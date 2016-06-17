@@ -53,13 +53,17 @@ struct DmaParameters
 {
     DmaParameters();
 
-    /// Page size in bytes
+    /// Size in bytes of the pages that the RORC must push.
     size_t pageSize;
 
-    /// Size of the DMA buffer in mebibytes
-    int bufferSizeMiB;
+    /// Size in bytes of the host's DMA buffer in bytes.
+    /// TODO: Automatically calculate/handle this, based on pageSize
+    int bufferSize;
 
-    size_t getBufferSizeBytes() const;
+    /// Instead of allocating the DMA buffer in kernel memory, allocate it in userspace shared memory.
+    /// Note: at the moment, this option is just for testing, but shared memory will probably become the default, or
+    /// even the only option in the future.
+    bool useSharedMemory;
 };
 
 /// FIFO related parameters
@@ -83,7 +87,7 @@ struct FifoParameters
 /// Generator related parameters
 struct GeneratorParameters
 {
-    inline GeneratorParameters();
+    GeneratorParameters();
 
     /// If data generator is used, loopbackMode parameter is needed in this case
     bool useDataGenerator;

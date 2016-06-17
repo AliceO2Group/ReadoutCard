@@ -48,6 +48,7 @@ class CardPdaBase : public CardInterface
         DMABuffer* dmaBuffer;
 
         /// Userspace address of the mapped buffers
+        //volatile void* mappedBuffer;
         volatile uint32_t* mappedBuffer;
 
         /// Array to keep track of read pages (false: wasn't read out, true: was read out).
@@ -64,6 +65,7 @@ class CardPdaBase : public CardInterface
     };
 
   protected:
+    /// Access the ChannelData class belonging the given channel
     ChannelData& getChannelData(int channel);
 
     /// Template method called by openDmaChannel()
@@ -77,13 +79,23 @@ class CardPdaBase : public CardInterface
 
     DMABuffer_SGNode* getScatterGatherList(int channel);
 
+    /// Get file path to the memory where pages are pushed to
+    std::string getSharedMemoryPagesFilePath(ChannelData& cd);
+
+    /// Initializes the BAR wrapper object
     void initBar(ChannelData& cd);
-    void initDmaBuffer(ChannelData& cd);
-    void initDmaBufferMap(ChannelData& cd);
+
+    /// Initializes the DMA buffer using a PDA kernel memory allocation
+    void initDmaBufferKernelMemory(ChannelData& cd);
+
+    /// Initializes the DMA buffer using a shared memory allocation
+    void initDmaBufferSharedMemory(ChannelData& cd);
+
+    /// Initialize the scatter-gather list
     void initScatterGatherList(ChannelData& cd);
 
+    /// Check if a channel is open
     bool isChannelOpen(int channel);
-
 
     /// PDA device operator
     DeviceOperator* const deviceOperator;
@@ -94,14 +106,14 @@ class CardPdaBase : public CardInterface
     /// Serial number of the card
     const int serialNumber;
 
-
   private:
+    /// Set the channel's open/closed state
     void setChannelOpen(int channel, bool open);
 
-    // Flags for keeping track of channel open/closed state
+    /// Flags for keeping track of channel open/closed state
     std::vector<bool> channelOpen;
 
-    // Channel data
+    /// Channel data
     std::vector<ChannelData> channelDataVector;
 };
 

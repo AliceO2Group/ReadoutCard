@@ -31,15 +31,15 @@ CardPdaCrorc::~CardPdaCrorc()
 
 void CardPdaCrorc::validateChannelParameters(const ChannelParameters& ps)
 {
-  if (ps.dma.bufferSizeMiB % 2 != 0) {
-    ALICEO2_RORC_THROW_EXCEPTION("Parameter 'dma.bufferSizeMiB' not a multiple of 2");
+  if (ps.dma.bufferSize % (2 * 1024 * 1024) != 0) {
+    ALICEO2_RORC_THROW_EXCEPTION("Parameter 'dma.bufferSize' not a multiple of 2 mebibytes");
   }
 
   if (ps.generator.dataSize > ps.dma.pageSize) {
     ALICEO2_RORC_THROW_EXCEPTION("Parameter 'generator.dataSize' greater than 'dma.pageSize'");
   }
 
-  if ((ps.dma.getBufferSizeBytes() % ps.dma.pageSize) != 0) {
+  if ((ps.dma.bufferSize % ps.dma.pageSize) != 0) {
     ALICEO2_RORC_THROW_EXCEPTION("DMA buffer size not a multiple of 'dma.pageSize'");
   }
 
@@ -288,7 +288,10 @@ volatile void* CardPdaCrorc::getDataStartAddress(ChannelData& cd)
 
 void CardPdaCrorc::initializeReadyFifo(ChannelData& cd)
 {
+//  auto userAddress = reinterpret_cast<void*>(reinterpret_cast<char*>(const_cast<void*>(cd.mappedBuffer))
+//      + cd.params().fifo.softwareOffset);
   auto userAddress = (cd.sglWrapper->nodes[0]->u_pointer + cd.params().fifo.softwareOffset);
+
   auto deviceAddress = (cd.sglWrapper->nodes[0]->d_pointer + cd.params().fifo.softwareOffset);
   cd.fifo.reset(new ReadyFifoWrapper(userAddress, deviceAddress, cd.params().fifo.entries));
   cd.fifo->resetAll();
@@ -306,7 +309,15 @@ void CardPdaCrorc::pushFreeFifoPage(ChannelData& cd, int fifoIndex)
 {
   volatile void* bar = cd.bar.getUserspaceAddress();
   volatile void* pageAddress = cd.sglWrapper->pages[fifoIndex].busAddress;
+
   auto pageAddr = reinterpret_cast<uint64_t>(pageAddress);
+
+  auto userAddr = (uint64_t) cd.sglWrapper->pages[fifoIndex].userAddress;
+  auto busAddr = (uint64_t) cd.sglWrapper->pages[fifoIndex].busAddress;
+
+
+  //cout << "PAGEADDRESS = " << std::hex << userAddr << " / " << busAddr << std::dec << endl;
+
   rorcPushRxFreeFifo(bar, pageAddr, (cd.params().dma.pageSize / 4), fifoIndex);
 
   // Or this?

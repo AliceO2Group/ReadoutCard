@@ -6,9 +6,13 @@
 #include "SglWrapper.h"
 #include <iostream>
 #include <iomanip>
+#include "RorcException.h"
 
 namespace AliceO2 {
 namespace Rorc {
+
+using std::cout;
+using std::endl;
 
 SglWrapper::SglWrapper(DMABuffer_SGNode* startNode, size_t pageSize, size_t fullOffset, int pageCount)
 {
@@ -29,8 +33,9 @@ SglWrapper::SglWrapper(DMABuffer_SGNode* startNode, size_t pageSize, size_t full
     int baseOffset = 0;
     size_t spaceLeft = node->length;
 
+    // The first node is a special case. It contains the readyFifo, which might prevent a page from fitting in
+    // as well. In that case, pages start at the second node
     if (i == 0) {
-      // First node is a special case, it might contain no data
       if (node->length < fullOffset + pageSize) {
         // Node is too small, data starts at second node
         continue;
@@ -44,20 +49,23 @@ SglWrapper::SglWrapper(DMABuffer_SGNode* startNode, size_t pageSize, size_t full
     int amountOfPages = spaceLeft / pageSize;
 
     for (int j = 0; j < amountOfPages; ++j) {
-      // In some cases, the buffer may be large enough to contain an excessive amount of pages
-      // We don't need to keep track of the excess pages
-      if (j >= pageCount) {
+      if (pages.size() >= pageCount) {
+        cout << "AliceO2::Rorc::SglWrapper::SglWrapper() -> Warning: excessive amount of pages" << endl;
         break;
       }
 
       int pageOffset = baseOffset + j * pageSize;
-//      std::cout << "Page " << std::hex
-//          << " usr " << std::setw(14) << Page(node,pageOffset).userAddress
-//          << " bus " << std::setw(14) << Page(node,pageOffset).busAddress
-//          << " offset " << std::setw(14) << pageOffset
-//          << std::dec << std::endl;
       pages.push_back(Page(node, pageOffset));
     }
+
+    if (pages.size() >= pageCount) {
+      break;
+    }
+  }
+
+  if (pages.size() < pageCount) {
+    cout << "Scatter-gather list could not fit enough pages: " << pages.size() << " out of " << pageCount << endl;
+    ALICEO2_RORC_THROW_EXCEPTION("Scatter-gather list could not fit enough pages");
   }
 }
 

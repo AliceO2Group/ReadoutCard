@@ -48,7 +48,10 @@ set(RORC_UTIL_EXAMPLE_SOURCES
 
 set(RORC_LIB_NAME rorc)
 add_library(${RORC_LIB_NAME} SHARED ${RORC_LIB_SOURCES})
-target_link_libraries(${RORC_LIB_NAME} ${PDA_LIBRARIES})
+target_link_libraries(${RORC_LIB_NAME} 
+  ${PDA_LIBRARIES}
+  rt # For shared memory
+)
 
 # Set the build version. It will be used in the name of the lib, with corresponding
 # symlinks created. SOVERSION could also be specified for api version. 

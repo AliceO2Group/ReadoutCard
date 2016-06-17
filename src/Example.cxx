@@ -36,7 +36,7 @@ const bool reinsertDriverModule = true;
 /// Prints the first 10 integers of a page
 void printPage(Rorc::Page& page, int index)
 {
-    cout << std::setw(4) << index << " -> ";
+    cout << std::setw(4) << index << " (0x" << std::hex << (uint64_t) page.getAddress() << std::dec << ")   -> ";
 
     for (int j = 0; j < 10; ++j) {
       cout << std::setw(j == 0 ? 4 : 0) << page.getAddressU32()[j] << " ";
@@ -48,7 +48,6 @@ void printPage(Rorc::Page& page, int index)
 /// Prints the first 10 integers of each page
 void printPages(Rorc::PageVector& pages)
 {
-  cout << "### PAGES\n";
   int i = 0;
 
   for (auto& page : pages) {
@@ -69,11 +68,13 @@ int main(int argc, char** argv)
 
   // Initialize the parameters for configuring the DMA channel
   Rorc::ChannelParameters params;
-  params.dma.bufferSizeMiB = 512;
+  params.dma.bufferSize = 512 * 1024 * 1024;
   params.dma.pageSize = 2 * 1024 * 1024;
+  params.dma.useSharedMemory = true;
   params.generator.useDataGenerator = true;
   params.generator.dataSize = 2 * 1024;
   params.generator.pattern = Rorc::GeneratorPattern::INCREMENTAL;
+  params.generator.seed = 0;
   params.initialResetLevel = Rorc::ResetLevel::RORC_ONLY;
 
   // Open the DMA channel
@@ -153,9 +154,20 @@ int main(int argc, char** argv)
   cout << "\n### Stopping DMA\n" << endl;
   card->stopDma(channel);
 
-  // Accessing all pages
+  // Example of accessing individual pages
+  cout << "\n### Pages\n" << endl;
   auto pages = card->getMappedPages(channel);
   printPages(pages);
+
+  // Example of printing raw memory
+  cout << "\n### Memory (hex values)\n" << endl;
+  auto buffer = reinterpret_cast<volatile uint32_t*>(card->getMappedMemory(channel));
+  for (int i = 0; i < 128/8; ++i) {
+    for (int j = 0; j < 8; ++j) {
+      cout << std::setw(8) << std::hex << buffer[i * 8 + j] << std::dec << " ";
+    }
+    cout << endl;
+  }
 
   cout << "\n### Closing DMA channel\n" << endl;
   card->closeChannel(channel);
