@@ -1,0 +1,37 @@
+RORC module
+
+
+## Authors: 
+ - Tuan Mate Nguyen (C layer)
+ - Pascal Boeschoten (C++ interface)
+
+
+## Dependencies
+The RORC module depends on the PDA (Portable Driver Architecture) library. 
+For installation instructions, see [insert link to Tuan's documentation here].
+If PDA is not detected on the system, only a dummy implementation of the interface will be compiled.
+
+
+## System configuration
+When using shared memory allocations for the DMA buffer, it is highly recommended to configure hugepage support on the system.
+Without hugepages, scatter-gather lists may be highly fragmented. 
+In addition, with larger RORC page sizes (> 4 KB), the driver may have difficulty finding enough contiguous memory to use for RORC pages.
+For more information about hugepages: https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt
+
+Configuration steps:
+
+1. Install hugetlbfs (will already be installed on most systems)
+  # yum install libhugetlbfs
+
+2. Allocate hugepages
+  # echo [number] > /proc/sys/vm/nr_hugepages
+  Where [number] is enough to cover the DMA buffer needs.
+  By default, hugepages are 2 MB. 
+
+3. Check to see if they're actually available
+  # cat /proc/meminfo | grep Huge
+  'HugePages_Total' should correspond to [number]
+
+4. Mount hugetlbfs
+  # mkdir /mnt/hugetlbfs (if directory does not exist)
+  # mount --types hugetlbfs none /mnt/hugetlbfs -o pagesize=2M

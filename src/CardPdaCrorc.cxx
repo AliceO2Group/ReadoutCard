@@ -288,10 +288,7 @@ volatile void* CardPdaCrorc::getDataStartAddress(ChannelData& cd)
 
 void CardPdaCrorc::initializeReadyFifo(ChannelData& cd)
 {
-//  auto userAddress = reinterpret_cast<void*>(reinterpret_cast<char*>(const_cast<void*>(cd.mappedBuffer))
-//      + cd.params().fifo.softwareOffset);
   auto userAddress = (cd.sglWrapper->nodes[0]->u_pointer + cd.params().fifo.softwareOffset);
-
   auto deviceAddress = (cd.sglWrapper->nodes[0]->d_pointer + cd.params().fifo.softwareOffset);
   cd.fifo.reset(new ReadyFifoWrapper(userAddress, deviceAddress, cd.params().fifo.entries));
   cd.fifo->resetAll();
@@ -307,23 +304,8 @@ void CardPdaCrorc::initializeFreeFifo(ChannelData& cd, int pagesToPush)
 
 void CardPdaCrorc::pushFreeFifoPage(ChannelData& cd, int fifoIndex)
 {
-  volatile void* bar = cd.bar.getUserspaceAddress();
-  volatile void* pageAddress = cd.sglWrapper->pages[fifoIndex].busAddress;
-
-  auto pageAddr = reinterpret_cast<uint64_t>(pageAddress);
-
-  auto userAddr = (uint64_t) cd.sglWrapper->pages[fifoIndex].userAddress;
-  auto busAddr = (uint64_t) cd.sglWrapper->pages[fifoIndex].busAddress;
-
-
-  //cout << "PAGEADDRESS = " << std::hex << userAddr << " / " << busAddr << std::dec << endl;
-
-  rorcPushRxFreeFifo(bar, pageAddr, (cd.params().dma.pageSize / 4), fifoIndex);
-
-  // Or this?
-//  cd.bar[C_RAFX] = arch64 ? (pageAddr >> 32) : 0x0;
-//  cd.bar[C_RAFH] = pageAddr & 0xffffffff;
-//  cd.bar[C_RAFL] = ((cd.params().dma.pageSize / 4) << 8) | fifoIndex;
+  auto pageAddress = reinterpret_cast<uint64_t>(cd.sglWrapper->pages[fifoIndex].busAddress);
+  rorcPushRxFreeFifo(cd.bar.getUserspaceAddress(), pageAddress, (cd.params().dma.pageSize / 4), fifoIndex);
 }
 
 CardPdaCrorc::DataArrivalStatus::type CardPdaCrorc::dataArrived(ChannelData& cd, int index)
@@ -342,14 +324,12 @@ CardPdaCrorc::DataArrivalStatus::type CardPdaCrorc::dataArrived(ChannelData& cd,
 void CardPdaCrorc::startDataReceiving(ChannelData& cd)
 {
   auto barAddress = cd.bar.getUserspaceAddressU32();
-  auto loopbackMode = cd.params().generator.loopbackMode;
 
-  // TODO Move to class variables
   setLoopPerSec(&loopPerUsec, &pciLoopPerUsec, barAddress);
   ddlFindDiuVersion(barAddress);
 
   // Preparing the card.
-  if (LoopbackMode::EXTERNAL_SIU == loopbackMode) {
+  if (LoopbackMode::EXTERNAL_SIU == cd.params().generator.loopbackMode) {
     resetCard(cd.channel, ResetLevel::RORC_DIU_SIU);
 
     if (rorcCheckLink(barAddress) != RORC_STATUS_OK) {
@@ -364,7 +344,7 @@ void CardPdaCrorc::startDataReceiving(ChannelData& cd)
     }
   }
 
-  rorcReset(barAddress, RORC_RESET_FF); // TODO Make member function
+  rorcReset(barAddress, RORC_RESET_FF);
 
   // Checking if firmware FIFO is empty.
   if (rorcCheckRxFreeFifo(barAddress) != RORC_FF_EMPTY){
