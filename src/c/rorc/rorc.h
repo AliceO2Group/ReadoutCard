@@ -18,10 +18,13 @@ extern "C" {
 
 #define LINE_UP "[1A[80D[0J"
 
+#define PRORC  1
+#define DRORC  2
+#define INTEG  3
 #define DRORC2 4
 #define PCIEXP 5
-
-#define INTEG  3 
+#define CHAN4  6
+#define CRORC  7
 
 #define MAX_STAT 4096
 
@@ -118,6 +121,13 @@ extern "C" {
 #define M_EIDFDH  78     /* Event ID FIFO data register, high         */
 #define M_RESx13C 79     /* reserved (0x13C) register                 */
 
+/*
+ * FLASH bits (C-RORC FIDS and FIAD registers)
+ */
+#define FLASH_SN_ADDRESS 0x01470000
+#define RORC_SN_POSITION 33
+#define RORC_SN_LENGTH 5
+
 #define DMA_BUFFER_SIZE 1024 * 1024
 
 #define REMOVE_INDEX 3
@@ -141,6 +151,7 @@ extern "C" {
 #define DRORC_CMD_DATA_TX_ON_OFF 0x00000100   //bit  8
 #define DRORC_CMD_DATA_RX_ON_OFF 0x00000200   //bit  9
 #define DRORC_CMD_START_DG       0x00000400   //bit 10
+#define DRORC_CMD_STOP_DG        0x00000800   //bit 11
 #define DRORC_CMD_LOOPB_ON_OFF   0x00001000   //bit 12
 /*------------------- pRORC ----------------------------------*/
 
@@ -238,6 +249,7 @@ extern "C" {
 #define mask(a,b) ((a) & (b))
 #define rorcFWVersMajor(fw) ((fw >> 20) & 0xf)
 #define rorcFWVersMinor(fw) ((fw >> 13) & 0x7f)
+#define rorcFFSize(fw) ((fw & 0xff000000) >> 18)  /* (x >> 24) * 64 */
 
 typedef union{
   struct{
@@ -326,6 +338,15 @@ int rorcParamOff(volatile void *buff);
 int roundPowerOf2(int number);
 int logi2(unsigned int number);
 void setLoopPerSec(long long int *loop_per_usec, double *pci_loop_per_usec, volatile void *buff);
+int trim(char *string);
+
+unsigned initFlash(uint32_t *buff, unsigned address, int sleept);
+unsigned readFlashStatus(uint32_t *buff, int sleept);
+int checkFlashStatus(uint32_t *buff, int timeout);
+int unlockFlashBlock(uint32_t *buff, unsigned address, int sleept);
+int eraseFlashBlock(uint32_t *buff, unsigned address, int sleept);
+int writeFlashWord(uint32_t *buff, unsigned address, int value, int sleept);
+int readFlashWord(uint32_t *buff, unsigned address, __u8 *data, int sleept);
 
 #ifdef __cplusplus
 } /* extern "C" */

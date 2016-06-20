@@ -59,6 +59,13 @@ int configure_crorc(char *config_file, configData *config_data)
   SLEEP_TIME = config_data->sleep_time;
   LOAD_TIME = config_data->load_time;
   WAIT_TIME = config_data->wait_time;
+  if(WAIT_TIME == 0){
+    WAIT_TIME == DDL_RESPONSE_TIME;
+  }
+  else if(WAIT_TIME < 0){
+    printf("Invalid wait time parameter!\n");
+    return -1;
+  }
   FEE_ADDRESS = config_data->fee_address;
   if(DATA_GENERATOR || FEE_ADDRESS){
     NO_RDYRX = 1;
@@ -80,7 +87,6 @@ int resetCard_crorc(uint32_t* barAddress, int reset_level)
   if ((reset_level > 1) && (LOOPBACK < 3))
   {
     rorcArmDDL(barAddress, RORC_RESET_DIU);
-    printf(" DIU reset\n");
 
     if ((reset_level > 2) && (LOOPBACK != 1))
     {    
@@ -181,12 +187,14 @@ int startDataReceiving_crorc(DMABuffer* buff, uint32_t* barAddress)
 {
   DMABuffer_SGNode *sgnode;
 
-  setLoopPerSec(&loop_per_usec, &pci_loop_per_usec, barAddress);
-  ddlFindDiuVersion(barAddress);
+  // Loop/usec variables have already been initialized in openCard().
+  //setLoopPerSec(&loop_per_usec, &pci_loop_per_usec, barAddress);
+  // DIU version has already beet set in openCard().
+  //ddlFindDiuVersion(barAddress);
 
   // Preparing the card.
+  // If SIU loopback
   if(LOOPBACK == 2){
-
     resetCard(barAddress, 3);
 
     if (rorcCheckLink(barAddress) != RORC_STATUS_OK){
@@ -199,13 +207,17 @@ int startDataReceiving_crorc(DMABuffer* buff, uint32_t* barAddress)
 	return -1;
       }
     }   
+  }
+
+  // If SIU or DIU loopback
+  if(LOOPBACK == 2 || LOOPBACK == 1){
     if(ddlReadDiu(barAddress, 0, DDL_RESPONSE_TIME) == -1){
       printf("DIU read error\n");
       return -1;
     }
-  }//loopback == 2
+  }
 
-  resetCard(barAddress, 1);
+  //resetCard(barAddress, 1);
   rorcReset(barAddress, RORC_RESET_FF);  
   
   // Checking if firmware FIFO is empty.
@@ -258,12 +270,22 @@ int armDataGenerator_crorc(uint32_t* barAddress)
     return -1;
   }
 
-  // If loopback is inside the RORC.
-  if (LOOPBACK == 3){
-    rorcParamOn(barAddress, PRORC_PARAM_LOOPB);
+  // If loopback is inside the DIU.
+  if(LOOPBACK == 1){
+    ret = ddlDiuLoopBack(barAddress, DDL_RESPONSE_TIME * pci_loop_per_usec, &stw);
+    if (ret != RORC_STATUS_OK){
+      printf("Error: SIU loopback error\n");
+      return -1;
+    }
+
     usleep(100000);
-  } 
- 
+
+    if(ddlReadDiu(barAddress, 0, DDL_RESPONSE_TIME) == -1){
+      printf("DIU read error\n");
+      return -1;
+    }
+  }//loopback == 1
+
   // If loopback is inside the SIU.
   if (LOOPBACK == 2){
     ret = ddlSetSiuLoopBack(barAddress, DDL_RESPONSE_TIME * pci_loop_per_usec, &stw);
@@ -277,16 +299,22 @@ int armDataGenerator_crorc(uint32_t* barAddress)
       return -1;
     }
     else{
-      if(ddlReadSiu(barAddress, 0, DDL_RESPONSE_TIME) == -1){
+      if(ddlReadSiu(barAddress, 0, DDL_RESPONSE_TIME * pci_loop_per_usec) == -1){
 	printf("SIU read error\n");
 	return -1;
       }
     }
-    if(ddlReadDiu(barAddress, 0, DDL_RESPONSE_TIME) == -1){
+    if(ddlReadDiu(barAddress, 0, DDL_RESPONSE_TIME * pci_loop_per_usec) == -1){
       printf("DIU read error\n");
       return -1;
     }
   }//loopback == 2
+
+  // If loopback is inside the RORC.
+  if (LOOPBACK == 3){
+    rorcParamOn(barAddress, PRORC_PARAM_LOOPB);
+    usleep(100000);
+  }
 
   return 0;
 }
@@ -328,4 +356,38 @@ int getNumOfPages_crorc(Card *card, int channel)
     card->numberOfPages[channel] = (card->sgnode[channel]->length - FULL_OFFSET)/DMA_PAGE_LENGTH + (length - card->sgnode[channel]->length)/DMA_PAGE_LENGTH;
     return (card->sgnode[channel]->length - FULL_OFFSET)/DMA_PAGE_LENGTH + (length - card->sgnode[channel]->length)/DMA_PAGE_LENGTH;
   }
+}
+
+int getSerialNumber_crorc(Card* card, int channel){
+  // Getting the serial number of the card from the FLASH. See rorcSerial() in rorc_lib.c.
+
+  char data[RORC_SN_LENGTH+1];
+  memset(data, 'x', RORC_SN_LENGTH+1);
+  int serial, i; 
+  unsigned flash_addr;
+  unsigned int status = 0;
+
+  // Reading the FLASH.
+  flash_addr = FLASH_SN_ADDRESS;
+  status = initFlash(card->barAddress[channel], flash_addr, 10);
+
+  // Setting the address to the serial number's (SN) position. (Actually it's the position 
+  // one before the SN's, because we need even position and the SN is at odd position. 
+  flash_addr += (RORC_SN_POSITION-1)/2;
+  data[RORC_SN_LENGTH] = '\0';
+  // Retrieving information character by caracter from the HW ID string.
+  for (i = 0; i < RORC_SN_LENGTH; i+=2, flash_addr++){
+    readFlashWord(card->barAddress[channel], flash_addr, &data[i], 10);
+    if ((data[i] == '\0') || (data[i+1] == '\0')) 
+      break;
+  }
+ 
+  // We started reading the serial number one position before, so we don't need
+  // the first character.
+  memmove(data, data+1, strlen(data));
+  serial = 0;
+  serial = atoi(data);
+  //printf("Serial = %d\n", serial);
+
+  return serial;
 }

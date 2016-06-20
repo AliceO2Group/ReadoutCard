@@ -160,3 +160,8 @@ int getNumOfPages_cru(Card *card, int channel)
   else
     return (card->sgnode[channel]->length - FULL_OFFSET)/DMA_PAGE_LENGTH + (length - card->sgnode[channel]->length)/DMA_PAGE_LENGTH;
 }
+
+int getSerialNumber_cru(Card* card, int channel){
+  
+  return 0;
+}

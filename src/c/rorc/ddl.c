@@ -1219,3 +1219,20 @@ int ddlSetSiuLoopBack(volatile void *buff, long long int timeout, stword_t *stw)
   return RORC_STATUS_OK;
 
 }
+
+int ddlDiuLoopBack(uint32_t *buff, long long int timeout, stword_t *stw){
+  int ret;
+  long long int longret;
+
+  ret = ddlSendCommand(buff, DIU, IFLOOP, 0, 0, timeout);
+  if (ret == RORC_TIMEOUT)
+    return RORC_STATUS_ERROR;
+
+  longret = ddlWaitStatus(buff, timeout);
+  if (longret >= timeout)
+    return RORC_NOT_ACCEPTED;
+  else
+    *stw = ddlReadStatus(buff);
+
+  return RORC_STATUS_OK;
+}

@@ -315,3 +315,101 @@ int rorcStartDataGenerator(volatile void *buff, __u32 maxLoop){
   return (RORC_STATUS_OK);
 }
 
+int rorcStopDataGenerator(uint32_t *buff)
+{
+  rorcWriteReg(buff, C_CSR, DRORC_CMD_STOP_DG);
+  
+  return (RORC_STATUS_OK);
+}
+
+void rorcBuildHwSerial(__u8 data[], unsigned int rorcRevisionNumber, int versionMajor,
+                       int versionMinor, __u8 cPld[], int numberOfChannels,
+                       int serialNumber)
+{
+  int i;
+  int versionPosition, channelPosition, ldPosition, serialNumberPosition;
+  // For the CRORC the ID positions are:
+  versionPosition = 7;
+  channelPosition = 11;
+  ldPosition = 20;
+  serialNumberPosition = 33;
+
+  data[0] = '\0';
+  if (rorcRevisionNumber != CRORC){
+    printf("Card is not a CRORC (rorcBuildHwSerial is implemented only for CRORC)\n");
+    return;
+  }
+
+  // Filling data with spaces.
+  for (i = 0; i < DDL_MAX_HW_ID-1; i++)
+    data[i] = ' ';
+  
+  // Adding hw ID text.
+  sprintf(data, "%s", "CRORC1");
+  data[strlen("CRORC1")] = ' ';
+  
+  // Adding hw version; version position is 7 for the CRORC.
+  sprintf(&data[versionPosition], "%1dv%1d", versionMajor, versionMinor);
+  data[versionPosition + 3] = ' ';
+  
+  /* add device type */
+  if (ldPosition){
+    sprintf(&data[ldPosition - 4],"LD: %s", cPld);
+    data[ldPosition + strlen(cPld)] = ' ';
+  }
+  
+  // Adding number of channels */
+  if (channelPosition){
+    if (numberOfChannels == 1)
+      sprintf(&data[channelPosition], "%s", "PLG.");
+    else if (numberOfChannels == 2)
+      sprintf(&data[channelPosition], "%s", "INT.");
+    else
+      sprintf(&data[channelPosition], "%s%02d", "Ch", numberOfChannels);
+    data[channelPosition + 4] = ' ';
+  }
+  
+  /* add serial number */
+  sprintf(&data[serialNumberPosition - 5],"S/N: %05d", serialNumber);
+  data[serialNumberPosition + 5] = ' ';
+
+  data[DDL_MAX_HW_ID-1] = '\0';
+  trim(data);
+}
+
+
+const char* rorcSerial(uint32_t* buff){
+  int i, ret ;
+  unsigned txtlen;
+  unsigned status, flashAddress;
+  __u8 address;
+  static char data[DDL_MAX_HW_ID];
+  char txt[20], checktxt[20];
+  int versionPosition, channelPosition, ldPosition, serialNumberPosition;
+  // For the CRORC the ID positions are:
+  versionPosition = 7;
+  channelPosition = 11;
+  ldPosition = 20;
+  serialNumberPosition = 33;
+  
+  if (rorc_revision != CRORC){
+    printf("Card is not a CRORC (rorcSerial is only implemented for CRORC)\n");
+    return NULL;
+  }
+  else // CRORC
+  {
+    // Read FLASH memory
+    flashAddress  = FLASH_SN_ADDRESS;
+    status = initFlash(buff, flashAddress, 10);
+
+    data[DDL_MAX_HW_ID - 1] = '\0';
+    for (i = 0; i < DDL_MAX_HW_ID - 1; i+=2, flashAddress++)
+    {
+      ret = readFlashWord(buff, flashAddress, &data[i], 10);
+      if ((data[i] == '\0') || (data[i+1] == '\0'))
+        break;
+    }
+  }
+
+  return data;
+}

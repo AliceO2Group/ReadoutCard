@@ -68,9 +68,9 @@ int initCard(char **ids)
       snprintf(device, sizeof(device), "%s%s/config", "/sys/bus/pci/devices/", file->d_name);
       FILE *cfp = fopen(device, "rb");
       char cfg[64];
-
+      /*
       fread(&cfg, 1, sizeof(cfg), cfp);
-      /*for(int j = 0; j<sizeof(cfg);j++){
+      for(int j = 0; j<sizeof(cfg);j++){
 	printf("%08x ", cfg[j]);
 	if((j+1)%4 == 0)
 	  printf("\n");
@@ -96,6 +96,7 @@ int initCard(char **ids)
 	getNumOfPages = &getNumOfPages_crorc;
 	configure = &configure_crorc;
 	resetCard = &resetCard_crorc;
+	getSerialNumber = &getSerialNumber_crorc;
 	//snprintf(fullId, sizeof(fullId), "%s %s", vendorId, deviceId);
 	//ids[0] = (const char*)fullId;
 	//printf("%s ", fullId);
@@ -120,6 +121,7 @@ int initCard(char **ids)
 	getNumOfPages = &getNumOfPages_cru;
 	configure = &configure_cru;
 	resetCard = &resetCard_cru;
+	getSerialNumber = &getSerialNumber_cru;
 	ids[0] =  "10dc e001";
 	ids[1] = NULL;
       }
@@ -314,9 +316,9 @@ int findCards()
   }
 
   /** Getting the parameters from the config file */
-  configure("/root/pda/crorc/interface/config.txt", &config_data);
+  configure("/home/tunguyen/crorc/interface/config.txt", &config_data);
 
-  // Checinkg if the PDA module (uio_pci_dma.ko) is inserted.
+  // Version checking, and checking if the PDA module (uio_pci_dma.ko) is inserted.
   if(PDAInit() != PDA_SUCCESS){
     printf("Error while initialization!\n");
     abort();
@@ -334,30 +336,109 @@ int findCards()
 
 int openCard(Card *card, int channel, int serial)
 {
-  // Setting the serial number.
-  card->serial = serial;
+  uint64_t numOfDevices = 0;
+  int foundMatchingSerialNumber;
+  int i;
+  Card tempCard;
+  int tempChannel;
 
-  // Getting the card.
-  if(PDA_SUCCESS != DeviceOperator_getPciDevice(dop, &card->device, serial) ){
-    if(PDA_SUCCESS != DeviceOperator_delete(dop, PDA_DELETE ) ){
-      printf("Device generation totally failed!\n");
+  // The FLASH can be accessed only by using BAR0.
+  tempChannel = 0;
+
+  // Finding cards, get their types and initializing accordingly.
+  findCards();
+  if(PDA_SUCCESS != DeviceOperator_getPciDeviceCount(dop, &numOfDevices)){
+    printf("Can't get number of devices!\n");
+    return -1;
+  }
+  foundMatchingSerialNumber = -1;
+
+  for(i = 0; i < numOfDevices; i++){
+    // Getting the card.
+    if(PDA_SUCCESS != DeviceOperator_getPciDevice(dop, &tempCard.device, i) ){
+      if(PDA_SUCCESS != DeviceOperator_delete(dop, PDA_DELETE ) ){
+	printf("Device generation totally failed!\n");
+	return -1;
+      }
+      printf("Can't get device!\n");
       return -1;
     }
-    printf("Can't get device!\n");
-    return -1;
-  }
-    
-  /** Getting the BAR struct */
-  if(PciDevice_getBar(card->device, &card->bar[channel], channel) != PDA_SUCCESS ){
-    printf("Can't get bar ...\n");
-    return -1;
-  }
+ 
+    /** Getting the BAR struct */
+    if(PciDevice_getBar(tempCard.device, &(tempCard.bar[tempChannel]), tempChannel) != PDA_SUCCESS ){
+      printf("Can't get bar ...\n");
+      return -1;
+    }
 
-  /** Mapping the BAR starting  address */
-  if(Bar_getMap(card->bar[channel], (void**)&card->barAddress[channel], &card->length[channel]) != PDA_SUCCESS ){
-    printf("Can't get map ...\n");
+    /** Mapping the BAR starting  address */
+    if(Bar_getMap(tempCard.bar[tempChannel], (void**)&tempCard.barAddress[tempChannel], &tempCard.length[tempChannel]) != PDA_SUCCESS ){
+      printf("Can't get map ...\n");
+      return -1;
+    }
+
+    if(getSerialNumber(&tempCard, tempChannel) == serial){
+      foundMatchingSerialNumber = i;
+      // Deleting the temporary device used for the iteration.
+      PciDevice_delete(tempCard.device, PDA_DELETE_PERSISTANT);
+      break;
+    }
+
+    // Deleting the temporary device used for the iteration.
+    PciDevice_delete(tempCard.device, PDA_DELETE_PERSISTANT);
+
+  }// End of for(i < numOfDevices) loop.
+ 
+
+  // Couldn't find device with matching serial number.
+  if(foundMatchingSerialNumber == -1){
+    printf("There was no device with matching serial number\n");
     return -1;
   }
+  else{ // Opening the found card.
+    // Getting the card.
+    findCards();
+ 
+    if(card->device == NULL){
+      if(PDA_SUCCESS != DeviceOperator_getPciDevice(dop, &card->device, foundMatchingSerialNumber) ){
+	if(PDA_SUCCESS != DeviceOperator_delete(dop, PDA_DELETE ) ){
+	  printf("Device generation totally failed!\n");
+	  return -1;
+	}
+	printf("Can't get device!\n");
+	return -1;
+      }
+    }// if card->device == NULL
+
+    /** Getting the BAR struct */
+    if(PciDevice_getBar(card->device, &(card->bar[channel]), channel) != PDA_SUCCESS ){
+      printf("Can't get bar ...\n");
+      return -1;
+    }
+
+    /** Mapping the BAR starting  address */
+    if(Bar_getMap(card->bar[channel], (void**)&card->barAddress[channel], &card->length[channel]) != PDA_SUCCESS ){
+      printf("Can't get map ...\n");
+      return -1;
+    }
+
+      uint64_t* ids;  // Array for found buffer IDs.
+      int numOfBuffers; // Number of found buffers.
+      numOfBuffers = PciDevice_getListOfBuffers(card->device, &ids);
+      for(int x = 0; x < numOfBuffers; ++x){
+	printf("ID%d = %d\n", x, ids[x]);	
+      }
+
+  }//else card is found
+
+  // Setting the serial number.
+  card->serialNumber = serial;
+
+  // THEY ARE CARD TYPE DEPENDENT, ARE TO BE MOVED.
+  // Getting DIU version.
+  // TODO: set card->revisionNumber
+  ddlFindDiuVersion(card->barAddress[channel]);
+  // Setting loop/usec global variables. 
+  setLoopPerSec(&loop_per_usec, &pci_loop_per_usec, card->barAddress[channel]);
 
   return 0;
 }
@@ -398,7 +479,8 @@ int closeCard(Card *card)
   // PDA function to clean up and delete device.
   PciDevice_delete(card->device, PDA_DELETE);
   card->device = NULL;
-  card->serial = 0;
+  card->serialNumber = 0;
+  card->revisionNumber = 0;
   for(i = 0; i < 6; i++){
     card->buffer[i] = NULL;
     card->sgnode[i] = NULL;
@@ -462,7 +544,7 @@ int startDMA(Card *card, int channel)
     if(!NO_RDYRX){
 
       uint64_t timeout = pci_loop_per_usec*DDL_RESPONSE_TIME,
-	       respCycle = pci_loop_per_usec*DDL_RESPONSE_TIME;
+	       respCycle = pci_loop_per_usec*WAIT_TIME;
 
       // Clearing SIU/DIU status.
 
@@ -493,7 +575,7 @@ int startDMA(Card *card, int channel)
 	  return -1;
 	}
       if (ret == RORC_NOT_ACCEPTED)
-	printf(" No reply arrived for RDYRX in timeout %lld usec\n", (unsigned long long)DDL_RESPONSE_TIME); 
+	printf(" No reply arrived for RDYRX in timeout %lld usec\n", (unsigned long long)WAIT_TIME); 
       else
 	printf(" FEE accepted the RDYDX command. Its reply: 0x%08lx\n",
 	       stw.stw);
@@ -512,6 +594,8 @@ int stopDMA(Card *card, int channel)
 
   // Stopping receiving data
   if(DATA_GENERATOR){
+    rorcStopDataGenerator(card->barAddress[channel]);
+
     rorcStopDataReceiver(card->barAddress[channel]);   
   }
   else if(!NO_RDYRX){
@@ -597,29 +681,85 @@ int checkPageRead(Card *card, int channel, int *readIndex, int *pushed, int *nex
 
 int startDummyDMA(Card *card, int channel, int serial)
 {
-  char path[72];
+  // String arguments for the execv() function.
+  char path[255];
+  char *args[3];
+  char argChannel[255], argSerial[255];
 
+  pid_t childProcessId;      // ID of the child process after fork().
   int i;
+
+  // Initializing the dummy 'firmware' FIFO entries.
   *(card->map[channel]+(FULL_OFFSET-4-128*4)/sizeof(uint32_t)) = 1;
   for(i = 0; i < 128; i++){
     *(card->map[channel]+ (128*8+4)/sizeof(uint32_t)+i) = -1;
   }
 
-  sprintf(path, "/root/pda/pda-11.0.7/test/dummyDataGenerator/dummyDataGenerator -c%d -s%d &", channel, serial);
+  // Setting the path and arguments for the execv().
+  sprintf(path, "/home/tunguyen/crorc/PdaUtilitiesCMakeCompiler/build/dummy-data-generator");
+  sprintf(argChannel, "-c%d", channel);
+  sprintf(argSerial, "-s%d", serial);
+  args[0] = path;
+  args[1] = argChannel;
+  args[2] = argSerial;
+  args[3] = NULL;
 
-  system(path);
+  // Creating second (child) process. This will be the dummy DMA process.
+  childProcessId = fork();
+
+  // Replacing the child process with a new process image (dummyDMA).
+  if(childProcessId == 0){
+    execv(path, args);
+  }
+
   printf("%s\n", path);
+
   return 0;
 }
 
 int stopDummyDMA(Card *card, int channel)
 {
+  int childStatus = 0;
 
+  // Stopping dummyDMA by flipping the run/stop flag in the memory.
   *(card->map[channel]+(FULL_OFFSET-4-128*4)/sizeof(uint32_t)) = 0;
 
-  // Giving time for the dummy data generator to close.
-  printf("\nWait 5 seconds until dummyDataGenerator closes ...\n");
-  sleep(5);
+  // Waiting for the child process to end.
+  wait(&childStatus);
+  if(!WIFEXITED(childStatus)){
+    printf("\nChild process (dummyDataGenerator) ended abnormally\n");
+    printf("  status: %d\n", childStatus);
+    printf("  WIFEXITED: %d\n", WIFEXITED(childStatus));
+    return -1;
+  }
 
+  return 0;
+}
+
+Card* createCard(){
+  Card* card;
+  int i;
+
+  card = (Card*)malloc(sizeof(Card));
+
+  card->device = NULL;
+  card->serialNumber = 0;
+  for(i = 0; i < 6; i++){
+    card->buffer[i] = NULL;
+    card->sgnode[i] = NULL;
+    card->map[i] = NULL;
+    card->bar[i] = NULL;
+    card->length[i] = 0;
+    card->barAddress[i] = NULL;
+    card->swFifoAddress[i] = NULL;
+    card->dataStartAddress[i] = NULL;
+    card->numberOfPages[i] = 0;
+  }
+  return card;
+}
+
+int deleteCard(Card* card)
+{
+  free(card);
   return 0;
 }
