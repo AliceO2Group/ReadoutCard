@@ -20,13 +20,9 @@ bool LoopbackMode::isExternal(const LoopbackMode::type& mode)
 
 DmaParameters::DmaParameters()
 {
-  bufferSizeMiB = 512;
   pageSize = 2 * 1024 * 1024;
-}
-
-size_t DmaParameters::getBufferSizeBytes() const
-{
-  return bufferSizeMiB * 1024 * 1024;
+  bufferSize = 512 * 1024 * 1024;
+  useSharedMemory = false;
 }
 
 FifoParameters::FifoParameters()

@@ -25,6 +25,11 @@ class SglWrapper
         {
         }
 
+        inline Page() :
+          userAddress(nullptr), busAddress(nullptr)
+        {
+        }
+
         volatile void* const userAddress;
         volatile void* const busAddress;
     };

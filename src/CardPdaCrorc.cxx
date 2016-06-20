@@ -31,15 +31,15 @@ CardPdaCrorc::~CardPdaCrorc()
 
 void CardPdaCrorc::validateChannelParameters(const ChannelParameters& ps)
 {
-  if (ps.dma.bufferSizeMiB % 2 != 0) {
-    ALICEO2_RORC_THROW_EXCEPTION("Parameter 'dma.bufferSizeMiB' not a multiple of 2");
+  if (ps.dma.bufferSize % (2 * 1024 * 1024) != 0) {
+    ALICEO2_RORC_THROW_EXCEPTION("Parameter 'dma.bufferSize' not a multiple of 2 mebibytes");
   }
 
   if (ps.generator.dataSize > ps.dma.pageSize) {
     ALICEO2_RORC_THROW_EXCEPTION("Parameter 'generator.dataSize' greater than 'dma.pageSize'");
   }
 
-  if ((ps.dma.getBufferSizeBytes() % ps.dma.pageSize) != 0) {
+  if ((ps.dma.bufferSize % ps.dma.pageSize) != 0) {
     ALICEO2_RORC_THROW_EXCEPTION("DMA buffer size not a multiple of 'dma.pageSize'");
   }
 
@@ -303,15 +303,8 @@ void CardPdaCrorc::initializeFreeFifo(ChannelData& cd, int pagesToPush)
 
 void CardPdaCrorc::pushFreeFifoPage(ChannelData& cd, int fifoIndex)
 {
-  volatile void* bar = cd.bar.getUserspaceAddress();
-  volatile void* pageAddress = cd.sglWrapper->pages[fifoIndex].busAddress;
-  auto pageAddr = reinterpret_cast<uint64_t>(pageAddress);
-  rorcPushRxFreeFifo(bar, pageAddr, (cd.params().dma.pageSize / 4), fifoIndex);
-
-  // Or this?
-//  cd.bar[C_RAFX] = arch64 ? (pageAddr >> 32) : 0x0;
-//  cd.bar[C_RAFH] = pageAddr & 0xffffffff;
-//  cd.bar[C_RAFL] = ((cd.params().dma.pageSize / 4) << 8) | fifoIndex;
+  auto pageAddress = reinterpret_cast<uint64_t>(cd.sglWrapper->pages[fifoIndex].busAddress);
+  rorcPushRxFreeFifo(cd.bar.getUserspaceAddress(), pageAddress, (cd.params().dma.pageSize / 4), fifoIndex);
 }
 
 CardPdaCrorc::DataArrivalStatus::type CardPdaCrorc::dataArrived(ChannelData& cd, int index)
@@ -330,14 +323,12 @@ CardPdaCrorc::DataArrivalStatus::type CardPdaCrorc::dataArrived(ChannelData& cd,
 void CardPdaCrorc::startDataReceiving(ChannelData& cd)
 {
   auto barAddress = cd.bar.getUserspaceAddressU32();
-  auto loopbackMode = cd.params().generator.loopbackMode;
 
-  // TODO Move to class variables
   setLoopPerSec(&loopPerUsec, &pciLoopPerUsec, barAddress);
   ddlFindDiuVersion(barAddress);
 
   // Preparing the card.
-  if (LoopbackMode::EXTERNAL_SIU == loopbackMode) {
+  if (LoopbackMode::EXTERNAL_SIU == cd.params().generator.loopbackMode) {
     resetCard(cd.channel, ResetLevel::RORC_DIU_SIU);
 
     if (rorcCheckLink(barAddress) != RORC_STATUS_OK) {
@@ -352,7 +343,7 @@ void CardPdaCrorc::startDataReceiving(ChannelData& cd)
     }
   }
 
-  rorcReset(barAddress, RORC_RESET_FF); // TODO Make member function
+  rorcReset(barAddress, RORC_RESET_FF);
 
   // Checking if firmware FIFO is empty.
   if (rorcCheckRxFreeFifo(barAddress) != RORC_FF_EMPTY){

@@ -45,18 +45,36 @@ class CardPdaCrorc: public CardPdaBase
     virtual void deviceCloseDmaChannel(int channel);
 
   private:
+    /// Initializes the readyFifo wrapper object
     void initializeReadyFifo(ChannelData& cd);
+
+    /// Initializes the RORC's freeFifo by pushing 128 pages.
     void initializeFreeFifo(ChannelData& cd, int pagesToPush);
+
+    /// Pushes a page to the RORC's freeFifo
     void pushFreeFifoPage(ChannelData& cd, int fifoIndex);
+
+    /// Returns the arrival status of a page
     CardPdaCrorc::DataArrivalStatus::type dataArrived(ChannelData& cd, int index);
+
+    /// Arms the DDL with the given reset mask
     void armDdl(ChannelData& cd, int32_t resetMask);
+
+    /// Enables the RORC data receiving
     void startDataReceiving(ChannelData& cd);
+
+    /// Gets the starting address of the page data in userspace
     volatile void* getDataStartAddress(ChannelData& cd);
+
+    /// Arms the data generator
     void armDataGenerator(ChannelData& cd, const GeneratorParameters& gen);
+
+    /// Starts the data generator
     void startDataGenerator(ChannelData& cd, int maxEvents);
 
     /// Not entirely sure what this is for
     long long int loopPerUsec;
+
     /// Not entirely sure what this is for
     double pciLoopPerUsec;
 };
