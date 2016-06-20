@@ -27,6 +27,7 @@ extern "C" {
 #define CRORC  7
 
 #define MAX_STAT 4096
+#define MAX_WAIT 1000000
 
 #define RCSR       0     /* RORC Control and Status register          */
 #define RERR       1     /* RORC Error register                       */
