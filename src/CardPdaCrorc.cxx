@@ -137,7 +137,6 @@ void CardPdaCrorc::startDma(int channel)
 
 int rorcStopDataGenerator(volatile uint32_t* buff)
 {
-  constexpr int DRORC_CMD_STOP_DG = 0x00000800;
   rorcWriteReg(buff, C_CSR, DRORC_CMD_STOP_DG);
   return (RORC_STATUS_OK);
 }
