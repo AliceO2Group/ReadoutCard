@@ -64,7 +64,8 @@ int main(int argc, char** argv)
   }
 
   // Get the shared pointer to the card
-  auto card = Rorc::CardFactory().getCardFromSerialNumber(0);
+  auto card1 = Rorc::CardFactory().getCardFromSerialNumber(0);
+  auto card2 = Rorc::CardFactory().getCardFromSerialNumber(0);
 
   // Initialize the parameters for configuring the DMA channel
   Rorc::ChannelParameters params;
@@ -79,11 +80,13 @@ int main(int argc, char** argv)
 
   // Open the DMA channel
   cout << "\n### Opening DMA channel\n" << endl;
-  card->openChannel(channel, params);
+  card1->openChannel(channel, params);
+  card2->openChannel(2, params);
 
   // Start the DMA
   cout << "\n### Starting DMA\n" << endl;
-  card->startDma(channel);
+  card1->startDma(channel);
+  card2->startDma(2);
 
   // Hopefully, this is enough to insure the freeFifo transfers have completed
   // TODO A more robust wait
@@ -106,18 +109,22 @@ int main(int argc, char** argv)
 
     for (auto i : boost::irange(0, pagesToPush)) {
       // Get page handle (contains FIFO index)
-      Rorc::PageHandle handle = card->pushNextPage(channel);
+      Rorc::PageHandle handle = card1->pushNextPage(channel);
+      Rorc::PageHandle handle2 = card2->pushNextPage(2);
 
       // Wait for page to arrive
-      while (!card->isPageArrived(channel, handle) && !timeExceeded()) { ; }
+      while (!card1->isPageArrived(channel, handle) && !timeExceeded()) { ; }
+      while (!card2->isPageArrived(2, handle2) && !timeExceeded()) { ; }
 
       // Get page (contains userspace address)
-      Rorc::Page page = card->getPage(channel, handle);
+      Rorc::Page page = card1->getPage(channel, handle);
+      Rorc::Page page2 = card2->getPage(2, handle2);
 
       printPage(page, handle.index);
 
       // Mark page as read so it can be written to again
-      card->markPageAsRead(channel, handle);
+      card1->markPageAsRead(channel, handle);
+      card2->markPageAsRead(2, handle2);
     }
   } else {
     cout << "### Pushing pages " << nConcurrent << " at a time" << endl;
@@ -134,34 +141,42 @@ int main(int argc, char** argv)
 
       // Push pages
       for (auto j : range) {
-        handles[j] = card->pushNextPage(channel);
+        handles[j] = card1->pushNextPage(channel);
       }
 
       // Wait until the arrive and get their addresses
       for (auto j : range) {
-        while (!card->isPageArrived(channel, handles[j]) && !timeExceeded()) { ; }
-        pages[j] = card->getPage(channel, handles[j]);
+        while (!card1->isPageArrived(channel, handles[j]) && !timeExceeded()) { ; }
+        pages[j] = card1->getPage(channel, handles[j]);
       }
 
       // Print pages and mark as read to indicate we're done with them
       for (auto j : range) {
         printPage(pages[j], handles[j].index);
-        card->markPageAsRead(channel, handles[j]);
+        card1->markPageAsRead(channel, handles[j]);
       }
     }
   }
 
   cout << "\n### Stopping DMA\n" << endl;
-  card->stopDma(channel);
+  card1->stopDma(channel);
+  card2->stopDma(2);
 
   // Example of accessing individual pages
-  cout << "\n### Pages\n" << endl;
-  auto pages = card->getMappedPages(channel);
-  printPages(pages);
+  {
+    cout << "\n### Pages 1\n" << endl;
+    auto pages = card1->getMappedPages(channel);
+    printPages(pages);
+  }
+  {
+    cout << "\n### Pages 2\n" << endl;
+    auto pages = card1->getMappedPages(channel);
+    printPages(pages);
+  }
 
   // Example of printing raw memory
   cout << "\n### Memory (hex values)\n" << endl;
-  auto buffer = reinterpret_cast<volatile uint32_t*>(card->getMappedMemory(channel));
+  auto buffer = reinterpret_cast<volatile uint32_t*>(card1->getMappedMemory(channel));
   for (int i = 0; i < 128/8; ++i) {
     for (int j = 0; j < 8; ++j) {
       cout << std::setw(8) << std::hex << buffer[i * 8 + j] << std::dec << " ";
@@ -170,7 +185,8 @@ int main(int argc, char** argv)
   }
 
   cout << "\n### Closing DMA channel\n" << endl;
-  card->closeChannel(channel);
+  card1->closeChannel(channel);
+  card2->closeChannel(2);
 
   return 0;
 }

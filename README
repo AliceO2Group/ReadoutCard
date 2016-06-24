@@ -35,3 +35,5 @@ Configuration steps:
 4. Mount hugetlbfs
   # mkdir /mnt/hugetlbfs (if directory does not exist)
   # mount --types hugetlbfs none /mnt/hugetlbfs -o pagesize=2M
+
+

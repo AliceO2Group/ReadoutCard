@@ -15,10 +15,11 @@ set(RORC_LIB_HEADERS
 )
 
 set(RORC_LIB_SOURCES
-  BarWrapper.cxx
   CardDummy.cxx
   CardFactory.cxx
   ChannelParameters.cxx
+  ChannelPaths.cxx
+  MemoryMappedFile.cxx
   ReadyFifoWrapper.cxx
   SglWrapper.cxx
   c/interface/header_common.c
@@ -34,6 +35,11 @@ if(PDA_FOUND)
   list(APPEND RORC_LIB_SOURCES 
     CardPdaBase.cxx
     CardPdaCrorc.cxx
+    ChannelMaster.cxx
+    CrorcChannelMaster.cxx
+    PdaBar.cxx
+    PdaDevice.cxx
+    PdaDmaBuffer.cxx
   )
 endif()
 
@@ -50,7 +56,11 @@ set(RORC_LIB_NAME rorc)
 add_library(${RORC_LIB_NAME} SHARED ${RORC_LIB_SOURCES})
 target_link_libraries(${RORC_LIB_NAME} 
   ${PDA_LIBRARIES}
+  #boost_interprocess
+  boost_filesystem
+  boost_system
   rt # For shared memory
+  pthread
 )
 
 # Set the build version. It will be used in the name of the lib, with corresponding
@@ -66,10 +76,14 @@ set_target_properties(${RORC_LIB_NAME} PROPERTIES
 # RORC utilities
 # -------
 
+message("BOOST FOUND:  " ${BOOST_FOUND})
+message("INTERPROCESS: " ${BOOST_INTERPROCESS_LIBRARY})
+message("FILESYSTEM:   " ${BOOST_FILESYSTEM_LIBRARY})
+message("SYSTEM:       " ${BOOST_SYSTEM_LIBRARY})
+
 set(RORC_UTIL_EXAMPLE_NAME RorcExample)
 add_executable(${RORC_UTIL_EXAMPLE_NAME} ${RORC_UTIL_EXAMPLE_SOURCES})
 target_link_libraries(${RORC_UTIL_EXAMPLE_NAME} ${RORC_LIB_NAME})
-
 
 # -------
 # Targets export for all libraries and executables

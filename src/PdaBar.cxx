@@ -3,7 +3,8 @@
 /// \author Pascal Boeschoten
 ///
 
-#include "BarWrapper.h"
+#include "PdaBar.h"
+
 #include <string>
 #include <boost/lexical_cast.hpp>
 
@@ -12,11 +13,11 @@
 namespace AliceO2 {
 namespace Rorc {
 
-BarWrapper::BarWrapper() : pdaBar(nullptr), barLength(-1), userspaceAddress(nullptr)
+PdaBar::PdaBar() : pdaBar(nullptr), barLength(-1), userspaceAddress(nullptr)
 {
 }
 
-BarWrapper::BarWrapper(PciDevice* pciDevice, int channel)
+PdaBar::PdaBar(PciDevice* pciDevice, int channel)
 {
   // Getting the BAR struct
   if(PciDevice_getBar(pciDevice, &pdaBar, channel) != PDA_SUCCESS ){

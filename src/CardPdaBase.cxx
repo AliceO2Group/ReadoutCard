@@ -106,6 +106,10 @@ void CardPdaBase::closeChannel(int channel)
     remove(path.c_str());
   }
 
+//  if (PciDevice_deleteDMABuffer(pciDevice, cd.dmaBuffer) != PDA_SUCCESS) {
+//    cout << "Failed to delete DMA buffer" << endl;
+//  }
+
   // Mark channel as closed and reset its data
   setChannelOpen(channel, false);
   cd = ChannelData(channel);
@@ -160,7 +164,7 @@ volatile void* CardPdaBase::getMappedMemory(int channel)
 
 void CardPdaBase::initBar(ChannelData& cd)
 {
-  cd.bar = BarWrapper(pciDevice, cd.channel);
+  cd.bar = PdaBar(pciDevice, cd.channel);
 }
 
 void CardPdaBase::initDmaBufferKernelMemory(ChannelData& cd)
@@ -185,9 +189,10 @@ std::string CardPdaBase::getSharedMemoryPagesFilePath(ChannelData& cd)
 {
   std::stringstream ss;
   ss << "/mnt/hugetlbfs/"
-    << "Alice02_RORC_" << serialNumber
-    << "_Channel_" << cd.channel
-    << "_Pages";
+    << "alice_o2"
+    << "/rorc_" << serialNumber
+    << "/channel_" << cd.channel
+    << "/pages";
   return ss.str();
 }
 
@@ -234,6 +239,9 @@ void* openOrCreateSharedMemory(std::string path, size_t size)
   // Resizing the file
   if (ftruncate(file, size)) {
     ALICEO2_RORC_THROW_EXCEPTION("Failed to resize shared memory file");
+    // Possible reasons:
+    //  - size is not a multiple of page size (are we using hugepages?)
+    //  - ...
   }
 
   // Mapping the file

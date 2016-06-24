@@ -13,11 +13,11 @@ namespace AliceO2 {
 namespace Rorc {
 
 /// A simple wrapper around the PDA BAR object, providing some convenience functions
-class BarWrapper
+class PdaBar
 {
   public:
-    BarWrapper();
-    BarWrapper(PciDevice* pciDevice, int channel);
+    PdaBar();
+    PdaBar(PciDevice* pciDevice, int channel);
 
     inline size_t getBarLength() const
     {

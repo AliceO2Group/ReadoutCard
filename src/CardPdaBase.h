@@ -9,8 +9,9 @@
 #include <memory>
 #include <pda.h>
 #include "RORC/CardInterface.h"
+
+#include "PdaBar.h"
 #include "SglWrapper.h"
-#include "BarWrapper.h"
 #include "ReadyFifoWrapper.h"
 
 namespace AliceO2 {
@@ -42,7 +43,7 @@ class CardPdaBase : public CardInterface
         std::unique_ptr<ReadyFifoWrapper> fifo;
 
         /// Wrapper around the the PCI BAR
-        BarWrapper bar;
+        PdaBar bar;
 
         /// PDA structs for the allocated buffers
         DMABuffer* dmaBuffer;

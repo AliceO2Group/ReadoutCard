@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <boost/format.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/interprocess/managed_mapped_file.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
