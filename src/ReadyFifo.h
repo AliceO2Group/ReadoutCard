@@ -24,8 +24,8 @@ class ReadyFifo
 
         inline void reset()
         {
-          length = 0xa; // temp magic value for debugging
-          status = 0xf; // temp magic value for debugging
+          length = -1; // temp magic value for debugging
+          status = -1; // temp magic value for debugging
         }
     };
 

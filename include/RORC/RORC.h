@@ -7,6 +7,6 @@
 
 #pragma once
 
-#include <RORC/CardInterface.h>
-#include <RORC/CardFactory.h>
+#include <RORC/ChannelMasterInterface.h>
+#include <RORC/ChannelMasterFactory.h>
 #include <RORC/ChannelParameters.h>

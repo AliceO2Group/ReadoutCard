@@ -15,13 +15,12 @@ set(RORC_LIB_HEADERS
 )
 
 set(RORC_LIB_SOURCES
-  CardDummy.cxx
-  CardFactory.cxx
+#  CardDummy.cxx
+#  CardFactory.cxx
   ChannelParameters.cxx
   ChannelPaths.cxx
   MemoryMappedFile.cxx
   ReadyFifoWrapper.cxx
-  SglWrapper.cxx
   c/interface/header_common.c
   c/interface/header_crorc.c
   c/interface/header_cru.c
@@ -33,9 +32,10 @@ set(RORC_LIB_SOURCES
 
 if(PDA_FOUND)
   list(APPEND RORC_LIB_SOURCES 
-    CardPdaBase.cxx
-    CardPdaCrorc.cxx
+    #CardPdaBase.cxx
+    #CardPdaCrorc.cxx
     ChannelMaster.cxx
+    ChannelMasterFactory.cxx
     CrorcChannelMaster.cxx
     PdaBar.cxx
     PdaDevice.cxx

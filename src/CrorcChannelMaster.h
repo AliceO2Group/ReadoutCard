@@ -5,13 +5,12 @@
 namespace AliceO2 {
 namespace Rorc {
 
-/// Wraps ChannelMaster object, and provides device-specific functionality
-/// TODO Use inheritance instead?
-/// TODO Implement...
+/// Extends ChannelMaster object, and provides device-specific functionality
+/// TODO Factor CRORC-specific things out of ChannelMaster and into this
 class CrorcChannelMaster
 {
   public:
-    CrorcChannelMaster();
+    CrorcChannelMaster(int serial, int channel, const ChannelParameters& params);
     ~CrorcChannelMaster();
   private:
     ChannelMaster channelMaster;
