@@ -20,20 +20,39 @@ namespace Rorc {
 class ChannelMaster: public ChannelMasterInterface
 {
   public:
-    ChannelMaster(int serial, int channel, const ChannelParameters& params);
+
+    ChannelMaster(int serial, int channel, const ChannelParameters& params, int dmaBuffersPerChannel);
     ~ChannelMaster();
 
     virtual void startDma();
     virtual void stopDma();
-    virtual void resetCard(ResetLevel::type resetLevel);
     virtual uint32_t readRegister(int index);
     virtual void writeRegister(int index, uint32_t value);
-    virtual PageHandle pushNextPage();
-    virtual bool isPageArrived(const PageHandle& handle);
     virtual Page getPage(const PageHandle& handle);
     virtual void markPageAsRead(const PageHandle& handle);
 
-  private:
+  protected:
+
+    /// Get the buffer ID belonging to the buffer. Note that index 0 is reserved for use by ChannelMaster
+    /// See dmaBuffersPerChannel() for more info
+    int getBufferId(int index);
+
+    /// Template method called by startDma() to do device-specific (CRORC, RCU...) actions
+    virtual void deviceStartDma() = 0;
+
+    /// Template method called by stopDma() to do device-specific (CRORC, RCU...) actions
+    virtual void deviceStopDma() = 0;
+
+    inline static size_t sharedDataSize()
+    {
+      return 4l * 1024l; // 4k ought to be enough for anybody
+    }
+
+    inline static const char* sharedDataName()
+    {
+      return "ChannelMasterSharedData";
+    }
+
     struct InitializationState
     {
       /// State of the shared data initialization
@@ -73,11 +92,11 @@ class ChannelMaster: public ChannelMasterInterface
         const ChannelParameters& getParams();
         InitializationState::type getState();
 
-        int fifoIndexWrite; /// Index of next page available for writing
-        int fifoIndexRead; /// Index of oldest non-free page
-        int pageIndex; /// Index to the next free page of the DMA buffer
-        long long int loopPerUsec; // Some timing parameter used during communications with the card
-        double pciLoopPerUsec; // Some timing parameters used during communications with the card
+        //int fifoIndexWrite; /// Index of next page available for writing
+        //int fifoIndexRead; /// Index of oldest non-free page
+        //int pageIndex; /// Index to the next free page of the DMA buffer
+        //long long int loopPerUsec; // Some timing parameter used during communications with the card
+        //double pciLoopPerUsec; // Some timing parameters used during communications with the card
         DmaState::type dmaState;
         InitializationState::type initializationState;
 
@@ -96,29 +115,14 @@ class ChannelMaster: public ChannelMasterInterface
     /// Getter for parameters in SharedData
     const ChannelParameters& getParams();
 
-    /// Arm DDL function
-    void armDdl(int resetMask);
-
-    /// Enables data receiving in the RORC
-    void startDataReceiving();
-
-    /// Initializes and starts the data generator with the given parameters
-    void startDataGenerator(const GeneratorParameters& gen);
-
-    /// Pushes the initial 128 pages to the CRORC's Free FIFO
-    void initializeFreeFifo(int pagesToPush);
-
-    /// Pusha a page to the CRORC's Free FIFO
-    void pushFreeFifoPage(int readyFifoIndex, void* pageBusAddress);
-
-    /// Check if data has arrived
-    DataArrivalStatus::type dataArrived(int index);
-
     /// Serial number of the device
     int serialNumber;
 
     /// DMA channel number
     int channelNumber;
+
+    /// Amount of DMA buffers per channel that will be registered to PDA
+    int dmaBuffersPerChannel;
 
     /// Memory mapped data stored in the shared state file
     FileSharedObject::LockedFileSharedObject<SharedData> sharedData;
@@ -132,14 +136,8 @@ class ChannelMaster: public ChannelMasterInterface
     /// Memory mapped file containing pages used for DMA transfer destination
     MemoryMappedFile mappedFilePages;
 
-    /// Memory mapped file containing the readyFifo
-    TypedMemoryMappedFile<ReadyFifo> mappedFileFifo;
-
     /// PDA DMABuffer object for the pages
     PdaDmaBuffer bufferPages;
-
-    /// PDA DMABuffer object for the readyFifo
-    PdaDmaBuffer bufferFifo;
 
     /// Addresses to pages in the DMA buffer
     std::vector<PageAddress> pageAddresses;

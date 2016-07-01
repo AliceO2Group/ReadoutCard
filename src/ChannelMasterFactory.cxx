@@ -12,7 +12,7 @@
 #include <boost/filesystem/fstream.hpp>
 #ifdef ALICEO2_RORC_PDA_ENABLED
 #include <pda.h>
-#include "ChannelMaster.h"
+#include "CrorcChannelMaster.h"
 #include "ChannelPaths.h"
 #endif
 #include "RorcException.h"
@@ -62,7 +62,7 @@ std::shared_ptr<ChannelMasterInterface> ChannelMasterFactory::getChannel(int ser
     makeParentDirectories(ChannelPaths::lock(serialNumber, channelNumber));
     touchFile(ChannelPaths::lock(serialNumber, channelNumber));
 
-    return std::make_shared<ChannelMaster>(serialNumber, channelNumber, params);
+    return std::make_shared<CrorcChannelMaster>(serialNumber, channelNumber, params);
   } else if (cardType == PdaDevice::CardType::CRU) {
     // TODO instantiate CRU ChannelMaster
     ALICEO2_RORC_THROW_EXCEPTION("CRU not yet supported");
