@@ -51,13 +51,25 @@ std::shared_ptr<ChannelMasterInterface> ChannelMasterFactory::getChannel(int ser
 //    return std::make_shared<ChannelMasterDummy>();
 //  } else {
 
-  makeParentDirectories(ChannelPaths::pages(serialNumber, channelNumber));
-  makeParentDirectories(ChannelPaths::state(serialNumber, channelNumber));
-  makeParentDirectories(ChannelPaths::fifo(serialNumber, channelNumber));
-  makeParentDirectories(ChannelPaths::lock(serialNumber, channelNumber));
-  touchFile(ChannelPaths::lock(serialNumber, channelNumber));
+  PdaDevice device(serialNumber);
+  auto cardType = device.getCardType();
 
-  return std::make_shared<ChannelMaster>(serialNumber, channelNumber, params);
+  if (cardType == PdaDevice::CardType::CRORC) {
+    // TODO Should this filesystem stuff be done by the ChannelMaster object itself?
+    makeParentDirectories(ChannelPaths::pages(serialNumber, channelNumber));
+    makeParentDirectories(ChannelPaths::state(serialNumber, channelNumber));
+    makeParentDirectories(ChannelPaths::fifo(serialNumber, channelNumber));
+    makeParentDirectories(ChannelPaths::lock(serialNumber, channelNumber));
+    touchFile(ChannelPaths::lock(serialNumber, channelNumber));
+
+    return std::make_shared<ChannelMaster>(serialNumber, channelNumber, params);
+  } else if (cardType == PdaDevice::CardType::CRU) {
+    // TODO instantiate CRU ChannelMaster
+    ALICEO2_RORC_THROW_EXCEPTION("CRU not yet supported");
+  } else {
+    ALICEO2_RORC_THROW_EXCEPTION("Unrecognized card type");
+  }
+
 //  }
 #else
 #pragma message("PDA not enabled, Alice02::Rorc::ChannelMasterFactory::getCardFromSerialNumber() will always return dummy implementation")

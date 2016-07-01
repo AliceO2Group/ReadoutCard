@@ -4,6 +4,7 @@
 ///
 
 #include "PdaDevice.h"
+#include <map>
 #include <pda.h>
 #include <boost/filesystem.hpp>
 #include <boost/range/iterator_range.hpp>
@@ -15,6 +16,15 @@ namespace Rorc {
 
 namespace b = boost;
 namespace bfs = boost::filesystem;
+
+static const std::string CRORC_DEVICE_ID = "0033";
+static const std::string CRU_DEVICE_ID = "????";
+static const std::string CERN_VENDOR_ID = "10dc";
+
+std::map<std::string, PdaDevice::CardType::type> typeMapping = {
+    {CRORC_DEVICE_ID, PdaDevice::CardType::CRORC},
+    {CRU_DEVICE_ID, PdaDevice::CardType::CRU}
+};
 
 std::string PdaDevice::fileToString(const bfs::path& path)
 {
@@ -30,8 +40,6 @@ PdaDevice::PdaDevice(int serialNumber) : deviceOperator(nullptr), pciDevice(null
     ALICEO2_RORC_THROW_EXCEPTION("Failed to initialize PDA");
   }
 
-  const std::string CRORC_DEVICE_ID = "0033";
-  const std::string CERN_VENDOR_ID = "10dc";
   const bfs::path dirPath("/sys/bus/pci/devices/");
   const bfs::path vendorFile("vendor");
   const bfs::path deviceFile("device");
@@ -52,7 +60,10 @@ PdaDevice::PdaDevice(int serialNumber) : deviceOperator(nullptr), pciDevice(null
       continue;
     }
 
-    if (deviceId == CRORC_DEVICE_ID) {
+    if (typeMapping.count(deviceId) != 0) {
+      cardType = typeMapping[deviceId];
+      pciDeviceId = deviceId;
+      pciVendorId = vendorId;
       newDeviceOperator(vendorId, deviceId);
       getPciDevice(serialNumber);
       return;
