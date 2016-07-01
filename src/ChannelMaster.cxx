@@ -162,11 +162,8 @@ void ChannelMaster::startDma()
   initializeFreeFifo(params.fifo.entries);
 
   if (params.generator.useDataGenerator) {
-    // Initializing the data generator according to the LOOPBACK parameter
-    armDataGenerator(params.generator);
-
     // Starting the data generator
-    startDataGenerator(params.generator.maximumEvents);
+    startDataGenerator(params.generator);
   } else {
     if (!getParams().noRDYRX) {
       uint64_t timeout = sharedData.get()->pciLoopPerUsec * DDL_RESPONSE_TIME;
@@ -224,7 +221,6 @@ void ChannelMaster::stopDma()
     return;
   }
 
-  // TODO
   auto userAddress = pdaBar.getUserspaceAddressU32();
 
   // Stopping receiving data
@@ -310,12 +306,12 @@ ChannelMasterInterface::PageHandle ChannelMaster::pushNextPage()
   auto handle = PageHandle(sd->fifoIndexWrite);
 
   // Check if page is available to write to
-  if (pageWasReadOut[handle.fifoIndex] == false) {
+  if (pageWasReadOut[handle.index] == false) {
     ALICEO2_RORC_THROW_EXCEPTION("Pushing page would overwrite");
   }
 
-  pageWasReadOut[handle.fifoIndex] = false;
-  pushFreeFifoPage(handle.fifoIndex, pageAddresses[handle.fifoIndex].bus);
+  pageWasReadOut[handle.index] = false;
+  pushFreeFifoPage(handle.index, pageAddresses[handle.index].bus);
 
   sd->fifoIndexWrite = (sd->fifoIndexWrite + 1) % getParams().fifo.entries;
 
@@ -337,20 +333,20 @@ ChannelMaster::DataArrivalStatus::type ChannelMaster::dataArrived(int index)
 
 bool ChannelMaster::isPageArrived(const PageHandle& handle)
 {
-  return dataArrived(handle.fifoIndex) != DataArrivalStatus::NONE_ARRIVED;
+  return dataArrived(handle.index) != DataArrivalStatus::NONE_ARRIVED;
 }
 
 Page ChannelMaster::getPage(const PageHandle& handle)
 {
-  return Page(pageAddresses[handle.fifoIndex].user);
+  return Page(pageAddresses[handle.index].user);
 }
 
 void ChannelMaster::markPageAsRead(const PageHandle& handle)
 {
-  if (pageWasReadOut[handle.fifoIndex]) {
+  if (pageWasReadOut[handle.index]) {
     ALICEO2_RORC_THROW_EXCEPTION("Page was already marked as read");
   }
-  pageWasReadOut[handle.fifoIndex] = true;
+  pageWasReadOut[handle.index] = true;
 }
 
 void ChannelMaster::armDdl(int resetMask)
@@ -394,7 +390,7 @@ void ChannelMaster::startDataReceiving()
   rorcStartDataReceiver(barAddress, reinterpret_cast<unsigned long>(busAddress));
 }
 
-void ChannelMaster::armDataGenerator(const GeneratorParameters& gen)
+void ChannelMaster::startDataGenerator(const GeneratorParameters& gen)
 {
   auto barAddress = pdaBar.getUserspaceAddress();
   int ret, rounded_len;
@@ -443,11 +439,8 @@ void ChannelMaster::armDataGenerator(const GeneratorParameters& gen)
       ALICEO2_RORC_THROW_EXCEPTION("DIU read error");
     }
   }
-}
 
-void ChannelMaster::startDataGenerator(int maxEvents)
-{
-  rorcStartDataGenerator(pdaBar.getUserspaceAddress(), maxEvents);
+  rorcStartDataGenerator(pdaBar.getUserspaceAddress(), gen.maximumEvents);
 }
 
 void ChannelMaster::initializeFreeFifo(int pagesToPush)

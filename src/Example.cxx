@@ -99,7 +99,7 @@ int main(int argc, char** argv)
     // Get page (contains userspace address)
     auto page = channel->getPage(handle);
 
-    printPage(page, handle.fifoIndex);
+    printPage(page, handle.index);
 
     // Mark page as read so it can be written to again
     channel->markPageAsRead(handle);

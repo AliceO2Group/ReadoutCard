@@ -12,21 +12,19 @@
 namespace AliceO2 {
 namespace Rorc {
 
-/// High-level C++ interface class for the RORC API
+/// Obtains a master lock on a channel and provides an interface to control and use the channel
 class ChannelMasterInterface
 {
   public:
-    /// A handle to index a page
-    /// TODO Make more private
-    /// TODO Move to separate file?
+    /// A handle that refers to a page. Used by some of the API calls.
     class PageHandle
     {
       public:
-        inline PageHandle(int fifoIndex = -1) : fifoIndex(fifoIndex)
+        inline PageHandle(int index = -1) : index(index)
         {
         }
 
-        int fifoIndex;
+        int index;
     };
 
     virtual ~ChannelMasterInterface()
@@ -35,17 +33,18 @@ class ChannelMasterInterface
 
     /// Start DMA for the given channel
     /// This must be called before pushing pages
+    /// TODO Should this be done automatically?
     virtual void startDma() = 0;
 
     /// Stop DMA for the given channel
-    /// This should probably be called before closing a channel that has started DMA
+    /// TODO Should this be done automatically?
     virtual void stopDma() = 0;
 
     /// Reset the channel
     /// \param resetLevel The depth of the reset
     virtual void resetCard(ResetLevel::type resetLevel) = 0;
 
-    /// Reads a BAR register. The registers are indexed by 32 bits
+    /// Reads a BAR register. The registers are indexed per 32 bits
     /// \param index The index of the register
     virtual uint32_t readRegister(int index) = 0;
 
