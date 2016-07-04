@@ -15,13 +15,10 @@ set(RORC_LIB_HEADERS
 )
 
 set(RORC_LIB_SOURCES
-#  CardDummy.cxx
-#  CardFactory.cxx
   ChannelParameters.cxx
   ChannelPaths.cxx
   DummyChannelMaster.cxx
   MemoryMappedFile.cxx
-  ReadyFifoWrapper.cxx
   RorcDeviceFinder.cxx
 )
 
@@ -34,12 +31,9 @@ if(PDA_FOUND)
     c/rorc/aux.c
     c/rorc/ddl.c
     c/rorc/rorc.c
-    #CardPdaBase.cxx
-    #CardPdaCrorc.cxx
     ChannelMaster.cxx
     ChannelMasterFactory.cxx
     CrorcChannelMaster.cxx
-    #CruChannelMaster.cxx
     PdaBar.cxx
     PdaDevice.cxx
     PdaDmaBuffer.cxx
