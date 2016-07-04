@@ -6,9 +6,8 @@
 
 set(RORC_LIB_HEADERS
   "${CMAKE_CURRENT_BINARY_DIR}/../include/RORC/Version.h" # Generated header
-  ../include/RORC/CardDummy.h # Normal header
-  ../include/RORC/CardFactory.h # Normal header
-  ../include/RORC/CardInterface.h # Normal header
+  ../include/RORC/ChannelMasterInterface.h # Normal header
+  ../include/RORC/ChannelMasterFactory.h # Normal header
   ../include/RORC/ChannelParameters.h # Normal header
   ../include/RORC/Page.h # Normal header
   ../include/RORC/RORC.h # Normal header
