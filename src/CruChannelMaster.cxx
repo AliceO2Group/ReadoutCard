@@ -3,9 +3,10 @@
 /// \author Pascal Boeschoten
 ///
 
+// XXX Note: this class is very under construction
+
 #include "CruChannelMaster.h"
 #include <iostream>
-#include "c/interface/header.h"
 #include "c/rorc/rorc.h"
 #include "ChannelPaths.h"
 
@@ -18,11 +19,11 @@ using std::endl;
 namespace AliceO2 {
 namespace Rorc {
 
-static constexpr int CRORC_BUFFERS_PER_CHANNEL = 2;
+static constexpr int CRU_BUFFERS_PER_CHANNEL = 2;
 static constexpr int BUFFER_INDEX_FIFO = 1;
 
 CruChannelMaster::CruChannelMaster(int serial, int channel, const ChannelParameters& params)
-: ChannelMaster(serial, channel, params, CRORC_BUFFERS_PER_CHANNEL),
+: ChannelMaster(serial, channel, params, CRU_BUFFERS_PER_CHANNEL),
   mappedFileFifo(
       ChannelPaths::fifo(serial, channel).c_str()),
   bufferFifo(
@@ -49,13 +50,13 @@ CruChannelMaster::CruChannelMaster(int serial, int channel, const ChannelParamet
     csd->initialize();
 
     cout << "Clearing FIFO" << endl;
-    auto& fifo = mappedFileFifo.get();
+    auto fifo = mappedFileFifo.get();
 
-    for (size_t i = 0; i < DESCRIPTOR_ENTRIES; ++i) {
+    for (size_t i = 0; i < fifo->statusEntries.size(); ++i) {
       fifo->statusEntries[i].status = 0;
     }
 
-    for (size_t i = 0; i < DESCRIPTOR_ENTRIES; ++i) {
+    for (size_t i = 0; i < fifo->statusEntries.size(); ++i) {
       auto& e = fifo->descriptorEntries[i];
       e.ctrl = (i << 18) + (params.dma.pageSize / 4);
       e.srcLow = i * params.dma.pageSize;
@@ -125,10 +126,10 @@ void CruChannelMaster::deviceStartDma()
   bar[3] = 0x0;
 
   // Set descriptor table size, same as number of available pages-1
-  bar[5] = FIFO_ENTRIES-1;
+  bar[5] = CRU_DESCRIPTOR_ENTRIES - 1;
 
   // Number of available pages-1
-  bar[4] = FIFO_ENTRIES-1;
+  bar[4] = CRU_DESCRIPTOR_ENTRIES - 1;
 
   // Give PCIe ready signal
   bar[129] = 0x1;
@@ -153,16 +154,12 @@ void CruChannelMaster::resetCard(ResetLevel::type resetLevel)
 ChannelMasterInterface::PageHandle CruChannelMaster::pushNextPage()
 {
   // TODO
-}
-
-ChannelMaster::DataArrivalStatus::type CruChannelMaster::dataArrived(int index)
-{
-  // TODO
+  return ChannelMasterInterface::PageHandle();
 }
 
 bool CruChannelMaster::isPageArrived(const PageHandle& handle)
 {
-  return dataArrived(handle.index) != DataArrivalStatus::NONE_ARRIVED;
+  return false;
 }
 
 } // namespace Rorc

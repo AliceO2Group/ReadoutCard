@@ -10,11 +10,11 @@
 #include "stdint.h"
 #include "linux/types.h"
 
-#include "ddl_def.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include "ddl_def.h"
 
 #define LINE_UP "[1A[80D[0J"
 
@@ -272,16 +272,13 @@ extern char* receivedOrderedSet[];
 
 extern char* remoteStatus[];
 
-char statInfo[MAX_STAT];
-
-long long int loop_per_usec;      // memory loop/us for the given machine
-double pci_loop_per_usec;	  // PCI loop/us for the given machine
-
-int rorc_revision, diu_version, siu_version;
+// XXX These global variables have been refactored out
+// XXX char statInfo[MAX_STAT];
+// XXX long long int loop_per_usec;      // memory loop/us for the given machine
+// XXX double pci_loop_per_usec;	  // PCI loop/us for the given machine
+// XXX int rorc_revision, diu_version, siu_version;
 
 /** DDL functions, for definitions see ddl.c */
-unsigned long ddlReadDiu(volatile void *buff, int transid,
-			 long long int time);
 stword_t ddlReadStatus(volatile void *buff);
 long long int ddlWaitStatus(volatile void *buff, long long int timeout);
 int ddlSendCommand(volatile void *buff,
@@ -292,37 +289,38 @@ int ddlSendCommand(volatile void *buff,
                    long long int   time);
 
 stword_t ddlReadCTSTW(volatile void *buff, int transid, int destination,
-		      long long int time);
+		      long long int time, int pci_loop_per_usec);
 long long int ddlWaitStatus(volatile void *buff, long long int timeout);
 stword_t ddlReadStatus(volatile void *buff);
 unsigned long ddlReadDiu(volatile void *buff, int transid,
-			 long long int time);
+			 long long int time, int pci_loop_per_usec);
 unsigned long ddlReadSiu(volatile void *buff, int transid,
-			 long long int time);
+			 long long int time, int pci_loop_per_usec);
 void ddlInterpretIFSTW(volatile void *buff, __u32 ifstw, char* pref,
-		       char* suff);
+		       char* suff, int diu_version);
 void ddlInterpret_OLD_IFSTW(__u32 ifstw, char* pref, char* suff);
 void ddlInterpret_NEW_IFSTW(__u32 ifstw, char *pref, char *suff);
 unsigned long ddlResetSiu(volatile void *buff, int print, int cycle,
-			  long long int time);
+			  long long int time, int diu_version, int pci_loop_per_usec);
 unsigned long ddlLinkUp(volatile void *buff, int master, int print, int stop,
-			long long int time); 
+			long long int time, int diu_version, int pci_loop_per_usec);
 unsigned long ddlLinkUp_OLD(volatile void *buff, int master, int print,
-			    int stop, long long int time);
+			    int stop, long long int time, int diu_version, int pci_loop_per_usec);
 unsigned long ddlLinkUp_NEW(volatile void *buff, int master, int print,
-			    int stop, long long int time);
-int ddlFindDiuVersion(volatile void *buff);
-int ddlSetSiuLoopBack(volatile void *buff, long long int timeout, stword_t *stw);
+			    int stop, long long int time, int diu_version, int pci_loop_per_usec);
+int ddlFindDiuVersion(volatile void *buff, int pci_loop_per_usec, int *rorc_revision, int *diu_version);
+int ddlSetSiuLoopBack(volatile void *buff, long long int timeout, int pci_loop_per_usec, stword_t *stw);
 
 /** RORC functions, for definitions see rorc.c */
-void rorcReset (volatile void *buff, int option);
+void rorcReset (volatile void *buff, int option, int pci_loop_per_usec);
 int rorcEmptyDataFifos(volatile void *buff, int empty_time);
 void elapsed(struct timeval *tv2, struct timeval *tv1, 
              int *dsec, int *dusec);
-int rorcArmDDL(volatile void *buff, int option);
+int rorcArmDDL(volatile void *buff, int option, int diu_version, int pci_loop_per_usec);
 int rorcCheckRxFreeFifo(volatile void *buff);
 int rorcStartDataReceiver(volatile void *buff,
-                          unsigned long   readyFifoBaseAddress);
+                          unsigned long readyFifoBaseAddress,
+                          int rorc_revision);
 int rorcStopDataReceiver(volatile void *buff);
 int rorcStartTrigger(volatile void *buff, long long int timeout, stword_t *stw);
 int rorcStopTrigger(volatile void *buff, long long int timeout, stword_t *stw);

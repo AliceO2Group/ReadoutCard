@@ -35,9 +35,9 @@ class CruChannelMaster : public ChannelMaster
 
   private:
 
-    struct CruFifoTable {
-      static constexpr size_t CRU_DESCRIPTOR_ENTRIES = 128l;
+    static constexpr size_t CRU_DESCRIPTOR_ENTRIES = 128l;
 
+    struct CruFifoTable {
       struct StatusEntry {
           volatile uint32_t status;
       };
@@ -73,9 +73,6 @@ class CruChannelMaster : public ChannelMaster
 
     /// Memory mapped data stored in the shared state file
     FileSharedObject::FileSharedObject<CrorcSharedData> crorcSharedData;
-
-    /// Check if data has arrived
-    DataArrivalStatus::type dataArrived(int index);
 
     /// Memory mapped file containing the readyFifo
     TypedMemoryMappedFile<CruFifoTable> mappedFileFifo;

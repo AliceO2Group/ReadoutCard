@@ -37,10 +37,11 @@ ChannelMasterFactory::~ChannelMasterFactory()
 
 void makeParentDirectories(const bfs::path& path)
 {
+  /// TODO Implement using boost::filesystem
   system(b::str(b::format("mkdir -p %s") % path.parent_path()).c_str());
 }
 
-// Similar to the "touch" Linux command
+/// Similar to the "touch" Linux command
 void touchFile(const bfs::path& path)
 {
   std::ofstream ofs(path.c_str(), std::ios::app);
@@ -53,14 +54,13 @@ std::shared_ptr<ChannelMasterInterface> ChannelMasterFactory::getChannel(int ser
   if (serialNumber == DUMMY_SERIAL_NUMBER) {
     return std::make_shared<DummyChannelMaster>(serialNumber, channelNumber, params);
   } else {
+    // Find the PCI device
     RorcDeviceFinder finder(serialNumber);
     auto cardType = finder.getCardType();
 
     if (cardType == RorcDeviceFinder::CardType::UNKNOWN) {
       ALICEO2_RORC_THROW_EXCEPTION("Unknown card type");
     }
-
-    PdaDevice device(finder.getPciVendorId(), finder.getPciDeviceId());
 
     if (cardType == RorcDeviceFinder::CardType::CRORC) {
       // TODO Should this filesystem stuff be done by the ChannelMaster object itself?
@@ -72,15 +72,16 @@ std::shared_ptr<ChannelMasterInterface> ChannelMasterFactory::getChannel(int ser
 
       return std::make_shared<CrorcChannelMaster>(serialNumber, channelNumber, params);
     } else if (cardType == RorcDeviceFinder::CardType::CRU) {
-      // TODO instantiate CRU ChannelMaster
+      // TODO Remove throw when CruChannelMaster is in usable state
       ALICEO2_RORC_THROW_EXCEPTION("CRU not yet supported");
+      return std::make_shared<CruChannelMaster>(serialNumber, channelNumber, params);
     } else {
       ALICEO2_RORC_THROW_EXCEPTION("Unrecognized card type");
     }
   }
 #else
-#pragma message("PDA not enabled, Alice02::Rorc::ChannelMasterFactory::getCardFromSerialNumber() will always return dummy implementation")
-  return std::make_shared<CardDummy>();
+#pragma message("PDA not enabled, Alice02::Rorc::ChannelMasterFactory::getChannel() will always return a dummy implementation")
+  return std::make_shared<DummyChannelMaster>();
 #endif
 }
 

@@ -5,7 +5,7 @@
 
 #include "CrorcChannelMaster.h"
 #include <iostream>
-#include "c/interface/header.h"
+//#include "c/interface/header.h"
 #include "c/rorc/rorc.h"
 #include "ChannelPaths.h"
 
@@ -83,7 +83,7 @@ CrorcChannelMaster::~CrorcChannelMaster()
 
 CrorcChannelMaster::CrorcSharedData::CrorcSharedData()
     : initializationState(InitializationState::UNKNOWN), fifoIndexWrite(0), fifoIndexRead(0), loopPerUsec(
-        0), pciLoopPerUsec(0), pageIndex(0)
+        0), pciLoopPerUsec(0), pageIndex(0), rorcRevision(0), siuVersion(0), diuVersion(0)
 {
 }
 void CrorcChannelMaster::CrorcSharedData::initialize()
@@ -91,24 +91,24 @@ void CrorcChannelMaster::CrorcSharedData::initialize()
   fifoIndexWrite = 0;
   fifoIndexRead = 0;
   pageIndex = 0;
+  loopPerUsec = 0;
+  pciLoopPerUsec = 0;
+  rorcRevision = 0;
+  siuVersion = 0;
+  diuVersion = 0;
   initializationState = InitializationState::INITIALIZED;
 }
 
 void CrorcChannelMaster::deviceStartDma()
 {
-  // For random sleep time after every received data block. // TODO ...???
-  if(SLEEP_TIME || LOAD_TIME){
-    srand(time(NULL));
-  }
-
   auto& params = getParams();
 
   // Initializing the software FIFO
   // initializeReadyFifo(cd); // Already done in constructor
 
   // Find DIU version, required for armDdl()
-  // XXX TODO XXX This whole thing relies on global variables. Bad. Refactor.
-  ddlFindDiuVersion(pdaBar.getUserspaceAddress());
+  auto csd = crorcSharedData.get();
+  ddlFindDiuVersion(pdaBar.getUserspaceAddress(), csd->pciLoopPerUsec, &csd->rorcRevision, &csd->diuVersion);
 
   // Resetting the card,according to the RESET LEVEL parameter
   resetCard(params.initialResetLevel);
@@ -132,12 +132,12 @@ void CrorcChannelMaster::deviceStartDma()
       if (rorcCheckLink(userAddress) != RORC_STATUS_OK) {
         printf("SIU not seen. Can not clear SIU status.\n");
       } else {
-        if (ddlReadSiu(userAddress, 0, timeout) != -1) {
+        if (ddlReadSiu(userAddress, 0, timeout, csd->pciLoopPerUsec) != -1) {
           printf("SIU status cleared.\n");
         }
       }
 
-      if (ddlReadDiu(userAddress, 0, timeout) != -1) {
+      if (ddlReadDiu(userAddress, 0, timeout, csd->pciLoopPerUsec) != -1) {
         printf("DIU status cleared.\n");
       }
 
@@ -231,7 +231,8 @@ void CrorcChannelMaster::resetCard(ResetLevel::type resetLevel)
 
 void CrorcChannelMaster::armDdl(int resetMask)
 {
-  if (rorcArmDDL(pdaBar.getUserspaceAddressU32(), resetMask) != RORC_STATUS_OK) {
+  auto csd = crorcSharedData.get();
+  if (rorcArmDDL(pdaBar.getUserspaceAddressU32(), resetMask, csd->diuVersion, csd->pciLoopPerUsec) != RORC_STATUS_OK) {
     ALICEO2_RORC_THROW_EXCEPTION("Failed to arm DDL");
   }
 }
@@ -239,9 +240,10 @@ void CrorcChannelMaster::armDdl(int resetMask)
 void CrorcChannelMaster::startDataReceiving()
 {
   auto barAddress = pdaBar.getUserspaceAddress();
+  auto csd = crorcSharedData.get();
 
-  setLoopPerSec(&crorcSharedData.get()->loopPerUsec, &crorcSharedData.get()->pciLoopPerUsec, barAddress); // TODO figure out significance of this call
-  ddlFindDiuVersion(barAddress);
+  setLoopPerSec(&crorcSharedData.get()->loopPerUsec, &csd->pciLoopPerUsec, barAddress); // TODO figure out significance of this call
+  ddlFindDiuVersion(barAddress, csd->pciLoopPerUsec, &csd->rorcRevision, &csd->diuVersion);
 
   // Preparing the card.
   if (LoopbackMode::EXTERNAL_SIU == getParams().generator.loopbackMode) {
@@ -250,16 +252,16 @@ void CrorcChannelMaster::startDataReceiving()
     if (rorcCheckLink(barAddress) != RORC_STATUS_OK) {
       ALICEO2_RORC_THROW_EXCEPTION("SIU not seen. Can not clear SIU status");
     } else {
-      if (ddlReadSiu(barAddress, 0, DDL_RESPONSE_TIME) == -1) {
+      if (ddlReadSiu(barAddress, 0, DDL_RESPONSE_TIME, csd->pciLoopPerUsec) == -1) {
         ALICEO2_RORC_THROW_EXCEPTION("SIU read error");
       }
     }
-    if (ddlReadDiu(barAddress, 0, DDL_RESPONSE_TIME) == -1) {
+    if (ddlReadDiu(barAddress, 0, DDL_RESPONSE_TIME, csd->pciLoopPerUsec) == -1) {
       ALICEO2_RORC_THROW_EXCEPTION("DIU read error");
     }
   }
 
-  rorcReset(barAddress, RORC_RESET_FF);
+  rorcReset(barAddress, RORC_RESET_FF, csd->pciLoopPerUsec);
 
   // Checking if firmware FIFO is empty.
   if (rorcCheckRxFreeFifo(barAddress) != RORC_FF_EMPTY){
@@ -267,7 +269,7 @@ void CrorcChannelMaster::startDataReceiving()
   }
 
   auto busAddress = bufferFifo.getScatterGatherList()[0].addressBus;
-  rorcStartDataReceiver(barAddress, reinterpret_cast<unsigned long>(busAddress));
+  rorcStartDataReceiver(barAddress, reinterpret_cast<unsigned long>(busAddress), csd->rorcRevision);
 }
 
 void CrorcChannelMaster::startDataGenerator(const GeneratorParameters& gen)
@@ -275,9 +277,10 @@ void CrorcChannelMaster::startDataGenerator(const GeneratorParameters& gen)
   auto barAddress = pdaBar.getUserspaceAddress();
   int ret, rounded_len;
   stword_t stw;
+  auto csd = crorcSharedData.get();
 
   if (LoopbackMode::NONE == gen.loopbackMode) {
-    ret = rorcStartTrigger(barAddress, DDL_RESPONSE_TIME * crorcSharedData.get()->pciLoopPerUsec, &stw);
+    ret = rorcStartTrigger(barAddress, DDL_RESPONSE_TIME * csd->pciLoopPerUsec, &stw);
 
     if (ret == RORC_LINK_NOT_ON) {
       ALICEO2_RORC_THROW_EXCEPTION("Error: LINK IS DOWN, RDYRX command could not be sent");
@@ -303,7 +306,10 @@ void CrorcChannelMaster::startDataGenerator(const GeneratorParameters& gen)
   }
 
   if (LoopbackMode::EXTERNAL_SIU == gen.loopbackMode) {
-    ret = ddlSetSiuLoopBack(barAddress, DDL_RESPONSE_TIME * crorcSharedData.get()->pciLoopPerUsec, &stw);
+
+    ///int ddlSetSiuLoopBack(volatile void *buff, long long int timeout, int pci_loop_per_usec, stword_t *stw){
+
+    ret = ddlSetSiuLoopBack(barAddress, DDL_RESPONSE_TIME * csd->pciLoopPerUsec, csd->pciLoopPerUsec, &stw);
     if (ret != RORC_STATUS_OK) {
       ALICEO2_RORC_THROW_EXCEPTION("SIU loopback error");
     }
@@ -311,11 +317,11 @@ void CrorcChannelMaster::startDataGenerator(const GeneratorParameters& gen)
     if (rorcCheckLink(barAddress) != RORC_STATUS_OK) {
       ALICEO2_RORC_THROW_EXCEPTION("SIU not seen, can not clear SIU status");
     } else {
-      if (ddlReadSiu(barAddress, 0, DDL_RESPONSE_TIME) == -1) {
+      if (ddlReadSiu(barAddress, 0, DDL_RESPONSE_TIME, csd->pciLoopPerUsec) == -1) {
         ALICEO2_RORC_THROW_EXCEPTION("SIU read error");
       }
     }
-    if (ddlReadDiu(barAddress, 0, DDL_RESPONSE_TIME) == -1) {
+    if (ddlReadDiu(barAddress, 0, DDL_RESPONSE_TIME, csd->pciLoopPerUsec) == -1) {
       ALICEO2_RORC_THROW_EXCEPTION("DIU read error");
     }
   }
@@ -361,7 +367,7 @@ ChannelMasterInterface::PageHandle CrorcChannelMaster::pushNextPage()
   return handle;
 }
 
-ChannelMaster::DataArrivalStatus::type CrorcChannelMaster::dataArrived(int index)
+CrorcChannelMaster::DataArrivalStatus::type CrorcChannelMaster::dataArrived(int index)
 {
   auto status = mappedFileFifo.get()->entries[index].status;
 

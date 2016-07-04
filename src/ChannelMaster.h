@@ -16,8 +16,9 @@
 namespace AliceO2 {
 namespace Rorc {
 
-/// Implements the ChannelMasterInterface
-/// TODO separate into a PDA base class and CRORC & CRU subclass
+/// Partially implements the ChannelMasterInterface. It takes care of:
+/// - Interprocess synchronization
+/// - PDA-based functionality that is common to the CRORC and CRU.
 class ChannelMaster: public ChannelMasterInterface
 {
   public:
@@ -73,17 +74,6 @@ class ChannelMaster: public ChannelMasterInterface
         enum type
         {
           UNKNOWN = 0, STOPPED = 1, STARTED = 2
-        };
-    };
-
-    struct DataArrivalStatus
-    {
-        /// The status of a page's arrival
-        enum type
-        {
-          NONE_ARRIVED = 0, // == RORC_DATA_BLOCK_NOT_ARRIVED;
-          PART_ARRIVED = 1, // == RORC_NOT_END_OF_EVENT_ARRIVED
-          WHOLE_ARRIVED = 2 // == RORC_LAST_BLOCK_OF_EVENT_ARRIVED
         };
     };
 

@@ -1,21 +1,21 @@
 #include "rorc.h"
 
-int ddlFindDiuVersion(volatile void *buff){
+int ddlFindDiuVersion(volatile void *buff, int pci_loop_per_usec, int *rorc_revision, int *diu_version) {
   stword_t stw[DDL_MAX_REPLY];
   int  n_reply, ret;
   long long longret;
   long long int TimeOut;
   DEBUG_PRINTF(PDADEBUG_ENTER, "");
-  rorc_revision = 7;//*((uint32_t*)buff + 6*1024);
+  *rorc_revision = 7;//*((uint32_t*)buff + 6*1024);
 
-  if (rorc_revision >= INTEG){
+  if (*rorc_revision >= INTEG){
     // ide johetne DIU status lekerdezes
-    diu_version = EMBEDDED;
+    *diu_version = EMBEDDED;
     return (RORC_STATUS_OK);
   }
 
-  rorcReset(buff, 0);   // full reset
-  diu_version = NO_DIU;
+  rorcReset(buff, 0, pci_loop_per_usec);   // full reset
+  *diu_version = NO_DIU;
   
   /* read DIU's HW id */
   TimeOut = DDL_RESPONSE_TIME * pci_loop_per_usec;
@@ -37,16 +37,16 @@ int ddlFindDiuVersion(volatile void *buff){
   }
   printf("HW status word = 0x%08lx.\n", stw[0].stw);
 
-  diu_version = NEW;
+  *diu_version = NEW;
   if (n_reply != 2){
-    diu_version = OLD;
+    *diu_version = OLD;
   }
 
   return (RORC_STATUS_OK);
 }
 
 stword_t ddlReadCTSTW(volatile void *buff, int transid, int destination,
-		      long long int time){ 
+		      long long int time, int pci_loop_per_usec){
   long long int longi; 
   stword_t stw; 
   DEBUG_PRINTF(PDADEBUG_ENTER, ""); 
@@ -179,7 +179,7 @@ stword_t ddlReadStatus(volatile void *buff)
 } 
  
 unsigned long ddlReadDiu(volatile void *buff, int transid,
-			 long long int time){ 
+			 long long int time, int pci_loop_per_usec){
   unsigned long retval; 
   stword_t stw; 
   int dest; 
@@ -220,13 +220,13 @@ unsigned long ddlReadDiu(volatile void *buff, int transid,
     retval = -1; 
   } 
  
-  stw = ddlReadCTSTW(buff, transid, dest, time); 
+  stw = ddlReadCTSTW(buff, transid, dest, time, pci_loop_per_usec);
  
   return(retval); 
 } 
 
 unsigned long ddlReadSiu(volatile void *buff, int transid,
-			 long long int time){
+			 long long int time, int pci_loop_per_usec){
   unsigned long retval;
   stword_t stw;
   int dest;
@@ -287,7 +287,7 @@ unsigned long ddlReadSiu(volatile void *buff, int transid,
 }
  
 void ddlInterpretIFSTW(volatile void *buff, __u32 ifstw, char* pref,
-		       char* suff){
+		       char* suff, int diu_version){
   DEBUG_PRINTF(PDADEBUG_ENTER, ""); 
   if (diu_version == OLD) 
     ddlInterpret_OLD_IFSTW(ifstw, pref, suff); 
@@ -568,7 +568,7 @@ void ddlInterpret_NEW_IFSTW(__u32 ifstw, char *pref, char *suff)
 } 
  
 unsigned long ddlResetSiu(volatile void *buff, int print, int cycle,
-			  long long int time) 
+			  long long int time, int diu_version, int pci_loop_per_usec)
  
 /* ddlResetSiu tries to reset the SIU. 
  *             print	# if != 0 then print link status 
@@ -631,7 +631,7 @@ unsigned long ddlResetSiu(volatile void *buff, int print, int cycle,
     siu_ok = 0; 
  
     transid = incr15(transid); 
-    retlong = ddlReadDiu(buff, transid, time); 
+    retlong = ddlReadDiu(buff, transid, time, pci_loop_per_usec);
     if (retlong == -1){ 
       if (print) { 
         printf(" ddlReadDiu returns -1: Error in ddlReadDiu "); 
@@ -650,25 +650,25 @@ unsigned long ddlResetSiu(volatile void *buff, int print, int cycle,
       if (print){ 
 	// printf(" DIU error at RORC /dev/prorc %d/%d. Status word: 0x%0lx ", 
 	//                 prorc->minor, prorc->ddl_channel, retlong); 
-        statInfo[0] = '\0'; 
-        ddlInterpretIFSTW(buff, retlong, pref, suff); 
-        printf("%s", statInfo); 
+        // // statInfo[0] = '\0';
+        ddlInterpretIFSTW(buff, retlong, pref, suff, diu_version);
+        // printf("%s", statInfo);
       } 
     } 
     else if (mask(retlong, S_OPTRAN)){ 
       if (print){ 
 	//  printf(" SIU transaction open at RORC /dev/prorc %d/%d. Status word: 0x%0lx ", 
 	//                  prorc->minor, prorc->ddl_channel, retlong); 
-        statInfo[0] = '\0'; 
-        ddlInterpretIFSTW(buff, retlong, pref, suff); 
-        printf("%s", statInfo); 
+        // // statInfo[0] = '\0';
+        ddlInterpretIFSTW(buff, retlong, pref, suff, diu_version);
+        // printf("%s", statInfo);
       } 
     } 
     else 
       diu_ok = 1; 
  
     transid = incr15(transid); 
-    retlong = ddlReadSiu(buff, transid, time); 
+    retlong = ddlReadSiu(buff, transid, time, pci_loop_per_usec);
     if (retlong == -1){ 
       if (print){ 
         printf(" ddlReadSiu returns -1: Error in ddlReadSiu "); 
@@ -687,9 +687,9 @@ unsigned long ddlResetSiu(volatile void *buff, int print, int cycle,
       if (print){ 
 	// printf(" SIU error at RORC /dev/prorc %d/%d. Status word: 0x%0lx ", 
 	//                 prorc->minor, prorc->ddl_channel, retlong); 
-        statInfo[0] = '\0'; 
-        ddlInterpretIFSTW(buff, retlong, pref, suff); 
-        printf("%s", statInfo); 
+        // // statInfo[0] = '\0';
+        ddlInterpretIFSTW(buff, retlong, pref, suff, diu_version);
+        // printf("%s", statInfo);
       } 
     } 
     else 
@@ -707,19 +707,20 @@ unsigned long ddlResetSiu(volatile void *buff, int print, int cycle,
 }
 
 unsigned long ddlLinkUp(volatile void *buff, int master, int print, int stop,
-			long long int time){
+			long long int time, int diu_version, int pci_loop_per_usec) {
   unsigned long retlong;
   DEBUG_PRINTF(PDADEBUG_ENTER, "");
-  if (diu_version == OLD)
-    retlong = ddlLinkUp_OLD(buff, master, print, stop, time);
-  else
-    retlong = ddlLinkUp_NEW(buff, master, print, stop, time);
+  if (diu_version == OLD) {
+    retlong = ddlLinkUp_OLD(buff, master, print, stop, time, diu_version, pci_loop_per_usec);
+  } else {
+    retlong = ddlLinkUp_NEW(buff, master, print, stop, time, diu_version, pci_loop_per_usec);
+  }
 
   return (retlong);
 }
 
 unsigned long ddlLinkUp_OLD(volatile void *buff, int master, int print,
-			    int stop, long long int time)
+			    int stop, long long int time, int diu_version, int pci_loop_per_usec)
 
 /* ddlLinkUp tries to reset and initialize (if master) the DDL link.
  * Parameter:  master   if !=0 then tries to initialize the link,
@@ -750,7 +751,7 @@ unsigned long ddlLinkUp_OLD(volatile void *buff, int master, int print,
   transid = 0xf;
   do{
     transid = incr15(transid);
-    retlong = ddlReadDiu(buff, transid, time);
+    retlong = ddlReadDiu(buff, transid, time, pci_loop_per_usec);
     if (retlong == -1){
       if (last_stw != retlong){
         if (print){
@@ -807,9 +808,9 @@ unsigned long ddlLinkUp_OLD(volatile void *buff, int master, int print,
         if (print){
 	  // printf(" DIU error at pRORC /dev/prorc %d/%d. Status word: 0x%0lx",
 	  //                  prorc->minor, prorc->ddl_channel, retlong);
-          statInfo[0] = '\0';
-          ddlInterpretIFSTW(buff, retlong, pref, suff);
-          printf("%s", statInfo);
+          // statInfo[0] = '\0';
+          ddlInterpretIFSTW(buff, retlong, pref, suff, diu_version);
+          // printf("%s", statInfo);
           if (print > 0){
             print--;
             if (print == 0){
@@ -1033,7 +1034,7 @@ unsigned long ddlLinkUp_OLD(volatile void *buff, int master, int print,
 }
 
 unsigned long ddlLinkUp_NEW(volatile void *buff, int master, int print,
-			    int stop, long long int time)
+			    int stop, long long int time, int diu_version, int pci_loop_per_usec)
 
 /* ddlLinkUp tries to reset and initialize (if master) the DDL link.
  * Parameter:  master   if !=0 then tries to initialize the link,
@@ -1085,7 +1086,7 @@ DEBUG_PRINTF(PDADEBUG_ENTER, "");
   transid = 0xf;
   do{
     transid = incr15(transid);
-    retlong = ddlReadDiu(buff, transid, time);
+    retlong = ddlReadDiu(buff, transid, time, pci_loop_per_usec);
     if (retlong == -1){
       if (last_stw != retlong){
         if (print){
@@ -1113,9 +1114,9 @@ DEBUG_PRINTF(PDADEBUG_ENTER, "");
       if (print){
 	//  printf(" DIU error at pRORC /dev/prorc %d/%d. Status word: 0x%0lx ",
 	//                  prorc->minor, prorc->ddl_channel, retlong);
-        statInfo[0] = '\0';
-        ddlInterpretIFSTW(buff, retlong, pref, suff);
-        printf("%s", statInfo);
+        // statInfo[0] = '\0';
+        ddlInterpretIFSTW(buff, retlong, pref, suff, diu_version);
+        // printf("%s", statInfo);
 	PRINTEND
 	continue;
       }
@@ -1160,7 +1161,7 @@ DEBUG_PRINTF(PDADEBUG_ENTER, "");
     return (retlong);   
 }
 
-int ddlSetSiuLoopBack(volatile void *buff, long long int timeout, stword_t *stw){
+int ddlSetSiuLoopBack(volatile void *buff, long long int timeout, int pci_loop_per_usec, stword_t *stw){
   int ret;
   long long int longret;
   unsigned long retlong;
@@ -1196,7 +1197,7 @@ int ddlSetSiuLoopBack(volatile void *buff, long long int timeout, stword_t *stw)
     return RORC_STATUS_ERROR;
 
   /* SIU loopback command accepted => check SIU loopback status */
-  retlong = ddlReadSiu(buff, 0, timeout);
+  retlong = ddlReadSiu(buff, 0, timeout, pci_loop_per_usec);
   if (retlong == -1)
     return RORC_STATUS_ERROR;
 

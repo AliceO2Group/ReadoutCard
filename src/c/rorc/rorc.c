@@ -1,6 +1,6 @@
 #include "rorc.h"
 
-void rorcReset (volatile void *buff, int option){
+void rorcReset (volatile void *buff, int option, int pci_loop_per_usec){
   DEBUG_PRINTF(PDADEBUG_ENTER, "");
   int prorc_cmd;
   long long int longret, timeout;
@@ -64,7 +64,7 @@ int rorcEmptyDataFifos(volatile void *buff, int empty_time)
     return (RORC_STATUS_OK);
 }
 
-int rorcArmDDL(volatile void *buff, int option){
+int rorcArmDDL(volatile void *buff, int option, int diu_version, int pci_loop_per_usec){
   DEBUG_PRINTF(PDADEBUG_ENTER, "");
   int ret;
   unsigned long retlong;
@@ -80,7 +80,7 @@ int rorcArmDDL(volatile void *buff, int option){
       return RORC_CMD_NOT_ALLOWED;
     }
     if (option & RORC_RESET_SIU){
-      ret = ddlResetSiu(buff, 0, 3, TimeOut);
+      ret = ddlResetSiu(buff, 0, 3, TimeOut, diu_version, pci_loop_per_usec);
       if (ret == -1){
         printf(" Unsuccessful SIU reset\n");
         return RORC_NOT_ACCEPTED;
@@ -88,16 +88,16 @@ int rorcArmDDL(volatile void *buff, int option){
     }
     if (option & RORC_LINK_UP){
       if (diu_version <= NEW){
-        retlong = ddlLinkUp(buff, 1, print, stop, TimeOut);
+        retlong = ddlLinkUp(buff, 1, print, stop, TimeOut, diu_version, pci_loop_per_usec);
         if (retlong == -1){
           printf(" Can not read DIU status");
           return RORC_LINK_NOT_ON;
         }
       }
       else{
-        rorcReset(buff, RORC_RESET_RORC);
-        rorcReset(buff, RORC_RESET_DIU);
-        rorcReset(buff, RORC_RESET_SIU);
+        rorcReset(buff, RORC_RESET_RORC, pci_loop_per_usec);
+        rorcReset(buff, RORC_RESET_DIU, pci_loop_per_usec);
+        rorcReset(buff, RORC_RESET_SIU, pci_loop_per_usec);
         usleep(100000); 
 
         if (rorcCheckLink(buff))
@@ -105,9 +105,9 @@ int rorcArmDDL(volatile void *buff, int option){
         if (rorcEmptyDataFifos(buff, 100000))
           return (RORC_TIMEOUT);
 
-        rorcReset(buff, RORC_RESET_SIU);
-        rorcReset(buff, RORC_RESET_DIU);
-        rorcReset(buff, RORC_RESET_RORC); 
+        rorcReset(buff, RORC_RESET_SIU, pci_loop_per_usec);
+        rorcReset(buff, RORC_RESET_DIU, pci_loop_per_usec);
+        rorcReset(buff, RORC_RESET_RORC, pci_loop_per_usec);
         usleep(100000);
 
         if (rorcCheckLink(buff))
@@ -115,16 +115,16 @@ int rorcArmDDL(volatile void *buff, int option){
       }
     }
     if (option & RORC_RESET_DIU)
-       rorcReset(buff, RORC_RESET_DIU);
+       rorcReset(buff, RORC_RESET_DIU, pci_loop_per_usec);
   }
   else{
     printf(" No DIU plugged into the RORC\n");
     return (RORC_LINK_NOT_ON);
   }
   if (option & RORC_RESET_FF)
-    rorcReset(buff, RORC_RESET_FF);
+    rorcReset(buff, RORC_RESET_FF, pci_loop_per_usec);
   if (option & RORC_RESET_RORC)
-    rorcReset(buff, RORC_RESET_RORC);
+    rorcReset(buff, RORC_RESET_RORC, pci_loop_per_usec);
   
   return RORC_STATUS_OK;
 }
@@ -171,7 +171,7 @@ void rorcInterpretVersion(__u32 x){
 }
 
 int rorcStartDataReceiver(volatile void *buff,
-                          unsigned long   readyFifoBaseAddress){
+                          unsigned long   readyFifoBaseAddress, int rorc_revision){
   int fw_major, fw_minor;
   unsigned long fw;
   DEBUG_PRINTF(PDADEBUG_ENTER, "");
@@ -378,7 +378,7 @@ void rorcBuildHwSerial(__u8 data[], unsigned int rorcRevisionNumber, int version
 }
 
 
-const char* rorcSerial(uint32_t* buff){
+const char* rorcSerial(uint32_t* buff, int rorc_revision){
   int i, ret ;
   unsigned txtlen;
   unsigned status, flashAddress;
