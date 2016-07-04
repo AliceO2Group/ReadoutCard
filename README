@@ -8,8 +8,21 @@ RORC module
 
 ## Dependencies
 The RORC module depends on the PDA (Portable Driver Architecture) library. 
-For installation instructions, see [insert link to Tuan's documentation here].
 If PDA is not detected on the system, only a dummy implementation of the interface will be compiled.
+
+#### PDA installation procedure
+1. Install libpci dependency
+  # yum install pciutils-devel
+
+2. Download & extract PDA 11.0.7
+  $ wget https://compeng.uni-frankfurt.de/fileadmin/Images/pda/pda-11.0.7.tar.gz
+  $ tar zxvf pda-11.0.7.tar.gz
+  $ cd pda-11.0.7
+
+3. Compile
+  $ ./configure --debug=true --numa=true --modprobe=true
+  $ make
+  # make install
 
 
 ## System configuration
@@ -18,8 +31,7 @@ Without hugepages, scatter-gather lists may be highly fragmented.
 In addition, with larger RORC page sizes (> 4 KB), the driver may have difficulty finding enough contiguous memory to use for RORC pages.
 For more information about hugepages: https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt
 
-Configuration steps:
-
+### Hugepages configuration steps:
 1. Install hugetlbfs (will already be installed on most systems)
   # yum install libhugetlbfs
 
