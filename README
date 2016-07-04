@@ -6,6 +6,35 @@ RORC module
  - Pascal Boeschoten (C++ interface)
 
 
+## Description
+The RORC module is the software that directly interfaces with the RORC (ReadOut and Receiver Card) PCIe cards.
+RORCs can have multiple DMA channels, and each channel is treated separately by the program.
+  (Note: the old CRORC card has 6 channels, the upcoming CRU 1.)
+
+Clients can acquire a master lock on a channel by instantiating a ChannelMasterInterface implementation through the ChannelMasterFactory class.
+It's also possible to instantiate a dummy object. 
+The ChannelMaster class provides PDA-based functionality common to the CRORC and CRU, and it is mostly an aggregation of wrapper classes.
+The CrorcChannelMaster and CruChannelMaster provide the device-specific functionality and use the RORC C API layer.
+
+The ChannelMaster will acquire a file lock to prevent simultaneous interprocess access to a channel.
+Currently, there are no protections against multi-threaded access, but this is planned for a future release.
+Some of the state is kept in shared memory files so that the state is persistent and that the lock can be handed over to other processes.
+Pages are also stored in shared memory. Functionality for clients to supply their own buffer is planned for a future release.
+
+The shared files are located in the directories:
+ - /dev/shm/alice_o2/rorc_[serial number]/channel_[channel number]/
+ - /mnt/hugetlbfs/alice_o2/rorc_[serial number]/channel_[channel number]/
+If things crash and the state can not be recovered, these files should be deleted.
+They should also be deleted with new releases of the RORC module, since their internal memory arrangement might change.
+
+Once a ChannelMaster has acquired the lock, clients can:
+ - Read and write registers
+ - Start and stop DMA
+ - Pushing and reading pages
+
+For an example of the usage, see the program in RORC/src/Example.cxx
+
+
 ## Dependencies
 The RORC module depends on the PDA (Portable Driver Architecture) library. 
 If PDA is not detected on the system, only a dummy implementation of the interface will be compiled.
