@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 namespace AliceO2 {
 namespace Rorc {
 
@@ -24,11 +26,6 @@ class Page
     inline volatile uint32_t* getAddressU32() const
     {
       return reinterpret_cast<volatile uint32_t*>(address);
-    }
-
-    inline volatile uint32_t& operator[](size_t index) const
-    {
-      return *reinterpret_cast<volatile uint32_t*>(address);
     }
 
   private:

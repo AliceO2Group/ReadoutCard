@@ -19,24 +19,27 @@ set(RORC_LIB_SOURCES
 #  CardFactory.cxx
   ChannelParameters.cxx
   ChannelPaths.cxx
+  DummyChannelMaster.cxx
   MemoryMappedFile.cxx
   ReadyFifoWrapper.cxx
-  c/interface/header_common.c
-  c/interface/header_crorc.c
-  c/interface/header_cru.c
-  c/interface/interface.c
-  c/rorc/aux.c
-  c/rorc/ddl.c
-  c/rorc/rorc.c
+  RorcDeviceFinder.cxx
 )
 
 if(PDA_FOUND)
-  list(APPEND RORC_LIB_SOURCES 
+  list(APPEND RORC_LIB_SOURCES
+    c/interface/header_common.c
+    c/interface/header_crorc.c
+    c/interface/header_cru.c
+    c/interface/interface.c
+    c/rorc/aux.c
+    c/rorc/ddl.c
+    c/rorc/rorc.c
     #CardPdaBase.cxx
     #CardPdaCrorc.cxx
     ChannelMaster.cxx
     ChannelMasterFactory.cxx
     CrorcChannelMaster.cxx
+    #CruChannelMaster.cxx
     PdaBar.cxx
     PdaDevice.cxx
     PdaDmaBuffer.cxx

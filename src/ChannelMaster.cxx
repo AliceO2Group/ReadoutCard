@@ -34,7 +34,8 @@ ChannelMaster::ChannelMaster(int serial, int channel, const ChannelParameters& p
        sharedDataSize(),
        sharedDataName(),
        FileSharedObject::find_or_construct),
-   pdaDevice(serialNumber),
+   deviceFinder(serialNumber),
+   pdaDevice(deviceFinder.getPciVendorId(), deviceFinder.getPciDeviceId()),
    pdaBar(pdaDevice.getPciDevice(), channel),
    mappedFilePages(
        ChannelPaths::pages(serial, channel).c_str(),
@@ -56,7 +57,7 @@ ChannelMaster::ChannelMaster(int serial, int channel, const ChannelParameters& p
      cout << "Warning: unknown shared channel state. Proceeding with initialization" << endl;
    }
    cout << "Initializing shared channel state" << endl;
-   sd->reset(params);
+   sd->initialize(params);
   }
 }
 
@@ -69,7 +70,7 @@ ChannelMaster::SharedData::SharedData()
 {
 }
 
-void ChannelMaster::SharedData::reset(const ChannelParameters& params)
+void ChannelMaster::SharedData::initialize(const ChannelParameters& params)
 {
   this->params = params;
   initializationState = InitializationState::INITIALIZED;
@@ -91,30 +92,30 @@ ChannelMaster::InitializationState::type ChannelMaster::SharedData::getState()
   return initializationState;
 }
 
+// Checks DMA state and forwards call to subclass if necessary
 void ChannelMaster::startDma()
 {
   if (sharedData.get()->dmaState == DmaState::UNKNOWN) {
     cout << "Warning: Unknown DMA state" << endl;
   } else if (sharedData.get()->dmaState == DmaState::STARTED) {
     cout << "Warning: DMA already started. Ignoring startDma() call" << endl;
-    return;
+  } else {
+    deviceStartDma();
   }
-
-  deviceStartDma();
 
   sharedData.get()->dmaState = DmaState::STARTED;
 }
 
+// Checks DMA state and forwards call to subclass if necessary
 void ChannelMaster::stopDma()
 {
   if (sharedData.get()->dmaState == DmaState::UNKNOWN) {
     cout << "Warning: Unknown DMA state" << endl;
   } else if (sharedData.get()->dmaState == DmaState::STOPPED) {
     cout << "Warning: DMA already stopped. Ignoring stopDma() call" << endl;
-    return;
+  } else {
+    deviceStopDma();
   }
-
-  deviceStopDma();
 
   sharedData.get()->dmaState = DmaState::STOPPED;
 }

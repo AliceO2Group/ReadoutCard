@@ -19,8 +19,8 @@ class ReadyFifo
     class Entry
     {
       public:
-        int32_t length;
-        int32_t status;
+        volatile int32_t length;
+        volatile int32_t status;
 
         inline void reset()
         {

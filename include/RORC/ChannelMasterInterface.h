@@ -71,22 +71,6 @@ class ChannelMasterInterface
     /// Mark a page as read, so it can be written to again
     /// \handle The handle of the page returned from pushNextPage()
     virtual void markPageAsRead(const PageHandle& handle) = 0;
-
-    /// Get the number of pages allocated
-    /// \return The number of pages allocated
-    //virtual int getNumberOfPages() = 0;
-
-    /// Get the number of DMA channels available on the card
-    /// \return The number of DMA channels available on the card
-    //virtual int getNumberOfChannels() = 0;
-
-    /// Get a pointer to the memory mapped userspace memory
-    /// \return A pointer to the memory mapped userspace memory
-    //virtual volatile void* getMappedMemory(int channel) = 0;
-
-    /// Returns a vector of pointers to the start of each page in userspace
-    /// \return Vector of pointers to the start of each page in userspace
-    //virtual std::vector<Page> getMappedPages(int channel) = 0;
 };
 
 } // namespace Rorc

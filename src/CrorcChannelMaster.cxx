@@ -1,3 +1,8 @@
+///
+/// \file CrorcChannelMaster.cxx
+/// \author Pascal Boeschoten
+///
+
 #include "CrorcChannelMaster.h"
 #include <iostream>
 #include "c/interface/header.h"
@@ -15,6 +20,8 @@ namespace Rorc {
 
 static constexpr int CRORC_BUFFERS_PER_CHANNEL = 2;
 static constexpr int BUFFER_INDEX_FIFO = 1;
+
+static const char* CRORC_SHARED_DATA_NAME = "CrorcChannelMasterSharedData";
 
 CrorcChannelMaster::CrorcChannelMaster(int serial, int channel, const ChannelParameters& params)
 : ChannelMaster(serial, channel, params, CRORC_BUFFERS_PER_CHANNEL),
@@ -42,7 +49,7 @@ CrorcChannelMaster::CrorcChannelMaster(int serial, int channel, const ChannelPar
      cout << "Warning: unknown CRORC shared channel state. Proceeding with initialization" << endl;
    }
    cout << "Initializing CRORC shared channel state" << endl;
-   csd->reset();
+   csd->initialize();
 
    cout << "Clearing readyFifo" << endl;
    mappedFileFifo.get()->reset();
@@ -79,7 +86,7 @@ CrorcChannelMaster::CrorcSharedData::CrorcSharedData()
         0), pciLoopPerUsec(0), pageIndex(0)
 {
 }
-void CrorcChannelMaster::CrorcSharedData::reset()
+void CrorcChannelMaster::CrorcSharedData::initialize()
 {
   fifoIndexWrite = 0;
   fifoIndexRead = 0;

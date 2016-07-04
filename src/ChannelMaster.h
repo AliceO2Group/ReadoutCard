@@ -11,6 +11,7 @@
 #include "PdaBar.h"
 #include "PdaDmaBuffer.h"
 #include "RORC/ChannelMasterInterface.h"
+#include "RorcDeviceFinder.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -43,11 +44,14 @@ class ChannelMaster: public ChannelMasterInterface
     /// Template method called by stopDma() to do device-specific (CRORC, RCU...) actions
     virtual void deviceStopDma() = 0;
 
+    /// The size of the shared state data file. It should be over-provisioned, since subclasses may also allocate their
+    /// own shared data in this file.
     inline static size_t sharedDataSize()
     {
       return 4l * 1024l; // 4k ought to be enough for anybody
     }
 
+    /// Name for the shared data object in the shared state file
     inline static const char* sharedDataName()
     {
       return "ChannelMasterSharedData";
@@ -88,7 +92,9 @@ class ChannelMaster: public ChannelMasterInterface
     {
       public:
         SharedData();
-        void reset(const ChannelParameters& params);
+
+        ///
+        void initialize(const ChannelParameters& params);
         const ChannelParameters& getParams();
         InitializationState::type getState();
 
@@ -105,7 +111,7 @@ class ChannelMaster: public ChannelMasterInterface
         // TODO mutex to prevent simultaneous intraprocess access?
     };
 
-    // A simple struct that holds the userspace and bus address of a page
+    /// A simple struct that holds the userspace and bus address of a page
     struct PageAddress
     {
         void* user;
@@ -126,6 +132,9 @@ class ChannelMaster: public ChannelMasterInterface
 
     /// Memory mapped data stored in the shared state file
     FileSharedObject::LockedFileSharedObject<SharedData> sharedData;
+
+    /// RORC device finder, gets the vendor & device ID of the card
+    RorcDeviceFinder deviceFinder;
 
     /// PDA device objects
     PdaDevice pdaDevice;

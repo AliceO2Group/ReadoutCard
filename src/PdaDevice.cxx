@@ -17,58 +17,37 @@ namespace Rorc {
 namespace b = boost;
 namespace bfs = boost::filesystem;
 
-static const std::string CRORC_DEVICE_ID = "0033";
-static const std::string CRU_DEVICE_ID = "????";
-static const std::string CERN_VENDOR_ID = "10dc";
-
-std::map<std::string, PdaDevice::CardType::type> typeMapping = {
-    {CRORC_DEVICE_ID, PdaDevice::CardType::CRORC},
-    {CRU_DEVICE_ID, PdaDevice::CardType::CRU}
-};
-
-std::string PdaDevice::fileToString(const bfs::path& path)
-{
-  bfs::ifstream fs(path);
-  std::stringstream buffer;
-  buffer << fs.rdbuf();
-  return buffer.str();
-}
-
-PdaDevice::PdaDevice(int serialNumber) : deviceOperator(nullptr), pciDevice(nullptr)
+PdaDevice::PdaDevice(std::string vendorId, std::string deviceId) : deviceOperator(nullptr), pciDevice(nullptr)
 {
   if (PDAInit() != PDA_SUCCESS) {
     ALICEO2_RORC_THROW_EXCEPTION("Failed to initialize PDA");
   }
 
-  const bfs::path dirPath("/sys/bus/pci/devices/");
-  const bfs::path vendorFile("vendor");
-  const bfs::path deviceFile("device");
-
-  if (!bfs::exists(dirPath)) {
-    ALICEO2_RORC_THROW_EXCEPTION("Failed to open directory");
+  if (deviceOperator != nullptr) {
+    ALICEO2_RORC_THROW_EXCEPTION("DeviceOperator was already initialized");
   }
 
-  for (auto& entry : boost::make_iterator_range(bfs::directory_iterator(dirPath), bfs::directory_iterator())) {
-    const bfs::path dir = entry.path();
+  const std::string id = vendorId + " " + deviceId + '\0'; // The terminating \0 is important, PDA is not C++
+  const char* ids[2] = { id.data(), nullptr };
 
-    // Get vendor & device ID, trimming off the leading '0x'
-    const std::string vendorId = fileToString(dir/"vendor").substr(2, 4);
-    const std::string deviceId = fileToString(dir/"device").substr(2, 4);
-
-    if (vendorId != CERN_VENDOR_ID) {
-      // Not a CERN card
-      continue;
-    }
-
-    if (typeMapping.count(deviceId) != 0) {
-      cardType = typeMapping[deviceId];
-      pciDeviceId = deviceId;
-      pciVendorId = vendorId;
-      newDeviceOperator(vendorId, deviceId);
-      getPciDevice(serialNumber);
-      return;
-    }
+  DeviceOperator* dop = DeviceOperator_new(ids, PDA_ENUMERATE_DEVICES);
+  if(dop == NULL){
+    ALICEO2_RORC_THROW_EXCEPTION("Failed to get device operator");
   }
+
+  deviceOperator = dop;
+
+  if (pciDevice != nullptr) {
+    ALICEO2_RORC_THROW_EXCEPTION("PciDevice was already initialized");
+  }
+
+  // Getting the card.
+  PciDevice* pd;
+  if (DeviceOperator_getPciDevice(deviceOperator, &pd, 0) != PDA_SUCCESS) {
+    ALICEO2_RORC_THROW_EXCEPTION("Failed to get PciDevice");
+  }
+
+  pciDevice = pd;
 }
 
 PdaDevice::~PdaDevice()
@@ -90,37 +69,6 @@ PciDevice* PdaDevice::getPciDevice()
   return pciDevice;
 }
 
-void PdaDevice::newDeviceOperator(const std::string& vendorId, const std::string& deviceId)
-{
-  if (deviceOperator != nullptr) {
-    ALICEO2_RORC_THROW_EXCEPTION("DeviceOperator was already initialized");
-  }
-
-  const std::string id = vendorId + " " + deviceId + '\0'; // The terminating \0 is important, PDA is not C++
-  const char* ids[2] = { id.data(), nullptr };
-
-  DeviceOperator* dop = DeviceOperator_new(ids, PDA_ENUMERATE_DEVICES);
-  if(dop == NULL){
-    ALICEO2_RORC_THROW_EXCEPTION("Failed to get device operator");
-  }
-
-  deviceOperator = dop;
-}
-
-void PdaDevice::getPciDevice(int serialNumber)
-{
-  if (pciDevice != nullptr) {
-    ALICEO2_RORC_THROW_EXCEPTION("PciDevice was already initialized");
-  }
-
-  // Getting the card.
-  PciDevice* pd;
-  if(DeviceOperator_getPciDevice(deviceOperator, &pd, serialNumber) != PDA_SUCCESS){
-    ALICEO2_RORC_THROW_EXCEPTION("Failed to get PciDevice");
-  }
-
-  pciDevice = pd;
-}
 
 } // namespace Rorc
 } // namespace AliceO2

@@ -1,23 +1,23 @@
 ///
-/// \file CrorcChannelMaster.h
+/// \file CruChannelMaster.h
 /// \author Pascal Boeschoten
 ///
 
 #pragma once
 
 #include "ChannelMaster.h"
+#include <array>
 
 namespace AliceO2 {
 namespace Rorc {
 
 /// Extends ChannelMaster object, and provides device-specific functionality
-/// TODO Factor CRORC-specific things out of ChannelMaster and into this
-class CrorcChannelMaster : public ChannelMaster
+class CruChannelMaster : public ChannelMaster
 {
   public:
 
-    CrorcChannelMaster(int serial, int channel, const ChannelParameters& params);
-    ~CrorcChannelMaster();
+    CruChannelMaster(int serial, int channel, const ChannelParameters& params);
+    ~CruChannelMaster();
     virtual void resetCard(ResetLevel::type resetLevel);
     virtual PageHandle pushNextPage();
     virtual bool isPageArrived(const PageHandle& handle);
@@ -27,13 +27,35 @@ class CrorcChannelMaster : public ChannelMaster
     virtual void deviceStartDma();
     virtual void deviceStopDma();
 
-    /// Name for the CRORC shared data object in the shared state file
+    /// Name for the CRU shared data object in the shared state file
     inline static const char* crorcSharedDataName()
     {
-      return "CrorcChannelMasterSharedData";
+      return "CruChannelMasterSharedData";
     }
 
   private:
+
+    struct CruFifoTable {
+      static constexpr size_t CRU_DESCRIPTOR_ENTRIES = 128l;
+
+      struct StatusEntry {
+          volatile uint32_t status;
+      };
+
+      struct DescriptorEntry {
+        uint32_t srcLow;
+        uint32_t srcHigh;
+        uint32_t dstLow;
+        uint32_t dstHigh;
+        uint32_t ctrl;
+        uint32_t reserved1;
+        uint32_t reserved2;
+        uint32_t reserved3;
+      };
+
+      std::array<StatusEntry, CRU_DESCRIPTOR_ENTRIES> statusEntries;
+      std::array<DescriptorEntry, CRU_DESCRIPTOR_ENTRIES> descriptorEntries;
+    };
 
     /// Persistent device state/data that resides in shared memory
     class CrorcSharedData
@@ -49,21 +71,6 @@ class CrorcChannelMaster : public ChannelMaster
         InitializationState::type initializationState;
     };
 
-    /// Arm DDL function
-    void armDdl(int resetMask);
-
-    /// Enables data receiving in the RORC
-    void startDataReceiving();
-
-    /// Initializes and starts the data generator with the given parameters
-    void startDataGenerator(const GeneratorParameters& gen);
-
-    /// Pushes the initial 128 pages to the CRORC's Free FIFO
-    void initializeFreeFifo(int pagesToPush);
-
-    /// Pusha a page to the CRORC's Free FIFO
-    void pushFreeFifoPage(int readyFifoIndex, void* pageBusAddress);
-
     /// Memory mapped data stored in the shared state file
     FileSharedObject::FileSharedObject<CrorcSharedData> crorcSharedData;
 
@@ -71,7 +78,7 @@ class CrorcChannelMaster : public ChannelMaster
     DataArrivalStatus::type dataArrived(int index);
 
     /// Memory mapped file containing the readyFifo
-    TypedMemoryMappedFile<ReadyFifo> mappedFileFifo;
+    TypedMemoryMappedFile<CruFifoTable> mappedFileFifo;
 
     /// PDA DMABuffer object for the readyFifo
     PdaDmaBuffer bufferFifo;
