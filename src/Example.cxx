@@ -6,11 +6,13 @@
 ///
 
 #include <iostream>
+#include <sstream>
 #include <iomanip>
 #include <stdexcept>
 #include <chrono>
 #include <thread>
 #include <boost/range/irange.hpp>
+#include <boost/exception/diagnostic_information.hpp>
 #include <RORC/RORC.h>
 
 using std::cout;
@@ -36,13 +38,13 @@ const bool reinsertDriverModule = true;
 const bool stopDma = true;
 
 /// Prints the first 10 integers of a page
-void printPage(Rorc::Page& page, int index)
+void printPage(Rorc::Page& page, int index, std::ostream& ios)
 {
-    cout << std::setw(4) << index << " (0x" << std::hex << (uint64_t) page.getAddress() << std::dec << ") -> ";
+    ios << std::setw(4) << index << " (0x" << std::hex << (uint64_t) page.getAddress() << std::dec << ") -> ";
     for (int j = 0; j < 10; ++j) {
-      cout << std::setw(j == 0 ? 4 : 0) << page.getAddressU32()[j] << " ";
+      ios << std::setw(j == 0 ? 4 : 0) << page.getAddressU32()[j] << " ";
     }
-    cout << endl;
+    ios << '\n';
 }
 
 int main(int argc, char** argv)
@@ -52,66 +54,101 @@ int main(int argc, char** argv)
     system("modprobe uio_pci_dma");
   }
 
-  // Initialize the parameters for configuring the DMA channel
-  Rorc::ChannelParameters params;
-  params.dma.bufferSize = 2 * 1024 * 1024;
-  params.dma.pageSize = 4 * 1024;
-  params.dma.useSharedMemory = true;
-  params.generator.useDataGenerator = true;
-  params.generator.dataSize = 2 * 1024;
-  params.generator.pattern = Rorc::GeneratorPattern::INCREMENTAL;
-  params.generator.seed = 0;
-  params.initialResetLevel = Rorc::ResetLevel::RORC_ONLY;
+  try {
+    // Initialize the parameters for configuring the DMA channel
+    Rorc::ChannelParameters params;
+    params.dma.bufferSize = 4 * 1024 * 1024;
+    params.dma.pageSize = 4 * 1024;
+    params.dma.useSharedMemory = true;
+    params.generator.useDataGenerator = true;
+    params.generator.dataSize = 2 * 1024;
+    params.generator.pattern = Rorc::GeneratorPattern::INCREMENTAL;
+    params.generator.seed = 0;
+    params.initialResetLevel = Rorc::ResetLevel::RORC_ONLY;
 
-  // Get the channel master object
-  cout << "\n### Acquiring channel master object" << endl;
-  auto channel = Rorc::ChannelMasterFactory().getChannel(serialNumber, channelNumber, params);
+    // Get the channel master object
+    cout << "\n### Acquiring channel master object" << endl;
+    auto channel = Rorc::ChannelMasterFactory().getChannel(serialNumber, channelNumber, params);
 
-  // Start the DMA
-  cout << "\n### Starting DMA" << endl;
-  channel->startDma();
-
-  // Hopefully, this is enough to insure the freeFifo transfers have completed
-  // TODO A more robust wait, built into the framework
-  std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
-  // Keep track of time, so we don't wait forever for pages to arrive if things break
-  const auto start = std::chrono::high_resolution_clock::now();
-  const auto maxTime = std::chrono::milliseconds(1000);
-  auto timeExceeded = [&]() {
-    if ((std::chrono::high_resolution_clock::now() - start) > maxTime) {
-      cout << "!!! Max time of " << maxTime.count() << " ms exceeded" << endl;
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  cout << "### Pushing pages" << endl;
-
-  for (auto i : boost::irange(0, pagesToPush)) {
-    // Get page handle (contains FIFO index)
-    auto handle = channel->pushNextPage();
-
-    // Wait for page to arrive
-    while (!channel->isPageArrived(handle) && !timeExceeded()) { ; }
-
-    // Get page (contains userspace address)
-    auto page = channel->getPage(handle);
-
-    printPage(page, handle.index);
-
-    // Mark page as read so it can be written to again
-    channel->markPageAsRead(handle);
-  }
-
-  if (stopDma) {
-    cout << "\n### Stopping DMA" << endl;
+    // Start the DMA
+    cout << "\n### Starting DMA" << endl;
     channel->stopDma();
-  } else {
-    cout << "\n### NOT stopping DMA" << endl;
-  }
+    channel->startDma();
 
-  cout << "\n### Releasing channel master object" << endl;
+    // Hopefully, this is enough to insure the freeFifo transfers have completed
+    // TODO A more robust wait, built into the framework
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    // Keep track of time, so we don't wait forever for pages to arrive if things break
+    const auto start = std::chrono::high_resolution_clock::now();
+    const auto maxTime = std::chrono::milliseconds(10000);
+    auto timeExceeded = [&]() {
+      if ((std::chrono::high_resolution_clock::now() - start) > maxTime) {
+        cout << "!!! Max time of " << maxTime.count() << " ms exceeded" << endl;
+        throw std::runtime_error("Max time exceeded");
+        return true;
+      } else {
+        return false;
+      }
+    };
+
+    cout << "### Pushing pages" << endl;
+
+    // The CRORC data generator puts an incremental number on the first 32 bits of the page.
+    // It starts with 128, because that's how many pages are pushed during initialization.
+    // They are a sort of "event number".
+    // We keep track of them so we can later check if they are as expected.
+    std::vector<uint32_t> eventNumbers;
+    eventNumbers.reserve(pagesToPush);
+    Rorc::Page page;
+    std::stringstream ss;
+
+    for (auto i : boost::irange(0, pagesToPush)) {
+      // Get page handle (contains FIFO index)
+      auto handle = channel->pushNextPage();
+
+      // Wait for page to arrive
+      while (!channel->isPageArrived(handle) && !timeExceeded()) { ; }
+
+      // XXX Currently, it appears that with the CRORC, the isPageArrived() function does not work properly and
+      // returns 'true' too early.
+      // It is suspected to be a firmware bug, where the page status in the Ready FIFO is marked as fully transferred
+      // while the actual DMA transfer has not yet been completed.
+      // The investigation is ongoing, but for the time being we can work around the issue with a manual delay.
+      std::this_thread::sleep_for(std::chrono::microseconds(1));
+
+      // Get page (contains userspace address)
+      page = channel->getPage(handle);
+      uint32_t eventNumber = page.getAddressU32()[0];
+      eventNumbers.push_back(eventNumber);
+
+      printPage(page, handle.index, ss);
+
+      // Mark page as read so it can be written to again
+      channel->markPageAsRead(handle);
+    }
+
+    if (stopDma) {
+      cout << "\n### Stopping DMA" << endl;
+      channel->stopDma();
+    } else {
+      cout << "\n### NOT stopping DMA" << endl;
+    }
+
+    cout << ss.rdbuf() << endl;
+
+    // Check if 'event numbers' are correct
+    for (size_t i = 0; i < (eventNumbers.size() - 1); ++i) {
+      if (eventNumbers[i] != (eventNumbers[i + 1] - 1)) {
+        cout << "WARNING: Page " << std::setw(4) << i << " number not consecutive with next page ("
+            << std::setw(4) << eventNumbers[i] << " & "
+            << std::setw(4) << eventNumbers[i + 1] << ")\n";
+      }
+    }
+
+    cout << "\n### Releasing channel master object" << endl;
+  } catch ( std::exception& e ) {
+    cout << boost::diagnostic_information(e) << endl;
+  }
   return 0;
 }

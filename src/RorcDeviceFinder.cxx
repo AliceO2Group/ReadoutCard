@@ -48,7 +48,9 @@ RorcDeviceFinder::RorcDeviceFinder(int serialNumber)
   const bfs::path dirPath("/sys/bus/pci/devices/");
 
   if (!bfs::exists(dirPath)) {
-    ALICEO2_RORC_THROW_EXCEPTION("Failed to open directory");
+    BOOST_THROW_EXCEPTION(AliceO2RorcException()
+            << errinfo_aliceO2_rorc_generic_message("Failed to open directory")
+            << errinfo_aliceO2_rorc_directory(dirPath.string()));
   }
 
   for (auto& entry : boost::make_iterator_range(bfs::directory_iterator(dirPath), bfs::directory_iterator())) {
@@ -71,7 +73,10 @@ RorcDeviceFinder::RorcDeviceFinder(int serialNumber)
     }
   }
 
-  ALICEO2_RORC_THROW_EXCEPTION("Failed to find RORC");
+  BOOST_THROW_EXCEPTION(AliceO2RorcException()
+          << errinfo_aliceO2_rorc_generic_message("Failed to find RORC")
+          << errinfo_aliceO2_rorc_possible_causes("Incorrect serial number")
+          << errinfo_aliceO2_rorc_serial_number(serialNumber));
 }
 
 RorcDeviceFinder::~RorcDeviceFinder()

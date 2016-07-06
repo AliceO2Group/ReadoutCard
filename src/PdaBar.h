@@ -42,12 +42,6 @@ class PdaBar
     /// Get reference to register
     inline volatile uint32_t& operator[](size_t i)
     {
-#ifndef NDEBUG
-      if (i >= barLength) {
-        ALICEO2_RORC_THROW_EXCEPTION("BAR index out of bounds");
-      }
-#endif
-
       return getUserspaceAddressU32()[i];
     }
 

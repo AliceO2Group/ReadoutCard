@@ -150,8 +150,9 @@ class LockedFileSharedObject
             : lock(fileLockPath.c_str())
         {
           if (!lock.try_lock()) {
-            ALICEO2_RORC_THROW_EXCEPTION(
-                b::str(b::format("Failed to acquire file lock for '%s'") % fileLockPath.c_str()));
+            BOOST_THROW_EXCEPTION(FileLockException()
+                    << errinfo_aliceO2_rorc_generic_message("Failed to acquire file lock")
+                    << errinfo_aliceO2_rorc_filename(fileLockPath.string()));
           }
         }
 

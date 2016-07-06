@@ -7,8 +7,10 @@
 
 #include "CruChannelMaster.h"
 #include <iostream>
+#include <cassert>
 #include "c/rorc/rorc.h"
 #include "ChannelPaths.h"
+#include "RorcException.h"
 
 namespace b = boost;
 namespace bip = boost::interprocess;
@@ -18,6 +20,54 @@ using std::endl;
 
 namespace AliceO2 {
 namespace Rorc {
+
+/// Creates a CruException and attaches data using the given message string
+#define CRU_EXCEPTION(_err_message) \
+  CruException() \
+      << errinfo_aliceO2_rorc_generic_message(_err_message)
+
+/// Throws a CruException with the given message string
+#define THROW_CRU_EXCEPTION(_err_message) \
+  BOOST_THROW_EXCEPTION(CruException() \
+      << errinfo_aliceO2_rorc_generic_message(_err_message))
+
+
+namespace CruBarOffset
+{
+/// Status table base address (low 32 bits)
+static constexpr size_t STATUS_BASE_LOW = 0;
+
+/// Status table base address (high 32 bits)
+static constexpr size_t STATUS_BASE_HIGH = 1;
+
+/// Destination FIFO memory address in card (low 32 bits)
+static constexpr size_t FIFO_CARD_ADDRESS_LOW = 2;
+
+/// Destination FIFO memory address in card (high 32 bits)
+/// XXX Appears to be unused, always set to 0 in code examples?
+static constexpr size_t FIFO_CARD_ADDRESS_HIGH = 3;
+
+/// Number of available pages
+static constexpr size_t AVAILABLE_PAGES = 4;
+
+/// Size of the descriptor table
+/// Set to the same as (number of available pages - 1)
+/// Used only if descriptor table size is other than 128
+static constexpr size_t DESCRIPTOR_TABLE_SIZE = 5;
+
+/// Set status to send status for every page not only for the last one to write the entire status memory
+/// (No idea what that description means)
+static constexpr size_t SEND_STATUS = 6;
+
+/// Enable data emulator
+static constexpr size_t DATA_EMULATOR_ENABLE = 128;
+
+/// Signals that the host RAM is available for transfer
+static constexpr size_t PCIE_READY = 129;
+
+/// Set to 0xff to turn the LED on, 0x00 to turn off
+static constexpr size_t LED_ON = 152;
+}
 
 static constexpr int CRU_BUFFERS_PER_CHANNEL = 2;
 static constexpr int BUFFER_INDEX_FIFO = 1;
@@ -35,8 +85,12 @@ CruChannelMaster::CruChannelMaster(int serial, int channel, const ChannelParamet
       ChannelPaths::state(serial, channel),
       sharedDataSize(),
       crorcSharedDataName(),
-      FileSharedObject::find_or_construct)
+      FileSharedObject::find_or_construct),
+  pendingPages(0),
+  pageWasReadOut(params.fifo.entries, true)
 {
+  assert(params.dma.pageSize == (8 * 1024)); // Currently the only supported page size is 8 KiB
+
   // Initialize (if needed) the shared data
   const auto& csd = crorcSharedData.get();
 
@@ -55,18 +109,6 @@ CruChannelMaster::CruChannelMaster(int serial, int channel, const ChannelParamet
     for (size_t i = 0; i < fifo->statusEntries.size(); ++i) {
       fifo->statusEntries[i].status = 0;
     }
-
-    for (size_t i = 0; i < fifo->statusEntries.size(); ++i) {
-      auto& e = fifo->descriptorEntries[i];
-      e.ctrl = (i << 18) + (params.dma.pageSize / 4);
-      e.srcLow = i * params.dma.pageSize;
-      e.srcHigh = 0;
-      e.dstLow = 0; // TODO
-      e.dstHigh = 0; // TODO
-      e.reserved1 = 0;
-      e.reserved2 = 0;
-      e.reserved3 = 0;
-    }
   }
 
   // Initialize the page addresses
@@ -84,11 +126,8 @@ CruChannelMaster::CruChannelMaster(int serial, int channel, const ChannelParamet
   }
 
   if (pageAddresses.size() <= CRORC_NUMBER_OF_PAGES) {
-    ALICEO2_RORC_THROW_EXCEPTION("Insufficient amount of pages fit in DMA buffer");
+    THROW_CRU_EXCEPTION("Insufficient amount of pages fit in DMA buffer");
   }
-
-  // Reset page read status
-  pageWasReadOut.resize(params.fifo.entries, true);
 }
 
 CruChannelMaster::~CruChannelMaster()
@@ -114,36 +153,38 @@ void CruChannelMaster::deviceStartDma()
 {
   auto& params = getParams();
 
-  auto bar = pdaBar.getUserspaceAddressU32();
   void* fifoTableAddress = bufferFifo.getScatterGatherList()[0].addressBus;
 
   // Status base address, low and high part, respectively
-  bar[0] = (uint64_t)fifoTableAddress & 0xffffffff;
-  bar[1] = (uint64_t)fifoTableAddress >> 32;
+  pdaBar[0] = (uint64_t)fifoTableAddress & 0xffffffff;
+  pdaBar[1] = (uint64_t)fifoTableAddress >> 32;
 
   // Destination (card's memory) addresses, low and high part, respectively
-  bar[2] = 0x8000;
-  bar[3] = 0x0;
+  pdaBar[2] = 0x8000;
+  pdaBar[3] = 0x0;
 
   // Set descriptor table size, same as number of available pages-1
-  bar[5] = CRU_DESCRIPTOR_ENTRIES - 1;
+  pdaBar[5] = CRU_DESCRIPTOR_ENTRIES - 1;
 
   // Number of available pages-1
-  bar[4] = CRU_DESCRIPTOR_ENTRIES - 1;
+  pdaBar[4] = CRU_DESCRIPTOR_ENTRIES - 1;
 
   // Give PCIe ready signal
-  bar[129] = 0x1;
+  pdaBar[129] = 0x1;
 
   // Programming the user module to trigger the data emulator
-  bar[128] = 0x1;
+  pdaBar[128] = 0x1;
 
   // Set status to send status for every page not only for the last one
-  bar[6] = 0x1;
+  pdaBar[6] = 0x1;
 }
 
 void CruChannelMaster::deviceStopDma()
 {
-  // TODO
+  // TODO Not sure if this is the correct way
+
+  // Set status to send status for every page not only for the last one
+  pdaBar[6] = 0x0;
 }
 
 void CruChannelMaster::resetCard(ResetLevel::type resetLevel)
@@ -153,14 +194,65 @@ void CruChannelMaster::resetCard(ResetLevel::type resetLevel)
 
 ChannelMasterInterface::PageHandle CruChannelMaster::pushNextPage()
 {
-  // TODO
-  return ChannelMasterInterface::PageHandle();
+  auto ph = ChannelMasterInterface::PageHandle(pendingPages);
+
+  if (pendingPages < 128) {
+    // Wait until we have 128 pages
+    pendingPages++;
+    return ph;
+  } else {
+    // Actually push pages
+    auto pageSize = getParams().dma.pageSize;
+    auto fifo = mappedFileFifo.get();
+
+    for (size_t i = 0; i < fifo->statusEntries.size(); ++i) {
+      fifo->statusEntries[i].status = 0;
+    }
+
+    for (size_t i = 0; i < fifo->statusEntries.size(); ++i) {
+      auto& e = fifo->descriptorEntries[i];
+
+      // Adresses in the card's memory (DMA source)
+      e.srcLow = i * pageSize;
+      e.srcHigh = 0x0;
+
+      // Addresses in the RAM (DMA destination)
+      auto busAddress = (uint64_t) pageAddresses[0].bus;
+      e.dstLow = busAddress & 0xffffffff;
+      e.dstHigh = busAddress >> 32;
+
+      // Page size
+      e.ctrl = i << 18 + pageSize / 4;
+
+      // Fill the reserved bit with zero
+      e.reserved1 = 0x0;
+      e.reserved2 = 0x0;
+      e.reserved3 = 0x0;
+    }
+
+    pendingPages = 0;
+    return ph;
+  }
 }
 
 bool CruChannelMaster::isPageArrived(const PageHandle& handle)
 {
   return false;
 }
+
+Page CruChannelMaster::getPage(const PageHandle& handle)
+{
+  return Page(pageAddresses[handle.index].user);
+}
+
+void CruChannelMaster::markPageAsRead(const PageHandle& handle)
+{
+  if (pageWasReadOut[handle.index]) {
+    THROW_CRU_EXCEPTION("Page was already marked as read");
+  }
+  pageWasReadOut[handle.index] = true;
+}
+
 
 } // namespace Rorc
 } // namespace AliceO2

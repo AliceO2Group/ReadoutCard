@@ -19,6 +19,7 @@ set(RORC_LIB_SOURCES
   DummyChannelMaster.cxx
   MemoryMappedFile.cxx
   RorcDeviceFinder.cxx
+  RorcStatusCode.cxx
 )
 
 if(PDA_FOUND)

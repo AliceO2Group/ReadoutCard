@@ -30,8 +30,8 @@ class ChannelMaster: public ChannelMasterInterface
     virtual void stopDma();
     virtual uint32_t readRegister(int index);
     virtual void writeRegister(int index, uint32_t value);
-    virtual Page getPage(const PageHandle& handle);
-    virtual void markPageAsRead(const PageHandle& handle);
+
+    static void validateParameters(const ChannelParameters& params);
 
   protected:
 
@@ -140,9 +140,6 @@ class ChannelMaster: public ChannelMasterInterface
 
     /// Addresses to pages in the DMA buffer
     std::vector<PageAddress> pageAddresses;
-
-    /// Array to keep track of read pages (false: wasn't read out, true: was read out).
-    std::vector<bool> pageWasReadOut;
 };
 
 } // namespace Rorc

@@ -24,8 +24,8 @@ class ReadyFifo
 
         inline void reset()
         {
-          length = -1; // temp magic value for debugging
-          status = -1; // temp magic value for debugging
+          length = -1;
+          status = -1;
         }
     };
 
@@ -38,6 +38,9 @@ class ReadyFifo
 
     std::array<Entry, CRORC_NUMBER_OF_PAGES> entries;
 };
+
+static_assert(sizeof(ReadyFifo::Entry) == 8, "Size of ReadyFifo::Entry invalid");
+static_assert(sizeof(ReadyFifo) == (CRORC_NUMBER_OF_PAGES * sizeof(ReadyFifo::Entry)), "Size of ReadyFifo invalid");
 
 } // namespace Rorc
 } // namespace AliceO2

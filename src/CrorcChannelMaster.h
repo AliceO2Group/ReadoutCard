@@ -21,6 +21,8 @@ class CrorcChannelMaster : public ChannelMaster
     virtual void resetCard(ResetLevel::type resetLevel);
     virtual PageHandle pushNextPage();
     virtual bool isPageArrived(const PageHandle& handle);
+    virtual Page getPage(const PageHandle& handle);
+    virtual void markPageAsRead(const PageHandle& handle);
 
   protected:
 
@@ -53,9 +55,9 @@ class CrorcChannelMaster : public ChannelMaster
         CrorcSharedData();
         void initialize();
         InitializationState::type initializationState;
-        int fifoIndexWrite; /// Index of next page available for writing
-        int fifoIndexRead; /// Index of oldest non-free page
-        int pageIndex; /// Index to the next free page of the DMA buffer
+        int fifoIndexWrite; /// Index of next FIFO page available for writing
+        int fifoIndexRead; /// Index of oldest non-free FIFO page
+        int bufferPageIndex; /// Index of next DMA buffer page available for writing
         long long int loopPerUsec; // Some timing parameter used during communications with the card
         double pciLoopPerUsec; // Some timing parameters used during communications with the card
         int rorcRevision;
@@ -90,6 +92,14 @@ class CrorcChannelMaster : public ChannelMaster
     /// PDA DMABuffer object for the readyFifo
     PdaDmaBuffer bufferFifo;
 
+    /// Mapping from fifo page index to DMA buffer index
+    std::vector<int> bufferPageIndexes;
+
+    /// Array to keep track of read pages (false: wasn't read out, true: was read out).
+    std::vector<bool> pageWasReadOut;
+
+    /// XXX
+    std::stringstream debug_ss;
 };
 
 } // namespace Rorc

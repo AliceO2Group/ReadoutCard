@@ -18,10 +18,30 @@ int ChannelMaster::getBufferId(int index)
   int n = dmaBuffersPerChannel;
 
   if (index >= n || index < 0) {
-    ALICEO2_RORC_THROW_EXCEPTION("Tried to get buffer ID using invalid index");
+    BOOST_THROW_EXCEPTION(InvalidParameterException()
+        << errinfo_aliceO2_rorc_generic_message("Tried to get buffer ID using invalid index"));
+
   }
 
   return channelNumber * n + index;
+}
+
+void ChannelMaster::validateParameters(const ChannelParameters& ps)
+{
+  if (ps.dma.bufferSize % (2 * 1024 * 1024) != 0) {
+    BOOST_THROW_EXCEPTION(InvalidParameterException()
+        << errinfo_aliceO2_rorc_generic_message("Parameter 'dma.bufferSize' not a multiple of 2 mebibytes"));
+  }
+
+  if (ps.generator.dataSize > ps.dma.pageSize) {
+    BOOST_THROW_EXCEPTION(InvalidParameterException()
+        << errinfo_aliceO2_rorc_generic_message("Parameter 'generator.dataSize' greater than 'dma.pageSize'"));
+  }
+
+  if ((ps.dma.bufferSize % ps.dma.pageSize) != 0) {
+    BOOST_THROW_EXCEPTION(InvalidParameterException()
+            << errinfo_aliceO2_rorc_generic_message("DMA buffer size not a multiple of 'dma.pageSize'"));
+  }
 }
 
 ChannelMaster::ChannelMaster(int serial, int channel, const ChannelParameters& params, int dmaBuffersPerChannel)
@@ -46,6 +66,8 @@ ChannelMaster::ChannelMaster(int serial, int channel, const ChannelParameters& p
        mappedFilePages.getSize(),
        getBufferId(BUFFER_INDEX_PAGES))
 {
+  validateParameters(params);
+
   // Initialize (if needed) the shared data
   const auto& sd = sharedData.get();
 
@@ -123,26 +145,13 @@ void ChannelMaster::stopDma()
 uint32_t ChannelMaster::readRegister(int index)
 {
   // TODO Range check
-  return pdaBar.getUserspaceAddressU32()[index];
+  return pdaBar[index];
 }
 
 void ChannelMaster::writeRegister(int index, uint32_t value)
 {
   // TODO Range check
-  pdaBar.getUserspaceAddressU32()[index] = value;
-}
-
-Page ChannelMaster::getPage(const PageHandle& handle)
-{
-  return Page(pageAddresses[handle.index].user);
-}
-
-void ChannelMaster::markPageAsRead(const PageHandle& handle)
-{
-  if (pageWasReadOut[handle.index]) {
-    ALICEO2_RORC_THROW_EXCEPTION("Page was already marked as read");
-  }
-  pageWasReadOut[handle.index] = true;
+  pdaBar[index] = value;
 }
 
 } // namespace Rorc

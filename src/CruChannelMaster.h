@@ -21,6 +21,8 @@ class CruChannelMaster : public ChannelMaster
     virtual void resetCard(ResetLevel::type resetLevel);
     virtual PageHandle pushNextPage();
     virtual bool isPageArrived(const PageHandle& handle);
+    virtual Page getPage(const PageHandle& handle);
+    virtual void markPageAsRead(const PageHandle& handle);
 
   protected:
 
@@ -80,6 +82,12 @@ class CruChannelMaster : public ChannelMaster
     /// PDA DMABuffer object for the readyFifo
     PdaDmaBuffer bufferFifo;
 
+    /// Counter for the amount of pages that have been requested.
+    /// Since currently, the idea is to push 128 at a time, we wait until the client requests 128 pages...
+    int pendingPages;
+
+    /// Array to keep track of read pages (false: wasn't read out, true: was read out).
+    std::vector<bool> pageWasReadOut;
 };
 
 } // namespace Rorc
