@@ -1,25 +1,32 @@
 RORC module
 
 
-## Authors: 
- - Tuan Mate Nguyen (C layer)
- - Pascal Boeschoten (C++ interface)
+## Authors
+
+  C layer: Tuan Mate Nguyen (tuan.mate@outlook.com)
+  C++ interface: Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 
 ## Description
+
 The RORC module is the software that directly interfaces with the RORC (ReadOut and Receiver Card) PCIe cards.
 RORCs can have multiple DMA channels, and each channel is treated separately by the program.
   (Note: the old CRORC card has 6 channels, the upcoming CRU 1.)
 
-Clients can acquire a master lock on a channel by instantiating a ChannelMasterInterface implementation through the ChannelMasterFactory class.
-It's also possible to instantiate a dummy object. 
-The ChannelMaster class provides PDA-based functionality common to the CRORC and CRU, and it is mostly an aggregation of wrapper classes.
+Clients can acquire a master lock on a channel by instantiating a ChannelMasterInterface implementation through the
+ChannelMasterFactory class.
+It's also possible to instantiate a dummy object.
+
+The ChannelMaster class provides PDA-based functionality common to the CRORC and CRU, and it is mostly an aggregation 
+of PDA wrapper classes and shared memory handling.
 The CrorcChannelMaster and CruChannelMaster provide the device-specific functionality and use the RORC C API layer.
 
 The ChannelMaster will acquire a file lock to prevent simultaneous interprocess access to a channel.
 Currently, there are no protections against multi-threaded access, but this is planned for a future release.
-Some of the state is kept in shared memory files so that the state is persistent and that the lock can be handed over to other processes.
-Pages are also stored in shared memory. Functionality for clients to supply their own buffer is planned for a future release.
+Some of the state is kept in shared memory files so that the state is persistent and that the lock can be handed over
+to other processes.
+Pages are also stored in shared memory. Functionality for clients to supply their own buffer is planned for a future 
+release.
 
 The shared files are located in the directories:
  - /dev/shm/alice_o2/rorc_[serial number]/channel_[channel number]/
@@ -35,11 +42,29 @@ Once a ChannelMaster has acquired the lock, clients can:
 For an example of the usage, see the program in RORC/src/Example.cxx
 
 
+## Known issues
+
+It appears that with the C-RORC, the isPageArrived() function does not work properly and returns 'true' too early.
+It is suspected to be a firmware bug, where the page status in the Ready FIFO is marked as fully transferred while the
+actual DMA transfer has not yet been completed.
+The investigation is ongoing, but for the time being we can work around the issue with a manual delay.
+The Example.cxx uses a microsecond wait, which is probably overkill.
+
+The FIFO of the C-RORC is initialized by pushing 128 pages. The framework should wait until these pages are fully
+transferred before continuing. This is not yet implemented, because of the isPageArrived() issue described above.
+Again, clients must wait manually.
+
+The CruChannelMaster implementation is not complete.
+
+
 ## Dependencies
+
 The RORC module depends on the PDA (Portable Driver Architecture) library. 
 If PDA is not detected on the system, only a dummy implementation of the interface will be compiled.
 
-#### PDA installation procedure
+
+## PDA installation procedure
+
 1. Install libpci dependency
   # yum install pciutils-devel
 
@@ -54,13 +79,22 @@ If PDA is not detected on the system, only a dummy implementation of the interfa
   # make install
 
 
-## System configuration
-When using shared memory allocations for the DMA buffer, it is highly recommended to configure hugepage support on the system.
-Without hugepages, scatter-gather lists may be highly fragmented. 
-In addition, with larger RORC page sizes (> 4 KB), the driver may have difficulty finding enough contiguous memory to use for RORC pages.
-For more information about hugepages: https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt
+## Hugepages
 
-### Hugepages configuration steps:
+When using shared memory allocations for the DMA buffer, it is highly recommended to configure hugepage support
+on the system.
+Without hugepages, scatter-gather lists may be highly fragmented.
+In addition, with larger RORC page sizes (> 4 KB), the driver may have difficulty finding enough contiguous memory to 
+use for RORC pages.
+For more information about hugepages, refer to the linux kernel docs: 
+  https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt
+
+
+## Hugepages configuration steps
+
+At some point, we should probably use kernel boot parameters to allocate hugepages, or use some boot-time script, but 
+until then, we must initialize and allocate manually.
+
 1. Install hugetlbfs (will already be installed on most systems)
   # yum install libhugetlbfs
 
