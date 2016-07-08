@@ -129,8 +129,8 @@ CruChannelMaster::CruChannelMaster(int serial, int channel, const ChannelParamet
     for (int64_t i = 0; i < pagesInSglEntry; ++i) {
       int64_t offset = i * params.dma.pageSize;
       PageAddress pa;
-      pa.bus = (void*) ((char*) entry.addressBus) + offset;
-      pa.user = (void*) ((char*) entry.addressUser) + offset;
+      pa.bus = (void*) (((char*) entry.addressBus) + offset);
+      pa.user = (void*) (((char*) entry.addressUser) + offset);
       pageAddresses.push_back(pa);
     }
   }
@@ -146,23 +146,23 @@ CruChannelMaster::~CruChannelMaster()
 }
 
 CruChannelMaster::CrorcSharedData::CrorcSharedData()
-    : initializationState(InitializationState::UNKNOWN), fifoIndexWrite(0), fifoIndexRead(0), loopPerUsec(
-        0), pciLoopPerUsec(0), pageIndex(0)
+    : initializationState(InitializationState::UNKNOWN), fifoIndexWrite(0), fifoIndexRead(0), pageIndex(0), loopPerUsec(
+        0), pciLoopPerUsec(0)
 {
 }
 
 void CruChannelMaster::CrorcSharedData::initialize()
 {
+  initializationState = InitializationState::INITIALIZED;
   fifoIndexWrite = 0;
   fifoIndexRead = 0;
   pageIndex = 0;
-  initializationState = InitializationState::INITIALIZED;
+  loopPerUsec = 0;
+  pciLoopPerUsec = 0;
 }
 
 void CruChannelMaster::deviceStartDma()
 {
-  auto& params = getParams();
-
   uint64_t fifoTableAddress = (uint64_t) bufferFifo.getScatterGatherList()[0].addressBus;
   pdaBar[BarIndex::STATUS_BASE_BUS_LOW] = getLower32Bits(fifoTableAddress);
   pdaBar[BarIndex::STATUS_BASE_BUS_HIGH] = getUpper32Bits(fifoTableAddress);
@@ -218,7 +218,7 @@ ChannelMasterInterface::PageHandle CruChannelMaster::pushNextPage()
       e.dstHigh = getUpper32Bits(busAddress);
 
       // Page size
-      e.ctrl = i << 18 + pageSize / 4;
+      e.ctrl = (i << 18) + (pageSize / 4);
 
       // Fill the reserved bit with zero
       e.reserved1 = 0x0;

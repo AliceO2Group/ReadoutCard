@@ -6,6 +6,7 @@
 #pragma once
 
 #include <chrono>
+#include <string>
 #include <cstdint>
 #include <boost/program_options/variables_map.hpp>
 
@@ -20,7 +21,8 @@ namespace ResetLevel
       NOTHING = 0, RORC_ONLY = 1, RORC_DIU = 2, RORC_DIU_SIU = 3,
     };
 
-    bool includesExternal(const ResetLevel::type& mode);
+    std::string toString(const ResetLevel::type& level);
+    bool includesExternal(const ResetLevel::type& level);
 }
 
 namespace LoopbackMode
@@ -31,6 +33,7 @@ namespace LoopbackMode
       NONE = 0, EXTERNAL_DIU = 1, EXTERNAL_SIU = 2, INTERNAL_RORC = 3
     };
 
+    std::string toString(const LoopbackMode::type& mode);
     bool isExternal(const LoopbackMode::type& mode);
 }
 

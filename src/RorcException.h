@@ -19,39 +19,60 @@ namespace Rorc {
 struct AliceO2RorcException : virtual boost::exception, virtual std::exception {};
 
 /// Helper macro for defining errinfo types for Boost exceptions
-#define ALICEO2_RORC_DEFINE_ERRINFO(name, type) \
+#define DEFINE_ERRINFO(name, type) \
   using errinfo_aliceO2_rorc_##name = boost::error_info<struct errinfo_aliceO2_rorc_##name##_, type>
 
 /// Helper macro for defining exception types
-#define ALICEO2_RORC_DEFINE_EXCEPTION(name) \
+#define DEFINE_EXCEPTION(name) \
   struct name##Exception : virtual AliceO2RorcException {}
 
 // errinfo definitions
-ALICEO2_RORC_DEFINE_ERRINFO(generic_message, std::string);
-ALICEO2_RORC_DEFINE_ERRINFO(possible_causes, std::string);
-ALICEO2_RORC_DEFINE_ERRINFO(readyfifo_status, std::string);
-ALICEO2_RORC_DEFINE_ERRINFO(readyfifo_length, int32_t);
-ALICEO2_RORC_DEFINE_ERRINFO(filename, std::string);
-ALICEO2_RORC_DEFINE_ERRINFO(filesize, size_t);
-ALICEO2_RORC_DEFINE_ERRINFO(directory, std::string);
-ALICEO2_RORC_DEFINE_ERRINFO(serial_number, int);
-ALICEO2_RORC_DEFINE_ERRINFO(channel_number, int);
-ALICEO2_RORC_DEFINE_ERRINFO(status_code, int);
-ALICEO2_RORC_DEFINE_ERRINFO(status_string, std::string);
-ALICEO2_RORC_DEFINE_ERRINFO(ddl_reset_mask, std::string);
-ALICEO2_RORC_DEFINE_ERRINFO(page_index, int);
-ALICEO2_RORC_DEFINE_ERRINFO(fifo_index, int);
+DEFINE_ERRINFO(generic_message, std::string);
+DEFINE_ERRINFO(possible_causes, std::string);
+DEFINE_ERRINFO(readyfifo_status, std::string);
+DEFINE_ERRINFO(readyfifo_length, int32_t);
+DEFINE_ERRINFO(filename, std::string);
+DEFINE_ERRINFO(filesize, size_t);
+DEFINE_ERRINFO(directory, std::string);
+DEFINE_ERRINFO(serial_number, int);
+DEFINE_ERRINFO(channel_number, int);
+DEFINE_ERRINFO(status_code, int);
+DEFINE_ERRINFO(status_code_string, std::string);
+DEFINE_ERRINFO(ddl_reset_mask, std::string);
+DEFINE_ERRINFO(page_index, int);
+DEFINE_ERRINFO(fifo_index, int);
+DEFINE_ERRINFO(reset_level, int);
+DEFINE_ERRINFO(reset_level_string, std::string);
+DEFINE_ERRINFO(loopback_mode, int);
+DEFINE_ERRINFO(loopback_mode_string, std::string);
+DEFINE_ERRINFO(siu_command, int);
+DEFINE_ERRINFO(diu_command, int);
+DEFINE_ERRINFO(generator_pattern, int);
+DEFINE_ERRINFO(generator_seed, int);
+DEFINE_ERRINFO(generator_event_length, size_t);
 
 // Exception definitions
-ALICEO2_RORC_DEFINE_EXCEPTION(MemoryMap);
-ALICEO2_RORC_DEFINE_EXCEPTION(InvalidParameter);
-ALICEO2_RORC_DEFINE_EXCEPTION(FileLock);
-ALICEO2_RORC_DEFINE_EXCEPTION(Crorc);
-ALICEO2_RORC_DEFINE_EXCEPTION(Cru);
+DEFINE_EXCEPTION(MemoryMap);
+DEFINE_EXCEPTION(InvalidParameter);
+DEFINE_EXCEPTION(FileLock);
+DEFINE_EXCEPTION(Crorc);
+DEFINE_EXCEPTION(CrorcArmDataGenerator);
+DEFINE_EXCEPTION(CrorcArmDdl);
+DEFINE_EXCEPTION(CrorcInitDiu);
+DEFINE_EXCEPTION(CrorcCheckLink);
+DEFINE_EXCEPTION(CrorcSiuCommand);
+DEFINE_EXCEPTION(CrorcDiuCommand);
+DEFINE_EXCEPTION(CrorcSiuLoopback);
+DEFINE_EXCEPTION(CrorcFreeFifo);
+DEFINE_EXCEPTION(CrorcStartDataGenerator);
+DEFINE_EXCEPTION(CrorcStartTrigger);
+DEFINE_EXCEPTION(CrorcStopTrigger);
+DEFINE_EXCEPTION(CrorcDataArrival);
+DEFINE_EXCEPTION(Cru);
 
 // Undefine macros for header safety
-#undef ALICEO2_RORC_DEFINE_ERRINFO
-#undef ALICEO2_RORC_DEFINE_EXCEPTION
+#undef DEFINE_ERRINFO
+#undef DEFINE_EXCEPTION
 
 } // namespace Rorc
 } // namespace AliceO2

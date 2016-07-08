@@ -61,36 +61,79 @@ class CrorcChannelMaster : public ChannelMaster
         long long int loopPerUsec; // Some timing parameter used during communications with the card
         double pciLoopPerUsec; // Some timing parameters used during communications with the card
         int rorcRevision;
-        int diuVersion;
         int siuVersion;
+        int diuVersion;
     };
-
-    /// Arm DDL function
-    void armDdl(int resetMask);
 
     /// Enables data receiving in the RORC
     void startDataReceiving();
 
     /// Initializes and starts the data generator with the given parameters
-    void startDataGenerator(const GeneratorParameters& gen);
+    /// \param generatorParameters The parameters for the data generator.
+    void startDataGenerator(const GeneratorParameters& generatorParameters);
 
     /// Pushes the initial 128 pages to the CRORC's Free FIFO
     void initializeFreeFifo();
 
-    /// Pusha a page to the CRORC's Free FIFO
+    /// Pushes a page to the CRORC's Free FIFO
+    /// \param readyFifoIndex Index of the Ready FIFO to write the page's transfer status to
+    /// \param pageBusAddress Address on the bus to push the page to
     void pushFreeFifoPage(int readyFifoIndex, void* pageBusAddress);
 
-    /// Memory mapped data stored in the shared state file
-    FileSharedObject::FileSharedObject<CrorcSharedData> crorcSharedData;
+    /// Get the bus address of the Ready FIFO
+    void* getReadyFifoBusAddress();
+
+    /// Get the userspace Ready FIFO object
+    ReadyFifo& getReadyFifo();
 
     /// Check if data has arrived
     DataArrivalStatus::type dataArrived(int index);
 
+    /// Arms CRORC data generator
+    void crorcArmDataGenerator();
+
+    /// Arms DDL
+    /// \param resetMask The reset mask. See the RORC_RESET_* macros in rorc.h
+    void crorcArmDdl(int resetMask);
+
+    /// Find and store DIU version
+    void crorcInitDiuVersion();
+
+    /// Checks if link is up
+    void crorcCheckLink();
+
+    /// Send a command to the SIU
+    void crorcSiuCommand(int command);
+
+    /// Send a command to the DIU
+    void crorcDiuCommand(int command);
+
+    /// Reset the C-RORC
+    void crorcReset();
+
+    /// Checks if the C-RORC's Free FIFO is empty
+    void crorcCheckFreeFifoEmpty();
+
+    /// Starts data receiving
+    void crorcStartDataReceiver();
+
+    /// Starts the trigger
+    void crorcStartTrigger();
+
+    /// Stops the trigger
+    void crorcStopTrigger();
+
+    /// Set SIU loopback
+    void crorcSetSiuLoopback();
+
     /// Memory mapped file containing the readyFifo
     TypedMemoryMappedFile<ReadyFifo> mappedFileFifo;
 
-    /// PDA DMABuffer object for the readyFifo
-    PdaDmaBuffer bufferFifo;
+    /// PDA DMABuffer object for the Ready FIFO
+    PdaDmaBuffer bufferReadyFifo;
+
+    /// Memory mapped data stored in the shared state file
+    FileSharedObject::FileSharedObject<CrorcSharedData> crorcSharedData;
 
     /// Mapping from fifo page index to DMA buffer index
     std::vector<int> bufferPageIndexes;

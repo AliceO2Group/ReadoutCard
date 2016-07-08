@@ -46,3 +46,34 @@ ChannelParameters::ChannelParameters()
 
 } // namespace Rorc
 } // namespace AliceO2
+
+
+std::string AliceO2::Rorc::ResetLevel::toString(const ResetLevel::type& level)
+{
+  static const std::map<ResetLevel::type, std::string> map {
+    { ResetLevel::NOTHING, "NOTHING" },
+    { ResetLevel::RORC_ONLY, "RORC_ONLY" },
+    { ResetLevel::RORC_DIU, "RORC_DIU" },
+    { ResetLevel::RORC_DIU_SIU, "RORC_DIU_SIU" },
+  };
+
+  if (map.count(level) != 0) {
+    return map.at(level);
+  }
+  return std::string("UNKNOWN");
+}
+
+std::string AliceO2::Rorc::LoopbackMode::toString(const LoopbackMode::type& mode)
+{
+  static const std::map<LoopbackMode::type, std::string> map {
+    { LoopbackMode::NONE, "NONE" },
+    { LoopbackMode::INTERNAL_RORC, "INTERNAL_RORC" },
+    { LoopbackMode::EXTERNAL_DIU, "EXTERNAL_DIU" },
+    { LoopbackMode::EXTERNAL_SIU, "EXTERNAL_SIU" },
+  };
+
+  if (map.count(mode) != 0) {
+    return map.at(mode);
+  }
+  return std::string("UNKNOWN");
+}

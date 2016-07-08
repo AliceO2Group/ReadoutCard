@@ -65,22 +65,22 @@ class CruChannelMaster : public ChannelMaster
       public:
         CrorcSharedData();
         void initialize();
+        InitializationState::type initializationState;
         int fifoIndexWrite; /// Index of next page available for writing
         int fifoIndexRead; /// Index of oldest non-free page
         int pageIndex; /// Index to the next free page of the DMA buffer
         long long int loopPerUsec; // Some timing parameter used during communications with the card
         double pciLoopPerUsec; // Some timing parameters used during communications with the card
-        InitializationState::type initializationState;
     };
-
-    /// Memory mapped data stored in the shared state file
-    FileSharedObject::FileSharedObject<CrorcSharedData> crorcSharedData;
 
     /// Memory mapped file containing the readyFifo
     TypedMemoryMappedFile<CruFifoTable> mappedFileFifo;
 
     /// PDA DMABuffer object for the readyFifo
     PdaDmaBuffer bufferFifo;
+
+    /// Memory mapped data stored in the shared state file
+    FileSharedObject::FileSharedObject<CrorcSharedData> crorcSharedData;
 
     /// Counter for the amount of pages that have been requested.
     /// Since currently, the idea is to push 128 at a time, we wait until the client requests 128 pages...

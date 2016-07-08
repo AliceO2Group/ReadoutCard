@@ -78,7 +78,7 @@ int main(int argc, char** argv)
 
     // Hopefully, this is enough to insure the freeFifo transfers have completed
     // TODO A more robust wait, built into the framework
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::microseconds(100));
 
     // Keep track of time, so we don't wait forever for pages to arrive if things break
     const auto start = std::chrono::high_resolution_clock::now();

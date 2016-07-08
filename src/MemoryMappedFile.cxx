@@ -59,7 +59,7 @@ void MemoryMappedFile::map(const char* fileName, size_t fileSize)
         << errinfo_aliceO2_rorc_filename(std::string(fileName))
         << errinfo_aliceO2_rorc_filesize(fileSize));
   }
-};
+}
 
 void* MemoryMappedFile::getAddress()
 {
