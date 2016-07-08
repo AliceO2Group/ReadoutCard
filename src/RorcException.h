@@ -56,9 +56,5 @@ ALICEO2_RORC_DEFINE_EXCEPTION(Cru);
 } // namespace Rorc
 } // namespace AliceO2
 
-//#define _ALICEO2_RORC_THROW_EXCEPTION(message) \
-//  throw AliceO2::Rorc::RorcException(__FILE__, __LINE__, message);
-//
-
 #define ALICEO2_RORC_THROW_EXCEPTION(message) \
     BOOST_THROW_EXCEPTION(AliceO2RorcException() << errinfo_aliceO2_rorc_generic_message(message))

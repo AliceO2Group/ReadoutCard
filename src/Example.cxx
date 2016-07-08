@@ -20,6 +20,7 @@ using std::endl;
 using namespace AliceO2;
 
 // The serial number of the card to use
+// For dummy implementation, use Rorc::ChannelMasterFactory::DUMMY_SERIAL_NUMBER
 const int serialNumber = 0;
 
 // The DMA channel to use

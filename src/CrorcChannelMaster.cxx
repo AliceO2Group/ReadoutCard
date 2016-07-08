@@ -45,10 +45,15 @@ namespace Rorc {
 
 /// If the given status code is not RORC_STATUS_OK, creates a CrorcException, attaching data using the given message
 /// string and status code, and throws it
-#define THROW_STATUS_EXCEPTION_ON_BAD_STATUS(_status_code, _err_message) \
+/// Note that it is wrapped in a do-while statement to prevent multiple evaluation of the _status_code_in argument
+/// This is necessary if the macro is given a function as the _status_code_in argument, for example:
+///   THROW_STATUS_EXCEPTION_ON_BAD_STATUS(someRorcFunction(), "Bad status");
+#define THROW_STATUS_EXCEPTION_ON_BAD_STATUS(_status_code_in, _err_message) do { \
+  auto _status_code = _status_code_in; \
   if (_status_code != RORC_STATUS_OK) { \
     BOOST_THROW_EXCEPTION(CRORC_STATUS_EXCEPTION(_status_code, _err_message)); \
-  }
+  } \
+} while (0);
 
 static constexpr int CRORC_BUFFERS_PER_CHANNEL = 2;
 static constexpr int BUFFER_INDEX_FIFO = 1;
@@ -85,10 +90,6 @@ CrorcChannelMaster::CrorcChannelMaster(int serial, int channel, const ChannelPar
 
    cout << "Clearing readyFifo" << endl;
    mappedFileFifo.get()->reset();
-
-   for (int i = 0; i < 128 * 2; ++i) {
-     cout << " i " << reinterpret_cast<int32_t*>(mappedFileFifo.getAddress())[i] << endl;
-   }
   }
 
   // Initialize the page addresses
@@ -99,8 +100,8 @@ CrorcChannelMaster::CrorcChannelMaster(int serial, int channel, const ChannelPar
    for (int64_t i = 0; i < pagesInSglEntry; ++i) {
      int64_t offset = i * params.dma.pageSize;
      PageAddress pa;
-     pa.bus = (void*) ((char*) entry.addressBus) + offset;
-     pa.user = (void*) ((char*) entry.addressUser) + offset;
+     pa.bus = (void*) (((char*) entry.addressBus) + offset);
+     pa.user = (void*) (((char*) entry.addressUser) + offset);
      pageAddresses.push_back(pa);
    }
   }
@@ -113,24 +114,6 @@ CrorcChannelMaster::CrorcChannelMaster(int serial, int channel, const ChannelPar
 
 CrorcChannelMaster::~CrorcChannelMaster()
 {
-}
-
-CrorcChannelMaster::CrorcSharedData::CrorcSharedData()
-    : initializationState(InitializationState::UNKNOWN), fifoIndexWrite(0), fifoIndexRead(0), loopPerUsec(
-        0), pciLoopPerUsec(0), bufferPageIndex(0), rorcRevision(0), siuVersion(0), diuVersion(0)
-{
-}
-void CrorcChannelMaster::CrorcSharedData::initialize()
-{
-  fifoIndexWrite = 0;
-  fifoIndexRead = 0;
-  bufferPageIndex = 0;
-  loopPerUsec = 0;
-  pciLoopPerUsec = 0;
-  rorcRevision = 0;
-  siuVersion = 0;
-  diuVersion = 0;
-  initializationState = InitializationState::INITIALIZED;
 }
 
 void CrorcChannelMaster::deviceStartDma()
@@ -254,7 +237,7 @@ void CrorcChannelMaster::startDataReceiving()
   auto barAddress = pdaBar.getUserspaceAddress();
   auto csd = crorcSharedData.get();
 
-  setLoopPerSec(&crorcSharedData.get()->loopPerUsec, &csd->pciLoopPerUsec, barAddress); // TODO figure out significance of this call
+  setLoopPerSec(&crorcSharedData.get()->loopPerUsec, &csd->pciLoopPerUsec, barAddress);
   ddlFindDiuVersion(barAddress, csd->pciLoopPerUsec, &csd->rorcRevision, &csd->diuVersion);
 
   // Preparing the card.
@@ -370,9 +353,6 @@ ChannelMasterInterface::PageHandle CrorcChannelMaster::pushNextPage()
 
 CrorcChannelMaster::DataArrivalStatus::type CrorcChannelMaster::dataArrived(int index)
 {
-  //auto addr = reinterpret_cast<int32_t*>(mappedFileFifo.getAddress());
-  //auto status = addr[(index * 2) + 1];
-
   auto length = mappedFileFifo.get()->entries[index].length;
   auto status = mappedFileFifo.get()->entries[index].status;
 
@@ -422,6 +402,25 @@ void CrorcChannelMaster::markPageAsRead(const PageHandle& handle)
   pageWasReadOut[handle.index] = true;
 }
 
+
+CrorcChannelMaster::CrorcSharedData::CrorcSharedData()
+    : initializationState(InitializationState::UNKNOWN), fifoIndexWrite(0), fifoIndexRead(0), loopPerUsec(
+        0), pciLoopPerUsec(0), bufferPageIndex(0), rorcRevision(0), siuVersion(0), diuVersion(0)
+{
+}
+
+void CrorcChannelMaster::CrorcSharedData::initialize()
+{
+  fifoIndexWrite = 0;
+  fifoIndexRead = 0;
+  bufferPageIndex = 0;
+  loopPerUsec = 0;
+  pciLoopPerUsec = 0;
+  rorcRevision = 0;
+  siuVersion = 0;
+  diuVersion = 0;
+  initializationState = InitializationState::INITIALIZED;
+}
 
 } // namespace Rorc
 } // namespace AliceO2
