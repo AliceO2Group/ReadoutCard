@@ -56,32 +56,13 @@ struct DmaParameters
     /// Size in bytes of the pages that the RORC must push.
     size_t pageSize;
 
-    /// Size in bytes of the host's DMA buffer in bytes.
-    /// TODO: Automatically calculate/handle this, based on pageSize
+    /// Size in bytes of the host's DMA buffer.
     int bufferSize;
 
     /// Instead of allocating the DMA buffer in kernel memory, allocate it in userspace shared memory.
     /// Note: at the moment, this option is just for testing, but shared memory will probably become the default, or
     /// even the only option in the future.
     bool useSharedMemory;
-};
-
-/// FIFO related parameters
-struct FifoParameters
-{
-    inline FifoParameters();
-
-    /// Offset of the software FIFO from the starting address of the buffer
-    int softwareOffset;
-
-    /// Offset of the data from the end of the software FIFO
-    int dataOffset;
-
-    /// Number of software FIFO entries. Each entry consists of two 32-bit integers: one for length and one for status.
-    int entries;
-
-    /// Offset in bytes of the data from the from the starting address of the buffer.
-    size_t getFullOffset() const;
 };
 
 /// Generator related parameters
@@ -134,7 +115,6 @@ class ChannelParameters
     ChannelParameters();
 
     DmaParameters dma;
-    FifoParameters fifo;
     GeneratorParameters generator;
     TimingParameters timing;
 

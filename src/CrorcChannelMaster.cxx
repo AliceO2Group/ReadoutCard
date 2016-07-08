@@ -52,7 +52,6 @@ namespace Rorc {
 
 static constexpr int CRORC_BUFFERS_PER_CHANNEL = 2;
 static constexpr int BUFFER_INDEX_FIFO = 1;
-static const char* CRORC_SHARED_DATA_NAME = "CrorcChannelMasterSharedData";
 
 CrorcChannelMaster::CrorcChannelMaster(int serial, int channel, const ChannelParameters& params)
 : ChannelMaster(serial, channel, params, CRORC_BUFFERS_PER_CHANNEL),
@@ -68,8 +67,8 @@ CrorcChannelMaster::CrorcChannelMaster(int serial, int channel, const ChannelPar
       sharedDataSize(),
       crorcSharedDataName(),
       FileSharedObject::find_or_construct),
-  bufferPageIndexes(params.fifo.entries, -1),
-  pageWasReadOut(params.fifo.entries, true)
+  bufferPageIndexes(ReadyFifo::FIFO_ENTRIES, -1),
+  pageWasReadOut(ReadyFifo::FIFO_ENTRIES, true)
 {
   // Initialize (if needed) the shared data
   const auto& csd = crorcSharedData.get();
@@ -106,7 +105,7 @@ CrorcChannelMaster::CrorcChannelMaster(int serial, int channel, const ChannelPar
    }
   }
 
-  if (pageAddresses.size() <= CRORC_NUMBER_OF_PAGES) {
+  if (pageAddresses.size() <= ReadyFifo::FIFO_ENTRIES) {
     BOOST_THROW_EXCEPTION(AliceO2RorcException()
           << errinfo_aliceO2_rorc_generic_message("Insufficient amount of pages fit in DMA buffer"));
   }
@@ -114,8 +113,6 @@ CrorcChannelMaster::CrorcChannelMaster(int serial, int channel, const ChannelPar
 
 CrorcChannelMaster::~CrorcChannelMaster()
 {
-  cout << "\nDEBUG:\n";
-  cout << debug_ss.rdbuf();
 }
 
 CrorcChannelMaster::CrorcSharedData::CrorcSharedData()
@@ -154,7 +151,7 @@ void CrorcChannelMaster::deviceStartDma()
   startDataReceiving();
 
   // Initializing the firmware FIFO, pushing (entries) pages
-  initializeFreeFifo(params.fifo.entries);
+  initializeFreeFifo();
 
   if (params.generator.useDataGenerator) {
     // Starting the data generator
@@ -326,10 +323,10 @@ void CrorcChannelMaster::startDataGenerator(const GeneratorParameters& gen)
   rorcStartDataGenerator(pdaBar.getUserspaceAddress(), gen.maximumEvents);
 }
 
-void CrorcChannelMaster::initializeFreeFifo(int pagesToPush)
+void CrorcChannelMaster::initializeFreeFifo()
 {
   // Pushing a given number of pages to the firmware FIFO.
-  for(int i = 0; i < pagesToPush; ++i){
+  for(int i = 0; i < ReadyFifo::FIFO_ENTRIES; ++i){
     mappedFileFifo.get()->entries[i].reset();
     pushFreeFifoPage(i, pageAddresses[i].bus);
     //while(dataArrived(i) != DataArrivalStatus::WHOLE_ARRIVED) { ; }
@@ -365,7 +362,7 @@ ChannelMasterInterface::PageHandle CrorcChannelMaster::pushNextPage()
 
   pushFreeFifoPage(fifoIndex, pageAddresses[bufferIndex].bus);
 
-  csd->fifoIndexWrite = (csd->fifoIndexWrite + 1) % getParams().fifo.entries;
+  csd->fifoIndexWrite = (csd->fifoIndexWrite + 1) % ReadyFifo::FIFO_ENTRIES;
   csd->bufferPageIndex = (csd->bufferPageIndex + 1) % pageAddresses.size();
 
   return PageHandle(fifoIndex);
@@ -378,8 +375,6 @@ CrorcChannelMaster::DataArrivalStatus::type CrorcChannelMaster::dataArrived(int 
 
   auto length = mappedFileFifo.get()->entries[index].length;
   auto status = mappedFileFifo.get()->entries[index].status;
-
-  debug_ss << std::setw(6) << index << std::setw(12) << std::hex << status << std::dec << '\n';
 
   if (status == -1) {
     return DataArrivalStatus::NONE_ARRIVED;

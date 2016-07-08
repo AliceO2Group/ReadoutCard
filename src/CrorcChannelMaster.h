@@ -75,7 +75,7 @@ class CrorcChannelMaster : public ChannelMaster
     void startDataGenerator(const GeneratorParameters& gen);
 
     /// Pushes the initial 128 pages to the CRORC's Free FIFO
-    void initializeFreeFifo(int pagesToPush);
+    void initializeFreeFifo();
 
     /// Pusha a page to the CRORC's Free FIFO
     void pushFreeFifoPage(int readyFifoIndex, void* pageBusAddress);
@@ -97,9 +97,6 @@ class CrorcChannelMaster : public ChannelMaster
 
     /// Array to keep track of read pages (false: wasn't read out, true: was read out).
     std::vector<bool> pageWasReadOut;
-
-    /// XXX
-    std::stringstream debug_ss;
 };
 
 } // namespace Rorc

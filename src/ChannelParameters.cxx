@@ -25,18 +25,6 @@ DmaParameters::DmaParameters()
   useSharedMemory = false;
 }
 
-FifoParameters::FifoParameters()
-{
-  dataOffset = 0;
-  entries = 128;
-  softwareOffset = 0;
-}
-
-size_t FifoParameters::getFullOffset() const
-{
-  return softwareOffset + entries * 8 + dataOffset;
-}
-
 GeneratorParameters::GeneratorParameters()
 {
   initialValue = 1;

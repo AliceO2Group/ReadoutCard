@@ -10,12 +10,12 @@
 namespace AliceO2 {
 namespace Rorc {
 
-static constexpr int CRORC_NUMBER_OF_PAGES = 128;
-
 /// Class representing CRORC readyFifo
 class ReadyFifo
 {
   public:
+    static constexpr int FIFO_ENTRIES = 128;
+
     class Entry
     {
       public:
@@ -36,11 +36,11 @@ class ReadyFifo
       }
     }
 
-    std::array<Entry, CRORC_NUMBER_OF_PAGES> entries;
+    std::array<Entry, FIFO_ENTRIES> entries;
 };
 
 static_assert(sizeof(ReadyFifo::Entry) == 8, "Size of ReadyFifo::Entry invalid");
-static_assert(sizeof(ReadyFifo) == (CRORC_NUMBER_OF_PAGES * sizeof(ReadyFifo::Entry)), "Size of ReadyFifo invalid");
+static_assert(sizeof(ReadyFifo) == (ReadyFifo::FIFO_ENTRIES * sizeof(ReadyFifo::Entry)), "Size of ReadyFifo invalid");
 
 } // namespace Rorc
 } // namespace AliceO2

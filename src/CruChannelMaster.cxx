@@ -32,23 +32,23 @@ namespace Rorc {
       << errinfo_aliceO2_rorc_generic_message(_err_message))
 
 
-namespace CruBarOffset
+namespace BarIndex
 {
 /// Status table base address (low 32 bits)
-static constexpr size_t STATUS_BASE_LOW = 0;
+static constexpr size_t STATUS_BASE_BUS_LOW = 0;
 
 /// Status table base address (high 32 bits)
-static constexpr size_t STATUS_BASE_HIGH = 1;
+static constexpr size_t STATUS_BASE_BUS_HIGH = 1;
 
 /// Destination FIFO memory address in card (low 32 bits)
-static constexpr size_t FIFO_CARD_ADDRESS_LOW = 2;
+static constexpr size_t FIFO_BASE_CARD_LOW = 2;
 
 /// Destination FIFO memory address in card (high 32 bits)
-/// XXX Appears to be unused, always set to 0 in code examples?
-static constexpr size_t FIFO_CARD_ADDRESS_HIGH = 3;
+/// XXX Appears to be unused, it's set to 0 in code examples
+static constexpr size_t FIFO_BASE_CARD_HIGH = 3;
 
-/// Number of available pages
-static constexpr size_t AVAILABLE_PAGES = 4;
+/// Set to number of available pages - 1
+static constexpr size_t START_DMA = 4;
 
 /// Size of the descriptor table
 /// Set to the same as (number of available pages - 1)
@@ -72,6 +72,16 @@ static constexpr size_t LED_ON = 152;
 static constexpr int CRU_BUFFERS_PER_CHANNEL = 2;
 static constexpr int BUFFER_INDEX_FIFO = 1;
 
+uint32_t getLower32Bits(uint64_t x)
+{
+  return x & 0xFfffFfff;
+}
+
+uint32_t getUpper32Bits(uint64_t x)
+{
+  return (x >> 32) & 0xFfffFfff;
+}
+
 CruChannelMaster::CruChannelMaster(int serial, int channel, const ChannelParameters& params)
 : ChannelMaster(serial, channel, params, CRU_BUFFERS_PER_CHANNEL),
   mappedFileFifo(
@@ -87,7 +97,7 @@ CruChannelMaster::CruChannelMaster(int serial, int channel, const ChannelParamet
       crorcSharedDataName(),
       FileSharedObject::find_or_construct),
   pendingPages(0),
-  pageWasReadOut(params.fifo.entries, true)
+  pageWasReadOut(CRU_DESCRIPTOR_ENTRIES, true)
 {
   assert(params.dma.pageSize == (8 * 1024)); // Currently the only supported page size is 8 KiB
 
@@ -125,7 +135,7 @@ CruChannelMaster::CruChannelMaster(int serial, int channel, const ChannelParamet
     }
   }
 
-  if (pageAddresses.size() <= CRORC_NUMBER_OF_PAGES) {
+  if (pageAddresses.size() <= CRU_DESCRIPTOR_ENTRIES) {
     THROW_CRU_EXCEPTION("Insufficient amount of pages fit in DMA buffer");
   }
 }
@@ -153,30 +163,16 @@ void CruChannelMaster::deviceStartDma()
 {
   auto& params = getParams();
 
-  void* fifoTableAddress = bufferFifo.getScatterGatherList()[0].addressBus;
-
-  // Status base address, low and high part, respectively
-  pdaBar[0] = (uint64_t)fifoTableAddress & 0xffffffff;
-  pdaBar[1] = (uint64_t)fifoTableAddress >> 32;
-
-  // Destination (card's memory) addresses, low and high part, respectively
-  pdaBar[2] = 0x8000;
-  pdaBar[3] = 0x0;
-
-  // Set descriptor table size, same as number of available pages-1
-  pdaBar[5] = CRU_DESCRIPTOR_ENTRIES - 1;
-
-  // Number of available pages-1
-  pdaBar[4] = CRU_DESCRIPTOR_ENTRIES - 1;
-
-  // Give PCIe ready signal
-  pdaBar[129] = 0x1;
-
-  // Programming the user module to trigger the data emulator
-  pdaBar[128] = 0x1;
-
-  // Set status to send status for every page not only for the last one
-  pdaBar[6] = 0x1;
+  uint64_t fifoTableAddress = (uint64_t) bufferFifo.getScatterGatherList()[0].addressBus;
+  pdaBar[BarIndex::STATUS_BASE_BUS_LOW] = getLower32Bits(fifoTableAddress);
+  pdaBar[BarIndex::STATUS_BASE_BUS_HIGH] = getUpper32Bits(fifoTableAddress);
+  pdaBar[BarIndex::FIFO_BASE_CARD_LOW] = 0x8000;
+  pdaBar[BarIndex::FIFO_BASE_CARD_HIGH] = 0x0;
+  pdaBar[BarIndex::START_DMA] = CRU_DESCRIPTOR_ENTRIES - 1;
+  pdaBar[BarIndex::DESCRIPTOR_TABLE_SIZE] = CRU_DESCRIPTOR_ENTRIES - 1;
+  pdaBar[BarIndex::PCIE_READY] = 0x1;
+  pdaBar[BarIndex::DATA_EMULATOR_ENABLE] = 0x1;
+  pdaBar[BarIndex::SEND_STATUS] = 0x1;
 }
 
 void CruChannelMaster::deviceStopDma()
@@ -184,7 +180,7 @@ void CruChannelMaster::deviceStopDma()
   // TODO Not sure if this is the correct way
 
   // Set status to send status for every page not only for the last one
-  pdaBar[6] = 0x0;
+  pdaBar[BarIndex::SEND_STATUS] = 0x0;
 }
 
 void CruChannelMaster::resetCard(ResetLevel::type resetLevel)
@@ -218,8 +214,8 @@ ChannelMasterInterface::PageHandle CruChannelMaster::pushNextPage()
 
       // Addresses in the RAM (DMA destination)
       auto busAddress = (uint64_t) pageAddresses[0].bus;
-      e.dstLow = busAddress & 0xffffffff;
-      e.dstHigh = busAddress >> 32;
+      e.dstLow = getLower32Bits(busAddress);
+      e.dstHigh = getUpper32Bits(busAddress);
 
       // Page size
       e.ctrl = i << 18 + pageSize / 4;

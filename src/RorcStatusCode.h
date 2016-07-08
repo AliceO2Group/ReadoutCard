@@ -10,7 +10,8 @@
 namespace AliceO2 {
 namespace Rorc {
 
-std::string getRorcStatusString(int errorCode);
+/// Get a string representing a RORC C API status code
+std::string getRorcStatusString(int rorcStatusCode);
 
 } // namespace Rorc
 } // namespace AliceO2

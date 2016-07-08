@@ -101,7 +101,7 @@ int main(int argc, char** argv)
     std::vector<uint32_t> eventNumbers;
     eventNumbers.reserve(pagesToPush);
     Rorc::Page page;
-    std::stringstream ss;
+    std::stringstream stringStream;
 
     for (auto i : boost::irange(0, pagesToPush)) {
       // Get page handle (contains FIFO index)
@@ -122,7 +122,7 @@ int main(int argc, char** argv)
       uint32_t eventNumber = page.getAddressU32()[0];
       eventNumbers.push_back(eventNumber);
 
-      printPage(page, handle.index, ss);
+      printPage(page, handle.index, stringStream);
 
       // Mark page as read so it can be written to again
       channel->markPageAsRead(handle);
@@ -135,7 +135,7 @@ int main(int argc, char** argv)
       cout << "\n### NOT stopping DMA" << endl;
     }
 
-    cout << ss.rdbuf() << endl;
+    cout << stringStream.rdbuf() << endl;
 
     // Check if 'event numbers' are correct
     for (size_t i = 0; i < (eventNumbers.size() - 1); ++i) {
