@@ -96,19 +96,6 @@ struct GeneratorParameters
     size_t dataSize;
 };
 
-/// Timing related parameters
-struct TimingParameters
-{
-    /// Defines the waiting period after each received fragment
-    std::chrono::milliseconds sleepTime;
-
-    /// Defines the waiting period before each time a new page is pushed
-    std::chrono::milliseconds loadTime;
-
-    /// Defines the waiting period for command responses
-    std::chrono::milliseconds waitTime;
-};
-
 class ChannelParameters
 {
   public:
@@ -116,7 +103,6 @@ class ChannelParameters
 
     DmaParameters dma;
     GeneratorParameters generator;
-    TimingParameters timing;
 
     /// Defines that the received fragment contains the Common Data Header
     bool ddlHeader;
