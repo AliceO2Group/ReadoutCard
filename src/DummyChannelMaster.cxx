@@ -12,7 +12,7 @@ using std::endl;
 namespace AliceO2 {
 namespace Rorc {
 
-DummyChannelMaster::DummyChannelMaster(int serial, int channel, const ChannelParameters& params)
+DummyChannelMaster::DummyChannelMaster(int serial, int channel, const ChannelParameters& params) : pageCounter(128)
 {
   cout << "DummyChannelMaster::DummyChannelMaster()" << endl;
 }
@@ -51,24 +51,33 @@ void DummyChannelMaster::writeRegister(int index, uint32_t value)
 ChannelMasterInterface::PageHandle DummyChannelMaster::pushNextPage()
 {
   cout << "DummyChannelMaster::pushNextPage()" << endl;
-  return ChannelMasterInterface::PageHandle(0);
+  auto handle = ChannelMasterInterface::PageHandle(pageCounter);
+  pageCounter++;
+  return handle;
 }
 
 bool DummyChannelMaster::isPageArrived(const PageHandle& handle)
 {
-  cout << "DummyChannelMaster::isPageArrived()" << endl;
-  return false;
+  cout << "DummyChannelMaster::isPageArrived(handle:" << handle.index << ")" << endl;
+  return true;
 }
 
 Page DummyChannelMaster::getPage(const PageHandle& handle)
 {
-  cout << "DummyChannelMaster::getPage()" << endl;
-  return Page();
+  cout << "DummyChannelMaster::getPage(handle:" << handle.index << ")" << endl;
+
+  pageBuffer[0] = handle.index;
+  for (int i = 1; i < pageBuffer.size(); ++i) {
+    pageBuffer[i] = i - 1;
+  }
+
+  auto page = Page(pageBuffer.data(), pageBuffer.size());
+  return page;
 }
 
 void DummyChannelMaster::markPageAsRead(const PageHandle& handle)
 {
-  cout << "DummyChannelMaster::markPageAsRead()" << endl;
+  cout << "DummyChannelMaster::markPageAsRead(handle:" << handle.index << ")" << endl;
 }
 
 } // namespace Rorc

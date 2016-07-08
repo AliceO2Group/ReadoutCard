@@ -6,6 +6,7 @@
 #pragma once
 
 #include "RORC/ChannelMasterInterface.h"
+#include <array>
 
 namespace AliceO2 {
 namespace Rorc {
@@ -30,6 +31,13 @@ class DummyChannelMaster : public ChannelMasterInterface
     virtual bool isPageArrived(const PageHandle& handle);
     virtual Page getPage(const PageHandle& handle);
     virtual void markPageAsRead(const PageHandle& handle);
+
+  private:
+
+    static constexpr size_t DUMMY_PAGE_SIZE = 4l * 1024l;
+
+    int pageCounter;
+    std::array<int, DUMMY_PAGE_SIZE> pageBuffer;
 };
 
 } // namespace Rorc
