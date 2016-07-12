@@ -60,16 +60,16 @@ CrorcChannelMaster::CrorcChannelMaster(int serial, int channel, const ChannelPar
   const auto& csd = crorcSharedData.get();
 
   if (csd->initializationState == InitializationState::INITIALIZED) {
-   cout << "CRORC shared channel state already initialized" << endl;
+   //cout << "CRORC shared channel state already initialized" << endl;
   }
   else {
    if (csd->initializationState == InitializationState::UNKNOWN) {
-     cout << "Warning: unknown CRORC shared channel state. Proceeding with initialization" << endl;
+     //cout << "Warning: unknown CRORC shared channel state. Proceeding with initialization" << endl;
    }
-   cout << "Initializing CRORC shared channel state" << endl;
+   //cout << "Initializing CRORC shared channel state" << endl;
    csd->initialize();
 
-   cout << "Clearing readyFifo" << endl;
+   //cout << "Clearing readyFifo" << endl;
    mappedFileFifo.get()->reset();
   }
 
@@ -251,7 +251,8 @@ ChannelMasterInterface::PageHandle CrorcChannelMaster::pushNextPage()
 
   if (sharedData.get()->dmaState != DmaState::STARTED) {
     BOOST_THROW_EXCEPTION(CrorcException()
-        << errinfo_rorc_generic_message("Not in required DMA state"));
+        << errinfo_rorc_generic_message("Not in required DMA state")
+        << errinfo_rorc_possible_causes("startDma() not called"));
   }
 
   // Handle for next page

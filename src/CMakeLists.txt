@@ -84,6 +84,7 @@ build_util_exec(rorc-example Example.cxx)
 build_util_exec(rorc-reg-read RorcUtilsReadRegister.cxx)
 build_util_exec(rorc-reg-read-range RorcUtilsReadRegisterRange)
 build_util_exec(rorc-reg-write RorcUtilsWriteRegister.cxx)
+build_util_exec(rorc-dma-bench RorcUtilsDmaBench.cxx)
 
 
 # -------

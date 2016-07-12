@@ -2,7 +2,7 @@
 /// \file RorcUtilsOptions.h
 /// \author Pascal Boeschoten
 ///
-/// Functions functions for the RORC utilities to handle program options
+/// Functions for the RORC utilities to handle program options
 ///
 
 #pragma once

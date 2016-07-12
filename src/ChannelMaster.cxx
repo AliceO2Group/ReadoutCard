@@ -78,13 +78,13 @@ ChannelMaster::ChannelMaster(int serial, int channel, const ChannelParameters& p
   const auto& sd = sharedData.get();
 
   if (sd->initializationState == InitializationState::INITIALIZED) {
-   cout << "Shared channel state already initialized" << endl;
+   //cout << "Shared channel state already initialized" << endl;
   }
   else {
    if (sd->initializationState == InitializationState::UNKNOWN) {
-     cout << "Warning: unknown shared channel state. Proceeding with initialization" << endl;
+     //cout << "Warning: unknown shared channel state. Proceeding with initialization" << endl;
    }
-   cout << "Initializing shared channel state" << endl;
+   //cout << "Initializing shared channel state" << endl;
    sd->initialize(params);
   }
 }
