@@ -14,16 +14,17 @@ namespace Rorc {
 namespace Util {
 namespace Common {
 
+/// Create a string showing individual bits of the given 32-bit value
 std::string make32bitString(uint32_t bits);
+
+/// Create a string showing the given 32-bit value in hexadecimal format
 std::string make32hexString(uint32_t bits);
+
+/// Create a string representation of a register address
 std::string makeRegisterAddressString(int address);
+
+/// Create a string representation of a register address and its value
 std::string makeRegisterString(int address, uint32_t value);
-
-void printHelp (std::string utilName, std::string utilDescription, std::string usageExample,
-    const boost::program_options::options_description& optionsDescription);
-
-void printErrorAndHelp(std::string errorMessage, std::string utilName, std::string utilDescription,
-    std::string usageExample, const boost::program_options::options_description& optionsDescription);
 
 } // namespace Common
 } // namespace Util

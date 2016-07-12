@@ -21,7 +21,7 @@ namespace po = boost::program_options;
 
 po::options_description createOptionsDescription()
 {
-  po::options_description od ("Allowed options");
+  po::options_description od("Allowed options");
   addOptionHelp(od);
   return od;
 }
