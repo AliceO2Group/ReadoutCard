@@ -38,9 +38,9 @@ if(GIT_FOUND)
     set (VCS_REVISION ${GIT_SHA1})
 endif()
 
-# This line finds the boost lib and headers. 
+# This line finds the boost lib and headers.
 set(Boost_NO_BOOST_CMAKE ON) #  Don't do a find_package in config mode before searching for a regular boost install.
-find_package(Boost REQUIRED)
+find_package(Boost COMPONENTS filesystem system program_options REQUIRED)
 
 # PDA (Portable Driver Architecture)
 find_package(PDA)
@@ -52,6 +52,9 @@ else()
     message(WARNING "PDA not found, RORC module will have a dummy implementation only (skip, no error)")
     return()
 endif(PDA_FOUND)
+
+# Dependency on another subproject
+#link_o2_subproject(Common)
 
 # This sets the include directory for the reference project. This is the -I flag in gcc.
 # All the includes should be in this variable To add new directories to the include path,

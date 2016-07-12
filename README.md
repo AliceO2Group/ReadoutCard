@@ -1,23 +1,26 @@
-RORC module
+# RORC module
 
 
-## Authors
+Authors
+===================
 
-  C layer: Tuan Mate Nguyen (tuan.mate@outlook.com)
-  C++ interface: Pascal Boeschoten (pascal.boeschoten@cern.ch)
+* C layer: Tuan Mate Nguyen (tuan.mate@outlook.com)
+* C++ interface: Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 
-## Description
+Description
+===================
 
 The RORC module is the software that directly interfaces with the RORC (ReadOut and Receiver Card) PCIe cards.
 RORCs can have multiple DMA channels, and each channel is treated separately by the program.
-  (Note: the old CRORC card has 6 channels, the upcoming CRU 1.)
+  (Note: the old C-RORC card has 6 channels, the upcoming CRU 1.)
 
+Channel ownership lock
+-------------------
 Clients can acquire a master lock on a channel by instantiating a ChannelMasterInterface implementation through the
-ChannelFactory class.
-It's also possible to instantiate a dummy object, or get a slave object that has limited access to the channel.
+ChannelFactory class. 
 
-The ChannelMaster class provides PDA-based functionality common to the CRORC and CRU, and it is mostly an aggregation 
+The ChannelMaster class provides PDA-based functionality common to the C-RORC and CRU, and it is mostly an aggregation 
 of PDA wrapper classes and shared memory handling.
 The CrorcChannelMaster and CruChannelMaster provide the device-specific functionality and use the RORC C API layer.
 
@@ -29,20 +32,37 @@ Pages are also stored in shared memory. Functionality for clients to supply thei
 release.
 
 The shared files are located in the directories:
- - /dev/shm/alice_o2/rorc_[serial number]/channel_[channel number]/
- - /mnt/hugetlbfs/alice_o2/rorc_[serial number]/channel_[channel number]/
+* /dev/shm/alice_o2/rorc_[serial number]/channel_[channel number]/
+* /mnt/hugetlbfs/alice_o2/rorc_[serial number]/channel_[channel number]/
+
 If things crash and the state can not be recovered, these files should be deleted.
 They should also be deleted with new releases of the RORC module, since their internal memory arrangement might change.
 
 Once a ChannelMaster has acquired the lock, clients can:
- - Read and write registers
- - Start and stop DMA
- - Pushing and reading pages
+* Read and write registers
+* Start and stop DMA
+* Pushing and reading pages
 
-For an example of the usage, see the program in RORC/src/Example.cxx
+For a usage example, see the program in RORC/src/Example.cxx
+
+Limited-access interface
+-------------------
+Users can also get a limited-access object (implementing ChannelSlaveInterface) from the
+factory.
+
+Dummy objects
+-------------------
+The ChannelFactory can instantiate a dummy object if a certain serial number (currently -1 is used) is passed to its
+functions. If PDA is not available (see 'Dependencies') the factory will **always** instantiate a dummy object.
+
+Utility programs
+-------------------
+The RORC module contains some utility programs to assist with RORC debugging and administration.
+Currently, only utilities for reading and writing registers are available, but more are planned.
 
 
-## Known issues
+Known issues
+===================
 
 It appears that with the C-RORC, the isPageArrived() function does not work properly and returns 'true' too early.
 It is suspected to be a firmware bug, where the page status in the Ready FIFO is marked as fully transferred while the
@@ -60,29 +80,37 @@ ChannelFactory should instantiate a ChannelMaster object based on card type and 
 But currently, it just goes with the first C-RORC it comes across. 
 
 
-## Dependencies
+Dependencies
+===================
 
 The RORC module depends on the PDA (Portable Driver Architecture) library. 
 If PDA is not detected on the system, only a dummy implementation of the interface will be compiled.
 
-
-## PDA installation procedure
+PDA installation
+-------------------
 
 1. Install libpci dependency
-  # yum install pciutils-devel
+  ~~~
+  yum install pciutils-devel
+  ~~~
 
 2. Download & extract PDA 11.0.7
-  $ wget https://compeng.uni-frankfurt.de/fileadmin/Images/pda/pda-11.0.7.tar.gz
-  $ tar zxvf pda-11.0.7.tar.gz
-  $ cd pda-11.0.7
+  ~~~
+  wget https://compeng.uni-frankfurt.de/fileadmin/Images/pda/pda-11.0.7.tar.gz
+  tar zxvf pda-11.0.7.tar.gz
+  cd pda-11.0.7
+  ~~~
 
 3. Compile
-  $ ./configure --debug=true --numa=true --modprobe=true
-  $ make
-  # make install
+  ~~~
+  ./configure --debug=true --numa=true --modprobe=true
+  make
+  make install
+  ~~~
 
 
-## Hugepages
+Hugepages
+===================
 
 When using shared memory allocations for the DMA buffer, it is highly recommended to configure hugepage support
 on the system.
@@ -93,25 +121,34 @@ For more information about hugepages, refer to the linux kernel docs:
   https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt
 
 
-## Hugepages configuration steps
+Hugepages configuration
+-------------------
 
 At some point, we should probably use kernel boot parameters to allocate hugepages, or use some boot-time script, but 
 until then, we must initialize and allocate manually.
 
 1. Install hugetlbfs (will already be installed on most systems)
-  # yum install libhugetlbfs
+  ~~~
+  yum install libhugetlbfs
+  ~~~
 
 2. Allocate hugepages
-  # echo [number] > /proc/sys/vm/nr_hugepages
+  ~~~
+  echo [number] > /proc/sys/vm/nr_hugepages
+  ~~~
   Where [number] is enough to cover the DMA buffer needs.
   By default, hugepages are 2 MB. 
 
 3. Check to see if they're actually available
-  # cat /proc/meminfo | grep Huge
-  'HugePages_Total' should correspond to [number]
+  ~~~
+  cat /proc/meminfo | grep Huge
+  ~~~
+ 'HugePages_Total' should correspond to [number]
 
 4. Mount hugetlbfs
-  # mkdir /mnt/hugetlbfs (if directory does not exist)
-  # mount --types hugetlbfs none /mnt/hugetlbfs -o pagesize=2M
+  ~~~
+  mkdir /mnt/hugetlbfs (if directory does not exist)
+  mount --types hugetlbfs none /mnt/hugetlbfs -o pagesize=2M
+  ~~~
 
 

@@ -21,6 +21,8 @@ set(RORC_LIB_SOURCES
   MemoryMappedFile.cxx
   RorcDeviceFinder.cxx
   RorcStatusCode.cxx
+  RorcUtilsCommon.cxx
+  RorcUtilsOptions.cxx
 )
 
 if(PDA_FOUND)
@@ -43,10 +45,6 @@ if(PDA_FOUND)
   )
 endif()
 
-set(RORC_UTIL_EXAMPLE_SOURCES
-  Example.cxx
-)
-
 
 # -------
 # RORC library
@@ -56,9 +54,9 @@ set(RORC_LIB_NAME rorc)
 add_library(${RORC_LIB_NAME} SHARED ${RORC_LIB_SOURCES})
 target_link_libraries(${RORC_LIB_NAME} 
   ${PDA_LIBRARIES}
-  #boost_interprocess
-  boost_filesystem
-  boost_system
+  ${Boost_FILESYSTEM_LIBRARY}
+  ${Boost_SYSTEM_LIBRARY}
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
   rt # For shared memory
   pthread
 )
@@ -73,17 +71,20 @@ set_target_properties(${RORC_LIB_NAME} PROPERTIES
 
 
 # -------
-# RORC utilities
+# RORC utility executables
 # -------
 
-message("BOOST FOUND:  " ${BOOST_FOUND})
-message("INTERPROCESS: " ${BOOST_INTERPROCESS_LIBRARY})
-message("FILESYSTEM:   " ${BOOST_FILESYSTEM_LIBRARY})
-message("SYSTEM:       " ${BOOST_SYSTEM_LIBRARY})
+# Helper function to build the utility executables
+function(build_util_exec execname filename)
+  add_executable(${execname} ${filename})
+  target_link_libraries(${execname} ${RORC_LIB_NAME})
+endfunction()
 
-set(RORC_UTIL_EXAMPLE_NAME RorcExample)
-add_executable(${RORC_UTIL_EXAMPLE_NAME} ${RORC_UTIL_EXAMPLE_SOURCES})
-target_link_libraries(${RORC_UTIL_EXAMPLE_NAME} ${RORC_LIB_NAME})
+build_util_exec(rorc-example Example.cxx)
+build_util_exec(rorc-reg-read RorcUtilsReadRegister.cxx)
+build_util_exec(rorc-reg-read-range RorcUtilsReadRegisterRange)
+build_util_exec(rorc-reg-write RorcUtilsWriteRegister.cxx)
+
 
 # -------
 # Targets export for all libraries and executables

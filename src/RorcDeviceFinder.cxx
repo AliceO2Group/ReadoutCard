@@ -79,9 +79,8 @@ RorcDeviceFinder::RorcDeviceFinder(int serialNumber)
 
     if (typeMapping.count(deviceId) != 0) {
       // Found a CRORC or CRU. Check its serial number
-      int tempSerial = serialFunctionMapping.at(deviceId)(vendorId, deviceId);
-
-      std::cout << "Found serial: " << tempSerial << std::endl;
+      //int tempSerial = serialFunctionMapping.at(deviceId)(vendorId, deviceId);
+      //std::cout << "Found serial: " << tempSerial << std::endl;
 
       //if (tempSerial == serialNumber) {
         // We found the right card
@@ -95,9 +94,9 @@ RorcDeviceFinder::RorcDeviceFinder(int serialNumber)
   }
 
   BOOST_THROW_EXCEPTION(RorcException()
-          << errinfo_rorc_generic_message("Failed to find RORC")
-          << errinfo_rorc_possible_causes("Incorrect serial number")
-          << errinfo_rorc_serial_number(serialNumber));
+      << errinfo_rorc_generic_message("Failed to find RORC")
+      << errinfo_rorc_possible_causes("Incorrect serial number")
+      << errinfo_rorc_serial_number(serialNumber));
 }
 
 RorcDeviceFinder::~RorcDeviceFinder()
