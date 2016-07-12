@@ -70,7 +70,10 @@ static constexpr size_t PCIE_READY = 129;
 static constexpr size_t LED_ON = 152;
 }
 
-static constexpr int CRU_BUFFERS_PER_CHANNEL = 2;
+/// Amount of additional DMA buffers for this channel
+static constexpr int CRU_BUFFERS_PER_CHANNEL = 1;
+
+/// The index of the DMA buffer for the FIFO
 static constexpr int BUFFER_INDEX_FIFO = 1;
 
 uint32_t getLower32Bits(uint64_t x)

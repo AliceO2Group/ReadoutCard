@@ -69,7 +69,7 @@ int main(int argc, char** argv)
 
     // Get the channel master object
     cout << "\n### Acquiring channel master object" << endl;
-    auto channel = Rorc::ChannelMasterFactory().getChannel(serialNumber, channelNumber, params);
+    auto channel = Rorc::ChannelFactory().getMaster(serialNumber, channelNumber, params);
 
     // Start the DMA
     cout << "\n### Starting DMA" << endl;

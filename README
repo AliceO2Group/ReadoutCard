@@ -14,8 +14,8 @@ RORCs can have multiple DMA channels, and each channel is treated separately by 
   (Note: the old CRORC card has 6 channels, the upcoming CRU 1.)
 
 Clients can acquire a master lock on a channel by instantiating a ChannelMasterInterface implementation through the
-ChannelMasterFactory class.
-It's also possible to instantiate a dummy object.
+ChannelFactory class.
+It's also possible to instantiate a dummy object, or get a slave object that has limited access to the channel.
 
 The ChannelMaster class provides PDA-based functionality common to the CRORC and CRU, and it is mostly an aggregation 
 of PDA wrapper classes and shared memory handling.
@@ -56,7 +56,7 @@ Again, clients must wait manually.
 
 The CruChannelMaster implementation is not complete.
 
-ChannelMasterFactory should instantiate a ChannelMaster object based on card type and serial number. 
+ChannelFactory should instantiate a ChannelMaster object based on card type and serial number. 
 But currently, it just goes with the first C-RORC it comes across. 
 
 

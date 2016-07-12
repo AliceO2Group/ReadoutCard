@@ -1,3 +1,8 @@
+///
+/// \file ChannelMaster.h
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+///
+
 #pragma once
 
 #include <vector>
@@ -23,7 +28,13 @@ class ChannelMaster: public ChannelMasterInterface
 {
   public:
 
-    ChannelMaster(int serial, int channel, const ChannelParameters& params, int dmaBuffersPerChannel);
+    /// Constructor for the ChannelMaster object
+    /// \param serial Serial number of the card
+    /// \param channel Channel number of the channel
+    /// \param params Parameters of the channel
+    /// \param additionalBuffers Subclasses must provide here the amount of DMA buffers the channel uses in total,
+    ///        excluding the one used by the ChannelMaster itself.
+    ChannelMaster(int serial, int channel, const ChannelParameters& params, int additionalBuffers);
     ~ChannelMaster();
 
     virtual void startDma();

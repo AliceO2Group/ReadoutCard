@@ -14,8 +14,9 @@ namespace Rorc {
 /// A dummy implementation of the ChannelMasterInterface.
 /// This exists so that the RORC module may be built even if the all the dependencies of the 'real' card
 /// implementation are not met (this mainly concerns the PDA driver library).
-/// In the future, a dummy implementation could be a simulated card. Currently, methods of this implementation do
-/// nothing besides print which method was called. Returned values are static and should not be used.
+/// In the future, a dummy implementation could be a simulated card.
+/// Currently, most methods of this implementation do nothing besides print which method was called.
+/// The getPage() function simulates incremental data generator output
 class DummyChannelMaster : public ChannelMasterInterface
 {
   public:

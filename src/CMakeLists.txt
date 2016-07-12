@@ -17,6 +17,7 @@ set(RORC_LIB_SOURCES
   ChannelParameters.cxx
   ChannelPaths.cxx
   DummyChannelMaster.cxx
+  DummyChannelSlave.cxx
   MemoryMappedFile.cxx
   RorcDeviceFinder.cxx
   RorcStatusCode.cxx
@@ -31,8 +32,9 @@ if(PDA_FOUND)
     c/rorc/aux.c
     c/rorc/ddl.c
     c/rorc/rorc.c
+    ChannelFactory.cxx
     ChannelMaster.cxx
-    ChannelMasterFactory.cxx
+    ChannelSlave.cxx
     CrorcChannelMaster.cxx
     CruChannelMaster.cxx
     PdaBar.cxx

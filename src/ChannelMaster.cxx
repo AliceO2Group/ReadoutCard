@@ -1,3 +1,8 @@
+///
+/// \file ChannelMaster.cxx
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+///
+
 #include "ChannelMaster.h"
 #include <iostream>
 #include "ChannelPaths.h"
@@ -11,6 +16,7 @@ namespace bfs = boost::filesystem;
 using std::cout;
 using std::endl;
 
+static constexpr int CHANNELMASTER_DMA_BUFFERS_PER_CHANNEL = 1;
 static constexpr int BUFFER_INDEX_PAGES = 0;
 
 int ChannelMaster::getBufferId(int index)
@@ -44,10 +50,10 @@ void ChannelMaster::validateParameters(const ChannelParameters& ps)
   }
 }
 
-ChannelMaster::ChannelMaster(int serial, int channel, const ChannelParameters& params, int dmaBuffersPerChannel)
+ChannelMaster::ChannelMaster(int serial, int channel, const ChannelParameters& params, int additionalBuffers)
  : serialNumber(serial),
    channelNumber(channel),
-   dmaBuffersPerChannel(dmaBuffersPerChannel),
+   dmaBuffersPerChannel(additionalBuffers + CHANNELMASTER_DMA_BUFFERS_PER_CHANNEL),
    sharedData(
        ChannelPaths::lock(serial, channel),
        ChannelPaths::state(serial, channel),

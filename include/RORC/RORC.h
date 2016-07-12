@@ -8,5 +8,6 @@
 #pragma once
 
 #include <RORC/ChannelMasterInterface.h>
-#include <RORC/ChannelMasterFactory.h>
+#include <RORC/ChannelSlaveInterface.h>
+#include <RORC/ChannelFactory.h>
 #include <RORC/ChannelParameters.h>

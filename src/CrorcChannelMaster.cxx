@@ -33,8 +33,8 @@ namespace Rorc {
     << errinfo_rorc_status_code(_status_code) \
     << errinfo_rorc_status_code_string(::AliceO2::Rorc::getRorcStatusString(_status_code))
 
-/// Amount of DMA buffers for this channel
-static constexpr int CRORC_BUFFERS_PER_CHANNEL = 2;
+/// Amount of additional DMA buffers for this channel
+static constexpr int CRORC_BUFFERS_PER_CHANNEL = 1;
 
 /// The index of the DMA buffer of the Ready FIFO
 static constexpr int BUFFER_INDEX_FIFO = 1;
