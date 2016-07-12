@@ -1,5 +1,5 @@
 ///
-/// \file BarWrapper.cxx
+/// \file PdaBar.cxx
 /// \author Pascal Boeschoten
 ///
 
@@ -21,16 +21,16 @@ PdaBar::PdaBar(PciDevice* pciDevice, int channel)
 {
   // Getting the BAR struct
   if(PciDevice_getBar(pciDevice, &pdaBar, channel) != PDA_SUCCESS ){
-    BOOST_THROW_EXCEPTION(AliceO2RorcException()
-        << errinfo_aliceO2_rorc_generic_message("Failed to get BAR")
-        << errinfo_aliceO2_rorc_channel_number(channel));
+    BOOST_THROW_EXCEPTION(RorcException()
+        << errinfo_rorc_generic_message("Failed to get BAR")
+        << errinfo_rorc_channel_number(channel));
   }
 
   // Mapping the BAR starting  address
   if(Bar_getMap(pdaBar, (void**) &userspaceAddress, &barLength) != PDA_SUCCESS ){
-    BOOST_THROW_EXCEPTION(AliceO2RorcException()
-        << errinfo_aliceO2_rorc_generic_message("Failed to map BAR")
-        << errinfo_aliceO2_rorc_channel_number(channel));
+    BOOST_THROW_EXCEPTION(RorcException()
+        << errinfo_rorc_generic_message("Failed to map BAR")
+        << errinfo_rorc_channel_number(channel));
   }
 }
 

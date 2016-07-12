@@ -59,17 +59,17 @@ class ChannelMasterInterface
     virtual PageHandle pushNextPage() = 0;
 
     /// Check if the page has arrived
-    /// \handle The handle of the page returned from pushNextPage()
+    /// \param handle The handle of the page returned from pushNextPage()
     /// \return True if the page has arrived, else false
     virtual bool isPageArrived(const PageHandle& handle) = 0;
 
     /// Get a page
-    /// \handle The handle of the page returned from pushNextPage()
+    /// \param handle The handle of the page returned from pushNextPage()
     /// \return A Page object containing the address of the page
     virtual Page getPage(const PageHandle& handle) = 0;
 
     /// Mark a page as read, so it can be written to again
-    /// \handle The handle of the page returned from pushNextPage()
+    /// \param handle The handle of the page returned from pushNextPage()
     virtual void markPageAsRead(const PageHandle& handle) = 0;
 };
 

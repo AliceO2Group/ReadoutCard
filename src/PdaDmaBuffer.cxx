@@ -1,5 +1,5 @@
 ///
-/// \file BarWrapper.cxx
+/// \file PdaDmaBuffer.cxx
 /// \author Pascal Boeschoten
 ///
 

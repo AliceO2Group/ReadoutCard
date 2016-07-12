@@ -59,10 +59,10 @@ std::shared_ptr<ChannelMasterInterface> ChannelMasterFactory::getChannel(int ser
     auto cardType = finder.getCardType();
 
     if (cardType == RorcDeviceFinder::CardType::UNKNOWN) {
-      BOOST_THROW_EXCEPTION(AliceO2RorcException()
-          << errinfo_aliceO2_rorc_generic_message("Unknown card type")
-          << errinfo_aliceO2_rorc_serial_number(serialNumber)
-          << errinfo_aliceO2_rorc_channel_number(channelNumber));
+      BOOST_THROW_EXCEPTION(RorcException()
+          << errinfo_rorc_generic_message("Unknown card type")
+          << errinfo_rorc_serial_number(serialNumber)
+          << errinfo_rorc_channel_number(channelNumber));
     }
 
     if (cardType == RorcDeviceFinder::CardType::CRORC) {
@@ -76,17 +76,17 @@ std::shared_ptr<ChannelMasterInterface> ChannelMasterFactory::getChannel(int ser
       return std::make_shared<CrorcChannelMaster>(serialNumber, channelNumber, params);
     } else if (cardType == RorcDeviceFinder::CardType::CRU) {
       // TODO Remove throw when CruChannelMaster is in usable state
-      BOOST_THROW_EXCEPTION(AliceO2RorcException()
-          << errinfo_aliceO2_rorc_generic_message("CRU not yet supported")
-          << errinfo_aliceO2_rorc_serial_number(serialNumber)
-          << errinfo_aliceO2_rorc_channel_number(channelNumber));
+      BOOST_THROW_EXCEPTION(RorcException()
+          << errinfo_rorc_generic_message("CRU not yet supported")
+          << errinfo_rorc_serial_number(serialNumber)
+          << errinfo_rorc_channel_number(channelNumber));
 
       return std::make_shared<CruChannelMaster>(serialNumber, channelNumber, params);
     } else {
-      BOOST_THROW_EXCEPTION(AliceO2RorcException()
-          << errinfo_aliceO2_rorc_generic_message("Unrecognized card type")
-          << errinfo_aliceO2_rorc_serial_number(serialNumber)
-          << errinfo_aliceO2_rorc_channel_number(channelNumber));
+      BOOST_THROW_EXCEPTION(RorcException()
+          << errinfo_rorc_generic_message("Unrecognized card type")
+          << errinfo_rorc_serial_number(serialNumber)
+          << errinfo_rorc_channel_number(channelNumber));
     }
   }
 #else

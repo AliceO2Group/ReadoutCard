@@ -56,6 +56,9 @@ Again, clients must wait manually.
 
 The CruChannelMaster implementation is not complete.
 
+ChannelMasterFactory should instantiate a ChannelMaster object based on card type and serial number. 
+But currently, it just goes with the first C-RORC it comes across. 
+
 
 ## Dependencies
 

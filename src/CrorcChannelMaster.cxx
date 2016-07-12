@@ -29,13 +29,9 @@ namespace Rorc {
 
 /// Adds errinfo using the given status code and error message
 #define ADD_ERRINFO(_status_code, _err_message) \
-    << errinfo_aliceO2_rorc_generic_message(_err_message) \
-    << errinfo_aliceO2_rorc_status_code(_status_code) \
-    << errinfo_aliceO2_rorc_status_code_string(::AliceO2::Rorc::getRorcStatusString(_status_code))
-
-/// Adds errinfo using the given error message
-#define ADD_ERRINFO_MSG(_err_message) \
-      << errinfo_aliceO2_rorc_generic_message(_err_message) \
+    << errinfo_rorc_generic_message(_err_message) \
+    << errinfo_rorc_status_code(_status_code) \
+    << errinfo_rorc_status_code_string(::AliceO2::Rorc::getRorcStatusString(_status_code))
 
 /// Amount of DMA buffers for this channel
 static constexpr int CRORC_BUFFERS_PER_CHANNEL = 2;
@@ -92,8 +88,8 @@ CrorcChannelMaster::CrorcChannelMaster(int serial, int channel, const ChannelPar
   }
 
   if (pageAddresses.size() <= ReadyFifo::FIFO_ENTRIES) {
-    BOOST_THROW_EXCEPTION(AliceO2RorcException()
-          << errinfo_aliceO2_rorc_generic_message("Insufficient amount of pages fit in DMA buffer"));
+    BOOST_THROW_EXCEPTION(RorcException()
+        << errinfo_rorc_generic_message("Insufficient amount of pages fit in DMA buffer"));
   }
 }
 
@@ -180,11 +176,11 @@ void CrorcChannelMaster::resetCard(ResetLevel::type resetLevel)
 
       crorcArmDdl(RORC_RESET_RORC);
     }
-  } catch (AliceO2RorcException& e) {
-    e << errinfo_aliceO2_rorc_reset_level(resetLevel);
-    e << errinfo_aliceO2_rorc_reset_level_string(ResetLevel::toString(resetLevel));
-    e << errinfo_aliceO2_rorc_loopback_mode(loopbackMode);
-    e << errinfo_aliceO2_rorc_loopback_mode_string(LoopbackMode::toString(loopbackMode));
+  } catch (RorcException& e) {
+    e << errinfo_rorc_reset_level(resetLevel);
+    e << errinfo_rorc_reset_level_string(ResetLevel::toString(resetLevel));
+    e << errinfo_rorc_loopback_mode(loopbackMode);
+    e << errinfo_rorc_loopback_mode_string(LoopbackMode::toString(loopbackMode));
     throw;
   }
 
@@ -216,6 +212,23 @@ void CrorcChannelMaster::startDataGenerator(const GeneratorParameters& gen)
   rorcStartDataGenerator(pdaBar.getUserspaceAddress(), gen.maximumEvents);
 }
 
+void CrorcChannelMaster::startDataReceiving()
+{
+  crorcInitDiuVersion();
+
+  // Preparing the card.
+  if (LoopbackMode::EXTERNAL_SIU == getParams().generator.loopbackMode) {
+    resetCard(ResetLevel::RORC_DIU_SIU);
+    crorcCheckLink();
+    crorcSiuCommand(0);
+    crorcDiuCommand(0);
+  }
+
+  crorcReset();
+  crorcCheckFreeFifoEmpty();
+  crorcStartDataReceiver();
+}
+
 void CrorcChannelMaster::initializeFreeFifo()
 {
   // Pushing a given number of pages to the firmware FIFO.
@@ -238,7 +251,7 @@ ChannelMasterInterface::PageHandle CrorcChannelMaster::pushNextPage()
 
   if (sharedData.get()->dmaState != DmaState::STARTED) {
     BOOST_THROW_EXCEPTION(CrorcException()
-        << errinfo_aliceO2_rorc_generic_message("Not in required DMA state"));
+        << errinfo_rorc_generic_message("Not in required DMA state"));
   }
 
   // Handle for next page
@@ -248,8 +261,8 @@ ChannelMasterInterface::PageHandle CrorcChannelMaster::pushNextPage()
   // Check if page is available to write to
   if (pageWasReadOut[fifoIndex] == false) {
     BOOST_THROW_EXCEPTION(CrorcException()
-        << errinfo_aliceO2_rorc_generic_message("Pushing page would overwrite")
-        << errinfo_aliceO2_rorc_fifo_index(fifoIndex));
+        << errinfo_rorc_generic_message("Pushing page would overwrite")
+        << errinfo_rorc_fifo_index(fifoIndex));
   }
 
   pageWasReadOut[fifoIndex] = false;
@@ -288,18 +301,18 @@ CrorcChannelMaster::DataArrivalStatus::type CrorcChannelMaster::dataArrived(int 
     if ((status & (1 << 31)) != 0) {
       // The error bit is set
       BOOST_THROW_EXCEPTION(CrorcDataArrivalException()
-          << errinfo_aliceO2_rorc_generic_message("Data arrival status word contains error bits")
-          << errinfo_aliceO2_rorc_readyfifo_status(b::str(b::format("0x%x") % status))
-          << errinfo_aliceO2_rorc_readyfifo_length(length)
-          << errinfo_aliceO2_rorc_fifo_index(index));
+          << errinfo_rorc_generic_message("Data arrival status word contains error bits")
+          << errinfo_rorc_readyfifo_status(b::str(b::format("0x%x") % status))
+          << errinfo_rorc_readyfifo_length(length)
+          << errinfo_rorc_fifo_index(index));
     }
     return DataArrivalStatus::WHOLE_ARRIVED;
   } else {
     BOOST_THROW_EXCEPTION(CrorcDataArrivalException()
-        << errinfo_aliceO2_rorc_generic_message("Unrecognized data arrival status word")
-        << errinfo_aliceO2_rorc_readyfifo_status(b::str(b::format("0x%x") % status))
-        << errinfo_aliceO2_rorc_readyfifo_length(length)
-        << errinfo_aliceO2_rorc_fifo_index(index));
+        << errinfo_rorc_generic_message("Unrecognized data arrival status word")
+        << errinfo_rorc_readyfifo_status(b::str(b::format("0x%x") % status))
+        << errinfo_rorc_readyfifo_length(length)
+        << errinfo_rorc_fifo_index(index));
   }
 }
 
@@ -319,8 +332,8 @@ void CrorcChannelMaster::markPageAsRead(const PageHandle& handle)
 {
   if (pageWasReadOut[handle.index]) {
     BOOST_THROW_EXCEPTION(CrorcException()
-        << errinfo_aliceO2_rorc_generic_message("Page was already marked as read")
-        << errinfo_aliceO2_rorc_page_index(handle.index));
+        << errinfo_rorc_generic_message("Page was already marked as read")
+        << errinfo_rorc_page_index(handle.index));
   }
 
   getReadyFifo().entries[handle.index].reset();
@@ -353,21 +366,19 @@ void CrorcChannelMaster::crorcArmDataGenerator()
   int roundedLen;
   int returnCode = rorcArmDataGenerator(pdaBar.getUserspaceAddress(), gen.initialValue, gen.initialWord, gen.pattern,
       gen.dataSize / 4, gen.seed, &roundedLen);
-
   THROW_IF_BAD_STATUS(returnCode, CrorcArmDataGeneratorException()
       ADD_ERRINFO(returnCode, "Failed to arm data generator")
-      << errinfo_aliceO2_rorc_generator_pattern(gen.pattern)
-      << errinfo_aliceO2_rorc_generator_event_length(gen.dataSize / 4));
+      << errinfo_rorc_generator_pattern(gen.pattern)
+      << errinfo_rorc_generator_event_length(gen.dataSize / 4));
 }
 
 void CrorcChannelMaster::crorcArmDdl(int resetMask)
 {
   auto csd = crorcSharedData.get();
   int returnCode = rorcArmDDL(pdaBar.getUserspaceAddressU32(), resetMask, csd->diuVersion, csd->pciLoopPerUsec);
-
   THROW_IF_BAD_STATUS(returnCode, CrorcArmDdlException()
       ADD_ERRINFO(returnCode, "Failed to arm DDL")
-      << errinfo_aliceO2_rorc_ddl_reset_mask(b::str(b::format("0x%x") % resetMask)));
+      << errinfo_rorc_ddl_reset_mask(b::str(b::format("0x%x") % resetMask)));
 }
 
 void CrorcChannelMaster::crorcInitDiuVersion()
@@ -376,7 +387,6 @@ void CrorcChannelMaster::crorcInitDiuVersion()
   auto csd = crorcSharedData.get();
   setLoopPerSec(&crorcSharedData.get()->loopPerUsec, &csd->pciLoopPerUsec, barAddress);
   int returnCode = ddlFindDiuVersion(barAddress, csd->pciLoopPerUsec, &csd->rorcRevision, &csd->diuVersion);
-
   THROW_IF_BAD_STATUS(returnCode, CrorcInitDiuException()
       ADD_ERRINFO(returnCode, "Failed to initialize DIU version"));
 }
@@ -384,7 +394,6 @@ void CrorcChannelMaster::crorcInitDiuVersion()
 void CrorcChannelMaster::crorcCheckLink()
 {
   int returnCode = rorcCheckLink(pdaBar.getUserspaceAddress());
-
   THROW_IF_BAD_STATUS(returnCode, CrorcCheckLinkException()
       ADD_ERRINFO(returnCode, "Bad link status"));
 }
@@ -393,20 +402,18 @@ void CrorcChannelMaster::crorcSiuCommand(int command)
 {
   auto csd = crorcSharedData.get();
   int returnCode = ddlReadSiu(pdaBar.getUserspaceAddress(), command, DDL_RESPONSE_TIME, csd->pciLoopPerUsec);
-
   THROW_IF_BAD_STATUS(returnCode, CrorcSiuCommandException()
       ADD_ERRINFO(returnCode, "Failed to send SIU command")
-      << errinfo_aliceO2_rorc_siu_command(command));
+      << errinfo_rorc_siu_command(command));
 }
 
 void CrorcChannelMaster::crorcDiuCommand(int command)
 {
   auto csd = crorcSharedData.get();
   int returnCode = ddlReadDiu(pdaBar.getUserspaceAddress(), command, DDL_RESPONSE_TIME, csd->pciLoopPerUsec);
-
   THROW_IF_BAD_STATUS(returnCode, CrorcSiuCommandException()
       ADD_ERRINFO(returnCode, "Failed to send DIU command")
-      << errinfo_aliceO2_rorc_diu_command(command));
+      << errinfo_rorc_diu_command(command));
 }
 
 void CrorcChannelMaster::crorcReset()
@@ -437,7 +444,6 @@ void CrorcChannelMaster::crorcSetSiuLoopback()
   stword_t stw;
   int returnCode = ddlSetSiuLoopBack(pdaBar.getUserspaceAddress(), DDL_RESPONSE_TIME * csd->pciLoopPerUsec,
       csd->pciLoopPerUsec, &stw);
-
   THROW_IF_BAD_STATUS(returnCode, CrorcSiuLoopbackException()
         ADD_ERRINFO(returnCode, "Failed to set SIU loopback"));
 }
@@ -447,7 +453,6 @@ void CrorcChannelMaster::crorcStartTrigger()
   auto csd = crorcSharedData.get();
   stword_t stw;
   int returnCode = rorcStartTrigger(pdaBar.getUserspaceAddress(), DDL_RESPONSE_TIME * csd->pciLoopPerUsec, &stw);
-
   THROW_IF_BAD_STATUS(returnCode, CrorcStartTriggerException()
           ADD_ERRINFO(returnCode, "Failed to start trigger"));
 }
@@ -457,26 +462,8 @@ void CrorcChannelMaster::crorcStopTrigger()
   stword_t stw;
   uint64_t timeout = crorcSharedData.get()->pciLoopPerUsec * DDL_RESPONSE_TIME;
   int returnCode = rorcStopTrigger(pdaBar.getUserspaceAddress(), timeout, &stw);
-
   THROW_IF_BAD_STATUS(returnCode, CrorcStopTriggerException()
             ADD_ERRINFO(returnCode, "Failed to stop trigger"));
-}
-
-void CrorcChannelMaster::startDataReceiving()
-{
-  crorcInitDiuVersion();
-
-  // Preparing the card.
-  if (LoopbackMode::EXTERNAL_SIU == getParams().generator.loopbackMode) {
-    resetCard(ResetLevel::RORC_DIU_SIU);
-    crorcCheckLink();
-    crorcSiuCommand(0);
-    crorcDiuCommand(0);
-  }
-
-  crorcReset();
-  crorcCheckFreeFifoEmpty();
-  crorcStartDataReceiver();
 }
 
 } // namespace Rorc

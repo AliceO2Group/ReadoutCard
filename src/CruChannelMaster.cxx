@@ -24,14 +24,15 @@ namespace Rorc {
 /// Creates a CruException and attaches data using the given message string
 #define CRU_EXCEPTION(_err_message) \
   CruException() \
-      << errinfo_aliceO2_rorc_generic_message(_err_message)
+      << errinfo_rorc_generic_message(_err_message)
 
 /// Throws a CruException with the given message string
 #define THROW_CRU_EXCEPTION(_err_message) \
   BOOST_THROW_EXCEPTION(CruException() \
-      << errinfo_aliceO2_rorc_generic_message(_err_message))
+      << errinfo_rorc_generic_message(_err_message))
 
 
+/// Namespace containing definitions of indexes for CRU BAR registers
 namespace BarIndex
 {
 /// Status table base address (low 32 bits)
@@ -146,8 +147,7 @@ CruChannelMaster::~CruChannelMaster()
 }
 
 CruChannelMaster::CrorcSharedData::CrorcSharedData()
-    : initializationState(InitializationState::UNKNOWN), fifoIndexWrite(0), fifoIndexRead(0), pageIndex(0), loopPerUsec(
-        0), pciLoopPerUsec(0)
+    : initializationState(InitializationState::UNKNOWN), fifoIndexWrite(0), fifoIndexRead(0), pageIndex(0)
 {
 }
 
@@ -157,8 +157,6 @@ void CruChannelMaster::CrorcSharedData::initialize()
   fifoIndexWrite = 0;
   fifoIndexRead = 0;
   pageIndex = 0;
-  loopPerUsec = 0;
-  pciLoopPerUsec = 0;
 }
 
 void CruChannelMaster::deviceStartDma()

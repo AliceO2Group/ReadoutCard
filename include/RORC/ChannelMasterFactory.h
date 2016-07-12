@@ -25,6 +25,8 @@ class ChannelMasterFactory
     /// It is not yet implemented fully, currently it will just pick the
     /// first CRORC it comes across. If the PDA dependency is not available, a dummy implementation will be returned.
     /// \param serialNumber The serial number of the card. Passing 'DUMMY_SERIAL_NUMBER' returns a dummy implementation
+    /// \param channelNumber The number of the channel to open.
+    /// \param params Parameters to pass onto the ChannelMasterInterface implementation
     std::shared_ptr<ChannelMasterInterface> getChannel(int serialNumber, int channelNumber, const ChannelParameters& params);
 };
 

@@ -40,9 +40,15 @@ class RorcDeviceFinder
       return cardType;
     }
 
+    int getSerialNumber() const
+    {
+      return rorcSerialNumber;
+    }
+
   private:
     std::string pciDeviceId;
     std::string pciVendorId;
+    int rorcSerialNumber;
     CardType::type cardType;
 };
 

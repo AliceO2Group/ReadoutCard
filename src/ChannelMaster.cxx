@@ -19,7 +19,7 @@ int ChannelMaster::getBufferId(int index)
 
   if (index >= n || index < 0) {
     BOOST_THROW_EXCEPTION(InvalidParameterException()
-        << errinfo_aliceO2_rorc_generic_message("Tried to get buffer ID using invalid index"));
+        << errinfo_rorc_generic_message("Tried to get buffer ID using invalid index"));
 
   }
 
@@ -30,17 +30,17 @@ void ChannelMaster::validateParameters(const ChannelParameters& ps)
 {
   if (ps.dma.bufferSize % (2 * 1024 * 1024) != 0) {
     BOOST_THROW_EXCEPTION(InvalidParameterException()
-        << errinfo_aliceO2_rorc_generic_message("Parameter 'dma.bufferSize' not a multiple of 2 mebibytes"));
+        << errinfo_rorc_generic_message("Parameter 'dma.bufferSize' not a multiple of 2 mebibytes"));
   }
 
   if (ps.generator.dataSize > ps.dma.pageSize) {
     BOOST_THROW_EXCEPTION(InvalidParameterException()
-        << errinfo_aliceO2_rorc_generic_message("Parameter 'generator.dataSize' greater than 'dma.pageSize'"));
+        << errinfo_rorc_generic_message("Parameter 'generator.dataSize' greater than 'dma.pageSize'"));
   }
 
   if ((ps.dma.bufferSize % ps.dma.pageSize) != 0) {
     BOOST_THROW_EXCEPTION(InvalidParameterException()
-            << errinfo_aliceO2_rorc_generic_message("DMA buffer size not a multiple of 'dma.pageSize'"));
+            << errinfo_rorc_generic_message("DMA buffer size not a multiple of 'dma.pageSize'"));
   }
 }
 

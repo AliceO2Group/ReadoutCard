@@ -11,7 +11,6 @@ namespace AliceO2 {
 namespace Rorc {
 
 /// Extends ChannelMaster object, and provides device-specific functionality
-/// TODO Factor CRORC-specific things out of ChannelMaster and into this
 class CrorcChannelMaster : public ChannelMaster
 {
   public:
@@ -55,11 +54,11 @@ class CrorcChannelMaster : public ChannelMaster
         CrorcSharedData();
         void initialize();
         InitializationState::type initializationState;
-        int fifoIndexWrite; /// Index of next FIFO page available for writing
-        int fifoIndexRead; /// Index of oldest non-free FIFO page
-        int bufferPageIndex; /// Index of next DMA buffer page available for writing
-        long long int loopPerUsec; // Some timing parameter used during communications with the card
-        double pciLoopPerUsec; // Some timing parameters used during communications with the card
+        int fifoIndexWrite; ///< Index of next FIFO page available for writing
+        int fifoIndexRead; ///< Index of oldest non-free FIFO page
+        int bufferPageIndex; ///< Index of next DMA buffer page available for writing
+        long long int loopPerUsec; ///< Some timing parameter used during communications with the card
+        double pciLoopPerUsec; ///< Some timing parameters used during communications with the card
         int rorcRevision;
         int siuVersion;
         int diuVersion;
@@ -89,7 +88,7 @@ class CrorcChannelMaster : public ChannelMaster
     /// Check if data has arrived
     DataArrivalStatus::type dataArrived(int index);
 
-    /// Arms CRORC data generator
+    /// Arms C-RORC data generator
     void crorcArmDataGenerator();
 
     /// Arms DDL
@@ -103,9 +102,13 @@ class CrorcChannelMaster : public ChannelMaster
     void crorcCheckLink();
 
     /// Send a command to the SIU
+    /// \param command The command to send to the SIU. These are probably the macros under 'interface commands' in
+    ///   the header ddl_def.h
     void crorcSiuCommand(int command);
 
     /// Send a command to the DIU
+    /// \param command The command to send to the SIU. These are probably the macros under 'interface commands' in
+    ///   the header ddl_def.h
     void crorcDiuCommand(int command);
 
     /// Reset the C-RORC

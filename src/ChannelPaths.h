@@ -1,5 +1,5 @@
 ///
-/// \file BarWrapper.h
+/// \file ChannelPaths.h
 /// \author Pascal Boeschoten
 ///
 

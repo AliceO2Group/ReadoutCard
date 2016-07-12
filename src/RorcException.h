@@ -1,8 +1,8 @@
 ///
-/// \file Exception.h
+/// \file RorcException.h
 /// \author Pascal Boeschoten
 ///
-/// Utilities for RORC exceptions
+/// Exceptions for the RORC module
 ///
 
 #pragma once
@@ -12,19 +12,15 @@
 #include <sstream>
 #include <boost/exception/all.hpp>
 #include <cstdint>
+#include <boost/preprocessor/cat.hpp>
+#include <boost/preprocessor/seq/for_each.hpp>
 
 namespace AliceO2 {
 namespace Rorc {
 
-struct AliceO2RorcException : virtual boost::exception, virtual std::exception {};
-
 /// Helper macro for defining errinfo types for Boost exceptions
 #define DEFINE_ERRINFO(name, type) \
-  using errinfo_aliceO2_rorc_##name = boost::error_info<struct errinfo_aliceO2_rorc_##name##_, type>
-
-/// Helper macro for defining exception types
-#define DEFINE_EXCEPTION(name) \
-  struct name##Exception : virtual AliceO2RorcException {}
+  using errinfo_rorc_##name = boost::error_info<struct errinfo_rorc_##name##_, type>
 
 // errinfo definitions
 DEFINE_ERRINFO(generic_message, std::string);
@@ -51,31 +47,38 @@ DEFINE_ERRINFO(generator_pattern, int);
 DEFINE_ERRINFO(generator_seed, int);
 DEFINE_ERRINFO(generator_event_length, size_t);
 
-// Exception definitions
-DEFINE_EXCEPTION(MemoryMap);
-DEFINE_EXCEPTION(InvalidParameter);
-DEFINE_EXCEPTION(FileLock);
-DEFINE_EXCEPTION(Crorc);
-DEFINE_EXCEPTION(CrorcArmDataGenerator);
-DEFINE_EXCEPTION(CrorcArmDdl);
-DEFINE_EXCEPTION(CrorcInitDiu);
-DEFINE_EXCEPTION(CrorcCheckLink);
-DEFINE_EXCEPTION(CrorcSiuCommand);
-DEFINE_EXCEPTION(CrorcDiuCommand);
-DEFINE_EXCEPTION(CrorcSiuLoopback);
-DEFINE_EXCEPTION(CrorcFreeFifo);
-DEFINE_EXCEPTION(CrorcStartDataGenerator);
-DEFINE_EXCEPTION(CrorcStartTrigger);
-DEFINE_EXCEPTION(CrorcStopTrigger);
-DEFINE_EXCEPTION(CrorcDataArrival);
-DEFINE_EXCEPTION(Cru);
-
-// Undefine macros for header safety
+// Undefine macro for header safety
 #undef DEFINE_ERRINFO
-#undef DEFINE_EXCEPTION
+
+// RORC exception definitions
+struct RorcException : virtual boost::exception, virtual std::exception {};
+
+// General exception definitions
+struct MemoryMapException : virtual RorcException {};
+struct InvalidParameterException : virtual RorcException {};
+struct FileLockException : virtual RorcException {};
+struct DeviceFinderException : virtual RorcException {};
+
+// C-RORC exception definitions
+struct CrorcException : virtual RorcException {};
+struct CrorcArmDataGeneratorException : virtual CrorcException {};
+struct CrorcArmDdlException : virtual CrorcException {};
+struct CrorcInitDiuException : virtual CrorcException {};
+struct CrorcCheckLinkException : virtual CrorcException {};
+struct CrorcSiuCommandException : virtual CrorcException {};
+struct CrorcDiuCommandException : virtual CrorcException {};
+struct CrorcSiuLoopbackException : virtual CrorcException {};
+struct CrorcFreeFifoException : virtual CrorcException {};
+struct CrorcStartDataGeneratorException : virtual CrorcException {};
+struct CrorcStartTriggerException : virtual CrorcException {};
+struct CrorcStopTriggerException : virtual CrorcException {};
+struct CrorcDataArrivalException : virtual CrorcException {};
+
+// CRU exception definitions
+struct CruException : virtual RorcException {};
 
 } // namespace Rorc
 } // namespace AliceO2
 
 #define ALICEO2_RORC_THROW_EXCEPTION(message) \
-    BOOST_THROW_EXCEPTION(AliceO2RorcException() << errinfo_aliceO2_rorc_generic_message(message))
+    BOOST_THROW_EXCEPTION(RorcException() << errinfo_rorc_generic_message(message))

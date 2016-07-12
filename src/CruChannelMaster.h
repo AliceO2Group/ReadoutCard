@@ -39,24 +39,49 @@ class CruChannelMaster : public ChannelMaster
 
     static constexpr size_t CRU_DESCRIPTOR_ENTRIES = 128l;
 
-    struct CruFifoTable {
-      struct StatusEntry {
-          volatile uint32_t status;
-      };
+    /// A class representing the CRU status and descriptor tables
+    struct CruFifoTable
+    {
+        /// A class representing a CRU status table entry
+        struct StatusEntry
+        {
+            volatile uint32_t status;
+        };
 
-      struct DescriptorEntry {
-        uint32_t srcLow;
-        uint32_t srcHigh;
-        uint32_t dstLow;
-        uint32_t dstHigh;
-        uint32_t ctrl;
-        uint32_t reserved1;
-        uint32_t reserved2;
-        uint32_t reserved3;
-      };
+        /// A class representing a CRU descriptor table entry
+        struct DescriptorEntry
+        {
 
-      std::array<StatusEntry, CRU_DESCRIPTOR_ENTRIES> statusEntries;
-      std::array<DescriptorEntry, CRU_DESCRIPTOR_ENTRIES> descriptorEntries;
+            /// Low 32 bits of the DMA source address on the card
+            uint32_t srcLow;
+
+            /// High 32 bits of the DMA source address on the card
+            uint32_t srcHigh;
+
+            /// Low 32 bits of the DMA destination address on the bus
+            uint32_t dstLow;
+
+            /// High 32 bits of the DMA destination address on the bus
+            uint32_t dstHigh;
+
+            /// Control register
+            uint32_t ctrl;
+
+            /// Reserved field 1
+            uint32_t reserved1;
+
+            /// Reserved field 2
+            uint32_t reserved2;
+
+            /// Reserved field 3
+            uint32_t reserved3;
+        };
+
+        /// Array of status entries
+        std::array<StatusEntry, CRU_DESCRIPTOR_ENTRIES> statusEntries;
+
+        /// Array of descriptor entries
+        std::array<DescriptorEntry, CRU_DESCRIPTOR_ENTRIES> descriptorEntries;
     };
 
     /// Persistent device state/data that resides in shared memory
@@ -64,13 +89,21 @@ class CruChannelMaster : public ChannelMaster
     {
       public:
         CrorcSharedData();
+
+        /// Initialize the shared data fields
         void initialize();
+
+        /// State of the initialization of the shared data
         InitializationState::type initializationState;
-        int fifoIndexWrite; /// Index of next page available for writing
-        int fifoIndexRead; /// Index of oldest non-free page
-        int pageIndex; /// Index to the next free page of the DMA buffer
-        long long int loopPerUsec; // Some timing parameter used during communications with the card
-        double pciLoopPerUsec; // Some timing parameters used during communications with the card
+
+        /// Index of next page available for writing
+        int fifoIndexWrite;
+
+        /// Index of oldest non-free page
+        int fifoIndexRead;
+
+        /// Index to the next free page of the DMA buffer
+        int pageIndex;
     };
 
     /// Memory mapped file containing the readyFifo

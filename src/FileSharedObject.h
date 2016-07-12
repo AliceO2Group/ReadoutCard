@@ -59,9 +59,7 @@ class FileSharedObject
     /// \param sharedFileSize   Size of the shared memory file
     /// \param sharedObjectName Name of the object within the shared memory file
     /// \param tag              Indicates that the shared object should be found only
-    /// \param args             Constructor arguments to be forwarded to the object
-    template <typename ...Args>
-    FileSharedObject(
+    inline FileSharedObject(
         const bfs::path&   sharedFilePath,
         const size_t&      sharedFileSize,
         const std::string& sharedObjectName,
@@ -122,9 +120,7 @@ class LockedFileSharedObject
     /// \param sharedFileSize   Size of the shared memory file
     /// \param sharedObjectName Name of the object within the shared memory file
     /// \param tag              Indicates that the shared object should be found or constructed
-    /// \param args             Constructor arguments to be forwarded to the object
-    template <typename ...Args>
-    LockedFileSharedObject(
+    inline LockedFileSharedObject(
         const bfs::path&   lockPath,
         const bfs::path&   sharedFilePath,
         const size_t&      sharedFileSize,
@@ -151,8 +147,8 @@ class LockedFileSharedObject
         {
           if (!lock.try_lock()) {
             BOOST_THROW_EXCEPTION(FileLockException()
-                    << errinfo_aliceO2_rorc_generic_message("Failed to acquire file lock")
-                    << errinfo_aliceO2_rorc_filename(fileLockPath.string()));
+                    << errinfo_rorc_generic_message("Failed to acquire file lock")
+                    << errinfo_rorc_filename(fileLockPath.string()));
           }
         }
 
