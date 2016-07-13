@@ -6,35 +6,29 @@
 
 set(RORC_LIB_HEADERS
   "${CMAKE_CURRENT_BINARY_DIR}/../include/RORC/Version.h" # Generated header
+  ../include/RORC/ChannelFactory.h # Normal header
   ../include/RORC/ChannelMasterInterface.h # Normal header
-  ../include/RORC/ChannelMasterFactory.h # Normal header
   ../include/RORC/ChannelParameters.h # Normal header
+  ../include/RORC/ChannelSlaveInterface.h # Normal header
   ../include/RORC/Page.h # Normal header
   ../include/RORC/RORC.h # Normal header
 )
 
 set(RORC_LIB_SOURCES
+  ChannelFactory.cxx
   ChannelParameters.cxx
   ChannelPaths.cxx
   DummyChannelMaster.cxx
   DummyChannelSlave.cxx
   MemoryMappedFile.cxx
-  RorcDeviceFinder.cxx
   RorcStatusCode.cxx
-  RorcUtilsCommon.cxx
-  RorcUtilsOptions.cxx
 )
 
 if(PDA_FOUND)
   list(APPEND RORC_LIB_SOURCES
-    #c/interface/header_common.c
-    #c/interface/header_crorc.c
-    #c/interface/header_cru.c
-    #c/interface/interface.c
     c/rorc/aux.c
     c/rorc/ddl.c
     c/rorc/rorc.c
-    ChannelFactory.cxx
     ChannelMaster.cxx
     ChannelSlave.cxx
     CrorcChannelMaster.cxx
@@ -42,6 +36,9 @@ if(PDA_FOUND)
     PdaBar.cxx
     PdaDevice.cxx
     PdaDmaBuffer.cxx
+    RorcDeviceFinder.cxx
+    RorcUtilsCommon.cxx
+    RorcUtilsOptions.cxx
   )
 endif()
 
