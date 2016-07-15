@@ -46,7 +46,7 @@ class FileSharedObject
         const bfs::path&      sharedFilePath,
         const size_t&         sharedFileSize,
         const std::string&    sharedObjectName,
-        find_or_construct_tag tag,
+        find_or_construct_tag ,
         Args&&...             args
         )
         : sharedFile(bip::open_or_create, sharedFilePath.c_str(), sharedFileSize),
@@ -63,7 +63,7 @@ class FileSharedObject
         const bfs::path&   sharedFilePath,
         const size_t&      sharedFileSize,
         const std::string& sharedObjectName,
-        find_only_tag      tag
+        find_only_tag
         )
         : sharedFile(bip::open_or_create, sharedFilePath.c_str(), sharedFileSize),
           sharedObjectPointer(sharedFile.find<T>(sharedObjectName.c_str()).first)

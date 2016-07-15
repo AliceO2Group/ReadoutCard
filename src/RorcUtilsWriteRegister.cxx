@@ -41,7 +41,7 @@ int main(int argc, char** argv)
     channel->writeRegister(address / 4, registerValue);
 
   } catch (std::exception& e) {
-    Options::printErrorAndHelp(boost::current_exception_diagnostic_information(), DESCRIPTION, optionsDescription);
+    RORC_UTILS_HANDLE_EXCEPTION(e, DESCRIPTION, optionsDescription);
   }
 
   return 0;

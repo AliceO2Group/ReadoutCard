@@ -30,8 +30,8 @@ static const std::string CRU_DEVICE_ID = "????";
 /// The PCI vendor ID of CERN
 static const std::string CERN_VENDOR_ID = "10dc";
 
-int crorcGetSerialNumber(const std::string& vendorId, const std::string deviceId);
-int cruGetSerialNumber(const std::string& vendorId, const std::string deviceId);
+int crorcGetSerialNumber(const std::string& vendorId, const std::string& deviceId);
+int cruGetSerialNumber(const std::string& vendorId, const std::string& deviceId);
 
 const std::map<std::string, RorcDeviceFinder::CardType::type> typeMapping = {
     {CRORC_DEVICE_ID, RorcDeviceFinder::CardType::CRORC},
@@ -53,7 +53,7 @@ std::string fileToString(const bfs::path& path) {
 }
 
 RorcDeviceFinder::RorcDeviceFinder(int serialNumber)
-    : pciDeviceId("unknown"), pciVendorId("unknown"), cardType(CardType::UNKNOWN), rorcSerialNumber(-1)
+    : pciDeviceId("unknown"), pciVendorId("unknown"), rorcSerialNumber(-1), cardType(CardType::UNKNOWN)
 {
   // These files are mapped to PCI registers
   // For more info on these: https://en.wikipedia.org/wiki/PCI_configuration_space
@@ -107,13 +107,12 @@ RorcDeviceFinder::~RorcDeviceFinder()
 #include "c/rorc/rorc.h"
 
 // TODO Clean up, C++ificate
-int crorcGetSerialNumber(const std::string& vendorId, const std::string deviceId)
+int crorcGetSerialNumber(const std::string& vendorId, const std::string& deviceId)
 {
   // Getting the serial number of the card from the FLASH. See rorcSerial() in rorc_lib.c.
   char data[RORC_SN_LENGTH+1];
   memset(data, 'x', RORC_SN_LENGTH+1);
   unsigned int flashAddr;
-  unsigned int status = 0;
 
   PdaDevice pdaDevice(vendorId, deviceId);
   int channel = 0; // Must use channel 0 to access flash
@@ -122,7 +121,7 @@ int crorcGetSerialNumber(const std::string& vendorId, const std::string deviceId
 
   // Reading the FLASH.
   flashAddr = FLASH_SN_ADDRESS;
-  status = initFlash(barAddress, flashAddr, 10);
+  initFlash(barAddress, flashAddr, 10); // TODO check returned status code
 
   // Setting the address to the serial number's (SN) position. (Actually it's the position
   // one before the SN's, because we need even position and the SN is at odd position.
@@ -130,7 +129,7 @@ int crorcGetSerialNumber(const std::string& vendorId, const std::string deviceId
   data[RORC_SN_LENGTH] = '\0';
   // Retrieving information character by caracter from the HW ID string.
   for (int i = 0; i < RORC_SN_LENGTH; i+=2, flashAddr++){
-    readFlashWord(barAddress, flashAddr, (unsigned char*) &data[i], 10);
+    readFlashWord(barAddress, flashAddr, &data[i], 10);
     if ((data[i] == '\0') || (data[i+1] == '\0')) {
       break;
     }
@@ -145,7 +144,7 @@ int crorcGetSerialNumber(const std::string& vendorId, const std::string deviceId
   return serial;
 }
 
-int cruGetSerialNumber(const std::string& vendorId, const std::string deviceId)
+int cruGetSerialNumber(const std::string&, const std::string&)
 {
   BOOST_THROW_EXCEPTION(DeviceFinderException() << errinfo_rorc_generic_message("CRU unsupported"));
 }

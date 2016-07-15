@@ -12,9 +12,10 @@ using std::endl;
 namespace AliceO2 {
 namespace Rorc {
 
-DummyChannelMaster::DummyChannelMaster(int serial, int channel, const ChannelParameters& params) : pageCounter(128)
+DummyChannelMaster::DummyChannelMaster(int serial, int channel, const ChannelParameters&) : pageCounter(128)
 {
-  cout << "DummyChannelMaster::DummyChannelMaster()" << endl;
+  cout << "DummyChannelMaster::DummyChannelMaster(serial:" << serial << ", channel:" << channel << ", params:...)"
+      << endl;
 }
 
 DummyChannelMaster::~DummyChannelMaster()
@@ -34,18 +35,18 @@ void DummyChannelMaster::stopDma()
 
 void DummyChannelMaster::resetCard(ResetLevel::type resetLevel)
 {
-  cout << "DummyChannelMaster::resetCard()" << endl;
+  cout << "DummyChannelMaster::resetCard(" << ResetLevel::toString(resetLevel) << ")" << endl;
 }
 
 uint32_t DummyChannelMaster::readRegister(int index)
 {
-  cout << "DummyChannelMaster::readRegister()" << endl;
+  cout << "DummyChannelMaster::readRegister(" << index << ")" << endl;
   return 0;
 }
 
 void DummyChannelMaster::writeRegister(int index, uint32_t value)
 {
-  cout << "DummyChannelMaster::writeRegister()" << endl;
+  cout << "DummyChannelMaster::writeRegister(index:" << index << ", value:" << value << ")" << endl;
 }
 
 ChannelMasterInterface::PageHandle DummyChannelMaster::pushNextPage()
@@ -66,8 +67,8 @@ Page DummyChannelMaster::getPage(const PageHandle& handle)
 {
   cout << "DummyChannelMaster::getPage(handle:" << handle.index << ")" << endl;
 
-  pageBuffer[0] = handle.index;
-  for (int i = 1; i < pageBuffer.size(); ++i) {
+  pageBuffer[0] = handle.index; // Puts the "event number" in the first word
+  for (size_t i = 1; i < pageBuffer.size(); ++i) {
     pageBuffer[i] = i - 1;
   }
 

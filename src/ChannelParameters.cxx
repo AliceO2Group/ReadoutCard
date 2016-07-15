@@ -4,19 +4,11 @@
 ///
 
 #include "RORC/ChannelParameters.h"
+#include <vector>
+#include <map>
 
 namespace AliceO2 {
 namespace Rorc {
-
-bool ResetLevel::includesExternal(const ResetLevel::type& mode)
-{
-  return mode == ResetLevel::RORC_DIU || mode == ResetLevel::RORC_DIU_SIU;
-}
-
-bool LoopbackMode::isExternal(const LoopbackMode::type& mode)
-{
-  return mode == LoopbackMode::EXTERNAL_SIU || mode == LoopbackMode::EXTERNAL_DIU;
-}
 
 DmaParameters::DmaParameters()
 {
@@ -44,36 +36,79 @@ ChannelParameters::ChannelParameters()
   initialResetLevel = Rorc::ResetLevel::NOTHING;
 }
 
+/// Flips a map around. Note that it will lead to data loss if multiple values of the original map are equal.
+template <typename Map, typename ReverseMap = std::map<typename Map::mapped_type, typename Map::key_type>>
+ReverseMap reverseMap(const Map& map)
+{
+  ReverseMap reverse;
+  for (auto it = map.begin(); it != map.end(); ++it) {
+    reverse.emplace(it->second, it->first);
+  }
+  return reverse;
+}
+
+/// Convenience function for implementing the enum to/from string functions
+template <typename Map>
+typename Map::mapped_type getValue(const Map& map, const typename Map::key_type& key)
+{
+  if (map.count(key) != 0) {
+    return map.at(key);
+  }
+  BOOST_THROW_EXCEPTION(std::runtime_error("Invalid conversion"));
+}
+
+// ResetLevel functions
+
+static const std::map<ResetLevel::type, std::string> resetLevelMap = {
+  { ResetLevel::NOTHING, "NOTHING" },
+  { ResetLevel::RORC_ONLY, "RORC_ONLY" },
+  { ResetLevel::RORC_DIU, "RORC_DIU" },
+  { ResetLevel::RORC_DIU_SIU, "RORC_DIU_SIU" },
+};
+
+static const auto resetLevelMapReverse = reverseMap(resetLevelMap);
+
+bool ResetLevel::includesExternal(const ResetLevel::type& mode)
+{
+  return mode == ResetLevel::RORC_DIU || mode == ResetLevel::RORC_DIU_SIU;
+}
+
+std::string ResetLevel::toString(const ResetLevel::type& level)
+{
+  return getValue(resetLevelMap, level);
+}
+
+ResetLevel::type ResetLevel::fromString(const std::string& string)
+{
+  return getValue(resetLevelMapReverse, string);
+}
+
+// LoopbackMode functions
+
+static const std::map<LoopbackMode::type, std::string> loopbackModeMap {
+  { LoopbackMode::NONE, "NONE" },
+  { LoopbackMode::INTERNAL_RORC, "INTERNAL_RORC" },
+  { LoopbackMode::EXTERNAL_DIU, "EXTERNAL_DIU" },
+  { LoopbackMode::EXTERNAL_SIU, "EXTERNAL_SIU" },
+};
+
+static const auto loopbackModeMapReverse = reverseMap(loopbackModeMap);
+
+bool LoopbackMode::isExternal(const LoopbackMode::type& mode)
+{
+  return mode == LoopbackMode::EXTERNAL_SIU || mode == LoopbackMode::EXTERNAL_DIU;
+}
+
+std::string LoopbackMode::toString(const LoopbackMode::type& mode)
+{
+  return getValue(loopbackModeMap, mode);
+}
+
+LoopbackMode::type LoopbackMode::fromString(const std::string& string)
+{
+  return getValue(loopbackModeMapReverse, string);
+}
+
 } // namespace Rorc
 } // namespace AliceO2
 
-
-std::string AliceO2::Rorc::ResetLevel::toString(const ResetLevel::type& level)
-{
-  static const std::map<ResetLevel::type, std::string> map {
-    { ResetLevel::NOTHING, "NOTHING" },
-    { ResetLevel::RORC_ONLY, "RORC_ONLY" },
-    { ResetLevel::RORC_DIU, "RORC_DIU" },
-    { ResetLevel::RORC_DIU_SIU, "RORC_DIU_SIU" },
-  };
-
-  if (map.count(level) != 0) {
-    return map.at(level);
-  }
-  return std::string("UNKNOWN");
-}
-
-std::string AliceO2::Rorc::LoopbackMode::toString(const LoopbackMode::type& mode)
-{
-  static const std::map<LoopbackMode::type, std::string> map {
-    { LoopbackMode::NONE, "NONE" },
-    { LoopbackMode::INTERNAL_RORC, "INTERNAL_RORC" },
-    { LoopbackMode::EXTERNAL_DIU, "EXTERNAL_DIU" },
-    { LoopbackMode::EXTERNAL_SIU, "EXTERNAL_SIU" },
-  };
-
-  if (map.count(mode) != 0) {
-    return map.at(mode);
-  }
-  return std::string("UNKNOWN");
-}

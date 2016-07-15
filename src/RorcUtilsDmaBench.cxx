@@ -23,7 +23,7 @@ using std::endl;
 static const UtilsDescription DESCRIPTION(
     "DMA Benchmark",
     "Test RORC DMA performance",
-    "./rorc-dma-bench"
+    "./rorc-dma-bench --serial=0"
     );
 
 int main(int argc, char** argv)
@@ -31,19 +31,14 @@ int main(int argc, char** argv)
   auto optionsDescription = Options::createOptionsDescription();
   Options::addOptionChannel(optionsDescription);
   Options::addOptionSerialNumber(optionsDescription);
+  Options::addOptionsChannelParameters(optionsDescription);
 
   try {
     auto variablesMap = Options::getVariablesMap(argc, argv, optionsDescription);
     int serialNumber = Options::getOptionSerialNumber(variablesMap);
     int channelNumber = Options::getOptionChannel(variablesMap);
-
-    // Initialize channel parameters
-    AliceO2::Rorc::ChannelParameters params;
-    params.dma.bufferSize = 4 * 1024 * 1024;
-    params.dma.pageSize = 4 * 1024;
-    params.dma.useSharedMemory = true;
-    params.generator.useDataGenerator = true;
-    params.generator.dataSize = 4 * 1024;
+    auto params = Options::getOptionsChannelParameters(variablesMap);
+    params.generator.dataSize = params.dma.pageSize;
     params.initialResetLevel = AliceO2::Rorc::ResetLevel::RORC_ONLY;
 
     // Get master lock on channel
@@ -114,7 +109,7 @@ int main(int argc, char** argv)
     cout << "------------------------------------\n";
 
   } catch (std::exception& e) {
-    Options::printErrorAndHelp(boost::current_exception_diagnostic_information(), DESCRIPTION, optionsDescription);
+    RORC_UTILS_HANDLE_EXCEPTION(e, DESCRIPTION, optionsDescription);
   }
   return 0;
 }

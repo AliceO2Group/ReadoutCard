@@ -66,8 +66,6 @@ int rorcEmptyDataFifos(volatile void *buff, int empty_time)
 
 int rorcArmDDL(volatile void *buff, int option, int diu_version, int pci_loop_per_usec){
   DEBUG_PRINTF(PDADEBUG_ENTER, "");
-  int ret;
-  unsigned long retlong;
   int print = 0; // -1;
   int stop = 1;
   long long int TimeOut;
@@ -80,7 +78,7 @@ int rorcArmDDL(volatile void *buff, int option, int diu_version, int pci_loop_pe
       return RORC_CMD_NOT_ALLOWED;
     }
     if (option & RORC_RESET_SIU){
-      ret = ddlResetSiu(buff, 0, 3, TimeOut, diu_version, pci_loop_per_usec);
+      long ret = ddlResetSiu(buff, 0, 3, TimeOut, diu_version, pci_loop_per_usec);
       if (ret == -1){
         printf(" Unsuccessful SIU reset\n");
         return RORC_NOT_ACCEPTED;
@@ -88,8 +86,8 @@ int rorcArmDDL(volatile void *buff, int option, int diu_version, int pci_loop_pe
     }
     if (option & RORC_LINK_UP){
       if (diu_version <= NEW){
-        retlong = ddlLinkUp(buff, 1, print, stop, TimeOut, diu_version, pci_loop_per_usec);
-        if (retlong == -1){
+        long ret = ddlLinkUp(buff, 1, print, stop, TimeOut, diu_version, pci_loop_per_usec);
+        if (ret == -1){
           printf(" Can not read DIU status");
           return RORC_LINK_NOT_ON;
         }
@@ -304,10 +302,11 @@ int rorcParamOff(volatile void *buff)
 int rorcStartDataGenerator(volatile void *buff, __u32 maxLoop){
   __u32 cycle;
 
-  if (maxLoop)
+  if (maxLoop) {
     cycle = (maxLoop - 1) & 0x7fffffff;
-  else
+  } else {
     cycle = 0x80000000;
+  }
 
   rorcWriteReg(buff, C_DG4, cycle);
   rorcWriteReg(buff, C_CSR, DRORC_CMD_START_DG);
@@ -322,8 +321,8 @@ int rorcStopDataGenerator(uint32_t *buff)
   return (RORC_STATUS_OK);
 }
 
-void rorcBuildHwSerial(__u8 data[], unsigned int rorcRevisionNumber, int versionMajor,
-                       int versionMinor, __u8 cPld[], int numberOfChannels,
+void rorcBuildHwSerial(char data[], unsigned int rorcRevisionNumber, int versionMajor,
+                       int versionMinor, char cPld[], int numberOfChannels,
                        int serialNumber)
 {
   int i;
@@ -379,18 +378,16 @@ void rorcBuildHwSerial(__u8 data[], unsigned int rorcRevisionNumber, int version
 
 
 const char* rorcSerial(uint32_t* buff, int rorc_revision){
-  int i, ret ;
-  unsigned txtlen;
-  unsigned status, flashAddress;
-  __u8 address;
+//  unsigned txtlen;
+//  __u8 address;
   static char data[DDL_MAX_HW_ID];
-  char txt[20], checktxt[20];
-  int versionPosition, channelPosition, ldPosition, serialNumberPosition;
-  // For the CRORC the ID positions are:
-  versionPosition = 7;
-  channelPosition = 11;
-  ldPosition = 20;
-  serialNumberPosition = 33;
+//  char txt[20], checktxt[20];
+//  int versionPosition, channelPosition, ldPosition, serialNumberPosition;
+//  // For the CRORC the ID positions are:
+//  versionPosition = 7;
+//  channelPosition = 11;
+//  ldPosition = 20;
+//  serialNumberPosition = 33;
   
   if (rorc_revision != CRORC){
     printf("Card is not a CRORC (rorcSerial is only implemented for CRORC)\n");
@@ -399,13 +396,13 @@ const char* rorcSerial(uint32_t* buff, int rorc_revision){
   else // CRORC
   {
     // Read FLASH memory
-    flashAddress  = FLASH_SN_ADDRESS;
-    status = initFlash(buff, flashAddress, 10);
+    unsigned int flashAddress  = FLASH_SN_ADDRESS;
+    initFlash(buff, flashAddress, 10); // TODO check return code
 
     data[DDL_MAX_HW_ID - 1] = '\0';
-    for (i = 0; i < DDL_MAX_HW_ID - 1; i+=2, flashAddress++)
+    for (int i = 0; i < DDL_MAX_HW_ID - 1; i+=2, flashAddress++)
     {
-      ret = readFlashWord(buff, flashAddress, &data[i], 10);
+      readFlashWord(buff, flashAddress, &data[i], 10); // TODO check return code
       if ((data[i] == '\0') || (data[i+1] == '\0'))
         break;
     }

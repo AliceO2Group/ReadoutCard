@@ -1,4 +1,5 @@
 #include "rorc.h"
+#include <unistd.h>
 
 char* receivedOrderedSet[] = {"SRST", "Not_Op", "Oper", "L_Init",
 			      "Idle", "Xoff", "Xon", "data or delimiter", "unknown ordered set"};
@@ -41,8 +42,9 @@ void setLoopPerSec(long long int *loop_per_usec, double *pci_loop_per_usec, vola
   max_loop = 1000;
   gettimeofday(&tv1, NULL);
 
-  for (i = 0; i < max_loop; i++)
-    rorcCheckRxStatus(buff);
+  for (i = 0; i < max_loop; i++) {
+    (void) rorcCheckRxStatus(buff); // XXX Cast to void to explicitly discard returned value
+  }
   
   gettimeofday(&tv2, NULL);
   elapsed(&tv2, &tv1, &dsec, &dusec);
@@ -173,7 +175,7 @@ int writeFlashWord(uint32_t *buff, unsigned address, int value, int sleept)
   return (ret);
 }
 
-int readFlashWord(uint32_t *buff, unsigned address, __u8 *data, int sleept)
+int readFlashWord(uint32_t *buff, unsigned address, char *data, int sleept)
 {
   unsigned stat;
 

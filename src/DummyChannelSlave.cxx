@@ -14,7 +14,7 @@ namespace Rorc {
 
 DummyChannelSlave::DummyChannelSlave(int serial, int channel)
 {
-  cout << "DummyChannelSlave::DummyChannelSlave()" << endl;
+  cout << "DummyChannelSlave::DummyChannelSlave(serial:" << serial << ", channel:" << channel << ")" << endl;
 }
 
 DummyChannelSlave::~DummyChannelSlave()
@@ -24,13 +24,13 @@ DummyChannelSlave::~DummyChannelSlave()
 
 uint32_t DummyChannelSlave::readRegister(int index)
 {
-  cout << "DummyChannelSlave::readRegister()" << endl;
+  cout << "DummyChannelSlave::readRegister(" << index << ")" << endl;
   return 0;
 }
 
 void DummyChannelSlave::writeRegister(int index, uint32_t value)
 {
-  cout << "DummyChannelSlave::writeRegister()" << endl;
+  cout << "DummyChannelSlave::writeRegister(index:" << index << ", value:" << value << ")" << endl;
 }
 
 } // namespace Rorc

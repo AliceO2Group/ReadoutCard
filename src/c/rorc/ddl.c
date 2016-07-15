@@ -1,4 +1,5 @@
 #include "rorc.h"
+#include <unistd.h>
 
 int ddlFindDiuVersion(volatile void *buff, int pci_loop_per_usec, int *rorc_revision, int *diu_version) {
   stword_t stw[DDL_MAX_REPLY];
@@ -178,9 +179,9 @@ stword_t ddlReadStatus(volatile void *buff)
   return(stw); 
 } 
  
-unsigned long ddlReadDiu(volatile void *buff, int transid,
+long ddlReadDiu(volatile void *buff, int transid,
 			 long long int time, int pci_loop_per_usec){
-  unsigned long retval; 
+  long retval;
   stword_t stw; 
   int dest; 
   long long int longi; 
@@ -225,9 +226,9 @@ unsigned long ddlReadDiu(volatile void *buff, int transid,
   return(retval); 
 } 
 
-unsigned long ddlReadSiu(volatile void *buff, int transid,
+long ddlReadSiu(volatile void *buff, int transid,
 			 long long int time, int pci_loop_per_usec){
-  unsigned long retval;
+  long retval;
   stword_t stw;
   int dest;
   long long int longi;
@@ -286,7 +287,7 @@ unsigned long ddlReadSiu(volatile void *buff, int transid,
   return(retval);
 }
  
-void ddlInterpretIFSTW(volatile void *buff, __u32 ifstw, char* pref,
+void ddlInterpretIFSTW(__u32 ifstw, char* pref,
 		       char* suff, int diu_version){
   DEBUG_PRINTF(PDADEBUG_ENTER, ""); 
   if (diu_version == OLD) 
@@ -581,7 +582,7 @@ unsigned long ddlResetSiu(volatile void *buff, int print, int cycle,
   int i, retval, transid; 
   long long longret; 
   int diu_ok, siu_ok, trial; 
-  unsigned long retlong; 
+  long retlong;
   stword_t stw; 
   char* pref=""; 
   char* suff="\n"; 
@@ -651,7 +652,7 @@ unsigned long ddlResetSiu(volatile void *buff, int print, int cycle,
 	// printf(" DIU error at RORC /dev/prorc %d/%d. Status word: 0x%0lx ", 
 	//                 prorc->minor, prorc->ddl_channel, retlong); 
         // // statInfo[0] = '\0';
-        ddlInterpretIFSTW(buff, retlong, pref, suff, diu_version);
+        ddlInterpretIFSTW(retlong, pref, suff, diu_version);
         // printf("%s", statInfo);
       } 
     } 
@@ -660,7 +661,7 @@ unsigned long ddlResetSiu(volatile void *buff, int print, int cycle,
 	//  printf(" SIU transaction open at RORC /dev/prorc %d/%d. Status word: 0x%0lx ", 
 	//                  prorc->minor, prorc->ddl_channel, retlong); 
         // // statInfo[0] = '\0';
-        ddlInterpretIFSTW(buff, retlong, pref, suff, diu_version);
+        ddlInterpretIFSTW(retlong, pref, suff, diu_version);
         // printf("%s", statInfo);
       } 
     } 
@@ -688,7 +689,7 @@ unsigned long ddlResetSiu(volatile void *buff, int print, int cycle,
 	// printf(" SIU error at RORC /dev/prorc %d/%d. Status word: 0x%0lx ", 
 	//                 prorc->minor, prorc->ddl_channel, retlong); 
         // // statInfo[0] = '\0';
-        ddlInterpretIFSTW(buff, retlong, pref, suff, diu_version);
+        ddlInterpretIFSTW(retlong, pref, suff, diu_version);
         // printf("%s", statInfo);
       } 
     } 
@@ -742,7 +743,9 @@ unsigned long ddlLinkUp_OLD(volatile void *buff, int master, int print,
 
 {
   int retval, siuSend, transid;
-  unsigned long retlong, last_stw, siuStatus;
+  long retlong;
+  long last_stw;
+  long siuStatus;
   stword_t stw;
   char pref[13] = "DIU status: ";
   char suff[2] = "\n";
@@ -809,7 +812,7 @@ unsigned long ddlLinkUp_OLD(volatile void *buff, int master, int print,
 	  // printf(" DIU error at pRORC /dev/prorc %d/%d. Status word: 0x%0lx",
 	  //                  prorc->minor, prorc->ddl_channel, retlong);
           // statInfo[0] = '\0';
-          ddlInterpretIFSTW(buff, retlong, pref, suff, diu_version);
+          ddlInterpretIFSTW(retlong, pref, suff, diu_version);
           // printf("%s", statInfo);
           if (print > 0){
             print--;
@@ -1075,8 +1078,10 @@ DEBUG_PRINTF(PDADEBUG_ENTER, "");
       printf(" remote SIU/DIU in %s state ", remoteStatus[siuStatus]); \
     PRINTEND
 
- int siuStatus, transid;// retval;
-  unsigned long retlong, last_stw;
+  int siuStatus;
+  int transid;
+  long retlong;
+  long last_stw;
   stword_t stw;
   char pref[13] = "DIU status: ";
   char suff[2] = "\n";
@@ -1115,7 +1120,7 @@ DEBUG_PRINTF(PDADEBUG_ENTER, "");
 	//  printf(" DIU error at pRORC /dev/prorc %d/%d. Status word: 0x%0lx ",
 	//                  prorc->minor, prorc->ddl_channel, retlong);
         // statInfo[0] = '\0';
-        ddlInterpretIFSTW(buff, retlong, pref, suff, diu_version);
+        ddlInterpretIFSTW(retlong, pref, suff, diu_version);
         // printf("%s", statInfo);
 	PRINTEND
 	continue;
@@ -1164,7 +1169,7 @@ DEBUG_PRINTF(PDADEBUG_ENTER, "");
 int ddlSetSiuLoopBack(volatile void *buff, long long int timeout, int pci_loop_per_usec, stword_t *stw){
   int ret;
   long long int longret;
-  unsigned long retlong;
+  long retlong;
 
   /* check SIU fw version */
 

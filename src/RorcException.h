@@ -77,6 +77,11 @@ struct CrorcDataArrivalException : virtual CrorcException {};
 // CRU exception definitions
 struct CruException : virtual RorcException {};
 
+// Utility exception definition
+struct UtilException : virtual boost::exception, virtual std::exception {};
+struct InvalidOptionValueException : virtual UtilException {};
+struct OptionRequiredException : virtual UtilException {};
+
 } // namespace Rorc
 } // namespace AliceO2
 

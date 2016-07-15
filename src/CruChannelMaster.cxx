@@ -184,7 +184,7 @@ void CruChannelMaster::deviceStopDma()
   pdaBar[BarIndex::SEND_STATUS] = 0x0;
 }
 
-void CruChannelMaster::resetCard(ResetLevel::type resetLevel)
+void CruChannelMaster::resetCard(ResetLevel::type)
 {
   // TODO
 }
@@ -232,8 +232,9 @@ ChannelMasterInterface::PageHandle CruChannelMaster::pushNextPage()
   }
 }
 
-bool CruChannelMaster::isPageArrived(const PageHandle& handle)
+bool CruChannelMaster::isPageArrived(const PageHandle&)
 {
+  // TODO
   return false;
 }
 

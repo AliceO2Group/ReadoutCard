@@ -207,8 +207,8 @@ extern "C" {
 #define RORC_NOT_END_OF_EVENT_ARRIVED     1
 #define RORC_LAST_BLOCK_OF_EVENT_ARRIVED  2
 
-#define rorcReadReg(buff, reg_number) (*((uint32_t*)buff + reg_number))
-#define rorcWriteReg(buff, reg_number, reg_value) *((uint32_t*)buff + reg_number) = reg_value
+#define rorcReadReg(buff, reg_number) (*((volatile uint32_t*)buff + reg_number))
+#define rorcWriteReg(buff, reg_number, reg_value) *((volatile uint32_t*)buff + reg_number) = reg_value
 
 #define rorcCheckLink(buff) \
   ((rorcReadReg(buff, C_CSR) & DRORC_STAT_LINK_DOWN) ? RORC_LINK_NOT_ON \
@@ -292,11 +292,11 @@ stword_t ddlReadCTSTW(volatile void *buff, int transid, int destination,
 		      long long int time, int pci_loop_per_usec);
 long long int ddlWaitStatus(volatile void *buff, long long int timeout);
 stword_t ddlReadStatus(volatile void *buff);
-unsigned long ddlReadDiu(volatile void *buff, int transid,
+long ddlReadDiu(volatile void *buff, int transid,
 			 long long int time, int pci_loop_per_usec);
-unsigned long ddlReadSiu(volatile void *buff, int transid,
+long ddlReadSiu(volatile void *buff, int transid,
 			 long long int time, int pci_loop_per_usec);
-void ddlInterpretIFSTW(volatile void *buff, __u32 ifstw, char* pref,
+void ddlInterpretIFSTW(__u32 ifstw, char* pref,
 		       char* suff, int diu_version);
 void ddlInterpret_OLD_IFSTW(__u32 ifstw, char* pref, char* suff);
 void ddlInterpret_NEW_IFSTW(__u32 ifstw, char *pref, char *suff);
@@ -345,7 +345,7 @@ int checkFlashStatus(uint32_t *buff, int timeout);
 int unlockFlashBlock(uint32_t *buff, unsigned address, int sleept);
 int eraseFlashBlock(uint32_t *buff, unsigned address, int sleept);
 int writeFlashWord(uint32_t *buff, unsigned address, int value, int sleept);
-int readFlashWord(uint32_t *buff, unsigned address, __u8 *data, int sleept);
+int readFlashWord(uint32_t *buff, unsigned address, char *data, int sleept);
 
 #ifdef __cplusplus
 } /* extern "C" */

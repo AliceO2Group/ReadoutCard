@@ -3,8 +3,6 @@
 /// \author Pascal Boeschoten
 ///
 
-#pragma once
-
 #include "RorcStatusCode.h"
 #include <string>
 #include <map>

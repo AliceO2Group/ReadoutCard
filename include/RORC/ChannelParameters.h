@@ -13,18 +13,25 @@
 namespace AliceO2 {
 namespace Rorc {
 
+/// Namespace for the RORC reset level enum, and supporting functions
 namespace ResetLevel
 {
-    /// Reset Level enumeration
     enum type
     {
       NOTHING = 0, RORC_ONLY = 1, RORC_DIU = 2, RORC_DIU_SIU = 3,
     };
 
+    /// Converts a ResetLevel to a string
     std::string toString(const ResetLevel::type& level);
+
+    /// Converts a string to a ResetLevel
+    ResetLevel::type fromString(const std::string& string);
+
+    /// Returns true if the reset level includes external resets (SIU and/or DIU)
     bool includesExternal(const ResetLevel::type& level);
 }
 
+/// Namespace for the RORC loopback mode enum, and supporting functions
 namespace LoopbackMode
 {
     /// Loopback mode
@@ -33,10 +40,17 @@ namespace LoopbackMode
       NONE = 0, EXTERNAL_DIU = 1, EXTERNAL_SIU = 2, INTERNAL_RORC = 3
     };
 
+    /// Converts a LoopbackMode to a string
     std::string toString(const LoopbackMode::type& mode);
+
+    /// Converts a string to a LoopbackMode
+    LoopbackMode::type fromString(const std::string& string);
+
+    /// Returns true if the loopback mode is external (SIU and/or DIU)
     bool isExternal(const LoopbackMode::type& mode);
 }
 
+/// Namespace for the RORC generator pattern enum
 namespace GeneratorPattern
 {
   enum type
@@ -60,7 +74,7 @@ struct DmaParameters
     size_t pageSize;
 
     /// Size in bytes of the host's DMA buffer.
-    int bufferSize;
+    size_t bufferSize;
 
     /// Instead of allocating the DMA buffer in kernel memory, allocate it in userspace shared memory.
     /// Note: at the moment, this option is just for testing, but shared memory will probably become the default, or
@@ -108,18 +122,19 @@ class ChannelParameters
     GeneratorParameters generator;
 
     /// Defines that the received fragment contains the Common Data Header
+    /// XXX Not sure if this should be a parameter...
     bool ddlHeader;
 
     /// Prevents sending the RDYRX and EOBTR commands. TODO This switch is implicitly set when data generator or the STBRD command is used
+    /// XXX Not sure if this should be a parameter...
     bool noRDYRX;
 
     /// Enforces that the data reading is carried out with the Start Block Read (STBRD) command
+    /// XXX Not sure if this should be a parameter...
     bool useFeeAddress;
 
     /// Reset level on initialization of channel
     ResetLevel::type initialResetLevel;
-
-    static ChannelParameters fromProgramOptions(const boost::program_options::variables_map& variablesMap);
 };
 
 } // namespace Rorc

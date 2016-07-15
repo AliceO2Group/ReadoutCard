@@ -48,7 +48,7 @@ void printPage(Rorc::Page& page, int index, std::ostream& ios)
     ios << '\n';
 }
 
-int main(int argc, char** argv)
+int main(int, char**)
 {
   if (reinsertDriverModule) {
     system("modprobe -r uio_pci_dma");
@@ -104,7 +104,7 @@ int main(int argc, char** argv)
     Rorc::Page page;
     std::stringstream stringStream;
 
-    for (auto i : boost::irange(0, pagesToPush)) {
+    for (int i = 0; i < pagesToPush; ++i) {
       // Get page handle (contains FIFO index)
       auto handle = channel->pushNextPage();
 
