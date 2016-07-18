@@ -39,7 +39,7 @@ int main(int argc, char** argv)
     int channelNumber = Options::getOptionChannel(variablesMap);
     auto params = Options::getOptionsChannelParameters(variablesMap);
     params.generator.dataSize = params.dma.pageSize;
-    params.initialResetLevel = AliceO2::Rorc::ResetLevel::RORC_ONLY;
+    params.initialResetLevel = AliceO2::Rorc::ResetLevel::RORC;
 
     // Get master lock on channel
     auto channel = AliceO2::Rorc::ChannelFactory().getMaster(serialNumber, channelNumber, params);

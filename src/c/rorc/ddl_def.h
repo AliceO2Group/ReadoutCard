@@ -1,5 +1,4 @@
-#ifndef _ddl_def_
-#define _ddl_def_
+#pragma once
 
 /************************************************
 *  ddl_def.h                                    *
@@ -25,11 +24,11 @@
 #define DDL_MAX_TX_WORD 0xFFFFFF
 
 /*  destination field      */
-#define RORC 0
-#define DIU 1
-#define SIU 2
-#define DSI 3
-#define FEE 4
+#define DDL_DEST_RORC 0
+#define DDL_DEST_DIU 1
+#define DDL_DEST_SIU 2
+#define DDL_DEST_DSI 3
+#define DDL_DEST_FEE 4
 
 /*  command field */
 /* FEE commands */
@@ -211,4 +210,3 @@
 #define oS_IRXCD    0x00002000 /* illegal receive code */
 #define oS_BUFER    0x00001000 /* elastic buffer over/under run */
 
-#endif

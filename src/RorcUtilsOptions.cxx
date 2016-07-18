@@ -63,7 +63,7 @@ static Option<size_t> cpDmaPageSize("cp-dma-pagesize", "RORC page size in bytes"
 static Option<size_t> cpDmaBufSize("cp-dma-bufmb", "DMA buffer size in mebibytes", true, 4);
 static Option<bool> cpGenEnable("cp-gen-enable", "Enable data generator", true, true);
 static Option<std::string> cpGenLoopback("cp-gen-loopb",
-    "Loopback mode [NONE, INTERNAL_RORC, EXTERNAL_DIU, EXTERNAL_SIU]", true, "INTERNAL_RORC");
+    "Loopback mode [NONE, RORC, DIU, SIU]", true, "RORC");
 }
 
 /// Adds the given Option to the options_description

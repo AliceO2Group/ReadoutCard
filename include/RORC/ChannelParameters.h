@@ -18,7 +18,7 @@ namespace ResetLevel
 {
     enum type
     {
-      NOTHING = 0, RORC_ONLY = 1, RORC_DIU = 2, RORC_DIU_SIU = 3,
+      NOTHING = 0, RORC = 1, RORC_DIU = 2, RORC_DIU_SIU = 3,
     };
 
     /// Converts a ResetLevel to a string
@@ -37,7 +37,7 @@ namespace LoopbackMode
     /// Loopback mode
     enum type
     {
-      NONE = 0, EXTERNAL_DIU = 1, EXTERNAL_SIU = 2, INTERNAL_RORC = 3
+      NONE = 0, DIU = 1, SIU = 2, RORC = 3
     };
 
     /// Converts a LoopbackMode to a string

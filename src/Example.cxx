@@ -65,7 +65,7 @@ int main(int, char**)
     params.generator.dataSize = 2 * 1024;
     params.generator.pattern = Rorc::GeneratorPattern::INCREMENTAL;
     params.generator.seed = 0;
-    params.initialResetLevel = Rorc::ResetLevel::RORC_ONLY;
+    params.initialResetLevel = Rorc::ResetLevel::RORC;
 
     // Get the channel master object
     cout << "\n### Acquiring channel master object" << endl;

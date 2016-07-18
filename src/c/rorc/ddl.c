@@ -1,5 +1,11 @@
 #include "rorc.h"
 #include <unistd.h>
+#include <pda.h>
+#include "rorc_macros.h"
+#include "ddl_def.h"
+
+char* receivedOrderedSet[]; /// XXX The usage of this looks like a segfault
+char* remoteStatus[]; /// XXX The usage of this looks like a segfault
 
 int ddlFindDiuVersion(volatile void *buff, int pci_loop_per_usec, int *rorc_revision, int *diu_version) {
   stword_t stw[DDL_MAX_REPLY];
@@ -9,7 +15,7 @@ int ddlFindDiuVersion(volatile void *buff, int pci_loop_per_usec, int *rorc_revi
   DEBUG_PRINTF(PDADEBUG_ENTER, "");
   *rorc_revision = 7;//*((uint32_t*)buff + 6*1024);
 
-  if (*rorc_revision >= INTEG){
+  if (*rorc_revision >= RORC_REVISION_INTEG){
     // ide johetne DIU status lekerdezes
     *diu_version = EMBEDDED;
     return (RORC_STATUS_OK);
@@ -20,7 +26,7 @@ int ddlFindDiuVersion(volatile void *buff, int pci_loop_per_usec, int *rorc_revi
   
   /* read DIU's HW id */
   TimeOut = DDL_RESPONSE_TIME * pci_loop_per_usec;
-  ret = ddlSendCommand(buff, DIU, RHWVER, 0, 0, TimeOut);
+  ret = ddlSendCommand(buff, DDL_DEST_DIU, RHWVER, 0, 0, TimeOut);
   if (ret)
     return (ret);
 
@@ -123,7 +129,7 @@ int ddlSendCommand(volatile void *buff,
   DEBUG_PRINTF(PDADEBUG_ENTER, ""); 
   //  printf("ddlSendCommand: command to send: 0x%08x\n", com); 
  
-  if (destination > DIU){ 
+  if (destination > DDL_DEST_DIU){
     if (rorcCheckLink(buff) == RORC_LINK_NOT_ON){ 
       printf("ddlSendCommand: command can not be sent as link is not on\n"); 
       return (RORC_LINK_NOT_ON); 
@@ -189,7 +195,7 @@ long ddlReadDiu(volatile void *buff, int transid,
   DEBUG_PRINTF(PDADEBUG_ENTER, ""); 
   /* prepare and send DDL command */ 
   
-  dest = DIU; 
+  dest = DDL_DEST_DIU;
   command =  RandCIFST; 
   param = 0; 
   retval = ddlSendCommand(buff, dest, command, transid, param, time); 
@@ -236,7 +242,7 @@ long ddlReadSiu(volatile void *buff, int transid,
   DEBUG_PRINTF(PDADEBUG_ENTER, "");
   /* prepare and send DDL command */
   
-  dest = SIU;
+  dest = DDL_DEST_SIU;
   command = RandCIFST;
   param = 0;
   retval=ddlSendCommand(buff, dest, command, transid, param, time);
@@ -308,7 +314,7 @@ void ddlInterpret_OLD_IFSTW(__u32 ifstw, char* pref, char* suff)
   DEBUG_PRINTF(PDADEBUG_ENTER, ""); 
   destination = ST_DEST(ifstw); 
   status = ifstw & STMASK; 
-  if (destination == DIU){ 
+  if (destination == DDL_DEST_DIU){
     if (mask(status, oDIU_LOOP)) 
       printf("%sDIU is set in loop-back mode%s", pref, suff); 
     if (mask(status, ERROR_BIT)){ 
@@ -452,7 +458,7 @@ void ddlInterpret_NEW_IFSTW(__u32 ifstw, char *pref, char *suff)
   destination = ST_DEST(ifstw); 
  
   status = ifstw & STMASK; 
-  if (destination == DIU) { 
+  if (destination == DDL_DEST_DIU) {
     if (mask(status, DIU_LOOP)) 
       printf("%sDIU is set in loop-back mode%s", pref, suff); 
     if (mask(status, ERROR_BIT)){ 
@@ -587,7 +593,7 @@ unsigned long ddlResetSiu(volatile void *buff, int print, int cycle,
   char* pref=""; 
   char* suff="\n"; 
   DEBUG_PRINTF(PDADEBUG_ENTER, ""); 
-  retval = ddlSendCommand(buff, DIU, SRST, 0,  0, time);
+  retval = ddlSendCommand(buff, DDL_DEST_DIU, SRST, 0,  0, time);
  
   if (retval == RORC_LINK_NOT_ON){ 
     if (print) 
@@ -889,7 +895,7 @@ unsigned long ddlLinkUp_OLD(volatile void *buff, int master, int print,
       }
 
       // Send reset command to DIU 
-      retval = ddlSendCommand(buff, DIU, LRST, transid ,0, time);
+      retval = ddlSendCommand(buff, DDL_DEST_DIU, LRST, transid ,0, time);
       transid = incr15(transid);
       if (retval == RORC_TIMEOUT)
         if (print){
@@ -988,7 +994,7 @@ unsigned long ddlLinkUp_OLD(volatile void *buff, int master, int print,
       else if (master){
         last_stw = retlong;
         // Send a command to DIU to initialize 
-        retval=ddlSendCommand(buff, DIU, LINIT, transid, 0, time);
+        retval=ddlSendCommand(buff, DDL_DEST_DIU, LINIT, transid, 0, time);
         transid = incr15(transid);
 
         if (retval == RORC_TIMEOUT)
@@ -1145,7 +1151,7 @@ DEBUG_PRINTF(PDADEBUG_ENTER, "");
 	  if (master)
 	    {
 	      // Send a command to DIU to wake up
-	      /*retval=*/ddlSendCommand(buff, DIU, WAKEUP, transid, 0, time);
+	      /*retval=*/ddlSendCommand(buff, DDL_DEST_DIU, WAKEUP, transid, 0, time);
 	      transid = incr15(transid);
 	      
 	      // Read status FIFO 
@@ -1173,7 +1179,7 @@ int ddlSetSiuLoopBack(volatile void *buff, long long int timeout, int pci_loop_p
 
   /* check SIU fw version */
 
-  ret = ddlSendCommand(buff, SIU, IFLOOP, 0, 0, timeout);
+  ret = ddlSendCommand(buff, DDL_DEST_SIU, IFLOOP, 0, 0, timeout);
   if (ret == RORC_LINK_NOT_ON)
     return (ret);
   if (ret == RORC_TIMEOUT)
@@ -1186,7 +1192,7 @@ int ddlSetSiuLoopBack(volatile void *buff, long long int timeout, int pci_loop_p
   *stw = ddlReadStatus(buff);
   if (stw->part.code == ILCMD){
     /* illegal command => old version => send TSTMODE for loopback */
-    ret = ddlSendCommand(buff, SIU, TSTMODE, 0, 0, timeout);
+    ret = ddlSendCommand(buff, DDL_DEST_SIU, TSTMODE, 0, 0, timeout);
     if (ret == RORC_LINK_NOT_ON)
       return (ret);
     if (ret == RORC_TIMEOUT)
@@ -1210,7 +1216,7 @@ int ddlSetSiuLoopBack(volatile void *buff, long long int timeout, int pci_loop_p
     return RORC_STATUS_OK; // SIU loopback set 
 
   /* SIU loopback not set => set it */
-  ret = ddlSendCommand(buff, SIU, IFLOOP, 0, 0, timeout);
+  ret = ddlSendCommand(buff, DDL_DEST_SIU, IFLOOP, 0, 0, timeout);
   if (ret == RORC_LINK_NOT_ON)
     return (ret);
   if (ret == RORC_TIMEOUT)
@@ -1230,7 +1236,7 @@ int ddlDiuLoopBack(uint32_t *buff, long long int timeout, stword_t *stw){
   int ret;
   long long int longret;
 
-  ret = ddlSendCommand(buff, DIU, IFLOOP, 0, 0, timeout);
+  ret = ddlSendCommand(buff, DDL_DEST_DIU, IFLOOP, 0, 0, timeout);
   if (ret == RORC_TIMEOUT)
     return RORC_STATUS_ERROR;
 

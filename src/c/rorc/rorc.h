@@ -1,11 +1,8 @@
-#ifndef BUFFER_TEST_H
-#define BUFFER_TEST_H
+#pragma once
 
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
-
-#include <pda.h>
 
 #include "stdint.h"
 #include "linux/types.h"
@@ -14,20 +11,8 @@
 extern "C" {
 #endif
 
-#include "ddl_def.h"
-
-#define LINE_UP "[1A[80D[0J"
-
-#define PRORC  1
-#define DRORC  2
-#define INTEG  3
-#define DRORC2 4
-#define PCIEXP 5
-#define CHAN4  6
-#define CRORC  7
-
-#define MAX_STAT 4096
-#define MAX_WAIT 1000000
+#include "stword.h"
+#include "ddl.h"
 
 #define RCSR       0     /* RORC Control and Status register          */
 #define RERR       1     /* RORC Error register                       */
@@ -129,13 +114,6 @@ extern "C" {
 #define RORC_SN_POSITION 33
 #define RORC_SN_LENGTH 5
 
-#define DMA_BUFFER_SIZE 1024 * 1024
-
-#define REMOVE_INDEX 3
-#define MEGA 1000000
-#define GIGA 1000000000
-#define PAGE_LEN (2048*1024)
-
 #define DRORC_CMD_RESET_RORC       0x00000001   //bit  0
 #define DRORC_CMD_RESET_CHAN       0x00000002   //bit  1
 #define DRORC_CMD_CLEAR_RORC_ERROR 0x00000008   //bit  3
@@ -188,12 +166,12 @@ extern "C" {
 
 #define RORC_DG_INFINIT_EVENT  0
 
-#define DIU 1
-#define RandCIFST     0       /* Read & Clear Interface Status Word */
-#define CTSTW     0     /* CTSTW */
-#define CTSTW_TO  1     /* CTSTW for Front-End TimeOut */
-#define ILCMD     2     /* CTSTW for illegal command */
-#define IFSTW    12     /* IFSTW */
+//#define DIU 1
+//#define RandCIFST     0       /* Read & Clear Interface Status Word */
+//#define CTSTW     0     /* CTSTW */
+//#define CTSTW_TO  1     /* CTSTW for Front-End TimeOut */
+//#define ILCMD     2     /* CTSTW for illegal command */
+//#define IFSTW    12     /* IFSTW */
 
 #define DRORC_STAT_LINK_DOWN          0x00002000   //bit 13
 #define DRORC_STAT_CMD_NOT_EMPTY      0x00010000   //bit 16
@@ -206,6 +184,14 @@ extern "C" {
 #define RORC_DATA_BLOCK_NOT_ARRIVED       0
 #define RORC_NOT_END_OF_EVENT_ARRIVED     1
 #define RORC_LAST_BLOCK_OF_EVENT_ARRIVED  2
+
+#define RORC_REVISION_PRORC  1
+#define RORC_REVISION_DRORC  2
+#define RORC_REVISION_INTEG  3
+#define RORC_REVISION_DRORC2 4
+#define RORC_REVISION_PCIEXP 5
+#define RORC_REVISION_CHAN4  6
+#define RORC_REVISION_CRORC  7
 
 #define rorcReadReg(buff, reg_number) (*((volatile uint32_t*)buff + reg_number))
 #define rorcWriteReg(buff, reg_number, reg_value) *((volatile uint32_t*)buff + reg_number) = reg_value
@@ -245,77 +231,9 @@ extern "C" {
   rorcWriteReg (buff, C_TAFH, ((blockAddress) & 0xffffffff));		\
   rorcWriteReg (buff, C_TAFL, (((blockLength) << 8) | (readyFifoIndex)))
 
-#define incr15(a) (((a) + 1) & 0xf)
-#define ST_DEST(fw)  ((unsigned short)( (fw) & 0xf))               // 4 bits  0- 3
-#define mask(a,b) ((a) & (b))
-#define rorcFWVersMajor(fw) ((fw >> 20) & 0xf)
-#define rorcFWVersMinor(fw) ((fw >> 13) & 0x7f)
-#define rorcFFSize(fw) ((fw & 0xff000000) >> 18)  /* (x >> 24) * 64 */
-
-typedef union{
-  struct{
-    unsigned char dest   :  4;
-    unsigned char code   :  4;
-    unsigned char trid   :  4;
-    unsigned long param  : 19;
-    unsigned char error  :  1;
-  } part;
-  unsigned long stw;
-} stword_t;
-
-struct readyFifo_entry{
-  volatile uint32_t length;
-  volatile uint32_t status;
-};
-
-extern char* receivedOrderedSet[];
-
-extern char* remoteStatus[];
-
-// XXX These global variables have been refactored out
-// XXX char statInfo[MAX_STAT];
-// XXX long long int loop_per_usec;      // memory loop/us for the given machine
-// XXX double pci_loop_per_usec;	  // PCI loop/us for the given machine
-// XXX int rorc_revision, diu_version, siu_version;
-
-/** DDL functions, for definitions see ddl.c */
-stword_t ddlReadStatus(volatile void *buff);
-long long int ddlWaitStatus(volatile void *buff, long long int timeout);
-int ddlSendCommand(volatile void *buff,
-                   int             dest,
-                   __u32           command,
-                   int             transid,
-                   __u32           param,
-                   long long int   time);
-
-stword_t ddlReadCTSTW(volatile void *buff, int transid, int destination,
-		      long long int time, int pci_loop_per_usec);
-long long int ddlWaitStatus(volatile void *buff, long long int timeout);
-stword_t ddlReadStatus(volatile void *buff);
-long ddlReadDiu(volatile void *buff, int transid,
-			 long long int time, int pci_loop_per_usec);
-long ddlReadSiu(volatile void *buff, int transid,
-			 long long int time, int pci_loop_per_usec);
-void ddlInterpretIFSTW(__u32 ifstw, char* pref,
-		       char* suff, int diu_version);
-void ddlInterpret_OLD_IFSTW(__u32 ifstw, char* pref, char* suff);
-void ddlInterpret_NEW_IFSTW(__u32 ifstw, char *pref, char *suff);
-unsigned long ddlResetSiu(volatile void *buff, int print, int cycle,
-			  long long int time, int diu_version, int pci_loop_per_usec);
-unsigned long ddlLinkUp(volatile void *buff, int master, int print, int stop,
-			long long int time, int diu_version, int pci_loop_per_usec);
-unsigned long ddlLinkUp_OLD(volatile void *buff, int master, int print,
-			    int stop, long long int time, int diu_version, int pci_loop_per_usec);
-unsigned long ddlLinkUp_NEW(volatile void *buff, int master, int print,
-			    int stop, long long int time, int diu_version, int pci_loop_per_usec);
-int ddlFindDiuVersion(volatile void *buff, int pci_loop_per_usec, int *rorc_revision, int *diu_version);
-int ddlSetSiuLoopBack(volatile void *buff, long long int timeout, int pci_loop_per_usec, stword_t *stw);
-
 /** RORC functions, for definitions see rorc.c */
 void rorcReset (volatile void *buff, int option, int pci_loop_per_usec);
 int rorcEmptyDataFifos(volatile void *buff, int empty_time);
-void elapsed(struct timeval *tv2, struct timeval *tv1, 
-             int *dsec, int *dusec);
 int rorcArmDDL(volatile void *buff, int option, int diu_version, int pci_loop_per_usec);
 int rorcCheckRxFreeFifo(volatile void *buff);
 int rorcStartDataReceiver(volatile void *buff,
@@ -333,23 +251,16 @@ int rorcStartDataGenerator(volatile void *buff, __u32 maxLoop);
 int rorcParamOn(volatile void *buff, int param);
 int rorcParamOff(volatile void *buff);
 
-/** Auxiliary functions, for definitions see aux.c */
-int roundPowerOf2(int number);
-int logi2(unsigned int number);
 void setLoopPerSec(long long int *loop_per_usec, double *pci_loop_per_usec, volatile void *buff);
-int trim(char *string);
-
-unsigned initFlash(uint32_t *buff, unsigned address, int sleept);
-unsigned readFlashStatus(uint32_t *buff, int sleept);
-int checkFlashStatus(uint32_t *buff, int timeout);
-int unlockFlashBlock(uint32_t *buff, unsigned address, int sleept);
-int eraseFlashBlock(uint32_t *buff, unsigned address, int sleept);
-int writeFlashWord(uint32_t *buff, unsigned address, int value, int sleept);
-int readFlashWord(uint32_t *buff, unsigned address, char *data, int sleept);
+unsigned initFlash(volatile void *buff, unsigned address, int sleept);
+unsigned readFlashStatus(volatile void *buff, int sleept);
+int checkFlashStatus(volatile void *buff, int timeout);
+int unlockFlashBlock(volatile void *buff, unsigned address, int sleept);
+int eraseFlashBlock(volatile void *buff, unsigned address, int sleept);
+int writeFlashWord(volatile void *buff, unsigned address, int value, int sleept);
+int readFlashWord(volatile void *buff, unsigned address, char *data, int sleept);
 
 #ifdef __cplusplus
 } /* extern "C" */
-#endif
-
 #endif
 

@@ -9,6 +9,7 @@
 #include <sstream>
 #include <boost/format.hpp>
 #include "c/rorc/rorc.h"
+#include "c/rorc/ddl_def.h"
 #include "ChannelPaths.h"
 #include "RorcStatusCode.h"
 
@@ -158,14 +159,14 @@ void CrorcChannelMaster::resetCard(ResetLevel::type resetLevel)
   auto loopbackMode = getParams().generator.loopbackMode;
 
   try {
-    if (resetLevel == ResetLevel::RORC_ONLY) {
+    if (resetLevel == ResetLevel::RORC) {
       crorcArmDdl(RORC_RESET_RORC);
     }
 
     if (LoopbackMode::isExternal(loopbackMode)) {
       crorcArmDdl(RORC_RESET_DIU);
 
-      if ((resetLevel == ResetLevel::RORC_DIU_SIU) && (loopbackMode != LoopbackMode::EXTERNAL_DIU))
+      if ((resetLevel == ResetLevel::RORC_DIU_SIU) && (loopbackMode != LoopbackMode::DIU))
       {
         // Wait a little before SIU reset.
         usleep(100000); /// XXX Dirty...
@@ -196,12 +197,12 @@ void CrorcChannelMaster::startDataGenerator(const GeneratorParameters& gen)
 
   crorcArmDataGenerator();
 
-  if (LoopbackMode::INTERNAL_RORC == gen.loopbackMode) {
+  if (LoopbackMode::RORC == gen.loopbackMode) {
     rorcParamOn(pdaBar.getUserspaceAddress(), PRORC_PARAM_LOOPB);
     usleep(100000); // XXX Why???
   }
 
-  if (LoopbackMode::EXTERNAL_SIU == gen.loopbackMode) {
+  if (LoopbackMode::SIU == gen.loopbackMode) {
     crorcSetSiuLoopback();
     usleep(100000); // XXX Why???
     crorcCheckLink();
@@ -217,7 +218,7 @@ void CrorcChannelMaster::startDataReceiving()
   crorcInitDiuVersion();
 
   // Preparing the card.
-  if (LoopbackMode::EXTERNAL_SIU == getParams().generator.loopbackMode) {
+  if (LoopbackMode::SIU == getParams().generator.loopbackMode) {
     resetCard(ResetLevel::RORC_DIU_SIU);
     crorcCheckLink();
     crorcSiuCommand(0);

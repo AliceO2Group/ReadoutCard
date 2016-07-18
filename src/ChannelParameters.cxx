@@ -21,7 +21,7 @@ GeneratorParameters::GeneratorParameters()
 {
   initialValue = 1;
   initialWord = 0;
-  loopbackMode = Rorc::LoopbackMode::INTERNAL_RORC;
+  loopbackMode = Rorc::LoopbackMode::RORC;
   pattern = GeneratorPattern::INCREMENTAL;
   seed = 0;
   useDataGenerator = false;
@@ -61,7 +61,7 @@ typename Map::mapped_type getValue(const Map& map, const typename Map::key_type&
 
 static const std::map<ResetLevel::type, std::string> resetLevelMap = {
   { ResetLevel::NOTHING, "NOTHING" },
-  { ResetLevel::RORC_ONLY, "RORC_ONLY" },
+  { ResetLevel::RORC, "RORC" },
   { ResetLevel::RORC_DIU, "RORC_DIU" },
   { ResetLevel::RORC_DIU_SIU, "RORC_DIU_SIU" },
 };
@@ -87,16 +87,16 @@ ResetLevel::type ResetLevel::fromString(const std::string& string)
 
 static const std::map<LoopbackMode::type, std::string> loopbackModeMap {
   { LoopbackMode::NONE, "NONE" },
-  { LoopbackMode::INTERNAL_RORC, "INTERNAL_RORC" },
-  { LoopbackMode::EXTERNAL_DIU, "EXTERNAL_DIU" },
-  { LoopbackMode::EXTERNAL_SIU, "EXTERNAL_SIU" },
+  { LoopbackMode::RORC, "RORC" },
+  { LoopbackMode::DIU, "DIU" },
+  { LoopbackMode::SIU, "SIU" },
 };
 
 static const auto loopbackModeMapReverse = reverseMap(loopbackModeMap);
 
 bool LoopbackMode::isExternal(const LoopbackMode::type& mode)
 {
-  return mode == LoopbackMode::EXTERNAL_SIU || mode == LoopbackMode::EXTERNAL_DIU;
+  return mode == LoopbackMode::SIU || mode == LoopbackMode::DIU;
 }
 
 std::string LoopbackMode::toString(const LoopbackMode::type& mode)
