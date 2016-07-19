@@ -22,7 +22,7 @@ namespace Rorc {
 int crorcGetSerial(PciDevice* pciDevice);
 int cruGetSerial(PciDevice* pciDevice);
 
-struct DeviceDescriptor
+struct DeviceType
 {
     CardType::type cardType;
     const std::string vendorId;
@@ -30,7 +30,7 @@ struct DeviceDescriptor
     std::function<int(PciDevice* pciDevice)> getSerial;
 };
 
-const std::vector<DeviceDescriptor> deviceDescriptors = {
+const std::vector<DeviceType> deviceTypes = {
     { CardType::CRORC, "10dc", "0033", crorcGetSerial },
     { CardType::CRU, "10dc", "????", cruGetSerial },
 };
@@ -38,19 +38,18 @@ const std::vector<DeviceDescriptor> deviceDescriptors = {
 RorcDevice::RorcDevice(int serialNumber)
     : deviceId("unknown"), vendorId("unknown"), serialNumber(-1), cardType(CardType::UNKNOWN)
 {
-  for (auto& dd : deviceDescriptors) {
-    pdaDevice.reset(new PdaDevice(dd.vendorId, dd.deviceId));
+  for (auto& type : deviceTypes) {
+    pdaDevice.reset(new PdaDevice(type.vendorId, type.deviceId));
     auto pciDevices = pdaDevice->getPciDevices();
 
     for (auto& pciDevice : pciDevices) {
-      int serial = dd.getSerial(pciDevice);
-      printf("found serial: %d\n");
+      int serial = type.getSerial(pciDevice);
       if (serial == serialNumber) {
         this->pciDevice = pciDevice;
-        this->cardType = dd.cardType;
+        this->cardType = type.cardType;
         this->serialNumber = serial;
-        this->deviceId = dd.deviceId;
-        this->vendorId = dd.vendorId;
+        this->deviceId = type.deviceId;
+        this->vendorId = type.vendorId;
         return;
       }
     }
@@ -65,6 +64,49 @@ RorcDevice::~RorcDevice()
 {
 }
 
+std::vector<RorcDevice::CardDescriptor> RorcDevice::enumerateDevices()
+{
+  std::vector<RorcDevice::CardDescriptor> cards;
+
+  for (auto& type : deviceTypes) {
+    PdaDevice pdaDevice(type.vendorId, type.deviceId);
+    auto pciDevices = pdaDevice.getPciDevices();
+
+    for (auto& pciDevice : pciDevices) {
+      RorcDevice::CardDescriptor cd;
+      cd.cardType = type.cardType;
+      cd.serialNumber = type.getSerial(pciDevice);
+      cd.deviceId = type.deviceId;
+      cd.vendorId = type.vendorId;
+      cards.push_back(cd);
+    }
+  }
+  return cards;
+}
+
+std::vector<RorcDevice::CardDescriptor> RorcDevice::enumerateDevices(int serialNumber)
+{
+  std::vector<RorcDevice::CardDescriptor> cards;
+
+  for (auto& type : deviceTypes) {
+    PdaDevice pdaDevice(type.vendorId, type.deviceId);
+    auto pciDevices = pdaDevice.getPciDevices();
+
+    for (auto& pciDevice : pciDevices) {
+      int serial = type.getSerial(pciDevice);
+      if (serial == serialNumber) {
+        RorcDevice::CardDescriptor cd;
+        cd.cardType = type.cardType;
+        cd.serialNumber = serial;
+        cd.deviceId = type.deviceId;
+        cd.vendorId = type.vendorId;
+        cards.push_back(cd);
+      }
+    }
+  }
+  return cards;
+}
+
 // The RORC headers have a lot of macros that cause problems with the rest of this file, so we include it down here.
 #include "c/rorc/rorc.h"
 
@@ -76,7 +118,7 @@ int crorcGetSerial(PciDevice* pciDevice)
   return Crorc::getSerial(pdaBar.getUserspaceAddress());
 }
 
-int cruGetSerial(PciDevice* pciDevice)
+int cruGetSerial(PciDevice*)
 {
   BOOST_THROW_EXCEPTION(DeviceFinderException() << errinfo_rorc_generic_message("CRU unsupported"));
 }

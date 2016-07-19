@@ -39,7 +39,6 @@ if(PDA_FOUND)
     PdaDevice.cxx
     PdaDmaBuffer.cxx
     RorcDevice.cxx
-    RorcDeviceEnumerator.cxx
     RorcUtilsCommon.cxx
     RorcUtilsOptions.cxx
   )

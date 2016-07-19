@@ -2,16 +2,14 @@
 /// \file RorcUtilsReadRegister.cxx
 /// \author Pascal Boeschoten
 ///
-/// Utility that reads a register from a RORC
+/// Utility that lists the RORC devices on the system
 ///
 
 #include <iostream>
 #include <iomanip>
 #include <stdexcept>
 #include <boost/exception/diagnostic_information.hpp>
-#include "RORC/ChannelFactory.h"
-#include "RORC/CardType.h"
-#include "RorcDeviceEnumerator.h"
+#include "RorcDevice.h"
 #include "RorcUtilsOptions.h"
 #include "RorcUtilsCommon.h"
 #include "RorcUtilsDescription.h"
@@ -27,25 +25,27 @@ static const UtilsDescription DESCRIPTION(
     "./rorc-list-cards"
     );
 
-int main(int argc, char** argv)
+int main(int, char**)
 {
   auto optionsDescription = Options::createOptionsDescription();
   try {
-    AliceO2::Rorc::RorcDeviceEnumerator enumerator;
-    auto cardsFound = enumerator.getCardsFound();
+    auto cardsFound = AliceO2::Rorc::RorcDevice::enumerateDevices();
 
     cout << "Found " << cardsFound.size() << " card(s)\n";
 
-    auto formatString = "  %-12s %-12s %-12s %-12d \n";
-    auto str = boost::str(boost::format(formatString) % "Card Type" % "Device ID" % "Vendor ID" % "Serial Nr.");
+    auto formatHeader = "  %-3s %-12s %-12s %-12s %-12s \n";
+    auto formatRow = "  %-3s %-12s 0x%-10s 0x%-10s %-12s \n";
+    auto str = boost::str(boost::format(formatHeader) % "#" % "Card Type" % "Vendor ID" % "Device ID" % "Serial Nr.");
     auto line1 = std::string(str.length(), '=') + '\n';
     auto line2 = std::string(str.length(), '-') + '\n';
 
     cout << line1 << str << line2;
 
+    int i = 0;
     for (auto& card : cardsFound) {
       auto cardType = AliceO2::Rorc::CardType::toString(card.cardType);
-      cout << boost::str(boost::format(formatString) % cardType % card.deviceId % card.vendorId % card.serialNumber);
+      cout << boost::str(boost::format(formatRow) % i % cardType % card.vendorId % card.deviceId % card.serialNumber);
+      i++;
     }
 
     cout << line1;

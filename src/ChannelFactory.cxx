@@ -21,7 +21,7 @@
 #  include "CruChannelMaster.h"
 #  include "CruChannelSlave.h"
 #  include "ChannelPaths.h"
-#  include "RorcDeviceEnumerator.h"
+#  include "RorcDevice.h"
 #endif
 
 namespace b = boost;
@@ -59,8 +59,7 @@ std::shared_ptr<ChannelMasterInterface> ChannelFactory::getMaster(int serialNumb
     return std::make_shared<DummyChannelMaster>(serialNumber, channelNumber, params);
   } else {
     // Find the PCI device
-    RorcDeviceEnumerator enumerator(serialNumber);
-    auto& cardsFound = enumerator.getCardsFound();
+    auto cardsFound = RorcDevice::enumerateDevices(serialNumber);
     if (cardsFound.empty()) {
       BOOST_THROW_EXCEPTION(RorcException()
           << errinfo_rorc_generic_message("Could not find card")
@@ -106,8 +105,7 @@ std::shared_ptr<ChannelSlaveInterface> ChannelFactory::getSlave(int serialNumber
     return std::make_shared<DummyChannelSlave>(serialNumber, channelNumber);
   } else {
     // Find the PCI device
-    RorcDeviceEnumerator enumerator(serialNumber);
-    auto& cardsFound = enumerator.getCardsFound();
+    auto cardsFound = RorcDevice::enumerateDevices(serialNumber);
     if (cardsFound.empty()) {
       BOOST_THROW_EXCEPTION(RorcException()
           << errinfo_rorc_generic_message("Could not find card")

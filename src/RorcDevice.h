@@ -46,6 +46,20 @@ class RorcDevice
       return pciDevice;
     }
 
+    struct CardDescriptor
+    {
+        CardType::type cardType;
+        int serialNumber;
+        std::string deviceId;
+        std::string vendorId;
+    };
+
+    // Finds RORC devices on the system
+    static std::vector<CardDescriptor> enumerateDevices();
+
+    // Finds RORC devices on the system with the given serial number
+    static std::vector<CardDescriptor> enumerateDevices(int serialNumber);
+
   private:
     std::auto_ptr<PdaDevice> pdaDevice;
     PciDevice* pciDevice;
