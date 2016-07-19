@@ -7,6 +7,8 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <chrono>
+#include <thread>
 #include <boost/format.hpp>
 #include "c/rorc/rorc.h"
 #include "c/rorc/ddl_def.h"
@@ -45,7 +47,7 @@ CrorcChannelMaster::CrorcChannelMaster(int serial, int channel, const ChannelPar
   mappedFileFifo(
       ChannelPaths::fifo(serial, channel).c_str()),
   bufferReadyFifo(
-      pdaDevice.getPciDevice(),
+      rorcDevice.getPciDevice(),
       mappedFileFifo.getAddress(),
       mappedFileFifo.getSize(),
       getBufferId(BUFFER_INDEX_FIFO)),
@@ -169,7 +171,8 @@ void CrorcChannelMaster::resetCard(ResetLevel::type resetLevel)
       if ((resetLevel == ResetLevel::RORC_DIU_SIU) && (loopbackMode != LoopbackMode::DIU))
       {
         // Wait a little before SIU reset.
-        usleep(100000); /// XXX Dirty...
+
+        std::this_thread::sleep_for(std::chrono::microseconds(100000)); /// XXX Why???
         // Reset SIU.
         crorcArmDdl(RORC_RESET_SIU);
         crorcArmDdl(RORC_RESET_DIU);
@@ -186,7 +189,7 @@ void CrorcChannelMaster::resetCard(ResetLevel::type resetLevel)
   }
 
   // Wait a little after reset.
-  usleep(100000); /// XXX Dirty...
+  std::this_thread::sleep_for(std::chrono::microseconds(100000)); /// XXX Why???
 }
 
 void CrorcChannelMaster::startDataGenerator(const GeneratorParameters& gen)
@@ -199,12 +202,12 @@ void CrorcChannelMaster::startDataGenerator(const GeneratorParameters& gen)
 
   if (LoopbackMode::RORC == gen.loopbackMode) {
     rorcParamOn(pdaBar.getUserspaceAddress(), PRORC_PARAM_LOOPB);
-    usleep(100000); // XXX Why???
+    std::this_thread::sleep_for(std::chrono::microseconds(100000)); // XXX Why???
   }
 
   if (LoopbackMode::SIU == gen.loopbackMode) {
     crorcSetSiuLoopback();
-    usleep(100000); // XXX Why???
+    std::this_thread::sleep_for(std::chrono::microseconds(100000)); // XXX Why???
     crorcCheckLink();
     crorcSiuCommand(0);
     crorcDiuCommand(0);

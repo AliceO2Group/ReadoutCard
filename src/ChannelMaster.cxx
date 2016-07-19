@@ -60,14 +60,14 @@ ChannelMaster::ChannelMaster(int serial, int channel, const ChannelParameters& p
        sharedDataSize(),
        sharedDataName(),
        FileSharedObject::find_or_construct),
-   deviceFinder(serialNumber),
-   pdaDevice(deviceFinder.getPciVendorId(), deviceFinder.getPciDeviceId()),
-   pdaBar(pdaDevice.getPciDevice(), channel),
+   //deviceFinder(serialNumber),
+   rorcDevice(serial),
+   pdaBar(rorcDevice.getPciDevice(), channel),
    mappedFilePages(
        ChannelPaths::pages(serial, channel).c_str(),
        params.dma.bufferSize),
    bufferPages(
-       pdaDevice.getPciDevice(),
+       rorcDevice.getPciDevice(),
        mappedFilePages.getAddress(),
        mappedFilePages.getSize(),
        getBufferId(BUFFER_INDEX_PAGES))

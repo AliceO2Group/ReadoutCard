@@ -21,7 +21,7 @@ using namespace AliceO2;
 
 // The serial number of the card to use
 // For dummy implementation, use Rorc::ChannelMasterFactory::DUMMY_SERIAL_NUMBER
-const int serialNumber = 0;
+const int serialNumber = 33333;
 
 // The DMA channel to use
 const int channelNumber = 0;

@@ -10,8 +10,8 @@
 #include <boost/format.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include "RORC/CardType.h"
 #include "RorcException.h"
-#include "RorcDeviceFinder.h"
 #include "DummyChannelMaster.h"
 #include "DummyChannelSlave.h"
 #ifdef ALICEO2_RORC_PDA_ENABLED
@@ -21,6 +21,7 @@
 #  include "CruChannelMaster.h"
 #  include "CruChannelSlave.h"
 #  include "ChannelPaths.h"
+#  include "RorcDeviceEnumerator.h"
 #endif
 
 namespace b = boost;
@@ -58,10 +59,17 @@ std::shared_ptr<ChannelMasterInterface> ChannelFactory::getMaster(int serialNumb
     return std::make_shared<DummyChannelMaster>(serialNumber, channelNumber, params);
   } else {
     // Find the PCI device
-    RorcDeviceFinder finder(serialNumber);
+    RorcDeviceEnumerator enumerator(serialNumber);
+    auto& cardsFound = enumerator.getCardsFound();
+    if (cardsFound.empty()) {
+      BOOST_THROW_EXCEPTION(RorcException()
+          << errinfo_rorc_generic_message("Could not find card")
+          << errinfo_rorc_serial_number(serialNumber));
+    }
+    auto& card = cardsFound[0];
 
-    switch (finder.getCardType()) {
-      case RorcDeviceFinder::CardType::CRORC: {
+    switch (card.cardType) {
+      case CardType::CRORC: {
         // TODO Should this filesystem stuff be done by the ChannelMaster object itself?
         makeParentDirectories(ChannelPaths::pages(serialNumber, channelNumber));
         makeParentDirectories(ChannelPaths::state(serialNumber, channelNumber));
@@ -70,19 +78,17 @@ std::shared_ptr<ChannelMasterInterface> ChannelFactory::getMaster(int serialNumb
         touchFile(ChannelPaths::lock(serialNumber, channelNumber));
         return std::make_shared<CrorcChannelMaster>(serialNumber, channelNumber, params);
       }
-      case RorcDeviceFinder::CardType::CRU: {
+      case CardType::CRU: {
         // TODO Remove throw when CruChannelMaster is in usable state
         BOOST_THROW_EXCEPTION(RorcException()
-            << errinfo_rorc_generic_message("CRU not yet supported")
-            << errinfo_rorc_serial_number(serialNumber)
-            << errinfo_rorc_channel_number(channelNumber));
+            << errinfo_rorc_generic_message("CRU channel master not yet supported")
+            << errinfo_rorc_serial_number(serialNumber));
         return std::make_shared<CruChannelMaster>(serialNumber, channelNumber, params);
       }
       default: {
         BOOST_THROW_EXCEPTION(RorcException()
             << errinfo_rorc_generic_message("Unknown card type")
-            << errinfo_rorc_serial_number(serialNumber)
-            << errinfo_rorc_channel_number(channelNumber));
+            << errinfo_rorc_serial_number(serialNumber));
       }
     }
   }
@@ -100,20 +106,26 @@ std::shared_ptr<ChannelSlaveInterface> ChannelFactory::getSlave(int serialNumber
     return std::make_shared<DummyChannelSlave>(serialNumber, channelNumber);
   } else {
     // Find the PCI device
-    RorcDeviceFinder finder(serialNumber);
+    RorcDeviceEnumerator enumerator(serialNumber);
+    auto& cardsFound = enumerator.getCardsFound();
+    if (cardsFound.empty()) {
+      BOOST_THROW_EXCEPTION(RorcException()
+          << errinfo_rorc_generic_message("Could not find card")
+          << errinfo_rorc_serial_number(serialNumber));
+    }
+    auto& card = cardsFound[0];
 
-    switch (finder.getCardType()) {
-      case RorcDeviceFinder::CardType::CRORC: {
+    switch (card.cardType) {
+      case CardType::CRORC: {
         return std::make_shared<CrorcChannelSlave>(serialNumber, channelNumber);
       }
-      case RorcDeviceFinder::CardType::CRU: {
+      case CardType::CRU: {
         return std::make_shared<CruChannelSlave>(serialNumber, channelNumber);
       }
       default: {
         BOOST_THROW_EXCEPTION(RorcException()
             << errinfo_rorc_generic_message("Unknown card type")
-            << errinfo_rorc_serial_number(serialNumber)
-            << errinfo_rorc_channel_number(channelNumber));
+            << errinfo_rorc_serial_number(serialNumber));
       }
     }
   }

@@ -5,10 +5,9 @@
 
 #pragma once
 
-#include "PdaDevice.h"
+#include "RorcDevice.h"
 #include "PdaBar.h"
 #include "RORC/ChannelSlaveInterface.h"
-#include "RorcDeviceFinder.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -34,11 +33,8 @@ class ChannelSlave: public ChannelSlaveInterface
     /// DMA channel number
     int channelNumber;
 
-    /// RORC device finder, gets the vendor & device ID of the card
-    RorcDeviceFinder deviceFinder;
-
     /// PDA device objects
-    PdaDevice pdaDevice;
+    RorcDevice rorcDevice;
 
     /// PDA BAR object
     PdaBar pdaBar;

@@ -12,11 +12,10 @@
 #include "MemoryMappedFile.h"
 #include "TypedMemoryMappedFile.h"
 #include "ReadyFifo.h"
-#include "PdaDevice.h"
+#include "RorcDevice.h"
 #include "PdaBar.h"
 #include "PdaDmaBuffer.h"
 #include "RORC/ChannelMasterInterface.h"
-#include "RorcDeviceFinder.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -134,11 +133,8 @@ class ChannelMaster: public ChannelMasterInterface
     /// Memory mapped data stored in the shared state file
     FileSharedObject::LockedFileSharedObject<SharedData> sharedData;
 
-    /// RORC device finder, gets the vendor & device ID of the card
-    RorcDeviceFinder deviceFinder;
-
     /// PDA device objects
-    PdaDevice pdaDevice;
+    RorcDevice rorcDevice;
 
     /// PDA BAR object
     PdaBar pdaBar;

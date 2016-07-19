@@ -117,6 +117,7 @@ class CruChannelMaster : public ChannelMaster
 
     /// Counter for the amount of pages that have been requested.
     /// Since currently, the idea is to push 128 at a time, we wait until the client requests 128 pages...
+    /// XXX This is of course a dirty hack and should be replaced when the CRU development matures
     int pendingPages;
 
     /// Array to keep track of read pages (false: wasn't read out, true: was read out).

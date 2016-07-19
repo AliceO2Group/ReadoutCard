@@ -6,6 +6,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <pda.h>
 
 namespace AliceO2 {
@@ -15,23 +16,22 @@ namespace Rorc {
 class PdaDevice
 {
   public:
-    struct CardType
-    {
-        enum type
-        {
-          CRORC, CRU
-        };
-    };
-
-    PdaDevice(std::string vendorId, std::string deviceId);
+    PdaDevice(const std::string& vendorId, const std::string& deviceId);
     ~PdaDevice();
     DeviceOperator* getDeviceOperator();
-    PciDevice* getPciDevice();
+
+    int getPciDeviceCount();
+    PciDevice* getPciDevice(int index);
+
+    const std::vector<PciDevice*>& getPciDevices() const
+    {
+      return pciDevices;
+    }
 
   private:
 
     DeviceOperator* deviceOperator;
-    PciDevice* pciDevice;
+    std::vector<PciDevice*> pciDevices;
 };
 
 } // namespace Rorc

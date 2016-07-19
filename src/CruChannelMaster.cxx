@@ -91,7 +91,7 @@ CruChannelMaster::CruChannelMaster(int serial, int channel, const ChannelParamet
   mappedFileFifo(
       ChannelPaths::fifo(serial, channel).c_str()),
   bufferFifo(
-      pdaDevice.getPciDevice(),
+      rorcDevice.getPciDevice(),
       mappedFileFifo.getAddress(),
       mappedFileFifo.getSize(),
       getBufferId(BUFFER_INDEX_FIFO)),
@@ -191,12 +191,12 @@ void CruChannelMaster::resetCard(ResetLevel::type)
 
 ChannelMasterInterface::PageHandle CruChannelMaster::pushNextPage()
 {
-  auto ph = ChannelMasterInterface::PageHandle(pendingPages);
+  auto handle = ChannelMasterInterface::PageHandle(pendingPages);
 
   if (pendingPages < 128) {
     // Wait until we have 128 pages
     pendingPages++;
-    return ph;
+    return handle;
   } else {
     // Actually push pages
     auto pageSize = getParams().dma.pageSize;
@@ -228,7 +228,7 @@ ChannelMasterInterface::PageHandle CruChannelMaster::pushNextPage()
     }
 
     pendingPages = 0;
-    return ph;
+    return handle;
   }
 }
 

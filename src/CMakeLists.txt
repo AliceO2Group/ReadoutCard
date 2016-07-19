@@ -15,6 +15,7 @@ set(RORC_LIB_HEADERS
 )
 
 set(RORC_LIB_SOURCES
+  CardType.cxx
   ChannelFactory.cxx
   ChannelParameters.cxx
   ChannelPaths.cxx
@@ -31,12 +32,14 @@ if(PDA_FOUND)
     c/rorc/rorc.c
     ChannelMaster.cxx
     ChannelSlave.cxx
+    Crorc.cxx
     CrorcChannelMaster.cxx
     CruChannelMaster.cxx
     PdaBar.cxx
     PdaDevice.cxx
     PdaDmaBuffer.cxx
-    RorcDeviceFinder.cxx
+    RorcDevice.cxx
+    RorcDeviceEnumerator.cxx
     RorcUtilsCommon.cxx
     RorcUtilsOptions.cxx
   )
@@ -82,6 +85,7 @@ build_util_exec(rorc-reg-read RorcUtilsReadRegister.cxx)
 build_util_exec(rorc-reg-read-range RorcUtilsReadRegisterRange)
 build_util_exec(rorc-reg-write RorcUtilsWriteRegister.cxx)
 build_util_exec(rorc-dma-bench RorcUtilsDmaBench.cxx)
+build_util_exec(rorc-list-cards RorcUtilsListCards.cxx)
 
 
 # -------

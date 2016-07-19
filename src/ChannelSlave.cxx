@@ -12,9 +12,8 @@ namespace Rorc {
 ChannelSlave::ChannelSlave(int serial, int channel)
  : serialNumber(serial),
    channelNumber(channel),
-   deviceFinder(serialNumber),
-   pdaDevice(deviceFinder.getPciVendorId(), deviceFinder.getPciDeviceId()),
-   pdaBar(pdaDevice.getPciDevice(), channel)
+   rorcDevice(serial),
+   pdaBar(rorcDevice.getPciDevice(), channel)
 {
 }
 
