@@ -27,6 +27,17 @@ MemoryMappedFile::MemoryMappedFile(const char* fileName, size_t fileSize)
 
 void MemoryMappedFile::map(const char* fileName, size_t fileSize)
 {
+  // Check the directory exists
+  {
+    auto dir = bfs::path(fileName).parent_path();
+    if (!(bfs::is_directory(dir) && bfs::exists(dir))) {
+      BOOST_THROW_EXCEPTION(MemoryMapException()
+          << errinfo_rorc_generic_message("Failed to open memory map file, parent directory does not exist")
+          << errinfo_rorc_filename(std::string(fileName))
+          << errinfo_rorc_filesize(fileSize));
+    }
+  }
+
   // Similar operation to calling "touch" command, making sure the file exists
   try {
     std::ofstream ofs(fileName, std::ios::app);
