@@ -77,7 +77,12 @@ Again, clients must wait manually.
 The CruChannelMaster implementation is not complete.
 
 ChannelFactory should instantiate a ChannelMaster object based on card type and serial number. 
-But currently, it just goes with the first C-RORC it comes across. 
+But currently, it just goes with the first C-RORC it comes across.
+
+The ChannelParameters used to initialize the ChannelMaster object are stored in the shared memory. The purpose of this
+is to know when a ChannelMaster object has released the lock, and then another one takes it using different parameters.
+In that case, some things must be re-initialized. However, this is not yet implemented and a change of parameters
+currently requires the user to delete the shared files.  
 
 
 Dependencies

@@ -110,13 +110,7 @@ int main(int, char**)
 
       // Wait for page to arrive
       while (!channel->isPageArrived(handle) && !timeExceeded()) { ; }
-
-      // XXX Currently, it appears that with the CRORC, the isPageArrived() function does not work properly and
-      // returns 'true' too early.
-      // It is suspected to be a firmware bug, where the page status in the Ready FIFO is marked as fully transferred
-      // while the actual DMA transfer has not yet been completed.
-      // The investigation is ongoing, but for the time being we can work around the issue with a manual delay.
-      std::this_thread::sleep_for(std::chrono::microseconds(1));
+      std::this_thread::sleep_for(std::chrono::microseconds(1)); // See README.md
 
       // Get page (contains userspace address)
       page = channel->getPage(handle);
