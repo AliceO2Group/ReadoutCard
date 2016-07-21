@@ -124,11 +124,6 @@ po::variables_map getVariablesMap(int argc, char** argv, const po::options_descr
   po::variables_map variablesMap;
   po::store(po::parse_command_line(argc, argv, optionsDescription), variablesMap);
   po::notify(variablesMap);
-
-  if (variablesMap.count("help")) {
-    throw std::runtime_error("Help");
-  }
-
   return variablesMap;
 }
 

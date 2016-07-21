@@ -67,6 +67,9 @@ ChannelParameters getOptionsChannelParameters(const boost::program_options::vari
     } \
     ::AliceO2::Rorc::Util::Options::printHelp(_utilsDescription, _optionsDescription); \
   } \
+  else { \
+    std::cout << "Error: " << _exception.what() << "\n\n"; \
+  } \
 } while (0)
 #else
 #define RORC_UTILS_HANDLE_EXCEPTION(_exception, _utilsDescription, _optionsDescription) do \
@@ -81,8 +84,17 @@ ChannelParameters getOptionsChannelParameters(const boost::program_options::vari
     } \
     ::AliceO2::Rorc::Util::Options::printHelp(_utilsDescription, _optionsDescription); \
   } \
+  else { \
+    std::cout << "Error: " << _exception.what() << "\n\n"; \
+  } \
 } while (0)
 #endif
+
+#define RORC_UTILS_HANDLE_HELP(_variablesMap, _utilDescription, _optDescription) \
+if (_variablesMap.count("help")) { \
+  ::AliceO2::Rorc::Util::Options::printHelp(_utilDescription, _optDescription); \
+  return 0; \
+}
 
 } // namespace Options
 } // namespace Util

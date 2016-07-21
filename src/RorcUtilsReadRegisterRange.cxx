@@ -31,7 +31,7 @@ int main(int argc, char** argv)
 
   try {
     auto variablesMap = Options::getVariablesMap(argc, argv, optionsDescription);
-
+    RORC_UTILS_HANDLE_HELP(variablesMap, DESCRIPTION, optionsDescription);
     int serialNumber = Options::getOptionSerialNumber(variablesMap);
     int baseAddress = Options::getOptionRegisterAddress(variablesMap);
     int channelNumber = Options::getOptionChannel(variablesMap);

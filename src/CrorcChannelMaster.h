@@ -41,9 +41,9 @@ class CrorcChannelMaster : public ChannelMaster
         /// The status of a page's arrival
         enum type
         {
-          NONE_ARRIVED = 0, // == RORC_DATA_BLOCK_NOT_ARRIVED;
-          PART_ARRIVED = 1, // == RORC_NOT_END_OF_EVENT_ARRIVED
-          WHOLE_ARRIVED = 2 // == RORC_LAST_BLOCK_OF_EVENT_ARRIVED
+          NONE_ARRIVED,
+          PART_ARRIVED,
+          WHOLE_ARRIVED,
         };
     };
 

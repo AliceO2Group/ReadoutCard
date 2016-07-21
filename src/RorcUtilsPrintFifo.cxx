@@ -35,6 +35,7 @@ int main(int argc, char** argv)
 
   try {
     auto variablesMap = Options::getVariablesMap(argc, argv, optionsDescription);
+    RORC_UTILS_HANDLE_HELP(variablesMap, DESCRIPTION, optionsDescription);
     int serialNumber = Options::getOptionSerialNumber(variablesMap);
     int channelNumber = Options::getOptionChannel(variablesMap);
     auto channel = AliceO2::Rorc::ChannelFactory().getSlave(serialNumber, channelNumber);

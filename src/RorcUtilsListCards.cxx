@@ -25,10 +25,13 @@ static const UtilsDescription DESCRIPTION(
     "./rorc-list-cards"
     );
 
-int main(int, char**)
+int main(int argc, char** argv)
 {
   auto optionsDescription = Options::createOptionsDescription();
   try {
+    auto variablesMap = Options::getVariablesMap(argc, argv, optionsDescription);
+    RORC_UTILS_HANDLE_HELP(variablesMap, DESCRIPTION, optionsDescription);
+
     auto cardsFound = AliceO2::Rorc::RorcDevice::enumerateDevices();
 
     cout << "Found " << cardsFound.size() << " card(s)\n";
