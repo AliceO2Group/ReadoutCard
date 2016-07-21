@@ -15,14 +15,9 @@ class CrorcChannelSlave: public ChannelSlave
 {
   public:
 
-    inline CrorcChannelSlave(int serial, int channel)
-        : ChannelSlave(serial, channel)
-    {
-    }
-
-    inline ~CrorcChannelSlave()
-    {
-    }
+    CrorcChannelSlave(int serial, int channel);
+    virtual ~CrorcChannelSlave();
+    virtual CardType::type getCardType();
 };
 
 } // namespace Rorc

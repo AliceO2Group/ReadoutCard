@@ -23,6 +23,8 @@ set(RORC_LIB_SOURCES
   DummyChannelSlave.cxx
   MemoryMappedFile.cxx
   RorcStatusCode.cxx
+  RorcUtilsProgram.cxx
+  Util.cxx
 )
 
 if(PDA_FOUND)
@@ -34,7 +36,9 @@ if(PDA_FOUND)
     ChannelSlave.cxx
     Crorc.cxx
     CrorcChannelMaster.cxx
+    CrorcChannelSlave.cxx
     CruChannelMaster.cxx
+    CruChannelSlave.cxx
     PdaBar.cxx
     PdaDevice.cxx
     PdaDmaBuffer.cxx

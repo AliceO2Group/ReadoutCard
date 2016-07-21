@@ -8,6 +8,7 @@
 #include <cstdint>
 #include "RORC/Page.h"
 #include "RORC/ChannelParameters.h"
+#include "RORC/CardType.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -71,6 +72,10 @@ class ChannelMasterInterface
     /// Mark a page as read, so it can be written to again
     /// \param handle The handle of the page returned from pushNextPage()
     virtual void markPageAsRead(const PageHandle& handle) = 0;
+
+    /// Return the type of the RORC card this ChannelMaster is controlling
+    /// \return The card type
+    virtual CardType::type getCardType() = 0;
 };
 
 } // namespace Rorc

@@ -15,14 +15,9 @@ class CruChannelSlave: public ChannelSlave
 {
   public:
 
-    inline CruChannelSlave(int serial, int channel)
-        : ChannelSlave(serial, channel)
-    {
-    }
-
-    inline ~CruChannelSlave()
-    {
-    }
+    CruChannelSlave(int serial, int channel);
+    virtual ~CruChannelSlave();
+    virtual CardType::type getCardType();
 };
 
 } // namespace Rorc

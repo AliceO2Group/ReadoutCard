@@ -4,19 +4,20 @@
 namespace AliceO2 {
 namespace Rorc {
 
-struct CardType
+/// Namespace for enum describing a RORC type, and supporting functions
+namespace CardType
 {
     enum type
     {
-      UNKNOWN, CRORC, CRU
+      UNKNOWN, CRORC, CRU, DUMMY
     };
 
     /// Converts a CardType to a string
-    static std::string toString(const CardType::type& level);
+    std::string toString(const CardType::type& level);
 
     /// Converts a string to a CardType
-    static CardType::type fromString(const std::string& string);
-};
+    CardType::type fromString(const std::string& string);
+}
 
 } // namespace Rorc
 } // namespace AliceO2

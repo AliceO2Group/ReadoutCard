@@ -33,5 +33,10 @@ void DummyChannelSlave::writeRegister(int index, uint32_t value)
   cout << "DummyChannelSlave::writeRegister(index:" << index << ", value:" << value << ")" << endl;
 }
 
+CardType::type DummyChannelSlave::getCardType()
+{
+  return CardType::DUMMY;
+}
+
 } // namespace Rorc
 } // namespace AliceO2

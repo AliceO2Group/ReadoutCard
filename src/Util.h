@@ -36,6 +36,12 @@ typename Map::mapped_type getValue(const Map& map, const typename Map::key_type&
   BOOST_THROW_EXCEPTION(std::runtime_error("Invalid conversion"));
 }
 
+/// Sets the given function as the SIGINT handler
+void setSigIntHandler(void(*function)(int));
+
+/// Checks if there's a SIGINT handler installed (not sure if it actually works correctly)
+bool isSigIntHandlerSet();
+
 } // namespace Util
 } // namespace Rorc
 } // namespace AliceO2

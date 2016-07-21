@@ -6,6 +6,7 @@
 #pragma once
 
 #include <cstdint>
+#include "RORC/CardType.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -29,6 +30,10 @@ class ChannelSlaveInterface
     /// \param index The index of the register
     /// \param value The value to be written into the register
     virtual void writeRegister(int index, uint32_t value) = 0;
+
+    /// Return the type of the RORC card this ChannelSlave is controlling
+    /// \return The card type
+    virtual CardType::type getCardType() = 0;
 };
 
 } // namespace Rorc

@@ -251,6 +251,11 @@ void CruChannelMaster::markPageAsRead(const PageHandle& handle)
   pageWasReadOut[handle.index] = true;
 }
 
+CardType::type CruChannelMaster::getCardType()
+{
+  return CardType::CRU;
+}
+
 
 } // namespace Rorc
 } // namespace AliceO2

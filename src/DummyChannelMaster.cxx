@@ -81,5 +81,10 @@ void DummyChannelMaster::markPageAsRead(const PageHandle& handle)
   cout << "DummyChannelMaster::markPageAsRead(handle:" << handle.index << ")" << endl;
 }
 
+CardType::type DummyChannelMaster::getCardType()
+{
+  return CardType::DUMMY;
+}
+
 } // namespace Rorc
 } // namespace AliceO2

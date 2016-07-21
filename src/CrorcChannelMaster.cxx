@@ -345,6 +345,11 @@ void CrorcChannelMaster::markPageAsRead(const PageHandle& handle)
   pageWasReadOut[handle.index] = true;
 }
 
+CardType::type CrorcChannelMaster::getCardType()
+{
+  return CardType::CRORC;
+}
+
 CrorcChannelMaster::CrorcSharedData::CrorcSharedData()
     : initializationState(InitializationState::UNKNOWN), fifoIndexWrite(0), fifoIndexRead(0), bufferPageIndex(0), loopPerUsec(
         0), pciLoopPerUsec(0), rorcRevision(0), siuVersion(0), diuVersion(0)

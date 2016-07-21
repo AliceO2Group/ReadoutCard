@@ -32,6 +32,7 @@ class DummyChannelMaster : public ChannelMasterInterface
     virtual bool isPageArrived(const PageHandle& handle);
     virtual Page getPage(const PageHandle& handle);
     virtual void markPageAsRead(const PageHandle& handle);
+    virtual CardType::type getCardType();
 
   private:
 

@@ -52,50 +52,6 @@ int getOptionSerialNumber(const boost::program_options::variables_map& variables
 int getOptionRegisterRange(const boost::program_options::variables_map& variablesMap);
 ChannelParameters getOptionsChannelParameters(const boost::program_options::variables_map& variablesMap);
 
-#ifdef NDEBUG
-/// Helper macro for handling exceptions in the utility programs
-/// It's a macro because we want to preserve the exception context for the boost::current_exception function
-/// The NDEBUG version omits the verbose diagnostic info
-#define RORC_UTILS_HANDLE_EXCEPTION(_exception, _utilsDescription, _optionsDescription) do \
-{ \
-  boost::exception const* be = boost::current_exception_cast<boost::exception const>(); \
-  if (be) { \
-    if (auto info = boost::get_error_info<::AliceO2::Rorc::errinfo_rorc_generic_message>(_exception)) { \
-      std::cout << "Error: " << *info << "\n\n"; \
-    } else { \
-      std::cout << "Error: " << _exception.what() << "\n\n"; \
-    } \
-    ::AliceO2::Rorc::Util::Options::printHelp(_utilsDescription, _optionsDescription); \
-  } \
-  else { \
-    std::cout << "Error: " << _exception.what() << "\n\n"; \
-  } \
-} while (0)
-#else
-#define RORC_UTILS_HANDLE_EXCEPTION(_exception, _utilsDescription, _optionsDescription) do \
-{ \
-  boost::exception const* be = boost::current_exception_cast<boost::exception const>(); \
-  if (be) { \
-    if (auto info = boost::get_error_info<::AliceO2::Rorc::errinfo_rorc_generic_message>(_exception)) { \
-      std::cout << "Error: " << *info << "\n\n"; \
-      std::cout << "DEBUG INFO: " << boost::diagnostic_information(_exception) << "\n"; \
-    } else { \
-      std::cout << "Error: " << _exception.what() << "\n\n"; \
-    } \
-    ::AliceO2::Rorc::Util::Options::printHelp(_utilsDescription, _optionsDescription); \
-  } \
-  else { \
-    std::cout << "Error: " << _exception.what() << "\n\n"; \
-  } \
-} while (0)
-#endif
-
-#define RORC_UTILS_HANDLE_HELP(_variablesMap, _utilDescription, _optDescription) \
-if (_variablesMap.count("help")) { \
-  ::AliceO2::Rorc::Util::Options::printHelp(_utilDescription, _optDescription); \
-  return 0; \
-}
-
 } // namespace Options
 } // namespace Util
 } // namespace Rorc
