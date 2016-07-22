@@ -86,4 +86,4 @@ struct OptionRequiredException : virtual UtilException {};
 } // namespace AliceO2
 
 #define ALICEO2_RORC_THROW_EXCEPTION(message) \
-    BOOST_THROW_EXCEPTION(RorcException() << errinfo_rorc_generic_message(message))
+    BOOST_THROW_EXCEPTION(::AliceO2::Rorc::RorcException() << ::AliceO2::Rorc::errinfo_rorc_generic_message(message))
