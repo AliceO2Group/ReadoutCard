@@ -20,8 +20,6 @@ int getSerial(volatile void* barAddress)
   memset(data, 'x', RORC_SN_LENGTH+1);
   unsigned int flashAddr;
 
-  int channel = 0; // Must use channel 0 to access flash
-
   // Reading the FLASH.
   flashAddr = FLASH_SN_ADDRESS;
   initFlash(barAddress, flashAddr, 10); // TODO check returned status code

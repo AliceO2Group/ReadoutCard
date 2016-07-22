@@ -14,7 +14,7 @@ namespace AliceO2 {
 namespace Rorc {
 
 /// Namespace for the RORC reset level enum, and supporting functions
-namespace ResetLevel
+struct ResetLevel
 {
     enum type
     {
@@ -22,17 +22,17 @@ namespace ResetLevel
     };
 
     /// Converts a ResetLevel to a string
-    std::string toString(const ResetLevel::type& level);
+    static std::string toString(const ResetLevel::type& level);
 
     /// Converts a string to a ResetLevel
-    ResetLevel::type fromString(const std::string& string);
+    static ResetLevel::type fromString(const std::string& string);
 
     /// Returns true if the reset level includes external resets (SIU and/or DIU)
-    bool includesExternal(const ResetLevel::type& level);
-}
+    static bool includesExternal(const ResetLevel::type& level);
+};
 
 /// Namespace for the RORC loopback mode enum, and supporting functions
-namespace LoopbackMode
+struct LoopbackMode
 {
     /// Loopback mode
     enum type
@@ -41,17 +41,17 @@ namespace LoopbackMode
     };
 
     /// Converts a LoopbackMode to a string
-    std::string toString(const LoopbackMode::type& mode);
+    static std::string toString(const LoopbackMode::type& mode);
 
     /// Converts a string to a LoopbackMode
-    LoopbackMode::type fromString(const std::string& string);
+    static LoopbackMode::type fromString(const std::string& string);
 
     /// Returns true if the loopback mode is external (SIU and/or DIU)
-    bool isExternal(const LoopbackMode::type& mode);
-}
+    static bool isExternal(const LoopbackMode::type& mode);
+};
 
 /// Namespace for the RORC generator pattern enum
-namespace GeneratorPattern
+struct GeneratorPattern
 {
   enum type
   {
@@ -63,7 +63,7 @@ namespace GeneratorPattern
     DECREMENTAL = 6,
     RANDOM = 7
   };
-}
+};
 
 /// DMA related parameters
 struct DmaParameters

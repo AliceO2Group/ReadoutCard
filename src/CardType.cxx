@@ -8,12 +8,13 @@ static const std::map<CardType::type, std::string> typeMap = {
   { CardType::UNKNOWN, "UNKNOWN" },
   { CardType::CRORC, "CRORC" },
   { CardType::CRU, "CRU" },
+  { CardType::DUMMY, "DUMMY" },
 };
 static const auto typeMapReverse = Util::reverseMap(typeMap);
 
-std::string CardType::toString(const CardType::type& level)
+std::string CardType::toString(const CardType::type& type)
 {
-  return Util::getValue(typeMap, level);
+  return Util::getValue(typeMap, type);
 }
 
 CardType::type CardType::fromString(const std::string& string)

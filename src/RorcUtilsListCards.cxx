@@ -43,11 +43,11 @@ class ProgramListCards: public RorcUtilsProgram
 
       auto formatHeader = "  %-3s %-12s %-12s %-12s %-12s \n";
       auto formatRow = "  %-3s %-12s 0x%-10s 0x%-10s %-12s \n";
-      auto str = boost::str(boost::format(formatHeader) % "#" % "Card Type" % "Vendor ID" % "Device ID" % "Serial Nr.");
-      auto line1 = std::string(str.length(), '=') + '\n';
-      auto line2 = std::string(str.length(), '-') + '\n';
+      auto header = boost::str(boost::format(formatHeader) % "#" % "Card Type" % "Vendor ID" % "Device ID" % "Serial Nr.");
+      auto lineFat = std::string(header.length(), '=') + '\n';
+      auto lineThin = std::string(header.length(), '-') + '\n';
 
-      cout << line1 << str << line2;
+      cout << lineFat << header << lineThin;
 
       int i = 0;
       for (auto& card : cardsFound) {
@@ -56,7 +56,7 @@ class ProgramListCards: public RorcUtilsProgram
         i++;
       }
 
-      cout << line1;
+      cout << lineFat;
     }
 };
 

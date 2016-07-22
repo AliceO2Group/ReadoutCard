@@ -57,6 +57,7 @@ static Option<int> channel("channel,c", "Channel", true, 0);
 static Option<std::string> registerAddress("address,a", "Register address in hex format");
 static Option<int> registerRange("regrange,r", "Amount of registers to print past given address");
 static Option<int> serialNumber("serial,s", "Serial number");
+static Option<std::string> registerValue("value,v", "Register value, either in decimal or hex (prefix with 0x)");
 
 // Options for ChannelParameters
 static Option<size_t> cpDmaPageSize("cp-dma-pagesize", "RORC page size in bytes", true, 4l * 1024l);
@@ -160,6 +161,11 @@ void addOptionRegisterAddress(po::options_description& optionsDescription)
   addOption(option::registerAddress, optionsDescription);
 }
 
+void addOptionRegisterValue(po::options_description& optionsDescription)
+{
+  addOption(option::registerValue, optionsDescription);
+}
+
 void addOptionRegisterRange(po::options_description& optionsDescription)
 {
   addOption(option::registerRange, optionsDescription);
@@ -193,7 +199,7 @@ int getOptionRegisterAddress(const po::variables_map& variablesMap)
 
   if (address < 0 || address > 0xfff) {
     BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-        << errinfo_rorc_generic_message("Address out of range, must be between 0 and 0xfff"));
+        << errinfo_rorc_generic_message("Address out of range, must be between 0x0 and 0xfff"));
   }
 
   if (address % 4) {
@@ -204,13 +210,35 @@ int getOptionRegisterAddress(const po::variables_map& variablesMap)
   return address;
 }
 
+int getOptionRegisterValue(const po::variables_map& variablesMap)
+{
+  auto valueString = getOptionRequired<std::string>(option::registerValue, variablesMap);
+
+  std::stringstream ss;
+  if (valueString.find("0x") == 0) {
+    ss << std::hex << valueString.substr(2);
+  } else {
+    ss << std::dec << valueString;
+  }
+
+  int value;
+  ss >> value;
+
+  if (ss.fail()) {
+    BOOST_THROW_EXCEPTION(InvalidOptionValueException()
+        << errinfo_rorc_generic_message("Failed to read register value option"));
+  }
+
+  return value;
+}
+
 int getOptionRegisterRange(const po::variables_map& variablesMap)
 {
   auto value = getOptionRequired(option::registerRange, variablesMap);
 
   if (value < 0) {
     BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-            << errinfo_rorc_generic_message("Register range negative"));
+        << errinfo_rorc_generic_message("Register range negative"));
   }
 
   return value;

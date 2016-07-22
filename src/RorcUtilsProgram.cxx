@@ -34,17 +34,18 @@ int RorcUtilsProgram::execute(int argc, char** argv)
   AliceO2::Rorc::Util::setSigIntHandler([](int){ flagSigInt = true; });
 
   auto optionsDescription = Options::createOptionsDescription();
-  addOptions(optionsDescription);
-  auto variablesMap = Options::getVariablesMap(argc, argv, optionsDescription);
-
-  if (variablesMap.count("help")) {
-    AliceO2::Rorc::Util::Options::printHelp(getDescription(), optionsDescription);
-    return 0;
-  }
-
   try {
+    addOptions(optionsDescription);
+    auto variablesMap = Options::getVariablesMap(argc, argv, optionsDescription);
+
+    if (variablesMap.count("help")) {
+      AliceO2::Rorc::Util::Options::printHelp(getDescription(), optionsDescription);
+      return 0;
+    }
+
     mainFunction(variablesMap);
-  } catch (boost::exception& boostExceptione) {
+  }
+  catch (boost::exception& boostExceptione) {
     std::exception const* stdException = boost::current_exception_cast<std::exception const>();
     auto info = boost::get_error_info<AliceO2::Rorc::errinfo_rorc_generic_message>(boostExceptione);
 

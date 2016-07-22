@@ -5,7 +5,7 @@ namespace AliceO2 {
 namespace Rorc {
 
 /// Namespace for enum describing a RORC type, and supporting functions
-namespace CardType
+struct CardType
 {
     enum type
     {
@@ -13,11 +13,11 @@ namespace CardType
     };
 
     /// Converts a CardType to a string
-    std::string toString(const CardType::type& level);
+    static std::string toString(const CardType::type& type);
 
     /// Converts a string to a CardType
-    CardType::type fromString(const std::string& string);
-}
+    static CardType::type fromString(const std::string& string);
+};
 
 } // namespace Rorc
 } // namespace AliceO2

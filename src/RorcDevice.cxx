@@ -31,8 +31,10 @@ struct DeviceType
 };
 
 const std::vector<DeviceType> deviceTypes = {
-    { CardType::CRORC, "10dc", "0033", crorcGetSerial },
-    { CardType::CRU, "10dc", "????", cruGetSerial },
+    { CardType::CRORC, "10dc", "0033", crorcGetSerial }, // C-RORC
+    { CardType::CRU, "1172", "2494", cruGetSerial }, // Altera dev board CRU
+    { CardType::CRU, "1172", "e001", cruGetSerial }, // Altera dev board CRU
+    { CardType::CRU, "10dc", "????", cruGetSerial }, // Actual CRU? To be determined...
 };
 
 RorcDevice::RorcDevice(int serialNumber)
@@ -120,9 +122,10 @@ int crorcGetSerial(PciDevice* pciDevice)
 
 int cruGetSerial(PciDevice*)
 {
-  BOOST_THROW_EXCEPTION(DeviceFinderException() << errinfo_rorc_generic_message("CRU unsupported"));
+  printf("WARNING: CRU NOT REALLY SUPPORTED, SERIAL NR HARDCODED\n");
+  return 12345;
+  //BOOST_THROW_EXCEPTION(DeviceFinderException() << errinfo_rorc_generic_message("CRU unsupported"));
 }
-
 
 } // namespace Rorc
 } // namespace AliceO2

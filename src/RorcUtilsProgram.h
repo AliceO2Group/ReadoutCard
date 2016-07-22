@@ -28,9 +28,6 @@ class RorcUtilsProgram
     /// Execute the program using the given arguments
     int execute(int argc, char** argv);
 
-    /// Has the SIGINT signal been given? (usually Ctrl-C)
-    bool isSigInt();
-
   protected:
 
     /// Get the description of the program
@@ -42,6 +39,8 @@ class RorcUtilsProgram
     /// The main function of the program
     virtual void mainFunction(boost::program_options::variables_map& variablesMap) = 0;
 
+    /// Has the SIGINT signal been given? (usually Ctrl-C)
+    bool isSigInt();
 };
 
 } // namespace Util

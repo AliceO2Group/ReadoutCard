@@ -22,7 +22,7 @@ class ProgramReadRegister: public RorcUtilsProgram
 
     virtual UtilsDescription getDescription()
     {
-      return UtilsDescription("Read Register", "Read a single register", "./rorc-reg-read -a0x8");
+      return UtilsDescription("Read Register", "Read a single register", "./rorc-reg-read --serial=12345 --address=0x8");
     }
 
     virtual void addOptions(boost::program_options::options_description& options)

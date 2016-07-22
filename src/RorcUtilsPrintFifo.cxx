@@ -49,15 +49,16 @@ class ProgramPrintFifo: public RorcUtilsProgram
       auto fileName = ChannelPaths::fifo(serialNumber, channelNumber);
 
       cout << "Printing FIFO at '" << fileName << "'" << endl;
-      auto str = boost::str(boost::format(" %-3s %-14s %-14s %-14s %-14s\n") % "#" % "Length (hex)" % "Status (hex)"
+      auto header = boost::str(boost::format(" %-3s %-14s %-14s %-14s %-14s\n") % "#" % "Length (hex)" % "Status (hex)"
           % "Length (dec)" % "Status (dec)");
-      auto line1 = std::string(str.length(), '=') + '\n';
-      auto line2 = std::string(str.length(), '-') + '\n';
+      auto lineFat = std::string(header.length(), '=') + '\n';
+      auto lineThin = std::string(header.length(), '-') + '\n';
 
       TypedMemoryMappedFile<ReadyFifo> mappedFileFifo(fileName.c_str());
       auto fifo = mappedFileFifo.get();
 
-      cout << line1 << str << line2;
+      cout << lineFat << header << lineThin;
+
       for (size_t i = 0 ; i < fifo->entries.size(); ++i) {
         int32_t length = fifo->entries[i].length;
         int32_t status = fifo->entries[i].status;
@@ -65,7 +66,7 @@ class ProgramPrintFifo: public RorcUtilsProgram
         //cout << " " << i << " -> " << fifo->entries[i].length << " " << fifo->entries[i].status << endl;
       }
 
-      cout << line1;
+      cout << lineFat;
     }
 };
 

@@ -29,7 +29,7 @@ class ProgramWriteRegister: public RorcUtilsProgram
       Options::addOptionRegisterAddress(options);
       Options::addOptionChannel(options);
       Options::addOptionSerialNumber(options);
-      options.add_options()("value,v", boost::program_options::value<uint32_t>()->required(), "Register value");
+      Options::addOptionRegisterValue(options);
     }
 
     virtual void mainFunction(boost::program_options::variables_map& map)
@@ -37,13 +37,13 @@ class ProgramWriteRegister: public RorcUtilsProgram
       int serialNumber = Options::getOptionSerialNumber(map);
       int address = Options::getOptionRegisterAddress(map);
       int channelNumber = Options::getOptionChannel(map);
+      int registerValue = Options::getOptionRegisterValue(map);
       auto channel = AliceO2::Rorc::ChannelFactory().getSlave(serialNumber, channelNumber);
 
       // Registers are indexed by 32 bits (4 bytes)
       channel->writeRegister(address / 4, registerValue);
+      std::cout << Common::makeRegisterString(address, channel->readRegister(address / 4));
     }
-
-    uint32_t registerValue;
 };
 
 int main(int argc, char** argv)
