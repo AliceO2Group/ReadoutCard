@@ -90,6 +90,7 @@ build_util_exec(rorc-reg-write RorcUtilsWriteRegister.cxx)
 build_util_exec(rorc-dma-bench RorcUtilsDmaBench.cxx)
 build_util_exec(rorc-list-cards RorcUtilsListCards.cxx)
 build_util_exec(rorc-print-fifo RorcUtilsPrintFifo.cxx)
+build_util_exec(rorc-cru-blink RorcUtilsCruBlink.cxx)
 
 
 # -------
