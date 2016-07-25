@@ -25,7 +25,6 @@ of PDA wrapper classes and shared memory handling.
 The CrorcChannelMaster and CruChannelMaster provide the device-specific functionality and use the RORC C API layer.
 
 The ChannelMaster will acquire a file lock to prevent simultaneous interprocess access to a channel.
-Currently, there are no protections against multi-threaded access, but this is planned for a future release.
 Some of the state is kept in shared memory files so that the state is persistent and that the lock can be handed over
 to other processes.
 Pages are also stored in shared memory. Functionality for clients to supply their own buffer is planned for a future 
@@ -64,6 +63,8 @@ Currently, only utilities for reading and writing registers are available, but m
 Known issues
 ===================
 
+C-RORC page arrival
+-------------------
 It appears that with the C-RORC, the isPageArrived() function does not work properly and returns 'true' too early.
 It is suspected to be a firmware bug, where the page status in the Ready FIFO is marked as fully transferred while the
 actual DMA transfer has not yet been completed.
@@ -74,16 +75,31 @@ The FIFO of the C-RORC is initialized by pushing 128 pages. The framework should
 transferred before continuing. This is not yet implemented, because of the isPageArrived() issue described above.
 Again, clients must wait manually.
 
-The CruChannelMaster implementation is not complete.
+CRU implementation
+-------------------
+The support for the CRU is in very preliminary stages.
+Currently, the serial number for the CRU is hard-coded. As of this writing, that serial number is 12345.
+See the function cruGetSerial() in RorcDevice.cxx, which is *supposed* to retrieve the serial from the card.
 
-ChannelFactory should instantiate a ChannelMaster object based on card type and serial number. 
-But currently, it just goes with the first C-RORC it comes across.
-
+Parameters & re-initialization
+-------------------
 The ChannelParameters used to initialize the ChannelMaster object are stored in the shared memory. The purpose of this
 is to know when a ChannelMaster object has released the lock, and then another one takes it using different parameters.
 In that case, some things must be re-initialized. However, this is not yet implemented and a change of parameters
 currently requires the user to delete the shared files.  
 
+Unsynchronized utilities
+-------------------
+Not all of the utility programs go through the ChannelMaster/ChannelSlave interface.
+For example, RorcUtilsPrintFifo.cxx and RorcUtilsListCards.cxx use "internal" libraries.
+This means that the way they access the cards is not synchronized. If these utilities are used while the cards are also
+otherwise being accessed, there is a chance of undefined behaviour.
+
+Multithreaded
+-------------------
+Currently, there are no protections in the ChannelMaster/ChannelSlave against multi-threaded access, since it relies
+purely on file locks at the moment. This is of course planned for a future release, probably by just adding a mutex to 
+the ChannelMaster/ChannelSlave object.
 
 Dependencies
 ===================
