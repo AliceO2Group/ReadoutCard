@@ -1,8 +1,8 @@
 ///
 /// \file Crorc.h
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
-/// Low level C-RORC functions
+/// \brief Low level C-RORC functions
 ///
 
 #pragma once

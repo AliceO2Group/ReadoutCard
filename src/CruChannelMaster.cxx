@@ -1,6 +1,6 @@
 ///
 /// \file CruChannelMaster.cxx
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
 // XXX Note: this class is very under construction

@@ -1,3 +1,8 @@
+///
+/// \file CardType.cxx
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+///
+
 #include "RORC/CardType.h"
 #include "Util.h"
 

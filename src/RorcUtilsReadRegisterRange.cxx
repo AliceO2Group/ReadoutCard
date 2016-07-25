@@ -1,8 +1,8 @@
 ///
 /// \file RorcUtilsReadRegisterRange.cxx
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
-/// Utility that reads a range of registers from a RORC
+/// \brief Utility that reads a range of registers from a RORC
 ///
 
 #include <iostream>

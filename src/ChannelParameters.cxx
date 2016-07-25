@@ -1,6 +1,6 @@
 ///
 /// \file ChannelParameters.cxx
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
 #include "RORC/ChannelParameters.h"

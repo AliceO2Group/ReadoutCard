@@ -1,6 +1,6 @@
 ///
 /// \file Util.cxx
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
 #include "Util.h"

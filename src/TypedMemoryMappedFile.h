@@ -1,7 +1,8 @@
 ///
 /// \file TypedMemoryMappedFile.h
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
+
 #pragma once
 
 #include <boost/interprocess/file_mapping.hpp>

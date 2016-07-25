@@ -1,8 +1,8 @@
 ///
 /// \file RorcUtilsWriteRegister.cxx
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
-/// Utility that writes to a register on a RORC
+/// \brief Utility that writes to a register on a RORC
 ///
 
 #include "RORC/ChannelFactory.h"

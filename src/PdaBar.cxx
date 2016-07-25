@@ -1,6 +1,6 @@
 ///
 /// \file PdaBar.cxx
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
 #include "PdaBar.h"

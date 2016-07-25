@@ -1,6 +1,6 @@
 ///
 /// \file DummyChannelMaster.cxx
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
 #include "DummyChannelMaster.h"

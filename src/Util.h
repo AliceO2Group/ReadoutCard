@@ -1,8 +1,8 @@
 ///
 /// \file Util.h
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
-/// It's the file with random useful utilities that don't really belong anywhere
+/// \brief It's the file with random useful utilities that don't really belong anywhere
 ///
 
 #pragma once

@@ -1,6 +1,6 @@
 ///
 /// \file ChannelFactory.cxx
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
 #include "RORC/ChannelFactory.h"

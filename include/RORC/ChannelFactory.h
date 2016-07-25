@@ -1,6 +1,6 @@
 ///
 /// \file ChannelFactory.h
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
 #pragma once

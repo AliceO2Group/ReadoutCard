@@ -1,6 +1,6 @@
 ///
 /// \file RorcUtilsCommon.cxx
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
 #include "RorcUtilsCommon.h"

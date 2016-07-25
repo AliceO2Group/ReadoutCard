@@ -1,6 +1,6 @@
 ///
 /// \file CrorcChannelMaster.h
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
 #pragma once
@@ -37,9 +37,9 @@ class CrorcChannelMaster : public ChannelMaster
 
   private:
 
+    /// Namespace for enum describing the status of a page's arrival
     struct DataArrivalStatus
     {
-        /// The status of a page's arrival
         enum type
         {
           NONE_ARRIVED,

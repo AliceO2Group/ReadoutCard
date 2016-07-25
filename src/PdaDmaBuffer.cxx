@@ -1,6 +1,6 @@
 ///
 /// \file PdaDmaBuffer.cxx
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
 #include "PdaDmaBuffer.h"

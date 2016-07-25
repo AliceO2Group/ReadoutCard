@@ -1,8 +1,8 @@
 ///
 /// \file RorcUtilsOptions.h
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
-/// Functions for the RORC utilities to handle program options
+/// \brief Functions for the RORC utilities to handle program options
 ///
 
 #pragma once

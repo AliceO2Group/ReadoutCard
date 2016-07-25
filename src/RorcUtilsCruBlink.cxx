@@ -1,8 +1,8 @@
 ///
 /// \file RorcUtilsReadRegister.cxx
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
-/// Utility that blinks the CRU LED
+/// \brief Utility that blinks the CRU LED
 ///
 
 #include <iostream>

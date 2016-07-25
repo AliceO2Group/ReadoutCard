@@ -22,6 +22,7 @@ set(RORC_LIB_SOURCES
   DummyChannelMaster.cxx
   DummyChannelSlave.cxx
   MemoryMappedFile.cxx
+  RorcException.cxx
   RorcStatusCode.cxx
   RorcUtilsProgram.cxx
   Util.cxx

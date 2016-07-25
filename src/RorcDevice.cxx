@@ -1,6 +1,6 @@
 ///
 /// \file RorcDevice.cxx
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
 #include "RorcDevice.h"
@@ -25,41 +25,42 @@ int cruGetSerial(PciDevice* pciDevice);
 struct DeviceType
 {
     CardType::type cardType;
-    const std::string vendorId;
-    const std::string deviceId;
+    const PciId pciId;
     std::function<int(PciDevice* pciDevice)> getSerial;
 };
 
 const std::vector<DeviceType> deviceTypes = {
-    { CardType::CRORC, "10dc", "0033", crorcGetSerial }, // C-RORC
-    { CardType::CRU, "1172", "2494", cruGetSerial }, // Altera dev board CRU
-    { CardType::CRU, "1172", "e001", cruGetSerial }, // Altera dev board CRU
-    { CardType::CRU, "10dc", "????", cruGetSerial }, // Actual CRU? To be determined...
+    { CardType::CRORC, {"0033", "10dc"}, crorcGetSerial }, // C-RORC
+    { CardType::CRU, {"e001", "1172"}, cruGetSerial }, // Altera dev board CRU
+    //{ CardType::CRU, {"????", "10dc"}, cruGetSerial }, // Actual CRU? To be determined...
 };
 
 RorcDevice::RorcDevice(int serialNumber)
-    : deviceId("unknown"), vendorId("unknown"), serialNumber(-1), cardType(CardType::UNKNOWN)
+    : pciId({"unknown", "unknown"}), serialNumber(-1), cardType(CardType::UNKNOWN)
 {
-  for (auto& type : deviceTypes) {
-    pdaDevice.reset(new PdaDevice(type.vendorId, type.deviceId));
-    auto pciDevices = pdaDevice->getPciDevices();
+  try {
+    for (auto& type : deviceTypes) {
+      pdaDevice.reset(new PdaDevice(type.pciId));
+      auto pciDevices = pdaDevice->getPciDevices();
 
-    for (auto& pciDevice : pciDevices) {
-      int serial = type.getSerial(pciDevice);
-      if (serial == serialNumber) {
-        this->pciDevice = pciDevice;
-        this->cardType = type.cardType;
-        this->serialNumber = serial;
-        this->deviceId = type.deviceId;
-        this->vendorId = type.vendorId;
-        return;
+      for (auto& pciDevice : pciDevices) {
+        int serial = type.getSerial(pciDevice);
+        if (serial == serialNumber) {
+          this->pciDevice = pciDevice;
+          this->cardType = type.cardType;
+          this->serialNumber = serial;
+          this->pciId = type.pciId;
+          return;
+        }
       }
     }
+    BOOST_THROW_EXCEPTION(RorcException() << errinfo_rorc_generic_message("Could not find card"));
   }
-
-  BOOST_THROW_EXCEPTION(RorcException()
-      << errinfo_rorc_generic_message("Could not find card")
-      << errinfo_rorc_serial_number(serialNumber));
+  catch (boost::exception& e) {
+    e << errinfo_rorc_serial_number(serialNumber);
+    addPossibleCauses(e, {"Invalid serial number search target"});
+    throw;
+  }
 }
 
 RorcDevice::~RorcDevice()
@@ -71,15 +72,14 @@ std::vector<RorcDevice::CardDescriptor> RorcDevice::enumerateDevices()
   std::vector<RorcDevice::CardDescriptor> cards;
 
   for (auto& type : deviceTypes) {
-    PdaDevice pdaDevice(type.vendorId, type.deviceId);
+    PdaDevice pdaDevice(type.pciId);
     auto pciDevices = pdaDevice.getPciDevices();
 
     for (auto& pciDevice : pciDevices) {
       RorcDevice::CardDescriptor cd;
       cd.cardType = type.cardType;
       cd.serialNumber = type.getSerial(pciDevice);
-      cd.deviceId = type.deviceId;
-      cd.vendorId = type.vendorId;
+      cd.pciId = type.pciId;
       cards.push_back(cd);
     }
   }
@@ -89,22 +89,27 @@ std::vector<RorcDevice::CardDescriptor> RorcDevice::enumerateDevices()
 std::vector<RorcDevice::CardDescriptor> RorcDevice::enumerateDevices(int serialNumber)
 {
   std::vector<RorcDevice::CardDescriptor> cards;
+  try {
+    for (auto& type : deviceTypes) {
+      PdaDevice pdaDevice(type.pciId);
+      auto pciDevices = pdaDevice.getPciDevices();
 
-  for (auto& type : deviceTypes) {
-    PdaDevice pdaDevice(type.vendorId, type.deviceId);
-    auto pciDevices = pdaDevice.getPciDevices();
-
-    for (auto& pciDevice : pciDevices) {
-      int serial = type.getSerial(pciDevice);
-      if (serial == serialNumber) {
-        RorcDevice::CardDescriptor cd;
-        cd.cardType = type.cardType;
-        cd.serialNumber = serial;
-        cd.deviceId = type.deviceId;
-        cd.vendorId = type.vendorId;
-        cards.push_back(cd);
+      for (auto& pciDevice : pciDevices) {
+        int serial = type.getSerial(pciDevice);
+        if (serial == serialNumber) {
+          RorcDevice::CardDescriptor cd;
+          cd.cardType = type.cardType;
+          cd.serialNumber = serial;
+          cd.pciId = type.pciId;
+          cards.push_back(cd);
+        }
       }
     }
+  }
+  catch (boost::exception& e) {
+    e << errinfo_rorc_serial_number(serialNumber);
+    addPossibleCauses(e, {"Invalid serial number search target"});
+    throw;
   }
   return cards;
 }

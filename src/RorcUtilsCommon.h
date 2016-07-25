@@ -1,6 +1,6 @@
 ///
 /// \file RorcUtilsCommon.h
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 /// Some common functions for the RORC utilities.
 ///

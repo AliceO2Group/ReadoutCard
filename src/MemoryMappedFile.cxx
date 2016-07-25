@@ -1,6 +1,6 @@
 ///
 /// \file MemoryMappedFile.cxx
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
 #include "MemoryMappedFile.h"
@@ -54,9 +54,9 @@ void MemoryMappedFile::map(const char* fileName, size_t fileSize)
   } catch (std::exception& e) {
     BOOST_THROW_EXCEPTION(MemoryMapException()
         << errinfo_rorc_generic_message("Failed to resize memory map file")
-        << errinfo_rorc_possible_causes(
-            "Size not a multiple of page size (possibly multiple of hugepages); "
-            "Not enough memory available (check hugepage allocation)")
+        << errinfo_rorc_possible_causes({
+            "Size not a multiple of page size (possibly multiple of hugepages); ",
+            "Not enough memory available (check hugepage allocation)"})
         << errinfo_rorc_filename(std::string(fileName))
         << errinfo_rorc_filesize(fileSize));
   }

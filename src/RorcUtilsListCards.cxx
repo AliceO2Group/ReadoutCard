@@ -1,8 +1,8 @@
 ///
-/// \file RorcUtilsReadRegister.cxx
-/// \author Pascal Boeschoten
+/// \file RorcUtilsListCards.cxx
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
-/// Utility that lists the RORC devices on the system
+/// \brief Utility that lists the RORC devices on the system
 ///
 
 #include <iostream>
@@ -52,7 +52,7 @@ class ProgramListCards: public RorcUtilsProgram
       int i = 0;
       for (auto& card : cardsFound) {
         auto cardType = AliceO2::Rorc::CardType::toString(card.cardType);
-        cout << boost::str(boost::format(formatRow) % i % cardType % card.vendorId % card.deviceId % card.serialNumber);
+        cout << boost::str(boost::format(formatRow) % i % cardType % card.pciId.vendor % card.pciId.device % card.serialNumber);
         i++;
       }
 

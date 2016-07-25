@@ -1,6 +1,6 @@
 ///
 /// \file ChannelParameters.h
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
 #pragma once
@@ -113,6 +113,7 @@ struct GeneratorParameters
     size_t dataSize;
 };
 
+/// Parameters for a RORC channel
 class ChannelParameters
 {
   public:

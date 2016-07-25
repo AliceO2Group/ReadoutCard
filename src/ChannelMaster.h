@@ -68,16 +68,16 @@ class ChannelMaster: public ChannelMasterInterface
       return "ChannelMasterSharedData";
     }
 
+    /// Namespace for enum describing the initialization state of the shared data
     struct InitializationState
     {
-      /// State of the shared data initialization
         enum type
         {
           UNKNOWN = 0, UNINITIALIZED = 1, INITIALIZED = 2
         };
     };
 
-
+    /// Namespace for describing the state of the DMA
     struct DmaState
     {
         /// The state of the DMA

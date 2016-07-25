@@ -1,6 +1,6 @@
 ///
 /// \file PdaDevice.h
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
 #pragma once
@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <pda.h>
+#include "RORC/PciId.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -16,7 +17,7 @@ namespace Rorc {
 class PdaDevice
 {
   public:
-    PdaDevice(const std::string& vendorId, const std::string& deviceId);
+    PdaDevice(const PciId& pciId);
     ~PdaDevice();
     DeviceOperator* getDeviceOperator();
 

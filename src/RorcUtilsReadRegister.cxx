@@ -1,8 +1,8 @@
 ///
 /// \file RorcUtilsReadRegister.cxx
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
-/// Utility that reads a register from a RORC
+/// \brief Utility that reads a register from a RORC
 ///
 
 #include <iostream>
@@ -10,6 +10,7 @@
 #include "RorcUtilsOptions.h"
 #include "RorcUtilsCommon.h"
 #include "RorcUtilsProgram.h"
+#include "RORC/ChannelParameters.h"
 
 using namespace AliceO2::Rorc::Util;
 

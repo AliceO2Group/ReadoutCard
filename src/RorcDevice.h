@@ -1,6 +1,6 @@
 ///
 /// \file RorcDevice.h
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
 #pragma once
@@ -9,6 +9,7 @@
 #include <memory>
 #include "PdaDevice.h"
 #include "RORC/CardType.h"
+#include "RORC/PciId.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -21,14 +22,9 @@ class RorcDevice
     RorcDevice(int serialNumber);
     ~RorcDevice();
 
-    const std::string& getDeviceId() const
+    const PciId& getPciId() const
     {
-      return deviceId;
-    }
-
-    const std::string& getVendorId() const
-    {
-      return vendorId;
+      return pciId;
     }
 
     CardType::type getCardType() const
@@ -50,8 +46,7 @@ class RorcDevice
     {
         CardType::type cardType;
         int serialNumber;
-        std::string deviceId;
-        std::string vendorId;
+        PciId pciId;
     };
 
     // Finds RORC devices on the system
@@ -63,8 +58,7 @@ class RorcDevice
   private:
     std::auto_ptr<PdaDevice> pdaDevice;
     PciDevice* pciDevice;
-    std::string deviceId;
-    std::string vendorId;
+    PciId pciId;
     int serialNumber;
     CardType::type cardType;
 };

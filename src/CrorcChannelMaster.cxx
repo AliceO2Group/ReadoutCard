@@ -1,6 +1,6 @@
 ///
 /// \file CrorcChannelMaster.cxx
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
 #include "CrorcChannelMaster.h"
@@ -33,8 +33,7 @@ namespace Rorc {
 /// Adds errinfo using the given status code and error message
 #define ADD_ERRINFO(_status_code, _err_message) \
     << errinfo_rorc_generic_message(_err_message) \
-    << errinfo_rorc_status_code(_status_code) \
-    << errinfo_rorc_status_code_string(::AliceO2::Rorc::getRorcStatusString(_status_code))
+    << errinfo_rorc_status_code(_status_code)
 
 /// Amount of additional DMA buffers for this channel
 static constexpr int CRORC_BUFFERS_PER_CHANNEL = 1;
@@ -182,9 +181,7 @@ void CrorcChannelMaster::resetCard(ResetLevel::type resetLevel)
     }
   } catch (RorcException& e) {
     e << errinfo_rorc_reset_level(resetLevel);
-    e << errinfo_rorc_reset_level_string(ResetLevel::toString(resetLevel));
     e << errinfo_rorc_loopback_mode(loopbackMode);
-    e << errinfo_rorc_loopback_mode_string(LoopbackMode::toString(loopbackMode));
     throw;
   }
 
@@ -256,7 +253,7 @@ ChannelMasterInterface::PageHandle CrorcChannelMaster::pushNextPage()
   if (sharedData.get()->dmaState != DmaState::STARTED) {
     BOOST_THROW_EXCEPTION(CrorcException()
         << errinfo_rorc_generic_message("Not in required DMA state")
-        << errinfo_rorc_possible_causes("startDma() not called"));
+        << errinfo_rorc_possible_causes({"startDma() not called"}));
   }
 
   // Handle for next page

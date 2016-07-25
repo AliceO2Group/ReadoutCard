@@ -1,6 +1,6 @@
 ///
 /// \file RorcUtilsOptions.cxx
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
 #include "RorcUtilsOptions.h"
@@ -69,7 +69,7 @@ static Option<std::string> cpGenLoopback("cp-gen-loopb",
 
 /// Adds the given Option to the options_description
 /// \param option The Option to add
-/// \param od The options_description to add to
+/// \param optionsDescription The options_description to add to
 template <typename T>
 void addOption(const Option<T>& option, po::options_description& optionsDescription)
 {

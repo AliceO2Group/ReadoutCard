@@ -8,14 +8,14 @@
 namespace AliceO2 {
 namespace Rorc {
 
-CruChannelSlave::CruChannelSlave(int serial, int channel)    : ChannelSlave(serial, channel)
-    {
-    }
+CruChannelSlave::CruChannelSlave(int serial, int channel)
+    : ChannelSlave(serial, channel)
+{
+}
 
 CruChannelSlave::~CruChannelSlave()
-    {
-    }
-
+{
+}
 
 CardType::type CruChannelSlave::getCardType()
 {

@@ -1,6 +1,6 @@
 ///
 /// \file RorcUtilsProgram.h
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
 #pragma once
@@ -41,6 +41,13 @@ class RorcUtilsProgram
 
     /// Has the SIGINT signal been given? (usually Ctrl-C)
     bool isSigInt();
+
+    /// Should output be verbose
+    bool isVerbose();
+
+  private:
+
+    bool verbose;
 };
 
 } // namespace Util
