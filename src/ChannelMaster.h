@@ -5,7 +5,9 @@
 
 #pragma once
 
+#include <memory>
 #include <vector>
+#include <boost/scoped_ptr.hpp>
 #include "RorcException.h"
 #include "RORC/ChannelParameters.h"
 #include "FileSharedObject.h"
@@ -16,6 +18,7 @@
 #include "PdaBar.h"
 #include "PdaDmaBuffer.h"
 #include "RORC/ChannelMasterInterface.h"
+#include "ChannelUtilityInterface.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -23,7 +26,7 @@ namespace Rorc {
 /// Partially implements the ChannelMasterInterface. It takes care of:
 /// - Interprocess synchronization
 /// - PDA-based functionality that is common to the CRORC and CRU.
-class ChannelMaster: public ChannelMasterInterface
+class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterface
 {
   public:
 
@@ -34,12 +37,24 @@ class ChannelMaster: public ChannelMasterInterface
     /// \param additionalBuffers Subclasses must provide here the amount of DMA buffers the channel uses in total,
     ///        excluding the one used by the ChannelMaster itself.
     ChannelMaster(int serial, int channel, const ChannelParameters& params, int additionalBuffers);
+
+    /// Constructor for the ChannelMaster object, without passing ChannelParameters
+    /// Construction will not succeed without these criteria:
+    ///  - A ChannelMaster *with* ChannelParameters was already successfully constructed
+    ///  - It successfully released
+    ///  - Its state has been preserved in shared memory
+    /// \param serial Serial number of the card
+    /// \param channel Channel number of the channel
+    /// \param additionalBuffers Subclasses must provide here the amount of DMA buffers the channel uses in total,
+    ///        excluding the one used by the ChannelMaster itself.
+    ChannelMaster(int serial, int channel, int additionalBuffers);
+
     ~ChannelMaster();
 
-    virtual void startDma();
-    virtual void stopDma();
-    virtual uint32_t readRegister(int index);
-    virtual void writeRegister(int index, uint32_t value);
+    virtual void startDma() override;
+    virtual void stopDma() override;
+    virtual uint32_t readRegister(int index) override;
+    virtual void writeRegister(int index, uint32_t value) override;
 
     static void validateParameters(const ChannelParameters& params);
 
@@ -131,22 +146,30 @@ class ChannelMaster: public ChannelMasterInterface
     int dmaBuffersPerChannel;
 
     /// Memory mapped data stored in the shared state file
-    FileSharedObject::LockedFileSharedObject<SharedData> sharedData;
+    boost::scoped_ptr<FileSharedObject::LockedFileSharedObject<SharedData>> sharedData;
 
     /// PDA device objects
-    RorcDevice rorcDevice;
+    boost::scoped_ptr<RorcDevice> rorcDevice;
 
     /// PDA BAR object
-    PdaBar pdaBar;
+    boost::scoped_ptr<PdaBar> pdaBar;
+
+    /// BAR userspace address
+    uint32_t volatile * barUserspace;
 
     /// Memory mapped file containing pages used for DMA transfer destination
-    MemoryMappedFile mappedFilePages;
+    boost::scoped_ptr<MemoryMappedFile> mappedFilePages;
 
     /// PDA DMABuffer object for the pages
-    PdaDmaBuffer bufferPages;
+    boost::scoped_ptr<PdaDmaBuffer> bufferPages;
 
     /// Addresses to pages in the DMA buffer
     std::vector<PageAddress> pageAddresses;
+
+  private:
+
+    void constructorCommonPhaseOne();
+    void constructorCommonPhaseTwo();
 };
 
 } // namespace Rorc

@@ -56,7 +56,7 @@ class RorcDevice
     static std::vector<CardDescriptor> enumerateDevices(int serialNumber);
 
   private:
-    std::auto_ptr<PdaDevice> pdaDevice;
+    std::unique_ptr<PdaDevice> pdaDevice;
     PciDevice* pciDevice;
     PciId pciId;
     int serialNumber;

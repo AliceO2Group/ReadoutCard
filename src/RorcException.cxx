@@ -11,6 +11,7 @@
 #include <boost/format.hpp>
 #include <cstdint>
 #include "RORC/ChannelParameters.h"
+#include "RORC/CardType.h"
 #include "RorcStatusCode.h"
 
 using namespace AliceO2::Rorc;
@@ -52,7 +53,7 @@ namespace boost {
 
 std::string to_string(const errinfo_rorc_generic_message& e)
 {
-  return toStringHelper("Message", e.value());
+  return toStringHelper("Error message", e.value());
 }
 
 std::string to_string(const errinfo_rorc_possible_causes& e)
@@ -92,5 +93,11 @@ std::string to_string(const errinfo_rorc_status_code& e)
 {
   return toStringHelper("RORC C API status code", e.value(), getRorcStatusString(e.value()));
 }
+
+std::string to_string(const errinfo_rorc_card_type& e)
+{
+  return toStringHelper("RORC card type", e.value(), CardType::toString(e.value()));
+}
+
 
 } // namespace boost

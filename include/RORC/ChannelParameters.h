@@ -8,6 +8,7 @@
 #include <chrono>
 #include <string>
 #include <cstdint>
+#include <tuple>
 #include <boost/program_options/variables_map.hpp>
 
 namespace AliceO2 {
@@ -80,6 +81,14 @@ struct DmaParameters
     /// Note: at the moment, this option is just for testing, but shared memory will probably become the default, or
     /// even the only option in the future.
     bool useSharedMemory;
+
+    inline bool operator==(const DmaParameters& other) const
+    {
+      auto tie = [](decltype(other) x) {
+        return std::tie(x.bufferSize, x.pageSize, x.useSharedMemory);
+      };
+      return tie((*this)) == tie(other);
+    }
 };
 
 /// Generator related parameters
@@ -111,6 +120,15 @@ struct GeneratorParameters
 
     /// Length of data written to each page
     size_t dataSize;
+
+    inline bool operator==(const GeneratorParameters& other) const
+    {
+      auto tie = [](decltype(other) x) {
+        return std::tie(x.dataSize, x.initialValue, x.initialWord, x.loopbackMode, x.maximumEvents, x.pattern, x.seed,
+            x.useDataGenerator);
+      };
+      return tie((*this)) == tie(other);
+    }
 };
 
 /// Parameters for a RORC channel
@@ -126,7 +144,8 @@ class ChannelParameters
     /// XXX Not sure if this should be a parameter...
     bool ddlHeader;
 
-    /// Prevents sending the RDYRX and EOBTR commands. TODO This switch is implicitly set when data generator or the STBRD command is used
+    /// Prevents sending the RDYRX and EOBTR commands. TODO This switch is implicitly set when data generator or the
+    /// STBRD command is used
     /// XXX Not sure if this should be a parameter...
     bool noRDYRX;
 
@@ -136,6 +155,14 @@ class ChannelParameters
 
     /// Reset level on initialization of channel
     ResetLevel::type initialResetLevel;
+
+    inline bool operator==(const ChannelParameters& other) const
+    {
+      auto tie = [](decltype(other) x) {
+        return std::tie(x.ddlHeader, x.dma, x.generator, x.initialResetLevel, x.noRDYRX, x.useFeeAddress);
+      };
+      return tie((*this)) == tie(other);
+    }
 };
 
 } // namespace Rorc

@@ -1,5 +1,5 @@
 ///
-/// \file RorcUtilsReadRegister.cxx
+/// \file RorcUtilsCruBlink.cxx
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 /// \brief Utility that blinks the CRU LED

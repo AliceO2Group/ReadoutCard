@@ -50,6 +50,7 @@ std::string makeRegisterString(int address, uint32_t value)
   oss << "  0x" << makeRegisterAddressString(address)
     << "  =>  0x" << make32hexString(value)
     << "  =  0b" << make32bitString(value)
+    << "  =  " << value
     << endl;
   return oss.str();
 }

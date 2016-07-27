@@ -31,13 +31,7 @@ namespace bfs = boost::filesystem;
 namespace AliceO2 {
 namespace Rorc {
 
-ChannelFactory::ChannelFactory()
-{
-}
-
-ChannelFactory::~ChannelFactory()
-{
-}
+namespace { // Anonymous namespace
 
 void makeParentDirectories(const bfs::path& path)
 {
@@ -49,6 +43,61 @@ void makeParentDirectories(const bfs::path& path)
 void touchFile(const bfs::path& path)
 {
   std::ofstream ofs(path.c_str(), std::ios::app);
+}
+
+} // Anonymous namespace
+
+ChannelFactory::ChannelFactory()
+{
+}
+
+ChannelFactory::~ChannelFactory()
+{
+}
+
+std::shared_ptr<ChannelMasterInterface> ChannelFactory::getMaster(int serialNumber, int channelNumber)
+{
+#ifdef ALICEO2_RORC_PDA_ENABLED
+  if (serialNumber == DUMMY_SERIAL_NUMBER) {
+    return std::make_shared<DummyChannelMaster>(serialNumber, channelNumber, ChannelParameters());
+  } else {
+    // Find the PCI device
+    auto cardsFound = RorcDevice::enumerateDevices(serialNumber);
+    if (cardsFound.empty()) {
+      BOOST_THROW_EXCEPTION(RorcException()
+          << errinfo_rorc_generic_message("Could not find card")
+          << errinfo_rorc_serial_number(serialNumber));
+    }
+    auto& card = cardsFound[0];
+
+    switch (card.cardType) {
+      case CardType::CRORC: {
+        // TODO Should this filesystem stuff be done by the ChannelMaster object itself?
+        makeParentDirectories(ChannelPaths::pages(serialNumber, channelNumber));
+        makeParentDirectories(ChannelPaths::state(serialNumber, channelNumber));
+        makeParentDirectories(ChannelPaths::fifo(serialNumber, channelNumber));
+        makeParentDirectories(ChannelPaths::lock(serialNumber, channelNumber));
+        touchFile(ChannelPaths::lock(serialNumber, channelNumber));
+        return std::make_shared<CrorcChannelMaster>(serialNumber, channelNumber);
+      }
+      case CardType::CRU: {
+        // TODO Remove throw when CruChannelMaster is in usable state
+        BOOST_THROW_EXCEPTION(RorcException()
+            << errinfo_rorc_generic_message("CRU channel master not yet supported")
+            << errinfo_rorc_serial_number(serialNumber));
+        return std::make_shared<CruChannelMaster>(serialNumber, channelNumber);
+      }
+      default: {
+        BOOST_THROW_EXCEPTION(RorcException()
+            << errinfo_rorc_generic_message("Unknown card type")
+            << errinfo_rorc_serial_number(serialNumber));
+      }
+    }
+  }
+#else
+#pragma message("PDA not enabled, Alice02::Rorc::ChannelFactory::getMaster() will always return a dummy implementation")
+  return std::make_shared<DummyChannelMaster>();
+#endif
 }
 
 std::shared_ptr<ChannelMasterInterface> ChannelFactory::getMaster(int serialNumber, int channelNumber,

@@ -11,6 +11,8 @@
 #include "c/rorc/rorc.h"
 #include "ChannelPaths.h"
 #include "RorcException.h"
+#include "Util.h"
+#include "ChannelUtilityImpl.h"
 
 namespace b = boost;
 namespace bip = boost::interprocess;
@@ -86,27 +88,40 @@ uint32_t getUpper32Bits(uint64_t x)
   return (x >> 32) & 0xFfffFfff;
 }
 
-CruChannelMaster::CruChannelMaster(int serial, int channel, const ChannelParameters& params)
-: ChannelMaster(serial, channel, params, CRU_BUFFERS_PER_CHANNEL),
-  mappedFileFifo(
-      ChannelPaths::fifo(serial, channel).c_str()),
-  bufferFifo(
-      rorcDevice.getPciDevice(),
-      mappedFileFifo.getAddress(),
-      mappedFileFifo.getSize(),
-      getBufferId(BUFFER_INDEX_FIFO)),
-  crorcSharedData(
-      ChannelPaths::state(serial, channel),
-      sharedDataSize(),
-      crorcSharedDataName(),
-      FileSharedObject::find_or_construct),
-  pendingPages(0),
-  pageWasReadOut(CRU_DESCRIPTOR_ENTRIES, true)
+CruChannelMaster::CruChannelMaster(int serial, int channel)
+    : ChannelMaster(serial, channel, CRU_BUFFERS_PER_CHANNEL)
 {
+  constructorCommon();
+}
+
+CruChannelMaster::CruChannelMaster(int serial, int channel, const ChannelParameters& params)
+    : ChannelMaster(serial, channel, params, CRU_BUFFERS_PER_CHANNEL)
+{
+  constructorCommon();
+}
+
+void CruChannelMaster::constructorCommon()
+{
+  using Util::resetSmartPtr;
+
+  resetSmartPtr(mappedFileFifo, ChannelPaths::fifo(serialNumber, channelNumber).c_str());
+
+  resetSmartPtr(bufferFifo, rorcDevice->getPciDevice(), mappedFileFifo->getAddress(), mappedFileFifo->getSize(),
+      getBufferId(BUFFER_INDEX_FIFO));
+
+  resetSmartPtr(crorcSharedData, ChannelPaths::state(serialNumber, channelNumber), sharedDataSize(),
+      cruSharedDataName(), FileSharedObject::find_or_construct);
+
+  pendingPages = 0;
+
+  pageWasReadOut.resize(CRU_DESCRIPTOR_ENTRIES, true);
+
+  auto& params = getParams();
+
   assert(params.dma.pageSize == (8 * 1024)); // Currently the only supported page size is 8 KiB
 
   // Initialize (if needed) the shared data
-  const auto& csd = crorcSharedData.get();
+  const auto& csd = crorcSharedData->get();
 
   if (csd->initializationState == InitializationState::INITIALIZED) {
     cout << "CRU shared channel state already initialized" << endl;
@@ -118,7 +133,7 @@ CruChannelMaster::CruChannelMaster(int serial, int channel, const ChannelParamet
     csd->initialize();
 
     cout << "Clearing FIFO" << endl;
-    auto fifo = mappedFileFifo.get();
+    auto fifo = mappedFileFifo->get();
 
     for (size_t i = 0; i < fifo->statusEntries.size(); ++i) {
       fifo->statusEntries[i].status = 0;
@@ -126,7 +141,7 @@ CruChannelMaster::CruChannelMaster(int serial, int channel, const ChannelParamet
   }
 
   // Initialize the page addresses
-  for (auto& entry : bufferPages.getScatterGatherList()) {
+  for (auto& entry : bufferPages->getScatterGatherList()) {
     // How many pages fit in this SGL entry
     int64_t pagesInSglEntry = entry.size / params.dma.pageSize;
 
@@ -164,16 +179,16 @@ void CruChannelMaster::CrorcSharedData::initialize()
 
 void CruChannelMaster::deviceStartDma()
 {
-  uint64_t fifoTableAddress = (uint64_t) bufferFifo.getScatterGatherList()[0].addressBus;
-  pdaBar[BarIndex::STATUS_BASE_BUS_LOW] = getLower32Bits(fifoTableAddress);
-  pdaBar[BarIndex::STATUS_BASE_BUS_HIGH] = getUpper32Bits(fifoTableAddress);
-  pdaBar[BarIndex::FIFO_BASE_CARD_LOW] = 0x8000;
-  pdaBar[BarIndex::FIFO_BASE_CARD_HIGH] = 0x0;
-  pdaBar[BarIndex::START_DMA] = CRU_DESCRIPTOR_ENTRIES - 1;
-  pdaBar[BarIndex::DESCRIPTOR_TABLE_SIZE] = CRU_DESCRIPTOR_ENTRIES - 1;
-  pdaBar[BarIndex::PCIE_READY] = 0x1;
-  pdaBar[BarIndex::DATA_EMULATOR_ENABLE] = 0x1;
-  pdaBar[BarIndex::SEND_STATUS] = 0x1;
+  uint64_t fifoTableAddress = (uint64_t) bufferFifo->getScatterGatherList()[0].addressBus;
+  barUserspace[BarIndex::STATUS_BASE_BUS_LOW] = getLower32Bits(fifoTableAddress);
+  barUserspace[BarIndex::STATUS_BASE_BUS_HIGH] = getUpper32Bits(fifoTableAddress);
+  barUserspace[BarIndex::FIFO_BASE_CARD_LOW] = 0x8000;
+  barUserspace[BarIndex::FIFO_BASE_CARD_HIGH] = 0x0;
+  barUserspace[BarIndex::START_DMA] = CRU_DESCRIPTOR_ENTRIES - 1;
+  barUserspace[BarIndex::DESCRIPTOR_TABLE_SIZE] = CRU_DESCRIPTOR_ENTRIES - 1;
+  barUserspace[BarIndex::PCIE_READY] = 0x1;
+  barUserspace[BarIndex::DATA_EMULATOR_ENABLE] = 0x1;
+  barUserspace[BarIndex::SEND_STATUS] = 0x1;
 }
 
 void CruChannelMaster::deviceStopDma()
@@ -181,7 +196,7 @@ void CruChannelMaster::deviceStopDma()
   // TODO Not sure if this is the correct way
 
   // Set status to send status for every page not only for the last one
-  pdaBar[BarIndex::SEND_STATUS] = 0x0;
+  barUserspace[BarIndex::SEND_STATUS] = 0x0;
 }
 
 void CruChannelMaster::resetCard(ResetLevel::type)
@@ -200,7 +215,7 @@ ChannelMasterInterface::PageHandle CruChannelMaster::pushNextPage()
   } else {
     // Actually push pages
     auto pageSize = getParams().dma.pageSize;
-    auto fifo = mappedFileFifo.get();
+    auto fifo = mappedFileFifo->get();
 
     for (size_t i = 0; i < fifo->statusEntries.size(); ++i) {
       fifo->statusEntries[i].status = 0;
@@ -256,6 +271,16 @@ CardType::type CruChannelMaster::getCardType()
   return CardType::CRU;
 }
 
+std::vector<uint32_t> CruChannelMaster::utilityCopyFifo()
+{
+  ALICEO2_RORC_THROW_EXCEPTION("Not implemented");
+  return std::vector<uint32_t>();
+}
+
+void CruChannelMaster::utilityPrintFifo(std::ostream& os)
+{
+  ChannelUtility::printCruFifo(mappedFileFifo->get(), os);
+}
 
 } // namespace Rorc
 } // namespace AliceO2

@@ -35,6 +35,7 @@ if(PDA_FOUND)
     c/rorc/rorc.c
     ChannelMaster.cxx
     ChannelSlave.cxx
+    ChannelUtilityImpl.cxx
     Crorc.cxx
     CrorcChannelMaster.cxx
     CrorcChannelSlave.cxx
@@ -92,6 +93,7 @@ build_util_exec(rorc-dma-bench RorcUtilsDmaBench.cxx)
 build_util_exec(rorc-list-cards RorcUtilsListCards.cxx)
 build_util_exec(rorc-print-fifo RorcUtilsPrintFifo.cxx)
 build_util_exec(rorc-cru-blink RorcUtilsCruBlink.cxx)
+build_util_exec(rorc-sanity-check RorcUtilsSanityCheck.cxx)
 
 
 # -------

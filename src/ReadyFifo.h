@@ -6,9 +6,12 @@
 #pragma once
 
 #include <cstdint>
+#include <array>
 
 namespace AliceO2 {
 namespace Rorc {
+
+constexpr int READYFIFO_ENTRIES = 128;
 
 /// Class representing CRORC readyFifo
 /// This class is meant to be used as an aliased type, reinterpret_casted from a raw memory pointer
@@ -16,10 +19,8 @@ namespace Rorc {
 /// For more information, see:
 ///   http://en.cppreference.com/w/cpp/language/reinterpret_cast
 ///   http://en.cppreference.com/w/cpp/language/aggregate_initialization
-struct ReadyFifo
+union ReadyFifo
 {
-    static constexpr int FIFO_ENTRIES = 128;
-
     struct Entry
     {
         volatile int32_t length;
@@ -39,11 +40,13 @@ struct ReadyFifo
       }
     }
 
-    std::array<Entry, FIFO_ENTRIES> entries;
+    std::array<Entry, READYFIFO_ENTRIES> entries;
+    std::array<int32_t, READYFIFO_ENTRIES * 2> dataInt32;
+    std::array<char, READYFIFO_ENTRIES * sizeof(Entry)> dataChar;
 };
 
 static_assert(sizeof(ReadyFifo::Entry) == 8, "Size of ReadyFifo::Entry invalid");
-static_assert(sizeof(ReadyFifo) == (ReadyFifo::FIFO_ENTRIES * sizeof(ReadyFifo::Entry)), "Size of ReadyFifo invalid");
+static_assert(sizeof(ReadyFifo) == (READYFIFO_ENTRIES * sizeof(ReadyFifo::Entry)), "Size of ReadyFifo invalid");
 
 } // namespace Rorc
 } // namespace AliceO2

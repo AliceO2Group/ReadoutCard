@@ -6,6 +6,7 @@
 #include "ChannelMaster.h"
 #include <iostream>
 #include "ChannelPaths.h"
+#include "Util.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -50,43 +51,79 @@ void ChannelMaster::validateParameters(const ChannelParameters& ps)
   }
 }
 
+void ChannelMaster::constructorCommonPhaseOne()
+{
+  Util::resetSmartPtr(sharedData, ChannelPaths::lock(serialNumber, channelNumber),
+      ChannelPaths::state(serialNumber, channelNumber), sharedDataSize(), sharedDataName(),
+      FileSharedObject::find_or_construct);
+}
+
+void ChannelMaster::constructorCommonPhaseTwo()
+{
+  using Util::resetSmartPtr;
+
+  resetSmartPtr(rorcDevice, serialNumber);
+
+  resetSmartPtr(pdaBar, rorcDevice->getPciDevice(), channelNumber);
+  barUserspace = pdaBar->getUserspaceAddressU32();
+
+  resetSmartPtr(mappedFilePages, ChannelPaths::pages(serialNumber, channelNumber).c_str(), sharedData->get()->getParams().dma.bufferSize);
+
+  resetSmartPtr(bufferPages, rorcDevice->getPciDevice(), mappedFilePages->getAddress(), mappedFilePages->getSize(),
+      getBufferId(BUFFER_INDEX_PAGES));
+}
+
+ChannelMaster::ChannelMaster(int serial, int channel, int additionalBuffers)
+    : serialNumber(serial), channelNumber(channel), dmaBuffersPerChannel(
+        additionalBuffers + CHANNELMASTER_DMA_BUFFERS_PER_CHANNEL)
+{
+  constructorCommonPhaseOne();
+
+  // Initialize (if needed) the shared data
+  const auto& sd = sharedData->get();
+  const auto& params = sd->getParams();
+
+  if (sd->initializationState == InitializationState::INITIALIZED) {
+    validateParameters(params);
+  }
+  else {
+    BOOST_THROW_EXCEPTION(CrorcException()
+        << errinfo_rorc_generic_message("Unknown or invalid shared data state")
+        << errinfo_rorc_shared_state_file(ChannelPaths::lock(serialNumber, channelNumber).string()));
+  }
+
+  constructorCommonPhaseTwo();
+}
+
 ChannelMaster::ChannelMaster(int serial, int channel, const ChannelParameters& params, int additionalBuffers)
- : serialNumber(serial),
-   channelNumber(channel),
-   dmaBuffersPerChannel(additionalBuffers + CHANNELMASTER_DMA_BUFFERS_PER_CHANNEL),
-   sharedData(
-       ChannelPaths::lock(serial, channel),
-       ChannelPaths::state(serial, channel),
-       sharedDataSize(),
-       sharedDataName(),
-       FileSharedObject::find_or_construct),
-   //deviceFinder(serialNumber),
-   rorcDevice(serial),
-   pdaBar(rorcDevice.getPciDevice(), channel),
-   mappedFilePages(
-       ChannelPaths::pages(serial, channel).c_str(),
-       params.dma.bufferSize),
-   bufferPages(
-       rorcDevice.getPciDevice(),
-       mappedFilePages.getAddress(),
-       mappedFilePages.getSize(),
-       getBufferId(BUFFER_INDEX_PAGES))
+    : serialNumber(serial), channelNumber(channel), dmaBuffersPerChannel(
+        additionalBuffers + CHANNELMASTER_DMA_BUFFERS_PER_CHANNEL)
 {
   validateParameters(params);
 
-  // Initialize (if needed) the shared data
-  const auto& sd = sharedData.get();
+  constructorCommonPhaseOne();
 
+  // Initialize (if needed) the shared data
+  const auto& sd = sharedData->get();
   if (sd->initializationState == InitializationState::INITIALIZED) {
-   //cout << "Shared channel state already initialized" << endl;
+   cout << "[LOG] Shared channel state already initialized" << endl;
+
+   if (sd->getParams() == params) {
+     cout << "[LOG] Shared state ChannelParameters equal to argument ChannelParameters" << endl;;
+   } else {
+     cout << "[LOG] Shared state ChannelParameters different to argument ChannelParameters"
+         "-> resetting channel (RESET NOT IMPLEMENTED)" << endl;
+   }
   }
   else {
    if (sd->initializationState == InitializationState::UNKNOWN) {
-     //cout << "Warning: unknown shared channel state. Proceeding with initialization" << endl;
+     cout << "[LOG] Warning: unknown shared channel state. Proceeding with initialization" << endl;
    }
-   //cout << "Initializing shared channel state" << endl;
+   cout << "[LOG] Initializing shared channel state" << endl;
    sd->initialize(params);
   }
+
+  constructorCommonPhaseTwo();
 }
 
 ChannelMaster::~ChannelMaster()
@@ -107,7 +144,7 @@ void ChannelMaster::SharedData::initialize(const ChannelParameters& params)
 
 const ChannelParameters& ChannelMaster::getParams()
 {
-  return sharedData.get()->getParams();
+  return sharedData->get()->getParams();
 }
 
 const ChannelParameters& ChannelMaster::SharedData::getParams()
@@ -123,41 +160,45 @@ ChannelMaster::InitializationState::type ChannelMaster::SharedData::getState()
 // Checks DMA state and forwards call to subclass if necessary
 void ChannelMaster::startDma()
 {
-  if (sharedData.get()->dmaState == DmaState::UNKNOWN) {
+  const auto& sd = sharedData->get();
+
+  if (sd->dmaState == DmaState::UNKNOWN) {
     cout << "Warning: Unknown DMA state" << endl;
-  } else if (sharedData.get()->dmaState == DmaState::STARTED) {
+  } else if (sd->dmaState == DmaState::STARTED) {
     cout << "Warning: DMA already started. Ignoring startDma() call" << endl;
   } else {
     deviceStartDma();
   }
 
-  sharedData.get()->dmaState = DmaState::STARTED;
+  sd->dmaState = DmaState::STARTED;
 }
 
 // Checks DMA state and forwards call to subclass if necessary
 void ChannelMaster::stopDma()
 {
-  if (sharedData.get()->dmaState == DmaState::UNKNOWN) {
+  const auto& sd = sharedData->get();
+
+  if (sd->dmaState == DmaState::UNKNOWN) {
     cout << "Warning: Unknown DMA state" << endl;
-  } else if (sharedData.get()->dmaState == DmaState::STOPPED) {
+  } else if (sd->dmaState == DmaState::STOPPED) {
     cout << "Warning: DMA already stopped. Ignoring stopDma() call" << endl;
   } else {
     deviceStopDma();
   }
 
-  sharedData.get()->dmaState = DmaState::STOPPED;
+  sd->dmaState = DmaState::STOPPED;
 }
 
 uint32_t ChannelMaster::readRegister(int index)
 {
   // TODO Range check
-  return pdaBar[index];
+  return barUserspace[index];
 }
 
 void ChannelMaster::writeRegister(int index, uint32_t value)
 {
   // TODO Range check
-  pdaBar[index] = value;
+  barUserspace[index] = value;
 }
 
 } // namespace Rorc

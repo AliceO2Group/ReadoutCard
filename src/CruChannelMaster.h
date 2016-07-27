@@ -6,7 +6,9 @@
 #pragma once
 
 #include "ChannelMaster.h"
+#include <memory>
 #include <array>
+#include "CruFifoTable.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -16,74 +18,32 @@ class CruChannelMaster : public ChannelMaster
 {
   public:
 
+    CruChannelMaster(int serial, int channel);
     CruChannelMaster(int serial, int channel, const ChannelParameters& params);
-    ~CruChannelMaster();
-    virtual void resetCard(ResetLevel::type resetLevel);
-    virtual PageHandle pushNextPage();
-    virtual bool isPageArrived(const PageHandle& handle);
-    virtual Page getPage(const PageHandle& handle);
-    virtual void markPageAsRead(const PageHandle& handle);
-    virtual CardType::type getCardType();
+    virtual ~CruChannelMaster() override;
+
+    virtual void resetCard(ResetLevel::type resetLevel) override;
+    virtual PageHandle pushNextPage() override;
+    virtual bool isPageArrived(const PageHandle& handle) override;
+    virtual Page getPage(const PageHandle& handle) override;
+    virtual void markPageAsRead(const PageHandle& handle) override;
+    virtual CardType::type getCardType() override;
+
+    virtual std::vector<uint32_t> utilityCopyFifo() override;
+    virtual void utilityPrintFifo(std::ostream& os) override;
 
   protected:
 
-    virtual void deviceStartDma();
-    virtual void deviceStopDma();
+    virtual void deviceStartDma() override;
+    virtual void deviceStopDma() override;
 
     /// Name for the CRU shared data object in the shared state file
-    inline static const char* crorcSharedDataName()
+    inline static const char* cruSharedDataName()
     {
       return "CruChannelMasterSharedData";
     }
 
   private:
-
-    static constexpr size_t CRU_DESCRIPTOR_ENTRIES = 128l;
-
-    /// A class representing the CRU status and descriptor tables
-    struct CruFifoTable
-    {
-        /// A class representing a CRU status table entry
-        struct StatusEntry
-        {
-            volatile uint32_t status;
-        };
-
-        /// A class representing a CRU descriptor table entry
-        struct DescriptorEntry
-        {
-
-            /// Low 32 bits of the DMA source address on the card
-            uint32_t srcLow;
-
-            /// High 32 bits of the DMA source address on the card
-            uint32_t srcHigh;
-
-            /// Low 32 bits of the DMA destination address on the bus
-            uint32_t dstLow;
-
-            /// High 32 bits of the DMA destination address on the bus
-            uint32_t dstHigh;
-
-            /// Control register
-            uint32_t ctrl;
-
-            /// Reserved field 1
-            uint32_t reserved1;
-
-            /// Reserved field 2
-            uint32_t reserved2;
-
-            /// Reserved field 3
-            uint32_t reserved3;
-        };
-
-        /// Array of status entries
-        std::array<StatusEntry, CRU_DESCRIPTOR_ENTRIES> statusEntries;
-
-        /// Array of descriptor entries
-        std::array<DescriptorEntry, CRU_DESCRIPTOR_ENTRIES> descriptorEntries;
-    };
 
     /// Persistent device state/data that resides in shared memory
     class CrorcSharedData
@@ -108,13 +68,13 @@ class CruChannelMaster : public ChannelMaster
     };
 
     /// Memory mapped file containing the readyFifo
-    TypedMemoryMappedFile<CruFifoTable> mappedFileFifo;
+    boost::scoped_ptr<TypedMemoryMappedFile<CruFifoTable>> mappedFileFifo;
 
     /// PDA DMABuffer object for the readyFifo
-    PdaDmaBuffer bufferFifo;
+    boost::scoped_ptr<PdaDmaBuffer> bufferFifo;
 
     /// Memory mapped data stored in the shared state file
-    FileSharedObject::FileSharedObject<CrorcSharedData> crorcSharedData;
+    boost::scoped_ptr<FileSharedObject::FileSharedObject<CrorcSharedData>> crorcSharedData;
 
     /// Counter for the amount of pages that have been requested.
     /// Since currently, the idea is to push 128 at a time, we wait until the client requests 128 pages...
@@ -123,6 +83,10 @@ class CruChannelMaster : public ChannelMaster
 
     /// Array to keep track of read pages (false: wasn't read out, true: was read out).
     std::vector<bool> pageWasReadOut;
+
+  private:
+
+    void constructorCommon();
 };
 
 } // namespace Rorc

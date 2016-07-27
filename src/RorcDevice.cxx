@@ -127,7 +127,7 @@ int crorcGetSerial(PciDevice* pciDevice)
 
 int cruGetSerial(PciDevice*)
 {
-  printf("WARNING: CRU NOT REALLY SUPPORTED, SERIAL NR HARDCODED\n");
+  // XXX WARNING: CRU NOT REALLY SUPPORTED, SERIAL NR HARDCODED
   return 12345;
   //BOOST_THROW_EXCEPTION(DeviceFinderException() << errinfo_rorc_generic_message("CRU unsupported"));
 }

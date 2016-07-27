@@ -9,12 +9,13 @@
 #include "RORC/Page.h"
 #include "RORC/ChannelParameters.h"
 #include "RORC/CardType.h"
+#include "RORC/RegisterReadWriteInterface.h"
 
 namespace AliceO2 {
 namespace Rorc {
 
 /// Obtains a master lock on a channel and provides an interface to control and use the channel
-class ChannelMasterInterface
+class ChannelMasterInterface: public RegisterReadWriteInterface
 {
   public:
     /// A handle that refers to a page. Used by some of the API calls.
@@ -44,15 +45,6 @@ class ChannelMasterInterface
     /// Reset the channel
     /// \param resetLevel The depth of the reset
     virtual void resetCard(ResetLevel::type resetLevel) = 0;
-
-    /// Reads a BAR register. The registers are indexed per 32 bits
-    /// \param index The index of the register
-    virtual uint32_t readRegister(int index) = 0;
-
-    /// Writes a BAR register
-    /// \param index The index of the register
-    /// \param value The value to be written into the register
-    virtual void writeRegister(int index, uint32_t value) = 0;
 
     /// Push page and return handle to the pushed page.
     /// \return A handle to the page that can be used with other functions to check when it has arrived, and then to

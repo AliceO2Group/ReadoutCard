@@ -15,6 +15,13 @@ namespace AliceO2 {
 namespace Rorc {
 namespace Util {
 
+/// Convenience function to reset a smart pointer
+template <typename SmartPtr, typename ...Args>
+void resetSmartPtr(SmartPtr& ptr, Args&&... args)
+{
+  ptr.reset(new typename SmartPtr::element_type(std::forward<Args>(args)...));
+}
+
 /// Flips a map around. Note that it will lead to data loss if multiple values of the original map are equal.
 template <typename Map, typename ReverseMap = std::map<typename Map::mapped_type, typename Map::key_type>>
 ReverseMap reverseMap(const Map& map)

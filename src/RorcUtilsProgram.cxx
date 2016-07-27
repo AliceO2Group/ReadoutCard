@@ -70,13 +70,7 @@ int RorcUtilsProgram::execute(int argc, char** argv)
       std::cout << "Error\n\n";
     }
 
-#ifndef NDEBUG
-    // Print extra debug info
-    std::cout << "DEBUG INFO (!NDEBUG):\n" << boost::diagnostic_information(boostException, true) << "\n";
-#else
-    // Less verbosity
-    std::cout << boost::diagnostic_information(boostException, false) << "\n";
-#endif
+    std::cout << '\n' << boost::diagnostic_information(boostException, verbose) << "\n";
 
     AliceO2::Rorc::Util::Options::printHelp(getDescription(), optionsDescription);
   }

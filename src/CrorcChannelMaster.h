@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <memory>
 #include "ChannelMaster.h"
 
 namespace AliceO2 {
@@ -15,19 +16,24 @@ class CrorcChannelMaster : public ChannelMaster
 {
   public:
 
+    CrorcChannelMaster(int serial, int channel);
     CrorcChannelMaster(int serial, int channel, const ChannelParameters& params);
-    ~CrorcChannelMaster();
-    virtual void resetCard(ResetLevel::type resetLevel);
-    virtual PageHandle pushNextPage();
-    virtual bool isPageArrived(const PageHandle& handle);
-    virtual Page getPage(const PageHandle& handle);
-    virtual void markPageAsRead(const PageHandle& handle);
-    virtual CardType::type getCardType();
+    virtual ~CrorcChannelMaster() override;
+
+    virtual void resetCard(ResetLevel::type resetLevel) override;
+    virtual PageHandle pushNextPage() override;
+    virtual bool isPageArrived(const PageHandle& handle) override;
+    virtual Page getPage(const PageHandle& handle) override;
+    virtual void markPageAsRead(const PageHandle& handle) override;
+    virtual CardType::type getCardType() override;
+
+    virtual std::vector<uint32_t> utilityCopyFifo() override;
+    virtual void utilityPrintFifo(std::ostream& os) override;
 
   protected:
 
-    virtual void deviceStartDma();
-    virtual void deviceStopDma();
+    virtual void deviceStartDma() override;
+    virtual void deviceStopDma() override;
 
     /// Name for the CRORC shared data object in the shared state file
     inline static const char* crorcSharedDataName()
@@ -131,19 +137,23 @@ class CrorcChannelMaster : public ChannelMaster
     void crorcSetSiuLoopback();
 
     /// Memory mapped file containing the readyFifo
-    TypedMemoryMappedFile<ReadyFifo> mappedFileFifo;
+    boost::scoped_ptr<TypedMemoryMappedFile<ReadyFifo>> mappedFileFifo;
 
     /// PDA DMABuffer object for the Ready FIFO
-    PdaDmaBuffer bufferReadyFifo;
+    boost::scoped_ptr<PdaDmaBuffer> bufferReadyFifo;
 
     /// Memory mapped data stored in the shared state file
-    FileSharedObject::FileSharedObject<CrorcSharedData> crorcSharedData;
+    boost::scoped_ptr<FileSharedObject::FileSharedObject<CrorcSharedData>> crorcSharedData;
 
     /// Mapping from fifo page index to DMA buffer index
     std::vector<int> bufferPageIndexes;
 
     /// Array to keep track of read pages (false: wasn't read out, true: was read out).
     std::vector<bool> pageWasReadOut;
+
+  private:
+
+    void constructorCommon();
 };
 
 } // namespace Rorc

@@ -6,6 +6,7 @@
 #include "RORC/ChannelParameters.h"
 #include <vector>
 #include <map>
+#include <tuple>
 #include "Util.h"
 
 namespace AliceO2 {

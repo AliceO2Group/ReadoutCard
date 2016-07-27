@@ -15,6 +15,7 @@
 #include <cstdint>
 #include "RORC/ChannelParameters.h"
 #include "RORC/PciId.h"
+#include "RORC/CardType.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -29,6 +30,7 @@ DEFINE_ERRINFO(possible_causes, std::vector<std::string>);
 DEFINE_ERRINFO(readyfifo_status, std::string);
 DEFINE_ERRINFO(readyfifo_length, int32_t);
 DEFINE_ERRINFO(filename, std::string);
+DEFINE_ERRINFO(shared_state_file, std::string);
 DEFINE_ERRINFO(filesize, size_t);
 DEFINE_ERRINFO(directory, std::string);
 DEFINE_ERRINFO(serial_number, int);
@@ -47,6 +49,7 @@ DEFINE_ERRINFO(generator_seed, int);
 DEFINE_ERRINFO(generator_event_length, size_t);
 DEFINE_ERRINFO(pci_id, PciId);
 DEFINE_ERRINFO(pci_device_index, int);
+DEFINE_ERRINFO(card_type, CardType::type);
 
 // Undefine macro for header safety
 #undef DEFINE_ERRINFO
@@ -102,6 +105,7 @@ std::string to_string(const ::AliceO2::Rorc::errinfo_rorc_loopback_mode& e);
 std::string to_string(const ::AliceO2::Rorc::errinfo_rorc_reset_level& e);
 std::string to_string(const ::AliceO2::Rorc::errinfo_rorc_status_code& e);
 std::string to_string(const ::AliceO2::Rorc::errinfo_rorc_pci_id& e);
+std::string to_string(const ::AliceO2::Rorc::errinfo_rorc_card_type_& e);
 
 }
 
