@@ -35,8 +35,8 @@ PdaDevice::PdaDevice(const PciId& pciId) : deviceOperator(nullptr)
     const std::string id = pciId.getVendorId() + " " + pciId.getDeviceId() + '\0';
     const char* ids[2] = { id.data(), nullptr };
 
-    DeviceOperator* deviceOperator = DeviceOperator_new(ids, PDA_ENUMERATE_DEVICES);
-    if(deviceOperator == NULL){
+    deviceOperator = DeviceOperator_new(ids, PDA_ENUMERATE_DEVICES);
+    if(deviceOperator == nullptr){
       BOOST_THROW_EXCEPTION(RorcPdaException()
           << errinfo_rorc_generic_message("Failed to get DeviceOperator")
           << errinfo_rorc_possible_causes({"Invalid PCI ID"}));
