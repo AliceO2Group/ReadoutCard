@@ -503,6 +503,16 @@ void CrorcChannelMaster::utilityPrintFifo(std::ostream& os)
   ChannelUtility::printCrorcFifo(mappedFileFifo->get(), os);
 }
 
+void CrorcChannelMaster::utilitySetLedState(bool)
+{
+  BOOST_THROW_EXCEPTION(CrorcException() << errinfo_rorc_generic_message("C-RORC does not support setting LED state"));
+}
+
+void CrorcChannelMaster::utilitySanityCheck(std::ostream& os)
+{
+  ChannelUtility::crorcSanityCheck(os, this);
+}
+
 } // namespace Rorc
 } // namespace AliceO2
 

@@ -5,15 +5,14 @@
 /// \brief Utility that prints the FIFO of a RORC
 ///
 /// TODO Support FIFO file input
-/// TODO Option to switch between pretty output and simple dump
 
 #include <iostream>
+#include <iomanip>
 #include <boost/exception/diagnostic_information.hpp>
-#include "RORC/ChannelFactory.h"
+#include "ChannelUtilityFactory.h"
 #include "RorcUtilsOptions.h"
 #include "RorcUtilsCommon.h"
 #include "RorcUtilsProgram.h"
-#include "ChannelUtilityInterface.h"
 #include "RorcException.h"
 
 using namespace AliceO2::Rorc::Util;
@@ -40,23 +39,27 @@ class ProgramPrintFifo: public RorcUtilsProgram
     {
       Options::addOptionChannel(options);
       Options::addOptionSerialNumber(options);
+      options.add_options()("nopretty", "Dump FIFO contents instead of making a nice table");
     }
 
-    virtual void mainFunction(boost::program_options::variables_map& map)
+    virtual void mainFunction(const boost::program_options::variables_map& map)
     {
       int serialNumber = Options::getOptionSerialNumber(map);
       int channelNumber = Options::getOptionChannel(map);
+      auto channel = ChannelUtilityFactory().getUtility(serialNumber, channelNumber);
 
-      auto channel = ChannelFactory().getMaster(serialNumber, channelNumber);
-      auto utility = dynamic_cast<ChannelUtilityInterface*>(channel.get());
-
-      if (utility) {
-        utility->utilityPrintFifo(cout);
-      } else {
-        BOOST_THROW_EXCEPTION(RorcException()
-            << errinfo_rorc_generic_message("Failed to print FIFO")
-            << errinfo_rorc_possible_causes({"Unsupported card type"})
-            << errinfo_rorc_card_type(channel->getCardType()));
+      if (map.count("nopretty")) {
+        // Dump contents
+        auto fifo = channel->utilityCopyFifo();
+        for (size_t i = 0; i < fifo.size(); ++i) {
+          auto value = fifo[i];
+          cout << std::setw(4) << i << "  =>  0x" << Common::make32hexString(value)
+              << "  =  0b" << Common::make32bitString(value) << "  =  " << value << '\n';
+        }
+      }
+      else {
+        // Nice printed FIFO
+        channel->utilityPrintFifo(cout);
       }
     }
 };

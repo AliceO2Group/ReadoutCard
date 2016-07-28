@@ -12,13 +12,16 @@ namespace AliceO2 {
 namespace Rorc {
 namespace ChannelUtility {
 
+using std::endl;
 namespace b = boost;
+
+namespace {
 
 /// Helper function for the "print FIFO" functions
 void printTable(std::ostream& os, const std::string& title, const std::string& header, int size,
     std::function<void(int i)> printRow)
 {
-  constexpr int HEADER_INTERVAL = 32;
+  int headerInterval = 32;
   auto lineFat = std::string(header.length(), '=') + '\n';
   auto lineThin = std::string(header.length(), '-') + '\n';
 
@@ -26,7 +29,7 @@ void printTable(std::ostream& os, const std::string& title, const std::string& h
   os << lineFat << header << lineThin;
 
   for (int i = 0; i < size; ++i) {
-    if ((i != 0) && ((i % HEADER_INTERVAL) == 0)) {
+    if ((i != 0) && ((i % headerInterval) == 0)) {
       // Add another header every x rows to make long tables more readable
       os << lineThin << header << lineThin;
     }
@@ -35,6 +38,29 @@ void printTable(std::ostream& os, const std::string& title, const std::string& h
 
   os << lineFat;
 }
+
+/// Helper function for the "sanity check" functions
+void registerCheck(std::ostream& os, int writeValue, int writeAddress, int readValue, int readAddress)
+{
+  auto formatFailure = " [FAILURE] wrote 0x%x to 0x%x, read 0x%x from 0x%x";
+  auto formatSuccess = " [success] wrote 0x%x to 0x%x, read 0x%x from 0x%x";
+  auto format = (readValue == writeValue) ? formatSuccess : formatFailure;
+  os << b::str(b::format(format) % writeValue % writeAddress % readValue % readAddress) << endl;
+}
+
+/// Helper function for the "sanity check" functions
+void registerReadWriteCheck(RegisterReadWriteInterface* channel, std::ostream& os, int writeValue,
+    int writeAddress, int readAddress)
+{
+  int writeIndex = writeAddress / 4;
+  int readIndex = readAddress / 4;
+
+  channel->writeRegister(writeIndex, writeValue);
+  int readValue = channel->readRegister(readIndex);
+  registerCheck(os, writeValue, writeAddress, readValue, readAddress);
+}
+
+} // Anonymous namespace
 
 /// Prints the C-RORC Ready FIFO
 void printCrorcFifo(ReadyFifo* fifo, std::ostream& os)
@@ -81,6 +107,72 @@ void printCruFifo(CruFifoTable* fifo, std::ostream& os)
   }
 }
 
+void crorcSanityCheck(std::ostream& os, RegisterReadWriteInterface* channel)
+{
+  {
+    // A register that can be freely written to and read from
+
+    int value = 0x1234abcd;
+    int address = 0x1f4;
+
+    os << "# Read/write register\n";
+    registerReadWriteCheck(channel, os, value, address, address);
+  }
+
+  {
+    // A pair of registers. A value can be written to one, and the same value should come out of the other
+
+    int addressWrite = 0x1f8;
+    int addressRead = 0x1fc;
+
+    os << "# Readback register pair\n";
+    registerReadWriteCheck(channel, os, 0x0, addressWrite, addressRead);
+    registerReadWriteCheck(channel, os, 0x1, addressWrite, addressRead);
+  }
+}
+
+void cruSanityCheck(std::ostream& os, RegisterReadWriteInterface* channel)
+{
+  {
+    // Writing to the LED register has been known to crash and reboot the machine if the CRU is in a bad state.
+    // That makes it a good part of this sanity test!
+
+    int ledAddress = 0x260;
+    int valueOn = 0xff;
+    int valueOff = 0x00;
+
+    os << "# Turning LEDs on\n";
+    registerReadWriteCheck(channel, os, valueOn, ledAddress, ledAddress);
+    os << "# Turning LEDs off\n";
+    registerReadWriteCheck(channel, os, valueOff, ledAddress, ledAddress);
+  }
+
+  {
+    // The CRU has a little debug register FIFO thing that we can use to check if simple register writing and
+    // reading is working properly.
+    // We should be able to push values by writing to 'addressPush' and pop by reading from 'addressPop'
+
+    int addressPush = 0x274;
+    int addressPop = 0x270;
+    int indexPush = addressPush / 4;
+    int indexPop = addressPop / 4;
+    int valuesToPush = 4;
+    auto getValue = [](int i) { return 1 << i; };
+
+    os << "# Debug FIFO push/pop register pair\n";
+    for (int i = 0; i < valuesToPush; ++i) {
+      channel->writeRegister(indexPush, getValue(i));
+    }
+
+    for (int i = 0; i < valuesToPush; ++i) {
+      int expectedValue = getValue(i);
+      int readValue = channel->readRegister(indexPop);
+      registerCheck(os, expectedValue, addressPush, readValue, addressPop);
+    }
+  }
+}
+
 } // namespace ChannelUtility
 } // namespace Rorc
 } // namespace AliceO2
+

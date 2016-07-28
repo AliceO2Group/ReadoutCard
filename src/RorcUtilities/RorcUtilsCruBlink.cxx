@@ -8,8 +8,8 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
-#include "RORC/ChannelFactory.h"
 #include "RORC/CardType.h"
+#include "ChannelUtilityFactory.h"
 #include "RorcUtilsOptions.h"
 #include "RorcUtilsCommon.h"
 #include "RorcUtilsProgram.h"
@@ -36,35 +36,25 @@ class ProgramCruBlink: public RorcUtilsProgram
       Options::addOptionSerialNumber(options);
     }
 
-    virtual void mainFunction(boost::program_options::variables_map& map)
+    virtual void mainFunction(const boost::program_options::variables_map& map)
     {
       const int serialNumber = Options::getOptionSerialNumber(map);
       const int channelNumber = 0;
-      auto channel = AliceO2::Rorc::ChannelFactory().getSlave(serialNumber, channelNumber);
+      auto channel = AliceO2::Rorc::ChannelUtilityFactory().getUtility(serialNumber, channelNumber);
 
-      if (channel->getCardType() != AliceO2::Rorc::CardType::CRU) {
-        ALICEO2_RORC_THROW_EXCEPTION("Card is not a CRU");
-      }
-
-      const int LED_REGISTER_ADDRESS = 0x260;
       const auto cycle = std::chrono::milliseconds(250);
-      bool turnOn = true;
+      bool nextLedState = true;
 
       for (int i = 0; i < 1000; ++i) {
-        const int index = LED_REGISTER_ADDRESS / 4;
-        const int valueOn = 0xff;
-        const int valueOff = 0x00;
-
         if (isSigInt()) {
           std::cout << "\nInterrupted - Turning LED off" << std::endl;
-          channel->writeRegister(index, valueOff);
+          channel->utilitySetLedState(false);
           break;
         }
-
-        channel->writeRegister(index, turnOn ? valueOn : valueOff);
-        cout << (turnOn ? "ON  " : "OFF ") << Common::makeRegisterString(index*4, channel->readRegister(index));
+        channel->utilitySetLedState(nextLedState);
+        cout << (nextLedState ? "ON" : "OFF") << endl;
         std::this_thread::sleep_for(cycle);
-        turnOn = !turnOn;
+        nextLedState = !nextLedState;
       }
     }
 };

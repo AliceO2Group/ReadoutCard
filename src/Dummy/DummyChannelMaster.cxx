@@ -86,5 +86,26 @@ CardType::type DummyChannelMaster::getCardType()
   return CardType::DUMMY;
 }
 
+std::vector<uint32_t> DummyChannelMaster::utilityCopyFifo()
+{
+  return std::vector<uint32_t>();
+}
+
+void DummyChannelMaster::utilityPrintFifo(std::ostream&)
+{
+  cout << "DummyChannelMaster::utilityPrintFifo()" << endl;
+}
+
+void DummyChannelMaster::utilitySetLedState(bool state)
+{
+  cout << "DummyChannelMaster::utilitySetLedState(" << (state ? "ON" : "OFF") << ")" << endl;
+}
+
+void DummyChannelMaster::utilitySanityCheck(std::ostream&)
+{
+  cout << "DummyChannelMaster::utilitySanityCheck()" << endl;
+}
+
+
 } // namespace Rorc
 } // namespace AliceO2

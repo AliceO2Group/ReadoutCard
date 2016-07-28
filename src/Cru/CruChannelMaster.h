@@ -31,6 +31,8 @@ class CruChannelMaster : public ChannelMaster
 
     virtual std::vector<uint32_t> utilityCopyFifo() override;
     virtual void utilityPrintFifo(std::ostream& os) override;
+    virtual void utilitySetLedState(bool state) override;
+    virtual void utilitySanityCheck(std::ostream& os) override;
 
   protected:
 

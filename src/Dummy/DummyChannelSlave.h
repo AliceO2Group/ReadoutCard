@@ -21,10 +21,10 @@ class DummyChannelSlave : public ChannelSlaveInterface
   public:
 
     DummyChannelSlave(int serial, int channel);
-    ~DummyChannelSlave();
-    virtual uint32_t readRegister(int index);
-    virtual void writeRegister(int index, uint32_t value);
-    virtual CardType::type getCardType();
+    virtual ~DummyChannelSlave();
+    virtual uint32_t readRegister(int index) override;
+    virtual void writeRegister(int index, uint32_t value) override;
+    virtual CardType::type getCardType() override;
 };
 
 } // namespace Rorc

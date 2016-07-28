@@ -13,6 +13,7 @@
 #include <ostream>
 #include "ReadyFifo.h"
 #include "CruFifoTable.h"
+#include "RORC/RegisterReadWriteInterface.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -20,6 +21,9 @@ namespace ChannelUtility {
 
 void printCrorcFifo(ReadyFifo* fifo, std::ostream& os);
 void printCruFifo(CruFifoTable* fifo, std::ostream& os);
+
+void crorcSanityCheck(std::ostream& os, RegisterReadWriteInterface* channel);
+void cruSanityCheck(std::ostream& os, RegisterReadWriteInterface* channel);
 
 } // namespace ChannelUtility
 } // namespace Rorc

@@ -10,6 +10,7 @@
 namespace AliceO2 {
 namespace Rorc {
 
+/// A simple interface for reading and writing 32-bit registers.
 class RegisterReadWriteInterface
 {
   public:

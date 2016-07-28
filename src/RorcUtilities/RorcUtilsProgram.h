@@ -37,7 +37,7 @@ class RorcUtilsProgram
     virtual void addOptions(boost::program_options::options_description& optionsDescription) = 0;
 
     /// The main function of the program
-    virtual void mainFunction(boost::program_options::variables_map& variablesMap) = 0;
+    virtual void mainFunction(const boost::program_options::variables_map& variablesMap) = 0;
 
     /// Has the SIGINT signal been given? (usually Ctrl-C)
     bool isSigInt();

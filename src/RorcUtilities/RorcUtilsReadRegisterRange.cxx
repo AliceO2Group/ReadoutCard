@@ -33,7 +33,7 @@ class ProgramReadRegisterRange: public RorcUtilsProgram
       Options::addOptionRegisterRange(options);
     }
 
-    virtual void mainFunction(boost::program_options::variables_map& map)
+    virtual void mainFunction(const boost::program_options::variables_map& map)
     {
       int serialNumber = Options::getOptionSerialNumber(map);
       int baseAddress = Options::getOptionRegisterAddress(map);

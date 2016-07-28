@@ -16,7 +16,8 @@ set(RORC_LIB_HEADERS
 
 set(RORC_LIB_SOURCES
   CardType.cxx
-  ChannelFactory.cxx
+  Factory/ChannelFactory.cxx
+  Factory/ChannelUtilityFactory.cxx
   ChannelParameters.cxx
   ChannelPaths.cxx
   Dummy/DummyChannelMaster.cxx

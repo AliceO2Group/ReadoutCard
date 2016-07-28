@@ -282,5 +282,15 @@ void CruChannelMaster::utilityPrintFifo(std::ostream& os)
   ChannelUtility::printCruFifo(mappedFileFifo->get(), os);
 }
 
+void CruChannelMaster::utilitySetLedState(bool state)
+{
+  barUserspace[BarIndex::LED_ON] = state ? 0xffff : 0x0000;
+}
+
+void CruChannelMaster::utilitySanityCheck(std::ostream& os)
+{
+  ChannelUtility::cruSanityCheck(os, this);
+}
+
 } // namespace Rorc
 } // namespace AliceO2

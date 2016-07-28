@@ -35,7 +35,7 @@ class ProgramListCards: public RorcUtilsProgram
     {
     }
 
-    virtual void mainFunction(boost::program_options::variables_map&)
+    virtual void mainFunction(const boost::program_options::variables_map&)
     {
       auto cardsFound = AliceO2::Rorc::RorcDevice::enumerateDevices();
 

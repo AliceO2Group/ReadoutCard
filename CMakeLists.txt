@@ -74,7 +74,8 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/src/Crorc
     ${PROJECT_SOURCE_DIR}/src/Cru
     ${PROJECT_SOURCE_DIR}/src/Dummy
-    ${PROJECT_SOURCE_DIR}/src/Pda
+    ${PROJECT_SOURCE_DIR}/src/Pda    
+    ${PROJECT_SOURCE_DIR}/src/Factory
     ${PROJECT_SOURCE_DIR}/src/RorcUtilities
 )
 

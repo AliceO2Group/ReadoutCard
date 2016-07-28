@@ -6,6 +6,7 @@
 #pragma once
 
 #include "RORC/ChannelMasterInterface.h"
+#include "ChannelUtilityInterface.h"
 #include <array>
 
 namespace AliceO2 {
@@ -17,22 +18,27 @@ namespace Rorc {
 /// In the future, a dummy implementation could be a simulated card.
 /// Currently, most methods of this implementation do nothing besides print which method was called.
 /// The getPage() function simulates incremental data generator output
-class DummyChannelMaster : public ChannelMasterInterface
+class DummyChannelMaster : public ChannelMasterInterface, public ChannelUtilityInterface
 {
   public:
 
     DummyChannelMaster(int serial, int channel, const ChannelParameters& params);
-    ~DummyChannelMaster();
-    virtual void startDma();
-    virtual void stopDma();
-    virtual void resetCard(ResetLevel::type resetLevel);
-    virtual uint32_t readRegister(int index);
-    virtual void writeRegister(int index, uint32_t value);
-    virtual PageHandle pushNextPage();
-    virtual bool isPageArrived(const PageHandle& handle);
-    virtual Page getPage(const PageHandle& handle);
-    virtual void markPageAsRead(const PageHandle& handle);
-    virtual CardType::type getCardType();
+    virtual ~DummyChannelMaster();
+    virtual void startDma() override;
+    virtual void stopDma() override;
+    virtual void resetCard(ResetLevel::type resetLevel) override;
+    virtual uint32_t readRegister(int index) override;
+    virtual void writeRegister(int index, uint32_t value) override;
+    virtual PageHandle pushNextPage() override;
+    virtual bool isPageArrived(const PageHandle& handle) override;
+    virtual Page getPage(const PageHandle& handle) override;
+    virtual void markPageAsRead(const PageHandle& handle) override;
+    virtual CardType::type getCardType() override;
+
+    virtual std::vector<uint32_t> utilityCopyFifo() override;
+    virtual void utilityPrintFifo(std::ostream& os) override;
+    virtual void utilitySetLedState(bool state) override;
+    virtual void utilitySanityCheck(std::ostream& os) override;
 
   private:
 
