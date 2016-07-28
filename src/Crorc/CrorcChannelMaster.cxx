@@ -59,6 +59,12 @@ void CrorcChannelMaster::constructorCommon()
 {
   using Util::resetSmartPtr;
 
+  Util::makeParentDirectories(ChannelPaths::pages(serialNumber, channelNumber));
+  Util::makeParentDirectories(ChannelPaths::state(serialNumber, channelNumber));
+  Util::makeParentDirectories(ChannelPaths::fifo(serialNumber, channelNumber));
+  Util::makeParentDirectories(ChannelPaths::lock(serialNumber, channelNumber));
+  Util::touchFile(ChannelPaths::lock(serialNumber, channelNumber));
+
   resetSmartPtr(mappedFileFifo, ChannelPaths::fifo(serialNumber, channelNumber).c_str());
 
   resetSmartPtr(bufferReadyFifo, rorcDevice->getPciDevice(), mappedFileFifo->getAddress(), mappedFileFifo->getSize(),

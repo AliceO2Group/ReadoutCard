@@ -5,11 +5,16 @@
 
 #include "Util.h"
 #include <signal.h>
-#include <string.h>
+#include <cstring>
+#include <fstream>
+#include <boost/format.hpp>
 
 namespace AliceO2 {
 namespace Rorc {
 namespace Util {
+
+namespace b = boost;
+namespace bfs = boost::filesystem;
 
 void setSigIntHandler(void(*function)(int))
 {
@@ -25,6 +30,19 @@ bool isSigIntHandlerSet()
   struct sigaction sa;
   sigaction(SIGINT, NULL, &sa);
   return sa.sa_flags != 0;
+}
+
+void makeParentDirectories(const bfs::path& path)
+{
+  /// TODO Implement using boost::filesystem
+  auto parent = path.parent_path();
+  system(b::str(b::format("mkdir -p %s") % parent).c_str());
+}
+
+/// Similar to the "touch" Linux command
+void touchFile(const bfs::path& path)
+{
+  std::ofstream ofs(path.c_str(), std::ios::app);
 }
 
 } // namespace Util

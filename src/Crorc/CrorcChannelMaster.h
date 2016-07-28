@@ -7,6 +7,7 @@
 
 #include <memory>
 #include "ChannelMaster.h"
+#include "ReadyFifo.h"
 
 namespace AliceO2 {
 namespace Rorc {

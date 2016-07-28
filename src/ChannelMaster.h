@@ -13,10 +13,9 @@
 #include "FileSharedObject.h"
 #include "MemoryMappedFile.h"
 #include "TypedMemoryMappedFile.h"
-#include "ReadyFifo.h"
 #include "RorcDevice.h"
-#include "PdaBar.h"
-#include "PdaDmaBuffer.h"
+#include "Pda/PdaBar.h"
+#include "Pda/PdaDmaBuffer.h"
 #include "RORC/ChannelMasterInterface.h"
 #include "ChannelUtilityInterface.h"
 

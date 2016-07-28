@@ -10,6 +10,8 @@
 #include <map>
 #include <stdexcept>
 #include <boost/throw_exception.hpp>
+#include <boost/filesystem/path.hpp>
+#include <string>
 
 namespace AliceO2 {
 namespace Rorc {
@@ -48,6 +50,13 @@ void setSigIntHandler(void(*function)(int));
 
 /// Checks if there's a SIGINT handler installed (not sure if it actually works correctly)
 bool isSigIntHandlerSet();
+
+/// Like the "mkdir -p" command.
+/// TODO Currently it actually calls that command.. not very portable, should refactor
+void makeParentDirectories(const boost::filesystem::path& path);
+
+/// Similar to the "touch" Linux command
+void touchFile(const boost::filesystem::path& path);
 
 } // namespace Util
 } // namespace Rorc

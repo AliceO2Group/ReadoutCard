@@ -4,7 +4,7 @@
 ///
 
 #include <RORC/RORC.h>
-#include "../src/RorcUtilsOptions.h"
+#include "RorcUtilsOptions.h"
 
 #define BOOST_TEST_MODULE RORC_Test
 #define BOOST_TEST_MAIN

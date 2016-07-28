@@ -19,12 +19,12 @@ set(RORC_LIB_SOURCES
   ChannelFactory.cxx
   ChannelParameters.cxx
   ChannelPaths.cxx
-  DummyChannelMaster.cxx
-  DummyChannelSlave.cxx
+  Dummy/DummyChannelMaster.cxx
+  Dummy/DummyChannelSlave.cxx
   MemoryMappedFile.cxx
   RorcException.cxx
   RorcStatusCode.cxx
-  RorcUtilsProgram.cxx
+  RorcUtilities/RorcUtilsProgram.cxx
   Util.cxx
 )
 
@@ -36,17 +36,17 @@ if(PDA_FOUND)
     ChannelMaster.cxx
     ChannelSlave.cxx
     ChannelUtilityImpl.cxx
-    Crorc.cxx
-    CrorcChannelMaster.cxx
-    CrorcChannelSlave.cxx
-    CruChannelMaster.cxx
-    CruChannelSlave.cxx
-    PdaBar.cxx
-    PdaDevice.cxx
-    PdaDmaBuffer.cxx
+    Crorc/Crorc.cxx
+    Crorc/CrorcChannelMaster.cxx
+    Crorc/CrorcChannelSlave.cxx
+    Cru/CruChannelMaster.cxx
+    Cru/CruChannelSlave.cxx
+    Pda/PdaBar.cxx
+    Pda/PdaDevice.cxx
+    Pda/PdaDmaBuffer.cxx
     RorcDevice.cxx
-    RorcUtilsCommon.cxx
-    RorcUtilsOptions.cxx
+    RorcUtilities/RorcUtilsCommon.cxx
+    RorcUtilities/RorcUtilsOptions.cxx
   )
 endif()
 
@@ -86,14 +86,14 @@ function(build_util_exec execname filename)
 endfunction()
 
 build_util_exec(rorc-example Example.cxx)
-build_util_exec(rorc-reg-read RorcUtilsReadRegister.cxx)
-build_util_exec(rorc-reg-read-range RorcUtilsReadRegisterRange)
-build_util_exec(rorc-reg-write RorcUtilsWriteRegister.cxx)
-build_util_exec(rorc-dma-bench RorcUtilsDmaBench.cxx)
-build_util_exec(rorc-list-cards RorcUtilsListCards.cxx)
-build_util_exec(rorc-print-fifo RorcUtilsPrintFifo.cxx)
-build_util_exec(rorc-cru-blink RorcUtilsCruBlink.cxx)
-build_util_exec(rorc-sanity-check RorcUtilsSanityCheck.cxx)
+build_util_exec(rorc-reg-read RorcUtilities/RorcUtilsReadRegister.cxx)
+build_util_exec(rorc-reg-read-range RorcUtilities/RorcUtilsReadRegisterRange)
+build_util_exec(rorc-reg-write RorcUtilities/RorcUtilsWriteRegister.cxx)
+build_util_exec(rorc-dma-bench RorcUtilities/RorcUtilsDmaBench.cxx)
+build_util_exec(rorc-list-cards RorcUtilities/RorcUtilsListCards.cxx)
+build_util_exec(rorc-print-fifo RorcUtilities/RorcUtilsPrintFifo.cxx)
+build_util_exec(rorc-cru-blink RorcUtilities/RorcUtilsCruBlink.cxx)
+build_util_exec(rorc-sanity-check RorcUtilities/RorcUtilsSanityCheck.cxx)
 
 
 # -------
