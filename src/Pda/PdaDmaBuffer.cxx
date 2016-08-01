@@ -14,15 +14,43 @@ namespace Rorc {
 PdaDmaBuffer::PdaDmaBuffer(PciDevice* pciDevice, void* userBufferAddress, size_t userBufferSize, int dmaBufferId)
     : pciDevice(pciDevice)
 {
-  // Tell PDA we're using our already allocated userspace buffer.
-  if (PciDevice_registerDMABuffer(pciDevice, dmaBufferId, userBufferAddress, userBufferSize, &dmaBuffer)
-      != PDA_SUCCESS) {
-    ALICEO2_RORC_THROW_EXCEPTION("Failed to register external DMA buffer");
+  try {
+    // Tell PDA we're using our already allocated userspace buffer.
+    if (PciDevice_registerDMABuffer(pciDevice, dmaBufferId, userBufferAddress, userBufferSize, &dmaBuffer)
+        != PDA_SUCCESS) {
+      // Failed to register it. Usually, this means a DMA buffer wasn't cleaned up properly (such as after a crash).
+      // So, try to clean things up.
+
+      // Get the previous buffer
+      DMABuffer* tempDmaBuffer;
+      if (PciDevice_getDMABuffer(pciDevice, dmaBufferId, &tempDmaBuffer) != PDA_SUCCESS) {
+        // Give up
+        BOOST_THROW_EXCEPTION(RorcPdaException() << errinfo_rorc_generic_message(
+            "Failed to register external DMA buffer; Failed to get previous buffer for cleanup"));
+      }
+
+      // Free it
+      if (PciDevice_deleteDMABuffer(pciDevice, tempDmaBuffer) != PDA_SUCCESS) {
+        // Give up
+        BOOST_THROW_EXCEPTION(RorcPdaException() << errinfo_rorc_generic_message(
+            "Failed to register external DMA buffer; Failed to delete previous buffer for cleanup"));
+      }
+
+      // Retry the registration of our new buffer
+      if(PciDevice_registerDMABuffer(pciDevice, dmaBufferId, userBufferAddress, userBufferSize, &dmaBuffer) != PDA_SUCCESS) {
+        // Give up
+        BOOST_THROW_EXCEPTION(RorcPdaException() << errinfo_rorc_generic_message(
+            "Failed to register external DMA buffer; Failed retry after automatic cleanup of previous buffer"));
+      }
+    }
+  } catch (RorcPdaException& e) {
+    addPossibleCauses(e, {"Program previously exited without cleaning up DMA buffer, reinserting DMA kernel module may "
+        " help, but insure no channels are open before reinsertion (modprobe -r uio_pci_dma; modprobe uio_pci_dma"});
   }
 
   DMABuffer_SGNode* sgList;
   if (DMABuffer_getSGList(dmaBuffer, &sgList) != PDA_SUCCESS) {
-    ALICEO2_RORC_THROW_EXCEPTION("Failed to get scatter-gather list");
+    BOOST_THROW_EXCEPTION(RorcPdaException() << errinfo_rorc_generic_message("Failed to get scatter-gather list"));
   }
 
   auto node = sgList;
@@ -38,7 +66,8 @@ PdaDmaBuffer::PdaDmaBuffer(PciDevice* pciDevice, void* userBufferAddress, size_t
   }
 
   if (sgVector.empty()) {
-    ALICEO2_RORC_THROW_EXCEPTION("Failed to initialize scatter-gather list, was empty");
+    BOOST_THROW_EXCEPTION(RorcPdaException() << errinfo_rorc_generic_message(
+        "Failed to initialize scatter-gather list, was empty"));
   }
 }
 
