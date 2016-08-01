@@ -322,7 +322,7 @@ CrorcChannelMaster::DataArrivalStatus::type CrorcChannelMaster::dataArrived(int 
       // The error bit is set
       BOOST_THROW_EXCEPTION(CrorcDataArrivalException()
           << errinfo_rorc_generic_message("Data arrival status word contains error bits")
-          << errinfo_rorc_readyfifo_status(b::str(b::format("0x%x") % status))
+          << errinfo_rorc_readyfifo_status(status)
           << errinfo_rorc_readyfifo_length(length)
           << errinfo_rorc_fifo_index(index));
     }
@@ -330,7 +330,7 @@ CrorcChannelMaster::DataArrivalStatus::type CrorcChannelMaster::dataArrived(int 
   } else {
     BOOST_THROW_EXCEPTION(CrorcDataArrivalException()
         << errinfo_rorc_generic_message("Unrecognized data arrival status word")
-        << errinfo_rorc_readyfifo_status(b::str(b::format("0x%x") % status))
+        << errinfo_rorc_readyfifo_status(status)
         << errinfo_rorc_readyfifo_length(length)
         << errinfo_rorc_fifo_index(index));
   }
@@ -511,6 +511,11 @@ void CrorcChannelMaster::utilitySetLedState(bool)
 void CrorcChannelMaster::utilitySanityCheck(std::ostream& os)
 {
   ChannelUtility::crorcSanityCheck(os, this);
+}
+
+void CrorcChannelMaster::utilityCleanupState()
+{
+  ChannelUtility::crorcCleanupState(serialNumber, channelNumber);
 }
 
 } // namespace Rorc

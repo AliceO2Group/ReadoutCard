@@ -292,5 +292,10 @@ void CruChannelMaster::utilitySanityCheck(std::ostream& os)
   ChannelUtility::cruSanityCheck(os, this);
 }
 
+void CruChannelMaster::utilityCleanupState()
+{
+  BOOST_THROW_EXCEPTION(RorcException() << errinfo_rorc_generic_message("Not implemented"));
+}
+
 } // namespace Rorc
 } // namespace AliceO2

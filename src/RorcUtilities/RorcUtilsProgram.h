@@ -7,6 +7,8 @@
 
 #include <boost/program_options.hpp>
 #include "RorcUtilsDescription.h"
+#include "RorcUtilsCommon.h"
+#include "RorcException.h"
 
 namespace AliceO2 {
 namespace Rorc {

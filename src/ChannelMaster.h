@@ -107,16 +107,10 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
       public:
         SharedData();
 
-        ///
         void initialize(const ChannelParameters& params);
         const ChannelParameters& getParams();
         InitializationState::type getState();
 
-        //int fifoIndexWrite; /// Index of next page available for writing
-        //int fifoIndexRead; /// Index of oldest non-free page
-        //int pageIndex; /// Index to the next free page of the DMA buffer
-        //long long int loopPerUsec; // Some timing parameter used during communications with the card
-        //double pciLoopPerUsec; // Some timing parameters used during communications with the card
         DmaState::type dmaState;
         InitializationState::type initializationState;
 

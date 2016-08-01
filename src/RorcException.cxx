@@ -74,9 +74,34 @@ std::string to_string(const errinfo_rorc_possible_causes& e)
   }
 }
 
+std::string to_string(const errinfo_rorc_readyfifo_status& e)
+{
+  return b::str(b::format("0x%x") % e.value());
+}
+
 std::string to_string(const errinfo_rorc_pci_id& e)
 {
   return b::str(b::format("[PCI ID (device, vendor)] = 0x%s 0x%s\n") % e.value().getDeviceId() % e.value().getVendorId());
+}
+
+std::string to_string(const errinfo_rorc_pci_ids& e)
+{
+  if (e.value().size() == 0) {
+    return "";
+  }
+  else if (e.value().size() == 1) {
+    auto pciId = e.value()[0];
+    return b::str(b::format("[PCI IDs (device, vendor)] = 0x%s 0x%s\n") % pciId.getDeviceId() % pciId.getVendorId());
+  }
+  else {
+    std::ostringstream oss;
+    oss << "[PCI IDs (device, vendor)]:\n";
+    for (size_t i = 0; i < e.value().size(); ++i) {
+      auto pciId = e.value()[i];
+      oss << b::str(b::format("  %d. 0x%s 0x%s\n") % i % pciId.getDeviceId() % pciId.getVendorId());
+    }
+    return oss.str();
+  }
 }
 
 std::string to_string(const errinfo_rorc_loopback_mode& e)

@@ -106,6 +106,9 @@ void DummyChannelMaster::utilitySanityCheck(std::ostream&)
   cout << "DummyChannelMaster::utilitySanityCheck()" << endl;
 }
 
+void DummyChannelMaster::utilityCleanupState()
+{
+}
 
 } // namespace Rorc
 } // namespace AliceO2

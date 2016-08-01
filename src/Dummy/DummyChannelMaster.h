@@ -39,6 +39,7 @@ class DummyChannelMaster : public ChannelMasterInterface, public ChannelUtilityI
     virtual void utilityPrintFifo(std::ostream& os) override;
     virtual void utilitySetLedState(bool state) override;
     virtual void utilitySanityCheck(std::ostream& os) override;
+    virtual void utilityCleanupState() override;
 
   private:
 

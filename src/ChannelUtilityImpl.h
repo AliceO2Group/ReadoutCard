@@ -25,6 +25,8 @@ void printCruFifo(CruFifoTable* fifo, std::ostream& os);
 void crorcSanityCheck(std::ostream& os, RegisterReadWriteInterface* channel);
 void cruSanityCheck(std::ostream& os, RegisterReadWriteInterface* channel);
 
+void crorcCleanupState(int serial, int channel);
+
 } // namespace ChannelUtility
 } // namespace Rorc
 } // namespace AliceO2

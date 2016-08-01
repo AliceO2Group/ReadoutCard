@@ -93,7 +93,12 @@ class ProgramDmaBench: public RorcUtilsProgram
           //std::this_thread::sleep_for(std::chrono::microseconds(1)); // XXX See README.md
 
           // Abort if time is exceeded
-          if (isMaxTimeExceeded() || isSigInt()) { break; }
+          if (isMaxTimeExceeded()) {
+            cout << "Reached max time!" << endl;
+            break;
+          }
+
+          if (isSigInt()) { break; }
 
           // Get page
           auto page = channel->getPage(handle);
@@ -113,10 +118,15 @@ class ProgramDmaBench: public RorcUtilsProgram
 
           // Wait for page
           while (!channel->isPageArrived(handle) && !isMaxTimeExceeded() && !isSigInt()) { ; }
-          std::this_thread::sleep_for(std::chrono::microseconds(1)); // XXX See README.md
+          //std::this_thread::sleep_for(std::chrono::microseconds(1)); // XXX See README.md
 
           // Abort if time is exceeded
-          if (isMaxTimeExceeded() || isSigInt()) { break; }
+          if (isMaxTimeExceeded()) {
+            cout << "Reached max time!" << endl;
+            break;
+          }
+
+          if (isSigInt()) { break; }
 
           // Get page
           auto page = channel->getPage(handle);
@@ -132,19 +142,24 @@ class ProgramDmaBench: public RorcUtilsProgram
       channel->stopDma();
 
       cout << "### Benchmark complete" << endl;
+      cout << "Pushed " << eventNumbers.size() << " pages" << endl;
 
       // Check if 'event numbers' are correct
       int nonConsecutives = 0;
       int unexpecteds = 0;
-      for (size_t i = 0; i < (eventNumbers.size() - 1); ++i) {
+      for (size_t i = 0; (i + 1) < eventNumbers.size(); ++i) {
         if (eventNumbers[i].actual != (eventNumbers[i + 1].actual - 1)) {
           nonConsecutives++;
-          cout << "NC: " << i << "   " << eventNumbers[i].actual << " != (" << eventNumbers[i + 1].actual << " - 1)\n";
+          if (isVerbose()) {
+            cout << "NC: " << i << "   " << eventNumbers[i].actual << " != (" << eventNumbers[i + 1].actual << " - 1)\n";
+          }
         }
 
         if (eventNumbers[i].actual != eventNumbers[i].expected) {
           unexpecteds++;
-          cout << "UE: " << i << "   " << eventNumbers[i].actual << " != " << eventNumbers[i].expected << "\n";
+          if (isVerbose()) {
+            cout << "UE: " << i << "   " << eventNumbers[i].actual << " != " << eventNumbers[i].expected << "\n";
+          }
         }
       }
       if (nonConsecutives > 0) {

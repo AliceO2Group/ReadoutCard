@@ -7,6 +7,8 @@
 #include <iostream>
 #include <functional>
 #include <boost/format.hpp>
+#include <boost/filesystem/operations.hpp>
+#include "ChannelPaths.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -170,6 +172,17 @@ void cruSanityCheck(std::ostream& os, RegisterReadWriteInterface* channel)
       registerCheck(os, expectedValue, addressPush, readValue, addressPop);
     }
   }
+}
+
+void crorcCleanupState(int serial, int channel)
+{
+  /// XXX I wonder what happens when you delete a memory mapped file that's still in use...
+  using boost::filesystem::remove;
+  remove(ChannelPaths::pages(serial, channel).c_str());
+  remove(ChannelPaths::state(serial, channel).c_str());
+  remove(ChannelPaths::fifo(serial, channel).c_str());
+  remove(ChannelPaths::lock(serial, channel).c_str());
+  remove(ChannelPaths::lock(serial, channel).c_str());
 }
 
 } // namespace ChannelUtility

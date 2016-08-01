@@ -19,8 +19,15 @@ using std::cout;
 using std::endl;
 namespace po = boost::program_options;
 
-/// Flag for SIGINT signal
-std::atomic<bool> flagSigInt(false);
+namespace {
+  /// Flag for SIGINT signal
+  std::atomic<bool> flagSigInt(false);
+
+  void gotSigInt(int)
+  {
+    flagSigInt = true;
+  }
+}
 
 RorcUtilsProgram::RorcUtilsProgram()
     : verbose(false)
@@ -33,21 +40,23 @@ RorcUtilsProgram::~RorcUtilsProgram()
 
 int RorcUtilsProgram::execute(int argc, char** argv)
 {
-  AliceO2::Rorc::Util::setSigIntHandler([](int){ flagSigInt = true; });
+  Util::setSigIntHandler(gotSigInt);
 
   auto optionsDescription = Options::createOptionsDescription();
+  auto printHelp = [&](){ Options::printHelp(getDescription(), optionsDescription); };
+
+  // We add a verbose switch
+  optionsDescription.add_options()("verbose,v", "Verbose output (usually only affects error output)");
+
+  // Subclass will add own options
+  addOptions(optionsDescription);
+
   try {
-    // We add a verbose switch
-    optionsDescription.add_options()("verbose,v", "Verbose output");
-
-    // Subclass will add own options
-    addOptions(optionsDescription);
-
     // Parse options and get the resulting map of variables
     auto variablesMap = Options::getVariablesMap(argc, argv, optionsDescription);
 
     if (variablesMap.count("help")) {
-      AliceO2::Rorc::Util::Options::printHelp(getDescription(), optionsDescription);
+      printHelp();
       return 0;
     }
 
@@ -58,24 +67,18 @@ int RorcUtilsProgram::execute(int argc, char** argv)
     // Start the actual program
     mainFunction(variablesMap);
   }
-  catch (boost::exception& boostException) {
-    std::exception const* stdException = boost::current_exception_cast<std::exception const>();
-    auto info = boost::get_error_info<AliceO2::Rorc::errinfo_rorc_generic_message>(boostException);
-
-    if (info) {
-      std::cout << "Error: " << *info << "\n\n";
-    } else if (stdException) {
-      std::cout << "Error: " << stdException->what() << "\n\n";
-    } else {
-      std::cout << "Error\n\n";
-    }
-
-    std::cout << '\n' << boost::diagnostic_information(boostException, verbose) << "\n";
-
-    AliceO2::Rorc::Util::Options::printHelp(getDescription(), optionsDescription);
+  catch (ProgramOptionException& e) {
+    auto message = boost::get_error_info<AliceO2::Rorc::errinfo_rorc_generic_message>(e);
+    std::cout << "Program options invalid: " << *message << "\n\n";
+    printHelp();
   }
-  catch (std::exception& exception) {
-    std::cout << "Error: " << exception.what() << "\n\n";
+  catch (boost::exception& e) {
+    std::cout << "Error:\n" << boost::diagnostic_information(e, verbose) << "\n";
+    printHelp();
+  }
+  catch (std::exception& e) {
+    std::cout << "Error:\n" << e.what() << "\n\n";
+    printHelp();
   }
 
   return 0;

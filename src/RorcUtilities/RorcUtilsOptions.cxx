@@ -53,14 +53,14 @@ inline std::string getLongSwitch(const std::string& swtch)
 
 namespace option {
 // General options
-static Option<int> channel("channel,c", "Channel", true, 0);
+static Option<int> channel("channel,c", "Channel");
 static Option<std::string> registerAddress("address,a", "Register address in hex format");
 static Option<int> registerRange("regrange,r", "Amount of registers to print past given address");
 static Option<int> serialNumber("serial,s", "Serial number");
 static Option<std::string> registerValue("value,v", "Register value, either in decimal or hex (prefix with 0x)");
 
 // Options for ChannelParameters
-static Option<size_t> cpDmaPageSize("cp-dma-pagesize", "RORC page size in bytes", true, 4l * 1024l);
+static Option<size_t> cpDmaPageSize("cp-dma-pagesize", "RORC page size in kibibytes", true, 4l);
 static Option<size_t> cpDmaBufSize("cp-dma-bufmb", "DMA buffer size in mebibytes", true, 4);
 static Option<bool> cpGenEnable("cp-gen-enable", "Enable data generator", true, true);
 static Option<std::string> cpGenLoopback("cp-gen-loopb",
@@ -130,13 +130,13 @@ po::variables_map getVariablesMap(int argc, char** argv, const po::options_descr
 
 void printHelp (const UtilsDescription& util, const po::options_description& optionsDescription)
 {
-  cout << "Rorc Utils - " << util.name << "\n"
-  << "  " << util.description << "\n"
-  << "\n"
+  cout << "#### RORC Utility: " << util.name << "\n"
+  << util.description << '\n'
+  << '\n'
   << optionsDescription
-  << "\n"
+  << '\n'
   << "Example:\n"
-  << "  " << util.usage << endl;
+  << "  " << util.usage << '\n';
 }
 
 void printErrorAndHelp(const std::string& errorMessage, const UtilsDescription& utilsDescription,
@@ -267,11 +267,18 @@ void addOptionsChannelParameters(po::options_description& optionsDescription)
 ChannelParameters getOptionsChannelParameters(const boost::program_options::variables_map& variablesMap)
 {
   ChannelParameters cp;
-  getOptionOptional(option::cpDmaPageSize, variablesMap, cp.dma.pageSize);
 
-  size_t bufSizeMiB;
-  getOptionOptional(option::cpDmaBufSize, variablesMap, bufSizeMiB);
-  cp.dma.bufferSize = bufSizeMiB * 1024l * 1024l;
+  {
+    size_t pageSizeMiB;
+    getOptionOptional(option::cpDmaPageSize, variablesMap, pageSizeMiB);
+    cp.dma.pageSize = pageSizeMiB * 1024l;
+  }
+
+  {
+    size_t bufSizeMiB;
+    getOptionOptional(option::cpDmaBufSize, variablesMap, bufSizeMiB);
+    cp.dma.bufferSize = bufSizeMiB * 1024l * 1024l;
+  }
 
   getOptionOptional(option::cpGenEnable, variablesMap, cp.generator.useDataGenerator);
 
@@ -282,7 +289,8 @@ ChannelParameters getOptionsChannelParameters(const boost::program_options::vari
       auto loopback = LoopbackMode::fromString(loopbackString);
       cp.generator.loopbackMode = loopback;
     } catch (std::out_of_range& e) {
-      throw std::runtime_error("Invalid value for option '" + option::cpGenLoopback.swtch + "'");
+      BOOST_THROW_EXCEPTION(InvalidOptionValueException()
+          << errinfo_rorc_generic_message("Invalid value for option '" + option::cpGenLoopback.swtch + "'"));
     }
   }
   return cp;

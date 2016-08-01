@@ -8,7 +8,6 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
-#include "RORC/CardType.h"
 #include "ChannelUtilityFactory.h"
 #include "RorcUtilsOptions.h"
 #include "RorcUtilsCommon.h"

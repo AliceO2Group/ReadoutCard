@@ -27,9 +27,9 @@ class ChannelUtilityInterface
 
     virtual std::vector<uint32_t> utilityCopyFifo() = 0;
     virtual void utilityPrintFifo(std::ostream& os) = 0;
-
     virtual void utilitySetLedState(bool state) = 0;
     virtual void utilitySanityCheck(std::ostream& os) = 0;
+    virtual void utilityCleanupState() = 0;
 };
 
 } // namespace Rorc

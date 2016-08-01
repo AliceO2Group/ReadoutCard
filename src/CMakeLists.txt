@@ -95,6 +95,7 @@ build_util_exec(rorc-list-cards RorcUtilities/RorcUtilsListCards.cxx)
 build_util_exec(rorc-print-fifo RorcUtilities/RorcUtilsPrintFifo.cxx)
 build_util_exec(rorc-cru-blink RorcUtilities/RorcUtilsCruBlink.cxx)
 build_util_exec(rorc-sanity-check RorcUtilities/RorcUtilsSanityCheck.cxx)
+build_util_exec(rorc-cleanup RorcUtilities/RorcUtilsCleanup.cxx)
 
 
 # -------

@@ -53,9 +53,21 @@ void ChannelMaster::validateParameters(const ChannelParameters& ps)
 
 void ChannelMaster::constructorCommonPhaseOne()
 {
-  Util::resetSmartPtr(sharedData, ChannelPaths::lock(serialNumber, channelNumber),
-      ChannelPaths::state(serialNumber, channelNumber), sharedDataSize(), sharedDataName(),
-      FileSharedObject::find_or_construct);
+  using namespace Util;
+
+  makeParentDirectories(ChannelPaths::pages(serialNumber, channelNumber));
+  makeParentDirectories(ChannelPaths::state(serialNumber, channelNumber));
+  makeParentDirectories(ChannelPaths::fifo(serialNumber, channelNumber));
+  makeParentDirectories(ChannelPaths::lock(serialNumber, channelNumber));
+  touchFile(ChannelPaths::lock(serialNumber, channelNumber));
+
+  try {
+    resetSmartPtr(sharedData, ChannelPaths::lock(serialNumber, channelNumber),
+        ChannelPaths::state(serialNumber, channelNumber), sharedDataSize(), sharedDataName(),
+        FileSharedObject::find_or_construct);
+  } catch (std::exception& e) {
+    BOOST_THROW_EXCEPTION(e);
+  }
 }
 
 void ChannelMaster::constructorCommonPhaseTwo()
@@ -67,7 +79,8 @@ void ChannelMaster::constructorCommonPhaseTwo()
   resetSmartPtr(pdaBar, rorcDevice->getPciDevice(), channelNumber);
   barUserspace = pdaBar->getUserspaceAddressU32();
 
-  resetSmartPtr(mappedFilePages, ChannelPaths::pages(serialNumber, channelNumber).c_str(), sharedData->get()->getParams().dma.bufferSize);
+  resetSmartPtr(mappedFilePages, ChannelPaths::pages(serialNumber, channelNumber).c_str(),
+      sharedData->get()->getParams().dma.bufferSize);
 
   resetSmartPtr(bufferPages, rorcDevice->getPciDevice(), mappedFilePages->getAddress(), mappedFilePages->getSize(),
       getBufferId(BUFFER_INDEX_PAGES));
@@ -88,8 +101,13 @@ ChannelMaster::ChannelMaster(int serial, int channel, int additionalBuffers)
   }
   else {
     BOOST_THROW_EXCEPTION(CrorcException()
-        << errinfo_rorc_generic_message("Unknown or invalid shared data state")
-        << errinfo_rorc_shared_state_file(ChannelPaths::lock(serialNumber, channelNumber).string()));
+        << errinfo_rorc_generic_message(sd->initializationState == InitializationState::UNINITIALIZED ?
+            "Uninitialized shared data state" : "Unknown shared data state")
+        << errinfo_rorc_shared_state_file(ChannelPaths::state(serialNumber, channelNumber).string())
+        << errinfo_rorc_possible_causes({
+            "Channel was never initialized with ChannelParameters",
+            "Channel state file was corrupted",
+            "Channel state file was used by incompatible library versions"}));
   }
 
   constructorCommonPhaseTwo();
@@ -106,21 +124,22 @@ ChannelMaster::ChannelMaster(int serial, int channel, const ChannelParameters& p
   // Initialize (if needed) the shared data
   const auto& sd = sharedData->get();
   if (sd->initializationState == InitializationState::INITIALIZED) {
-   cout << "[LOG] Shared channel state already initialized" << endl;
+    cout << "[LOG] Shared channel state already initialized" << endl;
 
-   if (sd->getParams() == params) {
-     cout << "[LOG] Shared state ChannelParameters equal to argument ChannelParameters" << endl;;
-   } else {
-     cout << "[LOG] Shared state ChannelParameters different to argument ChannelParameters"
-         "-> resetting channel (RESET NOT IMPLEMENTED)" << endl;
-   }
-  }
-  else {
-   if (sd->initializationState == InitializationState::UNKNOWN) {
-     cout << "[LOG] Warning: unknown shared channel state. Proceeding with initialization" << endl;
-   }
-   cout << "[LOG] Initializing shared channel state" << endl;
-   sd->initialize(params);
+    if (sd->getParams() == params) {
+      cout << "[LOG] Shared state ChannelParameters equal to argument ChannelParameters" << endl;
+    } else {
+      cout << "[LOG] Shared state ChannelParameters different to argument ChannelParameters, reconfiguring channel"
+          << endl;
+      BOOST_THROW_EXCEPTION(CrorcException() << errinfo_rorc_generic_message(
+                  "Automatic channel reconfiguration not yet supported. Clear channel state manually"));
+    }
+  } else {
+    if (sd->initializationState == InitializationState::UNKNOWN) {
+      cout << "[LOG] Warning: unknown shared channel state. Proceeding with initialization" << endl;
+    }
+    cout << "[LOG] Initializing shared channel state" << endl;
+    sd->initialize(params);
   }
 
   constructorCommonPhaseTwo();

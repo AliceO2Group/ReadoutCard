@@ -32,6 +32,7 @@ class CrorcChannelMaster : public ChannelMaster
     virtual void utilityPrintFifo(std::ostream& os) override;
     virtual void utilitySetLedState(bool state) override;
     virtual void utilitySanityCheck(std::ostream& os) override;
+    virtual void utilityCleanupState() override;
 
   protected:
 
