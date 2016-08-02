@@ -1,7 +1,12 @@
 # @author  Barthélémy von Haller
 
 # Compile C++ tests (here only one, but it will grab whatever cxx is in the test directory)
-file(GLOB_RECURSE TEST_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.cxx)
+#file(GLOB_RECURSE TEST_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.cxx)
+
+set(TEST_FILES
+    TestRorc.cxx
+    TestChannelFactoryUtils.cxx
+)
 
 # Iterate over all tests found. For each, declare an executable and add it to the tests list.
 set(ALL_TESTS)

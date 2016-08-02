@@ -12,6 +12,7 @@
 
 using namespace AliceO2::Rorc::Util;
 
+namespace {
 class ProgramWriteRegister: public RorcUtilsProgram
 {
   public:
@@ -46,6 +47,7 @@ class ProgramWriteRegister: public RorcUtilsProgram
       std::cout << Common::makeRegisterString(address, channel->readRegister(address / 4));
     }
 };
+} // Anonymous namespace
 
 int main(int argc, char** argv)
 {

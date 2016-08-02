@@ -13,6 +13,7 @@
 
 using namespace AliceO2::Rorc::Util;
 
+namespace {
 class ProgramReadRegisterRange: public RorcUtilsProgram
 {
   public:
@@ -51,6 +52,7 @@ class ProgramReadRegisterRange: public RorcUtilsProgram
       }
     }
 };
+} // Anonymous namespace
 
 int main(int argc, char** argv)
 {

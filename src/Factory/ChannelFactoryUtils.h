@@ -7,6 +7,7 @@
 #include <algorithm>
 #include "RORC/CardType.h"
 #include "RorcException.h"
+#include "RorcDevice.h"
 
 namespace AliceO2 {
 namespace Rorc {

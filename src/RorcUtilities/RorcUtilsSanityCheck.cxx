@@ -23,6 +23,7 @@ using std::endl;
 
 namespace b = boost;
 
+namespace {
 class ProgramSanityCheck: public RorcUtilsProgram
 {
   public:
@@ -59,6 +60,7 @@ class ProgramSanityCheck: public RorcUtilsProgram
       channel->utilitySanityCheck(cout);
     }
 };
+} // Anonymous namespace
 
 int main(int argc, char** argv)
 {

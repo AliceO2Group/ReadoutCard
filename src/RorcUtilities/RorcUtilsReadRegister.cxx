@@ -12,6 +12,7 @@
 #include "RorcUtilsProgram.h"
 #include "RORC/ChannelParameters.h"
 
+namespace {
 using namespace AliceO2::Rorc::Util;
 
 class ProgramReadRegister: public RorcUtilsProgram
@@ -46,6 +47,7 @@ class ProgramReadRegister: public RorcUtilsProgram
       std::cout << Common::makeRegisterString(address, value);
     }
 };
+} // Anonymous namespace
 
 int main(int argc, char** argv)
 {

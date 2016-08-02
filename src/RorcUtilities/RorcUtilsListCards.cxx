@@ -16,6 +16,7 @@ using namespace AliceO2::Rorc::Util;
 using std::cout;
 using std::endl;
 
+namespace {
 class ProgramListCards: public RorcUtilsProgram
 {
   public:
@@ -56,6 +57,7 @@ class ProgramListCards: public RorcUtilsProgram
       cout << lineFat;
     }
 };
+} // Anonymous namespace
 
 int main(int argc, char** argv)
 {

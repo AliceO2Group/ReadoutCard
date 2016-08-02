@@ -21,6 +21,7 @@ namespace b = boost;
 using std::cout;
 using std::endl;
 
+namespace {
 class ProgramPrintFifo: public RorcUtilsProgram
 {
   public:
@@ -64,6 +65,7 @@ class ProgramPrintFifo: public RorcUtilsProgram
       }
     }
 };
+} // Anonymous namespace
 
 int main(int argc, char** argv)
 {

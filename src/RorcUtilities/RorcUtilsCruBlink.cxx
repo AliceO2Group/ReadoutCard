@@ -19,6 +19,7 @@ using namespace AliceO2::Rorc::Util;
 using std::cout;
 using std::endl;
 
+namespace {
 class ProgramCruBlink: public RorcUtilsProgram
 {
   public:
@@ -60,6 +61,7 @@ class ProgramCruBlink: public RorcUtilsProgram
       }
     }
 };
+} // Anonymous namespace
 
 int main(int argc, char** argv)
 {

@@ -56,7 +56,8 @@ class ProgramListCards: public RorcUtilsProgram
             }
           }
 
-          auto channel = ChannelFactory().getMaster(serialNumber, channelNumber, parameters);
+          // Don't assign it to any value so it constructs and destructs completely before we say things are done
+          ChannelFactory().getMaster(serialNumber, channelNumber, parameters);
           cout << "Done!" << endl;
           return;
         }

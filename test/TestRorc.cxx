@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(UtilOptions)
   BOOST_CHECK_MESSAGE(getOptionRegisterRange(vm) == 200, "register range");
   BOOST_CHECK_MESSAGE(getOptionRegisterValue(vm) == 0x250, "register value");
   auto cps = getOptionsChannelParameters(vm);
-  BOOST_CHECK_MESSAGE(cps.dma.pageSize == 300, "dma page size");
+  BOOST_CHECK_MESSAGE(cps.dma.pageSize == 300l * 1024l, "dma page size");
   BOOST_CHECK_MESSAGE(cps.dma.bufferSize == (400l * 1024l * 1024l), "dma buffer size");
   BOOST_CHECK_MESSAGE(cps.generator.useDataGenerator == true, "generator enable");
   BOOST_CHECK_MESSAGE(cps.generator.loopbackMode == AliceO2::Rorc::LoopbackMode::RORC, "generator loopback mode");
@@ -85,3 +85,4 @@ BOOST_AUTO_TEST_CASE(EnumResetLevelConversion)
   checkEnumConversion<ResetLevel>({ResetLevel::NOTHING, ResetLevel::RORC, ResetLevel::RORC_DIU,
       ResetLevel::RORC_DIU_SIU});
 }
+
