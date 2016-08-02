@@ -125,7 +125,8 @@ PDA installation
 3. Compile
   ~~~
   ./configure --debug=true --numa=true --modprobe=true
-  make
+  make install
+  cd patches/linux_uio
   make install
   ~~~
 
