@@ -73,7 +73,7 @@ int RorcUtilsProgram::execute(int argc, char** argv)
     printHelp();
   }
   catch (boost::exception& e) {
-    std::cout << "Error:\n" << boost::diagnostic_information(e, verbose) << "\n";
+    std::cout << "Error:\n" << boost::diagnostic_information(e/*, verbose*/) << "\n";
     printHelp();
   }
   catch (std::exception& e) {
