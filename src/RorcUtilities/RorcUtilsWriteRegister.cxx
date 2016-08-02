@@ -21,7 +21,8 @@ class ProgramWriteRegister: public RorcUtilsProgram
 
     virtual UtilsDescription getDescription()
     {
-      return UtilsDescription("Write Register", "Write a value to a single register", "./rorc-reg-write -a0x8 -v0");
+      return UtilsDescription("Write Register", "Write a value to a single register",
+          "./rorc-reg-write --serial=12345 --channel=0 -a0x8 -v0");
     }
 
     virtual void addOptions(boost::program_options::options_description& options)

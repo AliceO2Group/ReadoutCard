@@ -10,6 +10,7 @@
 #include "Util.h"
 #include "RorcUtilsOptions.h"
 #include "RorcException.h"
+#include <boost/version.hpp>
 
 namespace AliceO2 {
 namespace Rorc {
@@ -60,9 +61,7 @@ int RorcUtilsProgram::execute(int argc, char** argv)
       return 0;
     }
 
-    if (variablesMap.count("verbose")) {
-      verbose = true;
-    }
+    verbose = bool(variablesMap.count("verbose"));
 
     // Start the actual program
     mainFunction(variablesMap);
@@ -72,13 +71,13 @@ int RorcUtilsProgram::execute(int argc, char** argv)
     std::cout << "Program options invalid: " << *message << "\n\n";
     printHelp();
   }
-  catch (boost::exception& e) {
-    std::cout << "Error:\n" << boost::diagnostic_information(e/*, verbose*/) << "\n";
-    printHelp();
-  }
   catch (std::exception& e) {
-    std::cout << "Error:\n" << e.what() << "\n\n";
-    printHelp();
+#if (BOOST_VERSION >= 105400)
+    std::cout << "Error:\n" << boost::diagnostic_information(e, isVerbose()) << "\n";
+#else
+#pragma message "BOOST_VERSION < 105400"
+    std::cout << "Error:\n" << boost::diagnostic_information(e) << "\n";
+#endif
   }
 
   return 0;

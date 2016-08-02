@@ -49,10 +49,10 @@ class CruChannelMaster : public ChannelMaster
   private:
 
     /// Persistent device state/data that resides in shared memory
-    class CrorcSharedData
+    class CruSharedData
     {
       public:
-        CrorcSharedData();
+        CruSharedData();
 
         /// Initialize the shared data fields
         void initialize();
@@ -77,7 +77,7 @@ class CruChannelMaster : public ChannelMaster
     boost::scoped_ptr<PdaDmaBuffer> bufferFifo;
 
     /// Memory mapped data stored in the shared state file
-    boost::scoped_ptr<FileSharedObject::FileSharedObject<CrorcSharedData>> crorcSharedData;
+    boost::scoped_ptr<FileSharedObject::FileSharedObject<CruSharedData>> cruSharedData;
 
     /// Counter for the amount of pages that have been requested.
     /// Since currently, the idea is to push 128 at a time, we wait until the client requests 128 pages...

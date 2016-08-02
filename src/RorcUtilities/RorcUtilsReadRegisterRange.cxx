@@ -22,7 +22,8 @@ class ProgramReadRegisterRange: public RorcUtilsProgram
 
     virtual UtilsDescription getDescription()
     {
-      return UtilsDescription("Read Register Range", "Read a range of registers", "./rorc-reg-read-range -a0x8 -r10");
+      return UtilsDescription("Read Register Range", "Read a range of registers",
+          "./rorc-reg-read-range --serial=12345 --channel=0 -a0x8 -r10");
     }
 
     virtual void addOptions(boost::program_options::options_description& options)

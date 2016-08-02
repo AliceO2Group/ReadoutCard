@@ -123,8 +123,13 @@ po::options_description createOptionsDescription()
 po::variables_map getVariablesMap(int argc, char** argv, const po::options_description& optionsDescription)
 {
   po::variables_map variablesMap;
-  po::store(po::parse_command_line(argc, argv, optionsDescription), variablesMap);
-  po::notify(variablesMap);
+  try {
+    po::store(po::parse_command_line(argc, argv, optionsDescription), variablesMap);
+    po::notify(variablesMap);
+  } catch (po::unknown_option& e) {
+    BOOST_THROW_EXCEPTION(ProgramOptionException()
+        << errinfo_rorc_generic_message("Unknown option '" + e.get_option_name() + "'"));
+  }
   return variablesMap;
 }
 

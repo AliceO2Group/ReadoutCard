@@ -101,6 +101,15 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
         };
     };
 
+    /// A simple struct that holds the userspace and bus address of a page
+    struct PageAddress
+    {
+        void* user;
+        void* bus;
+    };
+
+  private:
+
     /// Persistent channel state/data that resides in shared memory
     class SharedData
     {
@@ -108,8 +117,16 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
         SharedData();
 
         void initialize(const ChannelParameters& params);
-        const ChannelParameters& getParams();
-        InitializationState::type getState();
+
+        const ChannelParameters& getParams() const
+        {
+          return params;
+        }
+
+        InitializationState::type getState() const
+        {
+          return initializationState;
+        }
 
         DmaState::type dmaState;
         InitializationState::type initializationState;
@@ -119,24 +136,14 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
         // TODO mutex to prevent simultaneous intraprocess access?
     };
 
-    /// A simple struct that holds the userspace and bus address of a page
-    struct PageAddress
-    {
-        void* user;
-        void* bus;
-    };
-
-    /// Getter for parameters in SharedData
-    const ChannelParameters& getParams();
-
     /// Serial number of the device
-    int serialNumber;
+    const int serialNumber;
 
     /// DMA channel number
-    int channelNumber;
+    const int channelNumber;
 
     /// Amount of DMA buffers per channel that will be registered to PDA
-    int dmaBuffersPerChannel;
+    const int dmaBuffersPerChannel;
 
     /// Memory mapped data stored in the shared state file
     boost::scoped_ptr<FileSharedObject::LockedFileSharedObject<SharedData>> sharedData;
@@ -159,10 +166,63 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
     /// Addresses to pages in the DMA buffer
     std::vector<PageAddress> pageAddresses;
 
-  private:
-
     void constructorCommonPhaseOne();
     void constructorCommonPhaseTwo();
+
+  public:
+
+    // Getters
+
+    SharedData& getSharedData() const
+    {
+      return *(sharedData->get());
+    }
+
+    const ChannelParameters& getParams() const
+    {
+      return sharedData->get()->getParams();
+    }
+
+    int getChannelNumber() const
+    {
+      return channelNumber;
+    }
+
+    int getSerialNumber() const
+    {
+      return serialNumber;
+    }
+
+    volatile uint32_t* getBarUserspace() const
+    {
+      return barUserspace;
+    }
+
+    const PdaDmaBuffer& getBufferPages() const
+    {
+      return *(bufferPages.get());
+    }
+
+    const MemoryMappedFile& getMappedFilePages() const
+    {
+      return *(mappedFilePages.get());
+    }
+
+    std::vector<PageAddress>& getPageAddresses()
+    {
+      return pageAddresses;
+    }
+
+    const PdaBar& getPdaBar() const
+    {
+      return *(pdaBar.get());
+    }
+
+    const RorcDevice& getRorcDevice() const
+    {
+      return *(rorcDevice.get());
+    }
+
 };
 
 } // namespace Rorc

@@ -16,7 +16,7 @@ namespace Rorc {
 /// TODO
 ///   - Register access restricted
 ///   - Possibly read-only access to pages?
-class ChannelSlaveInterface: public RegisterReadWriteInterface
+class ChannelSlaveInterface: public virtual RegisterReadWriteInterface
 {
   public:
     virtual ~ChannelSlaveInterface()

@@ -33,7 +33,7 @@ class ProgramSanityCheck: public RorcUtilsProgram
     virtual UtilsDescription getDescription()
     {
       return UtilsDescription("Sanity Check", "Does some basic sanity checks on the card",
-          "./rorc-sanity-check --serial=12345");
+          "./rorc-sanity-check --serial=12345 --channel=0");
     }
 
     virtual void addOptions(boost::program_options::options_description& options)

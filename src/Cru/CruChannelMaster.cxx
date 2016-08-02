@@ -104,12 +104,12 @@ void CruChannelMaster::constructorCommon()
 {
   using Util::resetSmartPtr;
 
-  resetSmartPtr(mappedFileFifo, ChannelPaths::fifo(serialNumber, channelNumber).c_str());
+  resetSmartPtr(mappedFileFifo, ChannelPaths::fifo(getSerialNumber(), getChannelNumber()).c_str());
 
-  resetSmartPtr(bufferFifo, rorcDevice->getPciDevice(), mappedFileFifo->getAddress(), mappedFileFifo->getSize(),
+  resetSmartPtr(bufferFifo, getRorcDevice().getPciDevice(), mappedFileFifo->getAddress(), mappedFileFifo->getSize(),
       getBufferId(BUFFER_INDEX_FIFO));
 
-  resetSmartPtr(crorcSharedData, ChannelPaths::state(serialNumber, channelNumber), sharedDataSize(),
+  resetSmartPtr(cruSharedData, ChannelPaths::state(getSerialNumber(), getChannelNumber()), sharedDataSize(),
       cruSharedDataName(), FileSharedObject::find_or_construct);
 
   pendingPages = 0;
@@ -121,7 +121,7 @@ void CruChannelMaster::constructorCommon()
   assert(params.dma.pageSize == (8 * 1024)); // Currently the only supported page size is 8 KiB
 
   // Initialize (if needed) the shared data
-  const auto& csd = crorcSharedData->get();
+  const auto& csd = cruSharedData->get();
 
   if (csd->initializationState == InitializationState::INITIALIZED) {
     cout << "CRU shared channel state already initialized" << endl;
@@ -141,7 +141,7 @@ void CruChannelMaster::constructorCommon()
   }
 
   // Initialize the page addresses
-  for (auto& entry : bufferPages->getScatterGatherList()) {
+  for (auto& entry : getBufferPages().getScatterGatherList()) {
     // How many pages fit in this SGL entry
     int64_t pagesInSglEntry = entry.size / params.dma.pageSize;
 
@@ -150,11 +150,11 @@ void CruChannelMaster::constructorCommon()
       PageAddress pa;
       pa.bus = (void*) (((char*) entry.addressBus) + offset);
       pa.user = (void*) (((char*) entry.addressUser) + offset);
-      pageAddresses.push_back(pa);
+      getPageAddresses().push_back(pa);
     }
   }
 
-  if (pageAddresses.size() <= CRU_DESCRIPTOR_ENTRIES) {
+  if (getPageAddresses().size() <= CRU_DESCRIPTOR_ENTRIES) {
     THROW_CRU_EXCEPTION("Insufficient amount of pages fit in DMA buffer");
   }
 }
@@ -164,12 +164,12 @@ CruChannelMaster::~CruChannelMaster()
   // TODO
 }
 
-CruChannelMaster::CrorcSharedData::CrorcSharedData()
+CruChannelMaster::CruSharedData::CruSharedData()
     : initializationState(InitializationState::UNKNOWN), fifoIndexWrite(0), fifoIndexRead(0), pageIndex(0)
 {
 }
 
-void CruChannelMaster::CrorcSharedData::initialize()
+void CruChannelMaster::CruSharedData::initialize()
 {
   initializationState = InitializationState::INITIALIZED;
   fifoIndexWrite = 0;
@@ -180,15 +180,16 @@ void CruChannelMaster::CrorcSharedData::initialize()
 void CruChannelMaster::deviceStartDma()
 {
   uint64_t fifoTableAddress = (uint64_t) bufferFifo->getScatterGatherList()[0].addressBus;
-  barUserspace[BarIndex::STATUS_BASE_BUS_LOW] = getLower32Bits(fifoTableAddress);
-  barUserspace[BarIndex::STATUS_BASE_BUS_HIGH] = getUpper32Bits(fifoTableAddress);
-  barUserspace[BarIndex::FIFO_BASE_CARD_LOW] = 0x8000;
-  barUserspace[BarIndex::FIFO_BASE_CARD_HIGH] = 0x0;
-  barUserspace[BarIndex::START_DMA] = CRU_DESCRIPTOR_ENTRIES - 1;
-  barUserspace[BarIndex::DESCRIPTOR_TABLE_SIZE] = CRU_DESCRIPTOR_ENTRIES - 1;
-  barUserspace[BarIndex::PCIE_READY] = 0x1;
-  barUserspace[BarIndex::DATA_EMULATOR_ENABLE] = 0x1;
-  barUserspace[BarIndex::SEND_STATUS] = 0x1;
+  auto bar = getBarUserspace();
+  bar[BarIndex::STATUS_BASE_BUS_LOW] = getLower32Bits(fifoTableAddress);
+  bar[BarIndex::STATUS_BASE_BUS_HIGH] = getUpper32Bits(fifoTableAddress);
+  bar[BarIndex::FIFO_BASE_CARD_LOW] = 0x8000;
+  bar[BarIndex::FIFO_BASE_CARD_HIGH] = 0x0;
+  bar[BarIndex::START_DMA] = CRU_DESCRIPTOR_ENTRIES - 1;
+  bar[BarIndex::DESCRIPTOR_TABLE_SIZE] = CRU_DESCRIPTOR_ENTRIES - 1;
+  bar[BarIndex::PCIE_READY] = 0x1;
+  bar[BarIndex::DATA_EMULATOR_ENABLE] = 0x1;
+  bar[BarIndex::SEND_STATUS] = 0x1;
 }
 
 void CruChannelMaster::deviceStopDma()
@@ -196,7 +197,7 @@ void CruChannelMaster::deviceStopDma()
   // TODO Not sure if this is the correct way
 
   // Set status to send status for every page not only for the last one
-  barUserspace[BarIndex::SEND_STATUS] = 0x0;
+  getBarUserspace()[BarIndex::SEND_STATUS] = 0x0;
 }
 
 void CruChannelMaster::resetCard(ResetLevel::type)
@@ -229,7 +230,7 @@ ChannelMasterInterface::PageHandle CruChannelMaster::pushNextPage()
       e.srcHigh = 0x0;
 
       // Addresses in the RAM (DMA destination)
-      auto busAddress = (uint64_t) pageAddresses[0].bus;
+      auto busAddress = (uint64_t) getPageAddresses()[0].bus;
       e.dstLow = getLower32Bits(busAddress);
       e.dstHigh = getUpper32Bits(busAddress);
 
@@ -255,7 +256,7 @@ bool CruChannelMaster::isPageArrived(const PageHandle&)
 
 Page CruChannelMaster::getPage(const PageHandle& handle)
 {
-  return Page(pageAddresses[handle.index].user);
+  return Page(getPageAddresses()[handle.index].user);
 }
 
 void CruChannelMaster::markPageAsRead(const PageHandle& handle)
@@ -284,7 +285,7 @@ void CruChannelMaster::utilityPrintFifo(std::ostream& os)
 
 void CruChannelMaster::utilitySetLedState(bool state)
 {
-  barUserspace[BarIndex::LED_ON] = state ? 0xffff : 0x0000;
+  getBarUserspace()[BarIndex::LED_ON] = state ? 0xffff : 0x0000;
 }
 
 void CruChannelMaster::utilitySanityCheck(std::ostream& os)

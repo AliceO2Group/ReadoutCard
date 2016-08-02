@@ -32,7 +32,8 @@ class ProgramPrintFifo: public RorcUtilsProgram
 
     virtual UtilsDescription getDescription()
     {
-      return UtilsDescription("Print FIFO", "Prints the FIFO of a RORC", "./rorc-print-fifo --serial=12345 --channel=0");
+      return UtilsDescription("Print FIFO", "Prints the FIFO of a RORC",
+          "./rorc-print-fifo --serial=12345 --channel=0");
     }
 
     virtual void addOptions(boost::program_options::options_description& options)

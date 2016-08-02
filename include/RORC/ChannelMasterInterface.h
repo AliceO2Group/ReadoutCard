@@ -15,7 +15,7 @@ namespace AliceO2 {
 namespace Rorc {
 
 /// Obtains a master lock on a channel and provides an interface to control and use the channel
-class ChannelMasterInterface: public RegisterReadWriteInterface
+class ChannelMasterInterface: public virtual RegisterReadWriteInterface
 {
   public:
     /// A handle that refers to a page. Used by some of the API calls.

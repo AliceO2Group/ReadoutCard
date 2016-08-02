@@ -32,7 +32,8 @@ class ProgramDmaBench: public RorcUtilsProgram
 
     virtual UtilsDescription getDescription()
     {
-      return UtilsDescription("DMA Benchmark", "Test RORC DMA performance", "./rorc-dma-bench --serial=0");
+      return UtilsDescription("DMA Benchmark", "Test RORC DMA performance",
+          "./rorc-dma-bench --serial=12345 --channel=0");
     }
 
     virtual void addOptions(boost::program_options::options_description& options)

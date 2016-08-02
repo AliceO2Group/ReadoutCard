@@ -80,7 +80,7 @@ void ChannelMaster::constructorCommonPhaseTwo()
   barUserspace = pdaBar->getUserspaceAddressU32();
 
   resetSmartPtr(mappedFilePages, ChannelPaths::pages(serialNumber, channelNumber).c_str(),
-      sharedData->get()->getParams().dma.bufferSize);
+      getSharedData().getParams().dma.bufferSize);
 
   resetSmartPtr(bufferPages, rorcDevice->getPciDevice(), mappedFilePages->getAddress(), mappedFilePages->getSize(),
       getBufferId(BUFFER_INDEX_PAGES));
@@ -100,10 +100,13 @@ ChannelMaster::ChannelMaster(int serial, int channel, int additionalBuffers)
     validateParameters(params);
   }
   else {
-    BOOST_THROW_EXCEPTION(CrorcException()
+    BOOST_THROW_EXCEPTION(SharedStateException()
         << errinfo_rorc_generic_message(sd->initializationState == InitializationState::UNINITIALIZED ?
             "Uninitialized shared data state" : "Unknown shared data state")
+        << errinfo_rorc_shared_lock_file(ChannelPaths::lock(serialNumber, channelNumber).string())
         << errinfo_rorc_shared_state_file(ChannelPaths::state(serialNumber, channelNumber).string())
+        << errinfo_rorc_shared_buffer_file(ChannelPaths::pages(serialNumber, channelNumber).string())
+        << errinfo_rorc_shared_fifo_file(ChannelPaths::fifo(serialNumber, channelNumber).string())
         << errinfo_rorc_possible_causes({
             "Channel was never initialized with ChannelParameters",
             "Channel state file was corrupted",
@@ -159,21 +162,6 @@ void ChannelMaster::SharedData::initialize(const ChannelParameters& params)
   this->params = params;
   initializationState = InitializationState::INITIALIZED;
   dmaState = DmaState::STOPPED;
-}
-
-const ChannelParameters& ChannelMaster::getParams()
-{
-  return sharedData->get()->getParams();
-}
-
-const ChannelParameters& ChannelMaster::SharedData::getParams()
-{
-  return params;
-}
-
-ChannelMaster::InitializationState::type ChannelMaster::SharedData::getState()
-{
-  return initializationState;
 }
 
 // Checks DMA state and forwards call to subclass if necessary
