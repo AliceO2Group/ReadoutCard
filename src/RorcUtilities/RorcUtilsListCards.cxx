@@ -6,9 +6,6 @@
 ///
 
 #include <iostream>
-#include <iomanip>
-#include <stdexcept>
-#include <boost/exception/diagnostic_information.hpp>
 #include "RorcDevice.h"
 #include "RorcUtilsOptions.h"
 #include "RorcUtilsCommon.h"

@@ -31,8 +31,8 @@ Pages are also stored in shared memory. Functionality for clients to supply thei
 release.
 
 The shared files are located in the directories:
-* /dev/shm/alice_o2/rorc_[serial number]/channel_[channel number]/
-* /mnt/hugetlbfs/alice_o2/rorc_[serial number]/channel_[channel number]/
+* /dev/shm/alice\_o2/rorc\_[serial number]/channel\_[channel number]/
+* /mnt/hugetlbfs/alice\_o2/rorc\_[serial number]/channel\_[channel number]/
 
 If things crash and the state can not be recovered, these files should be deleted.
 They should also be deleted with new releases of the RORC module, since their internal memory arrangement might change.
@@ -99,7 +99,13 @@ Multithreaded
 -------------------
 Currently, there are no protections in the ChannelMaster/ChannelSlave against multi-threaded access, since it relies
 purely on file locks at the moment. This is of course planned for a future release, probably by just adding a mutex to 
-the ChannelMaster/ChannelSlave object.
+the ChannelMaster\/ChannelSlave object.
+
+Permissions
+-------------------
+Running the utilities as non-root is untested. We know there is a capability in the PDA driver to give permissions to 
+non-root users, but this is untested as of yet. However, the PDA kernel module must be inserted as root in any case. 
+The "modprobe uio\_pci\_dma" must be run as root at some point
 
 Dependencies
 ===================
@@ -129,6 +135,11 @@ PDA installation
   cd patches/linux_uio
   make install
   ~~~
+  
+4. Optionally, insert kernel module. If the utilities are run as root, PDA will do this automatically.
+  ~~~
+  modprobe uio\_pci\_dma
+  ~~~
 
 
 Hugepages
@@ -156,7 +167,7 @@ until then, we must initialize and allocate manually.
 
 2. Allocate hugepages
   ~~~
-  echo [number] > /proc/sys/vm/nr_hugepages
+  echo [number] > /proc/sys/vm/nr\_hugepages
   ~~~
   Where [number] is enough to cover the DMA buffer needs.
   By default, hugepages are 2 MB. 

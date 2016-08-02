@@ -13,6 +13,7 @@
 #include "RorcException.h"
 #include "Util.h"
 #include "ChannelUtilityImpl.h"
+#include "CruRegisterIndex.h"
 
 namespace b = boost;
 namespace bip = boost::interprocess;
@@ -32,45 +33,6 @@ namespace Rorc {
 #define THROW_CRU_EXCEPTION(_err_message) \
   BOOST_THROW_EXCEPTION(CruException() \
       << errinfo_rorc_generic_message(_err_message))
-
-
-/// Namespace containing definitions of indexes for CRU BAR registers
-namespace BarIndex
-{
-/// Status table base address (low 32 bits)
-static constexpr size_t STATUS_BASE_BUS_LOW = 0;
-
-/// Status table base address (high 32 bits)
-static constexpr size_t STATUS_BASE_BUS_HIGH = 1;
-
-/// Destination FIFO memory address in card (low 32 bits)
-static constexpr size_t FIFO_BASE_CARD_LOW = 2;
-
-/// Destination FIFO memory address in card (high 32 bits)
-/// XXX Appears to be unused, it's set to 0 in code examples
-static constexpr size_t FIFO_BASE_CARD_HIGH = 3;
-
-/// Set to number of available pages - 1
-static constexpr size_t START_DMA = 4;
-
-/// Size of the descriptor table
-/// Set to the same as (number of available pages - 1)
-/// Used only if descriptor table size is other than 128
-static constexpr size_t DESCRIPTOR_TABLE_SIZE = 5;
-
-/// Set status to send status for every page not only for the last one to write the entire status memory
-/// (No idea what that description means)
-static constexpr size_t SEND_STATUS = 6;
-
-/// Enable data emulator
-static constexpr size_t DATA_EMULATOR_ENABLE = 128;
-
-/// Signals that the host RAM is available for transfer
-static constexpr size_t PCIE_READY = 129;
-
-/// Set to 0xff to turn the LED on, 0x00 to turn off
-static constexpr size_t LED_ON = 152;
-}
 
 /// Amount of additional DMA buffers for this channel
 static constexpr int CRU_BUFFERS_PER_CHANNEL = 1;
@@ -124,15 +86,15 @@ void CruChannelMaster::constructorCommon()
   const auto& csd = cruSharedData->get();
 
   if (csd->initializationState == InitializationState::INITIALIZED) {
-    cout << "CRU shared channel state already initialized" << endl;
+    cout << "[LOG] CRU shared channel state already initialized" << endl;
   } else {
     if (csd->initializationState == InitializationState::UNKNOWN) {
-      cout << "Warning: unknown CRU shared channel state. Proceeding with initialization" << endl;
+      cout << "[LOG] Warning: unknown CRU shared channel state. Proceeding with initialization" << endl;
     }
-    cout << "Initializing CRU shared channel state" << endl;
+    cout << "[LOG] Initializing CRU shared channel state" << endl;
     csd->initialize();
 
-    cout << "Clearing FIFO" << endl;
+    cout << "[LOG] Clearing FIFO" << endl;
     auto fifo = mappedFileFifo->get();
 
     for (size_t i = 0; i < fifo->statusEntries.size(); ++i) {
@@ -179,17 +141,18 @@ void CruChannelMaster::CruSharedData::initialize()
 
 void CruChannelMaster::deviceStartDma()
 {
+  using namespace CruRegisterIndex;
   uint64_t fifoTableAddress = (uint64_t) bufferFifo->getScatterGatherList()[0].addressBus;
   auto bar = getBarUserspace();
-  bar[BarIndex::STATUS_BASE_BUS_LOW] = getLower32Bits(fifoTableAddress);
-  bar[BarIndex::STATUS_BASE_BUS_HIGH] = getUpper32Bits(fifoTableAddress);
-  bar[BarIndex::FIFO_BASE_CARD_LOW] = 0x8000;
-  bar[BarIndex::FIFO_BASE_CARD_HIGH] = 0x0;
-  bar[BarIndex::START_DMA] = CRU_DESCRIPTOR_ENTRIES - 1;
-  bar[BarIndex::DESCRIPTOR_TABLE_SIZE] = CRU_DESCRIPTOR_ENTRIES - 1;
-  bar[BarIndex::PCIE_READY] = 0x1;
-  bar[BarIndex::DATA_EMULATOR_ENABLE] = 0x1;
-  bar[BarIndex::SEND_STATUS] = 0x1;
+  bar[STATUS_BASE_BUS_LOW] = getLower32Bits(fifoTableAddress);
+  bar[STATUS_BASE_BUS_HIGH] = getUpper32Bits(fifoTableAddress);
+  bar[FIFO_BASE_CARD_LOW] = 0x8000;
+  bar[FIFO_BASE_CARD_HIGH] = 0x0;
+  bar[START_DMA] = CRU_DESCRIPTOR_ENTRIES - 1;
+  bar[DESCRIPTOR_TABLE_SIZE] = CRU_DESCRIPTOR_ENTRIES - 1;
+  bar[PCIE_READY] = 0x1;
+  bar[DATA_EMULATOR_ENABLE] = 0x1;
+  bar[SEND_STATUS] = 0x1;
 }
 
 void CruChannelMaster::deviceStopDma()
@@ -197,7 +160,7 @@ void CruChannelMaster::deviceStopDma()
   // TODO Not sure if this is the correct way
 
   // Set status to send status for every page not only for the last one
-  getBarUserspace()[BarIndex::SEND_STATUS] = 0x0;
+  getBarUserspace()[CruRegisterIndex::SEND_STATUS] = 0x0;
 }
 
 void CruChannelMaster::resetCard(ResetLevel::type)
@@ -285,7 +248,7 @@ void CruChannelMaster::utilityPrintFifo(std::ostream& os)
 
 void CruChannelMaster::utilitySetLedState(bool state)
 {
-  getBarUserspace()[BarIndex::LED_ON] = state ? 0xffff : 0x0000;
+  getBarUserspace()[CruRegisterIndex::LED_STATUS] = state ? 0xff : 0x00;
 }
 
 void CruChannelMaster::utilitySanityCheck(std::ostream& os)
@@ -295,7 +258,7 @@ void CruChannelMaster::utilitySanityCheck(std::ostream& os)
 
 void CruChannelMaster::utilityCleanupState()
 {
-  BOOST_THROW_EXCEPTION(RorcException() << errinfo_rorc_generic_message("Not implemented"));
+  ChannelUtility::cruCleanupState(getSerialNumber(), getChannelNumber());
 }
 
 } // namespace Rorc

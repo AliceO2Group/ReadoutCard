@@ -9,6 +9,7 @@
 #include <boost/format.hpp>
 #include <boost/filesystem/operations.hpp>
 #include "ChannelPaths.h"
+#include "CruRegisterIndex.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -60,6 +61,17 @@ void registerReadWriteCheck(RegisterReadWriteInterface* channel, std::ostream& o
   channel->writeRegister(writeIndex, writeValue);
   int readValue = channel->readRegister(readIndex);
   registerCheck(os, writeValue, writeAddress, readValue, readAddress);
+}
+
+void rorcCleanupState(int serial, int channel)
+{
+  /// XXX I wonder what happens when you delete a memory mapped file that's still in use...
+  using boost::filesystem::remove;
+  remove(ChannelPaths::pages(serial, channel).c_str());
+  remove(ChannelPaths::state(serial, channel).c_str());
+  remove(ChannelPaths::fifo(serial, channel).c_str());
+  remove(ChannelPaths::lock(serial, channel).c_str());
+  remove(ChannelPaths::lock(serial, channel).c_str());
 }
 
 } // Anonymous namespace
@@ -139,7 +151,7 @@ void cruSanityCheck(std::ostream& os, RegisterReadWriteInterface* channel)
     // Writing to the LED register has been known to crash and reboot the machine if the CRU is in a bad state.
     // That makes it a good part of this sanity test!
 
-    int ledAddress = 0x260;
+    int ledAddress = CruRegisterIndex::LED_STATUS;
     int valueOn = 0xff;
     int valueOff = 0x00;
 
@@ -154,10 +166,11 @@ void cruSanityCheck(std::ostream& os, RegisterReadWriteInterface* channel)
     // reading is working properly.
     // We should be able to push values by writing to 'addressPush' and pop by reading from 'addressPop'
 
-    int addressPush = 0x274;
-    int addressPop = 0x270;
-    int indexPush = addressPush / 4;
-    int indexPop = addressPop / 4;
+    int indexPush = CruRegisterIndex::DEBUG_FIFO_PUSH;
+    int indexPop = CruRegisterIndex::DEBUG_FIFO_POP;
+    int addressPush = indexPush * 4;
+    int addressPop = indexPop * 4;
+
     int valuesToPush = 4;
     auto getValue = [](int i) { return 1 << i; };
 
@@ -176,14 +189,14 @@ void cruSanityCheck(std::ostream& os, RegisterReadWriteInterface* channel)
 
 void crorcCleanupState(int serial, int channel)
 {
-  /// XXX I wonder what happens when you delete a memory mapped file that's still in use...
-  using boost::filesystem::remove;
-  remove(ChannelPaths::pages(serial, channel).c_str());
-  remove(ChannelPaths::state(serial, channel).c_str());
-  remove(ChannelPaths::fifo(serial, channel).c_str());
-  remove(ChannelPaths::lock(serial, channel).c_str());
-  remove(ChannelPaths::lock(serial, channel).c_str());
+  rorcCleanupState(serial, channel);
 }
+
+void cruCleanupState(int serial, int channel)
+{
+  rorcCleanupState(serial, channel);
+}
+
 
 } // namespace ChannelUtility
 } // namespace Rorc

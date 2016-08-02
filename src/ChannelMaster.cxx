@@ -35,7 +35,7 @@ int ChannelMaster::getBufferId(int index)
 
 void ChannelMaster::validateParameters(const ChannelParameters& ps)
 {
-  if (ps.dma.bufferSize % (2 * 1024 * 1024) != 0) {
+  if (ps.dma.bufferSize % (2l * 1024l * 1024l) != 0) {
     BOOST_THROW_EXCEPTION(InvalidParameterException()
         << errinfo_rorc_generic_message("Parameter 'dma.bufferSize' not a multiple of 2 mebibytes"));
   }

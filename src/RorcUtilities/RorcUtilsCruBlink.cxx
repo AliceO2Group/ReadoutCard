@@ -9,6 +9,7 @@
 #include <thread>
 #include <chrono>
 #include "ChannelUtilityFactory.h"
+#include "RORC/ChannelFactory.h"
 #include "RorcUtilsOptions.h"
 #include "RorcUtilsCommon.h"
 #include "RorcUtilsProgram.h"
@@ -37,8 +38,10 @@ class ProgramCruBlink: public RorcUtilsProgram
 
     virtual void mainFunction(const boost::program_options::variables_map& map)
     {
-      const int serialNumber = Options::getOptionSerialNumber(map);
-      const int channelNumber = 0;
+      using namespace AliceO2::Rorc;
+
+      auto serialNumber = Options::getOptionSerialNumber(map);
+      auto channelNumber = 0;
       auto channel = AliceO2::Rorc::ChannelUtilityFactory().getUtility(serialNumber, channelNumber);
 
       const auto cycle = std::chrono::milliseconds(250);
