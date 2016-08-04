@@ -60,7 +60,10 @@ DEFINE_ERRINFO(card_type, CardType::type);
 #undef DEFINE_ERRINFO
 
 // RORC exception definitions
-struct RorcException : virtual boost::exception, virtual std::exception {};
+struct RorcException : virtual boost::exception, virtual std::exception
+{
+  virtual const char* what() const noexcept override;
+};
 
 // General exception definitions
 struct RorcPdaException : virtual RorcException {};

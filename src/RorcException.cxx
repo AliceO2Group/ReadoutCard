@@ -20,6 +20,20 @@ namespace b = boost;
 namespace AliceO2 {
 namespace Rorc {
 
+const char* RorcException::what() const noexcept
+{
+  try {
+    if (auto info = boost::get_error_info<errinfo_rorc_generic_message>(*this)) {
+      return info->data();
+    } else {
+      return "RorcException";
+    }
+  }
+  catch (std::exception& e) {
+    return "RorcException";
+  }
+}
+
 void addPossibleCauses(boost::exception& exception, const std::vector<std::string>& newCauses)
 {
   if (auto oldCauses = boost::get_error_info<errinfo_rorc_possible_causes>(exception)) {
