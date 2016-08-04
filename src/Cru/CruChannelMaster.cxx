@@ -248,7 +248,9 @@ void CruChannelMaster::utilityPrintFifo(std::ostream& os)
 
 void CruChannelMaster::utilitySetLedState(bool state)
 {
-  getBarUserspace()[CruRegisterIndex::LED_STATUS] = state ? 0xff : 0x00;
+  int on = 0x00; // Yes, a 0 represents the on state
+  int off = 0xff;
+  getBarUserspace()[CruRegisterIndex::LED_STATUS] = state ? on : off;
 }
 
 void CruChannelMaster::utilitySanityCheck(std::ostream& os)

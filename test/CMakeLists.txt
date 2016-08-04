@@ -6,6 +6,8 @@
 set(TEST_FILES
     TestRorc.cxx
     TestChannelFactoryUtils.cxx
+    TestFileSharedObject.cxx
+    TestMemoryMappedFile.cxx
 )
 
 # Iterate over all tests found. For each, declare an executable and add it to the tests list.

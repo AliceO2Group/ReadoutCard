@@ -13,6 +13,9 @@
 using namespace AliceO2::Rorc::Util;
 
 namespace {
+
+const char* NOREAD_SWITCH("noread");
+
 class ProgramWriteRegister: public RorcUtilsProgram
 {
   public:
@@ -32,6 +35,7 @@ class ProgramWriteRegister: public RorcUtilsProgram
       Options::addOptionChannel(options);
       Options::addOptionSerialNumber(options);
       Options::addOptionRegisterValue(options);
+      options.add_options()(NOREAD_SWITCH, "No readback of register after write");
     }
 
     virtual void mainFunction(const boost::program_options::variables_map& map)
@@ -40,11 +44,16 @@ class ProgramWriteRegister: public RorcUtilsProgram
       int address = Options::getOptionRegisterAddress(map);
       int channelNumber = Options::getOptionChannel(map);
       int registerValue = Options::getOptionRegisterValue(map);
+      auto readback = !bool(map.count(NOREAD_SWITCH));
       auto channel = AliceO2::Rorc::ChannelFactory().getSlave(serialNumber, channelNumber);
 
       // Registers are indexed by 32 bits (4 bytes)
       channel->writeRegister(address / 4, registerValue);
-      std::cout << Common::makeRegisterString(address, channel->readRegister(address / 4));
+      if (readback) {
+        std::cout << Common::makeRegisterString(address, channel->readRegister(address / 4)) << std::flush;
+      } else {
+        std::cout << "Done!" << std::endl;
+      }
     }
 };
 } // Anonymous namespace

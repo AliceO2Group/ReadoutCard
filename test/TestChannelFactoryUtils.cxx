@@ -41,9 +41,9 @@ std::shared_ptr<TestInterface> _callMake(CardType::type cardType, Args&&... args
 std::shared_ptr<TestInterface> callMake(CardType::type cardType)
 {
   return _callMake(cardType,
-      DummyTag, [&](){ return std::make_shared<DummyImpl>(); },
-      CrorcTag, [&](){ return std::make_shared<CrorcImpl>(); },
-      CruTag,   [&](){ return std::make_shared<CruImpl>(); });
+      DummyTag, [](){ return std::make_shared<DummyImpl>(); },
+      CrorcTag, [](){ return std::make_shared<CrorcImpl>(); },
+      CruTag,   [](){ return std::make_shared<CruImpl>(); });
 }
 
 // This tests if the FactoryHelper::make() function maps to the expected types.

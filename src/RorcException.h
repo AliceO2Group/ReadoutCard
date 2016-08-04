@@ -34,6 +34,7 @@ DEFINE_ERRINFO(shared_state_file, std::string);
 DEFINE_ERRINFO(shared_lock_file, std::string);
 DEFINE_ERRINFO(shared_fifo_file, std::string);
 DEFINE_ERRINFO(shared_buffer_file, std::string);
+DEFINE_ERRINFO(shared_object_name, std::string);
 DEFINE_ERRINFO(filesize, size_t);
 DEFINE_ERRINFO(directory, std::string);
 DEFINE_ERRINFO(serial_number, int);
@@ -68,6 +69,7 @@ struct InvalidParameterException : virtual RorcException {};
 struct FileLockException : virtual RorcException {};
 struct DeviceFinderException : virtual RorcException {};
 struct SharedStateException : virtual RorcException {};
+struct SharedObjectNotFoundException : virtual RorcException {};
 
 // C-RORC exception definitions
 struct CrorcException : virtual RorcException {};

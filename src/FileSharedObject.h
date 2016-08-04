@@ -11,6 +11,7 @@
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
 #include "RorcException.h"
+#include "Util.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -68,6 +69,11 @@ class FileSharedObject
         : sharedFile(bip::open_or_create, sharedFilePath.c_str(), sharedFileSize),
           sharedObjectPointer(sharedFile.find<T>(sharedObjectName.c_str()).first)
     {
+      if (sharedObjectPointer == nullptr) {
+        BOOST_THROW_EXCEPTION(SharedObjectNotFoundException()
+            << errinfo_rorc_filename(sharedFilePath.string())
+            << errinfo_rorc_shared_object_name(sharedObjectName));
+      }
     }
 
     inline T* get()
@@ -143,19 +149,36 @@ class LockedFileSharedObject
     {
       public:
         inline ThrowingFileLock(bfs::path fileLockPath)
-            : lock(fileLockPath.c_str())
+        try : toucher(fileLockPath), lock(fileLockPath.c_str())
         {
           if (!lock.try_lock()) {
             BOOST_THROW_EXCEPTION(FileLockException()
-                    << errinfo_rorc_generic_message("Failed to acquire file lock")
-                    << errinfo_rorc_filename(fileLockPath.string()));
+                << errinfo_rorc_generic_message("Failed to acquire file lock")
+                << errinfo_rorc_filename(fileLockPath.string()));
           }
+        }
+        catch (const bip::interprocess_exception& e)
+        {
+          BOOST_THROW_EXCEPTION(FileLockException()
+              << errinfo_rorc_generic_message("Failed to initialize file lock")
+              << errinfo_rorc_possible_causes({e.what()})
+              << errinfo_rorc_filename(fileLockPath.string()));
         }
 
         inline ~ThrowingFileLock()
         {
           lock.unlock();
         }
+
+      private:
+        // "trick" to touch a file in the initializer list
+        struct Toucher
+        {
+          Toucher(const bfs::path& path)
+          {
+            Util::touchFile(path);
+          }
+        } toucher;
 
         bip::file_lock lock;
     };
