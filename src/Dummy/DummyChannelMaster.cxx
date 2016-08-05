@@ -110,5 +110,10 @@ void DummyChannelMaster::utilityCleanupState()
 {
 }
 
+int DummyChannelMaster::utilityGetFirmwareVersion()
+{
+  return 0;
+}
+
 } // namespace Rorc
 } // namespace AliceO2

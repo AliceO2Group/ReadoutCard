@@ -263,5 +263,10 @@ void CruChannelMaster::utilityCleanupState()
   ChannelUtility::cruCleanupState(getSerialNumber(), getChannelNumber());
 }
 
+int CruChannelMaster::utilityGetFirmwareVersion()
+{
+  return getBarUserspace()[CruRegisterIndex::FIRMWARE_COMPILE_INFO];
+}
+
 } // namespace Rorc
 } // namespace AliceO2

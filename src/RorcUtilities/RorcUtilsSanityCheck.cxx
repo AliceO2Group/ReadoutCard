@@ -27,9 +27,6 @@ namespace {
 class ProgramSanityCheck: public RorcUtilsProgram
 {
   public:
-    virtual ~ProgramSanityCheck()
-    {
-    }
 
     virtual UtilsDescription getDescription()
     {

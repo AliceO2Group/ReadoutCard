@@ -31,6 +31,11 @@ bfs::path fifo(int serial, int channel)
   return b::str(b::format("%s/rorc_%i/channel_%i/ready_fifo") % DIR_SHAREDMEM % serial % channel);
 }
 
+std::string namedMutex(int serial, int channel)
+{
+  return b::str(b::format("rorc_%i_channel_%i_mutex") % serial % channel);
+}
+
 } // namespace ChannelPaths
 } // namespace Rorc
 } // namespace AliceO2

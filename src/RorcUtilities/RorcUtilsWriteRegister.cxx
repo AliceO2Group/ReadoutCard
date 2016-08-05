@@ -19,14 +19,11 @@ const char* NOREAD_SWITCH("noread");
 class ProgramWriteRegister: public RorcUtilsProgram
 {
   public:
-    virtual ~ProgramWriteRegister()
-    {
-    }
 
     virtual UtilsDescription getDescription()
     {
       return UtilsDescription("Write Register", "Write a value to a single register",
-          "./rorc-reg-write --serial=12345 --channel=0 -a0x8 -v0");
+          "./rorc-reg-write --serial=12345 --channel=0 --address=0x8 --value=0");
     }
 
     virtual void addOptions(boost::program_options::options_description& options)

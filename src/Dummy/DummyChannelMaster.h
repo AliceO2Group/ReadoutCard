@@ -40,6 +40,7 @@ class DummyChannelMaster : public ChannelMasterInterface, public ChannelUtilityI
     virtual void utilitySetLedState(bool state) override;
     virtual void utilitySanityCheck(std::ostream& os) override;
     virtual void utilityCleanupState() override;
+    virtual int utilityGetFirmwareVersion() override;
 
   private:
 

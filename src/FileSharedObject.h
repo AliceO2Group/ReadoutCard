@@ -10,6 +10,7 @@
 #include <boost/interprocess/managed_mapped_file.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
+#include <boost/interprocess/sync/named_mutex.hpp>
 #include "RorcException.h"
 #include "Util.h"
 
@@ -86,6 +87,28 @@ class FileSharedObject
     T* sharedObjectPointer;
 };
 
+
+/// Helper class for file locks. Throws in constructor if it can't get a lock.
+template <typename Lock, typename ExceptionType = LockException>
+class ThrowingLockGuard
+{
+  public:
+    ThrowingLockGuard(Lock* lock) : lock(lock)
+    {
+      if (!lock->try_lock()) {
+        BOOST_THROW_EXCEPTION(ExceptionType() << errinfo_rorc_generic_message("Failed to acquire lock"));
+      }
+    }
+
+    ~ThrowingLockGuard()
+    {
+      lock->unlock();
+    }
+
+  private:
+    Lock* lock;
+};
+
 /// Class for mapping a shared object stored in a file to a pointer, whose access is controlled by a file lock.
 /// It wraps the FileSharedObject class.
 /// Unfortunately, file locks are only guaranteed to work on a per-process basis.
@@ -114,7 +137,9 @@ class LockedFileSharedObject
         find_or_construct_tag tag,
         Args&&...             args
         )
-        : fileLock(lockPath),
+        : toucher(lockPath.c_str()),
+          lock(lockPath.c_str()),
+          throwingLock(&lock),
           fileSharedObject(sharedFilePath, sharedFileSize, sharedObjectName, tag,
               std::forward<Args>(args)...)
     {
@@ -133,7 +158,9 @@ class LockedFileSharedObject
         const std::string& sharedObjectName,
         find_only_tag      tag
         )
-        : fileLock(lockPath),
+        : toucher(lockPath.c_str()),
+          lock(lockPath.c_str()),
+          throwingLock(&lock),
           fileSharedObject(sharedFilePath, sharedFileSize, sharedObjectName, tag)
     {
     }
@@ -144,46 +171,16 @@ class LockedFileSharedObject
     }
 
   private:
-    /// Helper class for file locks. Throws in constructor if it can't get a lock.
-    class ThrowingFileLock
-    {
-      public:
-        inline ThrowingFileLock(bfs::path fileLockPath)
-        try : toucher(fileLockPath), lock(fileLockPath.c_str())
+      struct Toucher
+      {
+        Toucher(const bfs::path& path)
         {
-          if (!lock.try_lock()) {
-            BOOST_THROW_EXCEPTION(FileLockException()
-                << errinfo_rorc_generic_message("Failed to acquire file lock")
-                << errinfo_rorc_filename(fileLockPath.string()));
-          }
+          Util::touchFile(path);
         }
-        catch (const bip::interprocess_exception& e)
-        {
-          BOOST_THROW_EXCEPTION(FileLockException()
-              << errinfo_rorc_generic_message("Failed to initialize file lock")
-              << errinfo_rorc_possible_causes({e.what()})
-              << errinfo_rorc_filename(fileLockPath.string()));
-        }
+      } toucher;
 
-        inline ~ThrowingFileLock()
-        {
-          lock.unlock();
-        }
-
-      private:
-        // "trick" to touch a file in the initializer list
-        struct Toucher
-        {
-          Toucher(const bfs::path& path)
-          {
-            Util::touchFile(path);
-          }
-        } toucher;
-
-        bip::file_lock lock;
-    };
-
-    ThrowingFileLock fileLock;
+    bip::file_lock lock;
+    ThrowingLockGuard<decltype(lock), FileLockException> throwingLock;
     FileSharedObject<T> fileSharedObject;
 };
 

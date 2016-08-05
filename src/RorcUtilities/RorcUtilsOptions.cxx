@@ -53,11 +53,11 @@ inline std::string getLongSwitch(const std::string& swtch)
 
 namespace option {
 // General options
-static Option<int> channel("channel,c", "Channel");
-static Option<std::string> registerAddress("address,a", "Register address in hex format");
-static Option<int> registerRange("regrange,r", "Amount of registers to print past given address");
-static Option<int> serialNumber("serial,s", "Serial number");
-static Option<std::string> registerValue("value,v", "Register value, either in decimal or hex (prefix with 0x)");
+static Option<int> channel("channel", "Channel");
+static Option<std::string> registerAddress("address", "Register address in hex format");
+static Option<int> registerRange("regrange", "Amount of registers to print past given address");
+static Option<int> serialNumber("serial", "Serial number");
+static Option<std::string> registerValue("value", "Register value, either in decimal or hex (prefix with 0x)");
 
 // Options for ChannelParameters
 static Option<size_t> cpDmaPageSize("cp-dma-pagesize", "RORC page size in kibibytes", true, 4l);
@@ -131,24 +131,6 @@ po::variables_map getVariablesMap(int argc, char** argv, const po::options_descr
         << errinfo_rorc_generic_message("Unknown option '" + e.get_option_name() + "'"));
   }
   return variablesMap;
-}
-
-void printHelp (const UtilsDescription& util, const po::options_description& optionsDescription)
-{
-  cout << "#### RORC Utility: " << util.name << "\n"
-  << util.description << '\n'
-  << '\n'
-  << optionsDescription
-  << '\n'
-  << "Example:\n"
-  << "  " << util.usage << '\n';
-}
-
-void printErrorAndHelp(const std::string& errorMessage, const UtilsDescription& utilsDescription,
-    const boost::program_options::options_description& optionsDescription)
-{
-  cout << errorMessage << "\n\n";
-  printHelp(utilsDescription, optionsDescription);
 }
 
 void addOptionHelp(po::options_description& optionsDescription)

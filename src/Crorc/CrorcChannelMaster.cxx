@@ -66,7 +66,6 @@ void CrorcChannelMaster::constructorCommon()
   Util::makeParentDirectories(ChannelPaths::state(serial, channel));
   Util::makeParentDirectories(ChannelPaths::fifo(serial, channel));
   Util::makeParentDirectories(ChannelPaths::lock(serial, channel));
-  Util::touchFile(ChannelPaths::lock(serial, channel));
 
   resetSmartPtr(mappedFileFifo, ChannelPaths::fifo(serial, channel).c_str());
 
@@ -519,6 +518,17 @@ void CrorcChannelMaster::utilitySanityCheck(std::ostream& os)
 void CrorcChannelMaster::utilityCleanupState()
 {
   ChannelUtility::crorcCleanupState(getSerialNumber(), getChannelNumber());
+}
+
+int CrorcChannelMaster::utilityGetFirmwareVersion()
+{
+  int pciLoopPerUsec;
+  int rorcRevision;
+  int diuVersion;
+  int returnCode = ddlFindDiuVersion(getBarUserspace(), pciLoopPerUsec, &rorcRevision, &diuVersion);
+  THROW_IF_BAD_STATUS(returnCode, CrorcInitDiuException()
+      ADD_ERRINFO(returnCode, "Failed to get C-RORC revision"));
+  return rorcRevision;
 }
 
 } // namespace Rorc

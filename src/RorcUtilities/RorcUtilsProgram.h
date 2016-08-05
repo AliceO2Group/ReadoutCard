@@ -47,6 +47,8 @@ class RorcUtilsProgram
     /// Should output be verbose
     bool isVerbose();
 
+    void printHelp (const boost::program_options::options_description& optionsDescription);
+
   private:
 
     bool verbose;

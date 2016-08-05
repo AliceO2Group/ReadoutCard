@@ -59,15 +59,15 @@ void ChannelMaster::constructorCommonPhaseOne()
   makeParentDirectories(ChannelPaths::state(serialNumber, channelNumber));
   makeParentDirectories(ChannelPaths::fifo(serialNumber, channelNumber));
   makeParentDirectories(ChannelPaths::lock(serialNumber, channelNumber));
-  touchFile(ChannelPaths::lock(serialNumber, channelNumber));
 
-  try {
-    resetSmartPtr(sharedData, ChannelPaths::lock(serialNumber, channelNumber),
-        ChannelPaths::state(serialNumber, channelNumber), sharedDataSize(), sharedDataName(),
-        FileSharedObject::find_or_construct);
-  } catch (std::exception& e) {
-    BOOST_THROW_EXCEPTION(e);
-  }
+  resetSmartPtr(sharedData, ChannelPaths::lock(serialNumber, channelNumber),
+      ChannelPaths::state(serialNumber, channelNumber), sharedDataSize(), sharedDataName(),
+      FileSharedObject::find_or_construct);
+
+  resetSmartPtr(interProcessMutex, bip::open_or_create,
+      ChannelPaths::namedMutex(serialNumber, channelNumber).c_str());
+
+  resetSmartPtr(mutexGuard, interProcessMutex.get());
 }
 
 void ChannelMaster::constructorCommonPhaseTwo()

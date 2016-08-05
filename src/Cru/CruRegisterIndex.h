@@ -47,7 +47,6 @@ static constexpr size_t DESCRIPTOR_TABLE_SIZE = 5;
 /// Some kind of control register.
 /// One can "Set status to send status for every page not only for the last one to write the entire status memory" by
 /// writing 0x1 into this (not sure what that means).
-/// (No idea what that description means)
 /// Byte address: 0x24
 static constexpr size_t SEND_STATUS = 6;
 
@@ -88,6 +87,11 @@ static constexpr size_t DEBUG_FIFO_POP = 156;
 /// A write to this register will push a value into the debug FIFO
 /// Byte address: 0x274
 static constexpr size_t DEBUG_FIFO_PUSH = 157;
+
+/// Register containing compilation info of the firmware
+/// Can be used as a sort of version number
+/// Byte address: 0x280
+static constexpr size_t FIRMWARE_COMPILE_INFO = 160;
 
 /// Convert an index to a byte address
 constexpr inline size_t toByteAddress(size_t address32)

@@ -69,7 +69,8 @@ struct RorcException : virtual boost::exception, virtual std::exception
 struct RorcPdaException : virtual RorcException {};
 struct MemoryMapException : virtual RorcException {};
 struct InvalidParameterException : virtual RorcException {};
-struct FileLockException : virtual RorcException {};
+struct LockException : virtual RorcException {};
+struct FileLockException : virtual LockException {};
 struct DeviceFinderException : virtual RorcException {};
 struct SharedStateException : virtual RorcException {};
 struct SharedObjectNotFoundException : virtual RorcException {};

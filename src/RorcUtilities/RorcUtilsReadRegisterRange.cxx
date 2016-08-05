@@ -17,9 +17,6 @@ namespace {
 class ProgramReadRegisterRange: public RorcUtilsProgram
 {
   public:
-    virtual ~ProgramReadRegisterRange()
-    {
-    }
 
     virtual UtilsDescription getDescription()
     {

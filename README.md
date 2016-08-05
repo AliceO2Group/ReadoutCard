@@ -167,7 +167,7 @@ until then, we must initialize and allocate manually.
 
 2. Allocate hugepages
   ~~~
-  echo [number] > /proc/sys/vm/nr\_hugepages
+  echo 1024 > /proc/sys/vm/nr_hugepages
   ~~~
   Where [number] is enough to cover the DMA buffer needs.
   By default, hugepages are 2 MB. 

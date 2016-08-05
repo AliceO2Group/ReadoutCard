@@ -97,6 +97,7 @@ build_util_exec(rorc-cru-blink RorcUtilities/RorcUtilsCruBlink.cxx)
 build_util_exec(rorc-sanity-check RorcUtilities/RorcUtilsSanityCheck.cxx)
 build_util_exec(rorc-channel-cleanup RorcUtilities/RorcUtilsCleanup.cxx)
 build_util_exec(rorc-channel-init RorcUtilities/RorcUtilsInitChannel.cxx)
+build_util_exec(rorc-cru-experimental-dma RorcUtilities/RorcUtilsCruExperimentalDma.cxx)
 
 
 # -------

@@ -133,7 +133,6 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
 
       private:
         ChannelParameters params;
-        // TODO mutex to prevent simultaneous intraprocess access?
     };
 
     /// Serial number of the device
@@ -147,6 +146,12 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
 
     /// Memory mapped data stored in the shared state file
     boost::scoped_ptr<FileSharedObject::LockedFileSharedObject<SharedData>> sharedData;
+
+    /// Mutex to guard against both interprocess and intraprocess simultaneous access
+    boost::scoped_ptr<boost::interprocess::named_mutex> interProcessMutex;
+
+    /// Lock guard for interprocess_mutex
+    boost::scoped_ptr<FileSharedObject::ThrowingLockGuard<boost::interprocess::named_mutex>> mutexGuard;
 
     /// PDA device objects
     boost::scoped_ptr<RorcDevice> rorcDevice;

@@ -18,9 +18,6 @@ using namespace AliceO2::Rorc::Util;
 class ProgramReadRegister: public RorcUtilsProgram
 {
   public:
-    virtual ~ProgramReadRegister()
-    {
-    }
 
     virtual UtilsDescription getDescription()
     {

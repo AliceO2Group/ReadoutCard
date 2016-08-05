@@ -19,16 +19,14 @@
 #include "RorcUtilsProgram.h"
 #include "Util.h"
 
-using namespace AliceO2::Rorc::Util;
+using namespace ::AliceO2::Rorc::Util;
+using namespace ::AliceO2::Rorc;
 using std::cout;
 using std::endl;
 
 class ProgramDmaBench: public RorcUtilsProgram
 {
   public:
-    virtual ~ProgramDmaBench()
-    {
-    }
 
     virtual UtilsDescription getDescription()
     {
@@ -48,6 +46,7 @@ class ProgramDmaBench: public RorcUtilsProgram
       int serialNumber = Options::getOptionSerialNumber(map);
       int channelNumber = Options::getOptionChannel(map);
       auto params = Options::getOptionsChannelParameters(map);
+      const auto maxTime = std::chrono::seconds(10);
       params.generator.dataSize = params.dma.pageSize;
       params.initialResetLevel = AliceO2::Rorc::ResetLevel::RORC;
 
@@ -58,7 +57,7 @@ class ProgramDmaBench: public RorcUtilsProgram
       std::this_thread::sleep_for(std::chrono::microseconds(500)); // XXX See README.md
 
       // Vector to keep track of event numbers
-      const size_t maxPagesToPush = 500l * 1000l;
+      const size_t maxPagesToPush = 50l * 1000l * 1000l;
       struct EventNumber {
           int actual;
           int expected;
@@ -67,10 +66,10 @@ class ProgramDmaBench: public RorcUtilsProgram
       eventNumbers.reserve(maxPagesToPush);
 
       cout << "### Starting benchmark" << endl;
+      cout << "Max time = " << maxTime.count() << " seconds\n";
 
       // Values & function to keep track of time
       const auto startTime = std::chrono::high_resolution_clock::now();
-      const auto maxTime = std::chrono::seconds(3);
       auto isMaxTimeExceeded = [&]() { return (std::chrono::high_resolution_clock::now() - startTime) > maxTime; };
 
       if (false) {
@@ -149,6 +148,8 @@ class ProgramDmaBench: public RorcUtilsProgram
       int nonConsecutives = 0;
       int unexpecteds = 0;
       for (size_t i = 0; (i + 1) < eventNumbers.size(); ++i) {
+        if (isSigInt()) { break; }
+
         if (eventNumbers[i].actual != (eventNumbers[i + 1].actual - 1)) {
           nonConsecutives++;
           if (isVerbose()) {

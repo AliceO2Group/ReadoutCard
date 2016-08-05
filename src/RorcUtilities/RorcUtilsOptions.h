@@ -20,17 +20,6 @@ namespace Rorc {
 namespace Util {
 namespace Options {
 
-/// Print a help message to standard output based on the given parameters
-void printHelp(const UtilsDescription& utilDescription,
-    const boost::program_options::options_description& optionsDescription);
-
-/// Print an error and help message to standard output based on the given parameters
-void printErrorAndHelp(const std::string& errorMessage, const UtilsDescription& utilsDescription,
-    const boost::program_options::options_description& optionsDescription);
-
-void printErrorAndHelp(const std::exception& exception, const UtilsDescription& utilsDescription,
-    const boost::program_options::options_description& optionsDescription);
-
 /// Create an options_description object, with the help switch already added
 boost::program_options::options_description createOptionsDescription();
 

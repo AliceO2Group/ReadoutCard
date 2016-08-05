@@ -25,11 +25,6 @@ namespace {
 class ProgramPrintFifo: public RorcUtilsProgram
 {
   public:
-    static constexpr int headerInterval = 32;
-
-    virtual ~ProgramPrintFifo()
-    {
-    }
 
     virtual UtilsDescription getDescription()
     {

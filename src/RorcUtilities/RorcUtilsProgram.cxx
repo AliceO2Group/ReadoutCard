@@ -7,10 +7,12 @@
 #include <iostream>
 #include <iomanip>
 #include <atomic>
+#include <boost/version.hpp>
+#include "RORC/Version.h"
 #include "Util.h"
 #include "RorcUtilsOptions.h"
 #include "RorcException.h"
-#include <boost/version.hpp>
+
 
 namespace AliceO2 {
 namespace Rorc {
@@ -28,6 +30,10 @@ namespace {
   {
     flagSigInt = true;
   }
+
+  const char* HELP_SWITCH = "help";
+  const char* VERBOSE_SWITCH = "verbose";
+  const char* VERSION_SWITCH = "version";
 }
 
 RorcUtilsProgram::RorcUtilsProgram()
@@ -39,15 +45,28 @@ RorcUtilsProgram::~RorcUtilsProgram()
 {
 }
 
+void RorcUtilsProgram::printHelp (const po::options_description& optionsDescription)
+{
+  auto util = getDescription();
+  cout << "#### RORC Utility: " << util.name << "\n"
+  << util.description << '\n'
+  << '\n'
+  << optionsDescription
+  << '\n'
+  << "Example:\n"
+  << "  " << util.usage << '\n';
+}
+
 int RorcUtilsProgram::execute(int argc, char** argv)
 {
   Util::setSigIntHandler(gotSigInt);
 
   auto optionsDescription = Options::createOptionsDescription();
-  auto printHelp = [&](){ Options::printHelp(getDescription(), optionsDescription); };
+  auto prnHelp = [&](){ printHelp(optionsDescription); };
 
   // We add a verbose switch
-  optionsDescription.add_options()("verbose,v", "Verbose output (usually only affects error output)");
+  optionsDescription.add_options()(VERBOSE_SWITCH, "Verbose output (usually only affects error output)");
+  optionsDescription.add_options()(VERSION_SWITCH, "Display RORC library version");
 
   // Subclass will add own options
   addOptions(optionsDescription);
@@ -56,12 +75,18 @@ int RorcUtilsProgram::execute(int argc, char** argv)
     // Parse options and get the resulting map of variables
     auto variablesMap = Options::getVariablesMap(argc, argv, optionsDescription);
 
-    if (variablesMap.count("help")) {
-      printHelp();
+    if (variablesMap.count(HELP_SWITCH)) {
+      prnHelp();
       return 0;
     }
 
-    verbose = bool(variablesMap.count("verbose"));
+    if (variablesMap.count(VERSION_SWITCH)) {
+      cout << "RORC lib     " << Core::Version::getString() << '\n' << "VCS version  " << Core::Version::getRevision()
+          << '\n';
+      return 0;
+    }
+
+    verbose = bool(variablesMap.count(VERBOSE_SWITCH));
 
     // Start the actual program
     mainFunction(variablesMap);
@@ -69,7 +94,7 @@ int RorcUtilsProgram::execute(int argc, char** argv)
   catch (ProgramOptionException& e) {
     auto message = boost::get_error_info<AliceO2::Rorc::errinfo_rorc_generic_message>(e);
     std::cout << "Program options invalid: " << *message << "\n\n";
-    printHelp();
+    prnHelp();
   }
   catch (std::exception& e) {
 #if (BOOST_VERSION >= 105400)

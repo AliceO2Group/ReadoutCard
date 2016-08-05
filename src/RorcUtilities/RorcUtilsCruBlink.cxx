@@ -23,9 +23,6 @@ namespace {
 class ProgramCruBlink: public RorcUtilsProgram
 {
   public:
-    virtual ~ProgramCruBlink()
-    {
-    }
 
     virtual UtilsDescription getDescription()
     {

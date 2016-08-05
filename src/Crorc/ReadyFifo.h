@@ -45,6 +45,8 @@ union ReadyFifo
     std::array<char, READYFIFO_ENTRIES * sizeof(Entry)> dataChar;
 };
 
+// These asserts are to check if the ReadyFifo struct is the expected size, and is not being padded or something like
+// that. The size is critical, because the structure must map exactly to what the C-RORC expects
 static_assert(sizeof(ReadyFifo::Entry) == 8, "Size of ReadyFifo::Entry invalid");
 static_assert(sizeof(ReadyFifo) == (READYFIFO_ENTRIES * sizeof(ReadyFifo::Entry)), "Size of ReadyFifo invalid");
 

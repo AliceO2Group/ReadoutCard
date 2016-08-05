@@ -21,9 +21,6 @@ namespace {
 class ProgramListCards: public RorcUtilsProgram
 {
   public:
-    virtual ~ProgramListCards()
-    {
-    }
 
     virtual UtilsDescription getDescription()
     {

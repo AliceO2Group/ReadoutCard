@@ -34,10 +34,6 @@ class ProgramCleanup: public RorcUtilsProgram
 {
   public:
 
-    virtual ~ProgramCleanup()
-    {
-    }
-
     virtual UtilsDescription getDescription()
     {
       return UtilsDescription("Cleanup", "Cleans up RORC state", "./rorc-cleanup --serial=12345 --channel=0");
