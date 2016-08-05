@@ -1,18 +1,19 @@
 ///
-/// \file RorcUtilsProgram.h
+/// \file Program.h
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
 #pragma once
 
 #include <boost/program_options.hpp>
-#include "RorcUtilsDescription.h"
-#include "RorcUtilsCommon.h"
+#include "Utilities/Common.h"
+#include "Utilities/Options.h"
+#include "Utilities/UtilsDescription.h"
 #include "RorcException.h"
 
 namespace AliceO2 {
 namespace Rorc {
-namespace Util {
+namespace Utilities {
 
 /// Helper class for making a RORC utility program. It handles:
 /// - Creation of the options_descripotion object
@@ -20,12 +21,12 @@ namespace Util {
 /// - Help message
 /// - Exceptions & error messages
 /// - SIGINT signals
-class RorcUtilsProgram
+class Program
 {
   public:
 
-    RorcUtilsProgram();
-    virtual ~RorcUtilsProgram();
+    Program();
+    virtual ~Program();
 
     /// Execute the program using the given arguments
     int execute(int argc, char** argv);
@@ -54,6 +55,6 @@ class RorcUtilsProgram
     bool verbose;
 };
 
-} // namespace Util
+} // namespace Utilities
 } // namespace Rorc
 } // namespace AliceO2

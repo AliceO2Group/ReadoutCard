@@ -1,24 +1,24 @@
 ///
-/// \file RorcUtilsInitChannel.cxx
+/// \file ProgramInitChannel.cxx
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 /// \brief Utility that initializes a RORC channel
 ///
 
+#include <Utilities/Common.h>
+#include <Utilities/Options.h>
+#include <Utilities/Program.h>
 #include <iostream>
 #include "RORC/ChannelFactory.h"
 #include "RorcDevice.h"
-#include "RorcUtilsOptions.h"
-#include "RorcUtilsCommon.h"
-#include "RorcUtilsProgram.h"
 
-using namespace AliceO2::Rorc::Util;
+using namespace AliceO2::Rorc::Utilities;
 using namespace AliceO2::Rorc;
 using std::cout;
 using std::endl;
 
 namespace {
-class ProgramListCards: public RorcUtilsProgram
+class ProgramInitChannel: public Program
 {
   public:
 
@@ -67,5 +67,5 @@ class ProgramListCards: public RorcUtilsProgram
 
 int main(int argc, char** argv)
 {
-  return ProgramListCards().execute(argc, argv);
+  return ProgramInitChannel().execute(argc, argv);
 }

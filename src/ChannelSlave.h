@@ -6,7 +6,7 @@
 #pragma once
 
 #include "RorcDevice.h"
-#include "PdaBar.h"
+#include "Pda/PdaBar.h"
 #include "RORC/ChannelSlaveInterface.h"
 
 namespace AliceO2 {
@@ -37,7 +37,7 @@ class ChannelSlave: public ChannelSlaveInterface
     RorcDevice rorcDevice;
 
     /// PDA BAR object
-    PdaBar pdaBar;
+    Pda::PdaBar pdaBar;
 };
 
 } // namespace Rorc

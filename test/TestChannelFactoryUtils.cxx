@@ -4,7 +4,7 @@
 ///
 
 #include "RORC/CardType.h"
-#include "ChannelFactoryUtils.h"
+#include "Factory/ChannelFactoryUtils.h"
 #include <map>
 #include <memory>
 

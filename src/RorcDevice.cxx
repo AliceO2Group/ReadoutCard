@@ -11,10 +11,11 @@
 #include <boost/filesystem/fstream.hpp>
 #include <functional>
 #include <iostream>
-#include "PdaBar.h"
-#include "PdaDevice.h"
+#include "Pda/PdaBar.h"
+#include "Pda/PdaDevice.h"
 #include "RorcException.h"
-#include "Crorc.h"
+#include "Crorc/Crorc.h"
+#include "Util.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -40,7 +41,7 @@ RorcDevice::RorcDevice(int serialNumber)
 {
   try {
     for (auto& type : deviceTypes) {
-      pdaDevice.reset(new PdaDevice(type.pciId));
+      Util::resetSmartPtr(pdaDevice, type.pciId);
       auto pciDevices = pdaDevice->getPciDevices();
 
       for (auto& pciDevice : pciDevices) {
@@ -72,7 +73,7 @@ std::vector<RorcDevice::CardDescriptor> RorcDevice::enumerateDevices()
   std::vector<RorcDevice::CardDescriptor> cards;
 
   for (auto& type : deviceTypes) {
-    PdaDevice pdaDevice(type.pciId);
+    Pda::PdaDevice pdaDevice(type.pciId);
     auto pciDevices = pdaDevice.getPciDevices();
 
     for (auto& pciDevice : pciDevices) {
@@ -91,7 +92,7 @@ std::vector<RorcDevice::CardDescriptor> RorcDevice::enumerateDevices(int serialN
   std::vector<RorcDevice::CardDescriptor> cards;
   try {
     for (auto& type : deviceTypes) {
-      PdaDevice pdaDevice(type.pciId);
+      Pda::PdaDevice pdaDevice(type.pciId);
       auto pciDevices = pdaDevice.getPciDevices();
 
       for (auto& pciDevice : pciDevices) {
@@ -121,7 +122,7 @@ std::vector<RorcDevice::CardDescriptor> RorcDevice::enumerateDevices(int serialN
 int crorcGetSerial(PciDevice* pciDevice)
 {
   int channel = 0; // Must use channel 0 to access flash
-  PdaBar pdaBar(pciDevice, channel);
+  Pda::PdaBar pdaBar(pciDevice, channel);
   return Crorc::getSerial(pdaBar.getUserspaceAddress());
 }
 

@@ -9,20 +9,18 @@
 #include <iostream>
 #include <iomanip>
 #include <boost/exception/diagnostic_information.hpp>
-#include "ChannelUtilityFactory.h"
-#include "RorcUtilsOptions.h"
-#include "RorcUtilsCommon.h"
-#include "RorcUtilsProgram.h"
+#include "Utilities/Program.h"
+#include "Factory/ChannelUtilityFactory.h"
 #include "RorcException.h"
 
-using namespace AliceO2::Rorc::Util;
+using namespace AliceO2::Rorc::Utilities;
 using namespace AliceO2::Rorc;
 namespace b = boost;
 using std::cout;
 using std::endl;
 
 namespace {
-class ProgramPrintFifo: public RorcUtilsProgram
+class ProgramPrintFifo: public Program
 {
   public:
 

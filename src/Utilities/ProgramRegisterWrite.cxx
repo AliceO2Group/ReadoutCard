@@ -5,18 +5,16 @@
 /// \brief Utility that writes to a register on a RORC
 ///
 
+#include "Utilities/Program.h"
 #include "RORC/ChannelFactory.h"
-#include "RorcUtilsOptions.h"
-#include "RorcUtilsCommon.h"
-#include "RorcUtilsProgram.h"
 
-using namespace AliceO2::Rorc::Util;
+using namespace AliceO2::Rorc::Utilities;
 
 namespace {
 
 const char* NOREAD_SWITCH("noread");
 
-class ProgramWriteRegister: public RorcUtilsProgram
+class ProgramRegisterWrite: public Program
 {
   public:
 
@@ -57,5 +55,5 @@ class ProgramWriteRegister: public RorcUtilsProgram
 
 int main(int argc, char** argv)
 {
-  return ProgramWriteRegister().execute(argc, argv);
+  return ProgramRegisterWrite().execute(argc, argv);
 }

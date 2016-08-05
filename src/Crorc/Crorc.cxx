@@ -6,6 +6,8 @@
 #include "Crorc.h"
 
 #include <pda.h>
+#include <string>
+#include <memory>
 #include "c/rorc/rorc.h"
 
 namespace AliceO2 {
@@ -44,7 +46,6 @@ int getSerial(volatile void* barAddress)
 
   return serial;
 }
-
 
 } // namespace Crorc
 } // namespace Rorc

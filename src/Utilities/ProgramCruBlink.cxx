@@ -1,26 +1,24 @@
 ///
-/// \file RorcUtilsCruBlink.cxx
+/// \file ProgramCruBlink.cxx
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 /// \brief Utility that blinks the CRU LED
 ///
 
+#include "Utilities/Program.h"
 #include <iostream>
 #include <thread>
 #include <chrono>
-#include "ChannelUtilityFactory.h"
+#include "Factory/ChannelUtilityFactory.h"
 #include "RORC/ChannelFactory.h"
-#include "RorcUtilsOptions.h"
-#include "RorcUtilsCommon.h"
-#include "RorcUtilsProgram.h"
 #include "RorcException.h"
 
-using namespace AliceO2::Rorc::Util;
+using namespace AliceO2::Rorc::Utilities;
 using std::cout;
 using std::endl;
 
 namespace {
-class ProgramCruBlink: public RorcUtilsProgram
+class ProgramCruBlink: public Program
 {
   public:
 

@@ -1,5 +1,5 @@
 ///
-/// \file RorcUtilsOptions.h
+/// \file Options.h
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 /// \brief Functions for the RORC utilities to handle program options
@@ -10,14 +10,14 @@
 #include <boost/program_options.hpp>
 #include <boost/exception/all.hpp>
 #include <boost/exception/diagnostic_information.hpp>
+#include <Utilities/UtilsDescription.h>
 #include <iostream>
-#include "RorcUtilsDescription.h"
 #include "RorcException.h"
 #include "RORC/ChannelParameters.h"
 
 namespace AliceO2 {
 namespace Rorc {
-namespace Util {
+namespace Utilities {
 namespace Options {
 
 /// Create an options_description object, with the help switch already added
@@ -44,6 +44,6 @@ int getOptionRegisterRange(const boost::program_options::variables_map& variable
 ChannelParameters getOptionsChannelParameters(const boost::program_options::variables_map& variablesMap);
 
 } // namespace Options
-} // namespace Util
+} // namespace Utilities
 } // namespace Rorc
 } // namespace AliceO2

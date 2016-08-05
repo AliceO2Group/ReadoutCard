@@ -7,12 +7,12 @@
 
 namespace AliceO2 {
 namespace Rorc {
-namespace Util {
+namespace Utilities {
 
 /// Contains some descriptive text about a RORC utility executable
 struct UtilsDescription
 {
-    inline UtilsDescription(const std::string& name, const std::string& description, const std::string& usage)
+    UtilsDescription(const std::string& name, const std::string& description, const std::string& usage)
         : name(name), description(description), usage(usage)
     {
     }
@@ -27,6 +27,6 @@ struct UtilsDescription
     const std::string usage;
 };
 
-} // namespace Util
+} // namespace Utilities
 } // namespace Rorc
 } // namespace AliceO2

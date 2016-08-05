@@ -1,21 +1,21 @@
 ///
-/// \file RorcUtilsOptions.cxx
+/// \file Options.cxx
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
-#include "RorcUtilsOptions.h"
-#include "RorcUtilsCommon.h"
-#include "RorcUtilsDescription.h"
 #include <sys/ioctl.h>
 #include <iostream>
 #include <iomanip>
 #include <bitset>
 #include <boost/algorithm/string.hpp>
+#include "Utilities/Common.h"
+#include "Utilities/Options.h"
+#include "Utilities/UtilsDescription.h"
 #include "RorcException.h"
 
 namespace AliceO2 {
 namespace Rorc {
-namespace Util {
+namespace Utilities {
 namespace Options {
 
 using std::cout;

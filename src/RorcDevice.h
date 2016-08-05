@@ -7,7 +7,7 @@
 
 #include <string>
 #include <memory>
-#include "PdaDevice.h"
+#include "Pda/PdaDevice.h"
 #include "RORC/CardType.h"
 #include "RORC/PciId.h"
 
@@ -56,7 +56,7 @@ class RorcDevice
     static std::vector<CardDescriptor> enumerateDevices(int serialNumber);
 
   private:
-    std::unique_ptr<PdaDevice> pdaDevice;
+    std::unique_ptr<Pda::PdaDevice> pdaDevice;
     PciDevice* pciDevice;
     PciId pciId;
     int serialNumber;

@@ -11,8 +11,8 @@
 
 #include <vector>
 #include <ostream>
-#include "ReadyFifo.h"
-#include "CruFifoTable.h"
+#include "Crorc/ReadyFifo.h"
+#include "Cru/CruFifoTable.h"
 #include "RORC/RegisterReadWriteInterface.h"
 
 namespace AliceO2 {

@@ -8,15 +8,13 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
-#include "ChannelUtilityFactory.h"
+#include "Factory/ChannelUtilityFactory.h"
 #include "RORC/CardType.h"
-#include "RorcUtilsOptions.h"
-#include "RorcUtilsCommon.h"
-#include "RorcUtilsProgram.h"
 #include "RorcException.h"
 #include <boost/format.hpp>
+#include "Utilities/Program.h"
 
-using namespace AliceO2::Rorc::Util;
+using namespace AliceO2::Rorc::Utilities;
 using namespace AliceO2::Rorc;
 using std::cout;
 using std::endl;
@@ -24,7 +22,7 @@ using std::endl;
 namespace b = boost;
 
 namespace {
-class ProgramSanityCheck: public RorcUtilsProgram
+class ProgramSanityCheck: public Program
 {
   public:
 

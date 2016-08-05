@@ -11,6 +11,7 @@
 
 namespace AliceO2 {
 namespace Rorc {
+namespace Pda {
 
 /// A simple wrapper around the PDA BAR object, providing some convenience functions
 class PdaBar
@@ -56,5 +57,6 @@ class PdaBar
     volatile void* userspaceAddress;
 };
 
+} // namespace Pda
 } // namespace Rorc
 } // namespace AliceO2

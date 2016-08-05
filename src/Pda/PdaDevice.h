@@ -12,6 +12,7 @@
 
 namespace AliceO2 {
 namespace Rorc {
+namespace Pda {
 
 /// Handles the creation and cleanup of the PDA DeviceOperator and PciDevice objects
 class PdaDevice
@@ -35,5 +36,6 @@ class PdaDevice
     std::vector<PciDevice*> pciDevices;
 };
 
+} // namespace Pda
 } // namespace Rorc
 } // namespace AliceO2

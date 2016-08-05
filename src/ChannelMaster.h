@@ -8,15 +8,16 @@
 #include <memory>
 #include <vector>
 #include <boost/scoped_ptr.hpp>
-#include "RorcException.h"
 #include "RORC/ChannelParameters.h"
+#include "RORC/ChannelMasterInterface.h"
+#include "RorcException.h"
 #include "FileSharedObject.h"
 #include "MemoryMappedFile.h"
 #include "TypedMemoryMappedFile.h"
 #include "RorcDevice.h"
 #include "Pda/PdaBar.h"
 #include "Pda/PdaDmaBuffer.h"
-#include "RORC/ChannelMasterInterface.h"
+
 #include "ChannelUtilityInterface.h"
 
 namespace AliceO2 {
@@ -157,7 +158,7 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
     boost::scoped_ptr<RorcDevice> rorcDevice;
 
     /// PDA BAR object
-    boost::scoped_ptr<PdaBar> pdaBar;
+    boost::scoped_ptr<Pda::PdaBar> pdaBar;
 
     /// BAR userspace address
     uint32_t volatile * barUserspace;
@@ -166,7 +167,7 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
     boost::scoped_ptr<MemoryMappedFile> mappedFilePages;
 
     /// PDA DMABuffer object for the pages
-    boost::scoped_ptr<PdaDmaBuffer> bufferPages;
+    boost::scoped_ptr<Pda::PdaDmaBuffer> bufferPages;
 
     /// Addresses to pages in the DMA buffer
     std::vector<PageAddress> pageAddresses;
@@ -203,7 +204,7 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
       return barUserspace;
     }
 
-    const PdaDmaBuffer& getBufferPages() const
+    const Pda::PdaDmaBuffer& getBufferPages() const
     {
       return *(bufferPages.get());
     }
@@ -218,7 +219,7 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
       return pageAddresses;
     }
 
-    const PdaBar& getPdaBar() const
+    const Pda::PdaBar& getPdaBar() const
     {
       return *(pdaBar.get());
     }

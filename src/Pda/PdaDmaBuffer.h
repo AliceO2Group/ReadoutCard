@@ -10,6 +10,7 @@
 
 namespace AliceO2 {
 namespace Rorc {
+namespace Pda {
 
 /// Handles the creation and cleanup of a PDA DMABuffer object, registering a user-allocated buffer and converting
 /// the scatter-gather list of the buffer into a convenient vector format
@@ -44,5 +45,6 @@ class PdaDmaBuffer
     ScatterGatherVector sgVector;
 };
 
+} // namespace Pda
 } // namespace Rorc
 } // namespace AliceO2

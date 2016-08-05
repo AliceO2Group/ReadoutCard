@@ -1,19 +1,19 @@
 ///
-/// \file RorcUtilsCleanup.cxx
+/// \file ProgramCleanup.cxx
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 /// \brief Utility that cleans up channel state
 ///
 
 #include <iostream>
-#include "ChannelUtilityFactory.h"
-#include "RorcUtilsOptions.h"
-#include "RorcUtilsCommon.h"
-#include "RorcUtilsProgram.h"
+#include "Factory/ChannelUtilityFactory.h"
 #include "RorcException.h"
 #include <boost/filesystem/operations.hpp>
+#include <Utilities/Common.h>
+#include <Utilities/Options.h>
+#include <Utilities/Program.h>
 
-using namespace AliceO2::Rorc::Util;
+using namespace AliceO2::Rorc::Utilities;
 using namespace AliceO2::Rorc;
 using std::cout;
 using std::endl;
@@ -30,7 +30,7 @@ void pushIfPresent(const Exception& exception, Vector& vector)
   }
 }
 
-class ProgramCleanup: public RorcUtilsProgram
+class ProgramCleanup: public Program
 {
   public:
 

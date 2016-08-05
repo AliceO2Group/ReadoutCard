@@ -11,7 +11,7 @@
 
 namespace AliceO2 {
 namespace Rorc {
-namespace Util {
+namespace Utilities {
 namespace Common {
 
 /// Create a string showing individual bits of the given 32-bit value
@@ -27,6 +27,6 @@ std::string makeRegisterAddressString(int address);
 std::string makeRegisterString(int address, uint32_t value);
 
 } // namespace Common
-} // namespace Util
+} // namespace Utilities
 } // namespace Rorc
 } // namespace AliceO2

@@ -4,8 +4,7 @@
 ///
 
 #include <RORC/RORC.h>
-#include "RorcUtilsOptions.h"
-
+#include "RorcException.h"
 #define BOOST_TEST_MODULE RORC_TestRorcException
 #define BOOST_TEST_MAIN
 #define BOOST_TEST_DYN_LINK

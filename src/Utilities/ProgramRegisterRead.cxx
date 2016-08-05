@@ -1,21 +1,19 @@
 ///
-/// \file RorcUtilsReadRegister.cxx
+/// \file ProgramRegisterRead.cxx
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 /// \brief Utility that reads a register from a RORC
 ///
 
+#include "Utilities/Program.h"
 #include <iostream>
 #include "RORC/ChannelFactory.h"
-#include "RorcUtilsOptions.h"
-#include "RorcUtilsCommon.h"
-#include "RorcUtilsProgram.h"
 #include "RORC/ChannelParameters.h"
 
 namespace {
-using namespace AliceO2::Rorc::Util;
+using namespace AliceO2::Rorc::Utilities;
 
-class ProgramReadRegister: public RorcUtilsProgram
+class ProgramRegisterRead: public Program
 {
   public:
 
@@ -48,5 +46,5 @@ class ProgramReadRegister: public RorcUtilsProgram
 
 int main(int argc, char** argv)
 {
-  return ProgramReadRegister().execute(argc, argv);
+  return ProgramRegisterRead().execute(argc, argv);
 }

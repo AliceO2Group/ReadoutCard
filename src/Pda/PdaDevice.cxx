@@ -22,6 +22,7 @@
 
 namespace AliceO2 {
 namespace Rorc {
+namespace Pda {
 
 namespace b = boost;
 namespace bfs = boost::filesystem;
@@ -87,6 +88,7 @@ int PdaDevice::getPciDeviceCount()
   return deviceCount;
 }
 
+} // namespace Pda
 } // namespace Rorc
 } // namespace AliceO2
 

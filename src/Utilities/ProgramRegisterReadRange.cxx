@@ -5,16 +5,14 @@
 /// \brief Utility that reads a range of registers from a RORC
 ///
 
-#include <iostream>
+#include "Utilities/Program.h"
 #include "RORC/ChannelFactory.h"
-#include "RorcUtilsOptions.h"
-#include "RorcUtilsCommon.h"
-#include "RorcUtilsProgram.h"
+#include <iostream>
 
-using namespace AliceO2::Rorc::Util;
+using namespace AliceO2::Rorc::Utilities;
 
 namespace {
-class ProgramReadRegisterRange: public RorcUtilsProgram
+class ProgramRegisterReadRange: public Program
 {
   public:
 
@@ -53,5 +51,5 @@ class ProgramReadRegisterRange: public RorcUtilsProgram
 
 int main(int argc, char** argv)
 {
-  return ProgramReadRegisterRange().execute(argc, argv);
+  return ProgramRegisterReadRange().execute(argc, argv);
 }

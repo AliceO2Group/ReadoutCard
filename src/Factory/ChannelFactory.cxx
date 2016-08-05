@@ -7,18 +7,18 @@
 #include <map>
 #include "RORC/CardType.h"
 #include "RorcException.h"
-#include "DummyChannelMaster.h"
-#include "DummyChannelSlave.h"
+#include "Dummy/DummyChannelMaster.h"
+#include "Dummy/DummyChannelSlave.h"
 #ifdef ALICEO2_RORC_PDA_ENABLED
 #  include <pda.h>
-#  include "CrorcChannelMaster.h"
-#  include "CrorcChannelSlave.h"
-#  include "CruChannelMaster.h"
-#  include "CruChannelSlave.h"
+#  include "Crorc/CrorcChannelMaster.h"
+#  include "Crorc/CrorcChannelSlave.h"
+#  include "Cru/CruChannelMaster.h"
+#  include "Cru/CruChannelSlave.h"
 #else
 #  pragma message("PDA not enabled, ChannelFactory will always return a dummy implementation")
 #endif
-#include "ChannelFactoryUtils.h"
+#include "Factory/ChannelFactoryUtils.h"
 #include <mutex>
 #include <boost/thread/lock_guard.hpp>
 

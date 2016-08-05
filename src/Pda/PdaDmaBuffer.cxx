@@ -9,7 +9,7 @@
 
 namespace AliceO2 {
 namespace Rorc {
-
+namespace Pda {
 
 PdaDmaBuffer::PdaDmaBuffer(PciDevice* pciDevice, void* userBufferAddress, size_t userBufferSize, int dmaBufferId)
     : pciDevice(pciDevice)
@@ -76,5 +76,6 @@ PdaDmaBuffer::~PdaDmaBuffer()
   PciDevice_deleteDMABuffer(pciDevice, dmaBuffer);
 }
 
+} // namespace Pda
 } // namespace Rorc
 } // namespace AliceO2

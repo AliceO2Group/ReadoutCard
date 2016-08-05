@@ -9,7 +9,7 @@
 #include <boost/format.hpp>
 #include <boost/filesystem/operations.hpp>
 #include "ChannelPaths.h"
-#include "CruRegisterIndex.h"
+#include "Cru/CruRegisterIndex.h"
 
 namespace AliceO2 {
 namespace Rorc {

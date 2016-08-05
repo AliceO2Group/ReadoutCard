@@ -3,14 +3,14 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
-#include "RorcUtilsCommon.h"
+#include <Utilities/Common.h>
 #include <iostream>
 #include <iomanip>
 #include <bitset>
 
 namespace AliceO2 {
 namespace Rorc {
-namespace Util {
+namespace Utilities {
 namespace Common {
 
 using std::cout;
@@ -56,6 +56,6 @@ std::string makeRegisterString(int address, uint32_t value)
 }
 
 } // namespace Common
-} // namespace Util
+} // namespace Utilities
 } // namespace Rorc
 } // namespace AliceO2

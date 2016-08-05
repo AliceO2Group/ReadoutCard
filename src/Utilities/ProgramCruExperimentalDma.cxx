@@ -1,21 +1,19 @@
 ///
-/// \file RorcUtilsCruExperimentalDma.cxx
+/// \file ProgramCruExperimentalDma.cxx
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 /// \brief Port of https://gitlab.cern.ch/alice-cru/pciedma_eval
 ///
 
+#include "Utilities/Program.h"
 #include <iostream>
 #include <thread>
 #include <chrono>
 #include <pda.h>
-#include "ChannelUtilityFactory.h"
+#include "Factory/ChannelUtilityFactory.h"
 #include "RORC/ChannelFactory.h"
-#include "RorcUtilsOptions.h"
-#include "RorcUtilsCommon.h"
-#include "RorcUtilsProgram.h"
 #include "RorcException.h"
-#include "CruRegisterIndex.h"
+#include "Cru/CruRegisterIndex.h"
 
 #include <cstdint>
 #include <cstdio>
@@ -29,7 +27,7 @@
 #include <ctype.h>
 #include <time.h>
 
-using namespace AliceO2::Rorc::Util;
+using namespace AliceO2::Rorc::Utilities;
 using std::cout;
 using std::endl;
 
@@ -40,7 +38,7 @@ using std::endl;
 
 namespace {
 
-class ProgramCruExperimentalDma: public RorcUtilsProgram
+class ProgramCruExperimentalDma: public Program
 {
   public:
 

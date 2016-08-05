@@ -7,20 +7,20 @@
 
 #include <iostream>
 #include <sstream>
+#include "Utilities/Options.h"
+#include "Utilities/Program.h"
+#include "Utilities/Common.h"
 #include "RorcDevice.h"
-#include "RorcUtilsOptions.h"
-#include "RorcUtilsCommon.h"
-#include "RorcUtilsProgram.h"
-#include "ChannelUtilityFactory.h"
+#include "Factory/ChannelUtilityFactory.h"
 #include <boost/format.hpp>
 
-using namespace ::AliceO2::Rorc::Util;
-using namespace ::AliceO2::Rorc;
+using namespace AliceO2::Rorc::Utilities;
+using namespace AliceO2::Rorc;
 using std::cout;
 using std::endl;
 
 namespace {
-class ProgramListCards: public RorcUtilsProgram
+class ProgramListCards: public Program
 {
   public:
 

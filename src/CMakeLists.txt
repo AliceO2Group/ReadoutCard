@@ -25,7 +25,7 @@ set(RORC_LIB_SOURCES
   MemoryMappedFile.cxx
   RorcException.cxx
   RorcStatusCode.cxx
-  RorcUtilities/RorcUtilsProgram.cxx
+  Utilities/Program.cxx
   Util.cxx
 )
 
@@ -46,8 +46,8 @@ if(PDA_FOUND)
     Pda/PdaDevice.cxx
     Pda/PdaDmaBuffer.cxx
     RorcDevice.cxx
-    RorcUtilities/RorcUtilsCommon.cxx
-    RorcUtilities/RorcUtilsOptions.cxx
+    Utilities/Common.cxx
+    Utilities/Options.cxx
   )
 endif()
 
@@ -87,17 +87,17 @@ function(build_util_exec execname filename)
 endfunction()
 
 build_util_exec(rorc-example Example.cxx)
-build_util_exec(rorc-reg-read RorcUtilities/RorcUtilsReadRegister.cxx)
-build_util_exec(rorc-reg-read-range RorcUtilities/RorcUtilsReadRegisterRange)
-build_util_exec(rorc-reg-write RorcUtilities/RorcUtilsWriteRegister.cxx)
-build_util_exec(rorc-dma-bench RorcUtilities/RorcUtilsDmaBench.cxx)
-build_util_exec(rorc-list-cards RorcUtilities/RorcUtilsListCards.cxx)
-build_util_exec(rorc-print-fifo RorcUtilities/RorcUtilsPrintFifo.cxx)
-build_util_exec(rorc-cru-blink RorcUtilities/RorcUtilsCruBlink.cxx)
-build_util_exec(rorc-sanity-check RorcUtilities/RorcUtilsSanityCheck.cxx)
-build_util_exec(rorc-channel-cleanup RorcUtilities/RorcUtilsCleanup.cxx)
-build_util_exec(rorc-channel-init RorcUtilities/RorcUtilsInitChannel.cxx)
-build_util_exec(rorc-cru-experimental-dma RorcUtilities/RorcUtilsCruExperimentalDma.cxx)
+build_util_exec(rorc-reg-read Utilities/ProgramRegisterRead.cxx)
+build_util_exec(rorc-reg-read-range Utilities/ProgramRegisterReadRange)
+build_util_exec(rorc-reg-write Utilities/ProgramRegisterWrite.cxx)
+build_util_exec(rorc-list-cards Utilities/ProgramListCards.cxx)
+build_util_exec(rorc-print-fifo Utilities/ProgramPrintFifo.cxx)
+build_util_exec(rorc-cru-blink Utilities/ProgramCruBlink.cxx)
+build_util_exec(rorc-sanity-check Utilities/ProgramSanityCheck.cxx)
+build_util_exec(rorc-channel-init Utilities/ProgramInitChannel.cxx)
+build_util_exec(rorc-channel-cleanup Utilities/ProgramCleanup.cxx)
+build_util_exec(rorc-dma-bench Utilities/ProgramDmaBench.cxx)
+build_util_exec(rorc-cru-experimental-dma Utilities/ProgramCruExperimentalDma.cxx)
 
 
 # -------

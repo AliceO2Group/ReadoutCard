@@ -145,7 +145,7 @@ class CrorcChannelMaster : public ChannelMaster
     boost::scoped_ptr<TypedMemoryMappedFile<ReadyFifo>> mappedFileFifo;
 
     /// PDA DMABuffer object for the Ready FIFO
-    boost::scoped_ptr<PdaDmaBuffer> bufferReadyFifo;
+    boost::scoped_ptr<Pda::PdaDmaBuffer> bufferReadyFifo;
 
     /// Memory mapped data stored in the shared state file
     boost::scoped_ptr<FileSharedObject::FileSharedObject<CrorcSharedData>> crorcSharedData;

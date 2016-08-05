@@ -7,11 +7,6 @@
 
 #pragma once
 
-#include <string>
-#include <memory>
-#include "PdaDevice.h"
-#include "RORC/CardType.h"
-
 namespace AliceO2 {
 namespace Rorc {
 namespace Crorc {

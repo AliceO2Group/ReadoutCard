@@ -12,6 +12,7 @@
 
 namespace AliceO2 {
 namespace Rorc {
+namespace Pda {
 
 PdaBar::PdaBar() : pdaBar(nullptr), barLength(-1), userspaceAddress(nullptr)
 {
@@ -34,5 +35,6 @@ PdaBar::PdaBar(PciDevice* pciDevice, int channel)
   }
 }
 
+} // namespace Pda
 } // namespace Rorc
 } // namespace AliceO2

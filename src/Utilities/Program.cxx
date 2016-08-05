@@ -1,22 +1,21 @@
 ///
-/// \file RorcUtilsProgram.cxx
+/// \file Program.cxx
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
-#include "RorcUtilsProgram.h"
 #include <iostream>
 #include <iomanip>
 #include <atomic>
 #include <boost/version.hpp>
+#include "Utilities/Options.h"
+#include "Utilities/Program.h"
 #include "RORC/Version.h"
 #include "Util.h"
-#include "RorcUtilsOptions.h"
 #include "RorcException.h"
-
 
 namespace AliceO2 {
 namespace Rorc {
-namespace Util {
+namespace Utilities {
 
 using std::cout;
 using std::endl;
@@ -36,16 +35,16 @@ namespace {
   const char* VERSION_SWITCH = "version";
 }
 
-RorcUtilsProgram::RorcUtilsProgram()
+Program::Program()
     : verbose(false)
 {
 }
 
-RorcUtilsProgram::~RorcUtilsProgram()
+Program::~Program()
 {
 }
 
-void RorcUtilsProgram::printHelp (const po::options_description& optionsDescription)
+void Program::printHelp (const po::options_description& optionsDescription)
 {
   auto util = getDescription();
   cout << "#### RORC Utility: " << util.name << "\n"
@@ -57,7 +56,7 @@ void RorcUtilsProgram::printHelp (const po::options_description& optionsDescript
   << "  " << util.usage << '\n';
 }
 
-int RorcUtilsProgram::execute(int argc, char** argv)
+int Program::execute(int argc, char** argv)
 {
   Util::setSigIntHandler(gotSigInt);
 
@@ -108,16 +107,16 @@ int RorcUtilsProgram::execute(int argc, char** argv)
   return 0;
 }
 
-bool RorcUtilsProgram::isSigInt()
+bool Program::isSigInt()
 {
   return flagSigInt;
 }
 
-bool RorcUtilsProgram::isVerbose()
+bool Program::isVerbose()
 {
   return verbose;
 }
 
-} // namespace Util
+} // namespace Utilities
 } // namespace Rorc
 } // namespace AliceO2

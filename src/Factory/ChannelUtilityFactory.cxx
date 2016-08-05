@@ -3,20 +3,21 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
-#include "ChannelUtilityFactory.h"
+#include "Factory/ChannelUtilityFactory.h"
 #include <map>
 #include "RORC/CardType.h"
-#include "DummyChannelMaster.h"
+#include "Dummy/DummyChannelMaster.h"
 #ifdef ALICEO2_RORC_PDA_ENABLED
-#  include "CrorcChannelMaster.h"
-#  include "CruChannelMaster.h"
+#  include "Crorc/CrorcChannelMaster.h"
+#  include "Cru/CruChannelMaster.h"
 #else
 #  pragma message("PDA not enabled, ChannelUtilityFactory will always return a dummy implementation")
 #endif
-#include "ChannelFactoryUtils.h"
+#include "Factory/ChannelFactoryUtils.h"
 
 namespace AliceO2 {
 namespace Rorc {
+
 using namespace FactoryHelper;
 using namespace CardTypeTag;
 

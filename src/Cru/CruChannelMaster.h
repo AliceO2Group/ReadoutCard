@@ -75,7 +75,7 @@ class CruChannelMaster : public ChannelMaster
     boost::scoped_ptr<TypedMemoryMappedFile<CruFifoTable>> mappedFileFifo;
 
     /// PDA DMABuffer object for the readyFifo
-    boost::scoped_ptr<PdaDmaBuffer> bufferFifo;
+    boost::scoped_ptr<Pda::PdaDmaBuffer> bufferFifo;
 
     /// Memory mapped data stored in the shared state file
     boost::scoped_ptr<FileSharedObject::FileSharedObject<CruSharedData>> cruSharedData;

@@ -3,7 +3,7 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
-#include "CrorcChannelSlave.h"
+#include "Crorc/CrorcChannelSlave.h"
 
 namespace AliceO2 {
 namespace Rorc {

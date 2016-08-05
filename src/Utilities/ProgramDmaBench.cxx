@@ -1,5 +1,5 @@
 ///
-/// \file RorcUtilsDmaBench.cxx
+/// \file ProgramDmaBench.cxx
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 /// \brief Utility that tests RORC DMA performance
@@ -12,19 +12,19 @@
 #include <queue>
 #include <thread>
 #include <boost/exception/diagnostic_information.hpp>
+#include <Utilities/Common.h>
+#include <Utilities/Options.h>
+#include <Utilities/Program.h>
 #include "RORC/ChannelFactory.h"
 #include "RORC/ChannelParameters.h"
-#include "RorcUtilsOptions.h"
-#include "RorcUtilsCommon.h"
-#include "RorcUtilsProgram.h"
 #include "Util.h"
 
-using namespace ::AliceO2::Rorc::Util;
+using namespace AliceO2::Rorc::Utilities;
 using namespace ::AliceO2::Rorc;
 using std::cout;
 using std::endl;
 
-class ProgramDmaBench: public RorcUtilsProgram
+class ProgramDmaBench: public Program
 {
   public:
 
