@@ -5,16 +5,18 @@
 /// \brief Port of https://gitlab.cern.ch/alice-cru/pciedma_eval
 ///
 
+
+// Notes:
+// The DMA transfer seems to work, but not consistently.
+// With shorter MAX_ROLLING (like 1500), it seems to work about 1 out of 4 times.
+// Higher (15k), it seems to nearly always work.
+
 #include "Utilities/Program.h"
 #include <iostream>
 #include <thread>
 #include <chrono>
 #include <pda.h>
-#include "Factory/ChannelUtilityFactory.h"
-#include "RORC/ChannelFactory.h"
-#include "RorcException.h"
-#include "Cru/CruRegisterIndex.h"
-
+#include <fstream>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -26,15 +28,60 @@
 #include <sys/mman.h>
 #include <ctype.h>
 #include <time.h>
+#include <boost/scoped_ptr.hpp>
+#include "Factory/ChannelUtilityFactory.h"
+#include "RORC/ChannelFactory.h"
+#include "RorcException.h"
+#include "RorcDevice.h"
+#include "MemoryMappedFile.h"
+#include "Cru/CruRegisterIndex.h"
+#include "Cru/CruFifoTable.h"
+#include "Cru/CruRegisterIndex.h"
+#include "Pda/PdaDevice.h"
+#include "Pda/PdaBar.h"
+#include "Pda/PdaDmaBuffer.h"
 
+namespace Register = AliceO2::Rorc::CruRegisterIndex;
 using namespace AliceO2::Rorc::Utilities;
+using namespace AliceO2::Rorc;
 using std::cout;
 using std::endl;
 
-#define FIFO_ENTRIES 4
-// DMA page length in bytes
-#define DMA_PAGE_LENGTH 8192
-#define NUM_OF_BUFFERS 32
+struct descriptor_entry
+{
+    uint32_t src_low;
+    uint32_t src_high;
+    uint32_t dst_low;
+    uint32_t dst_high;
+    uint32_t ctrl;
+    uint32_t reservd1;
+    uint32_t reservd2;
+    uint32_t reservd3;
+};
+
+constexpr int FIFO_ENTRIES = 4;
+
+/// DMA page length in bytes
+constexpr int DMA_PAGE_SIZE = 8 * 1024;
+
+/// DMA page length in 32-bit words
+constexpr int DMA_PAGE_SIZE_32 = DMA_PAGE_SIZE / 4;
+
+constexpr int NUM_OF_BUFFERS = 32;
+
+constexpr int MAX_ROLLING = 15000;
+
+/// Offset in bytes from start of status table to data buffer
+constexpr size_t DATA_OFFSET = 0x200;
+
+constexpr size_t DMA_BUFFER_PAGES_SIZE = 8l * 1024l * 1024l; // Should be enough...
+
+constexpr uint32_t DEFAULT_VALUE = 0xCcccCccc;
+
+constexpr int BUFFER_INDEX_PAGES = 0;
+constexpr int BUFFER_INDEX_FIFO = 0;
+
+#define USE_RORC_LIB
 
 namespace {
 
@@ -45,7 +92,7 @@ class ProgramCruExperimentalDma: public Program
     virtual UtilsDescription getDescription()
     {
       return UtilsDescription("CRU EXPERIMENTAL DMA", "!!! USE WITH CAUTION !!!",
-          "./rorc-cru-experimental-dma --serial=12345 --channel=0");
+          "./rorc-cru-experimental-dma");
     }
 
     virtual void addOptions(boost::program_options::options_description&)
@@ -56,65 +103,70 @@ class ProgramCruExperimentalDma: public Program
     {
       using namespace AliceO2::Rorc;
 
-      cout << "Warning: this utility is highly experimental and will probably leave the CRU in a bad state, requiring "
-          << "a reload of the firmware. It might also trigger a reboot.\n";
-      cout << "  To proceed, type 'y'\n";
-      cout << "  To abort, type anything else or give SIGINT (usually Ctrl-c)\n";
-      int c = getchar();
-      if (c != 'y' || isSigInt()) {
-        return;
-      }
-
-      print_data = 1;
-      print_status = 1;
-      print_descriptor = 1;
-      dma_buffer_size = 8l * 1024l * 1024l;
+//      cout << "Warning: this utility is highly experimental and will probably leave the CRU in a bad state, requiring "
+//          << "a reload of the firmware. It might also trigger a reboot.\n";
+//      cout << "  To proceed, type 'y'\n";
+//      cout << "  To abort, type anything else or give SIGINT (usually Ctrl-c)\n";
+//      int c = getchar();
+//      if (c != 'y' || isSigInt()) {
+//        return;
+//      }
 
       cout << "Starting DMA test" << endl;
       pdaDMA();
       cout << "Finished DMA test" << endl;
     }
 
-    DeviceOperator *dop;
-    DMABuffer *buffer; // = NULL;
-    uint32_t *bar_addr; // = NULL;
-    size_t dma_buffer_size;
+#ifdef USE_RORC_LIB
+    boost::scoped_ptr<RorcDevice> rorcDevice;
+    boost::scoped_ptr<Pda::PdaBar> pdaBar;
+    boost::scoped_ptr<MemoryMappedFile> mappedFilePages;
+//    boost::scoped_ptr<MemoryMappedFile> mappedFileFifo;
+    boost::scoped_ptr<Pda::PdaDmaBuffer> bufferPages;
+//    boost::scoped_ptr<Pda::PdaDmaBuffer> bufferFifo;
+    volatile uint32_t* bar;
+#else
+    DeviceOperator* dop;
+    DMABuffer* buffer;
+    uint32_t* bar;
+#endif
 
-    typedef struct _descriptor_entry
-    {
-        uint32_t src_low;
-        uint32_t src_high;
-        uint32_t dst_low;
-        uint32_t dst_high;
-        uint32_t ctrl;
-        uint32_t reservd1;
-        uint32_t reservd2;
-        uint32_t reservd3;
-    } descriptor_entry;
-    descriptor_entry *descriptor, *descriptor_usr;
+    CruFifoTable* fifoUser;
 
-    uint32_t *status, *status_usr;
-    uint32_t *data, *data_usr, *readout;
-    DMABuffer_SGNode *sglist; // = NULL;
-    int print_status;
-    int print_descriptor;
-    int print_data;
-    struct timespec t1, run_start, run_end;
+    uint32_t* data_user; ///< DMA buffer (userspace address)
+
+    timespec t1;
+    timespec run_start;
+    timespec run_end;
 
     int initPDA()
     {
       system("modprobe -r uio_pci_dma");
-      system("modprobe uio");
       system("modprobe uio_pci_dma");
 
+#ifdef USE_RORC_LIB
+      int serial = 12345;
+      int channel = 0;
+      Util::resetSmartPtr(rorcDevice, serial);
+      Util::resetSmartPtr(pdaBar, rorcDevice->getPciDevice(), channel);
+      bar = pdaBar->getUserspaceAddressU32();
+      Util::resetSmartPtr(mappedFilePages, "/mnt/hugetlbfs/rorc-cru-experimental-dma-pages", DMA_BUFFER_PAGES_SIZE);
+//      Util::resetSmartPtr(mappedFileFifo, "/tmp/rorc-cru-experimental-dma-fifo", DMA_BUFFER_FIFO_SIZE);
+      Util::resetSmartPtr(bufferPages, rorcDevice->getPciDevice(), mappedFilePages->getAddress(),
+          mappedFilePages->getSize(), BUFFER_INDEX_PAGES);
+//      Util::resetSmartPtr(bufferFifo, rorcDevice->getPciDevice(), mappedFileFifo->getAddress(),
+//          mappedFileFifo->getSize(), BUFFER_INDEX_PAGES);
+#else
       if (PDAInit() != PDA_SUCCESS) {
         printf("Error while initialization!\n");
         abort();
       }
 
       // A list of PCI ID to which PDA has to attach
-      const char *pci_ids[] = { "1172 e001", // CRU as registered at CERN
-      NULL // Delimiter
+      const char *pci_ids[] =
+      {
+         "1172 e001", // CRU as registered at CERN
+          NULL        // Delimiter
       };
 
       // The device operator manages all devices with the given IDs.
@@ -136,8 +188,7 @@ class ProgramCruExperimentalDma: public Program
       }
 
       // DMA-Buffer allocation
-      if (
-      PDA_SUCCESS != PciDevice_allocDMABuffer(device, 0, dma_buffer_size, &buffer)) {
+      if (PDA_SUCCESS != PciDevice_allocDMABuffer(device, 0, DMA_BUFFER_PAGES_SIZE, &buffer)) {
         if (PDA_SUCCESS != DeviceOperator_delete(dop, PDA_DELETE)) {
           printf("Buffer allocation totally failed!\n");
           return -1;
@@ -147,98 +198,106 @@ class ProgramCruExperimentalDma: public Program
       }
 
       // Get the bar structure and map the BAR
-      Bar *bar;
-      if (PciDevice_getBar(device, &bar, 0) != PDA_SUCCESS) {
+      Bar *pdaBar;
+      if (PciDevice_getBar(device, &pdaBar, 0) != PDA_SUCCESS) {
         printf("Can't get bar\n");
         exit(EXIT_FAILURE);
       }
 
       uint64_t length = 0;
-      if (Bar_getMap(bar, (void**) &bar_addr, &length) != PDA_SUCCESS) {
+      if (Bar_getMap(pdaBar, (void**) &bar, &length) != PDA_SUCCESS) {
         printf("Can't get map\n");
         exit(EXIT_FAILURE);
       }
+#endif
 
       return 0;
     }
 
     int initDMA()
     {
+#ifdef USE_RORC_LIB
+      auto list = bufferPages->getScatterGatherList();
+      cout << "SGL entries: " << list.size() << '\n';
+      auto entry = list.at(0);
+      cout << "SG Length: " << double(entry.size)/1024.0/1024.0 << " MiB\n";
+#else
+      DMABuffer_SGNode* sglist;
       if (DMABuffer_getSGList(buffer, &sglist) != PDA_SUCCESS) {
         printf("Can't get list ...\n");
         return -1;
       }
-
-      // IOMMU addresses
-      status = (uint32_t*) sglist->d_pointer;
-      // the start address of the descriptor table is always at the same place:
-      // adding a 0x200 offset (=status+128) to the status start address, no
-      // matter how many entries there are
-
-      descriptor = (descriptor_entry*) (status + 128);
-      data = (uint32_t*) (descriptor + FIFO_ENTRIES);
-
-      // Virtual addresses
-      status_usr = (uint32_t*) sglist->u_pointer;
-      descriptor_usr = (descriptor_entry*) (status_usr + 128);
-      data_usr = (uint32_t*) (descriptor_usr + FIFO_ENTRIES);
-
-      // Initializing statuses with 0
-      for (int i = 0; i < FIFO_ENTRIES; i++) {
-        status_usr[i] = 0;
-      }
-
-      // Allocating memory where the data will be read out to
-      // readout = (uint32_t*)calloc(FIFO_ENTRIES, 256); //dma length=256 byte
-      readout = (uint32_t*) calloc(FIFO_ENTRIES, DMA_PAGE_LENGTH);
+      cout << "SG Length: " << double(sglist->length)/1024.0/1024.0 << " MiB\n";
+#endif
 
       // Initializing the descriptor table
-      for (int i = 0; i < FIFO_ENTRIES; i++) {
-        const uint32_t ctrl = (i << 18) + (DMA_PAGE_LENGTH / 4);
-        descriptor_usr[i].ctrl = ctrl;
-        // Adresses in the card's memory (DMA source)
-        descriptor_usr[i].src_low = i * DMA_PAGE_LENGTH;
-        descriptor_usr[i].src_high = 0x0;
+#ifdef USE_RORC_LIB
+      fifoUser = reinterpret_cast<CruFifoTable*>(entry.addressUser);
+#else
+      fifoUser = reinterpret_cast<CruFifoTable*>(sglist->u_pointer);
+#endif
+//      cout << "FIFO address user       : " << (void*) fifoUser << '\n';
+      fifoUser->resetStatusEntries();
+
+      for (int i = 0; i < FIFO_ENTRIES * NUM_OF_BUFFERS; i++) {
+        auto sourceAddress = reinterpret_cast<void*>((i % NUM_OF_BUFFERS) * DMA_PAGE_SIZE);
+
         // Addresses in the RAM (DMA destination)
-        auto dst = (data + i * DMA_PAGE_LENGTH / sizeof(uint32_t));
-        descriptor_usr[i].dst_low = (uint64_t) dst & 0xffffffff;
-        descriptor_usr[i].dst_high = (uint64_t) dst >> 32;
-        //fill the reserved bit with zero
-        descriptor_usr[i].reservd1 = 0x0;
-        descriptor_usr[i].reservd2 = 0x0;
-        descriptor_usr[i].reservd3 = 0x0;
+        // the start address of the descriptor table is always at the same place:
+        // adding a 0x200 offset (=status+128) to the status start address, no
+        // matter how many entries there are
+#ifdef USE_RORC_LIB
+        uint32_t* status_device = (uint32_t*) entry.addressBus;
+#else
+        uint32_t* status_device = (uint32_t*) sglist->d_pointer;
+#endif
+        descriptor_entry* descriptor_device = (descriptor_entry*) (status_device + 128);
+        uint32_t* data_device = (uint32_t*) (descriptor_device + FIFO_ENTRIES * NUM_OF_BUFFERS);
+//        cout << "Status address device   : " << (void*) status_device << '\n';
+//        cout << "Data address device     : " << (void*) data_device << '\n';
+        auto destinationAddress = data_device + i * DMA_PAGE_SIZE_32;
+
+        fifoUser->descriptorEntries[i].setEntry(i, DMA_PAGE_SIZE_32, sourceAddress, destinationAddress);
       }
 
-      // Setting the buffer to the default value of 0xcccccccc
-      for (int i = 0; i < DMA_PAGE_LENGTH / sizeof(uint32_t) * FIFO_ENTRIES; i++) {
-        data_usr[i] = 0xcccccccc;
+      // Setting the buffer to the default value
+      data_user = reinterpret_cast<uint32_t*>(reinterpret_cast<char*>(fifoUser) + sizeof(CruFifoTable));
+//      cout << "Data address user       : " << (void*) data_user << '\n';
+      for (int i = 0; i < DMA_PAGE_SIZE_32 * FIFO_ENTRIES; i++) {
+        data_user[i] = DEFAULT_VALUE;
       }
 
       // Status base address, low and high part, respectively
-      bar_addr[0] = (uint64_t) status & 0xffffffff;
-      bar_addr[1] = (uint64_t) status >> 32;
+#ifdef USE_RORC_LIB
+      CruFifoTable* fifoDevice = reinterpret_cast<CruFifoTable*>(entry.addressBus);
+#else
+      CruFifoTable* fifoDevice = reinterpret_cast<CruFifoTable*>(sglist->d_pointer);
+#endif
+//      cout << "FIFO address device     : " << (void*) fifoDevice<< '\n';
+      bar[Register::STATUS_BASE_BUS_HIGH] = Util::getUpper32Bits(uint64_t(fifoDevice));
+      bar[Register::STATUS_BASE_BUS_LOW] = Util::getLower32Bits(uint64_t(fifoDevice));
 
       // Destination (card's memory) addresses, low and high part, respectively
-      bar_addr[2] = 0x8000;
-      bar_addr[3] = 0x0;
+      bar[Register::FIFO_BASE_CARD_HIGH] = 0x0;
+      bar[Register::FIFO_BASE_CARD_LOW] = 0x8000;
 
       // Set descriptor table size, same as number of available pages-1
-      bar_addr[5] = FIFO_ENTRIES - 1;
+      bar[Register::DESCRIPTOR_TABLE_SIZE] = FIFO_ENTRIES * NUM_OF_BUFFERS - 1;
 
       // Timestamp for test
       clock_gettime(CLOCK_REALTIME, &t1);
 
       // Number of available pages-1
-      bar_addr[4] = FIFO_ENTRIES - 1;
+      bar[Register::DMA_POINTER] = FIFO_ENTRIES * NUM_OF_BUFFERS - 1;
 
-      // make pcie reday signal
-      bar_addr[129] = 0x1;
+      // make buffer ready signal
+      bar[Register::BUFFER_READY] = 0x1;
 
       // Programming the user module to trigger the data emulator
-      bar_addr[128] = 0x1;
+      bar[Register::DATA_EMULATOR_ENABLE] = 0x1;
 
       // Set status to send status for every page not only for the last one
-      bar_addr[6] = 0x1;
+      bar[Register::SEND_STATUS] = 0x1;
 
       return 0;
     }
@@ -264,8 +323,7 @@ class ProgramCruExperimentalDma: public Program
         return -1;
       }
 
-      FILE *fp;
-      fp = fopen("dma_data.txt", "w");
+      std::ofstream file("dma_data.txt");
 
       // DMA; rolling
       int i = 0;
@@ -275,60 +333,60 @@ class ProgramCruExperimentalDma: public Program
       int num_of_err = 0;
       int rolling = 0;
 
-      // deassert reset for led module
-      // bar_addr[136] = 0xd;
-      // write data in led module
-      // bar_addr[140] = 0x3;
       clock_gettime(CLOCK_REALTIME, &run_start);
+
+      // Allocating memory where the data will be read out to
+      std::array<uint32_t, FIFO_ENTRIES * NUM_OF_BUFFERS * DMA_PAGE_SIZE_32> readout;
 
       while (i != FIFO_ENTRIES * NUM_OF_BUFFERS) {
         if (isSigInt()) {
           break;
         }
 
-        printf("pdaDMA is running\n");
+        //cout << "pdaDMA is running\n";
 
         // LEDs off
-        bar_addr[152] = 0xff;
+        bar[Register::LED_STATUS] = 0xff;
 
-        if (status_usr[i] == 1) {
+        if (fifoUser->statusEntries[i].isPageArrived()) {
 
-          memcpy(readout + i * 256 / sizeof(uint32_t), data_usr + i * 256 / sizeof(uint32_t), 256);
+          memcpy(&readout[i * DMA_PAGE_SIZE_32], &data_user[i * DMA_PAGE_SIZE_32], DMA_PAGE_SIZE);
 
           // Writing data to file
-          fprintf(fp, "%d", i);
-          fprintf(fp, "\n");
+          file << i << '\n';
 
-          for (int j = 0; j < DMA_PAGE_LENGTH / 32; j++) {
+          for (int j = 0; j < DMA_PAGE_SIZE / 32; j++) {
             if (isSigInt()) {
               break;
             }
 
             for (int k = 7; k >= 0; k--) {
-              fprintf(fp, "%d", data_usr[i * DMA_PAGE_LENGTH / sizeof(uint32_t) + j * 8 + k]);
+              file << readout[i * DMA_PAGE_SIZE_32 + j * 8 + k];
             }
-            fprintf(fp, "\n");
+            file << '\n';
 
             // Data error checking
-            size_t usr_index = i * (DMA_PAGE_LENGTH / sizeof(uint32_t)) + j * 8;
-            size_t pattern_index = current_page * DMA_PAGE_LENGTH / 32 + j;
-            if (data_usr[usr_index] != pattern[pattern_index]) {
+            size_t usr_index = i * DMA_PAGE_SIZE_32 + j * 8;
+            size_t pattern_index = current_page * DMA_PAGE_SIZE / 32 + j;
+            if (readout[usr_index] != pattern[pattern_index]) {
               num_of_err++;
-              printf("data error at rolling %d, page %d, data %d, %d - %d\n", rolling, i, j * 8, data_usr[usr_index],
-                  pattern[pattern_index]);
+              cout << "data error at rolling " << rolling
+                  << ", page " << i
+                  << ", data " << j * 8
+                  << ", " << readout[usr_index]
+                  << " - " << pattern[pattern_index] << '\n';
             }
           }
-
-          fprintf(fp, "\n");
+          file << '\n';
 
           current_page++;
 
-          // Setting the buffer to the default value of 0xcccccccc after the readout
-          for (size_t j = 0; j < DMA_PAGE_LENGTH / sizeof(uint32_t); j++) {
-            data_usr[i * DMA_PAGE_LENGTH / sizeof(uint32_t) + j] = 0xcccccccc;
+          // Setting the buffer to the default value after the readout
+          for (size_t j = 0; j < DMA_PAGE_SIZE_32; j++) {
+            data_user[i * DMA_PAGE_SIZE_32 + j] = DEFAULT_VALUE;
           }
 
-          printf(" %d %x\n", i, status_usr[i]);
+          //cout << " " << i << " " << fifoUser->statusEntries[i].status << '\n';
 
           //generates lock state for if l==0 case
           if (i == 1) {
@@ -336,49 +394,48 @@ class ProgramCruExperimentalDma: public Program
           }
 
           //make status zero for each descriptor for next rolling
-          status_usr[i] = 0;
+          fifoUser->statusEntries[i].reset();
 
           //points to the first descriptor
           if (lock == 0) {
-            bar_addr[4] = FIFO_ENTRIES * NUM_OF_BUFFERS - 1;
+            bar[Register::DMA_POINTER] = FIFO_ENTRIES * NUM_OF_BUFFERS - 1;
           }
 
           //push the same descriptor again when its gets executed
-          bar_addr[4] = i;
+          bar[Register::DMA_POINTER] = i;
 
           counter++;
 
           // LEDs on
-          bar_addr[152] = 0x00;
+          bar[Register::LED_STATUS] = 0x00;
 
           //after every 32Kbytes reset the current_page for online checking
           if ((i % FIFO_ENTRIES) == FIFO_ENTRIES - 1) {
 
             current_page = 0;
 
-            printf("counter = %d, rolling = %d\n", counter - 1, rolling);
-            printf(" rolling = %d\n", rolling);
+//            cout << "counter = " << counter - 1 << '\n';
+            cout << "rolling = " << rolling << '\n';
 
             //counter = 0;
 
             rolling++;
 
             // Measuring time difference
-            printf("t1:\t%d s\t%ld us\n", t1.tv_sec, t1.tv_nsec);
+//            cout << "t1:\t" << t1.tv_sec << "s " << "\t" << t1.tv_nsec << " us\n";
 
             // Only if we want a fixed number of rolling
-            if (rolling == 1000) {
-              printf("Rolling == 1000 -> stopping\n");
+            if (rolling == MAX_ROLLING) {
+              cout << "Rolling == " << MAX_ROLLING << " -> stopping\n";
               break;
             }
 
             clock_gettime(CLOCK_REALTIME, &t1);
           }
 
-          // loop over 128 descriptors or 1MByte DMA transfer
           if (i == FIFO_ENTRIES * NUM_OF_BUFFERS - 1) {
             // read status count after 1MByte dma transfer
-            printf("%d\n", bar_addr[148]);
+//            cout << bar[Register::READ_STATUS_COUNT] << '\n';
             i = 0;
           } else {
             i++;
@@ -386,10 +443,8 @@ class ProgramCruExperimentalDma: public Program
         }
       }
 
-      fclose(fp);
-
       if (isSigInt()) {
-        printf("Interrupted\n");
+        cout << "Interrupted\n";
       }
 
       // Uncomment this when measuring throughput
@@ -403,13 +458,15 @@ class ProgramCruExperimentalDma: public Program
         nsectime += 1000000000;
       }
       double dtime = sectime + nsectime / 1000000000.0;
-      double throughput = (double) rolling / dtime * FIFO_ENTRIES * DMA_PAGE_LENGTH / (1024 * 1024 * 1024);
-      printf("Throughput is %f GB/s or %f Gb/s.\n", throughput, throughput * 8);
+      double throughput = (double) rolling / dtime * FIFO_ENTRIES * DMA_PAGE_SIZE / (1024 * 1024 * 1024);
+      cout << "Throughput is " << throughput << " GB/s or " << throughput * 8 << " Gb/s.\n";
+      cout << "Number of errors is " << num_of_err << '\n';
+      cout << "Firmware info: " << Utilities::Common::make32hexString(bar[Register::FIRMWARE_COMPILE_INFO]) << '\n';
 
-      // Uncomment this while online checking
-      printf("Number of errors is %d\n", num_of_err);
-
+#ifdef USE_RORC_LIB
+#else
       return DeviceOperator_delete(dop, PDA_DELETE_PERSISTANT);
+#endif
     }
 };
 
