@@ -81,7 +81,7 @@ constexpr uint32_t DEFAULT_VALUE = 0xCcccCccc;
 constexpr int BUFFER_INDEX_PAGES = 0;
 constexpr int BUFFER_INDEX_FIFO = 0;
 
-#define USE_RORC_LIB
+const std::string DMA_BUFFER_PAGES_PATH = "/mnt/hugetlbfs/rorc-cru-experimental-dma-pages";
 
 namespace {
 
@@ -117,7 +117,6 @@ class ProgramCruExperimentalDma: public Program
       cout << "Finished DMA test" << endl;
     }
 
-#ifdef USE_RORC_LIB
     boost::scoped_ptr<RorcDevice> rorcDevice;
     boost::scoped_ptr<Pda::PdaBar> pdaBar;
     boost::scoped_ptr<MemoryMappedFile> mappedFilePages;
@@ -125,11 +124,6 @@ class ProgramCruExperimentalDma: public Program
     boost::scoped_ptr<Pda::PdaDmaBuffer> bufferPages;
 //    boost::scoped_ptr<Pda::PdaDmaBuffer> bufferFifo;
     volatile uint32_t* bar;
-#else
-    DeviceOperator* dop;
-    DMABuffer* buffer;
-    uint32_t* bar;
-#endif
 
     CruFifoTable* fifoUser;
 
@@ -144,98 +138,29 @@ class ProgramCruExperimentalDma: public Program
       system("modprobe -r uio_pci_dma");
       system("modprobe uio_pci_dma");
 
-#ifdef USE_RORC_LIB
       int serial = 12345;
       int channel = 0;
       Util::resetSmartPtr(rorcDevice, serial);
       Util::resetSmartPtr(pdaBar, rorcDevice->getPciDevice(), channel);
       bar = pdaBar->getUserspaceAddressU32();
-      Util::resetSmartPtr(mappedFilePages, "/mnt/hugetlbfs/rorc-cru-experimental-dma-pages", DMA_BUFFER_PAGES_SIZE);
+      Util::resetSmartPtr(mappedFilePages, DMA_BUFFER_PAGES_PATH.c_str(), DMA_BUFFER_PAGES_SIZE);
 //      Util::resetSmartPtr(mappedFileFifo, "/tmp/rorc-cru-experimental-dma-fifo", DMA_BUFFER_FIFO_SIZE);
       Util::resetSmartPtr(bufferPages, rorcDevice->getPciDevice(), mappedFilePages->getAddress(),
           mappedFilePages->getSize(), BUFFER_INDEX_PAGES);
 //      Util::resetSmartPtr(bufferFifo, rorcDevice->getPciDevice(), mappedFileFifo->getAddress(),
 //          mappedFileFifo->getSize(), BUFFER_INDEX_PAGES);
-#else
-      if (PDAInit() != PDA_SUCCESS) {
-        printf("Error while initialization!\n");
-        abort();
-      }
-
-      // A list of PCI ID to which PDA has to attach
-      const char *pci_ids[] =
-      {
-         "1172 e001", // CRU as registered at CERN
-          NULL        // Delimiter
-      };
-
-      // The device operator manages all devices with the given IDs.
-      dop = DeviceOperator_new(pci_ids, PDA_ENUMERATE_DEVICES);
-      if (dop == NULL) {
-        printf("Unable to get device-operator!\n");
-        return -1;
-      }
-
-      // Get a device object for the first found device in the list.
-      PciDevice *device = NULL;
-      if (PDA_SUCCESS != DeviceOperator_getPciDevice(dop, &device, 0)) {
-        if (PDA_SUCCESS != DeviceOperator_delete(dop, PDA_DELETE)) {
-          printf("Device generation totally failed!\n");
-          return -1;
-        }
-        printf("Can't get device!\n");
-        return -1;
-      }
-
-      // DMA-Buffer allocation
-      if (PDA_SUCCESS != PciDevice_allocDMABuffer(device, 0, DMA_BUFFER_PAGES_SIZE, &buffer)) {
-        if (PDA_SUCCESS != DeviceOperator_delete(dop, PDA_DELETE)) {
-          printf("Buffer allocation totally failed!\n");
-          return -1;
-        }
-        printf("DMA Buffer allocation failed!\n");
-        return -1;
-      }
-
-      // Get the bar structure and map the BAR
-      Bar *pdaBar;
-      if (PciDevice_getBar(device, &pdaBar, 0) != PDA_SUCCESS) {
-        printf("Can't get bar\n");
-        exit(EXIT_FAILURE);
-      }
-
-      uint64_t length = 0;
-      if (Bar_getMap(pdaBar, (void**) &bar, &length) != PDA_SUCCESS) {
-        printf("Can't get map\n");
-        exit(EXIT_FAILURE);
-      }
-#endif
-
       return 0;
     }
 
     int initDMA()
     {
-#ifdef USE_RORC_LIB
       auto list = bufferPages->getScatterGatherList();
       cout << "SGL entries: " << list.size() << '\n';
       auto entry = list.at(0);
       cout << "SG Length: " << double(entry.size)/1024.0/1024.0 << " MiB\n";
-#else
-      DMABuffer_SGNode* sglist;
-      if (DMABuffer_getSGList(buffer, &sglist) != PDA_SUCCESS) {
-        printf("Can't get list ...\n");
-        return -1;
-      }
-      cout << "SG Length: " << double(sglist->length)/1024.0/1024.0 << " MiB\n";
-#endif
 
       // Initializing the descriptor table
-#ifdef USE_RORC_LIB
       fifoUser = reinterpret_cast<CruFifoTable*>(entry.addressUser);
-#else
-      fifoUser = reinterpret_cast<CruFifoTable*>(sglist->u_pointer);
-#endif
 //      cout << "FIFO address user       : " << (void*) fifoUser << '\n';
       fifoUser->resetStatusEntries();
 
@@ -246,11 +171,7 @@ class ProgramCruExperimentalDma: public Program
         // the start address of the descriptor table is always at the same place:
         // adding a 0x200 offset (=status+128) to the status start address, no
         // matter how many entries there are
-#ifdef USE_RORC_LIB
         uint32_t* status_device = (uint32_t*) entry.addressBus;
-#else
-        uint32_t* status_device = (uint32_t*) sglist->d_pointer;
-#endif
         descriptor_entry* descriptor_device = (descriptor_entry*) (status_device + 128);
         uint32_t* data_device = (uint32_t*) (descriptor_device + FIFO_ENTRIES * NUM_OF_BUFFERS);
 //        cout << "Status address device   : " << (void*) status_device << '\n';
@@ -268,11 +189,7 @@ class ProgramCruExperimentalDma: public Program
       }
 
       // Status base address, low and high part, respectively
-#ifdef USE_RORC_LIB
       CruFifoTable* fifoDevice = reinterpret_cast<CruFifoTable*>(entry.addressBus);
-#else
-      CruFifoTable* fifoDevice = reinterpret_cast<CruFifoTable*>(sglist->d_pointer);
-#endif
 //      cout << "FIFO address device     : " << (void*) fifoDevice<< '\n';
       bar[Register::STATUS_BASE_BUS_HIGH] = Util::getUpper32Bits(uint64_t(fifoDevice));
       bar[Register::STATUS_BASE_BUS_LOW] = Util::getLower32Bits(uint64_t(fifoDevice));
@@ -462,11 +379,6 @@ class ProgramCruExperimentalDma: public Program
       cout << "Throughput is " << throughput << " GB/s or " << throughput * 8 << " Gb/s.\n";
       cout << "Number of errors is " << num_of_err << '\n';
       cout << "Firmware info: " << Utilities::Common::make32hexString(bar[Register::FIRMWARE_COMPILE_INFO]) << '\n';
-
-#ifdef USE_RORC_LIB
-#else
-      return DeviceOperator_delete(dop, PDA_DELETE_PERSISTANT);
-#endif
     }
 };
 
