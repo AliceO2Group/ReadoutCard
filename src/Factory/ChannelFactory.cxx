@@ -1,7 +1,7 @@
-///
 /// \file ChannelFactory.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Implementation of the ChannelFactory class.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "RORC/ChannelFactory.h"
 #include <map>
@@ -52,7 +52,6 @@ std::shared_ptr<ChannelMasterInterface> ChannelFactory::getMaster(int serial, in
     CrorcTag, [&](){ return std::make_shared<CrorcChannelMaster>(serial, channel, params); },
     CruTag,   [&](){ return std::make_shared<CruChannelMaster>(serial, channel, params); });
 }
-
 
 std::shared_ptr<ChannelSlaveInterface> ChannelFactory::getSlave(int serial, int channel)
 {

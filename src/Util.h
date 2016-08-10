@@ -37,12 +37,22 @@ ReverseMap reverseMap(const Map& map)
 
 /// Convenience function for implementing the enum to/from string functions
 template <typename Map>
-typename Map::mapped_type getValue(const Map& map, const typename Map::key_type& key)
+typename Map::mapped_type getValueFromMap(const Map& map, const typename Map::key_type& key)
 {
   if (map.count(key) != 0) {
     return map.at(key);
   }
   BOOST_THROW_EXCEPTION(std::runtime_error("Invalid conversion"));
+}
+
+inline uint32_t getLower32Bits(uint64_t x)
+{
+  return x & 0xFfffFfff;
+}
+
+inline uint32_t getUpper32Bits(uint64_t x)
+{
+  return (x >> 32) & 0xFfffFfff;
 }
 
 /// Sets the given function as the SIGINT handler

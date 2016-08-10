@@ -56,12 +56,12 @@ bool ResetLevel::includesExternal(const ResetLevel::type& mode)
 
 std::string ResetLevel::toString(const ResetLevel::type& level)
 {
-  return Util::getValue(resetLevelMap, level);
+  return Util::getValueFromMap(resetLevelMap, level);
 }
 
 ResetLevel::type ResetLevel::fromString(const std::string& string)
 {
-  return Util::getValue(resetLevelMapReverse, string);
+  return Util::getValueFromMap(resetLevelMapReverse, string);
 }
 
 // LoopbackMode functions
@@ -82,12 +82,12 @@ bool LoopbackMode::isExternal(const LoopbackMode::type& mode)
 
 std::string LoopbackMode::toString(const LoopbackMode::type& mode)
 {
-  return Util::getValue(loopbackModeMap, mode);
+  return Util::getValueFromMap(loopbackModeMap, mode);
 }
 
 LoopbackMode::type LoopbackMode::fromString(const std::string& string)
 {
-  return Util::getValue(loopbackModeMapReverse, string);
+  return Util::getValueFromMap(loopbackModeMapReverse, string);
 }
 
 } // namespace Rorc

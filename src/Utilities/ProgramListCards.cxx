@@ -36,7 +36,7 @@ class ProgramListCards: public Program
 
     virtual void mainFunction(const boost::program_options::variables_map&)
     {
-      auto cardsFound = AliceO2::Rorc::RorcDevice::enumerateDevices();
+      auto cardsFound = AliceO2::Rorc::RorcDevice::findSystemDevices();
 
       std::ostringstream table;
 

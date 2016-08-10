@@ -7,7 +7,12 @@
 
 #pragma once
 
-#include <RORC/ChannelMasterInterface.h>
-#include <RORC/ChannelSlaveInterface.h>
+#include <RORC/CardType.h>
 #include <RORC/ChannelFactory.h>
+#include <RORC/ChannelMasterInterface.h>
 #include <RORC/ChannelParameters.h>
+#include <RORC/ChannelSlaveInterface.h>
+#include <RORC/Page.h>
+#include <RORC/PageHandle.h>
+#include <RORC/PciId.h>
+#include <RORC/RegisterReadWriteInterface.h>

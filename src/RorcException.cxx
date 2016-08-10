@@ -23,7 +23,7 @@ namespace Rorc {
 const char* RorcException::what() const noexcept
 {
   try {
-    if (auto info = boost::get_error_info<errinfo_rorc_generic_message>(*this)) {
+    if (auto info = boost::get_error_info<errinfo_rorc_error_message>(*this)) {
       return info->data();
     } else {
       return "RorcException";
@@ -65,7 +65,7 @@ std::string toStringHelper(const std::string& name, const Basic& basic, const Ex
 
 namespace boost {
 
-std::string to_string(const errinfo_rorc_generic_message& e)
+std::string to_string(const errinfo_rorc_error_message& e)
 {
   return toStringHelper("Error message", e.value());
 }

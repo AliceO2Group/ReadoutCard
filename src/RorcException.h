@@ -25,7 +25,7 @@ namespace Rorc {
   using errinfo_rorc_##name = boost::error_info<struct errinfo_rorc_##name##_, type>
 
 // errinfo definitions
-DEFINE_ERRINFO(generic_message, std::string);
+DEFINE_ERRINFO(error_message, std::string);
 DEFINE_ERRINFO(possible_causes, std::vector<std::string>);
 DEFINE_ERRINFO(readyfifo_status, int);
 DEFINE_ERRINFO(readyfifo_length, int32_t);
@@ -55,20 +55,25 @@ DEFINE_ERRINFO(pci_id, PciId);
 DEFINE_ERRINFO(pci_ids, std::vector<PciId>);
 DEFINE_ERRINFO(pci_device_index, int);
 DEFINE_ERRINFO(card_type, CardType::type);
+DEFINE_ERRINFO(index, size_t);
+DEFINE_ERRINFO(range, size_t);
+DEFINE_ERRINFO(scatter_gather_entry_size, size_t);
 
-// Undefine macro for header safety
+// Undefine macro for header safety (we don't want to pollute the global namespace with collision-prone names)
 #undef DEFINE_ERRINFO
 
 // RORC exception definitions
 struct RorcException : virtual boost::exception, virtual std::exception
 {
-  virtual const char* what() const noexcept override;
+    /// The what() function is overridden to use the 'errinfo_rorc_generic_message' when available
+    virtual const char* what() const noexcept override;
 };
 
 // General exception definitions
 struct RorcPdaException : virtual RorcException {};
 struct MemoryMapException : virtual RorcException {};
 struct InvalidParameterException : virtual RorcException {};
+struct OutOfRangeException : virtual RorcException {};
 struct LockException : virtual RorcException {};
 struct FileLockException : virtual LockException {};
 struct DeviceFinderException : virtual RorcException {};
@@ -111,7 +116,7 @@ void addPossibleCauses(boost::exception& exception, const std::vector<std::strin
 namespace boost {
 
 // These functions convert the errinfos to strings for diagnostic messages
-std::string to_string(const ::AliceO2::Rorc::errinfo_rorc_generic_message& e);
+std::string to_string(const ::AliceO2::Rorc::errinfo_rorc_error_message& e);
 std::string to_string(const ::AliceO2::Rorc::errinfo_rorc_possible_causes& e);
 std::string to_string(const ::AliceO2::Rorc::errinfo_rorc_readyfifo_status& e);
 std::string to_string(const ::AliceO2::Rorc::errinfo_rorc_loopback_mode& e);
@@ -125,4 +130,4 @@ std::string to_string(const ::AliceO2::Rorc::errinfo_rorc_card_type& e);
 
 /// Helper macro for throwing a generic exception
 #define ALICEO2_RORC_THROW_EXCEPTION(message) \
-    BOOST_THROW_EXCEPTION(::AliceO2::Rorc::RorcException() << ::AliceO2::Rorc::errinfo_rorc_generic_message(message))
+    BOOST_THROW_EXCEPTION(::AliceO2::Rorc::RorcException() << ::AliceO2::Rorc::errinfo_rorc_error_message(message))

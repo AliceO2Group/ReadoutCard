@@ -10,10 +10,8 @@ namespace AliceO2 {
 namespace Rorc {
 
 /// Simple data holder class for a PCI ID, consisting of a device ID and vendor ID.
-class PciId
+struct PciId
 {
-  public:
-
     const std::string& getDeviceId() const
     {
       return device;

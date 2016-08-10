@@ -14,6 +14,7 @@ namespace AliceO2 {
 namespace Rorc {
 
 /// Extends ChannelMaster object, and provides device-specific functionality
+/// XXX Note: this class is very under construction
 class CruChannelMaster : public ChannelMaster
 {
   public:
@@ -42,7 +43,7 @@ class CruChannelMaster : public ChannelMaster
     virtual void deviceStopDma() override;
 
     /// Name for the CRU shared data object in the shared state file
-    inline static const char* cruSharedDataName()
+    static std::string getCruSharedDataName()
     {
       return "CruChannelMasterSharedData";
     }
@@ -50,10 +51,10 @@ class CruChannelMaster : public ChannelMaster
   private:
 
     /// Persistent device state/data that resides in shared memory
-    class CruSharedData
+    class SharedData
     {
       public:
-        CruSharedData();
+        SharedData();
 
         /// Initialize the shared data fields
         void initialize();
@@ -78,7 +79,7 @@ class CruChannelMaster : public ChannelMaster
     boost::scoped_ptr<Pda::PdaDmaBuffer> bufferFifo;
 
     /// Memory mapped data stored in the shared state file
-    boost::scoped_ptr<FileSharedObject::FileSharedObject<CruSharedData>> cruSharedData;
+    boost::scoped_ptr<FileSharedObject::FileSharedObject<SharedData>> cruSharedData;
 
     /// Counter for the amount of pages that have been requested.
     /// Since currently, the idea is to push 128 at a time, we wait until the client requests 128 pages...
@@ -91,6 +92,8 @@ class CruChannelMaster : public ChannelMaster
   private:
 
     void constructorCommon();
+
+    static constexpr CardType::type CARD_TYPE = CardType::CRU;
 };
 
 } // namespace Rorc

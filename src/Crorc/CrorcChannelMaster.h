@@ -41,7 +41,7 @@ class CrorcChannelMaster : public ChannelMaster
     virtual void deviceStopDma() override;
 
     /// Name for the CRORC shared data object in the shared state file
-    inline static const char* crorcSharedDataName()
+    static std::string getCrorcSharedDataName()
     {
       return "CrorcChannelMasterSharedData";
     }
@@ -159,6 +159,8 @@ class CrorcChannelMaster : public ChannelMaster
   private:
 
     void constructorCommon();
+
+    static constexpr CardType::type CARD_TYPE = CardType::CRORC;
 };
 
 } // namespace Rorc

@@ -1,12 +1,12 @@
+/// \file TestProgramOptions.cxx
+/// \brief Test for program options
 ///
-/// \file TestRorc.cxx
 /// \author Pascal Boeschoten
-///
 
 #include <RORC/RORC.h>
 #include "Utilities/Options.h"
 
-#define BOOST_TEST_MODULE RORC_Test
+#define BOOST_TEST_MODULE RORC_TestProgramOptions
 #define BOOST_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
@@ -56,33 +56,5 @@ BOOST_AUTO_TEST_CASE(UtilOptions)
   BOOST_CHECK_MESSAGE(cps.generator.useDataGenerator == true, "generator enable");
   BOOST_CHECK_MESSAGE(cps.generator.loopbackMode == AliceO2::Rorc::LoopbackMode::RORC, "generator loopback mode");
   BOOST_CHECK_MESSAGE(getOptionSerialNumber(vm) == 500, "serial number");
-}
-
-/// Helper method for checking enum to/from string conversions
-template <typename E>
-void checkEnumConversion(const std::vector<typename E::type>& items)
-{
-  for (auto& item : items) {
-    BOOST_CHECK(E::fromString(E::toString(item)) == item);
-  }
-}
-
-BOOST_AUTO_TEST_CASE(EnumCardTypeConversion)
-{
-  using namespace AliceO2::Rorc;
-  checkEnumConversion<CardType>({CardType::CRORC, CardType::CRU, CardType::DUMMY, CardType::UNKNOWN});
-}
-
-BOOST_AUTO_TEST_CASE(EnumLoopbackModeConversion)
-{
-  using namespace AliceO2::Rorc;
-  checkEnumConversion<LoopbackMode>({LoopbackMode::DIU, LoopbackMode::NONE, LoopbackMode::RORC, LoopbackMode::SIU});
-}
-
-BOOST_AUTO_TEST_CASE(EnumResetLevelConversion)
-{
-  using namespace AliceO2::Rorc;
-  checkEnumConversion<ResetLevel>({ResetLevel::NOTHING, ResetLevel::RORC, ResetLevel::RORC_DIU,
-      ResetLevel::RORC_DIU_SIU});
 }
 

@@ -13,11 +13,13 @@
 #include <thread>
 #include <boost/range/irange.hpp>
 #include <boost/exception/diagnostic_information.hpp>
-#include <RORC/RORC.h>
+#include "RORC/RORC.h"
 
 using std::cout;
 using std::endl;
 using namespace AliceO2;
+
+namespace {
 
 // The serial number of the card to use
 // For dummy implementation, use Rorc::ChannelMasterFactory::DUMMY_SERIAL_NUMBER
@@ -36,7 +38,7 @@ const bool reinsertDriverModule = true;
 
 // Stop DMA after pushing all the pages.
 // Explicit stopping should not be necessary, and will allow other processes to resume without restarting the DMA
-const bool stopDma = true;
+const bool stopDma = false;
 
 /// Prints the first 10 integers of a page
 void printPage(Rorc::Page& page, int index, std::ostream& ios)
@@ -47,6 +49,8 @@ void printPage(Rorc::Page& page, int index, std::ostream& ios)
     }
     ios << '\n';
 }
+
+} // Anonymous namespace
 
 int main(int, char**)
 {
@@ -69,11 +73,11 @@ int main(int, char**)
 
     // Get the channel master object
     cout << "\n### Acquiring channel master object" << endl;
-    auto channel = Rorc::ChannelFactory().getMaster(serialNumber, channelNumber, params);
+    std::shared_ptr<Rorc::ChannelMasterInterface> channel = Rorc::ChannelFactory().getMaster(serialNumber,
+        channelNumber, params);
 
     // Start the DMA
     cout << "\n### Starting DMA" << endl;
-    channel->stopDma();
     channel->startDma();
 
     // Hopefully, this is enough to insure the freeFifo transfers have completed
@@ -87,7 +91,6 @@ int main(int, char**)
       if ((std::chrono::high_resolution_clock::now() - start) > maxTime) {
         cout << "!!! Max time of " << maxTime.count() << " ms exceeded" << endl;
         throw std::runtime_error("Max time exceeded");
-        return true;
       } else {
         return false;
       }
@@ -101,19 +104,19 @@ int main(int, char**)
     // We keep track of them so we can later check if they are as expected.
     std::vector<uint32_t> eventNumbers;
     eventNumbers.reserve(pagesToPush);
-    Rorc::Page page;
     std::stringstream stringStream;
 
     for (int i = 0; i < pagesToPush; ++i) {
       // Get page handle (contains FIFO index)
-      auto handle = channel->pushNextPage();
+      Rorc::PageHandle handle = channel->pushNextPage();
 
       // Wait for page to arrive
+      // Uses a busy wait, because the wait time is (or should be) extremely short
       while (!channel->isPageArrived(handle) && !timeExceeded()) { ; }
       std::this_thread::sleep_for(std::chrono::microseconds(1)); // See README.md
 
       // Get page (contains userspace address)
-      page = channel->getPage(handle);
+      Rorc::Page page = channel->getPage(handle);
       uint32_t eventNumber = page.getAddressU32()[0];
       eventNumbers.push_back(eventNumber);
 
@@ -142,7 +145,7 @@ int main(int, char**)
     }
 
     cout << "\n### Releasing channel master object" << endl;
-  } catch ( std::exception& e ) {
+  } catch (const std::exception& e) {
     cout << boost::diagnostic_information(e) << endl;
   }
   return 0;

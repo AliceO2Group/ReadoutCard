@@ -32,17 +32,17 @@ std::shared_ptr<Interface> channelFactoryHelper(int serialNumber, int dummySeria
     return map.at(CardType::DUMMY)();
   } else {
     // Find the PCI device
-    auto cardsFound = RorcDevice::enumerateDevices(serialNumber);
+    auto cardsFound = RorcDevice::findSystemDevices(serialNumber);
 
     if (cardsFound.empty()) {
       BOOST_THROW_EXCEPTION(RorcException()
-          << errinfo_rorc_generic_message("Could not find card")
+          << errinfo_rorc_error_message("Could not find card")
           << errinfo_rorc_serial_number(serialNumber));
     }
 
     if (cardsFound.size() > 1) {
       BOOST_THROW_EXCEPTION(RorcException()
-          << errinfo_rorc_generic_message("Found multiple cards with the same serial number")
+          << errinfo_rorc_error_message("Found multiple cards with the same serial number")
           << errinfo_rorc_serial_number(serialNumber));
     }
 
@@ -50,7 +50,7 @@ std::shared_ptr<Interface> channelFactoryHelper(int serialNumber, int dummySeria
 
     if (map.count(cardType) == 0) {
       BOOST_THROW_EXCEPTION(RorcException()
-          << errinfo_rorc_generic_message("Unknown card type")
+          << errinfo_rorc_error_message("Unknown card type")
           << errinfo_rorc_serial_number(serialNumber)
           << errinfo_rorc_card_type(cardType));
     }
@@ -75,7 +75,7 @@ struct MakeImpl<Result>
   static Result make(CardType::type cardType)
   {
     BOOST_THROW_EXCEPTION(RorcException()
-        << errinfo_rorc_generic_message("No card match found")
+        << errinfo_rorc_error_message("No card match found")
         << errinfo_rorc_card_type(cardType));
   }
 };
@@ -142,18 +142,18 @@ std::shared_ptr<Interface> makeChannel(int serial, int dummySerial, Args&&... ar
 #ifdef ALICEO2_RORC_PDA_ENABLED
     }
 
-    auto cardsFound = RorcDevice::enumerateDevices(serial);
+    auto cardsFound = RorcDevice::findSystemDevices(serial);
 
     if (cardsFound.empty()) {
       BOOST_THROW_EXCEPTION(RorcException()
-          << errinfo_rorc_generic_message("Could not find a card with the given serial number"));
+          << errinfo_rorc_error_message("Could not find a card with the given serial number"));
     }
 
     if (cardsFound.size() > 1) {
       std::vector<PciId> pciIds;
       for (auto& c : cardsFound) { pciIds.push_back(c.pciId); }
       BOOST_THROW_EXCEPTION(RorcException()
-          << errinfo_rorc_generic_message("Found more than one card with the given serial number")
+          << errinfo_rorc_error_message("Found more than one card with the given serial number")
           << errinfo_rorc_pci_ids(pciIds));
     }
 

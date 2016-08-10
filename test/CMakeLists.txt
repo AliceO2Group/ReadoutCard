@@ -4,7 +4,9 @@
 #file(GLOB_RECURSE TEST_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.cxx)
 
 set(TEST_FILES
-    TestRorc.cxx
+    TestProgramOptions.cxx
+    TestChannelPaths.cxx
+    TestEnums.cxx
     TestChannelFactoryUtils.cxx
     TestFileSharedObject.cxx
     TestMemoryMappedFile.cxx

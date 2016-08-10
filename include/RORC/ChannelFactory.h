@@ -1,7 +1,7 @@
-///
 /// \file ChannelFactory.h
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Definition of the ChannelFactory class.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #pragma once
 
@@ -13,7 +13,7 @@
 namespace AliceO2 {
 namespace Rorc {
 
-/// Factory class for creating objects to access and control RORC channels
+/// Factory class for creating objects to access and control card channels
 class ChannelFactory
 {
   public:
@@ -25,6 +25,7 @@ class ChannelFactory
     /// Get a channel object with the given serial number and channel number.
     /// It is not yet implemented fully, currently it will just pick the
     /// first CRORC it comes across. If the PDA dependency is not available, a dummy implementation will be returned.
+    ///
     /// \param serialNumber The serial number of the card. Passing 'DUMMY_SERIAL_NUMBER' returns a dummy implementation
     /// \param channelNumber The number of the channel to open.
     /// \param params Parameters to pass onto the ChannelMasterInterface implementation
@@ -36,6 +37,7 @@ class ChannelFactory
     /// first CRORC it comes across. If the PDA dependency is not available, a dummy implementation will be returned.
     /// Since this getMaster() version does not pass any parameters along, the ChannelMaster object will require
     /// previous state to be available: a previous successful construction and destruction.
+    ///
     /// \param serialNumber The serial number of the card. Passing 'DUMMY_SERIAL_NUMBER' returns a dummy implementation
     /// \param channelNumber The number of the channel to open.
     std::shared_ptr<ChannelMasterInterface> getMaster(int serialNumber, int channelNumber);
@@ -43,6 +45,7 @@ class ChannelFactory
     /// Get a channel object with the given serial number and channel number.
     /// It is not yet implemented fully, currently it will just pick the
     /// first CRORC it comes across. If the PDA dependency is not available, a dummy implementation will be returned.
+    ///
     /// \param serialNumber The serial number of the card. Passing 'DUMMY_SERIAL_NUMBER' returns a dummy implementation
     /// \param channelNumber The number of the channel to open.
     std::shared_ptr<ChannelSlaveInterface> getSlave(int serialNumber, int channelNumber);
@@ -50,4 +53,3 @@ class ChannelFactory
 
 } // namespace Rorc
 } // namespace AliceO2
-

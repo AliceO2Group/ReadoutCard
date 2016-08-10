@@ -96,7 +96,7 @@ class ThrowingLockGuard
     ThrowingLockGuard(Lock* lock) : lock(lock)
     {
       if (!lock->try_lock()) {
-        BOOST_THROW_EXCEPTION(ExceptionType() << errinfo_rorc_generic_message("Failed to acquire lock"));
+        BOOST_THROW_EXCEPTION(ExceptionType() << errinfo_rorc_error_message("Failed to acquire lock"));
       }
     }
 

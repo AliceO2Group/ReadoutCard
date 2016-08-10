@@ -40,7 +40,7 @@ class ProgramInitChannel: public Program
       auto serialNumber = Options::getOptionSerialNumber(map);
       auto channelNumber = Options::getOptionChannel(map);
       auto parameters = Options::getOptionsChannelParameters(map);
-      auto cardsFound = RorcDevice::enumerateDevices();
+      auto cardsFound = RorcDevice::findSystemDevices();
 
       for (auto& card : cardsFound) {
         if (serialNumber == card.serialNumber) {

@@ -49,10 +49,10 @@ void DummyChannelMaster::writeRegister(int index, uint32_t value)
   cout << "DummyChannelMaster::writeRegister(index:" << index << ", value:" << value << ")" << endl;
 }
 
-ChannelMasterInterface::PageHandle DummyChannelMaster::pushNextPage()
+PageHandle DummyChannelMaster::pushNextPage()
 {
   cout << "DummyChannelMaster::pushNextPage()" << endl;
-  auto handle = ChannelMasterInterface::PageHandle(pageCounter);
+  auto handle = PageHandle(pageCounter);
   pageCounter++;
   return handle;
 }

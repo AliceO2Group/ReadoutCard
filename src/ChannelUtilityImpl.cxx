@@ -63,15 +63,14 @@ void registerReadWriteCheck(RegisterReadWriteInterface* channel, std::ostream& o
   registerCheck(os, writeValue, writeAddress, readValue, readAddress);
 }
 
-void rorcCleanupState(int serial, int channel)
+void rorcCleanupState(const ChannelPaths& paths)
 {
-  /// XXX I wonder what happens when you delete a memory mapped file that's still in use...
   using boost::filesystem::remove;
-  remove(ChannelPaths::pages(serial, channel).c_str());
-  remove(ChannelPaths::state(serial, channel).c_str());
-  remove(ChannelPaths::fifo(serial, channel).c_str());
-  remove(ChannelPaths::lock(serial, channel).c_str());
-  remove(ChannelPaths::lock(serial, channel).c_str());
+  remove(paths.pages().c_str());
+  remove(paths.state().c_str());
+  remove(paths.fifo().c_str());
+  remove(paths.lock().c_str());
+  remove(paths.lock().c_str());
 }
 
 } // Anonymous namespace
@@ -187,14 +186,14 @@ void cruSanityCheck(std::ostream& os, RegisterReadWriteInterface* channel)
   }
 }
 
-void crorcCleanupState(int serial, int channel)
+void crorcCleanupState(const ChannelPaths& paths)
 {
-  rorcCleanupState(serial, channel);
+  rorcCleanupState(paths);
 }
 
-void cruCleanupState(int serial, int channel)
+void cruCleanupState(const ChannelPaths& paths)
 {
-  rorcCleanupState(serial, channel);
+  rorcCleanupState(paths);
 }
 
 

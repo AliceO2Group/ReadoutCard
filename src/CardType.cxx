@@ -1,7 +1,7 @@
-///
 /// \file CardType.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Implementation of the CardType enum and supporting functions.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "RORC/CardType.h"
 #include "Util.h"
@@ -19,12 +19,12 @@ static const auto typeMapReverse = Util::reverseMap(typeMap);
 
 std::string CardType::toString(const CardType::type& type)
 {
-  return Util::getValue(typeMap, type);
+  return Util::getValueFromMap(typeMap, type);
 }
 
 CardType::type CardType::fromString(const std::string& string)
 {
-  return Util::getValue(typeMapReverse, string);
+  return Util::getValueFromMap(typeMapReverse, string);
 }
 
 } // namespace Rorc

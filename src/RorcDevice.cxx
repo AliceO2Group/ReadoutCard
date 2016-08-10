@@ -55,7 +55,7 @@ RorcDevice::RorcDevice(int serialNumber)
         }
       }
     }
-    BOOST_THROW_EXCEPTION(RorcException() << errinfo_rorc_generic_message("Could not find card"));
+    BOOST_THROW_EXCEPTION(RorcException() << errinfo_rorc_error_message("Could not find card"));
   }
   catch (boost::exception& e) {
     e << errinfo_rorc_serial_number(serialNumber);
@@ -68,7 +68,7 @@ RorcDevice::~RorcDevice()
 {
 }
 
-std::vector<RorcDevice::CardDescriptor> RorcDevice::enumerateDevices()
+std::vector<RorcDevice::CardDescriptor> RorcDevice::findSystemDevices()
 {
   std::vector<RorcDevice::CardDescriptor> cards;
 
@@ -87,7 +87,7 @@ std::vector<RorcDevice::CardDescriptor> RorcDevice::enumerateDevices()
   return cards;
 }
 
-std::vector<RorcDevice::CardDescriptor> RorcDevice::enumerateDevices(int serialNumber)
+std::vector<RorcDevice::CardDescriptor> RorcDevice::findSystemDevices(int serialNumber)
 {
   std::vector<RorcDevice::CardDescriptor> cards;
   try {

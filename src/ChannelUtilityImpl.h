@@ -14,6 +14,7 @@
 #include "Crorc/ReadyFifo.h"
 #include "Cru/CruFifoTable.h"
 #include "RORC/RegisterReadWriteInterface.h"
+#include "ChannelPaths.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -25,8 +26,8 @@ void printCruFifo(CruFifoTable* fifo, std::ostream& os);
 void crorcSanityCheck(std::ostream& os, RegisterReadWriteInterface* channel);
 void cruSanityCheck(std::ostream& os, RegisterReadWriteInterface* channel);
 
-void crorcCleanupState(int serial, int channel);
-void cruCleanupState(int serial, int channel);
+void crorcCleanupState(const ChannelPaths& paths);
+void cruCleanupState(const ChannelPaths& paths);
 
 } // namespace ChannelUtility
 } // namespace Rorc

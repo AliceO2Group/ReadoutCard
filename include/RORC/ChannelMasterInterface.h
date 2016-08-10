@@ -1,11 +1,12 @@
-///
 /// \file ChannelMasterInterface.h
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Definition of the ChannelMasterInterface class.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #pragma once
 
 #include <cstdint>
+#include "RORC/PageHandle.h"
 #include "RORC/Page.h"
 #include "RORC/ChannelParameters.h"
 #include "RORC/CardType.h"
@@ -14,20 +15,11 @@
 namespace AliceO2 {
 namespace Rorc {
 
-/// Obtains a master lock on a channel and provides an interface to control and use the channel
+/// Pure abstract interface for objects that obtain a master lock on a channel and provides an interface to control
+/// and use that channel.
 class ChannelMasterInterface: public virtual RegisterReadWriteInterface
 {
   public:
-    /// A handle that refers to a page. Used by some of the API calls.
-    class PageHandle
-    {
-      public:
-        inline PageHandle(int index = -1) : index(index)
-        {
-        }
-
-        int index;
-    };
 
     virtual ~ChannelMasterInterface()
     {
@@ -35,30 +27,28 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
 
     /// Start DMA for the given channel
     /// This must be called before pushing pages
-    /// TODO Should this be done automatically?
     virtual void startDma() = 0;
 
     /// Stop DMA for the given channel
-    /// TODO Should this be done automatically?
     virtual void stopDma() = 0;
 
     /// Reset the channel
     /// \param resetLevel The depth of the reset
     virtual void resetCard(ResetLevel::type resetLevel) = 0;
 
-    /// Push page and return handle to the pushed page.
+    /// Start pushing a page from the card to the host's DMA buffer and return a handle for the page.
     /// \return A handle to the page that can be used with other functions to check when it has arrived, and then to
-    ///         access it.
+    ///   access it.
     virtual PageHandle pushNextPage() = 0;
 
-    /// Check if the page has arrived
+    /// Check if the page has arrived from the card to the host's DMA buffer
     /// \param handle The handle of the page returned from pushNextPage()
     /// \return True if the page has arrived, else false
     virtual bool isPageArrived(const PageHandle& handle) = 0;
 
     /// Get a page
     /// \param handle The handle of the page returned from pushNextPage()
-    /// \return A Page object containing the address of the page
+    /// \return A Page object containing the address and size of the page
     virtual Page getPage(const PageHandle& handle) = 0;
 
     /// Mark a page as read, so it can be written to again

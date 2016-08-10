@@ -30,7 +30,7 @@ namespace bfs = boost::filesystem;
 PdaDevice::PdaDevice(const PciId& pciId) : deviceOperator(nullptr)
 {
   try {
-    THROW_IF_BAD_STATUS(PDAInit(), RorcPdaException() << errinfo_rorc_generic_message("Failed to initialize PDA"));
+    THROW_IF_BAD_STATUS(PDAInit(), RorcPdaException() << errinfo_rorc_error_message("Failed to initialize PDA"));
 
     // The terminating \0 is important, PDA is not C++
     const std::string id = pciId.getVendorId() + " " + pciId.getDeviceId() + '\0';
@@ -39,8 +39,8 @@ PdaDevice::PdaDevice(const PciId& pciId) : deviceOperator(nullptr)
     deviceOperator = DeviceOperator_new(ids, PDA_ENUMERATE_DEVICES);
     if(deviceOperator == nullptr){
       BOOST_THROW_EXCEPTION(RorcPdaException()
-          << errinfo_rorc_generic_message("Failed to get DeviceOperator")
-          << errinfo_rorc_possible_causes({"Invalid PCI ID"}));
+          << errinfo_rorc_error_message("Failed to get DeviceOperator")
+          << errinfo_rorc_possible_causes({"Invalid PCI ID", "Insufficient permissions"}));
     }
 
     uint64_t deviceCount = getPciDeviceCount();
@@ -75,7 +75,7 @@ PciDevice* PdaDevice::getPciDevice(int index)
 {
   PciDevice* pciDevice;
   THROW_IF_BAD_STATUS(DeviceOperator_getPciDevice(deviceOperator, &pciDevice, index), RorcPdaException()
-      << errinfo_rorc_generic_message("Failed to get PciDevice")
+      << errinfo_rorc_error_message("Failed to get PciDevice")
       << errinfo_rorc_pci_device_index(index));
   return pciDevice;
 }
@@ -84,7 +84,7 @@ int PdaDevice::getPciDeviceCount()
 {
   uint64_t deviceCount;
   THROW_IF_BAD_STATUS(DeviceOperator_getPciDeviceCount(deviceOperator, &deviceCount), RorcPdaException()
-      << errinfo_rorc_generic_message("Failed to get PCI device count"));
+      << errinfo_rorc_error_message("Failed to get PCI device count"));
   return deviceCount;
 }
 

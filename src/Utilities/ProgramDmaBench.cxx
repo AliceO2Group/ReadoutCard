@@ -75,7 +75,7 @@ class ProgramDmaBench: public Program
       if (false) {
         // XXX Test for zero dead time page pushing
 
-        auto handleQueue = std::queue<AliceO2::Rorc::ChannelMasterInterface::PageHandle>();
+        auto handleQueue = std::queue<PageHandle>();
         auto maxQueued = 32ul;
 
         for (size_t i = 0; i < maxPagesToPush; ++i) {

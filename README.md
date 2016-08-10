@@ -31,8 +31,8 @@ Pages are also stored in shared memory. Functionality for clients to supply thei
 release.
 
 The shared files are located in the directories:
-* /dev/shm/alice\_o2/rorc\_[serial number]/channel\_[channel number]/
-* /mnt/hugetlbfs/alice\_o2/rorc\_[serial number]/channel\_[channel number]/
+* `/dev/shm/alice_o2/card_[card type]/serial_[serial number]/channel_[channel number]/`
+* `/mnt/hugetlbfs/alice_o2/card_[card type]/serial_[serial number]/channel_[channel number]/`
 
 If things crash and the state can not be recovered, these files should be deleted.
 They should also be deleted with new releases of the RORC module, since their internal memory arrangement might change.
@@ -58,6 +58,38 @@ Utility programs
 -------------------
 The RORC module contains some utility programs to assist with RORC debugging and administration.
 Currently, only utilities for reading and writing registers are available, but more are planned.
+
+
+Design notes
+===================
+
+Enums
+-------------------
+Enums are surrounded by a struct, so we can group both the enum values themselves and any accompanying functions.
+It also allows us to use the type of the struct as a template parameter.
+
+Volatile variables
+-------------------
+Throughout the library, the variables which (may) refer to memory which the card can write to are declared as volatile. 
+This is to indicate to the compiler that the values of these variables may change at any time, completely outside of the
+control of the process. This means the compiler will avoid certain optimizations that may lead to unexpected behaviour. 
+
+Shared memory usage
+-------------------
+* DMA buffer (the push destination)
+* Card's FIFO (card updates status in here)
+* For ChannelMaster (& subclasses) "persistent member variables":
+  * Must be quickly updated
+  * Capable of stop & resume
+  * Persistent as long as system runs (not across reboots, since then cards & firmware may be changed) 
+* For mutex (inter & intra process channel lock
+TODO elaborate a bit more
+
+PageHandle & Page classes
+-------------------
+The PageHandle and Page classes have similar roles. PageHandle contains an index that the ChannelMaster uses internally
+to refer to a page. The Page class contains the raw address of a page and its size.
+The reason these are not combined into one class 
 
 
 Known issues
@@ -117,29 +149,29 @@ PDA installation
 -------------------
 
 1. Install libpci dependency
-  ~~~
+  ```
   yum install pciutils-devel
-  ~~~
+  ```
 
 2. Download & extract PDA 11.0.7
-  ~~~
+  ```
   wget https://compeng.uni-frankfurt.de/fileadmin/Images/pda/pda-11.0.7.tar.gz
   tar zxvf pda-11.0.7.tar.gz
   cd pda-11.0.7
-  ~~~
+  ```
 
 3. Compile
-  ~~~
+  ```
   ./configure --debug=true --numa=true --modprobe=true
   make install
   cd patches/linux_uio
   make install
-  ~~~
+  ```
   
 4. Optionally, insert kernel module. If the utilities are run as root, PDA will do this automatically.
-  ~~~
+  ```
   modprobe uio\_pci\_dma
-  ~~~
+  ```
 
 
 Hugepages
@@ -161,27 +193,27 @@ At some point, we should probably use kernel boot parameters to allocate hugepag
 until then, we must initialize and allocate manually.
 
 1. Install hugetlbfs (will already be installed on most systems)
-  ~~~
+  ```
   yum install libhugetlbfs
-  ~~~
+  ```
 
 2. Allocate hugepages
-  ~~~
-  echo 1024 > /proc/sys/vm/nr_hugepages
-  ~~~
+  ```
+  echo [number] > /proc/sys/vm/nr_hugepages
+  ```
   Where [number] is enough to cover the DMA buffer needs.
   By default, hugepages are 2 MB. 
 
 3. Check to see if they're actually available
-  ~~~
+  ```
   cat /proc/meminfo | grep Huge
-  ~~~
+  ```
  'HugePages_Total' should correspond to [number]
 
 4. Mount hugetlbfs
-  ~~~
+  ```
   mkdir /mnt/hugetlbfs (if directory does not exist)
   mount --types hugetlbfs none /mnt/hugetlbfs -o pagesize=2M
-  ~~~
+  ```
 
 

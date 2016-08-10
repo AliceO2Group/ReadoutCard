@@ -32,7 +32,7 @@ void MemoryMappedFile::map(const char* fileName, size_t fileSize)
     auto dir = bfs::path(fileName).parent_path();
     if (!(bfs::is_directory(dir) && bfs::exists(dir))) {
       BOOST_THROW_EXCEPTION(MemoryMapException()
-          << errinfo_rorc_generic_message("Failed to open memory map file, parent directory does not exist")
+          << errinfo_rorc_error_message("Failed to open memory map file, parent directory does not exist")
           << errinfo_rorc_filename(std::string(fileName))
           << errinfo_rorc_filesize(fileSize));
     }
@@ -43,7 +43,7 @@ void MemoryMappedFile::map(const char* fileName, size_t fileSize)
     std::ofstream ofs(fileName, std::ios::app);
   } catch (std::exception& e) {
     BOOST_THROW_EXCEPTION(MemoryMapException()
-        << errinfo_rorc_generic_message("Failed to open memory map file")
+        << errinfo_rorc_error_message("Failed to open memory map file")
         << errinfo_rorc_filename(std::string(fileName))
         << errinfo_rorc_filesize(fileSize));
   }
@@ -53,7 +53,7 @@ void MemoryMappedFile::map(const char* fileName, size_t fileSize)
     bfs::resize_file(fileName, fileSize);
   } catch (std::exception& e) {
     BOOST_THROW_EXCEPTION(MemoryMapException()
-        << errinfo_rorc_generic_message("Failed to resize memory map file")
+        << errinfo_rorc_error_message("Failed to resize memory map file")
         << errinfo_rorc_possible_causes({
             "Size not a multiple of page size (possibly multiple of hugepages); ",
             "Not enough memory available (check hugepage allocation)"})
@@ -62,24 +62,15 @@ void MemoryMappedFile::map(const char* fileName, size_t fileSize)
   }
 
   try {
-    fmap = bip::file_mapping(fileName, bip::read_write);
-    region = bip::mapped_region(fmap, bip::read_write, 0, fileSize);
+    mFileMapping = bip::file_mapping(fileName, bip::read_write);
+    mMappedRegion = bip::mapped_region(mFileMapping, bip::read_write, 0, fileSize);
   } catch (std::exception& e) {
     BOOST_THROW_EXCEPTION(MemoryMapException()
-        << errinfo_rorc_generic_message("Failed to memory map file")
+        << errinfo_rorc_error_message("Failed to memory map file")
+        << errinfo_rorc_possible_causes({"Not enough memory available (possibly not enough hugepages allocated)"})
         << errinfo_rorc_filename(std::string(fileName))
         << errinfo_rorc_filesize(fileSize));
   }
-}
-
-void* MemoryMappedFile::getAddress()
-{
-  return region.get_address();
-}
-
-size_t MemoryMappedFile::getSize()
-{
-  return region.get_size();
 }
 
 } // namespace Rorc

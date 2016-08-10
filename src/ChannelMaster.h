@@ -31,23 +31,26 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
   public:
 
     /// Constructor for the ChannelMaster object
+    /// \param cardType Type of the card
     /// \param serial Serial number of the card
     /// \param channel Channel number of the channel
     /// \param params Parameters of the channel
     /// \param additionalBuffers Subclasses must provide here the amount of DMA buffers the channel uses in total,
     ///        excluding the one used by the ChannelMaster itself.
-    ChannelMaster(int serial, int channel, const ChannelParameters& params, int additionalBuffers);
+    ChannelMaster(CardType::type cardType, int serial, int channel, const ChannelParameters& params,
+        int additionalBuffers);
 
     /// Constructor for the ChannelMaster object, without passing ChannelParameters
     /// Construction will not succeed without these criteria:
     ///  - A ChannelMaster *with* ChannelParameters was already successfully constructed
     ///  - It successfully released
     ///  - Its state has been preserved in shared memory
+    /// \param cardType Type of the card
     /// \param serial Serial number of the card
     /// \param channel Channel number of the channel
     /// \param additionalBuffers Subclasses must provide here the amount of DMA buffers the channel uses in total,
     ///        excluding the one used by the ChannelMaster itself.
-    ChannelMaster(int serial, int channel, int additionalBuffers);
+    ChannelMaster(CardType::type cardType, int serial, int channel, int additionalBuffers);
 
     ~ChannelMaster();
 
@@ -62,6 +65,7 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
 
     /// Get the buffer ID belonging to the buffer. Note that index 0 is reserved for use by ChannelMaster
     /// See dmaBuffersPerChannel() for more info
+    /// Non-virtual because it must be callable in constructors, and there's no need to override it.
     int getBufferId(int index);
 
     /// Template method called by startDma() to do device-specific (CRORC, RCU...) actions
@@ -72,13 +76,15 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
 
     /// The size of the shared state data file. It should be over-provisioned, since subclasses may also allocate their
     /// own shared data in this file.
-    inline static size_t sharedDataSize()
+    static size_t getSharedDataSize()
     {
-      return 4l * 1024l; // 4k ought to be enough for anybody
+      // 4KiB ought to be enough for anybody, and is also the standard x86 page size.
+      // Since shared memory needs to be a multiple of page size, this should work out.
+      return 4l * 1024l;
     }
 
     /// Name for the shared data object in the shared state file
-    inline static const char* sharedDataName()
+    static std::string getSharedDataName()
     {
       return "ChannelMasterSharedData";
     }
@@ -136,6 +142,9 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
         ChannelParameters params;
     };
 
+    /// Card type ofthe device
+    const CardType::type cardType;
+
     /// Serial number of the device
     const int serialNumber;
 
@@ -159,9 +168,6 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
 
     /// PDA BAR object
     boost::scoped_ptr<Pda::PdaBar> pdaBar;
-
-    /// BAR userspace address
-    uint32_t volatile * barUserspace;
 
     /// Memory mapped file containing pages used for DMA transfer destination
     boost::scoped_ptr<MemoryMappedFile> mappedFilePages;
@@ -201,7 +207,7 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
 
     volatile uint32_t* getBarUserspace() const
     {
-      return barUserspace;
+      return pdaBar->getUserspaceAddressU32();;
     }
 
     const Pda::PdaDmaBuffer& getBufferPages() const

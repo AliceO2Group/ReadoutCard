@@ -16,13 +16,22 @@ class MemoryMappedFile
   public:
     MemoryMappedFile();
     MemoryMappedFile(const char* fileName, size_t fileSize);
-    void map(const char* fileName, size_t fileSize);
-    void* getAddress();
-    size_t getSize();
+
+    void* getAddress() const
+    {
+      return mMappedRegion.get_address();
+    }
+
+    size_t getSize() const
+    {
+      return mMappedRegion.get_size();
+    }
 
   private:
-    boost::interprocess::file_mapping fmap;
-    boost::interprocess::mapped_region region;
+    boost::interprocess::file_mapping mFileMapping;
+    boost::interprocess::mapped_region mMappedRegion;
+
+    void map(const char* fileName, size_t fileSize);
 };
 
 } // namespace Rorc

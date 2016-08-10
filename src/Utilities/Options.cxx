@@ -87,7 +87,7 @@ T getOptionRequired(const Option<T>& option, const po::variables_map& variablesM
 
   if (variablesMap.count(switchLong) == 0){
     BOOST_THROW_EXCEPTION(OptionRequiredException()
-        << errinfo_rorc_generic_message("The option '" + option.swtch + "' is required but missing"));
+        << errinfo_rorc_error_message("The option '" + option.swtch + "' is required but missing"));
   }
 
   po::variable_value v = variablesMap.at(switchLong);
@@ -128,7 +128,7 @@ po::variables_map getVariablesMap(int argc, char** argv, const po::options_descr
     po::notify(variablesMap);
   } catch (po::unknown_option& e) {
     BOOST_THROW_EXCEPTION(ProgramOptionException()
-        << errinfo_rorc_generic_message("Unknown option '" + e.get_option_name() + "'"));
+        << errinfo_rorc_error_message("Unknown option '" + e.get_option_name() + "'"));
   }
   return variablesMap;
 }
@@ -169,7 +169,7 @@ int getOptionChannel(const po::variables_map& variablesMap)
 
   if (value < 0) {
     BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-        << errinfo_rorc_generic_message("Channel value is negative"));
+        << errinfo_rorc_error_message("Channel value is negative"));
   }
 
   return value;
@@ -186,12 +186,12 @@ int getOptionRegisterAddress(const po::variables_map& variablesMap)
 
   if (address < 0 || address > 0xfff) {
     BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-        << errinfo_rorc_generic_message("Address out of range, must be between 0x0 and 0xfff"));
+        << errinfo_rorc_error_message("Address out of range, must be between 0x0 and 0xfff"));
   }
 
   if (address % 4) {
     BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-        << errinfo_rorc_generic_message("Address not a multiple of 4"));
+        << errinfo_rorc_error_message("Address not a multiple of 4"));
   }
 
   return address;
@@ -213,7 +213,7 @@ int getOptionRegisterValue(const po::variables_map& variablesMap)
 
   if (ss.fail()) {
     BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-        << errinfo_rorc_generic_message("Failed to read register value option"));
+        << errinfo_rorc_error_message("Failed to read register value option"));
   }
 
   return value;
@@ -225,7 +225,7 @@ int getOptionRegisterRange(const po::variables_map& variablesMap)
 
   if (value < 0) {
     BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-        << errinfo_rorc_generic_message("Register range negative"));
+        << errinfo_rorc_error_message("Register range negative"));
   }
 
   return value;
@@ -237,7 +237,7 @@ int getOptionSerialNumber(const po::variables_map& variablesMap)
 
   if (value < 0) {
     BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-            << errinfo_rorc_generic_message("Serial number negative"));
+            << errinfo_rorc_error_message("Serial number negative"));
   }
 
   return value;
@@ -277,7 +277,7 @@ ChannelParameters getOptionsChannelParameters(const boost::program_options::vari
       cp.generator.loopbackMode = loopback;
     } catch (std::out_of_range& e) {
       BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-          << errinfo_rorc_generic_message("Invalid value for option '" + option::cpGenLoopback.swtch + "'"));
+          << errinfo_rorc_error_message("Invalid value for option '" + option::cpGenLoopback.swtch + "'"));
     }
   }
   return cp;

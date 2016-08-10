@@ -3,8 +3,6 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
-// XXX Note: this class is very under construction
-
 #include "CruChannelMaster.h"
 #include <iostream>
 #include <cassert>
@@ -29,35 +27,20 @@ namespace Rorc {
   CruException() \
       << errinfo_rorc_generic_message(_err_message)
 
-/// Throws a CruException with the given message string
-#define THROW_CRU_EXCEPTION(_err_message) \
-  BOOST_THROW_EXCEPTION(CruException() \
-      << errinfo_rorc_generic_message(_err_message))
-
 /// Amount of additional DMA buffers for this channel
 static constexpr int CRU_BUFFERS_PER_CHANNEL = 1;
 
 /// The index of the DMA buffer for the FIFO
 static constexpr int BUFFER_INDEX_FIFO = 1;
 
-uint32_t getLower32Bits(uint64_t x)
-{
-  return x & 0xFfffFfff;
-}
-
-uint32_t getUpper32Bits(uint64_t x)
-{
-  return (x >> 32) & 0xFfffFfff;
-}
-
 CruChannelMaster::CruChannelMaster(int serial, int channel)
-    : ChannelMaster(serial, channel, CRU_BUFFERS_PER_CHANNEL)
+    : ChannelMaster(CARD_TYPE, serial, channel, CRU_BUFFERS_PER_CHANNEL)
 {
   constructorCommon();
 }
 
 CruChannelMaster::CruChannelMaster(int serial, int channel, const ChannelParameters& params)
-    : ChannelMaster(serial, channel, params, CRU_BUFFERS_PER_CHANNEL)
+    : ChannelMaster(CARD_TYPE, serial, channel, params, CRU_BUFFERS_PER_CHANNEL)
 {
   constructorCommon();
 }
@@ -66,13 +49,14 @@ void CruChannelMaster::constructorCommon()
 {
   using Util::resetSmartPtr;
 
-  resetSmartPtr(mappedFileFifo, ChannelPaths::fifo(getSerialNumber(), getChannelNumber()).c_str());
+  ChannelPaths paths(CARD_TYPE, getSerialNumber(), getChannelNumber());
+  resetSmartPtr(mappedFileFifo, paths.fifo().c_str());
 
   resetSmartPtr(bufferFifo, getRorcDevice().getPciDevice(), mappedFileFifo->getAddress(), mappedFileFifo->getSize(),
       getBufferId(BUFFER_INDEX_FIFO));
 
-  resetSmartPtr(cruSharedData, ChannelPaths::state(getSerialNumber(), getChannelNumber()), sharedDataSize(),
-      cruSharedDataName(), FileSharedObject::find_or_construct);
+  resetSmartPtr(cruSharedData, paths.state(), getSharedDataSize(), getCruSharedDataName().c_str(),
+      FileSharedObject::find_or_construct);
 
   pendingPages = 0;
 
@@ -117,21 +101,21 @@ void CruChannelMaster::constructorCommon()
   }
 
   if (getPageAddresses().size() <= CRU_DESCRIPTOR_ENTRIES) {
-    THROW_CRU_EXCEPTION("Insufficient amount of pages fit in DMA buffer");
+    BOOST_THROW_EXCEPTION(CruException()
+        << errinfo_rorc_error_message("Insufficient amount of pages fit in DMA buffer"));
   }
 }
 
 CruChannelMaster::~CruChannelMaster()
 {
-  // TODO
 }
 
-CruChannelMaster::CruSharedData::CruSharedData()
+CruChannelMaster::SharedData::SharedData()
     : initializationState(InitializationState::UNKNOWN), fifoIndexWrite(0), fifoIndexRead(0), pageIndex(0)
 {
 }
 
-void CruChannelMaster::CruSharedData::initialize()
+void CruChannelMaster::SharedData::initialize()
 {
   initializationState = InitializationState::INITIALIZED;
   fifoIndexWrite = 0;
@@ -144,13 +128,13 @@ void CruChannelMaster::deviceStartDma()
   using namespace CruRegisterIndex;
   uint64_t fifoTableAddress = (uint64_t) bufferFifo->getScatterGatherList()[0].addressBus;
   auto bar = getBarUserspace();
-  bar[STATUS_BASE_BUS_LOW] = getLower32Bits(fifoTableAddress);
-  bar[STATUS_BASE_BUS_HIGH] = getUpper32Bits(fifoTableAddress);
+  bar[STATUS_BASE_BUS_LOW] = Util::getLower32Bits(fifoTableAddress);
+  bar[STATUS_BASE_BUS_HIGH] = Util::getUpper32Bits(fifoTableAddress);
   bar[FIFO_BASE_CARD_LOW] = 0x8000;
   bar[FIFO_BASE_CARD_HIGH] = 0x0;
-  bar[START_DMA] = CRU_DESCRIPTOR_ENTRIES - 1;
+  bar[DMA_POINTER] = CRU_DESCRIPTOR_ENTRIES - 1;
   bar[DESCRIPTOR_TABLE_SIZE] = CRU_DESCRIPTOR_ENTRIES - 1;
-  bar[PCIE_READY] = 0x1;
+  bar[BUFFER_READY] = 0x1;
   bar[DATA_EMULATOR_ENABLE] = 0x1;
   bar[SEND_STATUS] = 0x1;
 }
@@ -168,9 +152,9 @@ void CruChannelMaster::resetCard(ResetLevel::type)
   // TODO
 }
 
-ChannelMasterInterface::PageHandle CruChannelMaster::pushNextPage()
+PageHandle CruChannelMaster::pushNextPage()
 {
-  auto handle = ChannelMasterInterface::PageHandle(pendingPages);
+  auto handle = PageHandle(pendingPages);
 
   if (pendingPages < 128) {
     // Wait until we have 128 pages
@@ -194,8 +178,8 @@ ChannelMasterInterface::PageHandle CruChannelMaster::pushNextPage()
 
       // Addresses in the RAM (DMA destination)
       auto busAddress = (uint64_t) getPageAddresses()[0].bus;
-      e.dstLow = getLower32Bits(busAddress);
-      e.dstHigh = getUpper32Bits(busAddress);
+      e.dstLow = Util::getLower32Bits(busAddress);
+      e.dstHigh = Util::getUpper32Bits(busAddress);
 
       // Page size
       e.ctrl = (i << 18) + (pageSize / 4);
@@ -225,7 +209,7 @@ Page CruChannelMaster::getPage(const PageHandle& handle)
 void CruChannelMaster::markPageAsRead(const PageHandle& handle)
 {
   if (pageWasReadOut[handle.index]) {
-    THROW_CRU_EXCEPTION("Page was already marked as read");
+    BOOST_THROW_EXCEPTION(CruException() << errinfo_rorc_error_message("Page was already marked as read"));
   }
   pageWasReadOut[handle.index] = true;
 }
@@ -260,7 +244,7 @@ void CruChannelMaster::utilitySanityCheck(std::ostream& os)
 
 void CruChannelMaster::utilityCleanupState()
 {
-  ChannelUtility::cruCleanupState(getSerialNumber(), getChannelNumber());
+  ChannelUtility::cruCleanupState(ChannelPaths(CARD_TYPE, getSerialNumber(), getChannelNumber()));
 }
 
 int CruChannelMaster::utilityGetFirmwareVersion()

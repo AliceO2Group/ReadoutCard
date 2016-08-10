@@ -6,7 +6,7 @@
 #pragma once
 
 #include <string>
-#include <memory>
+#include <boost/scoped_ptr.hpp>
 #include "Pda/PdaDevice.h"
 #include "RORC/CardType.h"
 #include "RORC/PciId.h"
@@ -15,7 +15,6 @@ namespace AliceO2 {
 namespace Rorc {
 
 /// Represents a single RORC PCI device
-/// Note: some duplication of code with RorcDeviceEnumerator TODO refactor a bit
 class RorcDevice
 {
   public:
@@ -50,13 +49,13 @@ class RorcDevice
     };
 
     // Finds RORC devices on the system
-    static std::vector<CardDescriptor> enumerateDevices();
+    static std::vector<CardDescriptor> findSystemDevices();
 
     // Finds RORC devices on the system with the given serial number
-    static std::vector<CardDescriptor> enumerateDevices(int serialNumber);
+    static std::vector<CardDescriptor> findSystemDevices(int serialNumber);
 
   private:
-    std::unique_ptr<Pda::PdaDevice> pdaDevice;
+    boost::scoped_ptr<Pda::PdaDevice> pdaDevice;
     PciDevice* pciDevice;
     PciId pciId;
     int serialNumber;

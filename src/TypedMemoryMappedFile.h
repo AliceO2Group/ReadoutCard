@@ -12,33 +12,34 @@
 namespace AliceO2 {
 namespace Rorc {
 
-/// Handles the creation and cleanup of a memory mapping of a file
+/// Wrapper around MemoryMappedFile to provide a typed interface. Note that the user is responsible for making sure
+/// the type is appropriate for type aliasing into a memory mapped region.
 template<typename T>
 class TypedMemoryMappedFile
 {
   public:
     TypedMemoryMappedFile(const char* fileName)
+      : mMemoryMappedFile(fileName, sizeof(T))
     {
-      mf.map(fileName, sizeof(T));
     }
 
-    void* getAddress()
+    void* getAddress() const
     {
-      return mf.getAddress();
+      return mMemoryMappedFile.getAddress();
     }
 
-    size_t getSize()
+    size_t getSize() const
     {
-      return mf.getSize();
+      return mMemoryMappedFile.getSize();
     }
 
-    T* get()
+    T* get() const
     {
-      return reinterpret_cast<T*>(mf.getAddress());
+      return reinterpret_cast<T*>(mMemoryMappedFile.getAddress());
     }
 
   private:
-    MemoryMappedFile mf;
+    MemoryMappedFile mMemoryMappedFile;
 };
 
 } // namespace Rorc

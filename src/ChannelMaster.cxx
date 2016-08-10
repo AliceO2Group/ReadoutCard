@@ -22,32 +22,28 @@ static constexpr int BUFFER_INDEX_PAGES = 0;
 
 int ChannelMaster::getBufferId(int index)
 {
-  int n = dmaBuffersPerChannel;
-
-  if (index >= n || index < 0) {
+  if (index >= dmaBuffersPerChannel || index < 0) {
     BOOST_THROW_EXCEPTION(InvalidParameterException()
-        << errinfo_rorc_generic_message("Tried to get buffer ID using invalid index"));
-
+        << errinfo_rorc_error_message("Tried to get buffer ID using invalid index"));
   }
-
-  return channelNumber * n + index;
+  return channelNumber * dmaBuffersPerChannel + index;
 }
 
 void ChannelMaster::validateParameters(const ChannelParameters& ps)
 {
   if (ps.dma.bufferSize % (2l * 1024l * 1024l) != 0) {
     BOOST_THROW_EXCEPTION(InvalidParameterException()
-        << errinfo_rorc_generic_message("Parameter 'dma.bufferSize' not a multiple of 2 mebibytes"));
+        << errinfo_rorc_error_message("Parameter 'dma.bufferSize' not a multiple of 2 mebibytes"));
   }
 
   if (ps.generator.dataSize > ps.dma.pageSize) {
     BOOST_THROW_EXCEPTION(InvalidParameterException()
-        << errinfo_rorc_generic_message("Parameter 'generator.dataSize' greater than 'dma.pageSize'"));
+        << errinfo_rorc_error_message("Parameter 'generator.dataSize' greater than 'dma.pageSize'"));
   }
 
   if ((ps.dma.bufferSize % ps.dma.pageSize) != 0) {
     BOOST_THROW_EXCEPTION(InvalidParameterException()
-            << errinfo_rorc_generic_message("DMA buffer size not a multiple of 'dma.pageSize'"));
+        << errinfo_rorc_error_message("DMA buffer size not a multiple of 'dma.pageSize'"));
   }
 }
 
@@ -55,17 +51,16 @@ void ChannelMaster::constructorCommonPhaseOne()
 {
   using namespace Util;
 
-  makeParentDirectories(ChannelPaths::pages(serialNumber, channelNumber));
-  makeParentDirectories(ChannelPaths::state(serialNumber, channelNumber));
-  makeParentDirectories(ChannelPaths::fifo(serialNumber, channelNumber));
-  makeParentDirectories(ChannelPaths::lock(serialNumber, channelNumber));
+  ChannelPaths paths(cardType, serialNumber, channelNumber);
+  makeParentDirectories(paths.pages());
+  makeParentDirectories(paths.state());
+  makeParentDirectories(paths.fifo());
+  makeParentDirectories(paths.lock());
 
-  resetSmartPtr(sharedData, ChannelPaths::lock(serialNumber, channelNumber),
-      ChannelPaths::state(serialNumber, channelNumber), sharedDataSize(), sharedDataName(),
+  resetSmartPtr(sharedData, paths.lock(), paths.state(), getSharedDataSize(), getSharedDataName().c_str(),
       FileSharedObject::find_or_construct);
 
-  resetSmartPtr(interProcessMutex, bip::open_or_create,
-      ChannelPaths::namedMutex(serialNumber, channelNumber).c_str());
+  resetSmartPtr(interProcessMutex, bip::open_or_create, paths.namedMutex().c_str());
 
   resetSmartPtr(mutexGuard, interProcessMutex.get());
 }
@@ -77,17 +72,16 @@ void ChannelMaster::constructorCommonPhaseTwo()
   resetSmartPtr(rorcDevice, serialNumber);
 
   resetSmartPtr(pdaBar, rorcDevice->getPciDevice(), channelNumber);
-  barUserspace = pdaBar->getUserspaceAddressU32();
 
-  resetSmartPtr(mappedFilePages, ChannelPaths::pages(serialNumber, channelNumber).c_str(),
+  resetSmartPtr(mappedFilePages, ChannelPaths(cardType, serialNumber, channelNumber).pages().c_str(),
       getSharedData().getParams().dma.bufferSize);
 
   resetSmartPtr(bufferPages, rorcDevice->getPciDevice(), mappedFilePages->getAddress(), mappedFilePages->getSize(),
       getBufferId(BUFFER_INDEX_PAGES));
 }
 
-ChannelMaster::ChannelMaster(int serial, int channel, int additionalBuffers)
-    : serialNumber(serial), channelNumber(channel), dmaBuffersPerChannel(
+ChannelMaster::ChannelMaster(CardType::type cardType, int serial, int channel, int additionalBuffers)
+    : cardType(cardType), serialNumber(serial), channelNumber(channel), dmaBuffersPerChannel(
         additionalBuffers + CHANNELMASTER_DMA_BUFFERS_PER_CHANNEL)
 {
   constructorCommonPhaseOne();
@@ -100,13 +94,14 @@ ChannelMaster::ChannelMaster(int serial, int channel, int additionalBuffers)
     validateParameters(params);
   }
   else {
+    ChannelPaths paths(cardType, serialNumber, channelNumber);
     BOOST_THROW_EXCEPTION(SharedStateException()
-        << errinfo_rorc_generic_message(sd->initializationState == InitializationState::UNINITIALIZED ?
+        << errinfo_rorc_error_message(sd->initializationState == InitializationState::UNINITIALIZED ?
             "Uninitialized shared data state" : "Unknown shared data state")
-        << errinfo_rorc_shared_lock_file(ChannelPaths::lock(serialNumber, channelNumber).string())
-        << errinfo_rorc_shared_state_file(ChannelPaths::state(serialNumber, channelNumber).string())
-        << errinfo_rorc_shared_buffer_file(ChannelPaths::pages(serialNumber, channelNumber).string())
-        << errinfo_rorc_shared_fifo_file(ChannelPaths::fifo(serialNumber, channelNumber).string())
+        << errinfo_rorc_shared_lock_file(paths.lock().string())
+        << errinfo_rorc_shared_state_file(paths.state().string())
+        << errinfo_rorc_shared_buffer_file(paths.pages().string())
+        << errinfo_rorc_shared_fifo_file(paths.fifo().string())
         << errinfo_rorc_possible_causes({
             "Channel was never initialized with ChannelParameters",
             "Channel state file was corrupted",
@@ -116,8 +111,9 @@ ChannelMaster::ChannelMaster(int serial, int channel, int additionalBuffers)
   constructorCommonPhaseTwo();
 }
 
-ChannelMaster::ChannelMaster(int serial, int channel, const ChannelParameters& params, int additionalBuffers)
-    : serialNumber(serial), channelNumber(channel), dmaBuffersPerChannel(
+ChannelMaster::ChannelMaster(CardType::type cardType, int serial, int channel, const ChannelParameters& params,
+    int additionalBuffers)
+    : cardType(cardType), serialNumber(serial), channelNumber(channel), dmaBuffersPerChannel(
         additionalBuffers + CHANNELMASTER_DMA_BUFFERS_PER_CHANNEL)
 {
   validateParameters(params);
@@ -134,8 +130,10 @@ ChannelMaster::ChannelMaster(int serial, int channel, const ChannelParameters& p
     } else {
       cout << "[LOG] Shared state ChannelParameters different to argument ChannelParameters, reconfiguring channel"
           << endl;
-      BOOST_THROW_EXCEPTION(CrorcException() << errinfo_rorc_generic_message(
-                  "Automatic channel reconfiguration not yet supported. Clear channel state manually"));
+      BOOST_THROW_EXCEPTION(CrorcException() << errinfo_rorc_error_message(
+          "Automatic channel reconfiguration not yet supported. Clear channel state manually")
+          << errinfo_rorc_channel_number(channel)
+          << errinfo_rorc_serial_number(serial));
     }
   } else {
     if (sd->initializationState == InitializationState::UNKNOWN) {
@@ -199,13 +197,13 @@ void ChannelMaster::stopDma()
 uint32_t ChannelMaster::readRegister(int index)
 {
   // TODO Range check
-  return barUserspace[index];
+  return pdaBar->getUserspaceAddressU32()[index];
 }
 
 void ChannelMaster::writeRegister(int index, uint32_t value)
 {
   // TODO Range check
-  barUserspace[index] = value;
+  pdaBar->getUserspaceAddressU32()[index] = value;
 }
 
 } // namespace Rorc

@@ -34,7 +34,7 @@ namespace Rorc {
 
 /// Adds errinfo using the given status code and error message
 #define ADD_ERRINFO(_status_code, _err_message) \
-    << errinfo_rorc_generic_message(_err_message) \
+    << errinfo_rorc_error_message(_err_message) \
     << errinfo_rorc_status_code(_status_code)
 
 /// Amount of additional DMA buffers for this channel
@@ -44,13 +44,13 @@ static constexpr int CRORC_BUFFERS_PER_CHANNEL = 1;
 static constexpr int BUFFER_INDEX_FIFO = 1;
 
 CrorcChannelMaster::CrorcChannelMaster(int serial, int channel)
-    : ChannelMaster(serial, channel, CRORC_BUFFERS_PER_CHANNEL)
+    : ChannelMaster(CARD_TYPE, serial, channel, CRORC_BUFFERS_PER_CHANNEL)
 {
   constructorCommon();
 }
 
 CrorcChannelMaster::CrorcChannelMaster(int serial, int channel, const ChannelParameters& params)
-    : ChannelMaster(serial, channel, params, CRORC_BUFFERS_PER_CHANNEL)
+    : ChannelMaster(CARD_TYPE, serial, channel, params, CRORC_BUFFERS_PER_CHANNEL)
 {
   constructorCommon();
 }
@@ -59,20 +59,14 @@ void CrorcChannelMaster::constructorCommon()
 {
   using Util::resetSmartPtr;
 
-  auto serial = getSerialNumber();
-  auto channel = getChannelNumber();
+  ChannelPaths paths(CARD_TYPE, getSerialNumber(), getChannelNumber());
 
-  Util::makeParentDirectories(ChannelPaths::pages(serial, channel));
-  Util::makeParentDirectories(ChannelPaths::state(serial, channel));
-  Util::makeParentDirectories(ChannelPaths::fifo(serial, channel));
-  Util::makeParentDirectories(ChannelPaths::lock(serial, channel));
-
-  resetSmartPtr(mappedFileFifo, ChannelPaths::fifo(serial, channel).c_str());
+  resetSmartPtr(mappedFileFifo, paths.fifo().c_str());
 
   resetSmartPtr(bufferReadyFifo, getRorcDevice().getPciDevice(), mappedFileFifo->getAddress(), mappedFileFifo->getSize(),
       getBufferId(BUFFER_INDEX_FIFO));
 
-  resetSmartPtr(crorcSharedData, ChannelPaths::state(serial, channel), sharedDataSize(), crorcSharedDataName(),
+  resetSmartPtr(crorcSharedData, paths.state(), getSharedDataSize(), getCrorcSharedDataName().c_str(),
       FileSharedObject::find_or_construct);
 
   bufferPageIndexes.resize(READYFIFO_ENTRIES, -1);
@@ -99,21 +93,28 @@ void CrorcChannelMaster::constructorCommon()
 
   // Initialize the page addresses
   for (auto& entry : getBufferPages().getScatterGatherList()) {
-   // How many pages fit in this SGL entry
-   int64_t pagesInSglEntry = entry.size / params.dma.pageSize;
+    if (entry.size < (2l * 1024l * 1024l)) {
+      BOOST_THROW_EXCEPTION(CrorcException()
+          << errinfo_rorc_error_message("Unsupported configuration: DMA scatter-gather entry size less than 2 MiB")
+          << errinfo_rorc_possible_causes(
+              {"DMA buffer was not allocated in hugepage shared memory (hugetlbfs may not be properly mounted)"}));
+    }
 
-   for (int64_t i = 0; i < pagesInSglEntry; ++i) {
-     int64_t offset = i * params.dma.pageSize;
-     PageAddress pa;
-     pa.bus = (void*) (((char*) entry.addressBus) + offset);
-     pa.user = (void*) (((char*) entry.addressUser) + offset);
-     getPageAddresses().push_back(pa);
-   }
+    // How many pages fit in this SGL entry
+    int64_t pagesInSglEntry = entry.size / params.dma.pageSize;
+
+    for (int64_t i = 0; i < pagesInSglEntry; ++i) {
+      int64_t offset = i * params.dma.pageSize;
+      PageAddress pa;
+      pa.bus = (void*) (((char*) entry.addressBus) + offset);
+      pa.user = (void*) (((char*) entry.addressUser) + offset);
+      getPageAddresses().push_back(pa);
+    }
   }
 
   if (getPageAddresses().size() <= READYFIFO_ENTRIES) {
-    BOOST_THROW_EXCEPTION(RorcException()
-        << errinfo_rorc_generic_message("Insufficient amount of pages fit in DMA buffer"));
+    BOOST_THROW_EXCEPTION(CrorcException()
+        << errinfo_rorc_error_message("Insufficient amount of pages fit in DMA buffer"));
   }
 }
 
@@ -266,13 +267,13 @@ void CrorcChannelMaster::pushFreeFifoPage(int readyFifoIndex, void* pageBusAddre
   rorcPushRxFreeFifo(getBarUserspace(), reinterpret_cast<uint64_t>(pageBusAddress), pageWords, readyFifoIndex);
 }
 
-ChannelMasterInterface::PageHandle CrorcChannelMaster::pushNextPage()
+PageHandle CrorcChannelMaster::pushNextPage()
 {
   const auto& csd = crorcSharedData->get();
 
   if (getSharedData().dmaState != DmaState::STARTED) {
     BOOST_THROW_EXCEPTION(CrorcException()
-        << errinfo_rorc_generic_message("Not in required DMA state")
+        << errinfo_rorc_error_message("Not in required DMA state")
         << errinfo_rorc_possible_causes({"startDma() not called"}));
   }
 
@@ -283,7 +284,7 @@ ChannelMasterInterface::PageHandle CrorcChannelMaster::pushNextPage()
   // Check if page is available to write to
   if (pageWasReadOut[fifoIndex] == false) {
     BOOST_THROW_EXCEPTION(CrorcException()
-        << errinfo_rorc_generic_message("Pushing page would overwrite")
+        << errinfo_rorc_error_message("Pushing page would overwrite")
         << errinfo_rorc_fifo_index(fifoIndex));
   }
 
@@ -323,7 +324,7 @@ CrorcChannelMaster::DataArrivalStatus::type CrorcChannelMaster::dataArrived(int 
     if ((status & (1 << 31)) != 0) {
       // The error bit is set
       BOOST_THROW_EXCEPTION(CrorcDataArrivalException()
-          << errinfo_rorc_generic_message("Data arrival status word contains error bits")
+          << errinfo_rorc_error_message("Data arrival status word contains error bits")
           << errinfo_rorc_readyfifo_status(status)
           << errinfo_rorc_readyfifo_length(length)
           << errinfo_rorc_fifo_index(index));
@@ -331,7 +332,7 @@ CrorcChannelMaster::DataArrivalStatus::type CrorcChannelMaster::dataArrived(int 
     return DataArrivalStatus::WHOLE_ARRIVED;
   } else {
     BOOST_THROW_EXCEPTION(CrorcDataArrivalException()
-        << errinfo_rorc_generic_message("Unrecognized data arrival status word")
+        << errinfo_rorc_error_message("Unrecognized data arrival status word")
         << errinfo_rorc_readyfifo_status(status)
         << errinfo_rorc_readyfifo_length(length)
         << errinfo_rorc_fifo_index(index));
@@ -354,7 +355,7 @@ void CrorcChannelMaster::markPageAsRead(const PageHandle& handle)
 {
   if (pageWasReadOut[handle.index]) {
     BOOST_THROW_EXCEPTION(CrorcException()
-        << errinfo_rorc_generic_message("Page was already marked as read")
+        << errinfo_rorc_error_message("Page was already marked as read")
         << errinfo_rorc_page_index(handle.index));
   }
 
@@ -507,7 +508,7 @@ void CrorcChannelMaster::utilityPrintFifo(std::ostream& os)
 
 void CrorcChannelMaster::utilitySetLedState(bool)
 {
-  BOOST_THROW_EXCEPTION(CrorcException() << errinfo_rorc_generic_message("C-RORC does not support setting LED state"));
+  BOOST_THROW_EXCEPTION(CrorcException() << errinfo_rorc_error_message("C-RORC does not support setting LED state"));
 }
 
 void CrorcChannelMaster::utilitySanityCheck(std::ostream& os)
@@ -517,14 +518,14 @@ void CrorcChannelMaster::utilitySanityCheck(std::ostream& os)
 
 void CrorcChannelMaster::utilityCleanupState()
 {
-  ChannelUtility::crorcCleanupState(getSerialNumber(), getChannelNumber());
+  ChannelUtility::crorcCleanupState(ChannelPaths(CARD_TYPE, getSerialNumber(), getChannelNumber()));
 }
 
 int CrorcChannelMaster::utilityGetFirmwareVersion()
 {
-  int pciLoopPerUsec;
-  int rorcRevision;
-  int diuVersion;
+  int pciLoopPerUsec = 0;
+  int rorcRevision = 0;
+  int diuVersion = 0;
   int returnCode = ddlFindDiuVersion(getBarUserspace(), pciLoopPerUsec, &rorcRevision, &diuVersion);
   THROW_IF_BAD_STATUS(returnCode, CrorcInitDiuException()
       ADD_ERRINFO(returnCode, "Failed to get C-RORC revision"));

@@ -36,7 +36,7 @@ static constexpr size_t FIFO_BASE_CARD_HIGH = 3;
 
 /// Set to number of available pages - 1
 /// Byte address: 0x16
-static constexpr size_t START_DMA = 4;
+static constexpr size_t DMA_POINTER = 4;
 
 /// Size of the descriptor table
 /// Set to the same as (number of available pages - 1)
@@ -58,7 +58,7 @@ static constexpr size_t DATA_EMULATOR_ENABLE = 128;
 /// Control register for PCI status
 /// Write 0x1 to this register to signal that the host RAM is available for transfer
 /// Byte address: 0x204
-static constexpr size_t PCIE_READY = 129;
+static constexpr size_t BUFFER_READY = 129;
 
 /// Some kind of control register
 /// One can "deassert reset for led module" by writing 0xd into this (not sure what that means).

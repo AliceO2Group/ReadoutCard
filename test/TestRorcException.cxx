@@ -25,7 +25,7 @@ const std::string CAUSE_2("cause_2");
 BOOST_AUTO_TEST_CASE(TestRorcException)
 {
   try {
-    BOOST_THROW_EXCEPTION(RorcException() << errinfo_rorc_generic_message(TEST_MESSAGE_1));
+    BOOST_THROW_EXCEPTION(RorcException() << errinfo_rorc_error_message(TEST_MESSAGE_1));
   }
   catch (std::exception& e) {
     BOOST_CHECK(std::string(e.what()) == TEST_MESSAGE_1);
@@ -36,14 +36,14 @@ BOOST_AUTO_TEST_CASE(TestRorcException)
 BOOST_AUTO_TEST_CASE(TestRorcException2)
 {
   try {
-    BOOST_THROW_EXCEPTION(RorcException() << errinfo_rorc_generic_message(TEST_MESSAGE_1));
+    BOOST_THROW_EXCEPTION(RorcException() << errinfo_rorc_error_message(TEST_MESSAGE_1));
   }
   catch (RorcException& e) {
     auto what1 = e.what();
     BOOST_CHECK(std::string(what1) == TEST_MESSAGE_1);
 
     // Overwrite old message
-    e << errinfo_rorc_generic_message(TEST_MESSAGE_2);
+    e << errinfo_rorc_error_message(TEST_MESSAGE_2);
 
     // Will the old message now explode? Doesn't seem to be the case...
     BOOST_CHECK(std::string(what1) == TEST_MESSAGE_1);

@@ -47,6 +47,12 @@ find_package(Boost COMPONENTS
   program_options 
   REQUIRED
   )
+  
+# Other sub-projects
+#link_o2_subproject(InfoLogger)
+#link_o2_subproject(Common)
+#link_o2_subproject(Configuration)
+ 
 
 # PDA (Portable Driver Architecture)
 find_package(PDA)
@@ -58,9 +64,6 @@ else()
     message(WARNING "PDA not found, RORC module will have a dummy implementation only (skip, no error)")
     return()
 endif(PDA_FOUND)
-
-# Dependency on another subproject
-#link_o2_subproject(Common)
 
 # This sets the include directory for the reference project. This is the -I flag in gcc.
 # All the includes should be in this variable To add new directories to the include path,

@@ -64,7 +64,7 @@ int Program::execute(int argc, char** argv)
   auto prnHelp = [&](){ printHelp(optionsDescription); };
 
   // We add a verbose switch
-  optionsDescription.add_options()(VERBOSE_SWITCH, "Verbose output (usually only affects error output)");
+  optionsDescription.add_options()(VERBOSE_SWITCH, "Verbose output");
   optionsDescription.add_options()(VERSION_SWITCH, "Display RORC library version");
 
   // Subclass will add own options
@@ -91,7 +91,7 @@ int Program::execute(int argc, char** argv)
     mainFunction(variablesMap);
   }
   catch (ProgramOptionException& e) {
-    auto message = boost::get_error_info<AliceO2::Rorc::errinfo_rorc_generic_message>(e);
+    auto message = boost::get_error_info<AliceO2::Rorc::errinfo_rorc_error_message>(e);
     std::cout << "Program options invalid: " << *message << "\n\n";
     prnHelp();
   }
