@@ -29,8 +29,7 @@
 #include <ctype.h>
 #include <time.h>
 #include <boost/scoped_ptr.hpp>
-#include "Factory/ChannelUtilityFactory.h"
-#include "RORC/ChannelFactory.h"
+#include <boost/format.hpp>
 #include "RorcException.h"
 #include "RorcDevice.h"
 #include "MemoryMappedFile.h"
@@ -41,6 +40,7 @@
 #include "Pda/PdaBar.h"
 #include "Pda/PdaDmaBuffer.h"
 
+namespace b = boost;
 namespace Register = AliceO2::Rorc::CruRegisterIndex;
 using namespace AliceO2::Rorc::Utilities;
 using namespace AliceO2::Rorc;
@@ -74,7 +74,7 @@ constexpr int MAX_ROLLING = 15000;
 /// Offset in bytes from start of status table to data buffer
 constexpr size_t DATA_OFFSET = 0x200;
 
-constexpr size_t DMA_BUFFER_PAGES_SIZE = 8l * 1024l * 1024l; // Should be enough...
+constexpr size_t DMA_BUFFER_PAGES_SIZE = 2l * 1024l * 1024l; // One 2MiB hugepage. Should be enough...
 
 constexpr uint32_t DEFAULT_VALUE = 0xCcccCccc;
 
@@ -82,6 +82,8 @@ constexpr int BUFFER_INDEX_PAGES = 0;
 constexpr int BUFFER_INDEX_FIFO = 0;
 
 const std::string DMA_BUFFER_PAGES_PATH = "/mnt/hugetlbfs/rorc-cru-experimental-dma-pages";
+
+const std::string PROGRESS_FORMAT = "%-4s %-8s  %-8s  %-8s %-8s";
 
 namespace {
 
@@ -127,13 +129,13 @@ class ProgramCruExperimentalDma: public Program
 
     CruFifoTable* fifoUser;
 
-    uint32_t* data_user; ///< DMA buffer (userspace address)
+    uint32_t* dataUser; ///< DMA buffer (userspace address)
 
     timespec t1;
     timespec run_start;
     timespec run_end;
 
-    int initPDA()
+    void init()
     {
       system("modprobe -r uio_pci_dma");
       system("modprobe uio_pci_dma");
@@ -149,47 +151,47 @@ class ProgramCruExperimentalDma: public Program
           mappedFilePages->getSize(), BUFFER_INDEX_PAGES);
 //      Util::resetSmartPtr(bufferFifo, rorcDevice->getPciDevice(), mappedFileFifo->getAddress(),
 //          mappedFileFifo->getSize(), BUFFER_INDEX_PAGES);
-      return 0;
-    }
 
-    int initDMA()
-    {
-      auto list = bufferPages->getScatterGatherList();
-      cout << "SGL entries: " << list.size() << '\n';
-      auto entry = list.at(0);
-      cout << "SG Length: " << double(entry.size)/1024.0/1024.0 << " MiB\n";
+      auto entry = bufferPages->getScatterGatherList().at(0);
+      if (entry.size < (2l * 1024l * 1024l)) {
+        BOOST_THROW_EXCEPTION(CruException()
+            << errinfo_rorc_error_message("Unsupported configuration: DMA scatter-gather entry size less than 2 MiB")
+            << errinfo_rorc_scatter_gather_entry_size(entry.size)
+            << errinfo_rorc_possible_causes(
+                {"DMA buffer was not allocated in hugepage shared memory (hugetlbfs may not be properly mounted)"}));
+      }
+
+      auto getDataAddress = [](void* fifoAddress) {
+        // Data starts directly after the FIFO
+        return reinterpret_cast<uint32_t*>(reinterpret_cast<char*>(fifoAddress) + sizeof(CruFifoTable));
+      };
+
+      // Addresses in the RAM (DMA destination)
+      // the start address of the descriptor table is always at the same place:
+      // adding a 0x200 offset (= sizeof(CruFifoTable)) to the status start address, no
+      // matter how many entries there are
+      fifoUser = reinterpret_cast<CruFifoTable*>(entry.addressUser);
+      dataUser = getDataAddress(fifoUser);
+      CruFifoTable* fifoDevice = reinterpret_cast<CruFifoTable*>(entry.addressBus);
+      uint32_t* dataDevice = getDataAddress(fifoDevice);
 
       // Initializing the descriptor table
-      fifoUser = reinterpret_cast<CruFifoTable*>(entry.addressUser);
-//      cout << "FIFO address user       : " << (void*) fifoUser << '\n';
       fifoUser->resetStatusEntries();
 
       for (int i = 0; i < FIFO_ENTRIES * NUM_OF_BUFFERS; i++) {
         auto sourceAddress = reinterpret_cast<void*>((i % NUM_OF_BUFFERS) * DMA_PAGE_SIZE);
-
-        // Addresses in the RAM (DMA destination)
-        // the start address of the descriptor table is always at the same place:
-        // adding a 0x200 offset (=status+128) to the status start address, no
-        // matter how many entries there are
-        uint32_t* status_device = (uint32_t*) entry.addressBus;
-        descriptor_entry* descriptor_device = (descriptor_entry*) (status_device + 128);
-        uint32_t* data_device = (uint32_t*) (descriptor_device + FIFO_ENTRIES * NUM_OF_BUFFERS);
-//        cout << "Status address device   : " << (void*) status_device << '\n';
-//        cout << "Data address device     : " << (void*) data_device << '\n';
-        auto destinationAddress = data_device + i * DMA_PAGE_SIZE_32;
-
+        auto destinationAddress = dataDevice + i * DMA_PAGE_SIZE_32;
         fifoUser->descriptorEntries[i].setEntry(i, DMA_PAGE_SIZE_32, sourceAddress, destinationAddress);
       }
 
       // Setting the buffer to the default value
-      data_user = reinterpret_cast<uint32_t*>(reinterpret_cast<char*>(fifoUser) + sizeof(CruFifoTable));
+
 //      cout << "Data address user       : " << (void*) data_user << '\n';
       for (int i = 0; i < DMA_PAGE_SIZE_32 * FIFO_ENTRIES; i++) {
-        data_user[i] = DEFAULT_VALUE;
+        dataUser[i] = DEFAULT_VALUE;
       }
 
       // Status base address, low and high part, respectively
-      CruFifoTable* fifoDevice = reinterpret_cast<CruFifoTable*>(entry.addressBus);
 //      cout << "FIFO address device     : " << (void*) fifoDevice<< '\n';
       bar[Register::STATUS_BASE_BUS_HIGH] = Util::getUpper32Bits(uint64_t(fifoDevice));
       bar[Register::STATUS_BASE_BUS_LOW] = Util::getLower32Bits(uint64_t(fifoDevice));
@@ -215,12 +217,12 @@ class ProgramCruExperimentalDma: public Program
 
       // Set status to send status for every page not only for the last one
       bar[Register::SEND_STATUS] = 0x1;
-
-      return 0;
     }
 
     int pdaDMA()
     {
+      init();
+
       int pattern[1023];
       {
         for (int i = 2; i < 1024; i++) {
@@ -230,77 +232,67 @@ class ProgramCruExperimentalDma: public Program
         pattern[1] = 0;
       }
 
-      if (initPDA() != 0) {
-        printf("initPDA error ...\n");
-        return -1;
-      }
-
-      if (initDMA() != 0) {
-        printf("initDMA error ...\n");
-        return -1;
-      }
 
       std::ofstream file("dma_data.txt");
 
-      // DMA; rolling
       int i = 0;
       int lock = 0;
       int counter = 0;
-      int current_page = 0;
-      int num_of_err = 0;
+      int currentPage = 0;
+      int errorCount = 0;
       int rolling = 0;
+      int statusCount = 0;
 
       clock_gettime(CLOCK_REALTIME, &run_start);
 
       // Allocating memory where the data will be read out to
-      std::array<uint32_t, FIFO_ENTRIES * NUM_OF_BUFFERS * DMA_PAGE_SIZE_32> readout;
+      using PageBuffer = std::array<uint32_t, DMA_PAGE_SIZE_32>; ///< Array the size of a page
+      std::array<PageBuffer, FIFO_ENTRIES * NUM_OF_BUFFERS> readoutPages; ///< Array of pages
 
-      while (i != FIFO_ENTRIES * NUM_OF_BUFFERS) {
+      cout << '\n' << b::str(b::format(PROGRESS_FORMAT) % "i" % "Counter" % "Rolling" % "Status" % "Errors") << '\n';
+
+      while (true) {
         if (isSigInt()) {
           break;
         }
-
-        //cout << "pdaDMA is running\n";
 
         // LEDs off
         bar[Register::LED_STATUS] = 0xff;
 
         if (fifoUser->statusEntries[i].isPageArrived()) {
+          auto& readoutPage = readoutPages[i];
 
-          memcpy(&readout[i * DMA_PAGE_SIZE_32], &data_user[i * DMA_PAGE_SIZE_32], DMA_PAGE_SIZE);
+          memcpy(readoutPage.data(), &dataUser[i * DMA_PAGE_SIZE_32], DMA_PAGE_SIZE);
 
           // Writing data to file
           file << i << '\n';
 
           for (int j = 0; j < DMA_PAGE_SIZE / 32; j++) {
-            if (isSigInt()) {
-              break;
-            }
-
             for (int k = 7; k >= 0; k--) {
-              file << readout[i * DMA_PAGE_SIZE_32 + j * 8 + k];
+              file << readoutPage[j * 8 + k];
             }
             file << '\n';
 
             // Data error checking
-            size_t usr_index = i * DMA_PAGE_SIZE_32 + j * 8;
-            size_t pattern_index = current_page * DMA_PAGE_SIZE / 32 + j;
-            if (readout[usr_index] != pattern[pattern_index]) {
-              num_of_err++;
-              cout << "data error at rolling " << rolling
-                  << ", page " << i
-                  << ", data " << j * 8
-                  << ", " << readout[usr_index]
-                  << " - " << pattern[pattern_index] << '\n';
+            size_t pattern_index = currentPage * DMA_PAGE_SIZE / 32 + j;
+            if (readoutPage[j * 8] != pattern[pattern_index]) {
+              errorCount++;
+              if (isVerbose()) {
+                cout << "data error at rolling " << rolling
+                    << ", page " << i
+                    << ", data " << j * 8
+                    << ", " << readoutPage[j * 8]
+                    << " - " << pattern[pattern_index] << '\n';
+              }
             }
           }
           file << '\n';
 
-          current_page++;
+          currentPage++;
 
           // Setting the buffer to the default value after the readout
           for (size_t j = 0; j < DMA_PAGE_SIZE_32; j++) {
-            data_user[i * DMA_PAGE_SIZE_32 + j] = DEFAULT_VALUE;
+            dataUser[i * DMA_PAGE_SIZE_32 + j] = DEFAULT_VALUE;
           }
 
           //cout << " " << i << " " << fifoUser->statusEntries[i].status << '\n';
@@ -329,21 +321,16 @@ class ProgramCruExperimentalDma: public Program
           //after every 32Kbytes reset the current_page for online checking
           if ((i % FIFO_ENTRIES) == FIFO_ENTRIES - 1) {
 
-            current_page = 0;
-
-//            cout << "counter = " << counter - 1 << '\n';
-            cout << "rolling = " << rolling << '\n';
+            currentPage = 0;
 
             //counter = 0;
 
             rolling++;
-
-            // Measuring time difference
-//            cout << "t1:\t" << t1.tv_sec << "s " << "\t" << t1.tv_nsec << " us\n";
+            cout << b::str(b::format(PROGRESS_FORMAT) % i % (counter - 1) % rolling % statusCount % errorCount) << '\r';
 
             // Only if we want a fixed number of rolling
             if (rolling == MAX_ROLLING) {
-              cout << "Rolling == " << MAX_ROLLING << " -> stopping\n";
+              cout << "\nrolling == " << MAX_ROLLING << " -> stopping\n";
               break;
             }
 
@@ -352,7 +339,7 @@ class ProgramCruExperimentalDma: public Program
 
           if (i == FIFO_ENTRIES * NUM_OF_BUFFERS - 1) {
             // read status count after 1MByte dma transfer
-//            cout << bar[Register::READ_STATUS_COUNT] << '\n';
+            statusCount = bar[Register::READ_STATUS_COUNT];
             i = 0;
           } else {
             i++;
@@ -377,8 +364,10 @@ class ProgramCruExperimentalDma: public Program
       double dtime = sectime + nsectime / 1000000000.0;
       double throughput = (double) rolling / dtime * FIFO_ENTRIES * DMA_PAGE_SIZE / (1024 * 1024 * 1024);
       cout << "Throughput is " << throughput << " GB/s or " << throughput * 8 << " Gb/s.\n";
-      cout << "Number of errors is " << num_of_err << '\n';
+      cout << "Number of errors is " << errorCount << '\n';
       cout << "Firmware info: " << Utilities::Common::make32hexString(bar[Register::FIRMWARE_COMPILE_INFO]) << '\n';
+
+      return 0;
     }
 };
 
