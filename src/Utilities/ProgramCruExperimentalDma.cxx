@@ -47,18 +47,6 @@ using namespace AliceO2::Rorc;
 using std::cout;
 using std::endl;
 
-struct descriptor_entry
-{
-    uint32_t src_low;
-    uint32_t src_high;
-    uint32_t dst_low;
-    uint32_t dst_high;
-    uint32_t ctrl;
-    uint32_t reservd1;
-    uint32_t reservd2;
-    uint32_t reservd3;
-};
-
 constexpr int FIFO_ENTRIES = 4;
 
 /// DMA page length in bytes
@@ -78,8 +66,8 @@ constexpr size_t DMA_BUFFER_PAGES_SIZE = 2l * 1024l * 1024l; // One 2MiB hugepag
 
 constexpr uint32_t DEFAULT_VALUE = 0xCcccCccc;
 
+/// PDA DMA buffer index for the pages buffer
 constexpr int BUFFER_INDEX_PAGES = 0;
-constexpr int BUFFER_INDEX_FIFO = 0;
 
 const std::string DMA_BUFFER_PAGES_PATH = "/mnt/hugetlbfs/rorc-cru-experimental-dma-pages";
 
@@ -363,8 +351,8 @@ class ProgramCruExperimentalDma: public Program
       }
       double dtime = sectime + nsectime / 1000000000.0;
       double throughput = (double) rolling / dtime * FIFO_ENTRIES * DMA_PAGE_SIZE / (1024 * 1024 * 1024);
-      cout << "Throughput is " << throughput << " GB/s or " << throughput * 8 << " Gb/s.\n";
-      cout << "Number of errors is " << errorCount << '\n';
+      cout << "Throughput: " << throughput << " GB/s or " << throughput * 8 << " Gb/s.\n";
+      cout << "Number of errors: " << errorCount << '\n';
       cout << "Firmware info: " << Utilities::Common::make32hexString(bar[Register::FIRMWARE_COMPILE_INFO]) << '\n';
 
       return 0;
