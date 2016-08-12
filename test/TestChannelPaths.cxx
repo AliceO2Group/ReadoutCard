@@ -14,7 +14,7 @@
 BOOST_AUTO_TEST_CASE(ChannelPathsTest)
 {
   using namespace AliceO2::Rorc;
-  ChannelPaths paths(CardType::UNKNOWN, 0, 0);
+  ChannelPaths paths(CardType::Unknown, 0, 0);
   BOOST_CHECK_NO_THROW(paths.fifo());
   BOOST_CHECK_NO_THROW(paths.lock());
   BOOST_CHECK_NO_THROW(paths.namedMutex());

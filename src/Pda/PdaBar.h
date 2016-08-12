@@ -1,7 +1,7 @@
-///
 /// \file PdaBar.h
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Definition of the PdaBar class.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #pragma once
 
@@ -22,22 +22,22 @@ class PdaBar
 
     inline size_t getBarLength() const
     {
-      return barLength;
+      return mBarLength;
     }
 
     inline Bar* getPdaBar() const
     {
-      return pdaBar;
+      return mPdaBar;
     }
 
     inline volatile void* getUserspaceAddress() const
     {
-      return userspaceAddress;
+      return mUserspaceAddress;
     }
 
     inline volatile uint32_t* getUserspaceAddressU32() const
     {
-      return reinterpret_cast<volatile uint32_t*>(userspaceAddress);
+      return reinterpret_cast<volatile uint32_t*>(mUserspaceAddress);
     }
 
     /// Get reference to register
@@ -48,13 +48,13 @@ class PdaBar
 
   private:
     /// PDA object for the PCI BAR
-    Bar* pdaBar;
+    Bar* mPdaBar;
 
     /// Length of the BAR
-    size_t barLength;
+    size_t mBarLength;
 
     /// Userspace addresses of the mapped BARs
-    volatile void* userspaceAddress;
+    volatile void* mUserspaceAddress;
 };
 
 } // namespace Pda

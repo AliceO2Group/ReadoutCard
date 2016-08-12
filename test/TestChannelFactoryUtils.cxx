@@ -51,9 +51,9 @@ std::shared_ptr<TestInterface> callMake(CardType::type cardType)
 // we test only part of its implementation.
 BOOST_AUTO_TEST_CASE(ChannelFactoryHelperTest)
 {
-  BOOST_CHECK(nullptr != dynamic_cast<DummyImpl*>(callMake(CardType::DUMMY).get()));
-  BOOST_CHECK(nullptr != dynamic_cast<CrorcImpl*>(callMake(CardType::CRORC).get()));
-  BOOST_CHECK(nullptr != dynamic_cast<CruImpl*>(callMake(CardType::CRU).get()));
+  BOOST_CHECK(nullptr != dynamic_cast<DummyImpl*>(callMake(CardType::Dummy).get()));
+  BOOST_CHECK(nullptr != dynamic_cast<CrorcImpl*>(callMake(CardType::Crorc).get()));
+  BOOST_CHECK(nullptr != dynamic_cast<CruImpl*>(callMake(CardType::Cru).get()));
 }
 
 } // Anonymous namespace

@@ -46,7 +46,7 @@ class ProgramInitChannel: public Program
         if (serialNumber == card.serialNumber) {
           cout << "Found card, initializing channel..." << endl;
 
-          if (card.cardType == CardType::CRU) {
+          if (card.cardType == CardType::Cru) {
             if (parameters.dma.pageSize != 8l*1024l) {
               cout << "Warning: given page size != 8 kiB, required for CRU. Correcting automatically.\n";
               parameters.dma.pageSize = 8l*1024l;

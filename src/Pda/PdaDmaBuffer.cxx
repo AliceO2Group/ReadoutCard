@@ -1,7 +1,7 @@
-///
 /// \file PdaDmaBuffer.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Implementation of the PdaDmaBuffer class.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "PdaDmaBuffer.h"
 #include <pda.h>
@@ -12,11 +12,11 @@ namespace Rorc {
 namespace Pda {
 
 PdaDmaBuffer::PdaDmaBuffer(PciDevice* pciDevice, void* userBufferAddress, size_t userBufferSize, int dmaBufferId)
-    : pciDevice(pciDevice)
+    : mPciDevice(pciDevice)
 {
   try {
     // Tell PDA we're using our already allocated userspace buffer.
-    if (PciDevice_registerDMABuffer(pciDevice, dmaBufferId, userBufferAddress, userBufferSize, &dmaBuffer)
+    if (PciDevice_registerDMABuffer(pciDevice, dmaBufferId, userBufferAddress, userBufferSize, &mDmaBuffer)
         != PDA_SUCCESS) {
       // Failed to register it. Usually, this means a DMA buffer wasn't cleaned up properly (such as after a crash).
       // So, try to clean things up.
@@ -37,7 +37,7 @@ PdaDmaBuffer::PdaDmaBuffer(PciDevice* pciDevice, void* userBufferAddress, size_t
       }
 
       // Retry the registration of our new buffer
-      if(PciDevice_registerDMABuffer(pciDevice, dmaBufferId, userBufferAddress, userBufferSize, &dmaBuffer) != PDA_SUCCESS) {
+      if(PciDevice_registerDMABuffer(pciDevice, dmaBufferId, userBufferAddress, userBufferSize, &mDmaBuffer) != PDA_SUCCESS) {
         // Give up
         BOOST_THROW_EXCEPTION(RorcPdaException() << errinfo_rorc_error_message(
             "Failed to register external DMA buffer; Failed retry after automatic cleanup of previous buffer"));
@@ -49,7 +49,7 @@ PdaDmaBuffer::PdaDmaBuffer(PciDevice* pciDevice, void* userBufferAddress, size_t
   }
 
   DMABuffer_SGNode* sgList;
-  if (DMABuffer_getSGList(dmaBuffer, &sgList) != PDA_SUCCESS) {
+  if (DMABuffer_getSGList(mDmaBuffer, &sgList) != PDA_SUCCESS) {
     BOOST_THROW_EXCEPTION(RorcPdaException() << errinfo_rorc_error_message("Failed to get scatter-gather list"));
   }
 
@@ -61,11 +61,11 @@ PdaDmaBuffer::PdaDmaBuffer(PciDevice* pciDevice, void* userBufferAddress, size_t
     e.addressUser = node->u_pointer;
     e.addressBus = node->d_pointer;
     e.addressKernel = node->k_pointer;
-    sgVector.push_back(e);
+    mScatterGatherVector.push_back(e);
     node = node->next;
   }
 
-  if (sgVector.empty()) {
+  if (mScatterGatherVector.empty()) {
     BOOST_THROW_EXCEPTION(RorcPdaException() << errinfo_rorc_error_message(
         "Failed to initialize scatter-gather list, was empty"));
   }
@@ -73,7 +73,7 @@ PdaDmaBuffer::PdaDmaBuffer(PciDevice* pciDevice, void* userBufferAddress, size_t
 
 PdaDmaBuffer::~PdaDmaBuffer()
 {
-  PciDevice_deleteDMABuffer(pciDevice, dmaBuffer);
+  PciDevice_deleteDMABuffer(mPciDevice, mDmaBuffer);
 }
 
 } // namespace Pda

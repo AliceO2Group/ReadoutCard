@@ -48,7 +48,7 @@ class ProgramDmaBench: public Program
       auto params = Options::getOptionsChannelParameters(map);
       const auto maxTime = std::chrono::seconds(10);
       params.generator.dataSize = params.dma.pageSize;
-      params.initialResetLevel = AliceO2::Rorc::ResetLevel::RORC;
+      params.initialResetLevel = AliceO2::Rorc::ResetLevel::Rorc;
 
       // Get master lock on channel
       auto channel = AliceO2::Rorc::ChannelFactory().getMaster(serialNumber, channelNumber, params);

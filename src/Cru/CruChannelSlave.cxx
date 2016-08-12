@@ -1,7 +1,7 @@
-///
 /// \file CruChannelSlave.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Definition of the CruChannelSlave class.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "CruChannelSlave.h"
 
@@ -19,7 +19,7 @@ CruChannelSlave::~CruChannelSlave()
 
 CardType::type CruChannelSlave::getCardType()
 {
-  return CardType::CRU;
+  return CardType::Cru;
 }
 
 } // namespace Rorc

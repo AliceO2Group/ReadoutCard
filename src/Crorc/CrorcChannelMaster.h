@@ -1,7 +1,7 @@
-///
 /// \file CrorcChannelMaster.h
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Definition of the CrorcChannelMaster class.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #pragma once
 
@@ -53,9 +53,9 @@ class CrorcChannelMaster : public ChannelMaster
     {
         enum type
         {
-          NONE_ARRIVED,
-          PART_ARRIVED,
-          WHOLE_ARRIVED,
+          NoneArrived,
+          PartArrived,
+          WholeArrived,
         };
     };
 
@@ -65,15 +65,15 @@ class CrorcChannelMaster : public ChannelMaster
       public:
         CrorcSharedData();
         void initialize();
-        InitializationState::type initializationState;
-        int fifoIndexWrite; ///< Index of next FIFO page available for writing
-        int fifoIndexRead; ///< Index of oldest non-free FIFO page
-        int bufferPageIndex; ///< Index of next DMA buffer page available for writing
-        long long int loopPerUsec; ///< Some timing parameter used during communications with the card
-        double pciLoopPerUsec; ///< Some timing parameters used during communications with the card
-        int rorcRevision;
-        int siuVersion;
-        int diuVersion;
+        InitializationState::type mInitializationState;
+        int mFifoIndexWrite; ///< Index of next FIFO page available for writing
+        int mFifoIndexRead; ///< Index of oldest non-free FIFO page
+        int mBufferPageIndex; ///< Index of next DMA buffer page available for writing
+        long long int mLoopPerUsec; ///< Some timing parameter used during communications with the card
+        double mPciLoopPerUsec; ///< Some timing parameters used during communications with the card
+        int mRorcRevision;
+        int mSiuVersion;
+        int mDiuVersion;
     };
 
     /// Enables data receiving in the RORC
@@ -142,25 +142,23 @@ class CrorcChannelMaster : public ChannelMaster
     void crorcSetSiuLoopback();
 
     /// Memory mapped file containing the readyFifo
-    boost::scoped_ptr<TypedMemoryMappedFile<ReadyFifo>> mappedFileFifo;
+    boost::scoped_ptr<TypedMemoryMappedFile<ReadyFifo>> mMappedFileFifo;
 
     /// PDA DMABuffer object for the Ready FIFO
-    boost::scoped_ptr<Pda::PdaDmaBuffer> bufferReadyFifo;
+    boost::scoped_ptr<Pda::PdaDmaBuffer> mBufferReadyFifo;
 
     /// Memory mapped data stored in the shared state file
-    boost::scoped_ptr<FileSharedObject::FileSharedObject<CrorcSharedData>> crorcSharedData;
+    boost::scoped_ptr<FileSharedObject::FileSharedObject<CrorcSharedData>> mCrorcSharedData;
 
     /// Mapping from fifo page index to DMA buffer index
-    std::vector<int> bufferPageIndexes;
+    std::vector<int> mBufferPageIndexes;
 
     /// Array to keep track of read pages (false: wasn't read out, true: was read out).
-    std::vector<bool> pageWasReadOut;
-
-  private:
+    std::vector<bool> mPageWasReadOut;
 
     void constructorCommon();
 
-    static constexpr CardType::type CARD_TYPE = CardType::CRORC;
+    static constexpr CardType::type CARD_TYPE = CardType::Crorc;
 };
 
 } // namespace Rorc

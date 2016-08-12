@@ -1,7 +1,7 @@
-///
 /// \file ChannelFactoryUtils.h
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Definition of helper functions for Channel factories
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include <map>
 #include <algorithm>
@@ -29,7 +29,7 @@ std::shared_ptr<Interface> channelFactoryHelper(int serialNumber, int dummySeria
 {
 #ifdef ALICEO2_RORC_PDA_ENABLED
   if (serialNumber == dummySerial) {
-    return map.at(CardType::DUMMY)();
+    return map.at(CardType::Dummy)();
   } else {
     // Find the PCI device
     auto cardsFound = RorcDevice::findSystemDevices(serialNumber);

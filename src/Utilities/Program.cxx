@@ -5,7 +5,6 @@
 
 #include <iostream>
 #include <iomanip>
-#include <atomic>
 #include <boost/version.hpp>
 #include "Utilities/Options.h"
 #include "Utilities/Program.h"
@@ -22,18 +21,12 @@ using std::endl;
 namespace po = boost::program_options;
 
 namespace {
-  /// Flag for SIGINT signal
-  std::atomic<bool> flagSigInt(false);
-
-  void gotSigInt(int)
-  {
-    flagSigInt = true;
-  }
-
-  const char* HELP_SWITCH = "help";
-  const char* VERBOSE_SWITCH = "verbose";
-  const char* VERSION_SWITCH = "version";
+  const std::string HELP_SWITCH = "help";
+  const std::string VERBOSE_SWITCH = "verbose";
+  const std::string VERSION_SWITCH = "version";
 }
+
+std::atomic<bool> Program::sFlagSigInt(false);
 
 Program::Program()
     : verbose(false)
@@ -58,14 +51,14 @@ void Program::printHelp (const po::options_description& optionsDescription)
 
 int Program::execute(int argc, char** argv)
 {
-  Util::setSigIntHandler(gotSigInt);
+  Util::setSigIntHandler(sigIntHandler);
 
   auto optionsDescription = Options::createOptionsDescription();
   auto prnHelp = [&](){ printHelp(optionsDescription); };
 
   // We add a verbose switch
-  optionsDescription.add_options()(VERBOSE_SWITCH, "Verbose output");
-  optionsDescription.add_options()(VERSION_SWITCH, "Display RORC library version");
+  optionsDescription.add_options()(VERBOSE_SWITCH.c_str(), "Verbose output");
+  optionsDescription.add_options()(VERSION_SWITCH.c_str(), "Display RORC library version");
 
   // Subclass will add own options
   addOptions(optionsDescription);
@@ -105,16 +98,6 @@ int Program::execute(int argc, char** argv)
   }
 
   return 0;
-}
-
-bool Program::isSigInt()
-{
-  return flagSigInt;
-}
-
-bool Program::isVerbose()
-{
-  return verbose;
 }
 
 } // namespace Utilities

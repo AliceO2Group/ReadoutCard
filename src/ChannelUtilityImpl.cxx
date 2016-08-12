@@ -160,6 +160,7 @@ void cruSanityCheck(std::ostream& os, RegisterReadWriteInterface* channel)
     registerReadWriteCheck(channel, os, valueOff, ledAddress, ledAddress);
   }
 
+  /* FIFO no longer exists in latest firmware
   {
     // The CRU has a little debug register FIFO thing that we can use to check if simple register writing and
     // reading is working properly.
@@ -183,7 +184,7 @@ void cruSanityCheck(std::ostream& os, RegisterReadWriteInterface* channel)
       int readValue = channel->readRegister(indexPop);
       registerCheck(os, expectedValue, addressPush, readValue, addressPop);
     }
-  }
+  }*/
 }
 
 void crorcCleanupState(const ChannelPaths& paths)

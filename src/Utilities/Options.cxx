@@ -184,9 +184,9 @@ int getOptionRegisterAddress(const po::variables_map& variablesMap)
   int address;
   ss >> address;
 
-  if (address < 0 || address > 0xfff) {
+  if (address < 0) {
     BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-        << errinfo_rorc_error_message("Address out of range, must be between 0x0 and 0xfff"));
+        << errinfo_rorc_error_message("Address must be positive"));
   }
 
   if (address % 4) {
@@ -208,7 +208,7 @@ int getOptionRegisterValue(const po::variables_map& variablesMap)
     ss << std::dec << valueString;
   }
 
-  int value;
+  uint32_t value; // We need to read as unsigned, or it will detect an overflow if we input for example 0x80000000
   ss >> value;
 
   if (ss.fail()) {

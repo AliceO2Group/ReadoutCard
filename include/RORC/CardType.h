@@ -14,10 +14,10 @@ struct CardType
 {
     enum type
     {
-      UNKNOWN, ///< Unknown card type
-      CRORC,   ///< C-RORC card type
-      CRU,     ///< CRU card type
-      DUMMY    ///< Dummy card type
+      Unknown, ///< Unknown card type
+      Crorc,   ///< C-RORC card type
+      Cru,     ///< CRU card type
+      Dummy    ///< Dummy card type
     };
 
     /// Converts a CardType to a string
@@ -30,10 +30,10 @@ struct CardType
 /// Namespace for type tags that refer to CardType enum values. Provided for use in templates.
 namespace CardTypeTag
 {
-constexpr struct DummyTag_ { static constexpr auto type = CardType::DUMMY; } DummyTag = {};
-constexpr struct CrorcTag_ { static constexpr auto type = CardType::CRORC; } CrorcTag = {};
-constexpr struct CruTag_ { static constexpr auto type = CardType::CRU; } CruTag = {};
-constexpr struct UnknownTag_ { static constexpr auto type = CardType::UNKNOWN; } UnknownTag = {};
+constexpr struct DummyTag_ { static constexpr auto type = CardType::Dummy; } DummyTag = {};
+constexpr struct CrorcTag_ { static constexpr auto type = CardType::Crorc; } CrorcTag = {};
+constexpr struct CruTag_ { static constexpr auto type = CardType::Cru; } CruTag = {};
+constexpr struct UnknownTag_ { static constexpr auto type = CardType::Unknown; } UnknownTag = {};
 
 /// Checks if the given tag represents a valid card type.
 /// This means the type needs to be a DummyTag_ CrorcTag_ or CruTag_. NOT UnknownTag_ or anything else.

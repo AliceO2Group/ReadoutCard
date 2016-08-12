@@ -1,7 +1,7 @@
-///
 /// \file PdaDevice.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Implementation of the PdaDevice class.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "PdaDevice.h"
 #include <iostream>
@@ -27,7 +27,7 @@ namespace Pda {
 namespace b = boost;
 namespace bfs = boost::filesystem;
 
-PdaDevice::PdaDevice(const PciId& pciId) : deviceOperator(nullptr)
+PdaDevice::PdaDevice(const PciId& pciId) : mDeviceOperator(nullptr)
 {
   try {
     THROW_IF_BAD_STATUS(PDAInit(), RorcPdaException() << errinfo_rorc_error_message("Failed to initialize PDA"));
@@ -36,8 +36,8 @@ PdaDevice::PdaDevice(const PciId& pciId) : deviceOperator(nullptr)
     const std::string id = pciId.getVendorId() + " " + pciId.getDeviceId() + '\0';
     const char* ids[2] = { id.data(), nullptr };
 
-    deviceOperator = DeviceOperator_new(ids, PDA_ENUMERATE_DEVICES);
-    if(deviceOperator == nullptr){
+    mDeviceOperator = DeviceOperator_new(ids, PDA_ENUMERATE_DEVICES);
+    if(mDeviceOperator == nullptr){
       BOOST_THROW_EXCEPTION(RorcPdaException()
           << errinfo_rorc_error_message("Failed to get DeviceOperator")
           << errinfo_rorc_possible_causes({"Invalid PCI ID", "Insufficient permissions"}));
@@ -47,7 +47,7 @@ PdaDevice::PdaDevice(const PciId& pciId) : deviceOperator(nullptr)
 
     for (uint64_t i = 0; i < deviceCount; ++i) {
       PciDevice* pciDevice = getPciDevice(i);
-      pciDevices.push_back(pciDevice);
+      mPciDevices.push_back(pciDevice);
     }
   }
   catch (boost::exception& e) {
@@ -59,8 +59,8 @@ PdaDevice::PdaDevice(const PciId& pciId) : deviceOperator(nullptr)
 
 PdaDevice::~PdaDevice()
 {
-  if (deviceOperator != nullptr) {
-    if (DeviceOperator_delete(deviceOperator, PDA_DELETE) != PDA_SUCCESS) {
+  if (mDeviceOperator != nullptr) {
+    if (DeviceOperator_delete(mDeviceOperator, PDA_DELETE) != PDA_SUCCESS) {
       std::cerr << "Failed to delete DeviceOperator" << std::endl;
     }
   }
@@ -68,13 +68,13 @@ PdaDevice::~PdaDevice()
 
 DeviceOperator* PdaDevice::getDeviceOperator()
 {
-  return deviceOperator;
+  return mDeviceOperator;
 }
 
 PciDevice* PdaDevice::getPciDevice(int index)
 {
   PciDevice* pciDevice;
-  THROW_IF_BAD_STATUS(DeviceOperator_getPciDevice(deviceOperator, &pciDevice, index), RorcPdaException()
+  THROW_IF_BAD_STATUS(DeviceOperator_getPciDevice(mDeviceOperator, &pciDevice, index), RorcPdaException()
       << errinfo_rorc_error_message("Failed to get PciDevice")
       << errinfo_rorc_pci_device_index(index));
   return pciDevice;
@@ -83,7 +83,7 @@ PciDevice* PdaDevice::getPciDevice(int index)
 int PdaDevice::getPciDeviceCount()
 {
   uint64_t deviceCount;
-  THROW_IF_BAD_STATUS(DeviceOperator_getPciDeviceCount(deviceOperator, &deviceCount), RorcPdaException()
+  THROW_IF_BAD_STATUS(DeviceOperator_getPciDeviceCount(mDeviceOperator, &deviceCount), RorcPdaException()
       << errinfo_rorc_error_message("Failed to get PCI device count"));
   return deviceCount;
 }

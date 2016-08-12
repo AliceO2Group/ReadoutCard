@@ -23,8 +23,8 @@ GeneratorParameters::GeneratorParameters()
 {
   initialValue = 1;
   initialWord = 0;
-  loopbackMode = Rorc::LoopbackMode::RORC;
-  pattern = GeneratorPattern::INCREMENTAL;
+  loopbackMode = Rorc::LoopbackMode::Rorc;
+  pattern = GeneratorPattern::Incremental;
   seed = 0;
   useDataGenerator = false;
   maximumEvents = 0;
@@ -35,23 +35,23 @@ ChannelParameters::ChannelParameters()
   ddlHeader = 0;
   useFeeAddress = false;
   noRDYRX = true;
-  initialResetLevel = Rorc::ResetLevel::NOTHING;
+  initialResetLevel = Rorc::ResetLevel::Nothing;
 }
 
 // ResetLevel functions
 
 static const std::map<ResetLevel::type, std::string> resetLevelMap = {
-  { ResetLevel::NOTHING, "NOTHING" },
-  { ResetLevel::RORC, "RORC" },
-  { ResetLevel::RORC_DIU, "RORC_DIU" },
-  { ResetLevel::RORC_DIU_SIU, "RORC_DIU_SIU" },
+  { ResetLevel::Nothing, "NOTHING" },
+  { ResetLevel::Rorc, "RORC" },
+  { ResetLevel::RorcDiu, "RORC_DIU" },
+  { ResetLevel::RorcDiuSiu, "RORC_DIU_SIU" },
 };
 
 static const auto resetLevelMapReverse = Util::reverseMap(resetLevelMap);
 
 bool ResetLevel::includesExternal(const ResetLevel::type& mode)
 {
-  return mode == ResetLevel::RORC_DIU || mode == ResetLevel::RORC_DIU_SIU;
+  return mode == ResetLevel::RorcDiu || mode == ResetLevel::RorcDiuSiu;
 }
 
 std::string ResetLevel::toString(const ResetLevel::type& level)
@@ -67,17 +67,17 @@ ResetLevel::type ResetLevel::fromString(const std::string& string)
 // LoopbackMode functions
 
 static const std::map<LoopbackMode::type, std::string> loopbackModeMap {
-  { LoopbackMode::NONE, "NONE" },
-  { LoopbackMode::RORC, "RORC" },
-  { LoopbackMode::DIU, "DIU" },
-  { LoopbackMode::SIU, "SIU" },
+  { LoopbackMode::None, "NONE" },
+  { LoopbackMode::Rorc, "RORC" },
+  { LoopbackMode::Diu, "DIU" },
+  { LoopbackMode::Siu, "SIU" },
 };
 
 static const auto loopbackModeMapReverse = Util::reverseMap(loopbackModeMap);
 
 bool LoopbackMode::isExternal(const LoopbackMode::type& mode)
 {
-  return mode == LoopbackMode::SIU || mode == LoopbackMode::DIU;
+  return mode == LoopbackMode::Siu || mode == LoopbackMode::Diu;
 }
 
 std::string LoopbackMode::toString(const LoopbackMode::type& mode)

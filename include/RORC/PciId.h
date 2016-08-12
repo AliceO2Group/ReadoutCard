@@ -1,7 +1,7 @@
-///
 /// \file PciId.h
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Definition of the PciId struct.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #pragma once
 #include <string>

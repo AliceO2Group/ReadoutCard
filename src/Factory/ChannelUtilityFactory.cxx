@@ -1,7 +1,7 @@
-///
 /// \file ChannelUtilityFactory.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Implementation of the ChannelUtilityFactory class.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "Factory/ChannelUtilityFactory.h"
 #include <map>

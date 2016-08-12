@@ -12,7 +12,7 @@ using std::endl;
 namespace AliceO2 {
 namespace Rorc {
 
-DummyChannelMaster::DummyChannelMaster(int serial, int channel, const ChannelParameters&) : pageCounter(128)
+DummyChannelMaster::DummyChannelMaster(int serial, int channel, const ChannelParameters&) : mPageCounter(128)
 {
   cout << "DummyChannelMaster::DummyChannelMaster(serial:" << serial << ", channel:" << channel << ", params:...)"
       << endl;
@@ -52,8 +52,8 @@ void DummyChannelMaster::writeRegister(int index, uint32_t value)
 PageHandle DummyChannelMaster::pushNextPage()
 {
   cout << "DummyChannelMaster::pushNextPage()" << endl;
-  auto handle = PageHandle(pageCounter);
-  pageCounter++;
+  auto handle = PageHandle(mPageCounter);
+  mPageCounter++;
   return handle;
 }
 
@@ -67,12 +67,12 @@ Page DummyChannelMaster::getPage(const PageHandle& handle)
 {
   cout << "DummyChannelMaster::getPage(handle:" << handle.index << ")" << endl;
 
-  pageBuffer[0] = handle.index; // Puts the "event number" in the first word
-  for (size_t i = 1; i < pageBuffer.size(); ++i) {
-    pageBuffer[i] = i - 1;
+  mPageBuffer[0] = handle.index; // Puts the "event number" in the first word
+  for (size_t i = 1; i < mPageBuffer.size(); ++i) {
+    mPageBuffer[i] = i - 1;
   }
 
-  auto page = Page(pageBuffer.data(), pageBuffer.size());
+  auto page = Page(mPageBuffer.data(), mPageBuffer.size());
   return page;
 }
 
@@ -83,7 +83,7 @@ void DummyChannelMaster::markPageAsRead(const PageHandle& handle)
 
 CardType::type DummyChannelMaster::getCardType()
 {
-  return CardType::DUMMY;
+  return CardType::Dummy;
 }
 
 std::vector<uint32_t> DummyChannelMaster::utilityCopyFifo()

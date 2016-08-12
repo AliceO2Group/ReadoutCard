@@ -150,7 +150,7 @@ PDA installation
 
 1. Install libpci dependency
   ```
-  yum install pciutils-devel
+  yum install pciutils-devel kmod-devel
   ```
 
 2. Download & extract PDA 11.0.7

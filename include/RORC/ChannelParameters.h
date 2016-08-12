@@ -1,7 +1,7 @@
-///
 /// \file ChannelParameters.h
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Definition of the ChannelParameters class and associated enums.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #pragma once
 
@@ -19,7 +19,7 @@ struct ResetLevel
 {
     enum type
     {
-      NOTHING = 0, RORC = 1, RORC_DIU = 2, RORC_DIU_SIU = 3,
+      Nothing = 0, Rorc = 1, RorcDiu = 2, RorcDiuSiu = 3,
     };
 
     /// Converts a ResetLevel to a string
@@ -38,7 +38,7 @@ struct LoopbackMode
     /// Loopback mode
     enum type
     {
-      NONE = 0, DIU = 1, SIU = 2, RORC = 3
+      None = 0, Diu = 1, Siu = 2, Rorc = 3
     };
 
     /// Converts a LoopbackMode to a string
@@ -56,13 +56,13 @@ struct GeneratorPattern
 {
   enum type
   {
-    CONSTANT = 1,
-    ALTERNATING = 2,
-    FLYING_0 = 3,
-    FLYING_1 = 4,
-    INCREMENTAL = 5,
-    DECREMENTAL = 6,
-    RANDOM = 7
+    Constant = 1,
+    Alternating = 2,
+    Flying0 = 3,
+    Flying1 = 4,
+    Incremental = 5,
+    Decremental = 6,
+    Random = 7
   };
 };
 
@@ -132,9 +132,8 @@ struct GeneratorParameters
 };
 
 /// Parameters for a RORC channel
-class ChannelParameters
+struct ChannelParameters
 {
-  public:
     ChannelParameters();
 
     DmaParameters dma;

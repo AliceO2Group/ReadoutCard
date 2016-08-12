@@ -25,19 +25,19 @@ void checkEnumConversion(const std::vector<typename E::type>& items)
 BOOST_AUTO_TEST_CASE(EnumCardTypeConversion)
 {
   using namespace AliceO2::Rorc;
-  checkEnumConversion<CardType>({CardType::CRORC, CardType::CRU, CardType::DUMMY, CardType::UNKNOWN});
+  checkEnumConversion<CardType>({CardType::Crorc, CardType::Cru, CardType::Dummy, CardType::Unknown});
 }
 
 BOOST_AUTO_TEST_CASE(EnumLoopbackModeConversion)
 {
   using namespace AliceO2::Rorc;
-  checkEnumConversion<LoopbackMode>({LoopbackMode::DIU, LoopbackMode::NONE, LoopbackMode::RORC, LoopbackMode::SIU});
+  checkEnumConversion<LoopbackMode>({LoopbackMode::Diu, LoopbackMode::None, LoopbackMode::Rorc, LoopbackMode::Siu});
 }
 
 BOOST_AUTO_TEST_CASE(EnumResetLevelConversion)
 {
   using namespace AliceO2::Rorc;
-  checkEnumConversion<ResetLevel>({ResetLevel::NOTHING, ResetLevel::RORC, ResetLevel::RORC_DIU,
-      ResetLevel::RORC_DIU_SIU});
+  checkEnumConversion<ResetLevel>({ResetLevel::Nothing, ResetLevel::Rorc, ResetLevel::RorcDiu,
+      ResetLevel::RorcDiuSiu});
 }
 

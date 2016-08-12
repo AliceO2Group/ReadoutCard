@@ -1,7 +1,7 @@
-///
 /// \file PdaDmaBuffer.h
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Definition of the PdaDmaBuffer class.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #pragma once
 
@@ -36,13 +36,13 @@ class PdaDmaBuffer
 
     inline const ScatterGatherVector& getScatterGatherList() const
     {
-      return sgVector;
+      return mScatterGatherVector;
     }
 
   private:
-    DMABuffer* dmaBuffer;
-    PciDevice* pciDevice;
-    ScatterGatherVector sgVector;
+    DMABuffer* mDmaBuffer;
+    PciDevice* mPciDevice;
+    ScatterGatherVector mScatterGatherVector;
 };
 
 } // namespace Pda

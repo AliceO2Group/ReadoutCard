@@ -1,7 +1,7 @@
-///
 /// \file ChannelUtilityFactory.h
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Definition of the ChannelUtilityFactory class.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #pragma once
 

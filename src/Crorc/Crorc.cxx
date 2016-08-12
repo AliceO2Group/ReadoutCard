@@ -1,7 +1,7 @@
-///
 /// \file Crorc.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Implementation of low level C-RORC functions
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "Crorc.h"
 

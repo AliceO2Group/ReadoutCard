@@ -1,7 +1,7 @@
-///
 /// \file CruChannelMaster.h
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Definition of the CruChannelMaster class.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #pragma once
 
@@ -60,40 +60,40 @@ class CruChannelMaster : public ChannelMaster
         void initialize();
 
         /// State of the initialization of the shared data
-        InitializationState::type initializationState;
+        InitializationState::type mInitializationState;
 
         /// Index of next page available for writing
-        int fifoIndexWrite;
+        int mFifoIndexWrite;
 
         /// Index of oldest non-free page
-        int fifoIndexRead;
+        int mFifoIndexRead;
 
         /// Index to the next free page of the DMA buffer
-        int pageIndex;
+        int mPageIndex;
     };
 
     /// Memory mapped file containing the readyFifo
-    boost::scoped_ptr<TypedMemoryMappedFile<CruFifoTable>> mappedFileFifo;
+    boost::scoped_ptr<TypedMemoryMappedFile<CruFifoTable>> mMappedFileFifo;
 
     /// PDA DMABuffer object for the readyFifo
-    boost::scoped_ptr<Pda::PdaDmaBuffer> bufferFifo;
+    boost::scoped_ptr<Pda::PdaDmaBuffer> mBufferFifo;
 
     /// Memory mapped data stored in the shared state file
-    boost::scoped_ptr<FileSharedObject::FileSharedObject<SharedData>> cruSharedData;
+    boost::scoped_ptr<FileSharedObject::FileSharedObject<SharedData>> mCruSharedData;
 
     /// Counter for the amount of pages that have been requested.
     /// Since currently, the idea is to push 128 at a time, we wait until the client requests 128 pages...
     /// XXX This is of course a dirty hack and should be replaced when the CRU development matures
-    int pendingPages;
+    int mPendingPages;
 
     /// Array to keep track of read pages (false: wasn't read out, true: was read out).
-    std::vector<bool> pageWasReadOut;
+    std::vector<bool> mPageWasReadOut;
 
   private:
 
     void constructorCommon();
 
-    static constexpr CardType::type CARD_TYPE = CardType::CRU;
+    static constexpr CardType::type CARD_TYPE = CardType::Cru;
 };
 
 } // namespace Rorc

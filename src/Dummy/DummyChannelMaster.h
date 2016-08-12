@@ -46,8 +46,8 @@ class DummyChannelMaster : public ChannelMasterInterface, public ChannelUtilityI
 
     static constexpr size_t DUMMY_PAGE_SIZE = 4l * 1024l;
 
-    int pageCounter;
-    std::array<int, DUMMY_PAGE_SIZE> pageBuffer;
+    int mPageCounter;
+    std::array<int, DUMMY_PAGE_SIZE> mPageBuffer;
 };
 
 } // namespace Rorc

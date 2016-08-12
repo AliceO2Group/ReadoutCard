@@ -1,7 +1,7 @@
-///
 /// \file PdaBar.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Implementation of the PdaBar class.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "PdaBar.h"
 
@@ -14,21 +14,21 @@ namespace AliceO2 {
 namespace Rorc {
 namespace Pda {
 
-PdaBar::PdaBar() : pdaBar(nullptr), barLength(-1), userspaceAddress(nullptr)
+PdaBar::PdaBar() : mPdaBar(nullptr), mBarLength(-1), mUserspaceAddress(nullptr)
 {
 }
 
 PdaBar::PdaBar(PciDevice* pciDevice, int channel)
 {
   // Getting the BAR struct
-  if(PciDevice_getBar(pciDevice, &pdaBar, channel) != PDA_SUCCESS ){
+  if(PciDevice_getBar(pciDevice, &mPdaBar, channel) != PDA_SUCCESS ){
     BOOST_THROW_EXCEPTION(RorcException()
         << errinfo_rorc_error_message("Failed to get BAR")
         << errinfo_rorc_channel_number(channel));
   }
 
   // Mapping the BAR starting  address
-  if(Bar_getMap(pdaBar, (void**) &userspaceAddress, &barLength) != PDA_SUCCESS ){
+  if(Bar_getMap(mPdaBar, (void**) &mUserspaceAddress, &mBarLength) != PDA_SUCCESS ){
     BOOST_THROW_EXCEPTION(RorcException()
         << errinfo_rorc_error_message("Failed to map BAR")
         << errinfo_rorc_channel_number(channel));

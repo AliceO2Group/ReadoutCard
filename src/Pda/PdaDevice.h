@@ -27,13 +27,13 @@ class PdaDevice
 
     const std::vector<PciDevice*>& getPciDevices() const
     {
-      return pciDevices;
+      return mPciDevices;
     }
 
   private:
 
-    DeviceOperator* deviceOperator;
-    std::vector<PciDevice*> pciDevices;
+    DeviceOperator* mDeviceOperator;
+    std::vector<PciDevice*> mPciDevices;
 };
 
 } // namespace Pda

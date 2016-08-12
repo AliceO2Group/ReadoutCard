@@ -1,7 +1,7 @@
-///
 /// \file CrorcChannelSlave.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Implementation of the CrorcChannelSlave class.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "Crorc/CrorcChannelSlave.h"
 
@@ -19,7 +19,7 @@ CrorcChannelSlave::~CrorcChannelSlave()
 
 CardType::type CrorcChannelSlave::getCardType()
 {
-  return CardType::CRORC;
+  return CardType::Crorc;
 }
 
 } // namespace Rorc

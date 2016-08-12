@@ -31,13 +31,13 @@ struct DeviceType
 };
 
 const std::vector<DeviceType> deviceTypes = {
-    { CardType::CRORC, {"0033", "10dc"}, crorcGetSerial }, // C-RORC
-    { CardType::CRU, {"e001", "1172"}, cruGetSerial }, // Altera dev board CRU
+    { CardType::Crorc, {"0033", "10dc"}, crorcGetSerial }, // C-RORC
+    { CardType::Cru, {"e001", "1172"}, cruGetSerial }, // Altera dev board CRU
     //{ CardType::CRU, {"????", "10dc"}, cruGetSerial }, // Actual CRU? To be determined...
 };
 
 RorcDevice::RorcDevice(int serialNumber)
-    : pciId({"unknown", "unknown"}), serialNumber(-1), cardType(CardType::UNKNOWN)
+    : pciId({"unknown", "unknown"}), serialNumber(-1), cardType(CardType::Unknown)
 {
   try {
     for (auto& type : deviceTypes) {

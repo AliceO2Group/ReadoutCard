@@ -1,9 +1,7 @@
-///
 /// \file RORC.h
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
-///
 /// \brief Convenience header for the RORC module
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #pragma once
 

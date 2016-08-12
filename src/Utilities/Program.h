@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <boost/program_options.hpp>
 #include "Utilities/Common.h"
 #include "Utilities/Options.h"
@@ -31,6 +32,11 @@ class Program
     /// Execute the program using the given arguments
     int execute(int argc, char** argv);
 
+    /// Has the SIGINT signal been given? (usually Ctrl-C)
+    static bool isSigInt() {
+      return sFlagSigInt;
+    }
+
   protected:
 
     /// Get the description of the program
@@ -42,17 +48,23 @@ class Program
     /// The main function of the program
     virtual void mainFunction(const boost::program_options::variables_map& variablesMap) = 0;
 
-    /// Has the SIGINT signal been given? (usually Ctrl-C)
-    bool isSigInt();
+    void printHelp (const boost::program_options::options_description& optionsDescription);
 
     /// Should output be verbose
-    bool isVerbose();
-
-    void printHelp (const boost::program_options::options_description& optionsDescription);
+    bool isVerbose() const {
+      return verbose;
+    }
 
   private:
 
+    static std::atomic<bool> sFlagSigInt; // Long name to prevent naming conflicts
+
     bool verbose;
+
+    static void sigIntHandler(int)
+    {
+      sFlagSigInt = true;
+    }
 };
 
 } // namespace Utilities

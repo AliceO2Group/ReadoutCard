@@ -1,7 +1,7 @@
-///
 /// \file CruFifoTable.h
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Definition of the CruFifoTable struct.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #pragma once
 
@@ -66,18 +66,18 @@ struct CruFifoTable
         /// \param pageSize Size of the page in 32-bit words
         void setControlRegister(uint32_t index, uint32_t pageLength)
         {
-//#ifndef NDEBUG
-//          uint32_t MAX_INDEX = 128;
-//          uint32_t MAX_LENGTH = 8 * 1024 / 4; // Firmware limit of 8 KiB
-//
-//          if (index > MAX_INDEX) {
-//            throw std::out_of_range("Page index too high");
-//          }
-//
-//          if (pageLength > MAX_LENGTH) {
-//            throw std::out_of_range("Page length too high");
-//          }
-//#endif
+#ifndef NDEBUG
+          uint32_t MAX_INDEX = 128;
+          uint32_t MAX_LENGTH = 8 * 1024 / 4; // Firmware limit of 8 KiB
+
+          if (index > MAX_INDEX) {
+            throw std::out_of_range("Page index too high");
+          }
+
+          if (pageLength > MAX_LENGTH) {
+            throw std::out_of_range("Page length too high");
+          }
+#endif
           ctrl = (index << 18) + pageLength;
         }
 
@@ -85,25 +85,23 @@ struct CruFifoTable
         /// \param address Page address in device memory space
         void setSourceAddress(void* address)
         {
-          // Note we must set the high register first, according to the Arria 10 DMA user guide
-          srcHigh = Util::getUpper32Bits(uint64_t(address));
           srcLow = Util::getLower32Bits(uint64_t(address));
+          srcHigh = Util::getUpper32Bits(uint64_t(address));
         }
 
         /// Set the source address registers
         /// \param address Page address in user memory space
         void setDestinationAddress(void* address)
         {
-          // Note we must set the high register first, according to the Arria 10 DMA user guide
-          dstHigh = Util::getUpper32Bits(uint64_t(address));
           dstLow = Util::getLower32Bits(uint64_t(address));
+          dstHigh = Util::getUpper32Bits(uint64_t(address));
         }
 
         void setReserved()
         {
-          reserved1 = 0x0;
-          reserved2 = 0x0;
-          reserved3 = 0x0;
+//          reserved1 = 0x0;
+//          reserved2 = 0x0;
+//          reserved3 = 0x0;
         }
 
         /// Low 32 bits of the DMA source address on the card
@@ -139,8 +137,14 @@ struct CruFifoTable
 };
 
 static_assert(sizeof(CruFifoTable::StatusEntry) == (1 * 4), "Size of CruFifoTable::StatusEntry invalid");
+
 static_assert(sizeof(CruFifoTable::DescriptorEntry) == (8 * 4), "Size of CruFifoTable::DescriptorEntry invalid");
+
 static_assert(sizeof(CruFifoTable) == 0x1200, "Size of CruFifoTable invalid");
+
+static_assert(CRU_DESCRIPTOR_ENTRIES * sizeof(CruFifoTable::StatusEntry) == 0x200,
+    "Size of CruFifoTable::statusEntries invalid");
+
 static_assert(sizeof(CruFifoTable)
     == (CRU_DESCRIPTOR_ENTRIES * sizeof(CruFifoTable::StatusEntry))
      + (CRU_DESCRIPTOR_ENTRIES * sizeof(CruFifoTable::DescriptorEntry)),

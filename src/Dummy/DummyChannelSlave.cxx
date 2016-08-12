@@ -35,7 +35,7 @@ void DummyChannelSlave::writeRegister(int index, uint32_t value)
 
 CardType::type DummyChannelSlave::getCardType()
 {
-  return CardType::DUMMY;
+  return CardType::Dummy;
 }
 
 } // namespace Rorc

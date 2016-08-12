@@ -1,9 +1,7 @@
-///
 /// \file Crorc.h
+/// \brief Definition of low level C-RORC functions
+///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
-///
-/// \brief Low level C-RORC functions
-///
 
 #pragma once
 
