@@ -40,6 +40,9 @@
 #include "Pda/PdaBar.h"
 #include "Pda/PdaDmaBuffer.h"
 
+// Use other init procedure
+#define ALTERNATIVE_INIT_IMPL
+
 namespace b = boost;
 namespace bfs = boost::filesystem;
 namespace Register = AliceO2::Rorc::CruRegisterIndex;
@@ -47,6 +50,8 @@ using namespace AliceO2::Rorc::Utilities;
 using namespace AliceO2::Rorc;
 using std::cout;
 using std::endl;
+
+namespace {
 
 struct descriptor_entry
 {
@@ -72,8 +77,6 @@ constexpr int NUM_OF_BUFFERS = 32;
 
 constexpr int NUM_PAGES = FIFO_ENTRIES * NUM_OF_BUFFERS;
 
-//constexpr int MAX_ROLLING = 1500;
-
 /// Offset in bytes from start of status table to data buffer
 constexpr size_t DATA_OFFSET = 0x200;
 
@@ -86,14 +89,104 @@ constexpr int BUFFER_INDEX_PAGES = 0;
 
 const bfs::path DMA_BUFFER_PAGES_PATH = "/mnt/hugetlbfs/rorc-cru-experimental-dma-pages";
 
-const std::string PROGRESS_FORMAT = "  %-5s %-8s  %-8s  %-8s %-8s";
+const std::string PROGRESS_FORMAT = "  %-5s %-8s %-8s %-8s %-8s %-8.1f";
+
+constexpr int ROLLS_DEFAULT = 1500;
+
+constexpr double MAX_TEMPERATURE = 45.0;
 
 const std::string RESET_SWITCH = "reset";
 const std::string TO_FILE_SWITCH = "tofile";
 const std::string ROLLS_SWITCH = "rolls";
-constexpr int ROLLS_DEFAULT = 1500;
 
-namespace {
+/// Manages a temperature monitor thread
+class TemperatureMonitor {
+  public:
+    /// Start monitoring
+    /// \param temperatureRegister The register to read the temperature data from.
+    ///   The object using this must guarantee it will be accessible until stop() is called or this object is destroyed.
+    void start(const volatile uint32_t* temperatureRegister)
+    {
+      mTemperatureRegister = temperatureRegister;
+      mThread = std::thread(std::function<void(TemperatureMonitor*)>(TemperatureMonitor::function), this);
+    }
+
+    void stop()
+    {
+      mStopFlag = true;
+      try {
+        if (mThread.joinable()) {
+          mThread.join();
+        }
+      } catch (const std::exception& e) {
+        cout << "Failed to join thread: " << boost::diagnostic_information(e) << endl;
+      }
+    }
+
+    ~TemperatureMonitor()
+    {
+      stop();
+    }
+
+    bool isValid() const
+    {
+      return mValidFlag.load();
+    }
+
+    bool isMaxExceeded() const
+    {
+      return mMaxExceeded.load();
+    }
+
+    double getTemperature() const
+    {
+      return mTemperature.load();
+    }
+
+  private:
+
+    /// Thread object
+    std::thread mThread;
+
+    /// Flag to indicate max temperature was exceeded
+    std::atomic<bool> mMaxExceeded;
+
+    /// Variable to communicate temperature value
+    std::atomic<double> mTemperature;
+
+    /// Flag for valid temperature value
+    std::atomic<bool> mValidFlag;
+
+    /// Flag to stop the thread
+    std::atomic<bool> mStopFlag;
+
+    /// Register to read temperature value from
+    const volatile uint32_t* mTemperatureRegister;
+
+    // Thread function to monitor temperature
+    static void function(TemperatureMonitor* _this)
+    {
+      while (!_this->mStopFlag && !Program::isSigInt()) {
+        uint32_t value = *_this->mTemperatureRegister;
+        if (value == 0) {
+          _this->mValidFlag = false;
+        } else {
+          _this->mValidFlag = true;
+          // Conversion formula from: https://documentation.altera.com/#/00045071-AA$AA00044865
+          double C = double(value);
+          double temperature = ((693.0 * C) / 1024.0) - 265.0;
+          _this->mTemperature = temperature;
+
+          if (temperature > MAX_TEMPERATURE) {
+            _this->mMaxExceeded = true;
+            cout << "\n!!! MAXIMUM TEMPERATURE WAS EXCEEDED: " << temperature << endl;
+            break;
+          }
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+      }
+    }
+};
 
 class ProgramCruExperimentalDma: public Program
 {
@@ -110,33 +203,36 @@ class ProgramCruExperimentalDma: public Program
       options.add_options()(TO_FILE_SWITCH.c_str(), "Read out to file");
       options.add_options()(ROLLS_SWITCH.c_str(),
           boost::program_options::value<int>(&maxRolls)->default_value(ROLLS_DEFAULT),
-          "Amount of iterations over the FIFO");
+          "Amount of iterations over the FIFO. Give 0 for infinite.");
     }
 
     virtual void mainFunction(const boost::program_options::variables_map& map)
     {
       using namespace AliceO2::Rorc;
 
-//      cout << "Warning: this utility is highly experimental and will probably leave the CRU in a bad state, requiring "
-//          << "a reload of the firmware. It might also trigger a reboot.\n";
-//      cout << "  To proceed, type 'y'\n";
-//      cout << "  To abort, type anything else or give SIGINT (usually Ctrl-c)\n";
-//      int c = getchar();
-//      if (c != 'y' || isSigInt()) {
-//        return;
-//      }
-
+      infiniteRolls = maxRolls == 0;
       enableResetCard = bool(map.count(RESET_SWITCH));
       enableFileOutput = bool(map.count(TO_FILE_SWITCH));
 
+      cout << "Initializing" << endl;
+      init();
+
+      cout << "Starting temperature monitor" << endl;
+      temperatureMonitor.start(&bar[Register::TEMPERATURE]);
+
       cout << "Starting DMA test" << endl;
-      pdaDMA();
-      cout << "Finished DMA test" << endl;
+      runDma();
+      temperatureMonitor.stop();
     }
 
+  private:
+
     int maxRolls;
+    bool infiniteRolls; // true means no limit on rolling
     bool enableFileOutput;
     bool enableResetCard;
+
+    TemperatureMonitor temperatureMonitor;
 
     boost::scoped_ptr<RorcDevice> rorcDevice;
     boost::scoped_ptr<Pda::PdaBar> pdaBar;
@@ -145,8 +241,7 @@ class ProgramCruExperimentalDma: public Program
 
     volatile uint32_t* bar;
 
-#define OLD_INITPDA_IMPL
-#ifdef OLD_INITPDA_IMPL
+#ifdef ALTERNATIVE_INIT_IMPL
     descriptor_entry *descriptor;
     descriptor_entry *descriptor_usr;
     uint32_t* status_usr;
@@ -188,7 +283,7 @@ class ProgramCruExperimentalDma: public Program
         cout << "done!" << endl;
       }
 
-#ifdef OLD_INITPDA_IMPL
+#ifdef ALTERNATIVE_INIT_IMPL
 
       /** IOMMU addresses */
       uint32_t *status = (uint32_t*)entry.addressBus;
@@ -236,6 +331,14 @@ class ProgramCruExperimentalDma: public Program
     }
     usleep(1000);
 
+    // Init temperature sensor
+    bar[Register::TEMPERATURE] = 0x1;
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    bar[Register::TEMPERATURE] = 0x0;
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    bar[Register::TEMPERATURE] = 0x2;
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
 
     /** Status base address, low and high part, respectively */
     *bar = (uint64_t)status & 0xffffffff;
@@ -272,7 +375,7 @@ class ProgramCruExperimentalDma: public Program
 
 #else
 
-//#  define THIS_SHOULD_WORK
+#  define THIS_SHOULD_WORK
 #  ifndef THIS_SHOULD_WORK
       // NOTE: This is known to be working
 
@@ -281,7 +384,7 @@ class ProgramCruExperimentalDma: public Program
 //      cout << "FIFO address user       : " << (void*) fifoUser << '\n';
       fifoUser->resetStatusEntries();
 
-      for (int i = 0; i < FIFO_ENTRIES * NUM_OF_BUFFERS; i++) {
+      for (int i = 0; i < NUM_PAGES; i++) {
         auto sourceAddress = reinterpret_cast<void*>((i % NUM_OF_BUFFERS) * DMA_PAGE_SIZE);
 
         // Addresses in the RAM (DMA destination)
@@ -325,7 +428,7 @@ class ProgramCruExperimentalDma: public Program
       // Initializing the descriptor table
       fifoUser->resetStatusEntries();
 
-      for (int i = 0; i < FIFO_ENTRIES * NUM_OF_BUFFERS; i++) {
+      for (int i = 0; i < NUM_PAGES; i++) {
         auto sourceAddress = reinterpret_cast<void*>((i % NUM_OF_BUFFERS) * DMA_PAGE_SIZE);
         auto destinationAddress = dataDevice + i * DMA_PAGE_SIZE_32;
         fifoUser->descriptorEntries[i].setEntry(i, DMA_PAGE_SIZE_32, sourceAddress, destinationAddress);
@@ -339,49 +442,49 @@ class ProgramCruExperimentalDma: public Program
       }
 #  endif
 
-      auto prnBar = [&](std::string label, size_t address) {
-        cout << label << Common::makeRegisterString(address, bar[address]);
-      };
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+      // Init temperature sensor
+      bar[Register::TEMPERATURE] = 0x1;
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      bar[Register::TEMPERATURE] = 0x0;
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      bar[Register::TEMPERATURE] = 0x2;
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
       // Status base address, low and high part, respectively
       bar[Register::STATUS_BASE_BUS_HIGH] = Util::getUpper32Bits(uint64_t(fifoDevice));
       bar[Register::STATUS_BASE_BUS_LOW] = Util::getLower32Bits(uint64_t(fifoDevice));
-      prnBar("STATUS BUS LO   ", Register::STATUS_BASE_BUS_LOW);
-      prnBar("STATUS BUS HI   ", Register::STATUS_BASE_BUS_HIGH);
 
       // Destination (card's memory) addresses, low and high part, respectively
       bar[Register::STATUS_BASE_CARD_HIGH] = 0x0;
       bar[Register::STATUS_BASE_CARD_LOW] = 0x8000;
-      prnBar("STATUS CARD LO  ", Register::STATUS_BASE_CARD_LOW);
-      prnBar("STATUS CARD HI  ", Register::STATUS_BASE_CARD_HIGH);
 
-      // Set descriptor table size, same as number of available pages-1
+      // Set descriptor table size (must be size - 1)
       bar[Register::DESCRIPTOR_TABLE_SIZE] = NUM_PAGES - 1;
-      prnBar("DSCR TBL SIZE   ", Register::DESCRIPTOR_TABLE_SIZE);
 
-      // Number of available pages-1
+      // Send command to the DMA engine to write to every status entry, not just the final one
+      bar[Register::DONE_CONTROL] = 0x1;
+
+      // Send command to the DMA engine to write NUM_PAGES
       bar[Register::DMA_POINTER] = NUM_PAGES - 1;
-      prnBar("DMA POINTER     ", Register::DMA_POINTER);
 
       // make buffer ready signal
       bar[Register::BUFFER_READY] = 0x1;
 
       // Programming the user module to trigger the data emulator
-      bar[Register::DATA_EMULATOR_ENABLE] = 0x1;
+      bar[Register::DATA_EMULATOR_CONTROL] = 0x1;
 
-      // Set status to send status for every page not only for the last one
-      bar[Register::DONE_CONTROL] = 0x1;
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 #endif
 
+      cout << "\n  Firmware version  " << Utilities::Common::make32hexString(bar[Register::FIRMWARE_COMPILE_INFO]);
+      cout << "\n  Serial number     " << Utilities::Common::make32hexString(bar[Register::SERIAL_NUMBER]);
     }
 
-    int pdaDMA()
+    void runDma()
     {
-      init();
-
-      cout << "\nFirmware info:\n" << Utilities::Common::make32hexString(bar[Register::FIRMWARE_COMPILE_INFO]) << '\n';
-
       int pattern[1023];
       {
         for (int i = 2; i < 1024; i++) {
@@ -411,39 +514,48 @@ class ProgramCruExperimentalDma: public Program
       std::array<PageBuffer, NUM_PAGES> readoutPages; ///< Array of pages
 
       if (isVerbose()) {
-        cout << '\n' << b::str(b::format(PROGRESS_FORMAT) % "i" % "Counter" % "Rolling" % "Status" % "Errors") << '\n'
-        << b::str(b::format(PROGRESS_FORMAT) % '-' % '-' % '-' % '-' % '-') << std::flush;
+        cout << '\n' << b::str(b::format(PROGRESS_FORMAT) % "i" % "Counter" % "Rolling" % "Status" % "Errors"
+            % "°C") << '\n'
+        << b::str(b::format(PROGRESS_FORMAT) % '-' % '-' % '-' % '-' % '-' % '-') << std::flush;
       }
 
       auto timeStart = std::chrono::high_resolution_clock::now();
 
+      // Update the status display every 100 milliseconds
+      auto isDisplayInterval = [&timeStart](){
+        auto now = std::chrono::high_resolution_clock::now();
+        auto diff = std::chrono::duration_cast<std::chrono::milliseconds, int64_t>(now - timeStart).count();
+        return (diff % 100) == 0;
+      };
+
+      auto updateStatusDisplay = [&](){
+        auto format = b::format(PROGRESS_FORMAT) % i % (counter - 1) % rolling % statusCount % errorCount;
+        if (temperatureMonitor.isValid()) {
+          format % temperatureMonitor.getTemperature();
+        } else {
+          format % "n/a";
+        }
+        cout << '\r' << b::str(format);
+      };
+
       while (true) {
-        if (isSigInt()) {
+        if (!infiniteRolls && rolling >= maxRolls) {
+          cout << "\nMaximum amount of rolls reached\n";
+          break;
+        }
+        if (temperatureMonitor.isMaxExceeded()) {
+          cout << "\n!!! ABORTING: MAX TEMPERATURE EXCEEDED\n";
+          break;
+        } else if (isSigInt()) {
+          cout << "\n\nInterrupted\n";
           break;
         }
 
-        // Test waiting
-//        {
-//          int w = 0;
-//          while(not fifoUser->statusEntries[i].isPageArrived()) {
-//            if (isSigInt()) { break; }
-//
-//            cout << "Waiting (" << w << ") ";
-//
-//            for (size_t j = 0; j < fifoUser->statusEntries.size(); ++j) {
-//              if (j != 0 && ((j % 8) == 0)) {
-//                cout << '.';
-//              }
-//              cout << (fifoUser->statusEntries[j].isPageArrived() ? 'X' : ' ');
-//            }
-//            cout << '\r';
-//            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-//            w++;
-//          }
-//          cout << '\n';
-//        }
+        if (isVerbose() && isDisplayInterval()) {
+          updateStatusDisplay();
+        }
 
-#ifdef OLD_INITPDA_IMPL
+#ifdef ALTERNATIVE_INIT_IMPL
         if (status_usr[i] == 1) {
 #else
         if (fifoUser->statusEntries[i].isPageArrived()) {
@@ -496,7 +608,7 @@ class ProgramCruExperimentalDma: public Program
           }
 
           //make status zero for each descriptor for next rolling
-#ifdef OLD_INITPDA_IMPL
+#ifdef ALTERNATIVE_INIT_IMPL
           status_usr[i] = 0;
 #else
           fifoUser->statusEntries[i].reset();
@@ -514,23 +626,9 @@ class ProgramCruExperimentalDma: public Program
 
           //after every 32Kbytes reset the current_page for online checking
           if ((i % FIFO_ENTRIES) == FIFO_ENTRIES - 1) {
-
             currentPage = 0;
-
             //counter = 0;
-
             rolling++;
-
-            if (isVerbose()) {
-              cout << '\r'
-                  << b::str(b::format(PROGRESS_FORMAT) % i % (counter - 1) % rolling % statusCount % errorCount);
-            }
-
-            // Only if we want a fixed number of rolling
-            if (rolling == maxRolls) {
-              cout << "\n\nrolling == " << maxRolls << " -> stopping\n";
-              break;
-            }
           }
 
           if (i == NUM_PAGES - 1) {
@@ -545,31 +643,28 @@ class ProgramCruExperimentalDma: public Program
 
       auto timeEnd = std::chrono::high_resolution_clock::now();
 
-      if (isSigInt()) {
-        cout << "\n\nInterrupted\n";
-      }
-
       if (isVerbose()) {
         cout << "Errors: " << errorStream.str() << '\n';
       }
 
       // Calculating throughput
       double runTime = std::chrono::duration<double>(timeEnd - timeStart).count();
-      double GiB = double(rolling) * FIFO_ENTRIES * DMA_PAGE_SIZE / (1024 * 1024 * 1024);
+      double bytes = double(rolling) * FIFO_ENTRIES * DMA_PAGE_SIZE;
+      double GiB = bytes / (1024 * 1024 * 1024);
       double throughputGiBs = GiB / runTime;
       double throughputGibs = throughputGibs * 8.0;
 
       auto format = "  %-10s  %-10s\n";
       cout << '\n';
       cout << b::str(b::format(format) % "Seconds" % runTime);
-      cout << b::str(b::format(format) % "GiB" % GiB);
-      if (GiB > 0.00001) {
+      cout << b::str(b::format(format) % "Bytes" % bytes);
+      if (bytes > 0.00001) {
+        cout << b::str(b::format(format) % "GiB" % GiB);
         cout << b::str(b::format(format) % "GiB/s" % throughputGiBs);
         cout << b::str(b::format(format) % "Gibit/s" % throughputGibs);
         cout << b::str(b::format(format) % "Errors" % errorCount);
       }
       cout << '\n';
-      return 0;
     }
 };
 
