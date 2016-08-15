@@ -42,10 +42,7 @@
 #include "Pda/PdaDmaBuffer.h"
 
 /// Use other init procedure
-#define ALTERNATIVE_INIT_IMPL
-
-/// Use PCI interrupts instead of constant status polling (slightly faster if using busy interrupt wait)
-#define USE_INTERRUPTS
+//#define ALTERNATIVE_INIT_IMPL
 
 /// Use busy wait instead of condition variable (cv is very slow)
 #define USE_BUSY_INTERRUPT_WAIT
@@ -96,7 +93,7 @@ constexpr int BUFFER_INDEX_PAGES = 0;
 
 const bfs::path DMA_BUFFER_PAGES_PATH = "/mnt/hugetlbfs/rorc-cru-experimental-dma-pages";
 
-const std::string PROGRESS_FORMAT = "  %-5s %-8s %-8s %-8s %-8s %-8.1f";
+const boost::format PROGRESS_FORMAT("  %-5s %-8s %-8s %-8s %-8s %-8.1f");
 
 constexpr int ROLLS_DEFAULT = 1500;
 
@@ -150,9 +147,13 @@ class PdaIsr
     }
 
   private:
+
+#ifdef USE_BUSY_INTERRUPT_WAIT
     static std::atomic<bool> mInterruptFlag;
+#else
     static std::mutex mMutex;
     static std::condition_variable mConditionVariable;
+#endif
     PciDevice* mPciDevice;
 
     static uint64_t serviceRoutine(uint32_t sequenceNumber, const void* _this)
@@ -167,9 +168,12 @@ class PdaIsr
       return 0;
     }
 };
-std::atomic<bool> PdaIsr::mInterruptFlag; // not really needed
+#ifdef USE_BUSY_INTERRUPT_WAIT
+std::atomic<bool> PdaIsr::mInterruptFlag;
+#else
 std::mutex PdaIsr::mMutex;
 std::condition_variable PdaIsr::mConditionVariable;
+#endif
 
 /// Manages a temperature monitor thread
 class TemperatureMonitor {
@@ -436,12 +440,11 @@ class ProgramCruExperimentalDma: public Program
 
     /** Set status to send status for every page not only for the last one */
     *(bar+6) = 0x1;
-    //usleep(100);
+    usleep(100);
 
     /** Number of available pages-1 */
     *(bar+4) = FIFO_ENTRIES*NUM_OF_BUFFERS-1;
-
-    //    sleep(1);
+    usleep(100);
 
     /* make buffer ready signal*/
     *(bar+129) = 0x1;
@@ -522,6 +525,8 @@ class ProgramCruExperimentalDma: public Program
       }
 #  endif
 
+      // Note: the sleeps are needed until firmware implements proper "handshakes"
+
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
       // Init temperature sensor
@@ -555,7 +560,7 @@ class ProgramCruExperimentalDma: public Program
       // Programming the user module to trigger the data emulator
       bar[Register::DATA_EMULATOR_CONTROL] = 0x1;
 
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
 #endif
 
@@ -566,11 +571,12 @@ class ProgramCruExperimentalDma: public Program
     std::array<int, 1024> makePattern()
     {
       std::array<int, 1024> pattern;
+      pattern[0] = 0;
+      pattern[1] = 0;
       for (int i = 2; i < 1024; i++) {
         pattern[i] = i - 1;
       }
-      pattern[0] = 0;
-      pattern[1] = 0;
+      return pattern;
     }
 
     void runDma()
@@ -585,7 +591,6 @@ class ProgramCruExperimentalDma: public Program
       }
 
       int i = 0;
-      int lock = 0;
       int counter = 0;
       int currentPage = 0;
       int errorCount = 0;
@@ -597,9 +602,9 @@ class ProgramCruExperimentalDma: public Program
       std::array<PageBuffer, NUM_PAGES> readoutPages; ///< Array of pages
 
       if (isVerbose()) {
-        cout << '\n' << b::str(b::format(PROGRESS_FORMAT) % "i" % "Counter" % "Rolling" % "Status" % "Errors"
-            % "°C") << '\n'
-        << b::str(b::format(PROGRESS_FORMAT) % '-' % '-' % '-' % '-' % '-' % '-') << std::flush;
+        auto format = PROGRESS_FORMAT;
+        cout << '\n' << format % "i" % "Counter" % "Rolling" % "Status" % "Errors" % "°C";
+        cout << '\n' << format % '-' % '-' % '-' % '-' % '-' % '-';
       }
 
       auto timeStart = std::chrono::high_resolution_clock::now();
@@ -612,13 +617,13 @@ class ProgramCruExperimentalDma: public Program
       };
 
       auto updateStatusDisplay = [&](){
-        auto format = b::format(PROGRESS_FORMAT) % i % (counter - 1) % rolling % statusCount % errorCount;
+        auto format = b::format(PROGRESS_FORMAT) % i % counter % rolling % statusCount % errorCount;
         if (temperatureMonitor.isValid()) {
           format % temperatureMonitor.getTemperature();
         } else {
           format % "n/a";
         }
-        cout << '\r' << b::str(format);
+        cout << '\r' << format;
       };
 
       while (true) {
@@ -675,7 +680,7 @@ class ProgramCruExperimentalDma: public Program
             size_t pattern_index = currentPage * DMA_PAGE_SIZE / 32 + j;
             if (readoutPage[j * 8] != pattern[pattern_index]) {
               errorCount++;
-              if (isVerbose()) {
+              if (isVerbose() && errorCount < 1000) {
                 errorStream << "data error at rolling " << rolling << ", page " << i << ", data " << j * 8 << ", "
                     << readoutPage[j * 8] << " - " << pattern[pattern_index] << '\n';
               }
@@ -691,11 +696,6 @@ class ProgramCruExperimentalDma: public Program
 
           //cout << " " << i << " " << fifoUser->statusEntries[i].status << '\n';
 
-          //generates lock state for if l==0 case
-          if (i == 1) {
-            lock = 1;
-          }
-
           //make status zero for each descriptor for next rolling
 #ifdef ALTERNATIVE_INIT_IMPL
           status_usr[i] = 0;
@@ -703,13 +703,10 @@ class ProgramCruExperimentalDma: public Program
           fifoUser->statusEntries[i].reset();
 #endif
 
-          //points to the first descriptor
-          if (lock == 0) {
+          // points to the first descriptor
+          if (i == 0) {
             bar[Register::DMA_POINTER] = NUM_PAGES - 1;
           }
-
-          //push the same descriptor again when its gets executed
-          bar[Register::DMA_POINTER] = i;
 
           counter++;
 
@@ -733,28 +730,39 @@ class ProgramCruExperimentalDma: public Program
       auto timeEnd = std::chrono::high_resolution_clock::now();
 
       if (isVerbose()) {
+        cout << "Errors:\n";
+        size_t maxChars = 2000;
         auto str = errorStream.str();
         if (!str.empty()) {
-          cout << "Errors: " << errorStream.str() << '\n';
+          cout << str.substr(0, maxChars);
+          if (str.length() > maxChars) {
+            cout << "\n... more follow (" << (str.length() - maxChars) << " characters)\n";
+          }
         }
       }
 
       // Calculating throughput
       double runTime = std::chrono::duration<double>(timeEnd - timeStart).count();
       double bytes = double(rolling) * FIFO_ENTRIES * DMA_PAGE_SIZE;
+      double GB = bytes / (1000 * 1000 * 1000);
+      double GBs = GB / runTime;
+      double Gbs = GBs * 8.0;
       double GiB = bytes / (1024 * 1024 * 1024);
-      double throughputGiBs = GiB / runTime;
-      double throughputGibs = throughputGiBs * 8.0;
+      double GiBs = GiB / runTime;
+      double Gibs = GiBs * 8.0;
 
-      auto format = "  %-10s  %-10s\n";
+      auto format = b::format("  %-10s  %-10s\n");
       cout << '\n';
-      cout << b::str(b::format(format) % "Seconds" % runTime);
-      cout << b::str(b::format(format) % "Bytes" % bytes);
+      cout << format % "Seconds" % runTime;
+      cout << format % "Bytes" % bytes;
       if (bytes > 0.00001) {
-        cout << b::str(b::format(format) % "GiB" % GiB);
-        cout << b::str(b::format(format) % "GiB/s" % throughputGiBs);
-        cout << b::str(b::format(format) % "Gibit/s" % throughputGibs);
-        cout << b::str(b::format(format) % "Errors" % errorCount);
+        cout << format % "GB" % GB;
+        cout << format % "GB/s" % GBs;
+        cout << format % "Gb/s" % Gbs;
+        cout << format % "GiB" % GiB;
+        cout << format % "GiB/s" % GiBs;
+        cout << format % "Gibit/s" % Gibs;
+        cout << format % "Errors" % errorCount;
       }
       cout << '\n';
     }
