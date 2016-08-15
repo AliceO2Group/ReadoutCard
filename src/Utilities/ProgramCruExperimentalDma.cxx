@@ -11,6 +11,7 @@
 
 #include "Utilities/Program.h"
 #include <iostream>
+#include <condition_variable>
 #include <thread>
 #include <chrono>
 #include <pda.h>
@@ -40,8 +41,14 @@
 #include "Pda/PdaBar.h"
 #include "Pda/PdaDmaBuffer.h"
 
-// Use other init procedure
+/// Use other init procedure
 #define ALTERNATIVE_INIT_IMPL
+
+/// Use PCI interrupts instead of constant status polling (slightly faster if using busy interrupt wait)
+#define USE_INTERRUPTS
+
+/// Use busy wait instead of condition variable (cv is very slow)
+#define USE_BUSY_INTERRUPT_WAIT
 
 namespace b = boost;
 namespace bfs = boost::filesystem;
@@ -98,10 +105,76 @@ constexpr double MAX_TEMPERATURE = 45.0;
 const std::string RESET_SWITCH = "reset";
 const std::string TO_FILE_SWITCH = "tofile";
 const std::string ROLLS_SWITCH = "rolls";
+const std::string INTERRUPT_SWITCH = "interrupts";
+
+/// Test class for PCI interrupts
+class PdaIsr
+{
+  public:
+
+    PdaIsr(PciDevice* pciDevice)
+        : mPciDevice(pciDevice)
+    {
+      cout << "\nREGISTERING ISR\n";
+      PciDevice_registerISR(pciDevice, PdaIsr::serviceRoutine, this);
+    }
+
+    ~PdaIsr()
+    {
+      cout << "\nDE-REGISTERING ISR\n";
+      PciDevice_killISR(mPciDevice);
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    std::cv_status waitOnInterrupt(const std::chrono::milliseconds& timeout)
+    {
+#ifdef USE_BUSY_INTERRUPT_WAIT
+      auto start = std::chrono::high_resolution_clock::now();
+
+      int i = 0;
+      while (((std::chrono::high_resolution_clock::now() - start) < timeout) && i < 10000000) {
+        i++;
+        bool expectedValue = true;
+        bool newValue = false;
+//        if (mInterruptFlag.compare_exchange_strong(expectedValue, newValue) == true) {
+        if (mInterruptFlag.load() == true) {
+          return std::cv_status::no_timeout;
+        }
+      }
+      return std::cv_status::timeout;
+#else
+      // Wait until the interrupt flag is true, and atomically swap its value to false
+      std::unique_lock<decltype(mMutex)> lock(mMutex);
+      return mConditionVariable.wait_for(lock, timeout);
+#endif
+    }
+
+  private:
+    static std::atomic<bool> mInterruptFlag;
+    static std::mutex mMutex;
+    static std::condition_variable mConditionVariable;
+    PciDevice* mPciDevice;
+
+    static uint64_t serviceRoutine(uint32_t sequenceNumber, const void* _this)
+    {
+#ifdef USE_BUSY_INTERRUPT_WAIT
+      mInterruptFlag = true;
+#else
+      //cout << "GOT INTERRUPT: " << sequenceNumber << endl;
+      std::unique_lock<decltype(mMutex)> lock(mMutex);
+      mConditionVariable.notify_all();
+#endif
+      return 0;
+    }
+};
+std::atomic<bool> PdaIsr::mInterruptFlag; // not really needed
+std::mutex PdaIsr::mMutex;
+std::condition_variable PdaIsr::mConditionVariable;
 
 /// Manages a temperature monitor thread
 class TemperatureMonitor {
   public:
+
     /// Start monitoring
     /// \param temperatureRegister The register to read the temperature data from.
     ///   The object using this must guarantee it will be accessible until stop() is called or this object is destroyed.
@@ -204,6 +277,7 @@ class ProgramCruExperimentalDma: public Program
       options.add_options()(ROLLS_SWITCH.c_str(),
           boost::program_options::value<int>(&maxRolls)->default_value(ROLLS_DEFAULT),
           "Amount of iterations over the FIFO. Give 0 for infinite.");
+      options.add_options()(INTERRUPT_SWITCH.c_str(), "Use PCIe interrupts");
     }
 
     virtual void mainFunction(const boost::program_options::variables_map& map)
@@ -213,6 +287,7 @@ class ProgramCruExperimentalDma: public Program
       infiniteRolls = maxRolls == 0;
       enableResetCard = bool(map.count(RESET_SWITCH));
       enableFileOutput = bool(map.count(TO_FILE_SWITCH));
+      enableInterrupts = bool(map.count(INTERRUPT_SWITCH));
 
       cout << "Initializing" << endl;
       init();
@@ -231,13 +306,15 @@ class ProgramCruExperimentalDma: public Program
     bool infiniteRolls; // true means no limit on rolling
     bool enableFileOutput;
     bool enableResetCard;
+    bool enableInterrupts;
 
     TemperatureMonitor temperatureMonitor;
 
-    boost::scoped_ptr<RorcDevice> rorcDevice;
-    boost::scoped_ptr<Pda::PdaBar> pdaBar;
-    boost::scoped_ptr<MemoryMappedFile> mappedFilePages;
-    boost::scoped_ptr<Pda::PdaDmaBuffer> bufferPages;
+    b::scoped_ptr<RorcDevice> rorcDevice;
+    b::scoped_ptr<Pda::PdaBar> pdaBar;
+    b::scoped_ptr<PdaIsr> pdaIsr;
+    b::scoped_ptr<MemoryMappedFile> mappedFilePages;
+    b::scoped_ptr<Pda::PdaDmaBuffer> bufferPages;
 
     volatile uint32_t* bar;
 
@@ -263,6 +340,9 @@ class ProgramCruExperimentalDma: public Program
       Util::resetSmartPtr(rorcDevice, serial);
       Util::resetSmartPtr(pdaBar, rorcDevice->getPciDevice(), channel);
       bar = pdaBar->getUserspaceAddressU32();
+      if (enableInterrupts) {
+        Util::resetSmartPtr(pdaIsr, rorcDevice->getPciDevice());
+      }
       Util::resetSmartPtr(mappedFilePages, DMA_BUFFER_PAGES_PATH.c_str(), DMA_BUFFER_PAGES_SIZE);
       Util::resetSmartPtr(bufferPages, rorcDevice->getPciDevice(), mappedFilePages->getAddress(),
           mappedFilePages->getSize(), BUFFER_INDEX_PAGES);
@@ -479,20 +559,23 @@ class ProgramCruExperimentalDma: public Program
 
 #endif
 
-      cout << "\n  Firmware version  " << Utilities::Common::make32hexString(bar[Register::FIRMWARE_COMPILE_INFO]);
-      cout << "\n  Serial number     " << Utilities::Common::make32hexString(bar[Register::SERIAL_NUMBER]);
+      cout << "  Firmware version  " << Utilities::Common::make32hexString(bar[Register::FIRMWARE_COMPILE_INFO]) << '\n';
+      cout << "  Serial number     " << Utilities::Common::make32hexString(bar[Register::SERIAL_NUMBER]) << '\n';
+    }
+
+    std::array<int, 1024> makePattern()
+    {
+      std::array<int, 1024> pattern;
+      for (int i = 2; i < 1024; i++) {
+        pattern[i] = i - 1;
+      }
+      pattern[0] = 0;
+      pattern[1] = 0;
     }
 
     void runDma()
     {
-      int pattern[1023];
-      {
-        for (int i = 2; i < 1024; i++) {
-          pattern[i] = i - 1;
-        }
-        pattern[0] = 0;
-        pattern[1] = 0;
-      }
+      auto pattern = makePattern();
 
       std::ofstream fileStream;
       std::ostringstream errorStream;
@@ -540,19 +623,28 @@ class ProgramCruExperimentalDma: public Program
 
       while (true) {
         if (!infiniteRolls && rolling >= maxRolls) {
-          cout << "\nMaximum amount of rolls reached\n";
+          cout << "\n\nMaximum amount of rolls reached\n";
           break;
         }
-        if (temperatureMonitor.isMaxExceeded()) {
-          cout << "\n!!! ABORTING: MAX TEMPERATURE EXCEEDED\n";
+        else if (temperatureMonitor.isMaxExceeded()) {
+          cout << "\n\n!!! ABORTING: MAX TEMPERATURE EXCEEDED\n";
           break;
-        } else if (isSigInt()) {
+        }
+        else if (isSigInt()) {
           cout << "\n\nInterrupted\n";
           break;
         }
 
+        // TODO NOTE: It seems this update messes with the PCI interrupt, resulting in timeouts.
+        // Does it mask the interrupt??
         if (isVerbose() && isDisplayInterval()) {
           updateStatusDisplay();
+        }
+
+        // Interrupts are skipped on first iteration, because it would always time out otherwise
+        if (enableInterrupts && counter != 0
+            && (pdaIsr->waitOnInterrupt(std::chrono::milliseconds(100)) == std::cv_status::timeout)) {
+          cout << "Interrupt wait TIMED OUT at counter:" << counter << " rolling:" << rolling << "\n";
         }
 
 #ifdef ALTERNATIVE_INIT_IMPL
@@ -584,11 +676,8 @@ class ProgramCruExperimentalDma: public Program
             if (readoutPage[j * 8] != pattern[pattern_index]) {
               errorCount++;
               if (isVerbose()) {
-                errorStream << "data error at rolling " << rolling
-                    << ", page " << i
-                    << ", data " << j * 8
-                    << ", " << readoutPage[j * 8]
-                    << " - " << pattern[pattern_index] << '\n';
+                errorStream << "data error at rolling " << rolling << ", page " << i << ", data " << j * 8 << ", "
+                    << readoutPage[j * 8] << " - " << pattern[pattern_index] << '\n';
               }
             }
           }
@@ -644,7 +733,10 @@ class ProgramCruExperimentalDma: public Program
       auto timeEnd = std::chrono::high_resolution_clock::now();
 
       if (isVerbose()) {
-        cout << "Errors: " << errorStream.str() << '\n';
+        auto str = errorStream.str();
+        if (!str.empty()) {
+          cout << "Errors: " << errorStream.str() << '\n';
+        }
       }
 
       // Calculating throughput
@@ -652,7 +744,7 @@ class ProgramCruExperimentalDma: public Program
       double bytes = double(rolling) * FIFO_ENTRIES * DMA_PAGE_SIZE;
       double GiB = bytes / (1024 * 1024 * 1024);
       double throughputGiBs = GiB / runTime;
-      double throughputGibs = throughputGibs * 8.0;
+      double throughputGibs = throughputGiBs * 8.0;
 
       auto format = "  %-10s  %-10s\n";
       cout << '\n';
