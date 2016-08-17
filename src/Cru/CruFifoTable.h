@@ -29,6 +29,20 @@ struct CruFifoTable
       }
     }
 
+    /// Set the registers of a descriptor entry
+    /// \param index Page index
+    /// \param pageSize Size of the page in 32-bit words
+    /// \param sourceAddress Page address in device memory space
+    /// \param destinationAddress Page address in user memory space
+    void setDescriptor(uint32_t index, uint32_t pageLength, void* sourceAddress, void* destinationAddress)
+    {
+      auto& e = descriptorEntries[index];
+      e.setControlRegister(index, pageLength);
+      e.setSourceAddress(sourceAddress);
+      e.setDestinationAddress(destinationAddress);
+      e.setReserved();
+    }
+
     /// A class representing a CRU status table entry
     struct StatusEntry
     {
@@ -53,13 +67,13 @@ struct CruFifoTable
         /// \param pageSize Size of the page in 32-bit words
         /// \param sourceAddress Page address in device memory space
         /// \param destinationAddress Page address in user memory space
-        void setEntry(uint32_t index, uint32_t pageLength, void* sourceAddress, void* destinationAddress)
-        {
-          setControlRegister(index, pageLength);
-          setSourceAddress(sourceAddress);
-          setDestinationAddress(destinationAddress);
-          setReserved();
-        }
+//        void setEntry(uint32_t index, uint32_t pageLength, void* sourceAddress, void* destinationAddress)
+//        {
+//          setControlRegister(index, pageLength);
+//          setSourceAddress(sourceAddress);
+//          setDestinationAddress(destinationAddress);
+//          setReserved();
+//        }
 
         /// Set the control register
         /// \param index Page index
@@ -99,6 +113,7 @@ struct CruFifoTable
 
         void setReserved()
         {
+          // Doesn't seem to be needed
 //          reserved1 = 0x0;
 //          reserved2 = 0x0;
 //          reserved3 = 0x0;

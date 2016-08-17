@@ -258,12 +258,12 @@ class ProgramCruExperimentalDma: public Program
 {
   public:
 
-    virtual UtilsDescription getDescription()
+    virtual UtilsDescription getDescription() override
     {
       return UtilsDescription("CRU EXPERIMENTAL DMA", "!!! USE WITH CAUTION !!!", "./rorc-cru-experimental-dma");
     }
 
-    virtual void addOptions(boost::program_options::options_description& options)
+    virtual void addOptions(boost::program_options::options_description& options) override
     {
       options.add_options()(RESET_SWITCH.c_str(), "Reset card during initialization");
       options.add_options()(TO_FILE_SWITCH.c_str(), "Read out to file");
@@ -273,7 +273,7 @@ class ProgramCruExperimentalDma: public Program
       options.add_options()(INTERRUPT_SWITCH.c_str(), "Use PCIe interrupts");
     }
 
-    virtual void mainFunction(const boost::program_options::variables_map& map)
+    virtual void mainFunction(const boost::program_options::variables_map& map) override
     {
       using namespace AliceO2::Rorc;
 
@@ -375,7 +375,7 @@ class ProgramCruExperimentalDma: public Program
       for (int i = 0; i < NUM_PAGES; i++) {
         auto sourceAddress = reinterpret_cast<void*>((i % NUM_OF_BUFFERS) * DMA_PAGE_SIZE);
         auto destinationAddress = dataDevice + i * DMA_PAGE_SIZE_32;
-        mFifoUser->descriptorEntries[i].setEntry(i, DMA_PAGE_SIZE_32, sourceAddress, destinationAddress);
+        mFifoUser->setDescriptor(i, DMA_PAGE_SIZE_32, sourceAddress, destinationAddress);
       }
 
       // Setting the buffer to the default value

@@ -90,10 +90,10 @@ int Program::execute(int argc, char** argv)
   }
   catch (std::exception& e) {
 #if (BOOST_VERSION >= 105400)
-    std::cout << "Error:\n" << boost::diagnostic_information(e, isVerbose()) << "\n";
+    std::cout << "Error: " << e.what() << '\n' << boost::diagnostic_information(e, isVerbose()) << "\n";
 #else
 #pragma message "BOOST_VERSION < 105400"
-    std::cout << "Error:\n" << boost::diagnostic_information(e) << "\n";
+    std::cout << "Error: " << e.what() << '\n' << boost::diagnostic_information(e) << "\n";
 #endif
   }
 
