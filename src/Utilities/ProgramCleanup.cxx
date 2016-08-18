@@ -46,7 +46,7 @@ class ProgramCleanup: public Program
       options.add_options()(FORCE_SWITCH,"Force cleanup of shared state files if normal cleanup fails");
     }
 
-    virtual void mainFunction(const boost::program_options::variables_map& map)
+    virtual void run(const boost::program_options::variables_map& map)
     {
       auto serialNumber = Options::getOptionSerialNumber(map);
       auto channelNumber = Options::getOptionChannel(map);

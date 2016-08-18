@@ -38,7 +38,7 @@ class ProgramSanityCheck: public Program
       Options::addOptionChannel(options);
     }
 
-    virtual void mainFunction(const boost::program_options::variables_map& map)
+    virtual void run(const boost::program_options::variables_map& map)
     {
       const int serialNumber = Options::getOptionSerialNumber(map);
       const int channelNumber = Options::getOptionChannel(map);

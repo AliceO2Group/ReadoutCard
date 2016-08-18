@@ -33,7 +33,7 @@ class ProgramRegisterWrite: public Program
       options.add_options()(NOREAD_SWITCH, "No readback of register after write");
     }
 
-    virtual void mainFunction(const boost::program_options::variables_map& map)
+    virtual void run(const boost::program_options::variables_map& map)
     {
       int serialNumber = Options::getOptionSerialNumber(map);
       int address = Options::getOptionRegisterAddress(map);

@@ -46,9 +46,7 @@ class Program
     virtual void addOptions(boost::program_options::options_description& optionsDescription) = 0;
 
     /// The main function of the program
-    virtual void mainFunction(const boost::program_options::variables_map& variablesMap) = 0;
-
-    void printHelp (const boost::program_options::options_description& optionsDescription);
+    virtual void run(const boost::program_options::variables_map& variablesMap) = 0;
 
     /// Should output be verbose
     bool isVerbose() const {
@@ -57,7 +55,7 @@ class Program
 
   private:
 
-    static std::atomic<bool> sFlagSigInt; // Long name to prevent naming conflicts
+    static std::atomic<bool> sFlagSigInt;
 
     bool verbose;
 
@@ -65,6 +63,8 @@ class Program
     {
       sFlagSigInt = true;
     }
+
+    void printHelp (const boost::program_options::options_description& optionsDescription);
 };
 
 } // namespace Utilities

@@ -37,7 +37,7 @@ class ProgramPrintFifo: public Program
       options.add_options()("nopretty", "Dump FIFO contents instead of making a nice table");
     }
 
-    virtual void mainFunction(const boost::program_options::variables_map& map)
+    virtual void run(const boost::program_options::variables_map& map)
     {
       int serialNumber = Options::getOptionSerialNumber(map);
       int channelNumber = Options::getOptionChannel(map);

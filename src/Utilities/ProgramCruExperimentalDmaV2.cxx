@@ -1,4 +1,4 @@
-/// \file ProgramCruExperimentalDma.cxx
+/// \file ProgramCruExperimentalDmaV2.cxx
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 /// \brief Based on https://gitlab.cern.ch/alice-cru/pciedma_eval
@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <condition_variable>
 #include <thread>
+#include <queue>
 #include <future>
 #include <chrono>
 #include <pda.h>
@@ -48,6 +49,8 @@ using std::endl;
 
 namespace {
 
+constexpr std::chrono::milliseconds DISPLAY_INTERVAL(10);
+
 constexpr int FIFO_ENTRIES = 4;
 
 /// DMA page length in bytes
@@ -63,33 +66,72 @@ constexpr int NUM_PAGES = FIFO_ENTRIES * NUM_OF_BUFFERS;
 /// Offset in bytes from start of status table to data buffer
 constexpr size_t DATA_OFFSET = 0x200;
 
-constexpr size_t DMA_BUFFER_PAGES_SIZE = 2l * 1024l * 1024l; // One 2MiB hugepage. Should be enough...
+/// Two 2MiB hugepage. Should be enough...
+constexpr size_t DMA_BUFFER_PAGES_SIZE = 4l * 1024l * 1024l;
 
 constexpr uint32_t BUFFER_DEFAULT_VALUE = 0xCcccCccc;
 
 /// PDA DMA buffer index for the pages buffer
 constexpr int BUFFER_INDEX_PAGES = 0;
 
-const bfs::path DMA_BUFFER_PAGES_PATH = "/mnt/hugetlbfs/rorc-cru-experimental-dma-pages";
+const bfs::path DMA_BUFFER_PAGES_PATH = "/mnt/hugetlbfs/rorc-cru-experimental-dma-pages-v2";
 
-/// Fields: Time(hour:minute:second), i, Counter, Rolling, Errors, Status, °C
-const std::string PROGRESS_FORMAT_HEADER("  %-8s   %-12s  %-12s  %-12s  %-10s  %-10.1f");
+/// Fields: Time(hour:minute:second), i, Counter, Errors, Status, °C
+const std::string PROGRESS_FORMAT_HEADER("  %-8s   %-12s  %-12s  %-10s  %-10.1f");
 
-/// Fields: Time(hour:minute:second), i, Counter, Rolling, Errors, Status, °C
-const std::string PROGRESS_FORMAT("  %02s:%02s:%02s   %-12s  %-12s  %-12s  %-10s  %-10.1f");
+/// Fields: Time(hour:minute:second), i, Counter, Errors, Status, °C
+const std::string PROGRESS_FORMAT("  %02s:%02s:%02s   %-12s  %-12s  %-10s  %-10.1f");
 
-constexpr int ROLLS_DEFAULT = 1500;
+/// Default number of pages
+constexpr int PAGES_DEFAULT = 1500;
 
 constexpr double MAX_TEMPERATURE = 45.0;
 
+/// Minimum random pause interval in milliseconds
+constexpr int NEXT_PAUSE_MIN = 10;
+/// Maximum random pause interval in milliseconds
+constexpr int NEXT_PAUSE_MAX = 2000;
+/// Minimum random pause in milliseconds
+constexpr int PAUSE_LENGTH_MIN = 1;
+/// Maximum random pause in milliseconds
+constexpr int PAUSE_LENGTH_MAX = 500;
+
 const std::string RESET_SWITCH = "reset";
 const std::string TO_FILE_SWITCH = "tofile";
-const std::string ROLLS_SWITCH = "rolls";
+const std::string PAGES_SWITCH = "pages";
 const std::string INTERRUPT_SWITCH = "interrupts";
+const std::string DISPLAY_FIFO_SWITCH = "showfifo";
+const std::string RANDOM_PAUSES_SWITCH = "rand-pauses";
 
 const std::string READOUT_ERRORS_PATH = "readout_errors.txt";
 const std::string READOUT_DATA_PATH = "readout_data.txt";
 const std::string READOUT_LOG_FORMAT = "readout_log_%d.txt";
+
+template <typename Index>
+class LoopingIndex
+{
+  public:
+    LoopingIndex(Index max, Index start = 0) : max(max), i(start)
+    {
+    }
+
+    Index get() const
+    {
+      return i;
+    }
+
+    void increment()
+    {
+      i++;
+      if (i >= max) {
+        i = 0;
+      }
+    }
+
+  private:
+    Index max;
+    Index i;
+};
 
 /// Test class for PCI interrupts
 class PdaIsr
@@ -260,17 +302,19 @@ class ProgramCruExperimentalDma: public Program
 
     virtual UtilsDescription getDescription() override
     {
-      return UtilsDescription("CRU EXPERIMENTAL DMA", "!!! USE WITH CAUTION !!!", "./rorc-cru-experimental-dma");
+      return { "CRU EXPERIMENTAL DMA", "!!! USE WITH CAUTION !!!", "./rorc-cru-experimental-dma" };
     }
 
     virtual void addOptions(boost::program_options::options_description& options) override
     {
-      options.add_options()(RESET_SWITCH.c_str(), "Reset card during initialization");
-      options.add_options()(TO_FILE_SWITCH.c_str(), "Read out to file");
-      options.add_options()(ROLLS_SWITCH.c_str(),
-          boost::program_options::value<int>(&mMaxRolls)->default_value(ROLLS_DEFAULT),
-          "Amount of iterations over the FIFO. Give 0 for infinite.");
-      options.add_options()(INTERRUPT_SWITCH.c_str(), "Use PCIe interrupts");
+      options.add_options()
+          (RESET_SWITCH.c_str(), "Reset card during initialization")
+          (TO_FILE_SWITCH.c_str(), "Read out to file")
+          (PAGES_SWITCH.c_str(), boost::program_options::value<int>(&mMaxRolls)->default_value(PAGES_DEFAULT),
+              "Amount of pages to transfer. Give 0 for infinite.")
+          (INTERRUPT_SWITCH.c_str(), "Use PCIe interrupts")
+          (DISPLAY_FIFO_SWITCH.c_str(), "Display FIFO status (wide terminal recommended)")
+          (RANDOM_PAUSES_SWITCH.c_str(), "Randomly pause readout (to test robustness)");
     }
 
     virtual void run(const boost::program_options::variables_map& map) override
@@ -281,6 +325,8 @@ class ProgramCruExperimentalDma: public Program
       mEnableResetCard = bool(map.count(RESET_SWITCH));
       mEnableFileOutput = bool(map.count(TO_FILE_SWITCH));
       mEnableInterrupts = bool(map.count(INTERRUPT_SWITCH));
+      mEnableFifoDisplay = bool(map.count(DISPLAY_FIFO_SWITCH));
+      mEnableRandomPauses = bool(map.count(RANDOM_PAUSES_SWITCH));
 
 
       if (mEnableFileOutput) {
@@ -305,11 +351,14 @@ class ProgramCruExperimentalDma: public Program
     }
 
   private:
+    /// A simple struct that holds the userspace and bus address of a page
+    struct PageAddress
+    {
+        void* user;
+        void* bus;
+    };
 
     using TimePoint = std::chrono::high_resolution_clock::time_point;
-
-    /// Array for data emulator pattern
-    using DataPattern = std::array<int, 1024>;
 
     /// Array the size of a page
     using PageBuffer = std::array<uint32_t, DMA_PAGE_SIZE_32>;
@@ -317,15 +366,12 @@ class ProgramCruExperimentalDma: public Program
     /// Array of pages
     using PageBufferArray = std::array<PageBuffer, NUM_PAGES>;
 
-
     void initDma()
     {
       system("modprobe -r uio_pci_dma");
       system("modprobe uio_pci_dma");
 
       bfs::remove(DMA_BUFFER_PAGES_PATH);
-
-      mDataPattern = makePattern();
 
       int serial = 12345;
       int channel = 0;
@@ -339,15 +385,6 @@ class ProgramCruExperimentalDma: public Program
       Util::resetSmartPtr(mBufferPages, mRorcDevice->getPciDevice(), mMappedFilePages->getAddress(),
           mMappedFilePages->getSize(), BUFFER_INDEX_PAGES);
 
-      auto entry = mBufferPages->getScatterGatherList().at(0);
-      if (entry.size < (2l * 1024l * 1024l)) {
-        BOOST_THROW_EXCEPTION(CruException()
-            << errinfo_rorc_error_message("Unsupported configuration: DMA scatter-gather entry size less than 2 MiB")
-            << errinfo_rorc_scatter_gather_entry_size(entry.size)
-            << errinfo_rorc_possible_causes(
-                {"DMA buffer was not allocated in hugepage shared memory (hugetlbfs may not be properly mounted)"}));
-      }
-
       if (mEnableResetCard) {
         cout << "Resetting..." << std::flush;
         mBar[Register::RESET_CONTROL] = 0x1;
@@ -355,36 +392,74 @@ class ProgramCruExperimentalDma: public Program
         cout << "done!" << endl;
       }
 
-      auto getDataAddress = [](void* fifoAddress) {
-        // Data starts directly after the FIFO
-        return reinterpret_cast<uint32_t*>(reinterpret_cast<char*>(fifoAddress) + sizeof(CruFifoTable));
-      };
+      // Initialize the fifo & page addresses
+      {
+        mPageAddresses.clear();
 
-      // Addresses in the RAM (DMA destination)
-      // the start address of the descriptor table is always at the same place:
-      // adding a 0x200 offset (= sizeof(CruFifoTable)) to the status start address, no
-      // matter how many entries there are
-      mFifoUser = reinterpret_cast<CruFifoTable*>(entry.addressUser);
-      mDataUser = getDataAddress(mFifoUser);
-      CruFifoTable* fifoDevice = reinterpret_cast<CruFifoTable*>(entry.addressBus);
-      uint32_t* dataDevice = getDataAddress(fifoDevice);
+        /// Amount of space reserved for the FIFO, we use multiples of the page size for uniformity
+        size_t fifoSpace = ((sizeof(CruFifoTable) / DMA_PAGE_SIZE) + 1) * DMA_PAGE_SIZE;
+
+        auto list = mBufferPages->getScatterGatherList();
+
+        if (list.size() < 1) {
+          BOOST_THROW_EXCEPTION(CruException()
+              << errinfo_rorc_error_message("Scatter-gather list empty"));
+        }
+
+        if (list.at(0).size < fifoSpace) {
+          BOOST_THROW_EXCEPTION(CruException()
+              << errinfo_rorc_error_message("First SGL entry size insufficient for FIFO"));
+        }
+
+        mFifoUser = reinterpret_cast<CruFifoTable*>(list.at(0).addressUser);
+        mFifoDevice = reinterpret_cast<CruFifoTable*>(list.at(0).addressBus);
+
+        for (int i = 0; i < list.size(); ++i) {
+          auto& entry = list[i];
+          if (entry.size < (2l * 1024l * 1024l)) {
+            BOOST_THROW_EXCEPTION(CruException()
+                << errinfo_rorc_error_message("Unsupported configuration: DMA scatter-gather entry size less than 2 MiB")
+                << errinfo_rorc_scatter_gather_entry_size(entry.size)
+                << errinfo_rorc_possible_causes(
+                    {"DMA buffer was not allocated in hugepage shared memory (hugetlbfs may not be properly mounted)"}));
+          }
+
+          bool first = i == 0;
+
+          // How many pages fit in this SGL entry
+          int64_t pagesInSglEntry = first
+              ? (entry.size - fifoSpace) / DMA_PAGE_SIZE // First entry also contains the FIFO
+              : entry.size / DMA_PAGE_SIZE;
+
+          for (int64_t j = 0; j < pagesInSglEntry; ++j) {
+            int64_t offset = first
+              ? fifoSpace + j * DMA_PAGE_SIZE
+              : j * DMA_PAGE_SIZE;
+            PageAddress pa;
+            pa.bus = (void*) (((char*) entry.addressBus) + offset);
+            pa.user = (void*) (((char*) entry.addressUser) + offset);
+
+            mPageAddresses.push_back(pa);
+          }
+        }
+
+        if (mPageAddresses.size() <= NUM_PAGES) {
+          BOOST_THROW_EXCEPTION(CrorcException()
+              << errinfo_rorc_error_message("Insufficient amount of pages fit in DMA buffer"));
+        }
+      }
 
       // Initializing the descriptor table
       mFifoUser->resetStatusEntries();
-
-      for (int i = 0; i < NUM_PAGES; i++) {
-        auto sourceAddress = reinterpret_cast<void*>((i % NUM_OF_BUFFERS) * DMA_PAGE_SIZE);
-        auto destinationAddress = dataDevice + i * DMA_PAGE_SIZE_32;
-//        cout << "> Setting descriptor " << i << " to page " << i
-//                  << " @ " << sourceAddress << " -> " << destinationAddress << endl;
-        mFifoUser->setDescriptor(i, DMA_PAGE_SIZE_32, sourceAddress, destinationAddress);
+      // As a safety measure, we put "valid" addresses in the descriptor table, even though we're not pushing pages yet
+      // This helps prevent the card from writing to invalid addresses and crashing absolutely everything
+      for (int i = 0; i < mFifoUser->descriptorEntries.size(); i++) {
+        setDescriptor(i, i);
       }
 
-      // Setting the buffer to the default value
-
-//      cout << "Data address user       : " << (void*) data_user << '\n';
-      for (int i = 0; i < DMA_PAGE_SIZE_32 * FIFO_ENTRIES; i++) {
-        mDataUser[i] = BUFFER_DEFAULT_VALUE;
+      // Reset buffer to default value
+      for (auto& page : mPageAddresses) {
+        resetPage(reinterpret_cast<uint32_t*>(page.user));
       }
 
       // Note: the sleeps are needed until firmware implements proper "handshakes"
@@ -400,8 +475,8 @@ class ProgramCruExperimentalDma: public Program
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
       // Status base address, low and high part, respectively
-      mBar[Register::STATUS_BASE_BUS_HIGH] = Util::getUpper32Bits(uint64_t(fifoDevice));
-      mBar[Register::STATUS_BASE_BUS_LOW] = Util::getLower32Bits(uint64_t(fifoDevice));
+      mBar[Register::STATUS_BASE_BUS_HIGH] = Util::getUpper32Bits(uint64_t(mFifoDevice));
+      mBar[Register::STATUS_BASE_BUS_LOW] = Util::getLower32Bits(uint64_t(mFifoDevice));
 
       // Destination (card's memory) addresses, low and high part, respectively
       mBar[Register::STATUS_BASE_CARD_HIGH] = 0x0;
@@ -413,35 +488,47 @@ class ProgramCruExperimentalDma: public Program
       // Send command to the DMA engine to write to every status entry, not just the final one
       mBar[Register::DONE_CONTROL] = 0x1;
 
-      // Send command to the DMA engine to write NUM_PAGES
+      cout << "DMA_POINTER = " << mBar[Register::DMA_POINTER] << '\n';
+      // Send command to the DMA engine to point to the last descriptor so we can start with 0
       mBar[Register::DMA_POINTER] = NUM_PAGES - 1;
 
-      // make buffer ready signal
+      // Give buffer ready signal
       mBar[Register::BUFFER_READY] = 0x1;
 
       // Programming the user module to trigger the data emulator
       mBar[Register::DATA_EMULATOR_CONTROL] = 0x1;
 
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      // Wait for initial pages
+      while(!isSigInt() && !mFifoUser->statusEntries[NUM_PAGES - 1].isPageArrived()) {;}
+      mFifoUser->resetStatusEntries();
 
       cout << "  Firmware version  " << Utilities::Common::make32hexString(mBar[Register::FIRMWARE_COMPILE_INFO]) << '\n';
       cout << "  Serial number     " << Utilities::Common::make32hexString(mBar[Register::SERIAL_NUMBER]) << '\n';
+      cout << "  Buffer size       " << mPageAddresses.size() << " pages, " << " "
+          << mPageAddresses.size() * DMA_BUFFER_PAGES_SIZE << " bytes\n";
+
       mLogStream << "# Firmware version  " << Utilities::Common::make32hexString(mBar[Register::FIRMWARE_COMPILE_INFO]) << '\n';
       mLogStream << "# Serial number     " << Utilities::Common::make32hexString(mBar[Register::SERIAL_NUMBER]) << '\n';
+      mLogStream << "# Buffer size       " << mPageAddresses.size() << " pages, " << " "
+          << mPageAddresses.size() * DMA_BUFFER_PAGES_SIZE << " bytes\n";
+    }
+
+    void setDescriptor(int pageIndex, int descriptorIndex)
+    {
+      auto& pageAddress = mPageAddresses.at(pageIndex);
+      auto sourceAddress = reinterpret_cast<void*>((descriptorIndex % NUM_OF_BUFFERS) * DMA_PAGE_SIZE);
+      mFifoUser->setDescriptor(descriptorIndex, DMA_PAGE_SIZE_32, sourceAddress, pageAddress.bus);
     }
 
     void updateStatusDisplay()
     {
-      static bool updateNewline = false;
-
       using namespace std::chrono;
       auto diff = high_resolution_clock::now() - mRunStart;
       auto second = duration_cast<seconds>(diff).count() % 60;
       auto minute = duration_cast<minutes>(diff).count() % 60;
       auto hour = duration_cast<hours>(diff).count();
 
-      auto format = b::format(PROGRESS_FORMAT) % hour % minute % second % mPageCounter % mRollingCounter
-          % mErrorCount % mStatusCount;
+      auto format = b::format(PROGRESS_FORMAT) % hour % minute % second % mPageCounter % mErrorCount % mStatusCount;
       if (mTemperatureMonitor.isValid()) {
         format % mTemperatureMonitor.getTemperature();
       } else {
@@ -450,25 +537,35 @@ class ProgramCruExperimentalDma: public Program
 
       cout << '\r' << format;
 
+      if (mEnableFifoDisplay) {
+        for (int i = 0; i < 128; ++i) {
+          if ((i % 8) == 0) {
+            cout << '|';
+          }
+          cout << (mFifoUser->statusEntries.at(i).isPageArrived() ? 'X' : ' ');
+        }
+        cout << '|';
+      }
+
       // This takes care of adding a "line" to the stdout and log table every so many seconds
       {
         int interval = 60;
         auto second = duration_cast<seconds>(diff).count() % interval;
-        if (updateNewline && second == 0) {
+        if (mDisplayUpdateNewline && second == 0) {
           cout << '\n';
           mLogStream << '\n' << format;
-          updateNewline = false;
+          mDisplayUpdateNewline = false;
         }
         if (second >= 1) {
-          updateNewline = true;
+          mDisplayUpdateNewline = true;
         }
       }
     }
 
     void printHeader()
     {
-      auto line1 = b::format(PROGRESS_FORMAT_HEADER) % "Time" % "Counter" % "Rolling" % "Errors" % "Status" % "°C";
-      auto line2 = b::format(PROGRESS_FORMAT) % "00" % "00" % "00" % '-' % '-' % '-' % '-' % '-';
+      auto line1 = b::format(PROGRESS_FORMAT_HEADER) % "Time" % "Counter" % "Errors" % "Status" % "°C";
+      auto line2 = b::format(PROGRESS_FORMAT) % "00" % "00" % "00" % '-' % '-' % '-' % '-';
 
       cout << '\n' << line1;
       cout << '\n' << line2;
@@ -478,33 +575,31 @@ class ProgramCruExperimentalDma: public Program
 
     bool isDisplayInterval()
     {
-      auto displayInterval = std::chrono::milliseconds(10);
       auto now = std::chrono::high_resolution_clock::now();
-      if (std::chrono::duration_cast<std::chrono::milliseconds, int64_t>(now - mLastDisplayUpdate) > displayInterval) {
+      if (std::chrono::duration_cast<std::chrono::milliseconds, int64_t>(now - mLastDisplayUpdate) > DISPLAY_INTERVAL) {
         mLastDisplayUpdate = now;
         return true;
       }
       return false;
     }
 
-    void readoutTask(int i, int errorCheckPage, int rollingCounter)
+    struct Handle
     {
-      uint32_t* pushedPage = &mDataUser[i*DMA_PAGE_SIZE_32];
-      auto& readoutPage = mReadoutPages[i];
+        /// Index for CRU DMA descriptor table
+        int descriptorIndex;
 
-      // Copy page
-      copyPage(readoutPage.data(), pushedPage);
+        /// Index for mPageAddresses
+        int pageIndex;
+    };
 
-      // Setting the buffer to the default value after the readout
-      resetPage(pushedPage);
+    bool isPageArrived(const Handle& handle)
+    {
+      return mFifoUser->statusEntries[handle.descriptorIndex].isPageArrived();
+    }
 
-      // Read out to file
-      if (mEnableFileOutput) {
-        fileOutput(mReadoutStream, i, readoutPage);
-      }
-
-      // Data error checking
-      checkErrors(mErrorStream, i, errorCheckPage, rollingCounter, readoutPage, mDataPattern);
+    uint32_t* getPageAddress(const Handle& handle)
+    {
+      return reinterpret_cast<uint32_t*>(mPageAddresses.at(handle.pageIndex).user);
     }
 
     void runDma()
@@ -515,81 +610,66 @@ class ProgramCruExperimentalDma: public Program
 
       mRunStart = std::chrono::high_resolution_clock::now();
 
-#ifdef USE_ASYNC_READOUT
-      std::vector<std::future<void>> handles(NUM_PAGES);
-#endif
+      std::queue<Handle> queue;
+      const int MAX_QUEUE_SIZE = NUM_PAGES;
 
-      auto readoutTask = [&](int i, int errorCheckPage, int rollingCounter){
-        uint32_t* pushedPage = &mDataUser[i*DMA_PAGE_SIZE_32];
-        auto& readoutPage = mReadoutPages[i];
-
-        // Copy page
-        copyPage(readoutPage.data(), pushedPage);
-
-        // Setting the buffer to the default value after the readout
-        resetPage(pushedPage);
-
-        // Read out to file
-        if (mEnableFileOutput) {
-          fileOutput(mReadoutStream, i, readoutPage);
-        }
-
-        // Data error checking
-        checkErrors(mErrorStream, i, errorCheckPage, rollingCounter, readoutPage, mDataPattern);
-      };
+      int descriptorCounter = 0;
+      int pageIndexCounter = 0;
 
       int i = 0;
       while (true) {
-        // Interrupts are skipped on first iteration, because it would always time out otherwise
-        if (mEnableInterrupts && mPageCounter != 0
-            && (mPdaIsr->waitOnInterrupt(std::chrono::milliseconds(100)) == std::cv_status::timeout)) {
-          cout << "Interrupt wait TIMED OUT at counter:" << mPageCounter << " rolling:" << mRollingCounter << "\n";
+        while (queue.size() < MAX_QUEUE_SIZE) {
+          // Push page
+          Handle handle;
+          handle.descriptorIndex = descriptorCounter;
+          handle.pageIndex = pageIndexCounter;
+          descriptorCounter = (descriptorCounter + 1) % NUM_PAGES;
+          pageIndexCounter = (pageIndexCounter + 1) % mPageAddresses.size();
+
+          setDescriptor(handle.pageIndex, handle.descriptorIndex);
+          mBar[Register::DMA_POINTER] = handle.descriptorIndex;
+
+          queue.push(handle);
         }
 
-        if (mFifoUser->statusEntries[i].isPageArrived()) {
-#ifdef USE_ASYNC_READOUT
-          // Complete last cycle's task if it's still ongoing
-          if (handles[i].valid() && handles[i].wait_for(std::chrono::milliseconds(100)) == std::future_status::timeout) {
-            BOOST_THROW_EXCEPTION(CruException() << errinfo_rorc_error_message("Future timed out"));
-          }
-          handles[i] = std::async(std::launch::async, readoutTask, i, mErrorCheckPage, mRollingCounter);
-#else
-          readoutTask(i, mErrorCheckPage, mRollingCounter);
-#endif
-          mErrorCheckPage++;
-
-          // Reset page status
-          mFifoUser->statusEntries[i].reset();
-
-          // points to the first descriptor
-          if (i == 0) {
-            mBar[Register::DMA_POINTER] = NUM_PAGES - 1; // Batch
-          }
-          //mBar[Register::DMA_POINTER] = i; // One by one
-
-
-          // Push the same descriptor again when its gets executed
-          // TODO Not sure why this was done, it seems to have a bad effect on performance (cuts it in half)
-          //bar[Register::DMA_POINTER] = i;
-
+        if (isPageArrived(queue.front())) {
+          auto handle = queue.front();
           mPageCounter++;
 
-          // After every 32Kbytes reset the current_page for online checking
-          if ((i % FIFO_ENTRIES) == FIFO_ENTRIES - 1) {
-            mErrorCheckPage = 0;
-            mRollingCounter++;
+          uint32_t* pushedPage = getPageAddress(handle);
+
+          // Read out to file
+          if (mEnableFileOutput) {
+            fileOutput(handle);
           }
 
-          if (i == NUM_PAGES - 1) {
-            // read status count after 1MByte dma transfer
-            mStatusCount = mBar[Register::READ_STATUS_COUNT];
-            i = 0;
-          } else {
-            i++;
+          // Data error checking
+          checkErrors(handle);
+
+          // Setting the buffer to the default value after the readout
+          resetPage(pushedPage);
+
+          // Reset status entry
+          mFifoUser->statusEntries[handle.descriptorIndex].reset();
+
+          // Pop the handle
+          queue.pop();
+        }
+
+        if (mEnableRandomPauses) {
+          auto now = std::chrono::high_resolution_clock::now();
+          if (now >= mRandomPauses.nextPause) {
+            cout << b::format("! pause %-4d ms ... ") % mRandomPauses.nextPauseLength.count() << std::flush;
+            std::this_thread::sleep_for(mRandomPauses.nextPauseLength);
+            cout << " resume\n";
+
+            auto now = std::chrono::high_resolution_clock::now();
+            mRandomPauses.nextPause = now + std::chrono::milliseconds(getRandRange(NEXT_PAUSE_MIN, NEXT_PAUSE_MAX));
+            mRandomPauses.nextPauseLength = std::chrono::milliseconds(getRandRange(PAUSE_LENGTH_MIN, PAUSE_LENGTH_MAX));
           }
         }
 
-        if (!mInfiniteRolls && mRollingCounter >= mMaxRolls) {
+        if (!mInfiniteRolls && mPageCounter >= mMaxRolls) {
           cout << "\n\nMaximum amount of rolls reached\n";
           break;
         }
@@ -608,18 +688,16 @@ class ProgramCruExperimentalDma: public Program
         }
       }
 
-#ifdef USE_ASYNC_READOUT
-      for (auto& handle : handles) {
-        if (handle.valid()) {
-          handle.wait();
-        }
-      }
-#endif
-
       mRunEnd = std::chrono::high_resolution_clock::now();
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
       outputErrors();
       outputStats();
+    }
+
+    int getRandRange(int min, int max)
+    {
+      return (std::rand() % max - min) + min;
     }
 
     void outputErrors()
@@ -645,7 +723,7 @@ class ProgramCruExperimentalDma: public Program
     {
       // Calculating throughput
       double runTime = std::chrono::duration<double>(mRunEnd - mRunStart).count();
-      double bytes = double(mRollingCounter) * FIFO_ENTRIES * DMA_PAGE_SIZE;
+      double bytes = double(mPageCounter) * DMA_PAGE_SIZE;
       double GB = bytes / (1000 * 1000 * 1000);
       double GBs = GB / runTime;
       double Gbs = GBs * 8.0;
@@ -674,46 +752,57 @@ class ProgramCruExperimentalDma: public Program
       mLogStream << '\n' << str;
     }
 
-    DataPattern makePattern()
-    {
-      DataPattern pattern;
-      pattern[0] = 0;
-      pattern[1] = 0;
-      for (int i = 2; i < 1024; i++) {
-        pattern[i] = i - 1;
-      }
-      return pattern;
-    }
-
     void copyPage (uint32_t* target, const uint32_t* source)
     {
       std::copy(source, source + DMA_PAGE_SIZE_32, target);
     }
 
-    void fileOutput(std::ostream& stream, const int i, const PageBuffer& page)
+    void fileOutput(const Handle& handle)
     {
-      stream << i << '\n';
-      for (int j = 0; j < (DMA_PAGE_SIZE_32 / 8); j += 8) {
-        for (int k = 7; k >= 0; k--) {
-          stream << page[j + k];
+      uint32_t* page = getPageAddress(handle);
+      mReadoutStream << handle.pageIndex << '\n';
+      int perLine = 8;
+      for (int i = 0; i < DMA_PAGE_SIZE_32; i+= perLine) {
+        for (int j = 0; j < perLine; ++j) {
+          mReadoutStream << page[i+j] << ' ';
         }
-        stream << '\n';
+        mReadoutStream << '\n';
       }
-      stream << '\n';
+      mReadoutStream << '\n';
     }
 
-    void checkErrors(std::ostream& errorStream, const int pageIndex, const int errorCheckPage, const int rolling,
-        const PageBuffer& page, const DataPattern& pattern)
+    void checkErrors(const Handle& handle)
     {
-      for (int j = 0; j < (DMA_PAGE_SIZE_32 / 8); j++) {
-        size_t pattern_index = errorCheckPage * (DMA_PAGE_SIZE_32 / 8) + j;
-        if (page[j * 8] != pattern[pattern_index]) {
-          mErrorCount++;
-          if (isVerbose() && mErrorCount < MAX_RECORDED_ERRORS) {
-            errorStream << "data error at rolling " << rolling << ", page " << pageIndex << ", data " << j * 8 << ", "
-                << page[j * 8] << " - " << pattern[pattern_index] << '\n';
-          }
+      uint32_t* page = getPageAddress(handle);
+
+      auto reportError = [&](int i, int expectedValue, int actualValue) {
+        mErrorCount++;
+        if (isVerbose() && mErrorCount < MAX_RECORDED_ERRORS) {
+          mErrorStream << "Error @ page:" << handle.pageIndex << " i:" << i << " exp:" << expectedValue
+              << " val:" << actualValue << '\n';
         }
+      };
+
+      // The data emulator's counter resets every 4 pages
+      const int section = handle.descriptorIndex % 4;
+      // The data emulator writes to every 8th 32-bit word
+      constexpr int stride = 8;
+
+      // For the first section, the first number is 0, and the count starts on the second number
+      const bool first = (section == 0);
+      const int start = first ? stride : 0;
+
+      if (first && (page[0] != 0)) {
+        reportError(0, 0, page[0]);
+      }
+
+      int expectedValue = first ? 0 : section * 256 - 1;
+      for (int i = start; i < DMA_PAGE_SIZE_32; i += stride)
+      {
+        if (page[i] != expectedValue) {
+          reportError(i, expectedValue, page[i]);
+        }
+        expectedValue++;
       }
     }
 
@@ -733,6 +822,8 @@ class ProgramCruExperimentalDma: public Program
     bool mEnableFileOutput;
     bool mEnableResetCard;
     bool mEnableInterrupts;
+    bool mEnableFifoDisplay;
+    bool mEnableRandomPauses;
 
     /// Start of run time
     TimePoint mRunStart;
@@ -755,21 +846,13 @@ class ProgramCruExperimentalDma: public Program
 
     /// Aliased userspace FIFO
     CruFifoTable* mFifoUser;
-
-    /// DMA buffer (userspace address)
-    uint32_t* mDataUser;
-
-    /// Page counter used for error checking
-    int mErrorCheckPage;
+    CruFifoTable* mFifoDevice;
 
     /// Value of some kind of CRU status register. Seems to always be 0.
     uint32_t mStatusCount;
 
     /// Amount of pages pushed
     int64_t mPageCounter;
-
-    /// Amount of "rolls"
-    int64_t mRollingCounter;
 
     /// Amount of data errors detected
     int64_t mErrorCount;
@@ -786,11 +869,16 @@ class ProgramCruExperimentalDma: public Program
     /// Time of the last display update
     TimePoint mLastDisplayUpdate;
 
-    /// Readout buffer
-    PageBufferArray mReadoutPages;
+    /// Indicates the display must add a newline to the table
+    bool mDisplayUpdateNewline;
 
-    /// Pattern of the data, used for error checking
-    DataPattern mDataPattern;
+    /// Addresses of pages
+    std::vector<PageAddress> mPageAddresses;
+
+    struct RandomPauses {
+        TimePoint nextPause;
+        std::chrono::milliseconds nextPauseLength;
+    } mRandomPauses;
 };
 
 } // Anonymous namespace

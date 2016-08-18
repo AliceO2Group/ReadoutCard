@@ -57,8 +57,9 @@ int Program::execute(int argc, char** argv)
   auto prnHelp = [&](){ printHelp(optionsDescription); };
 
   // We add a verbose switch
-  optionsDescription.add_options()(VERBOSE_SWITCH.c_str(), "Verbose output");
-  optionsDescription.add_options()(VERSION_SWITCH.c_str(), "Display RORC library version");
+  optionsDescription.add_options()
+      (VERBOSE_SWITCH.c_str(), "Verbose output")
+      (VERSION_SWITCH.c_str(), "Display RORC library version");
 
   // Subclass will add own options
   addOptions(optionsDescription);
@@ -81,7 +82,7 @@ int Program::execute(int argc, char** argv)
     verbose = bool(variablesMap.count(VERBOSE_SWITCH));
 
     // Start the actual program
-    mainFunction(variablesMap);
+    run(variablesMap);
   }
   catch (ProgramOptionException& e) {
     auto message = boost::get_error_info<AliceO2::Rorc::errinfo_rorc_error_message>(e);

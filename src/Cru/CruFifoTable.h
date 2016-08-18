@@ -30,10 +30,10 @@ struct CruFifoTable
     }
 
     /// Set the registers of a descriptor entry
-    /// \param index Page index
+    /// \param index FIFO index
     /// \param pageSize Size of the page in 32-bit words
-    /// \param sourceAddress Page address in device memory space
-    /// \param destinationAddress Page address in user memory space
+    /// \param sourceAddress Page source address in device memory space
+    /// \param destinationAddress Page destination address in device memory space
     void setDescriptor(uint32_t index, uint32_t pageLength, void* sourceAddress, void* destinationAddress)
     {
       auto& e = descriptorEntries[index];
@@ -63,7 +63,7 @@ struct CruFifoTable
     struct DescriptorEntry
     {
         /// Set the registers of the entry
-        /// \param index Page index
+        /// \param index FIFO index
         /// \param pageSize Size of the page in 32-bit words
         /// \param sourceAddress Page address in device memory space
         /// \param destinationAddress Page address in user memory space

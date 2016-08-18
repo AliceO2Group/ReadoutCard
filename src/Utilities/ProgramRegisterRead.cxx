@@ -30,7 +30,7 @@ class ProgramRegisterRead: public Program
       Options::addOptionSerialNumber(options);
     }
 
-    virtual void mainFunction(const boost::program_options::variables_map& map)
+    virtual void run(const boost::program_options::variables_map& map)
     {
       int serialNumber = Options::getOptionSerialNumber(map);
       int address = Options::getOptionRegisterAddress(map);

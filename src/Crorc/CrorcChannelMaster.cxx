@@ -96,6 +96,7 @@ void CrorcChannelMaster::constructorCommon()
     if (entry.size < (2l * 1024l * 1024l)) {
       BOOST_THROW_EXCEPTION(CrorcException()
           << errinfo_rorc_error_message("Unsupported configuration: DMA scatter-gather entry size less than 2 MiB")
+          << errinfo_rorc_scatter_gather_entry_size(entry.size)
           << errinfo_rorc_possible_causes(
               {"DMA buffer was not allocated in hugepage shared memory (hugetlbfs may not be properly mounted)"}));
     }
