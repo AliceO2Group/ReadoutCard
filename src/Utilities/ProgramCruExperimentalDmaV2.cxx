@@ -23,6 +23,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/format.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <boost/circular_buffer.hpp>
 #include "RorcException.h"
 #include "RorcDevice.h"
 #include "MemoryMappedFile.h"
@@ -310,7 +311,7 @@ class ProgramCruExperimentalDma: public Program
       options.add_options()
           (RESET_SWITCH.c_str(), "Reset card during initialization")
           (TO_FILE_SWITCH.c_str(), "Read out to file")
-          (PAGES_SWITCH.c_str(), boost::program_options::value<int>(&mMaxRolls)->default_value(PAGES_DEFAULT),
+          (PAGES_SWITCH.c_str(), boost::program_options::value<int>(&mMaxPages)->default_value(PAGES_DEFAULT),
               "Amount of pages to transfer. Give 0 for infinite.")
           (INTERRUPT_SWITCH.c_str(), "Use PCIe interrupts")
           (DISPLAY_FIFO_SWITCH.c_str(), "Display FIFO status (wide terminal recommended)")
@@ -321,7 +322,7 @@ class ProgramCruExperimentalDma: public Program
     {
       using namespace AliceO2::Rorc;
 
-      mInfiniteRolls = mMaxRolls == 0;
+      mInfinitePages = mMaxPages == 0;
       mEnableResetCard = bool(map.count(RESET_SWITCH));
       mEnableFileOutput = bool(map.count(TO_FILE_SWITCH));
       mEnableInterrupts = bool(map.count(INTERRUPT_SWITCH));
@@ -357,6 +358,15 @@ class ProgramCruExperimentalDma: public Program
         void* user;
         void* bus;
     };
+
+    struct Handle
+    {
+        int descriptorIndex; ///< Index for CRU DMA descriptor table
+        int pageIndex; ///< Index for mPageAddresses
+    };
+
+    using QueueBuffer = boost::circular_buffer<Handle>;
+    using ReadoutQueue = std::queue<Handle, QueueBuffer>;
 
     using TimePoint = std::chrono::high_resolution_clock::time_point;
 
@@ -528,7 +538,7 @@ class ProgramCruExperimentalDma: public Program
       auto minute = duration_cast<minutes>(diff).count() % 60;
       auto hour = duration_cast<hours>(diff).count();
 
-      auto format = b::format(PROGRESS_FORMAT) % hour % minute % second % mPageCounter % mErrorCount % mStatusCount;
+      auto format = b::format(PROGRESS_FORMAT) % hour % minute % second % mReadoutCounter % mErrorCount % mStatusCount;
       if (mTemperatureMonitor.isValid()) {
         format % mTemperatureMonitor.getTemperature();
       } else {
@@ -564,9 +574,8 @@ class ProgramCruExperimentalDma: public Program
 
     void printHeader()
     {
-      auto line1 = b::format(PROGRESS_FORMAT_HEADER) % "Time" % "Counter" % "Errors" % "Status" % "°C";
+      auto line1 = b::format(PROGRESS_FORMAT_HEADER) % "Time" % "Pages" % "Errors" % "Status" % "°C";
       auto line2 = b::format(PROGRESS_FORMAT) % "00" % "00" % "00" % '-' % '-' % '-' % '-';
-
       cout << '\n' << line1;
       cout << '\n' << line2;
       mLogStream << '\n' << line1;
@@ -582,15 +591,6 @@ class ProgramCruExperimentalDma: public Program
       }
       return false;
     }
-
-    struct Handle
-    {
-        /// Index for CRU DMA descriptor table
-        int descriptorIndex;
-
-        /// Index for mPageAddresses
-        int pageIndex;
-    };
 
     bool isPageArrived(const Handle& handle)
     {
@@ -608,69 +608,13 @@ class ProgramCruExperimentalDma: public Program
         printHeader();
       }
 
+      auto queue = ReadoutQueue(QueueBuffer(NUM_PAGES));
+
       mRunStart = std::chrono::high_resolution_clock::now();
 
-      std::queue<Handle> queue;
-      const int MAX_QUEUE_SIZE = NUM_PAGES;
-
-      int descriptorCounter = 0;
-      int pageIndexCounter = 0;
-
-      int i = 0;
       while (true) {
-        while (queue.size() < MAX_QUEUE_SIZE) {
-          // Push page
-          Handle handle;
-          handle.descriptorIndex = descriptorCounter;
-          handle.pageIndex = pageIndexCounter;
-          descriptorCounter = (descriptorCounter + 1) % NUM_PAGES;
-          pageIndexCounter = (pageIndexCounter + 1) % mPageAddresses.size();
-
-          setDescriptor(handle.pageIndex, handle.descriptorIndex);
-          mBar[Register::DMA_POINTER] = handle.descriptorIndex;
-
-          queue.push(handle);
-        }
-
-        if (isPageArrived(queue.front())) {
-          auto handle = queue.front();
-          mPageCounter++;
-
-          uint32_t* pushedPage = getPageAddress(handle);
-
-          // Read out to file
-          if (mEnableFileOutput) {
-            fileOutput(handle);
-          }
-
-          // Data error checking
-          checkErrors(handle);
-
-          // Setting the buffer to the default value after the readout
-          resetPage(pushedPage);
-
-          // Reset status entry
-          mFifoUser->statusEntries[handle.descriptorIndex].reset();
-
-          // Pop the handle
-          queue.pop();
-        }
-
-        if (mEnableRandomPauses) {
-          auto now = std::chrono::high_resolution_clock::now();
-          if (now >= mRandomPauses.nextPause) {
-            cout << b::format("! pause %-4d ms ... ") % mRandomPauses.nextPauseLength.count() << std::flush;
-            std::this_thread::sleep_for(mRandomPauses.nextPauseLength);
-            cout << " resume\n";
-
-            auto now = std::chrono::high_resolution_clock::now();
-            mRandomPauses.nextPause = now + std::chrono::milliseconds(getRandRange(NEXT_PAUSE_MIN, NEXT_PAUSE_MAX));
-            mRandomPauses.nextPauseLength = std::chrono::milliseconds(getRandRange(PAUSE_LENGTH_MIN, PAUSE_LENGTH_MAX));
-          }
-        }
-
-        if (!mInfiniteRolls && mPageCounter >= mMaxRolls) {
-          cout << "\n\nMaximum amount of rolls reached\n";
+        if (!mInfinitePages && mReadoutCounter >= mMaxPages) {
+          cout << "\n\nMaximum amount of pages reached\n";
           break;
         }
         else if (mTemperatureMonitor.isMaxExceeded()) {
@@ -686,10 +630,82 @@ class ProgramCruExperimentalDma: public Program
           // Does it mask the interrupt??
           updateStatusDisplay();
         }
+
+        // Fill the queue
+        while ((mInfinitePages || (mPushCounter < mMaxPages)) && (queue.size() < NUM_PAGES)) {
+          mPushCounter++;
+          // Push page
+          setDescriptor(mPageIndexCounter, mDescriptorCounter);
+          mBar[Register::DMA_POINTER] = mDescriptorCounter;
+
+          // Add the page to the readout queue
+          queue.push(Handle{mDescriptorCounter, mPageIndexCounter});
+
+          // Increment counters
+          mDescriptorCounter = (mDescriptorCounter + 1) % NUM_PAGES;
+          mPageIndexCounter = (mPageIndexCounter + 1) % mPageAddresses.size();
+        }
+
+        // Read out a page
+        if (!queue.empty() && isPageArrived(queue.front())) {
+          auto handle = queue.front();
+          mReadoutCounter++;
+
+          // Read out to file
+          if (mEnableFileOutput) {
+            fileOutput(handle);
+          }
+
+          // Data error checking
+          checkErrors(handle);
+
+          // Setting the buffer to the default value after the readout
+          resetPage(getPageAddress(handle));
+
+          // Reset status entry
+          mFifoUser->statusEntries[handle.descriptorIndex].reset();
+
+          // Remove the page from the readout queue
+          queue.pop();
+        }
+
+        if (mEnableRandomPauses) {
+          auto now = std::chrono::high_resolution_clock::now();
+          if (now >= mRandomPauses.nextPause) {
+            cout << b::format("pause %-4d ms ...") % mRandomPauses.nextPauseLength.count() << std::flush;
+            std::this_thread::sleep_for(mRandomPauses.nextPauseLength);
+            cout << " resume\n";
+
+            // Schedule next pause
+            auto now = std::chrono::high_resolution_clock::now();
+            mRandomPauses.nextPause = now + std::chrono::milliseconds(getRandRange(NEXT_PAUSE_MIN, NEXT_PAUSE_MAX));
+            mRandomPauses.nextPauseLength = std::chrono::milliseconds(getRandRange(PAUSE_LENGTH_MIN, PAUSE_LENGTH_MAX));
+          }
+        }
       }
 
       mRunEnd = std::chrono::high_resolution_clock::now();
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+      // Finish readout queue, currently we just discard the pages
+      {
+        int size = queue.size();
+
+        if (size > 0) {
+          cout << "Discarding " << size << " pages after abort\n";
+        }
+
+        for (int i = 0; i < size; ++i) {
+          auto handle = queue.front();
+          auto& status = mFifoUser->statusEntries[handle.descriptorIndex];
+          if (status.isPageArrived()) {
+            status.reset();
+          } else {
+            cout << "WARNING: page " << handle.descriptorIndex << " not yet arrived\n";
+          }
+          queue.pop();
+        }
+      }
 
       outputErrors();
       outputStats();
@@ -723,7 +739,7 @@ class ProgramCruExperimentalDma: public Program
     {
       // Calculating throughput
       double runTime = std::chrono::duration<double>(mRunEnd - mRunStart).count();
-      double bytes = double(mPageCounter) * DMA_PAGE_SIZE;
+      double bytes = double(mReadoutCounter) * DMA_PAGE_SIZE;
       double GB = bytes / (1000 * 1000 * 1000);
       double GBs = GB / runTime;
       double Gbs = GBs * 8.0;
@@ -735,8 +751,9 @@ class ProgramCruExperimentalDma: public Program
       std::ostringstream stream;
       stream << '\n';
       stream << format % "Seconds" % runTime;
-      stream << format % "Bytes" % bytes;
+      stream << format % "Pages" % mReadoutCounter;
       if (bytes > 0.00001) {
+        stream << format % "Bytes" % bytes;
         stream << format % "GB" % GB;
         stream << format % "GB/s" % GBs;
         stream << format % "Gb/s" % Gbs;
@@ -817,8 +834,8 @@ class ProgramCruExperimentalDma: public Program
     static constexpr int64_t MAX_RECORDED_ERRORS = 1000;
 
     // Program options
-    int mMaxRolls;
-    bool mInfiniteRolls; // true means no limit on rolling
+    int mMaxPages; ///< Limit of pages to push
+    bool mInfinitePages; ///< A value of true means no limit on page pushing
     bool mEnableFileOutput;
     bool mEnableResetCard;
     bool mEnableInterrupts;
@@ -852,7 +869,16 @@ class ProgramCruExperimentalDma: public Program
     uint32_t mStatusCount;
 
     /// Amount of pages pushed
-    int64_t mPageCounter;
+    int64_t mPushCounter;
+
+    /// Amount of pages read out
+    int64_t mReadoutCounter;
+
+    /// Indicates current descriptor
+    int mDescriptorCounter;
+
+    /// Indicates current page in mPageAddresses
+    int mPageIndexCounter;
 
     /// Amount of data errors detected
     int64_t mErrorCount;
@@ -875,7 +901,8 @@ class ProgramCruExperimentalDma: public Program
     /// Addresses of pages
     std::vector<PageAddress> mPageAddresses;
 
-    struct RandomPauses {
+    struct RandomPauses
+    {
         TimePoint nextPause;
         std::chrono::milliseconds nextPauseLength;
     } mRandomPauses;
