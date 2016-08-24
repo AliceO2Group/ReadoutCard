@@ -33,7 +33,8 @@ class Program
     int execute(int argc, char** argv);
 
     /// Has the SIGINT signal been given? (usually Ctrl-C)
-    static bool isSigInt() {
+    static bool isSigInt()
+    {
       return sFlagSigInt;
     }
 
@@ -49,20 +50,18 @@ class Program
     virtual void run(const boost::program_options::variables_map& variablesMap) = 0;
 
     /// Should output be verbose
-    bool isVerbose() const {
-      return verbose;
+    bool isVerbose() const
+    {
+      return mVerbose;
     }
 
   private:
 
     static std::atomic<bool> sFlagSigInt;
 
-    bool verbose;
+    bool mVerbose;
 
-    static void sigIntHandler(int)
-    {
-      sFlagSigInt = true;
-    }
+    static void sigIntHandler(int);
 
     void printHelp (const boost::program_options::options_description& optionsDescription);
 };

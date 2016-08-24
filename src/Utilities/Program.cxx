@@ -28,8 +28,13 @@ namespace {
 
 std::atomic<bool> Program::sFlagSigInt(false);
 
+void Program::sigIntHandler(int)
+{
+  sFlagSigInt = true;
+}
+
 Program::Program()
-    : verbose(false)
+    : mVerbose(false)
 {
 }
 
@@ -79,7 +84,7 @@ int Program::execute(int argc, char** argv)
       return 0;
     }
 
-    verbose = bool(variablesMap.count(VERBOSE_SWITCH));
+    mVerbose = bool(variablesMap.count(VERBOSE_SWITCH));
 
     // Start the actual program
     run(variablesMap);

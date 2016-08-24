@@ -42,6 +42,7 @@ if(PDA_FOUND)
     Crorc/CrorcChannelSlave.cxx
     Cru/CruChannelMaster.cxx
     Cru/CruChannelSlave.cxx
+    Cru/Temperature.cxx
     Pda/PdaBar.cxx
     Pda/PdaDevice.cxx
     Pda/PdaDmaBuffer.cxx
