@@ -108,8 +108,6 @@ if(DIM_FOUND)
   build_util_exec(rorc-alf-client Utilities/ProgramAliceLowlevelFrontendClient.cxx ${DIM_LIBRARY})
 endif()
 
-
-
 # -------
 # Targets export for all libraries and executables
 # -------

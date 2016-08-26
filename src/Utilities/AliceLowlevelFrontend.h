@@ -1,10 +1,16 @@
 /// \file AliceLowlevelFrontend.h
+<<<<<<< HEAD
 /// \brief Definition of ALICE Lowlevel Frontend (ALF) & related DIM items
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #ifndef ALICEO2_RORC_UTILITIES_ALF_ALICELOWLEVELFRONTEND_H
 #define ALICEO2_RORC_UTILITIES_ALF_ALICELOWLEVELFRONTEND_H
+=======
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+///
+/// \brief Implementations for ALICE Lowlevel Frontend (ALF) & related DIM items
+>>>>>>> RORC: Added prototype DCS DIM server & example client
 
 #include <string>
 #include <functional>
@@ -15,7 +21,11 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/format.hpp>
+<<<<<<< HEAD
 #include "RORC/Exception.h"
+=======
+#include "RorcException.h"
+>>>>>>> RORC: Added prototype DCS DIM server & example client
 
 namespace Alf {
 
@@ -45,13 +55,19 @@ struct ServiceNames
     const int channel;
 };
 
+<<<<<<< HEAD
 /// We use this in a few places because DIM insists on non-const char*
 std::vector<char> toCharBuffer(const std::string& string, bool addTerminator = true)
+=======
+template <typename DimObject>
+void setDataString(const std::string& string, DimObject& dimObject, bool addTerminator = true)
+>>>>>>> RORC: Added prototype DCS DIM server & example client
 {
   std::vector<char> buffer(string.begin(), string.end());
   if (addTerminator) {
     buffer.push_back('\0');
   }
+<<<<<<< HEAD
   return buffer;
 }
 
@@ -59,6 +75,8 @@ template <typename DimObject>
 void setDataString(const std::string& string, DimObject& dimObject, bool addTerminator = true)
 {
   auto buffer = toCharBuffer(string, addTerminator);
+=======
+>>>>>>> RORC: Added prototype DCS DIM server & example client
   dimObject.setData(buffer.data(), buffer.size());
 }
 
@@ -71,7 +89,11 @@ inline std::string successPrefix()
 
 inline std::string failPrefix()
 {
+<<<<<<< HEAD
   return "failure:";
+=======
+  return "fail   :";
+>>>>>>> RORC: Added prototype DCS DIM server & example client
 }
 
 inline std::string makeSuccessString(const std::string& string)
@@ -86,12 +108,20 @@ inline std::string makeFailString(const std::string& string)
 
 inline bool isSuccess(const std::string& string)
 {
+<<<<<<< HEAD
   return boost::starts_with(string, successPrefix());
+=======
+  return boost::starts_with(string, "success:");
+>>>>>>> RORC: Added prototype DCS DIM server & example client
 }
 
 inline bool isFail(const std::string& string)
 {
+<<<<<<< HEAD
   return boost::starts_with(string, failPrefix());
+=======
+  return boost::starts_with(string, "failure:");
+>>>>>>> RORC: Added prototype DCS DIM server & example client
 }
 
 inline std::string stripPrefix(const std::string& string)
@@ -103,7 +133,11 @@ class RegisterReadRpc: public DimRpcInfo
 {
   public:
     RegisterReadRpc(const std::string& serviceName)
+<<<<<<< HEAD
         : DimRpcInfo(serviceName.c_str(), toCharBuffer("").data())
+=======
+        : DimRpcInfo(serviceName.c_str(), "")
+>>>>>>> RORC: Added prototype DCS DIM server & example client
     {
     }
 
@@ -113,7 +147,11 @@ class RegisterReadRpc: public DimRpcInfo
       auto returnValue = std::string(getString());
       printf("Read got return: %s\n", returnValue.c_str());
       if (isFail(returnValue)) {
+<<<<<<< HEAD
         BOOST_THROW_EXCEPTION(AliceO2::Rorc::Exception() << AliceO2::Rorc::errinfo_rorc_error_message(returnValue));
+=======
+        BOOST_THROW_EXCEPTION(AliceO2::Rorc::RorcException() << AliceO2::Rorc::errinfo_rorc_error_message(returnValue));
+>>>>>>> RORC: Added prototype DCS DIM server & example client
       }
       return boost::lexical_cast<uint32_t>(stripPrefix(returnValue));
     }
@@ -123,7 +161,11 @@ class RegisterWriteRpc: public DimRpcInfo
 {
   public:
     RegisterWriteRpc(const std::string& serviceName)
+<<<<<<< HEAD
         : DimRpcInfo(serviceName.c_str(), toCharBuffer("").data())
+=======
+        : DimRpcInfo(serviceName.c_str(), "")
+>>>>>>> RORC: Added prototype DCS DIM server & example client
     {
     }
 
@@ -134,7 +176,11 @@ class RegisterWriteRpc: public DimRpcInfo
       auto returnValue = std::string(getString());
       printf("Write got return: %s\n", returnValue.c_str());
       if (isFail(returnValue)) {
+<<<<<<< HEAD
         BOOST_THROW_EXCEPTION(AliceO2::Rorc::Exception() << AliceO2::Rorc::errinfo_rorc_error_message(returnValue));
+=======
+        BOOST_THROW_EXCEPTION(AliceO2::Rorc::RorcException() << AliceO2::Rorc::errinfo_rorc_error_message(returnValue));
+>>>>>>> RORC: Added prototype DCS DIM server & example client
       }
     }
 };
@@ -205,5 +251,8 @@ class CallbackCommand : public DimCommand
 };
 
 }
+<<<<<<< HEAD
 
 #endif // ALICEO2_RORC_UTILITIES_ALF_ALICELOWLEVELFRONTEND_H
+=======
+>>>>>>> RORC: Added prototype DCS DIM server & example client
