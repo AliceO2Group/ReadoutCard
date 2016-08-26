@@ -87,6 +87,12 @@ function(build_util_exec execname filename)
   target_link_libraries(${execname} ${RORC_LIB_NAME})
 endfunction()
 
+# Helper function to build the utility executables with additinal lib
+function(build_util_exec_lib execname filename lib)
+  add_executable(${execname} ${filename})
+  target_link_libraries(${execname} ${RORC_LIB_NAME} ${lib})
+endfunction()
+
 build_util_exec(rorc-example Example.cxx)
 build_util_exec(rorc-reg-read Utilities/ProgramRegisterRead.cxx)
 build_util_exec(rorc-reg-read-range Utilities/ProgramRegisterReadRange)
@@ -100,6 +106,12 @@ build_util_exec(rorc-channel-cleanup Utilities/ProgramCleanup.cxx)
 build_util_exec(rorc-dma-bench Utilities/ProgramDmaBench.cxx)
 build_util_exec(rorc-cru-experimental-dma Utilities/ProgramCruExperimentalDma.cxx)
 build_util_exec(rorc-cru-experimental-dma-v2 Utilities/ProgramCruExperimentalDmaV2.cxx)
+
+if(DIM_FOUND)
+  build_util_exec_lib(rorc-alf-server Utilities/ProgramAliceLowlevelFrontendServer.cxx ${DIM_LIBRARY})
+  build_util_exec_lib(rorc-alf-client Utilities/ProgramAliceLowlevelFrontendClient.cxx ${DIM_LIBRARY})
+endif()
+
 
 
 # -------

@@ -216,4 +216,61 @@ until then, we must initialize and allocate manually.
   mount --types hugetlbfs none /mnt/hugetlbfs -o pagesize=2M
   ```
 
+ALICE Low-level Front-end (ALF) DIM Server
+===================
+The utilities contain a DIM server for DCS control of the cards 
+
+Usage
+-------------------
+./rorc-alf-server --serial=11225 --channel=0
+Note: if the DIM_DNS_NODE environment variable was not set, the server uses localhost. 
+
+Service description
+-------------------
+
+Services names are under: 
+"ALF/SERIAL_[a]/CHANNEL_[b]/[service name]"
+where [a] = card serial number
+      [b] = card channel / BAR index
+
+* The RPC calls take a string argument and return a string.
+* When the argument must contain multiple values, they must be comma-separated.
+* The return string will contain an 8-byte prefix indicating success or failure "success:" or "failure:", 
+  optionally followed by a return value or error message.
+
+For example: a register write call could have the argument string "504,42" meaning write value 42 to address 504.
+The return string could be "success:" or "failure:Address out of range".
+
+#### Register read
+* Service type: RPC call
+* Service name: REGISTER_READ 
+* Parameters: register address
+* Return: register value
+
+#### Register write
+* Service type: RPC call
+* Service name: REGISTER_WRITE
+* Parameters: register address, register value
+* Return:
+
+#### Temperature
+Card's core temperature in degrees Celsius
+* Service type: Published
+* Service name: TEMPERATURE
+* Value type: double
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

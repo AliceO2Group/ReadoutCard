@@ -53,10 +53,10 @@ inline std::string getLongSwitch(const std::string& swtch)
 
 namespace option {
 // General options
-static Option<int> channel("channel", "Channel");
+static Option<int> channel("channel", "Card channel or BAR number");
 static Option<std::string> registerAddress("address", "Register address in hex format");
 static Option<int> registerRange("regrange", "Amount of registers to print past given address");
-static Option<int> serialNumber("serial", "Serial number");
+static Option<int> serialNumber("serial", "Card serial number");
 static Option<std::string> registerValue("value", "Register value, either in decimal or hex (prefix with 0x)");
 
 // Options for ChannelParameters

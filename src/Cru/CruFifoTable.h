@@ -20,6 +20,7 @@ static constexpr size_t CRU_DESCRIPTOR_ENTRIES = 128l;
 /// For more information, see:
 ///   http://en.cppreference.com/w/cpp/language/reinterpret_cast
 ///   http://en.cppreference.com/w/cpp/language/aggregate_initialization
+/// For more info about the workings of this class, see chapter 6 of the Arria 10 Avalon-MM DMA User Guide
 struct CruFifoTable
 {
     void resetStatusEntries()
@@ -99,16 +100,16 @@ struct CruFifoTable
         /// \param address Page address in device memory space
         void setSourceAddress(void* address)
         {
-          srcLow = Util::getLower32Bits(uint64_t(address));
           srcHigh = Util::getUpper32Bits(uint64_t(address));
+          srcLow = Util::getLower32Bits(uint64_t(address));
         }
 
         /// Set the source address registers
         /// \param address Page address in user memory space
         void setDestinationAddress(void* address)
         {
-          dstLow = Util::getLower32Bits(uint64_t(address));
           dstHigh = Util::getUpper32Bits(uint64_t(address));
+          dstLow = Util::getLower32Bits(uint64_t(address));
         }
 
         void setReserved()

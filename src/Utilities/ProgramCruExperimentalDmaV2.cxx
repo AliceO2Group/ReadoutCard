@@ -47,6 +47,7 @@ namespace bfs = boost::filesystem;
 namespace Register = AliceO2::Rorc::CruRegisterIndex;
 using namespace AliceO2::Rorc::Utilities;
 using namespace AliceO2::Rorc;
+//using namespace std::literals::chrono_literals;
 using std::cout;
 using std::endl;
 
@@ -87,6 +88,9 @@ const std::string PROGRESS_FORMAT_HEADER("  %-8s   %-12s  %-12s  %-10s  %-10.1f"
 
 /// Fields: Time(hour:minute:second), i, Counter, Errors, Status, °C
 const std::string PROGRESS_FORMAT("  %02s:%02s:%02s   %-12s  %-12s  %-10s  %-10.1f");
+
+/// Timeout of SIGINT handling
+constexpr std::chrono::milliseconds HANDLING_SIGINT_TIMEOUT {10};
 
 /// Default number of pages
 constexpr int PAGES_DEFAULT = 1500;
@@ -455,12 +459,6 @@ class ProgramCruExperimentalDma: public Program
         system("modprobe uio_pci_dma");
       }
 
-//      if (isVerbose()) {
-//        cout << "\nMemory map before\n";
-//        system("cat /proc/self/maps");
-//        cout << '\n';
-//      }
-
       //removeDmaBufferFile();
 
       int serial = 12345;
@@ -554,12 +552,6 @@ class ProgramCruExperimentalDma: public Program
       for (auto& page : mPageAddresses) {
         resetPage(reinterpret_cast<uint32_t*>(page.user));
       }
-
-//      if (isVerbose()) {
-//        cout << "\nMemory map after\n";
-//        system("cat /proc/self/maps");
-//        cout << '\n';
-//      }
 
       // Note: the sleeps are needed until firmware implements proper "handshakes"
 
@@ -733,7 +725,7 @@ class ProgramCruExperimentalDma: public Program
           return;
         }
 
-        if ((std::chrono::high_resolution_clock::now() - mHandlingSigintStart) > mHandlingSigintTimeout) {
+        if ((std::chrono::high_resolution_clock::now() - mHandlingSigintStart) > HANDLING_SIGINT_TIMEOUT) {
           // Timed out
           cout << "\n\nInterrupted (did not finish readout queue)\n";
           mDmaLoopBreak = true;
@@ -1032,6 +1024,8 @@ class ProgramCruExperimentalDma: public Program
     /// Aliased userspace FIFO
     CruFifoTable* mFifoUserAddress = nullptr;
     CruFifoTable* mFifoBusAddress = nullptr;
+    //AddressUser<CruFifoTable> mUserFifo;
+    //AddressBus<CruFifoTable> mBusFifo;
 
     /// Value of some kind of CRU status register. Seems to always be 0.
     uint32_t mStatusCount = 0;
@@ -1086,9 +1080,6 @@ class ProgramCruExperimentalDma: public Program
 
     /// Start time of SIGINT handling
     TimePoint mHandlingSigintStart;
-
-    /// Timeout of SIGINT handling
-    static constexpr std::chrono::milliseconds mHandlingSigintTimeout{10};
 
     /// Enables / disables the pushing loop
     bool mPushEnabled = true;

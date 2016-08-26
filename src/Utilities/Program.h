@@ -40,6 +40,14 @@ class Program
 
   protected:
 
+    /// Should output be verbose
+    bool isVerbose() const
+    {
+      return mVerbose;
+    }
+
+  private:
+
     /// Get the description of the program
     virtual UtilsDescription getDescription() = 0;
 
@@ -48,14 +56,6 @@ class Program
 
     /// The main function of the program
     virtual void run(const boost::program_options::variables_map& variablesMap) = 0;
-
-    /// Should output be verbose
-    bool isVerbose() const
-    {
-      return mVerbose;
-    }
-
-  private:
 
     static std::atomic<bool> sFlagSigInt;
 

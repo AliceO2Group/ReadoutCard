@@ -65,6 +65,15 @@ else()
     return()
 endif(PDA_FOUND)
 
+# DIM
+find_package(DIM)
+if(DIM_FOUND)
+    include_directories(${DIM_INCLUDE_DIRS})
+else()
+    message(WARNING "DIM not found, RORC module's ALF utilities will not be compiled")
+    return()
+endif(DIM_FOUND)
+
 # This sets the include directory for the reference project. This is the -I flag in gcc.
 # All the includes should be in this variable To add new directories to the include path,
 # just add them in this list (after a space), or add an include_directories statement in a
