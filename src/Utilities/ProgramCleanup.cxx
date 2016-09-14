@@ -7,7 +7,7 @@
 
 #include <iostream>
 #include "Factory/ChannelUtilityFactory.h"
-#include "RorcException.h"
+#include "RORC/Exception.h"
 #include <boost/filesystem/operations.hpp>
 #include <Utilities/Common.h>
 #include <Utilities/Options.h>
@@ -60,7 +60,7 @@ class ProgramCleanup: public Program
         channel->utilityCleanupState();
         cout << "### Done!" << endl;
       }
-      catch (std::exception& e) {
+      catch (const std::exception& e) {
         cout << "### Cleanup failed!" << endl;
 
         if (forceEnabled) {

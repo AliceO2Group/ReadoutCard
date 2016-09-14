@@ -1,9 +1,9 @@
 ///
-/// \file RorcException.cxx
+/// \file Exception.cxx
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 
-#include "RorcException.h"
+#include "RORC/Exception.h"
 #include <stdexcept>
 #include <string>
 #include <sstream>
@@ -20,7 +20,7 @@ namespace b = boost;
 namespace AliceO2 {
 namespace Rorc {
 
-const char* RorcException::what() const noexcept
+const char* Exception::what() const noexcept
 {
   try {
     if (auto info = boost::get_error_info<errinfo_rorc_error_message>(*this)) {
@@ -29,7 +29,7 @@ const char* RorcException::what() const noexcept
       return "RorcException";
     }
   }
-  catch (std::exception& e) {
+  catch (const std::exception& e) {
     return "RorcException";
   }
 }

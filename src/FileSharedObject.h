@@ -11,7 +11,7 @@
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
 #include <boost/interprocess/sync/named_mutex.hpp>
-#include "RorcException.h"
+#include "RORC/Exception.h"
 #include "Util.h"
 
 namespace AliceO2 {

@@ -15,7 +15,7 @@ namespace Rorc {
 
 /// Extends ChannelMaster object, and provides device-specific functionality
 /// XXX Note: this class is very under construction
-class CruChannelMaster : public ChannelMaster
+class CruChannelMaster final : public ChannelMaster
 {
   public:
 

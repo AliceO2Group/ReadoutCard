@@ -20,7 +20,7 @@
 #include <boost/interprocess/sync/named_mutex.hpp>
 #include <boost/exception/all.hpp>
 
-#include "RorcException.h"
+#include "RORC/Exception.h"
 
 namespace {
 
@@ -173,7 +173,7 @@ BOOST_AUTO_TEST_CASE(LockFileSharedObjectIntraprocessTest)
       conditionVariable.notify_all();
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    catch (LockException& e) {
+    catch (const LockException& e) {
       BOOST_FAIL("Child failed to acquire FileSharedObject");
     }
   });

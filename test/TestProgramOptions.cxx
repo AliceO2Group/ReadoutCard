@@ -3,7 +3,7 @@
 ///
 /// \author Pascal Boeschoten
 
-#include <RORC/RORC.h>
+#include "RORC/RORC.h"
 #include "Utilities/Options.h"
 
 #define BOOST_TEST_MODULE RORC_TestProgramOptions

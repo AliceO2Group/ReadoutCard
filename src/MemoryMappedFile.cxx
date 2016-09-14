@@ -6,7 +6,7 @@
 #include "MemoryMappedFile.h"
 #include <fstream>
 #include <boost/filesystem.hpp>
-#include "RorcException.h"
+#include "RORC/Exception.h"
 
 
 namespace AliceO2 {
@@ -41,7 +41,7 @@ void MemoryMappedFile::map(const char* fileName, size_t fileSize)
   // Similar operation to calling "touch" command, making sure the file exists
   try {
     std::ofstream ofs(fileName, std::ios::app);
-  } catch (std::exception& e) {
+  } catch (const std::exception& e) {
     BOOST_THROW_EXCEPTION(MemoryMapException()
         << errinfo_rorc_error_message("Failed to open memory map file")
         << errinfo_rorc_filename(std::string(fileName))
@@ -51,7 +51,7 @@ void MemoryMappedFile::map(const char* fileName, size_t fileSize)
   // Resize and map file to memory
   try {
     bfs::resize_file(fileName, fileSize);
-  } catch (std::exception& e) {
+  } catch (const std::exception& e) {
     BOOST_THROW_EXCEPTION(MemoryMapException()
         << errinfo_rorc_error_message("Failed to resize memory map file")
         << errinfo_rorc_possible_causes({
@@ -64,7 +64,7 @@ void MemoryMappedFile::map(const char* fileName, size_t fileSize)
   try {
     mFileMapping = bip::file_mapping(fileName, bip::read_write);
     mMappedRegion = bip::mapped_region(mFileMapping, bip::read_write, 0, fileSize);
-  } catch (std::exception& e) {
+  } catch (const std::exception& e) {
     BOOST_THROW_EXCEPTION(MemoryMapException()
         << errinfo_rorc_error_message("Failed to memory map file")
         << errinfo_rorc_possible_causes({"Not enough memory available (possibly not enough hugepages allocated)"})

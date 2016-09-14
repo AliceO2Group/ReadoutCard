@@ -8,12 +8,13 @@
 #pragma once
 
 #include <map>
+#include <set>
 #include <stdexcept>
 #include <boost/throw_exception.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/lexical_cast.hpp>
 #include <string>
-#include "RorcException.h"
+#include "RORC/Exception.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -80,6 +81,14 @@ struct Conv
 
 /// Takes each string in the container and assigns it to the argument in the corresponding position, converting it to
 /// the appropriate type using boost::lexical_cast()
+/// The vector must have a size at least as large as the amount of arguments to convert
+/// Example:
+/// std::vector<std::string> strings { "hello", "1.23", "42" };
+/// std::string x;
+/// double y;
+/// int z;
+/// convertAssign(strings, x, y, z);
+///
 /// \param strings A container of strings to convert. Must support random access. Size must be equal or greater than
 ///   amount of arguments.
 /// \param args References to arguments that the conversions will be assigned to.
@@ -115,6 +124,16 @@ void makeParentDirectories(const boost::filesystem::path& path);
 
 /// Similar to the "touch" Linux command
 void touchFile(const boost::filesystem::path& path);
+
+/// Get the file system type of the given directory
+std::string getFileSystemType(const boost::filesystem::path& path);
+
+/// Check if the file system of the given directory is any of the types given in the set
+/// \return pair with:
+///   bool: true if it is any of types
+///   std::string: the found type
+std::pair<bool, std::string> isFileSystemTypeAnyOf(const boost::filesystem::path& path,
+    const std::set<std::string>& types);
 
 } // namespace Util
 } // namespace Rorc

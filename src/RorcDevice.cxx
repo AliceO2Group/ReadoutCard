@@ -13,7 +13,7 @@
 #include <iostream>
 #include "Pda/PdaBar.h"
 #include "Pda/PdaDevice.h"
-#include "RorcException.h"
+#include "RORC/Exception.h"
 #include "Crorc/Crorc.h"
 #include "Util.h"
 
@@ -55,7 +55,7 @@ RorcDevice::RorcDevice(int serialNumber)
         }
       }
     }
-    BOOST_THROW_EXCEPTION(RorcException() << errinfo_rorc_error_message("Could not find card"));
+    BOOST_THROW_EXCEPTION(Exception() << errinfo_rorc_error_message("Could not find card"));
   }
   catch (boost::exception& e) {
     e << errinfo_rorc_serial_number(serialNumber);

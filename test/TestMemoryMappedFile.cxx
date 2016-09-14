@@ -12,7 +12,7 @@
 #include <boost/filesystem.hpp>
 #include <assert.h>
 #include <string>
-#include "RorcException.h"
+#include "RORC/Exception.h"
 
 namespace {
 

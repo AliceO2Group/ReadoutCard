@@ -25,7 +25,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/circular_buffer.hpp>
 #include <boost/optional.hpp>
-#include "RorcException.h"
+#include "RORC/Exception.h"
 #include "RorcDevice.h"
 #include "MemoryMappedFile.h"
 #include "Cru/CruRegisterIndex.h"
@@ -38,9 +38,6 @@
 
 /// Use busy wait instead of condition variable (c.v. impl incomplete, is very slow)
 #define USE_BUSY_INTERRUPT_WAIT
-
-/// Use asynchronous readout. Not the greatest implementation: slower, lots of readout errors...
-//#define USE_ASYNC_READOUT
 
 namespace b = boost;
 namespace bfs = boost::filesystem;
@@ -83,10 +80,10 @@ constexpr int BUFFER_INDEX_PAGES = 0;
 
 const bfs::path DMA_BUFFER_PAGES_PATH = "/mnt/hugetlbfs/rorc-cru-experimental-dma-pages-v2";
 
-/// Fields: Time(hour:minute:second), i, Counter, Errors, Status, °C
+/// Fields: Time(hour:minute:second), i, Counter, Errors, Fill, °C
 const std::string PROGRESS_FORMAT_HEADER("  %-8s   %-12s  %-12s  %-10s  %-10.1f");
 
-/// Fields: Time(hour:minute:second), i, Counter, Errors, Status, °C
+/// Fields: Time(hour:minute:second), i, Counter, Errors, Fill, °C
 const std::string PROGRESS_FORMAT("  %02s:%02s:%02s   %-12s  %-12s  %-10s  %-10.1f");
 
 /// Timeout of SIGINT handling
@@ -113,6 +110,7 @@ const std::string RANDOM_PAUSES_SWITCH = "randpauses";
 const std::string NO_CHECK_SWITCH = "nocheck";
 const std::string REMOVE_SHARED_MEMORY_SWITCH = "rmshm";
 const std::string RELOAD_KERNEL_MODULE_SWITCH = "reloadkmod";
+const std::string SET_DATA_EMULATOR_CONTROL = "setemucontrol";
 
 const std::string READOUT_ERRORS_PATH = "readout_errors.txt";
 const std::string READOUT_DATA_PATH = "readout_data.txt";
@@ -292,21 +290,21 @@ class TemperatureMonitor {
     }
 };
 
-///// Some wrapper for keeping track of user memory space and bus memory space would be nice...
-//template <typename T>
-//class AddressSpaces
-//{
-//  public:
-//    AddressSpaces(T* bus, T* user) : bus(bus), user(user)
-//  {
-//  }
-//
-//    //get/set ...
-//
-//  private:
-//    T* bus;
-//    T* user;
-//};
+/// Some wrapper for keeping track of user memory space and bus memory space ...
+template <typename T>
+struct AddressSpaces
+{
+    AddressSpaces() : user(nullptr), bus(nullptr)
+    {
+    }
+
+    AddressSpaces(void* user, void* bus) : user(reinterpret_cast<T*>(user)), bus(reinterpret_cast<T*>(bus))
+    {
+    }
+
+    T* bus;
+    T* user;
+};
 
 class ProgramCruExperimentalDma: public Program
 {
@@ -329,7 +327,8 @@ class ProgramCruExperimentalDma: public Program
           (RANDOM_PAUSES_SWITCH.c_str(), "Randomly pause readout (to test robustness)")
           (NO_CHECK_SWITCH.c_str(), "Skip error checking")
           (REMOVE_SHARED_MEMORY_SWITCH.c_str(), "Remove shared memory after DMA transfer")
-          (RELOAD_KERNEL_MODULE_SWITCH.c_str(), "Reload kernel module before DMA initialization")          ;
+          (RELOAD_KERNEL_MODULE_SWITCH.c_str(), "Reload kernel module before DMA initialization")
+          (SET_DATA_EMULATOR_CONTROL.c_str(), "Set data emulator control register (0x200) during initialization");
     }
 
     virtual void run(const boost::program_options::variables_map& map) override
@@ -345,6 +344,7 @@ class ProgramCruExperimentalDma: public Program
       mOptions.errorCheck = !bool(map.count(NO_CHECK_SWITCH));
       mOptions.removeSharedMemory = bool(map.count(REMOVE_SHARED_MEMORY_SWITCH));
       mOptions.reloadKernelModule = bool(map.count(RELOAD_KERNEL_MODULE_SWITCH));
+      mOptions.setDataEmulatorControl = bool(map.count(SET_DATA_EMULATOR_CONTROL));
 
       if (mOptions.fileOutput) {
         mReadoutStream.open(READOUT_DATA_PATH.c_str());
@@ -361,7 +361,7 @@ class ProgramCruExperimentalDma: public Program
       initDma();
 
       cout << "Starting temperature monitor" << endl;
-      mTemperatureMonitor.start(&mBar[Register::TEMPERATURE]);
+      mTemperatureMonitor.start(&(mPdaBar->getUserspaceAddressU32()[Register::TEMPERATURE]));
 
       cout << "Starting DMA test" << endl;
       runDma();
@@ -447,9 +447,65 @@ class ProgramCruExperimentalDma: public Program
       cout << "\n  BAR type       " << barTypeString << " (" << *pciBarTypesPtr << ")\n";
     }
 
-    bool checkAlignment(void* address, int64_t alignment)
+    bool checkAlignment(void* address, int64_t alignment) const
     {
       return (uint64_t(address) % alignment) == 0;
+    }
+
+    /// Partition the memory of the scatter gather list into pages
+    /// \param list Scatter gather list
+    /// \param fifoSpace Amount of space reserved for the FIFO, must use multiples of the page size for uniformity
+    /// \return A tuple containing: address of the page for the FIFO, vector with addresses of the rest of the pages
+    std::tuple<AddressSpaces<CruFifoTable>, std::vector<PageAddress>> partitionScatterGatherList(
+        const Pda::PdaDmaBuffer::ScatterGatherVector& list,
+        size_t fifoSpace) const
+    {
+      std::tuple<AddressSpaces<CruFifoTable>, std::vector<PageAddress>> tuple;
+      auto& fifoAddress = std::get<0>(tuple);
+      auto& pageAddresses = std::get<1>(tuple);
+
+      if (list.size() < 1) {
+        BOOST_THROW_EXCEPTION(CruException()
+            << errinfo_rorc_error_message("Scatter-gather list empty"));
+      }
+
+      if (list.at(0).size < fifoSpace) {
+        BOOST_THROW_EXCEPTION(CruException()
+            << errinfo_rorc_error_message("First SGL entry size insufficient for FIFO"));
+      }
+
+      fifoAddress = AddressSpaces<CruFifoTable>(list.at(0).addressUser, list.at(0).addressBus);
+
+      for (int i = 0; i < list.size(); ++i) {
+        auto& entry = list[i];
+        if (entry.size < (2l * 1024l * 1024l)) {
+          BOOST_THROW_EXCEPTION(CruException()
+              << errinfo_rorc_error_message("Unsupported configuration: DMA scatter-gather entry size less than 2 MiB")
+              << errinfo_rorc_scatter_gather_entry_size(entry.size)
+              << errinfo_rorc_possible_causes(
+                  {"DMA buffer was not allocated in hugepage shared memory (hugetlbfs may not be properly mounted)"}));
+        }
+
+        bool first = i == 0;
+
+        // How many pages fit in this SGL entry
+        int64_t pagesInSglEntry = first
+            ? (entry.size - fifoSpace) / DMA_PAGE_SIZE // First entry also contains the FIFO
+            : entry.size / DMA_PAGE_SIZE;
+
+        for (int64_t j = 0; j < pagesInSglEntry; ++j) {
+          int64_t offset = first
+            ? fifoSpace + j * DMA_PAGE_SIZE
+            : j * DMA_PAGE_SIZE;
+          PageAddress pa;
+          pa.bus = (void*) (((char*) entry.addressBus) + offset);
+          pa.user = (void*) (((char*) entry.addressUser) + offset);
+
+          pageAddresses.push_back(pa);
+        }
+      }
+
+      return tuple;
     }
 
     void initDma()
@@ -468,7 +524,7 @@ class ProgramCruExperimentalDma: public Program
         printDeviceInfo(mRorcDevice->getPciDevice());
       }
       Util::resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), channel);
-      mBar = mPdaBar->getUserspaceAddressU32();
+      auto bar = mPdaBar->getUserspaceAddressU32();
       if (mOptions.interrupts) {
         Util::resetSmartPtr(mPdaIsr, mRorcDevice->getPciDevice());
       }
@@ -478,61 +534,17 @@ class ProgramCruExperimentalDma: public Program
 
       if (mOptions.resetCard) {
         cout << "Resetting..." << std::flush;
-        mBar[Register::RESET_CONTROL] = 0x1;
+        bar[Register::RESET_CONTROL] = 0x1;
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         cout << "done!" << endl;
       }
 
       // Initialize the fifo & page addresses
       {
-        mPageAddresses.clear();
-
         /// Amount of space reserved for the FIFO, we use multiples of the page size for uniformity
         size_t fifoSpace = ((sizeof(CruFifoTable) / DMA_PAGE_SIZE) + 1) * DMA_PAGE_SIZE;
 
-        auto list = mBufferPages->getScatterGatherList();
-
-        if (list.size() < 1) {
-          BOOST_THROW_EXCEPTION(CruException()
-              << errinfo_rorc_error_message("Scatter-gather list empty"));
-        }
-
-        if (list.at(0).size < fifoSpace) {
-          BOOST_THROW_EXCEPTION(CruException()
-              << errinfo_rorc_error_message("First SGL entry size insufficient for FIFO"));
-        }
-
-        mFifoUserAddress = reinterpret_cast<CruFifoTable*>(list.at(0).addressUser);
-        mFifoBusAddress = reinterpret_cast<CruFifoTable*>(list.at(0).addressBus);
-
-        for (int i = 0; i < list.size(); ++i) {
-          auto& entry = list[i];
-          if (entry.size < (2l * 1024l * 1024l)) {
-            BOOST_THROW_EXCEPTION(CruException()
-                << errinfo_rorc_error_message("Unsupported configuration: DMA scatter-gather entry size less than 2 MiB")
-                << errinfo_rorc_scatter_gather_entry_size(entry.size)
-                << errinfo_rorc_possible_causes(
-                    {"DMA buffer was not allocated in hugepage shared memory (hugetlbfs may not be properly mounted)"}));
-          }
-
-          bool first = i == 0;
-
-          // How many pages fit in this SGL entry
-          int64_t pagesInSglEntry = first
-              ? (entry.size - fifoSpace) / DMA_PAGE_SIZE // First entry also contains the FIFO
-              : entry.size / DMA_PAGE_SIZE;
-
-          for (int64_t j = 0; j < pagesInSglEntry; ++j) {
-            int64_t offset = first
-              ? fifoSpace + j * DMA_PAGE_SIZE
-              : j * DMA_PAGE_SIZE;
-            PageAddress pa;
-            pa.bus = (void*) (((char*) entry.addressBus) + offset);
-            pa.user = (void*) (((char*) entry.addressUser) + offset);
-
-            mPageAddresses.push_back(pa);
-          }
-        }
+        std::tie(mFifoAddress, mPageAddresses) = partitionScatterGatherList(mBufferPages->getScatterGatherList(), fifoSpace);
 
         if (mPageAddresses.size() <= NUM_PAGES) {
           BOOST_THROW_EXCEPTION(CrorcException()
@@ -541,10 +553,10 @@ class ProgramCruExperimentalDma: public Program
       }
 
       // Initializing the descriptor table
-      mFifoUserAddress->resetStatusEntries();
+      mFifoAddress.user->resetStatusEntries();
       // As a safety measure, we put "valid" addresses in the descriptor table, even though we're not pushing pages yet
       // This helps prevent the card from writing to invalid addresses and crashing absolutely everything
-      for (int i = 0; i < mFifoUserAddress->descriptorEntries.size(); i++) {
+      for (int i = 0; i < mFifoAddress.user->descriptorEntries.size(); i++) {
         setDescriptor(i, i);
       }
 
@@ -557,68 +569,68 @@ class ProgramCruExperimentalDma: public Program
 
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-      // Give buffer ready signal
-      mBar[Register::BUFFER_READY] = 0x1;
-      //std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
       // Programming the user module to trigger the data emulator
-      mBar[Register::DATA_EMULATOR_CONTROL] = 0x1;
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      if (mOptions.setDataEmulatorControl) {
+        // Give buffer ready signal
+        bar[Register::BUFFER_READY] = 0x1;
+        bar[Register::DATA_EMULATOR_CONTROL] = 0x1;
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      }
 
       // Init temperature sensor
-      mBar[Register::TEMPERATURE] = 0x1;
+      bar[Register::TEMPERATURE] = 0x1;
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
-      mBar[Register::TEMPERATURE] = 0x0;
+      bar[Register::TEMPERATURE] = 0x0;
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
-      mBar[Register::TEMPERATURE] = 0x2;
+      bar[Register::TEMPERATURE] = 0x2;
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
       // Status base address in the bus address space
-      if (Util::getUpper32Bits(uint64_t(mFifoBusAddress)) != 0) {
-        cout << "Warning: using 64-bit region for status bus address (" << reinterpret_cast<void*>(mFifoBusAddress)
+      if (Util::getUpper32Bits(uint64_t(mFifoAddress.bus)) != 0) {
+        cout << "Warning: using 64-bit region for status bus address (" << reinterpret_cast<void*>(mFifoAddress.bus)
             << "), may be unsupported by PCI/BIOS configuration.\n";
       } else {
-        cout << "Info: using 32-bit region for status bus address (" << reinterpret_cast<void*>(mFifoBusAddress) << ")\n";
+        cout << "Info: using 32-bit region for status bus address (" << reinterpret_cast<void*>(mFifoAddress.bus) << ")\n";
       }
-      cout << "Info: status user address (" << reinterpret_cast<void*>(mFifoUserAddress) << ")\n";
+      cout << "Info: status user address (" << reinterpret_cast<void*>(mFifoAddress.user) << ")\n";
 
-      if (!checkAlignment(mFifoBusAddress, DMA_ALIGNMENT)) {
+      if (!checkAlignment(mFifoAddress.bus, DMA_ALIGNMENT)) {
         BOOST_THROW_EXCEPTION(CruException() << errinfo_rorc_error_message("mFifoDevice not 32 byte aligned"));
       }
-      mBar[Register::STATUS_BASE_BUS_HIGH] = Util::getUpper32Bits(uint64_t(mFifoBusAddress));
-      mBar[Register::STATUS_BASE_BUS_LOW] = Util::getLower32Bits(uint64_t(mFifoBusAddress));
+      bar[Register::STATUS_BASE_BUS_HIGH] = Util::getUpper32Bits(uint64_t(mFifoAddress.bus));
+      bar[Register::STATUS_BASE_BUS_LOW] = Util::getLower32Bits(uint64_t(mFifoAddress.bus));
 
       // Status table address in the card's address space
-      mBar[Register::STATUS_BASE_CARD_HIGH] = 0x0;
-      mBar[Register::STATUS_BASE_CARD_LOW] = 0x8000;
+      bar[Register::STATUS_BASE_CARD_HIGH] = 0x0;
+      bar[Register::STATUS_BASE_CARD_LOW] = 0x8000;
 
       // Set descriptor table size (must be size - 1)
-      mBar[Register::DESCRIPTOR_TABLE_SIZE] = NUM_PAGES - 1;
+      bar[Register::DESCRIPTOR_TABLE_SIZE] = NUM_PAGES - 1;
 
       // Send command to the DMA engine to write to every status entry, not just the final one
-      mBar[Register::DONE_CONTROL] = 0x1;
+      bar[Register::DONE_CONTROL] = 0x1;
 
       //cout << "DMA_POINTER = " << mBar[Register::DMA_POINTER] << '\n';
       // Send command to the DMA engine to point to the last descriptor so we can start with 0
-      mBar[Register::DMA_POINTER] = NUM_PAGES - 1;
+      bar[Register::DMA_POINTER] = NUM_PAGES - 1;
 
-//      // Wait for initial pages
+      // Wait for initial pages
       if (!waitOnPredicateWithTimeout(std::chrono::milliseconds(100),
-          [&](){ return isSigInt() || mFifoUserAddress->statusEntries[NUM_PAGES - 1].isPageArrived(); })) {
+          [&](){ return isSigInt() || mFifoAddress.user->statusEntries[NUM_PAGES - 1].isPageArrived(); })) {
         BOOST_THROW_EXCEPTION(CruException() << errinfo_rorc_error_message("Timed out waiting for initial pages\n"));
       }
-      mFifoUserAddress->resetStatusEntries();
+      mFifoAddress.user->resetStatusEntries();
 
 //      mBar[Register::DMA_POINTER] = 0;
 //      mBar[Register::DMA_POINTER] = NUM_PAGES - 1;
 
-      cout << "  Firmware version  " << Utilities::Common::make32hexString(mBar[Register::FIRMWARE_COMPILE_INFO]) << '\n';
-      cout << "  Serial number     " << Utilities::Common::make32hexString(mBar[Register::SERIAL_NUMBER]) << '\n';
+      cout << "  Firmware version  " << Utilities::Common::make32hexString(bar[Register::FIRMWARE_COMPILE_INFO]) << '\n';
+      cout << "  Serial number     " << Utilities::Common::make32hexString(bar[Register::SERIAL_NUMBER]) << '\n';
       cout << "  Buffer size       " << mPageAddresses.size() << " pages, " << " "
           << mPageAddresses.size() * DMA_BUFFER_PAGES_SIZE << " bytes\n";
 
-      mLogStream << "# Firmware version  " << Utilities::Common::make32hexString(mBar[Register::FIRMWARE_COMPILE_INFO]) << '\n';
-      mLogStream << "# Serial number     " << Utilities::Common::make32hexString(mBar[Register::SERIAL_NUMBER]) << '\n';
+      mLogStream << "# Firmware version  " << Utilities::Common::make32hexString(bar[Register::FIRMWARE_COMPILE_INFO]) << '\n';
+      mLogStream << "# Serial number     " << Utilities::Common::make32hexString(bar[Register::SERIAL_NUMBER]) << '\n';
       mLogStream << "# Buffer size       " << mPageAddresses.size() << " pages, " << " "
           << mPageAddresses.size() * DMA_BUFFER_PAGES_SIZE << " bytes\n";
     }
@@ -627,7 +639,7 @@ class ProgramCruExperimentalDma: public Program
     {
       auto& pageAddress = mPageAddresses.at(pageIndex);
       auto sourceAddress = reinterpret_cast<void*>((descriptorIndex % NUM_OF_BUFFERS) * DMA_PAGE_SIZE);
-      mFifoUserAddress->setDescriptor(descriptorIndex, DMA_PAGE_SIZE_32, sourceAddress, pageAddress.bus);
+      mFifoAddress.user->setDescriptor(descriptorIndex, DMA_PAGE_SIZE_32, sourceAddress, pageAddress.bus);
     }
 
     void updateStatusDisplay()
@@ -640,7 +652,7 @@ class ProgramCruExperimentalDma: public Program
 
       auto format = b::format(PROGRESS_FORMAT) % hour % minute % second % mReadoutCounter;
       mOptions.errorCheck ? format % mErrorCount : format % "n/a";
-      format % mStatusCount;
+      format % mLastFillSize;
       mTemperatureMonitor.isValid() ? format % mTemperatureMonitor.getTemperature() : format % "n/a";
       cout << '\r' << format;
 
@@ -649,7 +661,7 @@ class ProgramCruExperimentalDma: public Program
           if ((i % 8) == 0) {
             cout << '|';
           }
-          cout << (mFifoUserAddress->statusEntries.at(i).isPageArrived() ? 'X' : ' ');
+          cout << (mFifoAddress.user->statusEntries.at(i).isPageArrived() ? 'X' : ' ');
         }
         cout << '|';
       }
@@ -671,7 +683,7 @@ class ProgramCruExperimentalDma: public Program
 
     void printStatusHeader()
     {
-      auto line1 = b::format(PROGRESS_FORMAT_HEADER) % "Time" % "Pages" % "Errors" % "Status" % "°C";
+      auto line1 = b::format(PROGRESS_FORMAT_HEADER) % "Time" % "Pages" % "Errors" % "Fill" % "°C";
       auto line2 = b::format(PROGRESS_FORMAT) % "00" % "00" % "00" % '-' % '-' % '-' % '-';
       cout << '\n' << line1;
       cout << '\n' << line2;
@@ -691,7 +703,7 @@ class ProgramCruExperimentalDma: public Program
 
     bool isPageArrived(const Handle& handle)
     {
-      return mFifoUserAddress->statusEntries[handle.descriptorIndex].isPageArrived();
+      return mFifoAddress.user->statusEntries[handle.descriptorIndex].isPageArrived();
     }
 
     uint32_t* getPageAddress(const Handle& handle)
@@ -699,7 +711,7 @@ class ProgramCruExperimentalDma: public Program
       return reinterpret_cast<uint32_t*>(mPageAddresses[handle.pageIndex].user);
     }
 
-    void mLowPriorityTasks()
+    void lowPriorityTasks()
     {
       // Handle a max temperature abort
       if (mTemperatureMonitor.isMaxExceeded()) {
@@ -754,12 +766,18 @@ class ProgramCruExperimentalDma: public Program
       }
     }
 
+    bool shouldPushQueue()
+    {
+      return (mQueue.size() < NUM_PAGES) && (mInfinitePages || (mPushCounter < mOptions.maxPages)) && mPushEnabled;
+    }
+
     void fillReadoutQueue()
     {
-      while ((mQueue.size() < NUM_PAGES) && (mInfinitePages || (mPushCounter < mOptions.maxPages)) && mPushEnabled) {
+      mLastFillSize = 0;
+      while (shouldPushQueue()) {
         // Push page
         setDescriptor(mPageIndexCounter, mDescriptorCounter);
-        mBar[Register::DMA_POINTER] = mDescriptorCounter;
+        mPdaBar->getUserspaceAddressU32()[Register::DMA_POINTER] = mDescriptorCounter;
 
         // Add the page to the readout queue
         mQueue.push(Handle{mDescriptorCounter, mPageIndexCounter});
@@ -768,6 +786,7 @@ class ProgramCruExperimentalDma: public Program
         mDescriptorCounter = (mDescriptorCounter + 1) % NUM_PAGES;
         mPageIndexCounter = (mPageIndexCounter + 1) % mPageAddresses.size();
         mPushCounter++;
+        mLastFillSize++;
       }
     }
 
@@ -794,7 +813,7 @@ class ProgramCruExperimentalDma: public Program
       resetPage(getPageAddress(handle));
 
       // Reset status entry
-      mFifoUserAddress->statusEntries[handle.descriptorIndex].reset();
+      mFifoAddress.user->statusEntries[handle.descriptorIndex].reset();
     }
 
     void runDma()
@@ -819,7 +838,7 @@ class ProgramCruExperimentalDma: public Program
 
         // This stuff doesn't need to be run every cycle, so we reduce the overhead.
         if (mLowPriorityCounter >= LOW_PRIORITY_INTERVAL) {
-          mLowPriorityTasks();
+          lowPriorityTasks();
           mLowPriorityCounter = 0;
         }
         mLowPriorityCounter++;
@@ -906,7 +925,7 @@ class ProgramCruExperimentalDma: public Program
     void printToFile(const Handle& handle)
     {
       uint32_t* page = getPageAddress(handle);
-      mReadoutStream << handle.pageIndex << '\n';
+      mReadoutStream << "Event #" << handle.pageIndex << '\n';
       int perLine = 8;
       for (int i = 0; i < DMA_PAGE_SIZE_32; i+= perLine) {
         for (int j = 0; j < perLine; ++j) {
@@ -955,9 +974,6 @@ class ProgramCruExperimentalDma: public Program
 
       const int section = handle.descriptorIndex % PATTERN_SECTIONS;
 
-      // TODO First check if there are ANY errors. This is the general case, and should be optimized for speed.
-      // Only if there are errors, we do a detailed check and figure out where the error is
-
       // For the first section, the first number is 0, and the count starts on the second number
       const bool first = (section == 0);
       const int start = first ? PATTERN_STRIDE : 0;
@@ -997,6 +1013,7 @@ class ProgramCruExperimentalDma: public Program
         bool errorCheck;
         bool removeSharedMemory;
         bool reloadKernelModule;
+        bool setDataEmulatorControl;
     } mOptions;
 
     /// A value of true means no limit on page pushing
@@ -1018,14 +1035,8 @@ class ProgramCruExperimentalDma: public Program
     b::scoped_ptr<MemoryMappedFile> mMappedFilePages;
     b::scoped_ptr<Pda::PdaDmaBuffer> mBufferPages;
 
-    /// Convenience pointer to the BAR, which is actually owned by mPdaBar
-    volatile uint32_t* mBar = nullptr;
-
     /// Aliased userspace FIFO
-    CruFifoTable* mFifoUserAddress = nullptr;
-    CruFifoTable* mFifoBusAddress = nullptr;
-    //AddressUser<CruFifoTable> mUserFifo;
-    //AddressBus<CruFifoTable> mBusFifo;
+    AddressSpaces<CruFifoTable> mFifoAddress;
 
     /// Value of some kind of CRU status register. Seems to always be 0.
     uint32_t mStatusCount = 0;
@@ -1092,6 +1103,10 @@ class ProgramCruExperimentalDma: public Program
 
     /// Queue for page handles
     ReadoutQueue mQueue = ReadoutQueue(QueueBuffer(NUM_PAGES));
+
+    /// Amount of pages pushed in last queue fill. If this is ever greater than 1 during normal operation, it means
+    /// we're not keeping the queue filled up all the time, i.e. not keeping up with the card.
+    int mLastFillSize = 0;
 };
 
 } // Anonymous namespace

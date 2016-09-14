@@ -3,8 +3,8 @@
 /// \author Pascal Boeschoten
 ///
 
-#include <RORC/RORC.h>
-#include "RorcException.h"
+#include "RORC/RORC.h"
+#include "RORC/Exception.h"
 #define BOOST_TEST_MODULE RORC_TestRorcException
 #define BOOST_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
@@ -25,9 +25,9 @@ const std::string CAUSE_2("cause_2");
 BOOST_AUTO_TEST_CASE(TestRorcException)
 {
   try {
-    BOOST_THROW_EXCEPTION(RorcException() << errinfo_rorc_error_message(TEST_MESSAGE_1));
+    BOOST_THROW_EXCEPTION(Exception() << errinfo_rorc_error_message(TEST_MESSAGE_1));
   }
-  catch (std::exception& e) {
+  catch (const std::exception& e) {
     BOOST_CHECK(std::string(e.what()) == TEST_MESSAGE_1);
   }
 }
@@ -36,9 +36,9 @@ BOOST_AUTO_TEST_CASE(TestRorcException)
 BOOST_AUTO_TEST_CASE(TestRorcException2)
 {
   try {
-    BOOST_THROW_EXCEPTION(RorcException() << errinfo_rorc_error_message(TEST_MESSAGE_1));
+    BOOST_THROW_EXCEPTION(Exception() << errinfo_rorc_error_message(TEST_MESSAGE_1));
   }
-  catch (RorcException& e) {
+  catch (Exception& e) {
     auto what1 = e.what();
     BOOST_CHECK(std::string(what1) == TEST_MESSAGE_1);
 
@@ -58,12 +58,12 @@ BOOST_AUTO_TEST_CASE(TestRorcException2)
 BOOST_AUTO_TEST_CASE(TestAddCauses)
 {
   try {
-    auto e = RorcException();
+    auto e = Exception();
     e << errinfo_rorc_possible_causes({CAUSE_1});
     addPossibleCauses(e, {CAUSE_2});
     BOOST_THROW_EXCEPTION(e);
   }
-  catch (RorcException& e) {
+  catch (const Exception& e) {
     auto causes = boost::get_error_info<errinfo_rorc_possible_causes>(e);
     BOOST_REQUIRE(causes != nullptr);
     BOOST_CHECK(causes->at(0) == CAUSE_1);
@@ -75,12 +75,12 @@ BOOST_AUTO_TEST_CASE(TestAddCauses)
 BOOST_AUTO_TEST_CASE(TestAddCauses2)
 {
   try {
-    auto e = RorcException();
+    auto e = Exception();
     addPossibleCauses(e, {CAUSE_1});
     addPossibleCauses(e, {CAUSE_2});
     BOOST_THROW_EXCEPTION(e);
   }
-  catch (RorcException& e) {
+  catch (const Exception& e) {
     auto causes = boost::get_error_info<errinfo_rorc_possible_causes>(e);
     BOOST_REQUIRE(causes != nullptr);
     BOOST_CHECK(causes->at(0) == CAUSE_1);
@@ -92,13 +92,13 @@ BOOST_AUTO_TEST_CASE(TestAddCauses2)
 BOOST_AUTO_TEST_CASE(TestAddCauses3)
 {
   try {
-    auto e = RorcException();
+    auto e = Exception();
     addPossibleCauses(e, {CAUSE_1});
     // This will overwrite the old info
     e << errinfo_rorc_possible_causes({CAUSE_2});
     BOOST_THROW_EXCEPTION(e);
   }
-  catch (RorcException& e) {
+  catch (const Exception& e) {
     auto causes = boost::get_error_info<errinfo_rorc_possible_causes>(e);
     BOOST_REQUIRE(causes != nullptr);
     BOOST_CHECK(causes->size() == 1);

@@ -3,6 +3,9 @@
 ///
 /// \brief Implementations for ALICE Lowlevel Frontend (ALF) & related DIM items
 
+#ifndef ALICEO2_RORC_UTILITIES_ALF_ALICELOWLEVELFRONTEND_H
+#define ALICEO2_RORC_UTILITIES_ALF_ALICELOWLEVELFRONTEND_H
+
 #include <string>
 #include <functional>
 #include <dim/dim.hxx>
@@ -12,7 +15,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/format.hpp>
-#include "RorcException.h"
+#include "RORC/Exception.h"
 
 namespace Alf {
 
@@ -45,6 +48,7 @@ struct ServiceNames
 template <typename DimObject>
 void setDataString(const std::string& string, DimObject& dimObject, bool addTerminator = true)
 {
+  // Copy into a buffer because DIM insists on non-const pointer
   std::vector<char> buffer(string.begin(), string.end());
   if (addTerminator) {
     buffer.push_back('\0');
@@ -61,7 +65,7 @@ inline std::string successPrefix()
 
 inline std::string failPrefix()
 {
-  return "fail   :";
+  return "failure:";
 }
 
 inline std::string makeSuccessString(const std::string& string)
@@ -76,12 +80,12 @@ inline std::string makeFailString(const std::string& string)
 
 inline bool isSuccess(const std::string& string)
 {
-  return boost::starts_with(string, "success:");
+  return boost::starts_with(string, successPrefix());
 }
 
 inline bool isFail(const std::string& string)
 {
-  return boost::starts_with(string, "failure:");
+  return boost::starts_with(string, failPrefix());
 }
 
 inline std::string stripPrefix(const std::string& string)
@@ -103,7 +107,7 @@ class RegisterReadRpc: public DimRpcInfo
       auto returnValue = std::string(getString());
       printf("Read got return: %s\n", returnValue.c_str());
       if (isFail(returnValue)) {
-        BOOST_THROW_EXCEPTION(AliceO2::Rorc::RorcException() << AliceO2::Rorc::errinfo_rorc_error_message(returnValue));
+        BOOST_THROW_EXCEPTION(AliceO2::Rorc::Exception() << AliceO2::Rorc::errinfo_rorc_error_message(returnValue));
       }
       return boost::lexical_cast<uint32_t>(stripPrefix(returnValue));
     }
@@ -124,7 +128,7 @@ class RegisterWriteRpc: public DimRpcInfo
       auto returnValue = std::string(getString());
       printf("Write got return: %s\n", returnValue.c_str());
       if (isFail(returnValue)) {
-        BOOST_THROW_EXCEPTION(AliceO2::Rorc::RorcException() << AliceO2::Rorc::errinfo_rorc_error_message(returnValue));
+        BOOST_THROW_EXCEPTION(AliceO2::Rorc::Exception() << AliceO2::Rorc::errinfo_rorc_error_message(returnValue));
       }
     }
 };
@@ -195,3 +199,5 @@ class CallbackCommand : public DimCommand
 };
 
 }
+
+#endif // ALICEO2_RORC_UTILITIES_ALF_ALICELOWLEVELFRONTEND_H

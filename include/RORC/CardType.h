@@ -4,6 +4,7 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #pragma once
+
 #include <string>
 
 namespace AliceO2 {

@@ -10,7 +10,7 @@
 #include "Utilities/Common.h"
 #include "Utilities/Options.h"
 #include "Utilities/UtilsDescription.h"
-#include "RorcException.h"
+#include "RORC/Exception.h"
 
 namespace AliceO2 {
 namespace Rorc {

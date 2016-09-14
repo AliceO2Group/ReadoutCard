@@ -7,7 +7,7 @@
 
 #include <pda.h>
 
-#include "RorcException.h"
+#include "RORC/Exception.h"
 
 namespace AliceO2 {
 namespace Rorc {

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <memory>
+#include <boost/scoped_ptr.hpp>
 #include "ChannelMaster.h"
 #include "ReadyFifo.h"
 
@@ -13,7 +13,7 @@ namespace AliceO2 {
 namespace Rorc {
 
 /// Extends ChannelMaster object, and provides device-specific functionality
-class CrorcChannelMaster : public ChannelMaster
+class CrorcChannelMaster final : public ChannelMaster
 {
   public:
 
@@ -92,10 +92,10 @@ class CrorcChannelMaster : public ChannelMaster
     void pushFreeFifoPage(int readyFifoIndex, void* pageBusAddress);
 
     /// Get the bus address of the Ready FIFO
-    void* getReadyFifoBusAddress();
+    void* getReadyFifoBusAddress() const;
 
     /// Get the userspace Ready FIFO object
-    ReadyFifo& getReadyFifo();
+    ReadyFifo& getReadyFifo() const;
 
     /// Check if data has arrived
     DataArrivalStatus::type dataArrived(int index);

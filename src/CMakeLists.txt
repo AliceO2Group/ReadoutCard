@@ -23,7 +23,7 @@ set(RORC_LIB_SOURCES
   Dummy/DummyChannelMaster.cxx
   Dummy/DummyChannelSlave.cxx
   MemoryMappedFile.cxx
-  RorcException.cxx
+  Exception.cxx
   RorcStatusCode.cxx
   Utilities/Program.cxx
   Util.cxx
@@ -84,13 +84,7 @@ set_target_properties(${RORC_LIB_NAME} PROPERTIES
 # Helper function to build the utility executables
 function(build_util_exec execname filename)
   add_executable(${execname} ${filename})
-  target_link_libraries(${execname} ${RORC_LIB_NAME})
-endfunction()
-
-# Helper function to build the utility executables with additinal lib
-function(build_util_exec_lib execname filename lib)
-  add_executable(${execname} ${filename})
-  target_link_libraries(${execname} ${RORC_LIB_NAME} ${lib})
+  target_link_libraries(${execname} ${RORC_LIB_NAME} ${ARGN})
 endfunction()
 
 build_util_exec(rorc-example Example.cxx)
@@ -101,15 +95,15 @@ build_util_exec(rorc-list-cards Utilities/ProgramListCards.cxx)
 build_util_exec(rorc-print-fifo Utilities/ProgramPrintFifo.cxx)
 build_util_exec(rorc-cru-blink Utilities/ProgramCruBlink.cxx)
 build_util_exec(rorc-sanity-check Utilities/ProgramSanityCheck.cxx)
-build_util_exec(rorc-channel-init Utilities/ProgramInitChannel.cxx)
+build_util_exec(rorc-channel-init Utilities/ProgramInitChannel.cxx Configuration-static curl)
 build_util_exec(rorc-channel-cleanup Utilities/ProgramCleanup.cxx)
 build_util_exec(rorc-dma-bench Utilities/ProgramDmaBench.cxx)
 build_util_exec(rorc-cru-experimental-dma Utilities/ProgramCruExperimentalDma.cxx)
 build_util_exec(rorc-cru-experimental-dma-v2 Utilities/ProgramCruExperimentalDmaV2.cxx)
 
 if(DIM_FOUND)
-  build_util_exec_lib(rorc-alf-server Utilities/ProgramAliceLowlevelFrontendServer.cxx ${DIM_LIBRARY})
-  build_util_exec_lib(rorc-alf-client Utilities/ProgramAliceLowlevelFrontendClient.cxx ${DIM_LIBRARY})
+  build_util_exec(rorc-alf-server Utilities/ProgramAliceLowlevelFrontendServer.cxx ${DIM_LIBRARY})
+  build_util_exec(rorc-alf-client Utilities/ProgramAliceLowlevelFrontendClient.cxx ${DIM_LIBRARY})
 endif()
 
 

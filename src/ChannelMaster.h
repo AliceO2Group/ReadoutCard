@@ -5,12 +5,11 @@
 
 #pragma once
 
-#include <memory>
 #include <vector>
 #include <boost/scoped_ptr.hpp>
 #include "RORC/ChannelParameters.h"
 #include "RORC/ChannelMasterInterface.h"
-#include "RorcException.h"
+#include "RORC/Exception.h"
 #include "FileSharedObject.h"
 #include "MemoryMappedFile.h"
 #include "TypedMemoryMappedFile.h"
@@ -54,10 +53,10 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
 
     ~ChannelMaster();
 
-    virtual void startDma() override;
-    virtual void stopDma() override;
-    virtual uint32_t readRegister(int index) override;
-    virtual void writeRegister(int index, uint32_t value) override;
+    virtual void startDma() final override;
+    virtual void stopDma() final override;
+    virtual uint32_t readRegister(int index) final override;
+    virtual void writeRegister(int index, uint32_t value) final override;
 
     static void validateParameters(const ChannelParameters& params);
 
@@ -66,7 +65,7 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
     /// Get the buffer ID belonging to the buffer. Note that index 0 is reserved for use by ChannelMaster
     /// See dmaBuffersPerChannel() for more info
     /// Non-virtual because it must be callable in constructors, and there's no need to override it.
-    int getBufferId(int index);
+    int getBufferId(int index) const;
 
     /// Template method called by startDma() to do device-specific (CRORC, RCU...) actions
     virtual void deviceStartDma() = 0;
@@ -152,6 +151,8 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
     const int channelNumber;
 
     /// Amount of DMA buffers per channel that will be registered to PDA
+    /// Is the sum of the buffers needed by this class and by the subclass. The subclass indicates its need in the
+    /// constructor of this class.
     const int dmaBuffersPerChannel;
 
     /// Memory mapped data stored in the shared state file
@@ -182,8 +183,6 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
     void constructorCommonPhaseTwo();
 
   public:
-
-    // Getters
 
     SharedData& getSharedData() const
     {

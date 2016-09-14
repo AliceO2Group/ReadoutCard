@@ -8,7 +8,7 @@
 #include <string>
 #include <boost/lexical_cast.hpp>
 
-#include "RorcException.h"
+#include "RORC/Exception.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -22,14 +22,14 @@ PdaBar::PdaBar(PciDevice* pciDevice, int channel)
 {
   // Getting the BAR struct
   if(PciDevice_getBar(pciDevice, &mPdaBar, channel) != PDA_SUCCESS ){
-    BOOST_THROW_EXCEPTION(RorcException()
+    BOOST_THROW_EXCEPTION(Exception()
         << errinfo_rorc_error_message("Failed to get BAR")
         << errinfo_rorc_channel_number(channel));
   }
 
   // Mapping the BAR starting  address
   if(Bar_getMap(mPdaBar, (void**) &mUserspaceAddress, &mBarLength) != PDA_SUCCESS ){
-    BOOST_THROW_EXCEPTION(RorcException()
+    BOOST_THROW_EXCEPTION(Exception()
         << errinfo_rorc_error_message("Failed to map BAR")
         << errinfo_rorc_channel_number(channel));
   }

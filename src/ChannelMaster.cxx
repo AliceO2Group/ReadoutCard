@@ -17,10 +17,39 @@ namespace bfs = boost::filesystem;
 using std::cout;
 using std::endl;
 
+namespace {
+
+/// Throws if the file system type of the given file/directory is not one of the given valid types
+void assertFileSystemType(const bfs::path& path, const std::set<std::string>& validTypes, const std::string& name)
+{
+  bool found;
+  std::string type;
+  std::tie(found, type) = Util::isFileSystemTypeAnyOf(path, validTypes);
+
+  if (!found) {
+    std::ostringstream oss;
+    oss << "File-backed shared memory for '" << name << "' file system type invalid (supported: ";
+    for (auto i = validTypes.begin(); i != validTypes.end(); i++) {
+      oss << *i;
+      if (i != validTypes.end()) {
+        oss << ",";
+      }
+    }
+    oss << ")";
+
+    BOOST_THROW_EXCEPTION(Exception()
+        << errinfo_rorc_error_message(oss.str())
+        << errinfo_rorc_filename(path.c_str())
+        << errinfo_rorc_filesystem_type(type));
+  }
+}
+
 static constexpr int CHANNELMASTER_DMA_BUFFERS_PER_CHANNEL = 1;
 static constexpr int BUFFER_INDEX_PAGES = 0;
 
-int ChannelMaster::getBufferId(int index)
+} // Anonymous namespace
+
+int ChannelMaster::getBufferId(int index) const
 {
   if (index >= dmaBuffersPerChannel || index < 0) {
     BOOST_THROW_EXCEPTION(InvalidParameterException()
@@ -52,11 +81,17 @@ void ChannelMaster::constructorCommonPhaseOne()
   using namespace Util;
 
   ChannelPaths paths(cardType, serialNumber, channelNumber);
-  makeParentDirectories(paths.pages());
-  makeParentDirectories(paths.state());
-  makeParentDirectories(paths.fifo());
-  makeParentDirectories(paths.lock());
 
+  // Create parent directories
+  for (auto& p : {paths.pages(), paths.state(), paths.fifo(), paths.lock()}) {
+    makeParentDirectories(p);
+  }
+
+  // Check file system types
+  assertFileSystemType(paths.state(), {"tmpfs", "hugetlbfs"}, "shared state");
+  assertFileSystemType(paths.pages(), {"hugetlbfs"}, "DMA buffer");
+
+  // Initialize file system objects
   resetSmartPtr(sharedData, paths.lock(), paths.state(), getSharedDataSize(), getSharedDataName().c_str(),
       FileSharedObject::find_or_construct);
 

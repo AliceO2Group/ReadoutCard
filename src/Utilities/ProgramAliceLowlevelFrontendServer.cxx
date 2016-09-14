@@ -14,7 +14,7 @@
 #include <boost/scope_exit.hpp>
 #include "RORC/ChannelFactory.h"
 #include "RORC/ChannelParameters.h"
-#include "RorcException.h"
+#include "RORC/Exception.h"
 #include "AliceLowlevelFrontend.h"
 #include "Util.h"
 
@@ -98,7 +98,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
     static void assertAddress(uint64_t address)
     {
       if (address < 0x1e8 || address > 0x1fc) {
-        BOOST_THROW_EXCEPTION(RorcException()
+        BOOST_THROW_EXCEPTION(Exception()
             << errinfo_rorc_error_message("Address out of range"));
       }
     }
@@ -123,7 +123,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
       std::vector<std::string> params = split(parameter);
 
       if (params.size() != 2) {
-        BOOST_THROW_EXCEPTION(RorcException()
+        BOOST_THROW_EXCEPTION(Exception()
             << errinfo_rorc_error_message("Write RPC call did not have 2 parameters"));
       }
 

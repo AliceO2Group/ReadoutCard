@@ -10,7 +10,7 @@
 #include <chrono>
 #include "Factory/ChannelUtilityFactory.h"
 #include "RORC/CardType.h"
-#include "RorcException.h"
+#include "RORC/Exception.h"
 #include <boost/format.hpp>
 #include "Utilities/Program.h"
 

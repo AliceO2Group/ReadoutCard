@@ -22,7 +22,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/format.hpp>
 #include <boost/filesystem/operations.hpp>
-#include "RorcException.h"
+#include "RORC/Exception.h"
 #include "RorcDevice.h"
 #include "MemoryMappedFile.h"
 #include "Cru/CruRegisterIndex.h"

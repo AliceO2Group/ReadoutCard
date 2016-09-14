@@ -11,7 +11,7 @@
 #include "Utilities/Common.h"
 #include "Utilities/Options.h"
 #include "Utilities/UtilsDescription.h"
-#include "RorcException.h"
+#include "RORC/Exception.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -126,7 +126,7 @@ po::variables_map getVariablesMap(int argc, char** argv, const po::options_descr
   try {
     po::store(po::parse_command_line(argc, argv, optionsDescription), variablesMap);
     po::notify(variablesMap);
-  } catch (po::unknown_option& e) {
+  } catch (const po::unknown_option& e) {
     BOOST_THROW_EXCEPTION(ProgramOptionException()
         << errinfo_rorc_error_message("Unknown option '" + e.get_option_name() + "'"));
   }
@@ -275,7 +275,7 @@ ChannelParameters getOptionsChannelParameters(const boost::program_options::vari
     try {
       auto loopback = LoopbackMode::fromString(loopbackString);
       cp.generator.loopbackMode = loopback;
-    } catch (std::out_of_range& e) {
+    } catch (const std::out_of_range& e) {
       BOOST_THROW_EXCEPTION(InvalidOptionValueException()
           << errinfo_rorc_error_message("Invalid value for option '" + option::cpGenLoopback.swtch + "'"));
     }

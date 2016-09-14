@@ -201,7 +201,7 @@ void CrorcChannelMaster::resetCard(ResetLevel::type resetLevel)
 
       crorcArmDdl(RORC_RESET_RORC);
     }
-  } catch (RorcException& e) {
+  } catch (Exception& e) {
     e << errinfo_rorc_reset_level(resetLevel);
     e << errinfo_rorc_loopback_mode(loopbackMode);
     throw;
@@ -300,12 +300,12 @@ PageHandle CrorcChannelMaster::pushNextPage()
   return PageHandle(fifoIndex);
 }
 
-void* CrorcChannelMaster::getReadyFifoBusAddress()
+void* CrorcChannelMaster::getReadyFifoBusAddress() const
 {
   return mBufferReadyFifo->getScatterGatherList()[0].addressBus;
 }
 
-ReadyFifo& CrorcChannelMaster::getReadyFifo()
+ReadyFifo& CrorcChannelMaster::getReadyFifo() const
 {
   return *mMappedFileFifo->get();
 }
@@ -331,13 +331,13 @@ CrorcChannelMaster::DataArrivalStatus::type CrorcChannelMaster::dataArrived(int 
           << errinfo_rorc_fifo_index(index));
     }
     return DataArrivalStatus::WholeArrived;
-  } else {
-    BOOST_THROW_EXCEPTION(CrorcDataArrivalException()
-        << errinfo_rorc_error_message("Unrecognized data arrival status word")
-        << errinfo_rorc_readyfifo_status(status)
-        << errinfo_rorc_readyfifo_length(length)
-        << errinfo_rorc_fifo_index(index));
   }
+
+  BOOST_THROW_EXCEPTION(CrorcDataArrivalException()
+      << errinfo_rorc_error_message("Unrecognized data arrival status word")
+      << errinfo_rorc_readyfifo_status(status)
+      << errinfo_rorc_readyfifo_length(length)
+      << errinfo_rorc_fifo_index(index));
 }
 
 bool CrorcChannelMaster::isPageArrived(const PageHandle& handle)

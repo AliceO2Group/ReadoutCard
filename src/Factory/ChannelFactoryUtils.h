@@ -6,7 +6,7 @@
 #include <map>
 #include <algorithm>
 #include "RORC/CardType.h"
-#include "RorcException.h"
+#include "RORC/Exception.h"
 #include "RorcDevice.h"
 
 namespace AliceO2 {
@@ -21,8 +21,8 @@ namespace FactoryHelper {
 ///   Formed by pairs of arguments of a CardType and an std::function. The first mapping must use Dummy.
 ///   Example:
 ///   auto sharedPointer = channelFactoryHelper<ChannelMasterInterface>(12345, -1, {
-///       { CardType::DUMMY, [](){ return makeMasterDummy(); }},
-///       { CardType::CRORC, [](){ return makeMasterCrorc(); }}});
+///       { CardType::DUMMY, []{ return makeDummy(); }},
+///       { CardType::CRORC, []{ return makeCrorc(); }}});
 template <typename Interface>
 std::shared_ptr<Interface> channelFactoryHelper(int serialNumber, int dummySerial,
     const std::map<CardType::type, std::function<std::shared_ptr<Interface>()>>& map)
@@ -35,13 +35,13 @@ std::shared_ptr<Interface> channelFactoryHelper(int serialNumber, int dummySeria
     auto cardsFound = RorcDevice::findSystemDevices(serialNumber);
 
     if (cardsFound.empty()) {
-      BOOST_THROW_EXCEPTION(RorcException()
+      BOOST_THROW_EXCEPTION(Exception()
           << errinfo_rorc_error_message("Could not find card")
           << errinfo_rorc_serial_number(serialNumber));
     }
 
     if (cardsFound.size() > 1) {
-      BOOST_THROW_EXCEPTION(RorcException()
+      BOOST_THROW_EXCEPTION(Exception()
           << errinfo_rorc_error_message("Found multiple cards with the same serial number")
           << errinfo_rorc_serial_number(serialNumber));
     }
@@ -49,7 +49,7 @@ std::shared_ptr<Interface> channelFactoryHelper(int serialNumber, int dummySeria
     auto cardType = cardsFound[0].cardType;
 
     if (map.count(cardType) == 0) {
-      BOOST_THROW_EXCEPTION(RorcException()
+      BOOST_THROW_EXCEPTION(Exception()
           << errinfo_rorc_error_message("Unknown card type")
           << errinfo_rorc_serial_number(serialNumber)
           << errinfo_rorc_card_type(cardType));
@@ -74,7 +74,7 @@ struct MakeImpl<Result>
 {
   static Result make(CardType::type cardType)
   {
-    BOOST_THROW_EXCEPTION(RorcException()
+    BOOST_THROW_EXCEPTION(Exception()
         << errinfo_rorc_error_message("No card match found")
         << errinfo_rorc_card_type(cardType));
   }
@@ -127,8 +127,8 @@ struct MakeImpl<Result, Tag, Function, Args...>
 ///   Formed by pairs of arguments of a CardTypeTag tag and a callable object. The first mapping must use DummyTag.
 ///   Example:
 ///   auto sharedPointer = make<ChannelMasterInterface>(12345, -1,
-///       CardTypeTag::DummyTag, [](){ return makeMasterDummy(); },
-///       CardTypeTag::CrorcTag, [](){ return makeMasterCrorc(); });
+///       CardTypeTag::DummyTag, []{ return makeDummy(); },
+///       CardTypeTag::CrorcTag, []{ return makeCrorc(); });
 ///
 template<class Interface, class ... Args>
 std::shared_ptr<Interface> makeChannel(int serial, int dummySerial, Args&&... args)
@@ -145,14 +145,14 @@ std::shared_ptr<Interface> makeChannel(int serial, int dummySerial, Args&&... ar
     auto cardsFound = RorcDevice::findSystemDevices(serial);
 
     if (cardsFound.empty()) {
-      BOOST_THROW_EXCEPTION(RorcException()
+      BOOST_THROW_EXCEPTION(Exception()
           << errinfo_rorc_error_message("Could not find a card with the given serial number"));
     }
 
     if (cardsFound.size() > 1) {
       std::vector<PciId> pciIds;
       for (auto& c : cardsFound) { pciIds.push_back(c.pciId); }
-      BOOST_THROW_EXCEPTION(RorcException()
+      BOOST_THROW_EXCEPTION(Exception()
           << errinfo_rorc_error_message("Found more than one card with the given serial number")
           << errinfo_rorc_pci_ids(pciIds));
     }

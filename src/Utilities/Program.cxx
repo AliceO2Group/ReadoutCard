@@ -10,7 +10,7 @@
 #include "Utilities/Program.h"
 #include "RORC/Version.h"
 #include "Util.h"
-#include "RorcException.h"
+#include "RORC/Exception.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -89,12 +89,12 @@ int Program::execute(int argc, char** argv)
     // Start the actual program
     run(variablesMap);
   }
-  catch (ProgramOptionException& e) {
+  catch (const ProgramOptionException& e) {
     auto message = boost::get_error_info<AliceO2::Rorc::errinfo_rorc_error_message>(e);
     std::cout << "Program options invalid: " << *message << "\n\n";
     prnHelp();
   }
-  catch (std::exception& e) {
+  catch (const std::exception& e) {
 #if (BOOST_VERSION >= 105400)
     std::cout << "Error: " << e.what() << '\n' << boost::diagnostic_information(e, isVerbose()) << "\n";
 #else

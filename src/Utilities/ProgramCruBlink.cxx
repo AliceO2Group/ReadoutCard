@@ -11,7 +11,7 @@
 #include <chrono>
 #include "Factory/ChannelUtilityFactory.h"
 #include "RORC/ChannelFactory.h"
-#include "RorcException.h"
+#include "RORC/Exception.h"
 
 using namespace AliceO2::Rorc::Utilities;
 using std::cout;

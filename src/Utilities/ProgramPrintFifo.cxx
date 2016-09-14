@@ -11,7 +11,7 @@
 #include <boost/exception/diagnostic_information.hpp>
 #include "Utilities/Program.h"
 #include "Factory/ChannelUtilityFactory.h"
-#include "RorcException.h"
+#include "RORC/Exception.h"
 
 using namespace AliceO2::Rorc::Utilities;
 using namespace AliceO2::Rorc;

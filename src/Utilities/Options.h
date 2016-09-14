@@ -12,7 +12,7 @@
 #include <boost/exception/diagnostic_information.hpp>
 #include <Utilities/UtilsDescription.h>
 #include <iostream>
-#include "RorcException.h"
+#include "RORC/Exception.h"
 #include "RORC/ChannelParameters.h"
 
 namespace AliceO2 {

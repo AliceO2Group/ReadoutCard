@@ -8,7 +8,7 @@
 #include <cassert>
 #include "c/rorc/rorc.h"
 #include "ChannelPaths.h"
-#include "RorcException.h"
+#include "RORC/Exception.h"
 #include "Util.h"
 #include "ChannelUtilityImpl.h"
 #include "CruRegisterIndex.h"
@@ -221,8 +221,16 @@ CardType::type CruChannelMaster::getCardType()
 
 std::vector<uint32_t> CruChannelMaster::utilityCopyFifo()
 {
-  ALICEO2_RORC_THROW_EXCEPTION("Not implemented");
-  return std::vector<uint32_t>();
+  std::vector<uint32_t> copy;
+  auto* fifo = mMappedFileFifo->get();
+  size_t size = sizeof(std::decay<decltype(fifo)>::type);
+  size_t elements = size / sizeof(decltype(copy)::value_type);
+  copy.reserve(elements);
+
+  auto* fifoData = reinterpret_cast<char*>(fifo);
+  auto* copyData = reinterpret_cast<char*>(copy.data());
+  std::copy(fifoData, fifoData + size, copyData);
+  return copy;
 }
 
 void CruChannelMaster::utilityPrintFifo(std::ostream& os)
