@@ -17,6 +17,8 @@ class ChannelUtilityFactory
   public:
     static constexpr int DUMMY_SERIAL_NUMBER = -1;
 
+    using UtilitySharedPtr = std::shared_ptr<ChannelUtilityInterface>;
+
     ChannelUtilityFactory();
     virtual ~ChannelUtilityFactory();
 
@@ -25,7 +27,7 @@ class ChannelUtilityFactory
     /// first CRORC it comes across. If the PDA dependency is not available, a dummy implementation will be returned.
     /// \param serialNumber The serial number of the card. Passing 'DUMMY_SERIAL_NUMBER' returns a dummy implementation
     /// \param channelNumber The number of the channel to open.
-    std::shared_ptr<ChannelUtilityInterface> getUtility(int serialNumber, int channelNumber);
+    UtilitySharedPtr getUtility(int serialNumber, int channelNumber);
 };
 
 } // namespace Rorc

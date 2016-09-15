@@ -6,10 +6,11 @@
 #pragma once
 
 #include <cstdint>
+#include "RORC/Parameters.h"
 #include "RORC/PageHandle.h"
 #include "RORC/Page.h"
-#include "RORC/ChannelParameters.h"
 #include "RORC/CardType.h"
+#include "RORC/ResetLevel.h"
 #include "RORC/RegisterReadWriteInterface.h"
 
 namespace AliceO2 {

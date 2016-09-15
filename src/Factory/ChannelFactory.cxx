@@ -3,8 +3,12 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
+#include "RORC/Parameters.h"
 #include "RORC/ChannelFactory.h"
 #include "RORC/CardType.h"
+#include "RORC/ResetLevel.h"
+#include "RORC/GeneratorPattern.h"
+#include "RORC/LoopbackMode.h"
 #include "RORC/Exception.h"
 #include "Dummy/DummyChannelMaster.h"
 #include "Dummy/DummyChannelSlave.h"
@@ -33,16 +37,15 @@ ChannelFactory::~ChannelFactory()
 {
 }
 
-std::shared_ptr<ChannelMasterInterface> ChannelFactory::getMaster(int serial, int channel)
+auto ChannelFactory::getMaster(int serial, int channel) -> MasterSharedPtr
 {
   return makeChannel<ChannelMasterInterface>(serial, DUMMY_SERIAL_NUMBER,
-    DummyTag, [&]{ return std::make_shared<DummyChannelMaster>(serial, channel, ChannelParameters()); },
+    DummyTag, [&]{ return std::make_shared<DummyChannelMaster>(serial, channel, Parameters::Map()); },
     CrorcTag, [&]{ return std::make_shared<CrorcChannelMaster>(serial, channel); },
     CruTag,   [&]{ return std::make_shared<CruChannelMaster>(serial, channel); });
 }
 
-std::shared_ptr<ChannelMasterInterface> ChannelFactory::getMaster(int serial, int channel,
-    const ChannelParameters& params)
+auto ChannelFactory::getMaster(int serial, int channel, const Parameters::Map& params) -> MasterSharedPtr
 {
   return makeChannel<ChannelMasterInterface>(serial, DUMMY_SERIAL_NUMBER,
     DummyTag, [&]{ return std::make_shared<DummyChannelMaster>(serial, channel, params); },
@@ -50,7 +53,7 @@ std::shared_ptr<ChannelMasterInterface> ChannelFactory::getMaster(int serial, in
     CruTag,   [&]{ return std::make_shared<CruChannelMaster>(serial, channel, params); });
 }
 
-std::shared_ptr<ChannelSlaveInterface> ChannelFactory::getSlave(int serial, int channel)
+auto ChannelFactory::getSlave(int serial, int channel) -> SlaveSharedPtr
 {
   return makeChannel<ChannelSlaveInterface>(serial, DUMMY_SERIAL_NUMBER,
     DummyTag, [&]{ return std::make_shared<DummyChannelSlave>(serial, channel); },

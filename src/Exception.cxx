@@ -10,7 +10,6 @@
 #include <boost/exception/all.hpp>
 #include <boost/format.hpp>
 #include <cstdint>
-#include "RORC/ChannelParameters.h"
 #include "RORC/CardType.h"
 #include "RorcStatusCode.h"
 

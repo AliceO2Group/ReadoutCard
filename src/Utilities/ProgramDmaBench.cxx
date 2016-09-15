@@ -12,11 +12,11 @@
 #include <queue>
 #include <thread>
 #include <boost/exception/diagnostic_information.hpp>
-#include <Utilities/Common.h>
-#include <Utilities/Options.h>
-#include <Utilities/Program.h>
+#include "RORC/Parameters.h"
+#include "Utilities/Common.h"
+#include "Utilities/Options.h"
+#include "Utilities/Program.h"
 #include "RORC/ChannelFactory.h"
-#include "RORC/ChannelParameters.h"
 #include "Util.h"
 
 using namespace AliceO2::Rorc::Utilities;
@@ -45,10 +45,15 @@ class ProgramDmaBench: public Program
     {
       int serialNumber = Options::getOptionSerialNumber(map);
       int channelNumber = Options::getOptionChannel(map);
-      auto params = Options::getOptionsChannelParameters(map);
       const auto maxTime = std::chrono::seconds(10);
-      params.generator.dataSize = params.dma.pageSize;
-      params.initialResetLevel = AliceO2::Rorc::ResetLevel::Rorc;
+
+      size_t pageSize = 4*1024;
+      size_t bufferSize = 4*1024*1024;
+      Parameters::Map params = {
+          {"dma_page_size", std::to_string(pageSize)},
+          {"dma_buffer_size", std::to_string(bufferSize)},
+          {"generator_enabled", "true"},
+      };
 
       // Get master lock on channel
       auto channel = AliceO2::Rorc::ChannelFactory().getMaster(serialNumber, channelNumber, params);
@@ -173,7 +178,7 @@ class ProgramDmaBench: public Program
 
       // Calculate performance
       auto pagesPushed = eventNumbers.size();
-      auto bytesPushed = pagesPushed * params.dma.pageSize;
+      auto bytesPushed = pagesPushed * pageSize;
       auto seconds = std::chrono::duration<double>(endTime - startTime).count();
       auto bytesPerSecond = bytesPushed / seconds;
 

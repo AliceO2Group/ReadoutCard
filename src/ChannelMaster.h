@@ -7,13 +7,14 @@
 
 #include <vector>
 #include <boost/scoped_ptr.hpp>
-#include "RORC/ChannelParameters.h"
+#include "RORC/Parameters.h"
 #include "RORC/ChannelMasterInterface.h"
 #include "RORC/Exception.h"
 #include "FileSharedObject.h"
 #include "MemoryMappedFile.h"
 #include "TypedMemoryMappedFile.h"
 #include "RorcDevice.h"
+#include "ChannelParameters.h"
 #include "Pda/PdaBar.h"
 #include "Pda/PdaDmaBuffer.h"
 
@@ -36,7 +37,7 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
     /// \param params Parameters of the channel
     /// \param additionalBuffers Subclasses must provide here the amount of DMA buffers the channel uses in total,
     ///        excluding the one used by the ChannelMaster itself.
-    ChannelMaster(CardType::type cardType, int serial, int channel, const ChannelParameters& params,
+    ChannelMaster(CardType::type cardType, int serial, int channel, const Parameters::Map& params,
         int additionalBuffers);
 
     /// Constructor for the ChannelMaster object, without passing ChannelParameters
@@ -58,7 +59,9 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
     virtual uint32_t readRegister(int index) final override;
     virtual void writeRegister(int index, uint32_t value) final override;
 
-    static void validateParameters(const ChannelParameters& params);
+    /// Convert ParameterMap to ChannelParameters
+    static ChannelParameters convertParameters(const Parameters::Map& params);
+    static void validateParameters(const ChannelParameters& ps);
 
   protected:
 

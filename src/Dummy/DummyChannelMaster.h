@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "RORC/Parameters.h"
 #include "RORC/ChannelMasterInterface.h"
 #include "ChannelUtilityInterface.h"
 #include <array>
@@ -22,7 +23,7 @@ class DummyChannelMaster : public ChannelMasterInterface, public ChannelUtilityI
 {
   public:
 
-    DummyChannelMaster(int serial, int channel, const ChannelParameters& params);
+    DummyChannelMaster(int serial, int channel, const Parameters::Map& params);
     virtual ~DummyChannelMaster();
     virtual void startDma() override;
     virtual void stopDma() override;

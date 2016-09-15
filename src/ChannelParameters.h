@@ -9,62 +9,15 @@
 #include <string>
 #include <cstdint>
 #include <tuple>
+#include <set>
 #include <boost/program_options/variables_map.hpp>
+#include <boost/lexical_cast.hpp>
+#include "RORC/LoopbackMode.h"
+#include "RORC/ResetLevel.h"
+#include "RORC/GeneratorPattern.h"
 
 namespace AliceO2 {
 namespace Rorc {
-
-/// Namespace for the RORC reset level enum, and supporting functions
-struct ResetLevel
-{
-    enum type
-    {
-      Nothing = 0, Rorc = 1, RorcDiu = 2, RorcDiuSiu = 3,
-    };
-
-    /// Converts a ResetLevel to a string
-    static std::string toString(const ResetLevel::type& level);
-
-    /// Converts a string to a ResetLevel
-    static ResetLevel::type fromString(const std::string& string);
-
-    /// Returns true if the reset level includes external resets (SIU and/or DIU)
-    static bool includesExternal(const ResetLevel::type& level);
-};
-
-/// Namespace for the RORC loopback mode enum, and supporting functions
-struct LoopbackMode
-{
-    /// Loopback mode
-    enum type
-    {
-      None = 0, Diu = 1, Siu = 2, Rorc = 3
-    };
-
-    /// Converts a LoopbackMode to a string
-    static std::string toString(const LoopbackMode::type& mode);
-
-    /// Converts a string to a LoopbackMode
-    static LoopbackMode::type fromString(const std::string& string);
-
-    /// Returns true if the loopback mode is external (SIU and/or DIU)
-    static bool isExternal(const LoopbackMode::type& mode);
-};
-
-/// Namespace for the RORC generator pattern enum
-struct GeneratorPattern
-{
-  enum type
-  {
-    Constant = 1,
-    Alternating = 2,
-    Flying0 = 3,
-    Flying1 = 4,
-    Incremental = 5,
-    Decremental = 6,
-    Random = 7
-  };
-};
 
 /// DMA related parameters
 struct DmaParameters

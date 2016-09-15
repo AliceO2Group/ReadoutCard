@@ -29,10 +29,10 @@ ChannelUtilityFactory::~ChannelUtilityFactory()
 {
 }
 
-std::shared_ptr<ChannelUtilityInterface> ChannelUtilityFactory::getUtility(int serial, int channel)
+auto ChannelUtilityFactory::getUtility(int serial, int channel) -> UtilitySharedPtr
 {
   return makeChannel<ChannelUtilityInterface>(serial, DUMMY_SERIAL_NUMBER,
-    DummyTag, [&](){ return std::make_shared<DummyChannelMaster>(serial, channel, ChannelParameters()); },
+    DummyTag, [&](){ return std::make_shared<DummyChannelMaster>(serial, channel, Parameters::Map()); },
     CrorcTag, [&](){ return std::make_shared<CrorcChannelMaster>(serial, channel); },
     CruTag,   [&](){ return std::make_shared<CruChannelMaster>(serial, channel); });
 }

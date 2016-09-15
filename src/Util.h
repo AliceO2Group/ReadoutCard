@@ -102,6 +102,12 @@ void convertAssign(const Container& strings, Args&... args)
   _TieConvertImpl::Conv<Container, sizeof...(args) - 1, Args...>()(strings, args...);
 }
 
+template <typename T1, typename T2>
+void lexicalCast(const T1& from, T2& to)
+{
+  to = boost::lexical_cast<T2>(from);
+}
+
 inline uint32_t getLower32Bits(uint64_t x)
 {
   return x & 0xFfffFfff;

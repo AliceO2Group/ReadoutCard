@@ -5,10 +5,10 @@
 /// \brief Utility that reads a register from a RORC
 ///
 
+#include "RORC/Parameters.h"
 #include "Utilities/Program.h"
 #include <iostream>
 #include "RORC/ChannelFactory.h"
-#include "RORC/ChannelParameters.h"
 
 namespace {
 using namespace AliceO2::Rorc::Utilities;

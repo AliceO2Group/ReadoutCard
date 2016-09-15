@@ -10,10 +10,11 @@
 #include <boost/program_options.hpp>
 #include <boost/exception/all.hpp>
 #include <boost/exception/diagnostic_information.hpp>
+#include "RORC/Parameters.h"
 #include <Utilities/UtilsDescription.h>
 #include <iostream>
 #include "RORC/Exception.h"
-#include "RORC/ChannelParameters.h"
+#include "ChannelParameters.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -42,6 +43,7 @@ int getOptionChannel(const boost::program_options::variables_map& variablesMap);
 int getOptionSerialNumber(const boost::program_options::variables_map& variablesMap);
 int getOptionRegisterRange(const boost::program_options::variables_map& variablesMap);
 ChannelParameters getOptionsChannelParameters(const boost::program_options::variables_map& variablesMap);
+Parameters::Map getOptionsParameterMap(const boost::program_options::variables_map& variablesMap);
 
 } // namespace Options
 } // namespace Utilities

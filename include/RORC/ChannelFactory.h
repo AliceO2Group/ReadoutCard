@@ -5,10 +5,11 @@
 
 #pragma once
 
+#include "RORC/Parameters.h"
 #include <memory>
+#include <string>
 #include "RORC/ChannelMasterInterface.h"
 #include "RORC/ChannelSlaveInterface.h"
-#include "RORC/ChannelParameters.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -18,6 +19,9 @@ class ChannelFactory
 {
   public:
     static constexpr int DUMMY_SERIAL_NUMBER = -1;
+
+    using MasterSharedPtr = std::shared_ptr<ChannelMasterInterface>;
+    using SlaveSharedPtr = std::shared_ptr<ChannelSlaveInterface>;
 
     ChannelFactory();
     virtual ~ChannelFactory();
@@ -29,8 +33,7 @@ class ChannelFactory
     /// \param serialNumber The serial number of the card. Passing 'DUMMY_SERIAL_NUMBER' returns a dummy implementation
     /// \param channelNumber The number of the channel to open.
     /// \param params Parameters to pass onto the ChannelMasterInterface implementation
-    std::shared_ptr<ChannelMasterInterface> getMaster(int serialNumber, int channelNumber,
-        const ChannelParameters& params);
+    MasterSharedPtr getMaster(int serialNumber, int channelNumber, const Parameters::Map& params);
 
     /// Get a channel object with the given serial number and channel number.
     /// It is not yet implemented fully, currently it will just pick the
@@ -40,7 +43,7 @@ class ChannelFactory
     ///
     /// \param serialNumber The serial number of the card. Passing 'DUMMY_SERIAL_NUMBER' returns a dummy implementation
     /// \param channelNumber The number of the channel to open.
-    std::shared_ptr<ChannelMasterInterface> getMaster(int serialNumber, int channelNumber);
+    MasterSharedPtr getMaster(int serialNumber, int channelNumber);
 
     /// Get a channel object with the given serial number and channel number.
     /// It is not yet implemented fully, currently it will just pick the
@@ -48,7 +51,7 @@ class ChannelFactory
     ///
     /// \param serialNumber The serial number of the card. Passing 'DUMMY_SERIAL_NUMBER' returns a dummy implementation
     /// \param channelNumber The number of the channel to open.
-    std::shared_ptr<ChannelSlaveInterface> getSlave(int serialNumber, int channelNumber);
+    SlaveSharedPtr getSlave(int serialNumber, int channelNumber);
 };
 
 } // namespace Rorc

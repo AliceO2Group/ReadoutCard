@@ -61,15 +61,13 @@ int main(int, char**)
 
   try {
     // Initialize the parameters for configuring the DMA channel
-    Rorc::ChannelParameters params;
-    params.dma.bufferSize = 4 * 1024 * 1024;
-    params.dma.pageSize = 4 * 1024;
-    params.dma.useSharedMemory = true;
-    params.generator.useDataGenerator = true;
-    params.generator.dataSize = 2 * 1024;
-    params.generator.pattern = Rorc::GeneratorPattern::Incremental;
-    params.generator.seed = 0;
-    params.initialResetLevel = Rorc::ResetLevel::Rorc;
+    size_t pageSize = 4*1024;
+    size_t bufferSize = 4*1024*1024;
+    Rorc::Parameters::Map params = {
+        {"dma_page_size", std::to_string(pageSize)},
+        {"dma_buffer_size", std::to_string(bufferSize)},
+        {"generator_enabled", "true"},
+    };
 
     // Get the channel master object
     cout << "\n### Acquiring channel master object" << endl;

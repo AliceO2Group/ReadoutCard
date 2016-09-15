@@ -49,7 +49,7 @@ CrorcChannelMaster::CrorcChannelMaster(int serial, int channel)
   constructorCommon();
 }
 
-CrorcChannelMaster::CrorcChannelMaster(int serial, int channel, const ChannelParameters& params)
+CrorcChannelMaster::CrorcChannelMaster(int serial, int channel, const Parameters::Map& params)
     : ChannelMaster(CARD_TYPE, serial, channel, params, CRORC_BUFFERS_PER_CHANNEL)
 {
   constructorCommon();
@@ -115,7 +115,9 @@ void CrorcChannelMaster::constructorCommon()
 
   if (getPageAddresses().size() <= READYFIFO_ENTRIES) {
     BOOST_THROW_EXCEPTION(CrorcException()
-        << errinfo_rorc_error_message("Insufficient amount of pages fit in DMA buffer"));
+        << errinfo_rorc_error_message("Insufficient amount of pages fit in DMA buffer")
+        << errinfo_rorc_dma_buffer_size(params.dma.bufferSize)
+        << errinfo_rorc_dma_page_size(params.dma.pageSize));
   }
 }
 

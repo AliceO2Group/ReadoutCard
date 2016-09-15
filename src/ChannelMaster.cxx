@@ -58,19 +58,57 @@ int ChannelMaster::getBufferId(int index) const
   return channelNumber * dmaBuffersPerChannel + index;
 }
 
-void ChannelMaster::validateParameters(const ChannelParameters& ps)
+ChannelParameters ChannelMaster::convertParameters(const Parameters::Map& map)
 {
-  if (ps.dma.bufferSize % (2l * 1024l * 1024l) != 0) {
+  ChannelParameters cp;
+
+  auto require = [&](const std::string& key) {
+    if (!map.count(key)) {
+      BOOST_THROW_EXCEPTION(ParameterException() << errinfo_rorc_error_message("Parameter '" + key + "' is required"));
+    }
+  };
+
+  using namespace Parameters::Keys;
+
+  require(dmaBufferSize());
+  Util::lexicalCast(map.at(dmaBufferSize()), cp.dma.bufferSize);
+
+  require(dmaPageSize());
+  Util::lexicalCast(map.at(dmaPageSize()), cp.dma.pageSize);
+
+  if (map.count(generatorEnabled())) {
+    cp.generator.useDataGenerator = true;
+
+    if (map.count(generatorDataSize())) {
+      Util::lexicalCast(map.at(generatorDataSize()), cp.generator.dataSize);
+    }
+
+    if (map.count(generatorLoopbackMode())) {
+      try {
+        cp.generator.loopbackMode = LoopbackMode::fromString(map.at(generatorLoopbackMode()));
+      } catch (const std::out_of_range& e) {
+        BOOST_THROW_EXCEPTION(InvalidOptionValueException()
+            << errinfo_rorc_error_message("Invalid value for parameter '" + generatorLoopbackMode() + "'"));
+      }
+    }
+  }
+
+  return cp;
+}
+
+void ChannelMaster::validateParameters(const ChannelParameters& cp)
+{
+  if (cp.dma.bufferSize % (2l * 1024l * 1024l) != 0) {
     BOOST_THROW_EXCEPTION(InvalidParameterException()
         << errinfo_rorc_error_message("Parameter 'dma.bufferSize' not a multiple of 2 mebibytes"));
   }
 
-  if (ps.generator.dataSize > ps.dma.pageSize) {
+  if (cp.generator.dataSize > cp.dma.pageSize) {
     BOOST_THROW_EXCEPTION(InvalidParameterException()
         << errinfo_rorc_error_message("Parameter 'generator.dataSize' greater than 'dma.pageSize'"));
   }
 
-  if ((ps.dma.bufferSize % ps.dma.pageSize) != 0) {
+  if ((cp.dma.bufferSize % cp.dma.pageSize) != 0) {
     BOOST_THROW_EXCEPTION(InvalidParameterException()
         << errinfo_rorc_error_message("DMA buffer size not a multiple of 'dma.pageSize'"));
   }
@@ -88,8 +126,8 @@ void ChannelMaster::constructorCommonPhaseOne()
   }
 
   // Check file system types
-  assertFileSystemType(paths.state(), {"tmpfs", "hugetlbfs"}, "shared state");
-  assertFileSystemType(paths.pages(), {"hugetlbfs"}, "DMA buffer");
+  assertFileSystemType(paths.state().parent_path(), {"tmpfs", "hugetlbfs"}, "shared state");
+  assertFileSystemType(paths.pages().parent_path(), {"hugetlbfs"}, "DMA buffer");
 
   // Initialize file system objects
   resetSmartPtr(sharedData, paths.lock(), paths.state(), getSharedDataSize(), getSharedDataName().c_str(),
@@ -146,13 +184,13 @@ ChannelMaster::ChannelMaster(CardType::type cardType, int serial, int channel, i
   constructorCommonPhaseTwo();
 }
 
-ChannelMaster::ChannelMaster(CardType::type cardType, int serial, int channel, const ChannelParameters& params,
+ChannelMaster::ChannelMaster(CardType::type cardType, int serial, int channel, const Parameters::Map& paramMap,
     int additionalBuffers)
     : cardType(cardType), serialNumber(serial), channelNumber(channel), dmaBuffersPerChannel(
         additionalBuffers + CHANNELMASTER_DMA_BUFFERS_PER_CHANNEL)
 {
+  auto params = convertParameters(paramMap);
   validateParameters(params);
-
   constructorCommonPhaseOne();
 
   // Initialize (if needed) the shared data

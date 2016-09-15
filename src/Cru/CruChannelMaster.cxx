@@ -39,7 +39,7 @@ CruChannelMaster::CruChannelMaster(int serial, int channel)
   constructorCommon();
 }
 
-CruChannelMaster::CruChannelMaster(int serial, int channel, const ChannelParameters& params)
+CruChannelMaster::CruChannelMaster(int serial, int channel, const Parameters::Map& params)
     : ChannelMaster(CARD_TYPE, serial, channel, params, CRU_BUFFERS_PER_CHANNEL)
 {
   constructorCommon();

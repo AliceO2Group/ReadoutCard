@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "RORC/Parameters.h"
 #include "ChannelMaster.h"
 #include <memory>
 #include <array>
@@ -20,7 +21,7 @@ class CruChannelMaster final : public ChannelMaster
   public:
 
     CruChannelMaster(int serial, int channel);
-    CruChannelMaster(int serial, int channel, const ChannelParameters& params);
+    CruChannelMaster(int serial, int channel, const Parameters::Map& params);
     virtual ~CruChannelMaster() override;
 
     virtual void resetCard(ResetLevel::type resetLevel) override;

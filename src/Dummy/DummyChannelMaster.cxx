@@ -12,7 +12,7 @@ using std::endl;
 namespace AliceO2 {
 namespace Rorc {
 
-DummyChannelMaster::DummyChannelMaster(int serial, int channel, const ChannelParameters&) : mPageCounter(128)
+DummyChannelMaster::DummyChannelMaster(int serial, int channel, const Parameters::Map&) : mPageCounter(128)
 {
   cout << "DummyChannelMaster::DummyChannelMaster(serial:" << serial << ", channel:" << channel << ", params:...)"
       << endl;

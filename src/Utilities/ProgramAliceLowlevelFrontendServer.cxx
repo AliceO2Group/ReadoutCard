@@ -12,8 +12,8 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/scope_exit.hpp>
+#include "RORC/Parameters.h"
 #include "RORC/ChannelFactory.h"
-#include "RORC/ChannelParameters.h"
 #include "RORC/Exception.h"
 #include "AliceLowlevelFrontend.h"
 #include "Util.h"

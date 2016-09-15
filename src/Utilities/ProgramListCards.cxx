@@ -53,7 +53,7 @@ class ProgramListCards: public Program
       bool foundUninitialized = false;
       for (auto& card : cardsFound) {
         // Try to figure out the firmware version
-        std::string firmware = "unknown";
+        std::string firmware = "n/a";
         try {
           auto firmwareVersion = ChannelUtilityFactory().getUtility(card.serialNumber, 0)->utilityGetFirmwareVersion();
           firmware = std::to_string(firmwareVersion);

@@ -22,8 +22,10 @@ set(RORC_LIB_SOURCES
   ChannelPaths.cxx
   Dummy/DummyChannelMaster.cxx
   Dummy/DummyChannelSlave.cxx
-  MemoryMappedFile.cxx
   Exception.cxx
+  LoopbackMode.cxx
+  MemoryMappedFile.cxx
+  ResetLevel.cxx
   RorcStatusCode.cxx
   Utilities/Program.cxx
   Util.cxx

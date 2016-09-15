@@ -72,8 +72,10 @@ std::string getFileSystemType(const boost::filesystem::path& path)
   // We need the second like of the output (first line is a header)
   std::vector<std::string> splitted;
   boost::split(splitted, result, boost::is_any_of("\n"));
-  if (splitted.size() == 2) {
+  if (splitted.size() == 3) {
     type = splitted.at(1);
+  } else {
+    BOOST_THROW_EXCEPTION(std::runtime_error("Unrecognized output from 'df' command"));
   }
 
   return type;

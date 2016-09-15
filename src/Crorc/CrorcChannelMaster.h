@@ -6,6 +6,7 @@
 #pragma once
 
 #include <boost/scoped_ptr.hpp>
+#include "RORC/Parameters.h"
 #include "ChannelMaster.h"
 #include "ReadyFifo.h"
 
@@ -18,7 +19,7 @@ class CrorcChannelMaster final : public ChannelMaster
   public:
 
     CrorcChannelMaster(int serial, int channel);
-    CrorcChannelMaster(int serial, int channel, const ChannelParameters& params);
+    CrorcChannelMaster(int serial, int channel, const Parameters::Map& params);
     virtual ~CrorcChannelMaster() override;
 
     virtual void resetCard(ResetLevel::type resetLevel) override;

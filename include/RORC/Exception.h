@@ -12,9 +12,12 @@
 #include <vector>
 #include <boost/exception/all.hpp>
 #include <cstdint>
-#include "RORC/ChannelParameters.h"
+#include "RORC/Parameters.h"
 #include "RORC/PciId.h"
 #include "RORC/CardType.h"
+#include "RORC/ResetLevel.h"
+#include "RORC/GeneratorPattern.h"
+#include "RORC/LoopbackMode.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -57,6 +60,8 @@ DEFINE_ERRINFO(pci_device_index, int);
 DEFINE_ERRINFO(card_type, CardType::type);
 DEFINE_ERRINFO(index, size_t);
 DEFINE_ERRINFO(range, size_t);
+DEFINE_ERRINFO(dma_buffer_size, size_t);
+DEFINE_ERRINFO(dma_page_size, size_t);
 DEFINE_ERRINFO(scatter_gather_entry_size, size_t);
 
 // Undefine macro for header safety (we don't want to pollute the global namespace with collision-prone names)
@@ -72,7 +77,8 @@ struct Exception : virtual boost::exception, virtual std::exception
 // General exception definitions
 struct RorcPdaException : virtual Exception {};
 struct MemoryMapException : virtual Exception {};
-struct InvalidParameterException : virtual Exception {};
+struct ParameterException : virtual Exception {};
+struct InvalidParameterException : virtual ParameterException {};
 struct OutOfRangeException : virtual Exception {};
 struct LockException : virtual Exception {};
 struct FileLockException : virtual LockException {};
