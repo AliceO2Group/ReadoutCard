@@ -28,9 +28,9 @@ namespace bfs = boost::filesystem;
 //  - The "find only" variant (which can't have 'Args&&...' parameters)
 // Without these tags, those two constructors would look the same
 /// Find or construct the shared object
-const struct find_or_construct_tag {} find_or_construct;
+constexpr struct find_or_construct_tag {} find_or_construct = {};
 /// Find the shared object, do not construct
-const struct find_only_tag {} find_only;
+constexpr struct find_only_tag {} find_only = {};
 
 /// Class for mapping a shared object stored in a file to a pointer
 template <typename T>

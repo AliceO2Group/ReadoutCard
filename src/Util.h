@@ -49,7 +49,7 @@ typename Map::mapped_type getValueFromMap(const Map& map, const typename Map::ke
 }
 
 namespace _TieConvertImpl {
-template <typename Container, size_t Index, typename ...Args>
+template <typename Container, int Index, typename ...Args>
 struct Conv;
 
 // Stop condition specialization: on a negative index
@@ -62,7 +62,7 @@ struct Conv <Container, -1, Args...>
 };
 
 // Recursive step specialization
-template <typename Container, size_t Index, typename ...Args>
+template <typename Container, int Index, typename ...Args>
 struct Conv
 {
     void operator()(const Container& strings, Args&... args)
@@ -99,7 +99,7 @@ void convertAssign(const Container& strings, Args&... args)
     BOOST_THROW_EXCEPTION(UtilException()
         << errinfo_rorc_error_message("Container size smaller than amount of arguments"));
   }
-  _TieConvertImpl::Conv<Container, sizeof...(args) - 1, Args...>()(strings, args...);
+  _TieConvertImpl::Conv<Container, int(sizeof...(args)) - 1, Args...>()(strings, args...);
 }
 
 template <typename T1, typename T2>
