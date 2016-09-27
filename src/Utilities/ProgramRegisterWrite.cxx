@@ -45,9 +45,14 @@ class ProgramRegisterWrite: public Program
       // Registers are indexed by 32 bits (4 bytes)
       channel->writeRegister(address / 4, registerValue);
       if (readback) {
-        std::cout << Common::makeRegisterString(address, channel->readRegister(address / 4)) << std::flush;
+        auto value = channel->readRegister(address / 4);
+        if (isVerbose()) {
+          std::cout << Common::makeRegisterString(address, value);
+        } else {
+          std::cout << std::hex << value << '\n';
+        }
       } else {
-        std::cout << "Done!" << std::endl;
+        std::cout << "Done!\n";
       }
     }
 };

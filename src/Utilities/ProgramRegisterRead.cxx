@@ -39,7 +39,11 @@ class ProgramRegisterRead: public Program
 
       // Registers are indexed by 32 bits (4 bytes)
       uint32_t value = channel->readRegister(address / 4);
-      std::cout << Common::makeRegisterString(address, value);
+      if (isVerbose()) {
+        std::cout << Common::makeRegisterString(address, value);
+      } else {
+        std::cout << std::hex << value << '\n';
+      }
     }
 };
 } // Anonymous namespace
