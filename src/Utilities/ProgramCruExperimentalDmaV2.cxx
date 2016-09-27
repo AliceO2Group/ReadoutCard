@@ -67,9 +67,6 @@ constexpr int NUM_OF_BUFFERS = 32;
 
 constexpr int NUM_PAGES = FIFO_ENTRIES * NUM_OF_BUFFERS;
 
-/// Offset in bytes from start of status table to data buffer
-constexpr size_t DATA_OFFSET = 0x200;
-
 /// Two 2MiB hugepage. Should be enough...
 constexpr size_t DMA_BUFFER_PAGES_SIZE = 4l * 1024l * 1024l;
 
@@ -111,6 +108,7 @@ const std::string NO_CHECK_SWITCH = "nocheck";
 const std::string REMOVE_SHARED_MEMORY_SWITCH = "rmshm";
 const std::string RELOAD_KERNEL_MODULE_SWITCH = "reloadkmod";
 const std::string SET_DATA_EMULATOR_CONTROL = "setemucontrol";
+const std::string DONT_ADVANCE_DMA_PTR = "nodmaptr";
 
 const std::string READOUT_ERRORS_PATH = "readout_errors.txt";
 const std::string READOUT_DATA_PATH = "readout_data.txt";
@@ -302,8 +300,8 @@ struct AddressSpaces
     {
     }
 
-    T* bus;
     T* user;
+    T* bus;
 };
 
 class ProgramCruExperimentalDma: public Program
@@ -318,17 +316,29 @@ class ProgramCruExperimentalDma: public Program
     virtual void addOptions(boost::program_options::options_description& options) override
     {
       options.add_options()
-          (RESET_SWITCH.c_str(), "Reset card during initialization")
-          (TO_FILE_SWITCH.c_str(), "Read out to file")
-          (PAGES_SWITCH.c_str(), boost::program_options::value<int64_t>(&mOptions.maxPages)->default_value(PAGES_DEFAULT),
+          (RESET_SWITCH.c_str(),
+              "Reset card during initialization")
+          (TO_FILE_SWITCH.c_str(),
+              "Read out to file")
+          (PAGES_SWITCH.c_str(),
+              boost::program_options::value<int64_t>(&mOptions.maxPages)->default_value(PAGES_DEFAULT),
               "Amount of pages to transfer. Give <= 0 for infinite.")
-          (INTERRUPT_SWITCH.c_str(), "Use PCIe interrupts")
-          (DISPLAY_FIFO_SWITCH.c_str(), "Display FIFO status (wide terminal recommended)")
-          (RANDOM_PAUSES_SWITCH.c_str(), "Randomly pause readout (to test robustness)")
-          (NO_CHECK_SWITCH.c_str(), "Skip error checking")
-          (REMOVE_SHARED_MEMORY_SWITCH.c_str(), "Remove shared memory after DMA transfer")
-          (RELOAD_KERNEL_MODULE_SWITCH.c_str(), "Reload kernel module before DMA initialization")
-          (SET_DATA_EMULATOR_CONTROL.c_str(), "Set data emulator control register (0x200) during initialization");
+          (INTERRUPT_SWITCH.c_str(),
+              "Use PCIe interrupts")
+          (DISPLAY_FIFO_SWITCH.c_str(),
+              "Display FIFO status (wide terminal recommended)")
+          (RANDOM_PAUSES_SWITCH.c_str(),
+              "Randomly pause readout (to test robustness)")
+          (NO_CHECK_SWITCH.c_str(),
+              "Skip error checking")
+          (REMOVE_SHARED_MEMORY_SWITCH.c_str(),
+              "Remove shared memory after DMA transfer")
+          (RELOAD_KERNEL_MODULE_SWITCH.c_str(),
+              "Reload kernel module before DMA initialization")
+          (SET_DATA_EMULATOR_CONTROL.c_str(),
+              "Set data emulator control register (0x200) during initialization")
+          (DONT_ADVANCE_DMA_PTR.c_str(),
+              "Don't advance the DMA pointer (0x10), user must do so manually");
     }
 
     virtual void run(const boost::program_options::variables_map& map) override
@@ -345,6 +355,7 @@ class ProgramCruExperimentalDma: public Program
       mOptions.removeSharedMemory = bool(map.count(REMOVE_SHARED_MEMORY_SWITCH));
       mOptions.reloadKernelModule = bool(map.count(RELOAD_KERNEL_MODULE_SWITCH));
       mOptions.setDataEmulatorControl = bool(map.count(SET_DATA_EMULATOR_CONTROL));
+      mOptions.advanceDmaPtr = !bool(map.count(DONT_ADVANCE_DMA_PTR));
 
       if (mOptions.fileOutput) {
         mReadoutStream.open(READOUT_DATA_PATH.c_str());
@@ -421,16 +432,16 @@ class ProgramCruExperimentalDma: public Program
     void printDeviceInfo(PciDevice* device)
     {
       uint16_t domainId;
-      PciDevice_getDomainID(mRorcDevice->getPciDevice(), &domainId);
+      PciDevice_getDomainID(device, &domainId);
 
       uint8_t busId;
-      PciDevice_getBusID(mRorcDevice->getPciDevice(), &busId);
+      PciDevice_getBusID(device, &busId);
 
       uint8_t functionId;
-      PciDevice_getFunctionID(mRorcDevice->getPciDevice(), &functionId);
+      PciDevice_getFunctionID(device, &functionId);
 
       const PciBarTypes* pciBarTypesPtr;
-      PciDevice_getBarTypes(mRorcDevice->getPciDevice(), &pciBarTypesPtr);
+      PciDevice_getBarTypes(device, &pciBarTypesPtr);
 
       auto barType = *pciBarTypesPtr;
       auto barTypeString =
@@ -777,7 +788,10 @@ class ProgramCruExperimentalDma: public Program
       while (shouldPushQueue()) {
         // Push page
         setDescriptor(mPageIndexCounter, mDescriptorCounter);
-        mPdaBar->getUserspaceAddressU32()[Register::DMA_POINTER] = mDescriptorCounter;
+
+        if (mOptions.advanceDmaPtr) {
+          mPdaBar->getUserspaceAddressU32()[Register::DMA_POINTER] = mDescriptorCounter;
+        }
 
         // Add the page to the readout queue
         mQueue.push(Handle{mDescriptorCounter, mPageIndexCounter});
@@ -944,7 +958,6 @@ class ProgramCruExperimentalDma: public Program
       for (int section = 0; section < PATTERN_SECTIONS; ++section) {
         // For the first section, the first number is 0, and the count starts on the second number
         const bool first = (section == 0);
-        const int start = first ? 1 : 0;
 
         auto& pattern = mDataPatterns.at(section);
 
@@ -1014,6 +1027,7 @@ class ProgramCruExperimentalDma: public Program
         bool removeSharedMemory;
         bool reloadKernelModule;
         bool setDataEmulatorControl;
+        bool advanceDmaPtr;
     } mOptions;
 
     /// A value of true means no limit on page pushing
@@ -1037,9 +1051,6 @@ class ProgramCruExperimentalDma: public Program
 
     /// Aliased userspace FIFO
     AddressSpaces<CruFifoTable> mFifoAddress;
-
-    /// Value of some kind of CRU status register. Seems to always be 0.
-    uint32_t mStatusCount = 0;
 
     /// Amount of pages pushed
     int64_t mPushCounter = 0;

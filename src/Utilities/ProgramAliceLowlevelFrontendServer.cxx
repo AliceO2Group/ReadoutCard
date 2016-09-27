@@ -69,9 +69,9 @@ class ProgramAliceLowlevelFrontendServer: public Program
       int channelNumber = Options::getOptionChannel(map);
       auto channel = AliceO2::Rorc::ChannelFactory().getSlave(serialNumber, channelNumber);
 
-      if (getenv("DIM_DNS_NODE") == nullptr) {
+      if (getenv(std::string("DIM_DNS_NODE").c_str()) == nullptr) {
         cout << "Using localhost as DIM DNS node\n";
-        putenv("DIM_DNS_NODE=localhost");
+        putenv(Alf::toCharBuffer("DIM_DNS_NODE=localhost").data());
       }
 
       DimServerStartStopper dimStartStopper;
@@ -145,7 +145,6 @@ class ProgramAliceLowlevelFrontendServer: public Program
     }
 
     double mTemperature = 45;
-    uint32_t mReadRegisterInt = 0;
 };
 } // Anonymous namespace
 

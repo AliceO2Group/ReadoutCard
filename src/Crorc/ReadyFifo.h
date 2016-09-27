@@ -41,8 +41,8 @@ union ReadyFifo
     }
 
     std::array<Entry, READYFIFO_ENTRIES> entries;
-    std::array<int32_t, READYFIFO_ENTRIES * 2> dataInt32;
-    std::array<char, READYFIFO_ENTRIES * sizeof(Entry)> dataChar;
+    std::array<volatile int32_t, READYFIFO_ENTRIES * 2> dataInt32;
+    std::array<volatile char, READYFIFO_ENTRIES * sizeof(Entry)> dataChar;
 };
 
 // These asserts are to check if the ReadyFifo struct is the expected size, and is not being padded or something like

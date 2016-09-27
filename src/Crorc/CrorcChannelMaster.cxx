@@ -148,8 +148,8 @@ void CrorcChannelMaster::deviceStartDma()
     if (!params.noRDYRX) {
       // Clearing SIU/DIU status.
       crorcCheckLink();
-      crorcSiuCommand(0);
-      crorcDiuCommand(0);
+      crorcSiuCommand(RandCIFST);
+      crorcDiuCommand(RandCIFST);
 
       // RDYRX command to FEE
       crorcStartTrigger();
@@ -230,8 +230,8 @@ void CrorcChannelMaster::startDataGenerator(const GeneratorParameters& gen)
     crorcSetSiuLoopback();
     std::this_thread::sleep_for(std::chrono::microseconds(100000)); // XXX Why???
     crorcCheckLink();
-    crorcSiuCommand(0);
-    crorcDiuCommand(0);
+    crorcSiuCommand(RandCIFST);
+    crorcDiuCommand(RandCIFST);
   }
 
   rorcStartDataGenerator(getBarUserspace(), gen.maximumEvents);
@@ -245,8 +245,8 @@ void CrorcChannelMaster::startDataReceiving()
   if (LoopbackMode::Siu == getParams().generator.loopbackMode) {
     resetCard(ResetLevel::RorcDiuSiu);
     crorcCheckLink();
-    crorcSiuCommand(0);
-    crorcDiuCommand(0);
+    crorcSiuCommand(RandCIFST);
+    crorcDiuCommand(RandCIFST);
   }
 
   crorcReset();

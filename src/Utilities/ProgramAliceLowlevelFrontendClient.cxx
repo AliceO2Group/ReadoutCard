@@ -56,9 +56,9 @@ class ProgramAliceLowlevelFrontendClient: public Program
       int serialNumber = Options::getOptionSerialNumber(map);
       int channelNumber = Options::getOptionChannel(map);
 
-      if (getenv("DIM_DNS_NODE") == nullptr) {
+      if (getenv(std::string("DIM_DNS_NODE").c_str()) == nullptr) {
         cout << "Using localhost as DIM DNS node\n";
-        putenv("DIM_DNS_NODE=localhost");
+        putenv(Alf::toCharBuffer("DIM_DNS_NODE=localhost").data());
       }
 
       Alf::ServiceNames names(serialNumber, channelNumber);
@@ -88,9 +88,6 @@ class ProgramAliceLowlevelFrontendClient: public Program
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
       }
     }
-
-  private:
-    int mTestInt = 0;
 };
 } // Anonymous namespace
 

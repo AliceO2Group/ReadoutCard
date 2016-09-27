@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <bitset>
 #include <boost/algorithm/string.hpp>
+#include <boost/optional.hpp>
 #include "Utilities/Common.h"
 #include "Utilities/Options.h"
 #include "Utilities/UtilsDescription.h"
@@ -21,6 +22,7 @@ namespace Options {
 using std::cout;
 using std::endl;
 namespace po = boost::program_options;
+namespace b = boost;
 
 /// Simple data holder struct that represents a program option
 template <typename T>
@@ -97,15 +99,17 @@ T getOptionRequired(const Option<T>& option, const po::variables_map& variablesM
 /// Get the value of the Option from the variables_map, if it is available
 /// \param option The Option to retrieve
 /// \param variablesMap The variables_map to retrieve from
-/// \param optionOut The retrieved value will be written here, if a value was found
+/// \return The retrieved value, if it was found
 template <typename T>
-void getOptionOptional(const Option<T>& option, const po::variables_map& variablesMap, T& optionOut)
+b::optional<T> getOptionOptional(const Option<T>& option, const po::variables_map& variablesMap)
 {
   auto switchLong = getLongSwitch(option.swtch);
 
   if (variablesMap.count(switchLong) != 0){
     po::variable_value v = variablesMap.at(switchLong);
-    optionOut = v.as<T>();
+    return v.as<T>();
+  } else {
+    return b::none;
   }
 }
 
@@ -255,29 +259,27 @@ ChannelParameters getOptionsChannelParameters(const boost::program_options::vari
 {
   ChannelParameters cp;
 
-  {
-    size_t pageSizeKiB;
-    getOptionOptional(option::cpDmaPageSize, variablesMap, pageSizeKiB);
-    cp.dma.pageSize = pageSizeKiB * 1024l;
+  if (auto pageSizeKiB = getOptionOptional<size_t>(option::cpDmaPageSize, variablesMap)) {
+    cp.dma.pageSize = pageSizeKiB.get() * 1024l;
   }
 
-  {
-    size_t bufSizeMiB;
-    getOptionOptional(option::cpDmaBufSize, variablesMap, bufSizeMiB);
-    cp.dma.bufferSize = bufSizeMiB * 1024l * 1024l;
+  if (auto bufSizeMiB = getOptionOptional<size_t>(option::cpDmaBufSize, variablesMap)) {
+    cp.dma.bufferSize = bufSizeMiB.get() * 1024l * 1024l;
   }
 
-  getOptionOptional(option::cpGenEnable, variablesMap, cp.generator.useDataGenerator);
+  if (auto useGenerator = getOptionOptional<bool>(option::cpGenEnable, variablesMap)) {
+    cp.generator.useDataGenerator = useGenerator.get();
+  }
 
-  auto loopbackString = std::string();
-  getOptionOptional(option::cpGenLoopback, variablesMap, loopbackString);
-  if (!loopbackString.empty()) {
-    try {
-      auto loopback = LoopbackMode::fromString(loopbackString);
-      cp.generator.loopbackMode = loopback;
-    } catch (const std::out_of_range& e) {
-      BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-          << errinfo_rorc_error_message("Invalid value for option '" + option::cpGenLoopback.swtch + "'"));
+  if (auto loopbackString = getOptionOptional<std::string>(option::cpGenLoopback, variablesMap)) {
+    if (!loopbackString.get().empty()) {
+      try {
+        auto loopback = LoopbackMode::fromString(loopbackString.get());
+        cp.generator.loopbackMode = loopback;
+      } catch (const std::out_of_range& e) {
+        BOOST_THROW_EXCEPTION(InvalidOptionValueException()
+            << errinfo_rorc_error_message("Invalid value for option '" + option::cpGenLoopback.swtch + "'"));
+      }
     }
   }
   return cp;

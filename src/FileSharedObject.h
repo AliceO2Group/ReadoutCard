@@ -18,10 +18,6 @@ namespace AliceO2 {
 namespace Rorc {
 namespace FileSharedObject {
 
-namespace b = boost;
-namespace bip = boost::interprocess;
-namespace bfs = boost::filesystem;
-
 // Tag arguments for FileSharedObject and LockFileSharedObject constructors
 // They are needed to disambiguate between:
 //  - The "find or construct" variant without any 'Args&&...' parameters
@@ -45,13 +41,13 @@ class FileSharedObject
     /// \param args             Constructor arguments to be forwarded to the object
     template<typename ...Args>
     FileSharedObject(
-        const bfs::path&      sharedFilePath,
-        const size_t&         sharedFileSize,
-        const std::string&    sharedObjectName,
+        const boost::filesystem::path& sharedFilePath,
+        const size_t&                  sharedFileSize,
+        const std::string&             sharedObjectName,
         find_or_construct_tag ,
-        Args&&...             args
+        Args&&...                      args
         )
-        : sharedFile(bip::open_or_create, sharedFilePath.c_str(), sharedFileSize),
+        : sharedFile(boost::interprocess::open_or_create, sharedFilePath.c_str(), sharedFileSize),
           sharedObjectPointer(sharedFile.find_or_construct<T>(sharedObjectName.c_str())(std::forward<Args>(args)...))
     {
     }
@@ -62,12 +58,12 @@ class FileSharedObject
     /// \param sharedObjectName Name of the object within the shared memory file
     /// \param tag              Indicates that the shared object should be found only
     inline FileSharedObject(
-        const bfs::path&   sharedFilePath,
-        const size_t&      sharedFileSize,
-        const std::string& sharedObjectName,
+        const boost::filesystem::path& sharedFilePath,
+        const size_t&                  sharedFileSize,
+        const std::string&             sharedObjectName,
         find_only_tag
         )
-        : sharedFile(bip::open_or_create, sharedFilePath.c_str(), sharedFileSize),
+        : sharedFile(boost::interprocess::open_or_create, sharedFilePath.c_str(), sharedFileSize),
           sharedObjectPointer(sharedFile.find<T>(sharedObjectName.c_str()).first)
     {
       if (sharedObjectPointer == nullptr) {
@@ -83,7 +79,7 @@ class FileSharedObject
     }
 
   private:
-    bip::managed_mapped_file sharedFile;
+    boost::interprocess::managed_mapped_file sharedFile;
     T* sharedObjectPointer;
 };
 
@@ -130,18 +126,16 @@ class LockedFileSharedObject
     /// \param args             Constructor arguments to be forwarded to the object
     template <typename ...Args>
     LockedFileSharedObject(
-        const bfs::path&      lockPath,
-        const bfs::path&      sharedFilePath,
-        const size_t&         sharedFileSize,
-        const std::string&    sharedObjectName,
-        find_or_construct_tag tag,
-        Args&&...             args
-        )
+        const boost::filesystem::path& lockPath,
+        const boost::filesystem::path& sharedFilePath,
+        const size_t&                  sharedFileSize,
+        const std::string&             sharedObjectName,
+        find_or_construct_tag          tag,
+        Args&&...                      args)
         : toucher(lockPath.c_str()),
           lock(lockPath.c_str()),
           throwingLock(&lock),
-          fileSharedObject(sharedFilePath, sharedFileSize, sharedObjectName, tag,
-              std::forward<Args>(args)...)
+          fileSharedObject(sharedFilePath, sharedFileSize, sharedObjectName, tag, std::forward<Args>(args)...)
     {
     }
 
@@ -152,11 +146,11 @@ class LockedFileSharedObject
     /// \param sharedObjectName Name of the object within the shared memory file
     /// \param tag              Indicates that the shared object should be found or constructed
     inline LockedFileSharedObject(
-        const bfs::path&   lockPath,
-        const bfs::path&   sharedFilePath,
-        const size_t&      sharedFileSize,
-        const std::string& sharedObjectName,
-        find_only_tag      tag
+        const boost::filesystem::path& lockPath,
+        const boost::filesystem::path& sharedFilePath,
+        const size_t&                  sharedFileSize,
+        const std::string&             sharedObjectName,
+        find_only_tag                  tag
         )
         : toucher(lockPath.c_str()),
           lock(lockPath.c_str()),
@@ -173,13 +167,13 @@ class LockedFileSharedObject
   private:
       struct Toucher
       {
-        Toucher(const bfs::path& path)
+        Toucher(const boost::filesystem::path& path)
         {
           Util::touchFile(path);
         }
       } toucher;
 
-    bip::file_lock lock;
+    boost::interprocess::file_lock lock;
     ThrowingLockGuard<decltype(lock), FileLockException> throwingLock;
     FileSharedObject<T> fileSharedObject;
 };

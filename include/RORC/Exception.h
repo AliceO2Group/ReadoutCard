@@ -82,6 +82,7 @@ struct InvalidParameterException : virtual ParameterException {};
 struct OutOfRangeException : virtual Exception {};
 struct LockException : virtual Exception {};
 struct FileLockException : virtual LockException {};
+struct NamedMutexLockException : virtual LockException {};
 struct DeviceFinderException : virtual Exception {};
 struct SharedStateException : virtual Exception {};
 struct SharedObjectNotFoundException : virtual Exception {};

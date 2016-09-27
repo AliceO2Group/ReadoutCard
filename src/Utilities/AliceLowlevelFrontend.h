@@ -45,14 +45,20 @@ struct ServiceNames
     const int channel;
 };
 
-template <typename DimObject>
-void setDataString(const std::string& string, DimObject& dimObject, bool addTerminator = true)
+/// We use this in a few places because DIM insists on non-const char*
+std::vector<char> toCharBuffer(const std::string& string, bool addTerminator = true)
 {
-  // Copy into a buffer because DIM insists on non-const pointer
   std::vector<char> buffer(string.begin(), string.end());
   if (addTerminator) {
     buffer.push_back('\0');
   }
+  return buffer;
+}
+
+template <typename DimObject>
+void setDataString(const std::string& string, DimObject& dimObject, bool addTerminator = true)
+{
+  auto buffer = toCharBuffer(string, addTerminator);
   dimObject.setData(buffer.data(), buffer.size());
 }
 
@@ -97,7 +103,7 @@ class RegisterReadRpc: public DimRpcInfo
 {
   public:
     RegisterReadRpc(const std::string& serviceName)
-        : DimRpcInfo(serviceName.c_str(), "")
+        : DimRpcInfo(serviceName.c_str(), toCharBuffer("").data())
     {
     }
 
@@ -117,7 +123,7 @@ class RegisterWriteRpc: public DimRpcInfo
 {
   public:
     RegisterWriteRpc(const std::string& serviceName)
-        : DimRpcInfo(serviceName.c_str(), "")
+        : DimRpcInfo(serviceName.c_str(), toCharBuffer("").data())
     {
     }
 

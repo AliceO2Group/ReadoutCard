@@ -40,7 +40,7 @@ struct DmaParameters
       auto tie = [](decltype(other) x) {
         return std::tie(x.bufferSize, x.pageSize, x.useSharedMemory);
       };
-      return tie((*this)) == tie(other);
+      return tie(*this) == tie(other);
     }
 };
 
@@ -80,7 +80,7 @@ struct GeneratorParameters
         return std::tie(x.dataSize, x.initialValue, x.initialWord, x.loopbackMode, x.maximumEvents, x.pattern, x.seed,
             x.useDataGenerator);
       };
-      return tie((*this)) == tie(other);
+      return tie(*this) == tie(other);
     }
 };
 
@@ -113,7 +113,7 @@ struct ChannelParameters
       auto tie = [](decltype(other) x) {
         return std::tie(x.ddlHeader, x.dma, x.generator, x.initialResetLevel, x.noRDYRX, x.useFeeAddress);
       };
-      return tie((*this)) == tie(other);
+      return tie(*this) == tie(other);
     }
 };
 

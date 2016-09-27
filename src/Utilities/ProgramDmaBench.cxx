@@ -12,6 +12,7 @@
 #include <queue>
 #include <thread>
 #include <boost/exception/diagnostic_information.hpp>
+#include <boost/lexical_cast.hpp>
 #include "RORC/Parameters.h"
 #include "Utilities/Common.h"
 #include "Utilities/Options.h"
@@ -47,17 +48,13 @@ class ProgramDmaBench: public Program
       int channelNumber = Options::getOptionChannel(map);
       const auto maxTime = std::chrono::seconds(10);
 
-      size_t pageSize = 4*1024;
-      size_t bufferSize = 4*1024*1024;
-      Parameters::Map params = {
-          {"dma_page_size", std::to_string(pageSize)},
-          {"dma_buffer_size", std::to_string(bufferSize)},
-          {"generator_enabled", "true"},
-      };
+      auto params = Options::getOptionsParameterMap(map);
+      size_t pageSize = boost::lexical_cast<size_t>(params.at(Parameters::Keys::dmaPageSize()));
+      params[Parameters::Keys::generatorDataSize()] = std::to_string(pageSize);
 
       // Get master lock on channel
       auto channel = AliceO2::Rorc::ChannelFactory().getMaster(serialNumber, channelNumber, params);
-      channel->stopDma();
+      channel->stopDma(); // Not necessary, but for the benchmark we want to start from a clean slate.
       channel->startDma();
       std::this_thread::sleep_for(std::chrono::microseconds(500)); // XXX See README.md
 
@@ -95,7 +92,7 @@ class ProgramDmaBench: public Program
 
           // Wait for page
           while (!channel->isPageArrived(handle) && !isMaxTimeExceeded() &&!isSigInt()) { ; }
-          //std::this_thread::sleep_for(std::chrono::microseconds(1)); // XXX See README.md
+          //std::this_thread::sleep_for(std::chrono::nanoseconds(1)); // XXX See README.md
 
           // Abort if time is exceeded
           if (isMaxTimeExceeded()) {
@@ -123,7 +120,7 @@ class ProgramDmaBench: public Program
 
           // Wait for page
           while (!channel->isPageArrived(handle) && !isMaxTimeExceeded() && !isSigInt()) { ; }
-          //std::this_thread::sleep_for(std::chrono::microseconds(1)); // XXX See README.md
+          //std::this_thread::sleep_for(std::chrono::nanoseconds(1)); // XXX See README.md
 
           // Abort if time is exceeded
           if (isMaxTimeExceeded()) {
@@ -178,17 +175,18 @@ class ProgramDmaBench: public Program
 
       // Calculate performance
       auto pagesPushed = eventNumbers.size();
-      auto bytesPushed = pagesPushed * pageSize;
+      auto bytesPushed = double(pagesPushed) * double(pageSize);
       auto seconds = std::chrono::duration<double>(endTime - startTime).count();
       auto bytesPerSecond = bytesPushed / seconds;
 
       cout << "### Statistics\n";
       cout << "====================================\n";
-      cout << "Pages pushed   " << pagesPushed << endl;
-      cout << "Bytes pushed   " << bytesPushed << endl;
-      cout << "Seconds        " << seconds << endl;
-      cout << "Bytes/second   " << bytesPerSecond << endl;
-      cout << "GB/second      " << (bytesPerSecond / (1000000000)) << endl;
+      cout << "Pages pushed   " << pagesPushed << '\n';
+      cout << "Bytes pushed   " << bytesPushed << '\n';
+      cout << "Seconds        " << seconds << '\n';
+      cout << "Bytes/s        " << bytesPerSecond << '\n';
+      cout << "GB/s           " << (bytesPerSecond / (1000*1000*1000)) << '\n';
+      cout << "GiB/s          " << (bytesPerSecond / (1024*1024*1024)) << '\n';
       cout << "====================================\n";
     }
 };

@@ -19,6 +19,11 @@ using std::endl;
 
 namespace {
 
+namespace FilesystemType {
+const char* SHARED_MEMORY = "tmpfs";
+const char* HUGEPAGE = "hugetlbfs";
+}
+
 /// Throws if the file system type of the given file/directory is not one of the given valid types
 void assertFileSystemType(const bfs::path& path, const std::set<std::string>& validTypes, const std::string& name)
 {
@@ -126,16 +131,18 @@ void ChannelMaster::constructorCommonPhaseOne()
   }
 
   // Check file system types
-  assertFileSystemType(paths.state().parent_path(), {"tmpfs", "hugetlbfs"}, "shared state");
-  assertFileSystemType(paths.pages().parent_path(), {"hugetlbfs"}, "DMA buffer");
+  {
+    using namespace FilesystemType;
+    assertFileSystemType(paths.state().parent_path(), {SHARED_MEMORY, HUGEPAGE}, "shared state");
+    assertFileSystemType(paths.pages().parent_path(), {HUGEPAGE}, "DMA buffer");
+  }
+
+  // Get lock on shared data
+  resetSmartPtr(mInterprocessLock, paths.lock(), paths.namedMutex());
 
   // Initialize file system objects
-  resetSmartPtr(sharedData, paths.lock(), paths.state(), getSharedDataSize(), getSharedDataName().c_str(),
+  resetSmartPtr(mSharedData, paths.state(), getSharedDataSize(), getSharedDataName().c_str(),
       FileSharedObject::find_or_construct);
-
-  resetSmartPtr(interProcessMutex, bip::open_or_create, paths.namedMutex().c_str());
-
-  resetSmartPtr(mutexGuard, interProcessMutex.get());
 }
 
 void ChannelMaster::constructorCommonPhaseTwo()
@@ -160,7 +167,7 @@ ChannelMaster::ChannelMaster(CardType::type cardType, int serial, int channel, i
   constructorCommonPhaseOne();
 
   // Initialize (if needed) the shared data
-  const auto& sd = sharedData->get();
+  const auto& sd = mSharedData->get();
   const auto& params = sd->getParams();
 
   if (sd->initializationState == InitializationState::INITIALIZED) {
@@ -194,7 +201,7 @@ ChannelMaster::ChannelMaster(CardType::type cardType, int serial, int channel, c
   constructorCommonPhaseOne();
 
   // Initialize (if needed) the shared data
-  const auto& sd = sharedData->get();
+  const auto& sd = mSharedData->get();
   if (sd->initializationState == InitializationState::INITIALIZED) {
     cout << "[LOG] Shared channel state already initialized" << endl;
 
@@ -238,7 +245,7 @@ void ChannelMaster::SharedData::initialize(const ChannelParameters& params)
 // Checks DMA state and forwards call to subclass if necessary
 void ChannelMaster::startDma()
 {
-  const auto& sd = sharedData->get();
+  const auto& sd = mSharedData->get();
 
   if (sd->dmaState == DmaState::UNKNOWN) {
     cout << "Warning: Unknown DMA state" << endl;
@@ -254,7 +261,7 @@ void ChannelMaster::startDma()
 // Checks DMA state and forwards call to subclass if necessary
 void ChannelMaster::stopDma()
 {
-  const auto& sd = sharedData->get();
+  const auto& sd = mSharedData->get();
 
   if (sd->dmaState == DmaState::UNKNOWN) {
     cout << "Warning: Unknown DMA state" << endl;

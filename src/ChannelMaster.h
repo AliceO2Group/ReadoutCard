@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <boost/scoped_ptr.hpp>
+#include <InterprocessLock.h>
 #include "RORC/Parameters.h"
 #include "RORC/ChannelMasterInterface.h"
 #include "RORC/Exception.h"
@@ -17,7 +18,6 @@
 #include "ChannelParameters.h"
 #include "Pda/PdaBar.h"
 #include "Pda/PdaDmaBuffer.h"
-
 #include "ChannelUtilityInterface.h"
 
 namespace AliceO2 {
@@ -159,13 +159,10 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
     const int dmaBuffersPerChannel;
 
     /// Memory mapped data stored in the shared state file
-    boost::scoped_ptr<FileSharedObject::LockedFileSharedObject<SharedData>> sharedData;
+    boost::scoped_ptr<FileSharedObject::FileSharedObject<SharedData>> mSharedData;
 
-    /// Mutex to guard against both interprocess and intraprocess simultaneous access
-    boost::scoped_ptr<boost::interprocess::named_mutex> interProcessMutex;
-
-    /// Lock guard for interprocess_mutex
-    boost::scoped_ptr<FileSharedObject::ThrowingLockGuard<boost::interprocess::named_mutex>> mutexGuard;
+    /// Lock that guards against both inter- and intra-process ownership
+    boost::scoped_ptr<Interprocess::Lock> mInterprocessLock;
 
     /// PDA device objects
     boost::scoped_ptr<RorcDevice> rorcDevice;
@@ -189,12 +186,12 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
 
     SharedData& getSharedData() const
     {
-      return *(sharedData->get());
+      return *(mSharedData->get());
     }
 
     const ChannelParameters& getParams() const
     {
-      return sharedData->get()->getParams();
+      return mSharedData->get()->getParams();
     }
 
     int getChannelNumber() const
