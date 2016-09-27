@@ -1,7 +1,7 @@
-///
 /// \file Program.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Implementation of the Program class.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include <iostream>
 #include <iomanip>

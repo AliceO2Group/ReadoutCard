@@ -1,7 +1,7 @@
-///
 /// \file RorcStatusCode.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Implementation of the Rorc::StatusCode functions.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "RorcStatusCode.h"
 #include <string>
@@ -9,6 +9,7 @@
 
 namespace AliceO2 {
 namespace Rorc {
+namespace StatusCode {
 
 constexpr static int RORC_STATUS_OK = -1;
 constexpr static int RORC_STATUS_ERROR = -1;
@@ -21,7 +22,7 @@ constexpr static int RORC_TIMEOUT = -64;
 constexpr static int RORC_FF_FULL = -128;
 constexpr static int RORC_FF_EMPTY = -256;
 
-std::string getRorcStatusString(int errorCode)
+std::string getString(int statusCode)
 {
   static const std::map<int, std::string> map {
     { RORC_STATUS_OK,       "RORC_STATUS_OK"},
@@ -36,12 +37,13 @@ std::string getRorcStatusString(int errorCode)
     { RORC_FF_EMPTY,        "RORC_FF_EMPTY"},
   };
 
-  if (map.count(errorCode) != 0) {
-    return map.at(errorCode);
+  if (map.count(statusCode) != 0) {
+    return map.at(statusCode);
   } else {
     return std::string("UNKNOWN");
   }
 }
 
+} // namespace StatusCode
 } // namespace Rorc
 } // namespace AliceO2

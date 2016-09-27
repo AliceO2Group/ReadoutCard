@@ -1,7 +1,7 @@
-///
 /// \file TestUtil.cxx
-/// \author Pascal Boeschoten
+/// \brief Test of the Util class
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #define BOOST_TEST_MODULE RORC_TestChannelFactoryUtils
 #define BOOST_TEST_MAIN

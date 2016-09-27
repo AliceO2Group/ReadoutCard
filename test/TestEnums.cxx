@@ -1,7 +1,7 @@
 /// \file TestEnums.cxx
 /// \brief Tests for enums
 ///
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "RORC/RORC.h"
 #include "Utilities/Options.h"

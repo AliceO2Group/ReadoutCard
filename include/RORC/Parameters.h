@@ -1,5 +1,5 @@
-/// \file ParameterMap.h
-/// \brief Definition of the ParameterMap and associated methods
+/// \file Parameters.h
+/// \brief Definition of the RORC Parameters and associated functions
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 

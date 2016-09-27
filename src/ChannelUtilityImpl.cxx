@@ -1,7 +1,7 @@
-///
 /// \file ChannelUtilityImpl.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Implementation of the ChannelUtilityImpl helper functions.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "ChannelUtilityImpl.h"
 #include <iostream>

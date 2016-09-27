@@ -1,5 +1,5 @@
-/// \file ChannelPaths.h
-/// \brief Implementation of ChannelPaths
+/// \file ChannelPaths.cxx
+/// \brief Implementation of the ChannelPaths class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 

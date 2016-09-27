@@ -1,9 +1,7 @@
+/// \file Common.h
+/// \brief Definition of common functions for the RORC utilities.
 ///
-/// \file RorcUtilsCommon.h
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
-///
-/// Some common functions for the RORC utilities.
-///
 
 #pragma once
 

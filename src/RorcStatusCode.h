@@ -1,7 +1,7 @@
-///
 /// \file RorcStatusCode.h
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Definition of the Rorc::StatusCode functions.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #pragma once
 
@@ -9,9 +9,11 @@
 
 namespace AliceO2 {
 namespace Rorc {
+namespace StatusCode {
 
 /// Get a string representing a RORC C API status code
-std::string getRorcStatusString(int rorcStatusCode);
+std::string getString(int statusCode);
 
+} // namespace StatusCode
 } // namespace Rorc
 } // namespace AliceO2

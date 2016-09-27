@@ -1,9 +1,7 @@
-///
 /// \file Util.h
+/// \brief Definition of various useful utilities that don't really belong anywhere in particular
+///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
-///
-/// \brief It's the file with random useful utilities that don't really belong anywhere
-///
 
 #pragma once
 

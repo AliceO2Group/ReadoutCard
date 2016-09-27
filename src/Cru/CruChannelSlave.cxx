@@ -1,5 +1,5 @@
 /// \file CruChannelSlave.cxx
-/// \brief Definition of the CruChannelSlave class.
+/// \brief Implementation of the CruChannelSlave class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 

@@ -1,7 +1,7 @@
 /// \file TestProgramOptions.cxx
-/// \brief Test for program options
+/// \brief Test of the program options handling
 ///
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "RORC/RORC.h"
 #include "Utilities/Options.h"

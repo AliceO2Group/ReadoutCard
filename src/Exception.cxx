@@ -1,7 +1,7 @@
-///
 /// \file Exception.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Implementation of the RORC exceptions and related functions.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "RORC/Exception.h"
 #include <stdexcept>
@@ -129,7 +129,7 @@ std::string to_string(const errinfo_rorc_reset_level& e)
 
 std::string to_string(const errinfo_rorc_status_code& e)
 {
-  return toStringHelper("RORC C API status code", e.value(), getRorcStatusString(e.value()));
+  return toStringHelper("RORC C API status code", e.value(), StatusCode::getString(e.value()));
 }
 
 std::string to_string(const errinfo_rorc_card_type& e)

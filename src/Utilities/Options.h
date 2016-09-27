@@ -1,9 +1,7 @@
-///
 /// \file Options.h
+/// \brief Definition of functions for the RORC utilities to handle program options
+///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
-///
-/// \brief Functions for the RORC utilities to handle program options
-///
 
 #pragma once
 

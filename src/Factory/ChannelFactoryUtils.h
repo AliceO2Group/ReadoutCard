@@ -120,9 +120,9 @@ struct MakeImpl<Result, Tag, Function, Args...>
 ///
 /// Is that worth the ugliness of the template implementation? Good question...
 ///
-/// \param Interface The pointer type of the returned smart_ptr
+/// \tparam Interface The pointer type of the returned smart_ptr
+/// \param serial Serial number of the card
 /// \param dummySerial Serial number that indicates a dummy object should be instantiated
-/// \param serialNumber Serial number of the card
 /// \param args A mapping of CardType to functions that create a shared pointer to an implementation of the Interface.
 ///   Formed by pairs of arguments of a CardTypeTag tag and a callable object. The first mapping must use DummyTag.
 ///   Example:

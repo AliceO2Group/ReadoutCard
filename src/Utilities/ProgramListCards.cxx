@@ -1,9 +1,7 @@
-///
-/// \file RorcUtilsListCards.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
-///
+/// \file ProgramListCards.cxx
 /// \brief Utility that lists the RORC devices on the system
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include <iostream>
 #include <sstream>

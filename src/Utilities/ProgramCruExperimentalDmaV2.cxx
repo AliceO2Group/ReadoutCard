@@ -1,7 +1,7 @@
 /// \file ProgramCruExperimentalDmaV2.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
-///
 /// \brief Based on https://gitlab.cern.ch/alice-cru/pciedma_eval
+///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "Utilities/Program.h"
 #include <iostream>
@@ -583,8 +583,9 @@ class ProgramCruExperimentalDma: public Program
       // Programming the user module to trigger the data emulator
       if (mOptions.setDataEmulatorControl) {
         // Give buffer ready signal
-        bar[Register::BUFFER_READY] = 0x1;
-        bar[Register::DATA_EMULATOR_CONTROL] = 0x1;
+//        bar[Register::BUFFER_READY] = 0x1;
+//        bar[Register::DATA_EMULATOR_CONTROL] = 0x1;
+        bar[Register::DATA_EMULATOR_CONTROL] = 0x3;
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
 
@@ -790,7 +791,9 @@ class ProgramCruExperimentalDma: public Program
         setDescriptor(mPageIndexCounter, mDescriptorCounter);
 
         if (mOptions.advanceDmaPtr) {
-          mPdaBar->getUserspaceAddressU32()[Register::DMA_POINTER] = mDescriptorCounter;
+          auto bar = mPdaBar->getUserspaceAddressU32();
+          bar[Register::DMA_POINTER] = bar[Register::FIRMWARE_DMA_POINTER];
+//          bar[Register::DMA_POINTER] = mDescriptorCounter;
         }
 
         // Add the page to the readout queue
@@ -863,6 +866,10 @@ class ProgramCruExperimentalDma: public Program
         // Read out a page if available
         if (readoutQueueHasPageAvailable()) {
           readoutPage(mQueue.front());
+          if (mReadoutCounter % 4 == 0) {
+            // Indicate to the firmware we've read out 4 pages
+            mPdaBar->getUserspaceAddressU32()[CruRegisterIndex::BUFFER_READY] = 1;
+          }
           mQueue.pop();
         }
       }

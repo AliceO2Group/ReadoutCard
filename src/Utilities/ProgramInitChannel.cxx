@@ -1,9 +1,7 @@
-///
 /// \file ProgramInitChannel.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
-///
 /// \brief Utility that initializes a RORC channel
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include <Utilities/Common.h>
 #include <Utilities/Options.h>

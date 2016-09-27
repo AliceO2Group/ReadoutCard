@@ -1,7 +1,7 @@
 /// \file ProgramAliceLowlevelFrontendServer.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
-///
 /// \brief Utility that starts the ALICE Lowlevel Frontend (ALF) DIM server
+///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "Utilities/Program.h"
 #include <iostream>

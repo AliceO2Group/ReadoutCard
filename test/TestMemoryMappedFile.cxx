@@ -1,7 +1,7 @@
-///
 /// \file TestMemoryMappedFile.cxx
-/// \author Pascal Boeschoten
+/// \brief Test of the MemoryMappedFile class
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "MemoryMappedFile.h"
 

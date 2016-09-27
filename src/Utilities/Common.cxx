@@ -1,7 +1,7 @@
+/// \file Common.cxx
+/// \brief Implementation of common functions for the RORC utilities.
 ///
-/// \file RorcUtilsCommon.cxx
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
-///
 
 #include <Utilities/Common.h>
 #include <iostream>

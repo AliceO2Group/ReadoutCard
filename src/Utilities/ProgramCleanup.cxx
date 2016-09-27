@@ -1,9 +1,7 @@
-///
 /// \file ProgramCleanup.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
-///
 /// \brief Utility that cleans up channel state
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include <iostream>
 #include "Factory/ChannelUtilityFactory.h"

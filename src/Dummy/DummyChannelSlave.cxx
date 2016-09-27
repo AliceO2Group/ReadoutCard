@@ -1,7 +1,7 @@
-///
 /// \file DummyChannelSlave.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Implementation of the DummyChannelSlave class.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "DummyChannelSlave.h"
 #include <iostream>

@@ -1,7 +1,7 @@
-///
 /// \file TestRorcException.cxx
-/// \author Pascal Boeschoten
+/// \brief Test of the Exception class
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "RORC/RORC.h"
 #include "RORC/Exception.h"

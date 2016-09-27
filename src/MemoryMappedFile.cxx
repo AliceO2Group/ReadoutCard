@@ -1,7 +1,7 @@
-///
 /// \file MemoryMappedFile.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Implementation of the MemoryMappedFile class.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "MemoryMappedFile.h"
 #include <fstream>

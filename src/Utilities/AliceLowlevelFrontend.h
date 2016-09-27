@@ -1,7 +1,7 @@
 /// \file AliceLowlevelFrontend.h
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Definition of ALICE Lowlevel Frontend (ALF) & related DIM items
 ///
-/// \brief Implementations for ALICE Lowlevel Frontend (ALF) & related DIM items
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #ifndef ALICEO2_RORC_UTILITIES_ALF_ALICELOWLEVELFRONTEND_H
 #define ALICEO2_RORC_UTILITIES_ALF_ALICELOWLEVELFRONTEND_H

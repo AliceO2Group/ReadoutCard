@@ -1,5 +1,5 @@
 /// \file ChannelPaths.h
-/// \brief Header of ChannelPaths
+/// \brief Definition of the ChannelPaths class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 

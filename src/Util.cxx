@@ -1,7 +1,7 @@
-///
 /// \file Util.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Implementation of various useful utilities that don't really belong anywhere in particular
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "Util.h"
 #include <signal.h>

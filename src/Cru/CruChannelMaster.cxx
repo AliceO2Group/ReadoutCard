@@ -1,5 +1,5 @@
 /// \file CruChannelMaster.cxx
-/// \brief Definition of the CruChannelMaster class.
+/// \brief Implementation of the CruChannelMaster class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 

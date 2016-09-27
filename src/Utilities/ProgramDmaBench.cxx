@@ -1,9 +1,7 @@
-///
 /// \file ProgramDmaBench.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 /// \brief Utility that tests RORC DMA performance
-///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include <iostream>
 #include <iomanip>

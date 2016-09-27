@@ -1,9 +1,7 @@
-///
 /// \file Exception.h
+/// \brief Definition of the RORC exceptions and related functions.
+///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
-///
-/// \brief Exceptions for the RORC module
-///
 
 #pragma once
 

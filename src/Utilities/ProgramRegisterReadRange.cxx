@@ -1,9 +1,7 @@
-///
-/// \file RorcUtilsReadRegisterRange.cxx
+/// \file ProgramRegisterReadRange.cxx
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 /// \brief Utility that reads a range of registers from a RORC
-///
 
 #include "Utilities/Program.h"
 #include "RORC/ChannelFactory.h"

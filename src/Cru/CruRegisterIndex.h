@@ -52,14 +52,22 @@ static constexpr size_t DESCRIPTOR_TABLE_SIZE = 5;
 static constexpr size_t DONE_CONTROL = 6;
 
 /// Control register for the data emulator
-/// Write 0x1 to this register to enable it
+/// bit 0: set to indicate the software is ready for DMA
+/// bit 1: set to start internal data generator
 /// Byte address: 0x200
 static constexpr size_t DATA_EMULATOR_CONTROL = 128;
 
-/// Control register for PCI status
-/// Write 0x1 to this register to signal that the host RAM is available for transfer
+/// Control register for DMA status
+/// Write 0x1 to this register to signal that the software handled the last 4 pages. Note that this is a "pulse" bit,
+/// not a sticky bit. It's used by the firmware to know when the software is ready to accept new data
 /// Byte address: 0x204
 static constexpr size_t BUFFER_READY = 129;
+
+/// Control register for DMA status
+/// The firmware indicates in this register which number the software should write into the DMA_POINTER (0x10) register
+/// to advance the DMA. Note: this will probably become unneeded in the near future.
+/// Byte address: 0x208
+static constexpr size_t FIRMWARE_DMA_POINTER = 130;
 
 /// Some kind of control register
 /// One can "deassert reset for led module" by writing 0xd into this (not sure what that means).
@@ -84,14 +92,14 @@ static constexpr size_t LED_STATUS = 152;
 ///// A read from this register will pop a value from the debug FIFO
 ///// Byte address: 0x270
 //static constexpr size_t DEBUG_FIFO_POP = 156;
+
 /// Board serial number
 /// Byte address: 0x270
 static constexpr size_t SERIAL_NUMBER = 156;
 
-
-/// A write to this register will push a value into the debug FIFO
-/// Byte address: 0x274
-static constexpr size_t DEBUG_FIFO_PUSH = 157;
+///// A write to this register will push a value into the debug FIFO
+///// Byte address: 0x274
+//static constexpr size_t DEBUG_FIFO_PUSH = 157;
 
 /// Register containing compilation info of the firmware
 /// Can be used as a sort of version number

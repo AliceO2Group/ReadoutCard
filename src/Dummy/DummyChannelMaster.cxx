@@ -1,7 +1,7 @@
-///
 /// \file DummyChannelMaster.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Implementation of the DummyChannelMaster class.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "DummyChannelMaster.h"
 #include <iostream>

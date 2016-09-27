@@ -1,7 +1,7 @@
 /// \file TestChannelPaths.cxx
 /// \brief Tests for ChannelPaths
 ///
-/// \author Pascal Boeschoten
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "ChannelPaths.h"
 

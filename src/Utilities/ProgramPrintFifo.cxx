@@ -1,9 +1,7 @@
-///
-/// \file RorcUtilsReadRegister.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
-///
+/// \file ProgramPrintFifo.cxx
 /// \brief Utility that prints the FIFO of a RORC
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 /// TODO Support FIFO file input
 
 #include <iostream>

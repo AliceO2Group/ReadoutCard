@@ -1,7 +1,7 @@
 /// \file ProgramCruExperimentalDma.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
-///
 /// \brief Based on https://gitlab.cern.ch/alice-cru/pciedma_eval
+///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "Utilities/Program.h"
 #include <iostream>

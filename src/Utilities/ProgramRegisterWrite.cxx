@@ -1,9 +1,7 @@
-///
-/// \file RorcUtilsWriteRegister.cxx
+/// \file ProgramRegisterWrite.cxx
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 /// \brief Utility that writes to a register on a RORC
-///
 
 #include "Utilities/Program.h"
 #include "RORC/ChannelFactory.h"
@@ -49,10 +47,10 @@ class ProgramRegisterWrite: public Program
         if (isVerbose()) {
           std::cout << Common::makeRegisterString(address, value);
         } else {
-          std::cout << std::hex << value << '\n';
+          std::cout << "0x" << std::hex << value << '\n';
         }
       } else {
-        std::cout << "Done!\n";
+        std::cout << (isVerbose() ? "Done!\n" : "\n");
       }
     }
 };

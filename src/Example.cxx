@@ -1,9 +1,7 @@
-///
 /// \file Example.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
-///
 /// \brief Example of pushing pages with the RORC C++ interface
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include <iostream>
 #include <vector>

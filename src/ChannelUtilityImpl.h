@@ -1,11 +1,9 @@
-///
 /// \file ChannelUtilityImpl.h
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
-///
-/// \brief Implementations of the ChannelUtilityInterface functions. The functions here are called by the ChannelMaster
+/// \brief Definition of the ChannelUtilityInterface functions. The functions here are called by the ChannelMaster
 ///   objects. While the ChannelMaster inherits directly from the ChannelUtilityInterface, we don't want to pollute them
 ///   with these sorts of functions.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #pragma once
 

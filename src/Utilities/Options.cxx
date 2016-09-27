@@ -1,7 +1,7 @@
-///
 /// \file Options.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Implementation of functions for the RORC utilities to handle program options
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include <sys/ioctl.h>
 #include <iostream>

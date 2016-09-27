@@ -1,7 +1,7 @@
-///
 /// \file ChannelSlave.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Implementation of the ChannelSlave class.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "ChannelSlave.h"
 #include <iostream>

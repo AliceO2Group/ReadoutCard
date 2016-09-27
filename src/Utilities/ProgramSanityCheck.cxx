@@ -1,9 +1,7 @@
-///
-/// \file RorcUtilsSanityCheck.cxx
+/// \file ProgramSanityCheck.cxx
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
 /// \brief Utility that performs some basic sanity checks
-///
 
 #include <iostream>
 #include <thread>

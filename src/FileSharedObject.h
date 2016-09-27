@@ -1,7 +1,7 @@
-///
 /// \file FileSharedObject.h
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Definition of the FileSharedObject class.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #pragma once
 
@@ -25,6 +25,7 @@ namespace FileSharedObject {
 // Without these tags, those two constructors would look the same
 /// Find or construct the shared object
 constexpr struct find_or_construct_tag {} find_or_construct = {};
+
 /// Find the shared object, do not construct
 constexpr struct find_only_tag {} find_only = {};
 
@@ -44,9 +45,8 @@ class FileSharedObject
         const boost::filesystem::path& sharedFilePath,
         const size_t&                  sharedFileSize,
         const std::string&             sharedObjectName,
-        find_or_construct_tag ,
-        Args&&...                      args
-        )
+        find_or_construct_tag          ,
+        Args&&...                      args)
         : sharedFile(boost::interprocess::open_or_create, sharedFilePath.c_str(), sharedFileSize),
           sharedObjectPointer(sharedFile.find_or_construct<T>(sharedObjectName.c_str())(std::forward<Args>(args)...))
     {
@@ -57,12 +57,11 @@ class FileSharedObject
     /// \param sharedFileSize   Size of the shared memory file
     /// \param sharedObjectName Name of the object within the shared memory file
     /// \param tag              Indicates that the shared object should be found only
-    inline FileSharedObject(
+    FileSharedObject(
         const boost::filesystem::path& sharedFilePath,
         const size_t&                  sharedFileSize,
         const std::string&             sharedObjectName,
-        find_only_tag
-        )
+        find_only_tag)
         : sharedFile(boost::interprocess::open_or_create, sharedFilePath.c_str(), sharedFileSize),
           sharedObjectPointer(sharedFile.find<T>(sharedObjectName.c_str()).first)
     {
@@ -73,7 +72,7 @@ class FileSharedObject
       }
     }
 
-    inline T* get()
+    T* get()
     {
       return sharedObjectPointer;
     }

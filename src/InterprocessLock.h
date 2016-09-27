@@ -1,7 +1,7 @@
-/// \file InterprocessMutex.h
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
-///
+/// \file InterprocessLock.h
 /// \brief Definitions for InterprocessMutex class
+///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #ifndef ALICEO2_RORC_INTERPROCESSMUTEX_H_
 #define ALICEO2_RORC_INTERPROCESSMUTEX_H_
@@ -11,7 +11,6 @@
 #include <boost/interprocess/sync/named_mutex.hpp>
 #include <boost/exception/errinfo_errno.hpp>
 #include <boost/filesystem/path.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <boost/scoped_ptr.hpp>
 #include "Util.h"
 
@@ -29,7 +28,6 @@ class Lock
     using NamedMutex = boost::interprocess::named_mutex;
     using FileLock = std::unique_lock<FileMutex>;
     using NamedLock = std::unique_lock<NamedMutex>;
-//    template <typename T> using Scoped = boost::scoped_ptr<T>;
 
     Lock(const boost::filesystem::path& lockFilePath, const std::string& namedMutexName)
     {
@@ -73,8 +71,8 @@ class Lock
   private:
     boost::scoped_ptr<FileMutex> mFileMutex;
     boost::scoped_ptr<NamedMutex> mNamedMutex;
-    std::unique_lock<FileMutex> mFileLock;
-    std::unique_lock<NamedMutex> mNamedLock;
+    FileLock mFileLock;
+    NamedLock mNamedLock;
 };
 
 } // namespace Interprocess

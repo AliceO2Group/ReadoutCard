@@ -1,9 +1,7 @@
-///
 /// \file ProgramCruBlink.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
-///
 /// \brief Utility that blinks the CRU LED
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "Utilities/Program.h"
 #include <iostream>

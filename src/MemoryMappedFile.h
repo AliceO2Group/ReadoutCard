@@ -1,7 +1,8 @@
-///
 /// \file MemoryMappedFile.h
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Definition of the MemoryMappedFile class.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+
 #pragma once
 
 #include <boost/interprocess/file_mapping.hpp>

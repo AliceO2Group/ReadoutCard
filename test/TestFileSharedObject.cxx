@@ -1,7 +1,7 @@
-///
 /// \file TestFileSharedObject.cxx
-/// \author Pascal Boeschoten
+/// \brief Test of the FileSharedObject class
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "FileSharedObject.h"
 

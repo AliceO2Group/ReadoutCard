@@ -1,7 +1,7 @@
+/// \file UtilsDescription.h
+/// \brief Definition of the UtilsDescription class.
 ///
-/// \file RorcUtilsDescription.h
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
-///
 
 #pragma once
 

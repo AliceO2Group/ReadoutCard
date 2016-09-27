@@ -32,7 +32,7 @@ struct CruFifoTable
 
     /// Set the registers of a descriptor entry
     /// \param index FIFO index
-    /// \param pageSize Size of the page in 32-bit words
+    /// \param pageLength Size of the page in 32-bit words
     /// \param sourceAddress Page source address in device memory space
     /// \param destinationAddress Page destination address in device memory space
     void setDescriptor(uint32_t index, uint32_t pageLength, void* sourceAddress, void* destinationAddress)
@@ -63,22 +63,10 @@ struct CruFifoTable
     /// A class representing a CRU descriptor table entry
     struct DescriptorEntry
     {
-        /// Set the registers of the entry
-        /// \param index FIFO index
-        /// \param pageSize Size of the page in 32-bit words
-        /// \param sourceAddress Page address in device memory space
-        /// \param destinationAddress Page address in user memory space
-//        void setEntry(uint32_t index, uint32_t pageLength, void* sourceAddress, void* destinationAddress)
-//        {
-//          setControlRegister(index, pageLength);
-//          setSourceAddress(sourceAddress);
-//          setDestinationAddress(destinationAddress);
-//          setReserved();
-//        }
 
         /// Set the control register
         /// \param index Page index
-        /// \param pageSize Size of the page in 32-bit words
+        /// \param pageLength Size of the page in 32-bit words
         void setControlRegister(uint32_t index, uint32_t pageLength)
         {
 #ifndef NDEBUG

@@ -1,9 +1,7 @@
-///
 /// \file ProgramRegisterRead.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
-///
 /// \brief Utility that reads a register from a RORC
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "RORC/Parameters.h"
 #include "Utilities/Program.h"
@@ -42,7 +40,7 @@ class ProgramRegisterRead: public Program
       if (isVerbose()) {
         std::cout << Common::makeRegisterString(address, value);
       } else {
-        std::cout << std::hex << value << '\n';
+        std::cout << "0x" << std::hex << value << '\n';
       }
     }
 };

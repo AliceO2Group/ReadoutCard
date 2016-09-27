@@ -1,7 +1,7 @@
-///
 /// \file ChannelMaster.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Implementation of the ChannelMaster class.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "ChannelMaster.h"
 #include <iostream>

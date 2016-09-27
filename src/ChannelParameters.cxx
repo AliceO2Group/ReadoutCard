@@ -1,7 +1,7 @@
-///
 /// \file ChannelParameters.cxx
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \brief Implementation of the ChannelParameters class.
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "ChannelParameters.h"
 #include <vector>

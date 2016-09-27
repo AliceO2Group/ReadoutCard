@@ -1,7 +1,7 @@
-///
 /// \file TestChannelFactoryUtils.cxx
-/// \author Pascal Boeschoten
+/// \brief Test of the ChannelFactoryUtils class
 ///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "RORC/CardType.h"
 #include "Factory/ChannelFactoryUtils.h"

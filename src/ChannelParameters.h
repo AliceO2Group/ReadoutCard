@@ -1,5 +1,5 @@
 /// \file ChannelParameters.h
-/// \brief Definition of the ChannelParameters class and associated enums.
+/// \brief Definition of the ChannelParameters class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
