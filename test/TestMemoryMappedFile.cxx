@@ -23,7 +23,6 @@ const std::string badFilePath("/tmp/AliceO2_MemoryMappedFile_Test/12345abcdf/xyz
 const size_t fileSize(4 * 1024);
 
 const std::string testString("HelloTest!");
-const int testInt(0x1234);
 
 BOOST_AUTO_TEST_CASE(MemoryMappedFileTest)
 {
