@@ -7,7 +7,9 @@
 #include <algorithm>
 #include "RORC/CardType.h"
 #include "RORC/Exception.h"
-#include "RorcDevice.h"
+#ifdef ALICEO2_RORC_PDA_ENABLED
+# include "RorcDevice.h"
+#endif
 
 namespace AliceO2 {
 namespace Rorc {
@@ -58,7 +60,7 @@ std::shared_ptr<Interface> channelFactoryHelper(int serialNumber, int dummySeria
     return map.at(cardType)();
   }
 #else
-  return makeDummy();
+  return map.at(CardType::Dummy)();
 #endif
 }
 

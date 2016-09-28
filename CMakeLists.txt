@@ -62,7 +62,6 @@ if(PDA_FOUND)
     include_directories(${PDA_INCLUDE_DIRS})
 else()
     message(WARNING "PDA not found, RORC module will have a dummy implementation only (skip, no error)")
-    return()
 endif(PDA_FOUND)
 
 # DIM
@@ -71,7 +70,6 @@ if(DIM_FOUND)
     include_directories(${DIM_INCLUDE_DIRS})
 else()
     message(WARNING "DIM not found, RORC module's ALF utilities will not be compiled")
-    return()
 endif(DIM_FOUND)
 
 # This sets the include directory for the reference project. This is the -I flag in gcc.

@@ -52,6 +52,9 @@ if(PDA_FOUND)
     Utilities/Common.cxx
     Utilities/Options.cxx
   )
+  set(PDA_LIBRARIES_MAYBE ${PDA_LIBRARIES})
+else()
+  set(PDA_LIBRARIES_MAYBE "")
 endif()
 
 
@@ -62,7 +65,7 @@ endif()
 set(RORC_LIB_NAME rorc)
 add_library(${RORC_LIB_NAME} SHARED ${RORC_LIB_SOURCES})
 target_link_libraries(${RORC_LIB_NAME} 
-  ${PDA_LIBRARIES}
+  ${PDA_LIBRARIES_MAYBE}
   ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
