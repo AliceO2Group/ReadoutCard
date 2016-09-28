@@ -12,7 +12,6 @@
 #include "RORC/ChannelFactory.h"
 #include "RORC/Parameters.h"
 #include "RorcDevice.h"
-#include <Configuration/ConfigurationFactory.h>
 #include <boost/format.hpp>
 #include "RORC/Parameters.h"
 
@@ -50,13 +49,13 @@ class ProgramInitChannel: public Program
     Parameters::Map getParametersFromConfiguration(const std::string& uri, CardType::type cardType,
         int serial, int channel)
     {
-      auto conf = ConfigurationFactory::getConfiguration(uri);
+      auto conf = AliceO2::Configuration::ConfigurationFactory::getConfiguration(uri);
       const auto prefix = b::str(b::format("/RORC/card_%s/serial_%i/channel_%i/parameters/")
           % CardType::toString(cardType) % serial % channel);
 
       Parameters::Map map;
       for (const auto& parameterKey : Parameters::Keys::all()) {
-        std::string value = conf->getString(prefix + parameterKey);
+        std::string value = conf->getString(prefix + parameterKey).value();
         map.emplace(parameterKey, value);
       }
       return map;
