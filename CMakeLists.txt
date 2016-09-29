@@ -51,7 +51,7 @@ find_package(Boost COMPONENTS
 # Other sub-projects
 #link_o2_subproject(InfoLogger)
 #link_o2_subproject(Common)
-#link_o2_subproject(Configuration)
+link_o2_subproject(Configuration)
  
 
 # PDA (Portable Driver Architecture)
