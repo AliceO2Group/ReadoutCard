@@ -34,7 +34,7 @@ class PdaDmaBuffer
     };
     using ScatterGatherVector = std::vector<ScatterGatherEntry>;
 
-    inline const ScatterGatherVector& getScatterGatherList() const
+    const ScatterGatherVector& getScatterGatherList() const
     {
       return mScatterGatherVector;
     }

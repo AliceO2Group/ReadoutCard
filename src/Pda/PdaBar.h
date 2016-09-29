@@ -20,28 +20,28 @@ class PdaBar
     PdaBar();
     PdaBar(PciDevice* pciDevice, int channel);
 
-    inline size_t getBarLength() const
+    size_t getBarLength() const
     {
       return mBarLength;
     }
 
-    inline Bar* getPdaBar() const
+    Bar* getPdaBar() const
     {
       return mPdaBar;
     }
 
-    inline volatile void* getUserspaceAddress() const
+    volatile void* getUserspaceAddress() const
     {
       return mUserspaceAddress;
     }
 
-    inline volatile uint32_t* getUserspaceAddressU32() const
+    volatile uint32_t* getUserspaceAddressU32() const
     {
       return reinterpret_cast<volatile uint32_t*>(mUserspaceAddress);
     }
 
     /// Get reference to register
-    inline volatile uint32_t& operator[](size_t i)
+    volatile uint32_t& operator[](size_t i)
     {
       return getUserspaceAddressU32()[i];
     }

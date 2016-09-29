@@ -35,7 +35,7 @@ struct DmaParameters
     /// even the only option in the future.
     bool useSharedMemory;
 
-    inline bool operator==(const DmaParameters& other) const
+    bool operator==(const DmaParameters& other) const
     {
       auto tie = [](decltype(other) x) {
         return std::tie(x.bufferSize, x.pageSize, x.useSharedMemory);
@@ -74,7 +74,7 @@ struct GeneratorParameters
     /// Length of data written to each page
     size_t dataSize;
 
-    inline bool operator==(const GeneratorParameters& other) const
+    bool operator==(const GeneratorParameters& other) const
     {
       auto tie = [](decltype(other) x) {
         return std::tie(x.dataSize, x.initialValue, x.initialWord, x.loopbackMode, x.maximumEvents, x.pattern, x.seed,
@@ -108,7 +108,7 @@ struct ChannelParameters
     /// Reset level on initialization of channel
     ResetLevel::type initialResetLevel;
 
-    inline bool operator==(const ChannelParameters& other) const
+    bool operator==(const ChannelParameters& other) const
     {
       auto tie = [](decltype(other) x) {
         return std::tie(x.ddlHeader, x.dma, x.generator, x.initialResetLevel, x.noRDYRX, x.useFeeAddress);

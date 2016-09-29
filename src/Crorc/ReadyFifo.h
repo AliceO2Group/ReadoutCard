@@ -26,14 +26,14 @@ union ReadyFifo
         volatile int32_t length;
         volatile int32_t status;
 
-        inline void reset()
+        void reset()
         {
           length = -1;
           status = -1;
         }
     };
 
-    inline void reset()
+    void reset()
     {
       for (auto& e : entries) {
         e.reset();
