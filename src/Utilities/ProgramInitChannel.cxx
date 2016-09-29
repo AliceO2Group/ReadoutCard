@@ -12,8 +12,6 @@
 #include "RORC/ChannelFactory.h"
 #include "RORC/Parameters.h"
 #include "RorcDevice.h"
-#include <boost/format.hpp>
-#include "RORC/Parameters.h"
 
 using namespace AliceO2::Rorc::Utilities;
 using namespace AliceO2::Rorc;
