@@ -8,7 +8,6 @@ set(RORC_LIB_HEADERS
   "${CMAKE_CURRENT_BINARY_DIR}/../include/RORC/Version.h" # Generated header
   ../include/RORC/ChannelFactory.h # Normal header
   ../include/RORC/ChannelMasterInterface.h # Normal header
-  ../include/RORC/ChannelParameters.h # Normal header
   ../include/RORC/ChannelSlaveInterface.h # Normal header
   ../include/RORC/Page.h # Normal header
   ../include/RORC/RORC.h # Normal header
