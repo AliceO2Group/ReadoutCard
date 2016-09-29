@@ -108,8 +108,6 @@ const std::string RANDOM_PAUSES_SWITCH = "randpauses";
 const std::string NO_CHECK_SWITCH = "nocheck";
 const std::string REMOVE_SHARED_MEMORY_SWITCH = "rmshm";
 const std::string RELOAD_KERNEL_MODULE_SWITCH = "reloadkmod";
-const std::string SET_DATA_EMULATOR_CONTROL = "setemucontrol";
-const std::string DONT_ADVANCE_DMA_PTR = "nodmaptr";
 
 const std::string READOUT_ERRORS_PATH = "readout_errors.txt";
 const std::string READOUT_DATA_PATH = "readout_data.txt";
@@ -336,10 +334,7 @@ class ProgramCruExperimentalDma: public Program
               "Remove shared memory after DMA transfer")
           (RELOAD_KERNEL_MODULE_SWITCH.c_str(),
               "Reload kernel module before DMA initialization")
-          (SET_DATA_EMULATOR_CONTROL.c_str(),
-              "Set data emulator control register (0x200) during initialization")
-          (DONT_ADVANCE_DMA_PTR.c_str(),
-              "Don't advance the DMA pointer (0x10), user must do so manually");
+              ;
     }
 
     virtual void run(const boost::program_options::variables_map& map) override
@@ -355,8 +350,6 @@ class ProgramCruExperimentalDma: public Program
       mOptions.errorCheck = !bool(map.count(NO_CHECK_SWITCH));
       mOptions.removeSharedMemory = bool(map.count(REMOVE_SHARED_MEMORY_SWITCH));
       mOptions.reloadKernelModule = bool(map.count(RELOAD_KERNEL_MODULE_SWITCH));
-      mOptions.setDataEmulatorControl = bool(map.count(SET_DATA_EMULATOR_CONTROL));
-      mOptions.advanceDmaPtr = !bool(map.count(DONT_ADVANCE_DMA_PTR));
 
       if (mOptions.fileOutput) {
         mReadoutStream.open(READOUT_DATA_PATH.c_str());
@@ -397,12 +390,6 @@ class ProgramCruExperimentalDma: public Program
         int descriptorIndex; ///< Index for CRU DMA descriptor table
         int pageIndex; ///< Index for mPageAddresses
     };
-
-    /// The data emulator writes to every 8th 32-bit word
-    static constexpr int PATTERN_STRIDE = 8;
-
-    /// Pages are pushed in 4 consecutive patterns, i.e. the data emulator's counter resets every 4 pages
-    static constexpr int PATTERN_SECTIONS = 4;
 
     /// Underlying buffer for the ReadoutQueue
     using QueueBuffer = boost::circular_buffer<Handle>;
@@ -539,8 +526,10 @@ class ProgramCruExperimentalDma: public Program
 
       if (mOptions.resetCard) {
         cout << "Resetting..." << std::flush;
+        bar[Register::RESET_CONTROL] = 0x2;
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         bar[Register::RESET_CONTROL] = 0x1;
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         cout << "done!" << endl;
       }
 
@@ -573,15 +562,6 @@ class ProgramCruExperimentalDma: public Program
       // Note: the sleeps are needed until firmware implements proper "handshakes"
 
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-      // Programming the user module to trigger the data emulator
-      if (mOptions.setDataEmulatorControl) {
-        // Give buffer ready signal
-//        bar[Register::BUFFER_READY] = 0x1;
-//        bar[Register::DATA_EMULATOR_CONTROL] = 0x1;
-        bar[Register::DATA_EMULATOR_CONTROL] = 0x3;
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-      }
 
       // Init temperature sensor
       bar[Register::TEMPERATURE] = 0x1;
@@ -616,19 +596,11 @@ class ProgramCruExperimentalDma: public Program
       // Send command to the DMA engine to write to every status entry, not just the final one
       bar[Register::DONE_CONTROL] = 0x1;
 
-      //cout << "DMA_POINTER = " << mBar[Register::DMA_POINTER] << '\n';
-      // Send command to the DMA engine to point to the last descriptor so we can start with 0
-      bar[Register::DMA_POINTER] = NUM_PAGES - 1;
-
-      // Wait for initial pages
-      if (!waitOnPredicateWithTimeout(std::chrono::milliseconds(100),
-          [&](){ return isSigInt() || mFifoAddress.user->statusEntries[NUM_PAGES - 1].isPageArrived(); })) {
-        BOOST_THROW_EXCEPTION(CruException() << errinfo_rorc_error_message("Timed out waiting for initial pages\n"));
-      }
       mFifoAddress.user->resetStatusEntries();
 
-//      mBar[Register::DMA_POINTER] = 0;
-//      mBar[Register::DMA_POINTER] = NUM_PAGES - 1;
+      // Give buffer ready signal
+      bar[Register::DATA_EMULATOR_CONTROL] = 0x3;
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
       cout << "  Firmware version  " << Utilities::Common::make32hexString(bar[Register::FIRMWARE_COMPILE_INFO]) << '\n';
       cout << "  Serial number     " << Utilities::Common::make32hexString(bar[Register::SERIAL_NUMBER]) << '\n';
@@ -780,26 +752,19 @@ class ProgramCruExperimentalDma: public Program
     void fillReadoutQueue()
     {
       mLastFillSize = 0;
+      // Note: This should be more optimized later, since pages are always pushed in blocks of 4.
       while (shouldPushQueue()) {
-        // Note: for now, we implement the 4 pages per push with a loop. This should be more optimized later.
-        for (int i = 0; i < PAGES_PER_PUSH; ++i) {
-          // Push page
-          setDescriptor(mPageIndexCounter, mDescriptorCounter);
+        // Push page
+        setDescriptor(mPageIndexCounter, mDescriptorCounter);
 
-//          if (mOptions.advanceDmaPtr) {
-//            auto bar = mPdaBar->getUserspaceAddressU32();
-//            bar[Register::DMA_POINTER] = mDescriptorCounter;
-//          }
+        // Add the page to the readout queue
+        mQueue.push(Handle{mDescriptorCounter, mPageIndexCounter});
 
-          // Add the page to the readout queue
-          mQueue.push(Handle{mDescriptorCounter, mPageIndexCounter});
-
-          // Increment counters
-          mDescriptorCounter = (mDescriptorCounter + 1) % NUM_PAGES;
-          mPageIndexCounter = (mPageIndexCounter + 1) % mPageAddresses.size();
-          mPushCounter++;
-          mLastFillSize++;
-        }
+        // Increment counters
+        mDescriptorCounter = (mDescriptorCounter + 1) % NUM_PAGES;
+        mPageIndexCounter = (mPageIndexCounter + 1) % mPageAddresses.size();
+        mPushCounter++;
+        mLastFillSize++;
       }
     }
 
@@ -810,8 +775,6 @@ class ProgramCruExperimentalDma: public Program
 
     void readoutPage(const Handle& handle)
     {
-      mReadoutCounter++;
-
       // Read out to file
       if (mOptions.fileOutput) {
         printToFile(handle);
@@ -819,7 +782,7 @@ class ProgramCruExperimentalDma: public Program
 
       // Data error checking
       if (mOptions.errorCheck) {
-        checkErrors(handle);
+        checkErrors(handle, mReadoutCounter);
       }
 
       // Setting the buffer to the default value after the readout
@@ -827,6 +790,8 @@ class ProgramCruExperimentalDma: public Program
 
       // Reset status entry
       mFifoAddress.user->statusEntries[handle.descriptorIndex].reset();
+
+      mReadoutCounter++;
     }
 
     void runDma()
@@ -953,8 +918,15 @@ class ProgramCruExperimentalDma: public Program
       mReadoutStream << '\n';
     }
 
-    void checkErrors(const Handle& handle)
+    void checkErrors(const Handle& handle, int pageNumber)
     {
+      /// The data emulator writes to every 8th 32-bit word
+      constexpr int PATTERN_STRIDE = 8;
+      /// The data emulator adds an offset of 2, apparently
+      constexpr int PATTERN_OFFSET = 2;
+      /// Pages are pushed in 4 consecutive patterns, i.e. the data emulator's counter resets every 4 pages
+      constexpr int PATTERN_SECTIONS = 4;
+
       uint32_t* page = getPageAddress(handle);
 
       auto reportError = [&](int i, int expectedValue, int actualValue) {
@@ -965,10 +937,9 @@ class ProgramCruExperimentalDma: public Program
         }
       };
 
-      const int section = handle.descriptorIndex % PATTERN_SECTIONS;
       for (int i = 0; i < DMA_PAGE_SIZE_32; i += PATTERN_STRIDE)
       {
-        int expectedValue = section * 256 + i;
+        int expectedValue = pageNumber * 256 + i/8 + PATTERN_OFFSET;
         if (page[i] != expectedValue) {
           reportError(i, expectedValue, page[i]);
         }
@@ -996,8 +967,6 @@ class ProgramCruExperimentalDma: public Program
         bool errorCheck;
         bool removeSharedMemory;
         bool reloadKernelModule;
-        bool setDataEmulatorControl;
-        bool advanceDmaPtr;
     } mOptions;
 
     /// A value of true means no limit on page pushing

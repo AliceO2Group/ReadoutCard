@@ -69,15 +69,9 @@ class ProgramAliceLowlevelFrontendServer: public Program
       int channelNumber = Options::getOptionChannel(map);
       auto channel = AliceO2::Rorc::ChannelFactory().getSlave(serialNumber, channelNumber);
 
-<<<<<<< HEAD
       if (getenv(std::string("DIM_DNS_NODE").c_str()) == nullptr) {
         cout << "Using localhost as DIM DNS node\n";
         putenv(Alf::toCharBuffer("DIM_DNS_NODE=localhost").data());
-=======
-      if (getenv("DIM_DNS_NODE") == nullptr) {
-        cout << "Using localhost as DIM DNS node\n";
-        putenv("DIM_DNS_NODE=localhost");
->>>>>>> RORC: Added prototype DCS DIM server & example client
       }
 
       DimServerStartStopper dimStartStopper;
@@ -104,11 +98,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
     static void assertAddress(uint64_t address)
     {
       if (address < 0x1e8 || address > 0x1fc) {
-<<<<<<< HEAD
         BOOST_THROW_EXCEPTION(Exception()
-=======
-        BOOST_THROW_EXCEPTION(RorcException()
->>>>>>> RORC: Added prototype DCS DIM server & example client
             << errinfo_rorc_error_message("Address out of range"));
       }
     }

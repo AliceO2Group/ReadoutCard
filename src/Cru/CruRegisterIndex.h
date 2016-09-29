@@ -36,7 +36,7 @@ static constexpr size_t STATUS_BASE_CARD_HIGH = 3;
 
 /// Set to number of available pages - 1
 /// Byte address: 0x10
-static constexpr size_t DMA_POINTER = 4;
+static constexpr size_t DMA_POINTER = 4; // Now controlled by firmware
 
 /// Size of the descriptor table
 /// Set to the same as (number of available pages - 1)
@@ -108,6 +108,7 @@ static constexpr size_t FIRMWARE_COMPILE_INFO = 160;
 
 /// Reset control register
 /// Write a 1 to reset the card
+/// Write a 2 to reset data generator counter
 /// Byte address: 0x290
 static constexpr size_t RESET_CONTROL = 164;
 
