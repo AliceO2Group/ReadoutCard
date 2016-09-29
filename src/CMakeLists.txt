@@ -27,6 +27,8 @@ set(RORC_LIB_SOURCES
   MemoryMappedFile.cxx
   ResetLevel.cxx
   RorcStatusCode.cxx
+  Utilities/Common.cxx
+  Utilities/Options.cxx
   Utilities/Program.cxx
   Util.cxx
 )
@@ -49,8 +51,6 @@ if(PDA_FOUND)
     Pda/PdaDevice.cxx
     Pda/PdaDmaBuffer.cxx
     RorcDevice.cxx
-    Utilities/Common.cxx
-    Utilities/Options.cxx
   )
   set(PDA_LIBRARIES_MAYBE ${PDA_LIBRARIES})
 else()
