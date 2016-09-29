@@ -61,13 +61,13 @@ static constexpr size_t DATA_EMULATOR_CONTROL = 128;
 /// Write 0x1 to this register to signal that the software handled the last 4 pages. Note that this is a "pulse" bit,
 /// not a sticky bit. It's used by the firmware to know when the software is ready to accept new data
 /// Byte address: 0x204
-static constexpr size_t BUFFER_READY = 129;
+static constexpr size_t SOFTWARE_BUFFER_READY = 129;
 
-/// Control register for DMA status
-/// The firmware indicates in this register which number the software should write into the DMA_POINTER (0x10) register
-/// to advance the DMA. Note: this will probably become unneeded in the near future.
-/// Byte address: 0x208
-static constexpr size_t FIRMWARE_DMA_POINTER = 130;
+///// Control register for DMA status
+///// The firmware indicates in this register which number the software should write into the DMA_POINTER (0x10) register
+///// to advance the DMA. Note: this will probably become unneeded in the near future.
+///// Byte address: 0x208
+//static constexpr size_t FIRMWARE_DMA_POINTER = 130; // No longer needed
 
 /// Some kind of control register
 /// One can "deassert reset for led module" by writing 0xd into this (not sure what that means).

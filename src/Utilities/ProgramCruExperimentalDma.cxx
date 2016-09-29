@@ -417,7 +417,7 @@ class ProgramCruExperimentalDma: public Program
       mBar[Register::DMA_POINTER] = NUM_PAGES - 1;
 
       // make buffer ready signal
-      mBar[Register::BUFFER_READY] = 0x1;
+      mBar[Register::SOFTWARE_BUFFER_READY] = 0x1;
 
       // Programming the user module to trigger the data emulator
       mBar[Register::DATA_EMULATOR_CONTROL] = 0x1;

@@ -52,7 +52,8 @@ namespace {
 
 constexpr std::chrono::milliseconds DISPLAY_INTERVAL(10);
 
-constexpr int FIFO_ENTRIES = 4;
+/// Amount of pages to push at a time
+constexpr int PAGES_PER_PUSH = 4;
 
 /// DMA addresses must be 32-byte aligned
 constexpr uint64_t DMA_ALIGNMENT = 32;
@@ -64,7 +65,7 @@ constexpr int DMA_PAGE_SIZE = 8 * 1024;
 constexpr int DMA_PAGE_SIZE_32 = DMA_PAGE_SIZE / 4;
 
 constexpr int NUM_OF_BUFFERS = 32;
-
+constexpr int FIFO_ENTRIES = 4;
 constexpr int NUM_PAGES = FIFO_ENTRIES * NUM_OF_BUFFERS;
 
 /// Two 2MiB hugepage. Should be enough...
@@ -368,7 +369,6 @@ class ProgramCruExperimentalDma: public Program
       mLogStream << "# Time " << time << "\n";
 
       cout << "Initializing" << endl;
-      initPatterns();
       initDma();
 
       cout << "Starting temperature monitor" << endl;
@@ -403,12 +403,6 @@ class ProgramCruExperimentalDma: public Program
 
     /// Pages are pushed in 4 consecutive patterns, i.e. the data emulator's counter resets every 4 pages
     static constexpr int PATTERN_SECTIONS = 4;
-
-    /// Length of a data emulator pattern
-    static constexpr int PATTERN_LENGTH = DMA_PAGE_SIZE_32 / PATTERN_STRIDE;
-
-    /// Array for a data emulator pattern
-    using DataPattern = std::array<int, PATTERN_LENGTH>;
 
     /// Underlying buffer for the ReadoutQueue
     using QueueBuffer = boost::circular_buffer<Handle>;
@@ -787,23 +781,25 @@ class ProgramCruExperimentalDma: public Program
     {
       mLastFillSize = 0;
       while (shouldPushQueue()) {
-        // Push page
-        setDescriptor(mPageIndexCounter, mDescriptorCounter);
+        // Note: for now, we implement the 4 pages per push with a loop. This should be more optimized later.
+        for (int i = 0; i < PAGES_PER_PUSH; ++i) {
+          // Push page
+          setDescriptor(mPageIndexCounter, mDescriptorCounter);
 
-        if (mOptions.advanceDmaPtr) {
-          auto bar = mPdaBar->getUserspaceAddressU32();
-          bar[Register::DMA_POINTER] = bar[Register::FIRMWARE_DMA_POINTER];
-//          bar[Register::DMA_POINTER] = mDescriptorCounter;
+//          if (mOptions.advanceDmaPtr) {
+//            auto bar = mPdaBar->getUserspaceAddressU32();
+//            bar[Register::DMA_POINTER] = mDescriptorCounter;
+//          }
+
+          // Add the page to the readout queue
+          mQueue.push(Handle{mDescriptorCounter, mPageIndexCounter});
+
+          // Increment counters
+          mDescriptorCounter = (mDescriptorCounter + 1) % NUM_PAGES;
+          mPageIndexCounter = (mPageIndexCounter + 1) % mPageAddresses.size();
+          mPushCounter++;
+          mLastFillSize++;
         }
-
-        // Add the page to the readout queue
-        mQueue.push(Handle{mDescriptorCounter, mPageIndexCounter});
-
-        // Increment counters
-        mDescriptorCounter = (mDescriptorCounter + 1) % NUM_PAGES;
-        mPageIndexCounter = (mPageIndexCounter + 1) % mPageAddresses.size();
-        mPushCounter++;
-        mLastFillSize++;
       }
     }
 
@@ -866,9 +862,9 @@ class ProgramCruExperimentalDma: public Program
         // Read out a page if available
         if (readoutQueueHasPageAvailable()) {
           readoutPage(mQueue.front());
-          if (mReadoutCounter % 4 == 0) {
+          if (mReadoutCounter % PAGES_PER_PUSH == 0) {
             // Indicate to the firmware we've read out 4 pages
-            mPdaBar->getUserspaceAddressU32()[CruRegisterIndex::BUFFER_READY] = 1;
+            mPdaBar->getUserspaceAddressU32()[CruRegisterIndex::SOFTWARE_BUFFER_READY] = 0x1;
           }
           mQueue.pop();
         }
@@ -957,29 +953,6 @@ class ProgramCruExperimentalDma: public Program
       mReadoutStream << '\n';
     }
 
-    void initPatterns()
-    {
-      mDataPatterns.clear();
-      mDataPatterns.resize(PATTERN_SECTIONS);
-
-      for (int section = 0; section < PATTERN_SECTIONS; ++section) {
-        // For the first section, the first number is 0, and the count starts on the second number
-        const bool first = (section == 0);
-
-        auto& pattern = mDataPatterns.at(section);
-
-        if (first) {
-          pattern[0] = 0;
-        }
-
-        int expectedValue = first ? 0 : section * 256 - 1;
-        for (int i = 0; i < PATTERN_LENGTH; ++i)
-        {
-          pattern[i] = expectedValue++;
-        }
-      }
-    }
-
     void checkErrors(const Handle& handle)
     {
       uint32_t* page = getPageAddress(handle);
@@ -993,22 +966,12 @@ class ProgramCruExperimentalDma: public Program
       };
 
       const int section = handle.descriptorIndex % PATTERN_SECTIONS;
-
-      // For the first section, the first number is 0, and the count starts on the second number
-      const bool first = (section == 0);
-      const int start = first ? PATTERN_STRIDE : 0;
-
-      if (first && (page[0] != 0)) {
-        reportError(0, 0, page[0]);
-      }
-
-      int expectedValue = first ? 0 : section * 256 - 1;
-      for (int i = start; i < DMA_PAGE_SIZE_32; i += PATTERN_STRIDE)
+      for (int i = 0; i < DMA_PAGE_SIZE_32; i += PATTERN_STRIDE)
       {
+        int expectedValue = section * 256 + i;
         if (page[i] != expectedValue) {
           reportError(i, expectedValue, page[i]);
         }
-        expectedValue++;
       }
     }
 
@@ -1097,9 +1060,6 @@ class ProgramCruExperimentalDma: public Program
         TimePoint next; ///< Next pause at this time
         std::chrono::milliseconds length; ///< Next pause has this length
     } mRandomPauses;
-
-    /// Contains data emulator patterns (currently unused...)
-    std::vector<DataPattern> mDataPatterns;
 
     /// Set when the DMA loop must be stopped (e.g. SIGINT, max temperature reached)
     bool mDmaLoopBreak = false;
