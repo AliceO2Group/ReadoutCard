@@ -100,14 +100,15 @@ constexpr int PAUSE_LENGTH_MIN = 1;
 constexpr int PAUSE_LENGTH_MAX = 500;
 
 const std::string RESET_SWITCH = "reset";
-const std::string TO_FILE_SWITCH = "tofile";
+const std::string TO_FILE_SWITCH = "to-file";
 const std::string PAGES_SWITCH = "pages";
-const std::string INTERRUPT_SWITCH = "interrupts";
-const std::string DISPLAY_FIFO_SWITCH = "showfifo";
-const std::string RANDOM_PAUSES_SWITCH = "randpauses";
-const std::string NO_CHECK_SWITCH = "nocheck";
-const std::string REMOVE_SHARED_MEMORY_SWITCH = "rmshm";
-const std::string RELOAD_KERNEL_MODULE_SWITCH = "reloadkmod";
+const std::string DISPLAY_FIFO_SWITCH = "show-fifo";
+const std::string RANDOM_PAUSE_SOFTWARE_SWITCH = "rand-pause-sw";
+const std::string RANDOM_PAUSE_FIRMWARE_SWITCH = "rand-pause-fw";
+const std::string NO_CHECK_SWITCH = "no-errorcheck";
+const std::string REMOVE_SHARED_MEMORY_SWITCH = "rm-sharedmem";
+const std::string RELOAD_KERNEL_MODULE_SWITCH = "reload-kmod";
+const std::string RESYNC_DATA_GENERATOR_COUNTER = "resync-counter";
 
 const std::string READOUT_ERRORS_PATH = "readout_errors.txt";
 const std::string READOUT_DATA_PATH = "readout_data.txt";
@@ -127,77 +128,6 @@ bool waitOnPredicateWithTimeout(Duration duration, Predicate predicate)
 }
 
 /// Test class for PCI interrupts
-class PdaIsr
-{
-  public:
-
-    PdaIsr(PciDevice* pciDevice)
-        : mPciDevice(pciDevice)
-    {
-      cout << "\nREGISTERING ISR\n";
-      if (PciDevice_registerISR(pciDevice, PdaIsr::serviceRoutine, nullptr) != PDA_SUCCESS) {
-        BOOST_THROW_EXCEPTION(CruException() << errinfo_rorc_error_message("Failed to register ISR"));
-      }
-    }
-
-    ~PdaIsr()
-    {
-      cout << "\nDE-REGISTERING ISR\n";
-      PciDevice_killISR(mPciDevice);
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
-
-    std::cv_status waitOnInterrupt(const std::chrono::milliseconds& timeout)
-    {
-#ifdef USE_BUSY_INTERRUPT_WAIT
-      auto start = std::chrono::high_resolution_clock::now();
-
-      int i = 0;
-      while (((std::chrono::high_resolution_clock::now() - start) < timeout) && i < 10000000) {
-        i++;
-//        bool expectedValue = true;
-//        bool newValue = false;
-//        if (mInterruptFlag.compare_exchange_strong(expectedValue, newValue) == true) {
-        if (mInterruptFlag.load() == true) {
-          return std::cv_status::no_timeout;
-        }
-      }
-      return std::cv_status::timeout;
-#else
-      // Wait until the interrupt flag is true, and atomically swap its value to false
-      std::unique_lock<decltype(mMutex)> lock(mMutex);
-      return mConditionVariable.wait_for(lock, timeout);
-#endif
-    }
-
-  private:
-
-#ifdef USE_BUSY_INTERRUPT_WAIT
-    static std::atomic<bool> mInterruptFlag;
-#else
-    static std::mutex mMutex;
-    static std::condition_variable mConditionVariable;
-#endif
-    PciDevice* mPciDevice;
-
-    static uint64_t serviceRoutine(uint32_t, const void*)
-    {
-#ifdef USE_BUSY_INTERRUPT_WAIT
-      mInterruptFlag = true;
-#else
-      //cout << "GOT INTERRUPT: " << sequenceNumber << endl;
-      std::unique_lock<decltype(mMutex)> lock(mMutex);
-      mConditionVariable.notify_all();
-#endif
-      return 0;
-    }
-};
-#ifdef USE_BUSY_INTERRUPT_WAIT
-std::atomic<bool> PdaIsr::mInterruptFlag;
-#else
-std::mutex PdaIsr::mMutex;
-std::condition_variable PdaIsr::mConditionVariable;
-#endif
 
 /// Manages a temperature monitor thread
 class TemperatureMonitor {
@@ -322,18 +252,20 @@ class ProgramCruExperimentalDma: public Program
           (PAGES_SWITCH.c_str(),
               boost::program_options::value<int64_t>(&mOptions.maxPages)->default_value(PAGES_DEFAULT),
               "Amount of pages to transfer. Give <= 0 for infinite.")
-          (INTERRUPT_SWITCH.c_str(),
-              "Use PCIe interrupts")
           (DISPLAY_FIFO_SWITCH.c_str(),
               "Display FIFO status (wide terminal recommended)")
-          (RANDOM_PAUSES_SWITCH.c_str(),
-              "Randomly pause readout (to test robustness)")
+          (RANDOM_PAUSE_SOFTWARE_SWITCH.c_str(),
+              "Randomly pause readout using software method")
+          (RANDOM_PAUSE_FIRMWARE_SWITCH.c_str(),
+              "Randomly pause readout using firmware method")
           (NO_CHECK_SWITCH.c_str(),
               "Skip error checking")
           (REMOVE_SHARED_MEMORY_SWITCH.c_str(),
               "Remove shared memory after DMA transfer")
           (RELOAD_KERNEL_MODULE_SWITCH.c_str(),
               "Reload kernel module before DMA initialization")
+          (RESYNC_DATA_GENERATOR_COUNTER.c_str(),
+              "Automatically resynchronize data generator counter in case of errors")
               ;
     }
 
@@ -344,12 +276,15 @@ class ProgramCruExperimentalDma: public Program
       mInfinitePages = (mOptions.maxPages <= 0);
       mOptions.resetCard = bool(map.count(RESET_SWITCH));
       mOptions.fileOutput = bool(map.count(TO_FILE_SWITCH));
-      mOptions.interrupts = bool(map.count(INTERRUPT_SWITCH));
       mOptions.fifoDisplay = bool(map.count(DISPLAY_FIFO_SWITCH));
-      mOptions.randomPauses = bool(map.count(RANDOM_PAUSES_SWITCH));
+      mOptions.randomPauseSoft = bool(map.count(RANDOM_PAUSE_SOFTWARE_SWITCH));
+      mOptions.randomPauseFirm = bool(map.count(RANDOM_PAUSE_FIRMWARE_SWITCH));
       mOptions.errorCheck = !bool(map.count(NO_CHECK_SWITCH));
       mOptions.removeSharedMemory = bool(map.count(REMOVE_SHARED_MEMORY_SWITCH));
       mOptions.reloadKernelModule = bool(map.count(RELOAD_KERNEL_MODULE_SWITCH));
+      mOptions.resyncCounter = bool(map.count(RESYNC_DATA_GENERATOR_COUNTER));
+
+//      mDataGeneratorOffsetNeedsResync = mOptions.resyncCounter;
 
       if (mOptions.fileOutput) {
         mReadoutStream.open(READOUT_DATA_PATH.c_str());
@@ -517,9 +452,6 @@ class ProgramCruExperimentalDma: public Program
       }
       Util::resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), channel);
       auto bar = mPdaBar->getUserspaceAddressU32();
-      if (mOptions.interrupts) {
-        Util::resetSmartPtr(mPdaIsr, mRorcDevice->getPciDevice());
-      }
       Util::resetSmartPtr(mMappedFilePages, DMA_BUFFER_PAGES_PATH.c_str(), DMA_BUFFER_PAGES_SIZE);
       Util::resetSmartPtr(mBufferPages, mRorcDevice->getPciDevice(), mMappedFilePages->getAddress(),
           mMappedFilePages->getSize(), BUFFER_INDEX_PAGES);
@@ -729,17 +661,36 @@ class ProgramCruExperimentalDma: public Program
       }
 
       // Random pauses
-      if (mOptions.randomPauses) {
+      if (mOptions.randomPauseSoft) {
         auto now = std::chrono::high_resolution_clock::now();
-        if (now >= mRandomPauses.next) {
-          cout << b::format("pause %-4d ms ...") % mRandomPauses.length.count() << std::flush;
-          std::this_thread::sleep_for(mRandomPauses.length);
-          cout << " resume\n";
+        if (now >= mRandomPausesSoft.next) {
+          cout << b::format("sw pause %-4d ms\n") % mRandomPausesSoft.length.count() << std::flush;
+          std::this_thread::sleep_for(mRandomPausesSoft.length);
 
           // Schedule next pause
           auto now = std::chrono::high_resolution_clock::now();
-          mRandomPauses.next = now + std::chrono::milliseconds(getRandRange(NEXT_PAUSE_MIN, NEXT_PAUSE_MAX));
-          mRandomPauses.length = std::chrono::milliseconds(getRandRange(PAUSE_LENGTH_MIN, PAUSE_LENGTH_MAX));
+          mRandomPausesSoft.next = now + std::chrono::milliseconds(getRandRange(NEXT_PAUSE_MIN, NEXT_PAUSE_MAX));
+          mRandomPausesSoft.length = std::chrono::milliseconds(getRandRange(PAUSE_LENGTH_MIN, PAUSE_LENGTH_MAX));
+        }
+      }
+
+      // Random pauses
+      if (mOptions.randomPauseFirm) {
+        auto now = std::chrono::high_resolution_clock::now();
+        if (!mRandomPausesFirm.isPaused && now >= mRandomPausesFirm.next) {
+          cout << b::format("fw pause %-4d ms\n") % mRandomPausesFirm.length.count() << std::flush;
+          mPdaBar->getUserspaceAddressU32()[CruRegisterIndex::DATA_EMULATOR_CONTROL] = 0x1;
+          mRandomPausesFirm.isPaused = true;
+        }
+
+        if (mRandomPausesFirm.isPaused && now >= mRandomPausesFirm.next + mRandomPausesFirm.length) {
+          mPdaBar->getUserspaceAddressU32()[CruRegisterIndex::DATA_EMULATOR_CONTROL] = 0x3;
+          mRandomPausesFirm.isPaused = false;
+
+          // Schedule next pause
+          auto now = std::chrono::high_resolution_clock::now();
+          mRandomPausesFirm.next = now + std::chrono::milliseconds(getRandRange(NEXT_PAUSE_MIN, NEXT_PAUSE_MAX));
+          mRandomPausesFirm.length = std::chrono::milliseconds(getRandRange(PAUSE_LENGTH_MIN, PAUSE_LENGTH_MAX));
         }
       }
     }
@@ -782,7 +733,14 @@ class ProgramCruExperimentalDma: public Program
 
       // Data error checking
       if (mOptions.errorCheck) {
-        checkErrors(handle, mReadoutCounter);
+        if (mDataGeneratorCounter == -1) {
+          // First page initializes the counter
+          mDataGeneratorCounter = getPageAddress(handle)[0];
+        }
+        if (hasErrors(handle, mDataGeneratorCounter) && mOptions.resyncCounter) {
+          // Resync the counter
+          mDataGeneratorCounter = getPageAddress(handle)[0];
+        }
       }
 
       // Setting the buffer to the default value after the readout
@@ -791,6 +749,7 @@ class ProgramCruExperimentalDma: public Program
       // Reset status entry
       mFifoAddress.user->statusEntries[handle.descriptorIndex].reset();
 
+      mDataGeneratorCounter += 256;
       mReadoutCounter++;
     }
 
@@ -918,7 +877,7 @@ class ProgramCruExperimentalDma: public Program
       mReadoutStream << '\n';
     }
 
-    void checkErrors(const Handle& handle, int pageNumber)
+    bool hasErrors(const Handle& handle, int counter)
     {
       /// The data emulator writes to every 8th 32-bit word
       constexpr int PATTERN_STRIDE = 8;
@@ -928,6 +887,8 @@ class ProgramCruExperimentalDma: public Program
       constexpr int PATTERN_SECTIONS = 4;
 
       uint32_t* page = getPageAddress(handle);
+
+      int64_t errorCountBefore = mErrorCount;
 
       auto reportError = [&](int i, int expectedValue, int actualValue) {
         mErrorCount++;
@@ -939,11 +900,14 @@ class ProgramCruExperimentalDma: public Program
 
       for (int i = 0; i < DMA_PAGE_SIZE_32; i += PATTERN_STRIDE)
       {
-        int expectedValue = pageNumber * 256 + i/8 + PATTERN_OFFSET;
+        int expectedValue = counter + i/8;
         if (page[i] != expectedValue) {
           reportError(i, expectedValue, page[i]);
+          return true;
         }
       }
+
+      return mErrorCount > errorCountBefore;
     }
 
     void resetPage(uint32_t* page)
@@ -961,12 +925,13 @@ class ProgramCruExperimentalDma: public Program
         int64_t maxPages; ///< Limit of pages to push
         bool fileOutput;
         bool resetCard;
-        bool interrupts;
         bool fifoDisplay;
-        bool randomPauses;
+        bool randomPauseSoft;
+        bool randomPauseFirm;
         bool errorCheck;
         bool removeSharedMemory;
         bool reloadKernelModule;
+        bool resyncCounter;
     } mOptions;
 
     /// A value of true means no limit on page pushing
@@ -984,7 +949,6 @@ class ProgramCruExperimentalDma: public Program
     // PDA, buffer, etc stuff
     b::scoped_ptr<RorcDevice> mRorcDevice;
     b::scoped_ptr<Pda::PdaBar> mPdaBar;
-    b::scoped_ptr<PdaIsr> mPdaIsr;
     b::scoped_ptr<MemoryMappedFile> mMappedFilePages;
     b::scoped_ptr<Pda::PdaDmaBuffer> mBufferPages;
 
@@ -996,6 +960,12 @@ class ProgramCruExperimentalDma: public Program
 
     /// Amount of pages read out
     int64_t mReadoutCounter = 0;
+
+    /// Data generator counter
+    int64_t mDataGeneratorCounter = -1;
+
+    /// Indicates the offset should be reinitialized at the next page
+//    bool mDataGeneratorOffsetNeedsResync = true;
 
     /// Indicates current descriptor
     int mDescriptorCounter = 0;
@@ -1024,11 +994,18 @@ class ProgramCruExperimentalDma: public Program
     /// Addresses of pages
     std::vector<PageAddress> mPageAddresses;
 
-    struct RandomPauses
+    struct RandomPausesSoft
     {
         TimePoint next; ///< Next pause at this time
         std::chrono::milliseconds length; ///< Next pause has this length
-    } mRandomPauses;
+    } mRandomPausesSoft;
+
+    struct RandomPausesFirm
+    {
+        bool isPaused = false;
+        TimePoint next; ///< Next pause at this time
+        std::chrono::milliseconds length; ///< Next pause has this length
+    } mRandomPausesFirm;
 
     /// Set when the DMA loop must be stopped (e.g. SIGINT, max temperature reached)
     bool mDmaLoopBreak = false;
