@@ -60,7 +60,7 @@ int ChannelMaster::getBufferId(int index) const
     BOOST_THROW_EXCEPTION(InvalidParameterException()
         << errinfo_rorc_error_message("Tried to get buffer ID using invalid index"));
   }
-  return channelNumber * dmaBuffersPerChannel + index;
+  return mChannelNumber * dmaBuffersPerChannel + index;
 }
 
 ChannelParameters ChannelMaster::convertParameters(const Parameters::Map& map)
@@ -123,7 +123,7 @@ void ChannelMaster::constructorCommonPhaseOne()
 {
   using namespace Util;
 
-  ChannelPaths paths(cardType, serialNumber, channelNumber);
+  ChannelPaths paths(mCardType, mSerialNumber, mChannelNumber);
 
   // Create parent directories
   for (const auto& p : {paths.pages(), paths.state(), paths.fifo(), paths.lock()}) {
@@ -149,19 +149,19 @@ void ChannelMaster::constructorCommonPhaseTwo()
 {
   using Util::resetSmartPtr;
 
-  resetSmartPtr(rorcDevice, serialNumber);
+  resetSmartPtr(mRorcDevice, mSerialNumber);
 
-  resetSmartPtr(pdaBar, rorcDevice->getPciDevice(), channelNumber);
+  resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), mChannelNumber);
 
-  resetSmartPtr(mappedFilePages, ChannelPaths(cardType, serialNumber, channelNumber).pages().c_str(),
+  resetSmartPtr(mMappedFilePages, ChannelPaths(mCardType, mSerialNumber, mChannelNumber).pages().c_str(),
       getSharedData().getParams().dma.bufferSize);
 
-  resetSmartPtr(bufferPages, rorcDevice->getPciDevice(), mappedFilePages->getAddress(), mappedFilePages->getSize(),
+  resetSmartPtr(mBufferPages, mRorcDevice->getPciDevice(), mMappedFilePages->getAddress(), mMappedFilePages->getSize(),
       getBufferId(BUFFER_INDEX_PAGES));
 }
 
 ChannelMaster::ChannelMaster(CardType::type cardType, int serial, int channel, int additionalBuffers)
-    : cardType(cardType), serialNumber(serial), channelNumber(channel), dmaBuffersPerChannel(
+    : mCardType(cardType), mSerialNumber(serial), mChannelNumber(channel), dmaBuffersPerChannel(
         additionalBuffers + CHANNELMASTER_DMA_BUFFERS_PER_CHANNEL)
 {
   constructorCommonPhaseOne();
@@ -170,13 +170,13 @@ ChannelMaster::ChannelMaster(CardType::type cardType, int serial, int channel, i
   const auto& sd = mSharedData->get();
   const auto& params = sd->getParams();
 
-  if (sd->initializationState == InitializationState::INITIALIZED) {
+  if (sd->mInitializationState == InitializationState::INITIALIZED) {
     validateParameters(params);
   }
   else {
-    ChannelPaths paths(cardType, serialNumber, channelNumber);
+    ChannelPaths paths(cardType, mSerialNumber, mChannelNumber);
     BOOST_THROW_EXCEPTION(SharedStateException()
-        << errinfo_rorc_error_message(sd->initializationState == InitializationState::UNINITIALIZED ?
+        << errinfo_rorc_error_message(sd->mInitializationState == InitializationState::UNINITIALIZED ?
             "Uninitialized shared data state" : "Unknown shared data state")
         << errinfo_rorc_shared_lock_file(paths.lock().string())
         << errinfo_rorc_shared_state_file(paths.state().string())
@@ -193,7 +193,7 @@ ChannelMaster::ChannelMaster(CardType::type cardType, int serial, int channel, i
 
 ChannelMaster::ChannelMaster(CardType::type cardType, int serial, int channel, const Parameters::Map& paramMap,
     int additionalBuffers)
-    : cardType(cardType), serialNumber(serial), channelNumber(channel), dmaBuffersPerChannel(
+    : mCardType(cardType), mSerialNumber(serial), mChannelNumber(channel), dmaBuffersPerChannel(
         additionalBuffers + CHANNELMASTER_DMA_BUFFERS_PER_CHANNEL)
 {
   auto params = convertParameters(paramMap);
@@ -202,7 +202,7 @@ ChannelMaster::ChannelMaster(CardType::type cardType, int serial, int channel, c
 
   // Initialize (if needed) the shared data
   const auto& sd = mSharedData->get();
-  if (sd->initializationState == InitializationState::INITIALIZED) {
+  if (sd->mInitializationState == InitializationState::INITIALIZED) {
     cout << "[LOG] Shared channel state already initialized" << endl;
 
     if (sd->getParams() == params) {
@@ -216,7 +216,7 @@ ChannelMaster::ChannelMaster(CardType::type cardType, int serial, int channel, c
           << errinfo_rorc_serial_number(serial));
     }
   } else {
-    if (sd->initializationState == InitializationState::UNKNOWN) {
+    if (sd->mInitializationState == InitializationState::UNKNOWN) {
       cout << "[LOG] Warning: unknown shared channel state. Proceeding with initialization" << endl;
     }
     cout << "[LOG] Initializing shared channel state" << endl;
@@ -231,15 +231,15 @@ ChannelMaster::~ChannelMaster()
 }
 
 ChannelMaster::SharedData::SharedData()
-    : dmaState(DmaState::UNKNOWN), initializationState(InitializationState::UNKNOWN)
+    : mDmaState(DmaState::UNKNOWN), mInitializationState(InitializationState::UNKNOWN)
 {
 }
 
 void ChannelMaster::SharedData::initialize(const ChannelParameters& params)
 {
-  this->params = params;
-  initializationState = InitializationState::INITIALIZED;
-  dmaState = DmaState::STOPPED;
+  this->mParams = params;
+  mInitializationState = InitializationState::INITIALIZED;
+  mDmaState = DmaState::STOPPED;
 }
 
 // Checks DMA state and forwards call to subclass if necessary
@@ -247,15 +247,15 @@ void ChannelMaster::startDma()
 {
   const auto& sd = mSharedData->get();
 
-  if (sd->dmaState == DmaState::UNKNOWN) {
+  if (sd->mDmaState == DmaState::UNKNOWN) {
     cout << "Warning: Unknown DMA state" << endl;
-  } else if (sd->dmaState == DmaState::STARTED) {
+  } else if (sd->mDmaState == DmaState::STARTED) {
     cout << "Warning: DMA already started. Ignoring startDma() call" << endl;
   } else {
     deviceStartDma();
   }
 
-  sd->dmaState = DmaState::STARTED;
+  sd->mDmaState = DmaState::STARTED;
 }
 
 // Checks DMA state and forwards call to subclass if necessary
@@ -263,27 +263,27 @@ void ChannelMaster::stopDma()
 {
   const auto& sd = mSharedData->get();
 
-  if (sd->dmaState == DmaState::UNKNOWN) {
+  if (sd->mDmaState == DmaState::UNKNOWN) {
     cout << "Warning: Unknown DMA state" << endl;
-  } else if (sd->dmaState == DmaState::STOPPED) {
+  } else if (sd->mDmaState == DmaState::STOPPED) {
     cout << "Warning: DMA already stopped. Ignoring stopDma() call" << endl;
   } else {
     deviceStopDma();
   }
 
-  sd->dmaState = DmaState::STOPPED;
+  sd->mDmaState = DmaState::STOPPED;
 }
 
 uint32_t ChannelMaster::readRegister(int index)
 {
   // TODO Range check
-  return pdaBar->getUserspaceAddressU32()[index];
+  return mPdaBar->getUserspaceAddressU32()[index];
 }
 
 void ChannelMaster::writeRegister(int index, uint32_t value)
 {
   // TODO Range check
-  pdaBar->getUserspaceAddressU32()[index] = value;
+  mPdaBar->getUserspaceAddressU32()[index] = value;
 }
 
 } // namespace Rorc

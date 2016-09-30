@@ -37,20 +37,20 @@ const std::vector<DeviceType> deviceTypes = {
 };
 
 RorcDevice::RorcDevice(int serialNumber)
-    : pciId({"unknown", "unknown"}), serialNumber(-1), cardType(CardType::Unknown)
+    : mPciId({"unknown", "unknown"}), mSerialNumber(-1), mCardType(CardType::Unknown)
 {
   try {
     for (const auto& type : deviceTypes) {
-      Util::resetSmartPtr(pdaDevice, type.pciId);
-      auto pciDevices = pdaDevice->getPciDevices();
+      Util::resetSmartPtr(mPdaDevice, type.pciId);
+      auto pciDevices = mPdaDevice->getPciDevices();
 
       for (const auto& pciDevice : pciDevices) {
         int serial = type.getSerial(pciDevice);
         if (serial == serialNumber) {
-          this->pciDevice = pciDevice;
-          this->cardType = type.cardType;
-          this->serialNumber = serial;
-          this->pciId = type.pciId;
+          this->mPciDevice = pciDevice;
+          this->mCardType = type.cardType;
+          this->mSerialNumber = serial;
+          this->mPciId = type.pciId;
           return;
         }
       }

@@ -47,8 +47,8 @@ class FileSharedObject
         const std::string&             sharedObjectName,
         find_or_construct_tag          ,
         Args&&...                      args)
-        : sharedFile(boost::interprocess::open_or_create, sharedFilePath.c_str(), sharedFileSize),
-          sharedObjectPointer(sharedFile.find_or_construct<T>(sharedObjectName.c_str())(std::forward<Args>(args)...))
+        : mSharedFile(boost::interprocess::open_or_create, sharedFilePath.c_str(), sharedFileSize),
+          mSharedObjectPointer(mSharedFile.find_or_construct<T>(sharedObjectName.c_str())(std::forward<Args>(args)...))
     {
     }
 
@@ -62,10 +62,10 @@ class FileSharedObject
         const size_t&                  sharedFileSize,
         const std::string&             sharedObjectName,
         find_only_tag)
-        : sharedFile(boost::interprocess::open_or_create, sharedFilePath.c_str(), sharedFileSize),
-          sharedObjectPointer(sharedFile.find<T>(sharedObjectName.c_str()).first)
+        : mSharedFile(boost::interprocess::open_or_create, sharedFilePath.c_str(), sharedFileSize),
+          mSharedObjectPointer(mSharedFile.find<T>(sharedObjectName.c_str()).first)
     {
-      if (sharedObjectPointer == nullptr) {
+      if (mSharedObjectPointer == nullptr) {
         BOOST_THROW_EXCEPTION(SharedObjectNotFoundException()
             << errinfo_rorc_filename(sharedFilePath.string())
             << errinfo_rorc_shared_object_name(sharedObjectName));
@@ -74,12 +74,14 @@ class FileSharedObject
 
     T* get()
     {
-      return sharedObjectPointer;
+      return mSharedObjectPointer;
     }
 
   private:
-    boost::interprocess::managed_mapped_file sharedFile;
-    T* sharedObjectPointer;
+    boost::interprocess::managed_mapped_file mSharedFile;
+
+    /// Because the managed_mapped_file's find_or_construct() is not trivial, we "cache" the result in this pointer
+    T* mSharedObjectPointer;
 };
 
 } // namespace FileSharedObject

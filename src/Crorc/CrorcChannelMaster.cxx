@@ -274,7 +274,7 @@ PageHandle CrorcChannelMaster::pushNextPage()
 {
   const auto& csd = mCrorcSharedData->get();
 
-  if (getSharedData().dmaState != DmaState::STARTED) {
+  if (getSharedData().mDmaState != DmaState::STARTED) {
     BOOST_THROW_EXCEPTION(CrorcException()
         << errinfo_rorc_error_message("Not in required DMA state")
         << errinfo_rorc_possible_causes({"startDma() not called"}));

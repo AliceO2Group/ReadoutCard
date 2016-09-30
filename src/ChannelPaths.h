@@ -44,9 +44,9 @@ class ChannelPaths
 
   private:
 
-    const CardType::type cardType;
-    const int serial;
-    const int channel;
+    const CardType::type mCardType;
+    const int mSerial;
+    const int mChannel;
 };
 
 } // namespace Rorc

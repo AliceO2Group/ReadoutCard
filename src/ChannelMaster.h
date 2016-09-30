@@ -129,29 +129,29 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
 
         const ChannelParameters& getParams() const
         {
-          return params;
+          return mParams;
         }
 
         InitializationState::type getState() const
         {
-          return initializationState;
+          return mInitializationState;
         }
 
-        DmaState::type dmaState;
-        InitializationState::type initializationState;
+        DmaState::type mDmaState;
+        InitializationState::type mInitializationState;
 
       private:
-        ChannelParameters params;
+        ChannelParameters mParams;
     };
 
     /// Card type ofthe device
-    const CardType::type cardType;
+    const CardType::type mCardType;
 
     /// Serial number of the device
-    const int serialNumber;
+    const int mSerialNumber;
 
     /// DMA channel number
-    const int channelNumber;
+    const int mChannelNumber;
 
     /// Amount of DMA buffers per channel that will be registered to PDA
     /// Is the sum of the buffers needed by this class and by the subclass. The subclass indicates its need in the
@@ -165,19 +165,19 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
     boost::scoped_ptr<Interprocess::Lock> mInterprocessLock;
 
     /// PDA device objects
-    boost::scoped_ptr<RorcDevice> rorcDevice;
+    boost::scoped_ptr<RorcDevice> mRorcDevice;
 
     /// PDA BAR object
-    boost::scoped_ptr<Pda::PdaBar> pdaBar;
+    boost::scoped_ptr<Pda::PdaBar> mPdaBar;
 
     /// Memory mapped file containing pages used for DMA transfer destination
-    boost::scoped_ptr<MemoryMappedFile> mappedFilePages;
+    boost::scoped_ptr<MemoryMappedFile> mMappedFilePages;
 
     /// PDA DMABuffer object for the pages
-    boost::scoped_ptr<Pda::PdaDmaBuffer> bufferPages;
+    boost::scoped_ptr<Pda::PdaDmaBuffer> mBufferPages;
 
     /// Addresses to pages in the DMA buffer
-    std::vector<PageAddress> pageAddresses;
+    std::vector<PageAddress> mPageAddresses;
 
     void constructorCommonPhaseOne();
     void constructorCommonPhaseTwo();
@@ -196,42 +196,42 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
 
     int getChannelNumber() const
     {
-      return channelNumber;
+      return mChannelNumber;
     }
 
     int getSerialNumber() const
     {
-      return serialNumber;
+      return mSerialNumber;
     }
 
     volatile uint32_t* getBarUserspace() const
     {
-      return pdaBar->getUserspaceAddressU32();;
+      return mPdaBar->getUserspaceAddressU32();;
     }
 
     const Pda::PdaDmaBuffer& getBufferPages() const
     {
-      return *(bufferPages.get());
+      return *(mBufferPages.get());
     }
 
     const MemoryMappedFile& getMappedFilePages() const
     {
-      return *(mappedFilePages.get());
+      return *(mMappedFilePages.get());
     }
 
     std::vector<PageAddress>& getPageAddresses()
     {
-      return pageAddresses;
+      return mPageAddresses;
     }
 
     const Pda::PdaBar& getPdaBar() const
     {
-      return *(pdaBar.get());
+      return *(mPdaBar.get());
     }
 
     const RorcDevice& getRorcDevice() const
     {
-      return *(rorcDevice.get());
+      return *(mRorcDevice.get());
     }
 
 };

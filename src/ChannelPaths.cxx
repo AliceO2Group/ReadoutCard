@@ -17,33 +17,33 @@ namespace b = boost;
 namespace bfs = boost::filesystem;
 
 ChannelPaths::ChannelPaths(CardType::type cardType, int serial, int channel)
-    : cardType(cardType), serial(serial), channel(channel)
+    : mCardType(cardType), mSerial(serial), mChannel(channel)
 {
 }
 
 bfs::path ChannelPaths::pages() const
 {
-  return b::str(b::format(FORMAT) % DIR_HUGEPAGES % CardType::toString(cardType) % serial % channel % "pages");
+  return b::str(b::format(FORMAT) % DIR_HUGEPAGES % CardType::toString(mCardType) % mSerial % mChannel % "pages");
 }
 
 bfs::path ChannelPaths::state() const
 {
-  return b::str(b::format(FORMAT) % DIR_SHAREDMEM % CardType::toString(cardType) % serial % channel % "state");
+  return b::str(b::format(FORMAT) % DIR_SHAREDMEM % CardType::toString(mCardType) % mSerial % mChannel % "state");
 }
 
 bfs::path ChannelPaths::lock() const
 {
-  return b::str(b::format(FORMAT) % DIR_SHAREDMEM % CardType::toString(cardType) % serial % channel % ".lock");
+  return b::str(b::format(FORMAT) % DIR_SHAREDMEM % CardType::toString(mCardType) % mSerial % mChannel % ".lock");
 }
 
 bfs::path ChannelPaths::fifo() const
 {
-  return b::str(b::format(FORMAT) % DIR_SHAREDMEM % CardType::toString(cardType) % serial % channel % "ready_fifo");
+  return b::str(b::format(FORMAT) % DIR_SHAREDMEM % CardType::toString(mCardType) % mSerial % mChannel % "ready_fifo");
 }
 
 std::string ChannelPaths::namedMutex() const
 {
-  return b::str(b::format("card%s_serial_%i_channel_%i_mutex") % cardType % serial % channel);
+  return b::str(b::format("card%s_serial_%i_channel_%i_mutex") % mCardType % mSerial % mChannel);
 }
 
 } // namespace Rorc

@@ -28,16 +28,16 @@ class ChannelSlave: public ChannelSlaveInterface
   protected:
 
     /// Serial number of the device
-    int serialNumber;
+    int mSerialNumber;
 
     /// DMA channel number
-    int channelNumber;
+    int mChannelNumber;
 
     /// PDA device objects
-    RorcDevice rorcDevice;
+    RorcDevice mRorcDevice;
 
     /// PDA BAR object
-    Pda::PdaBar pdaBar;
+    Pda::PdaBar mPdaBar;
 };
 
 } // namespace Rorc

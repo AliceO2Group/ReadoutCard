@@ -23,22 +23,22 @@ class RorcDevice
 
     const PciId& getPciId() const
     {
-      return pciId;
+      return mPciId;
     }
 
     CardType::type getCardType() const
     {
-      return cardType;
+      return mCardType;
     }
 
     int getSerialNumber() const
     {
-      return serialNumber;
+      return mSerialNumber;
     }
 
     PciDevice* getPciDevice() const
     {
-      return pciDevice;
+      return mPciDevice;
     }
 
     struct CardDescriptor
@@ -55,11 +55,11 @@ class RorcDevice
     static std::vector<CardDescriptor> findSystemDevices(int serialNumber);
 
   private:
-    boost::scoped_ptr<Pda::PdaDevice> pdaDevice;
-    PciDevice* pciDevice;
-    PciId pciId;
-    int serialNumber;
-    CardType::type cardType;
+    boost::scoped_ptr<Pda::PdaDevice> mPdaDevice;
+    PciDevice* mPciDevice;
+    PciId mPciId;
+    int mSerialNumber;
+    CardType::type mCardType;
 };
 
 } // namespace Rorc

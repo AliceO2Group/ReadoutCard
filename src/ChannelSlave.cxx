@@ -10,10 +10,10 @@ namespace AliceO2 {
 namespace Rorc {
 
 ChannelSlave::ChannelSlave(int serial, int channel)
- : serialNumber(serial),
-   channelNumber(channel),
-   rorcDevice(serial),
-   pdaBar(rorcDevice.getPciDevice(), channel)
+ : mSerialNumber(serial),
+   mChannelNumber(channel),
+   mRorcDevice(serial),
+   mPdaBar(mRorcDevice.getPciDevice(), channel)
 {
 }
 
@@ -25,14 +25,14 @@ uint32_t ChannelSlave::readRegister(int index)
 {
   // TODO Range check
   // TODO Access restriction
-  return pdaBar[index];
+  return mPdaBar[index];
 }
 
 void ChannelSlave::writeRegister(int index, uint32_t value)
 {
   // TODO Range check
   // TODO Access restriction
-  pdaBar[index] = value;
+  mPdaBar[index] = value;
 }
 
 } // namespace Rorc
