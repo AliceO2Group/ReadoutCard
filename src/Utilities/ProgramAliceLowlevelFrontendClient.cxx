@@ -9,6 +9,7 @@
 #include <chrono>
 #include <boost/optional/optional_io.hpp>
 #include <dim/dic.hxx>
+#include "RORC/Exception.h"
 #include "AliceLowlevelFrontend.h"
 
 using std::cout;
@@ -57,8 +58,8 @@ class ProgramAliceLowlevelFrontendClient: public Program
       int channelNumber = Options::getOptionChannel(map);
 
       if (getenv(std::string("DIM_DNS_NODE").c_str()) == nullptr) {
-        cout << "Using localhost as DIM DNS node\n";
-        putenv(Alf::toCharBuffer("DIM_DNS_NODE=localhost").data());
+        BOOST_THROW_EXCEPTION(AliceO2::Rorc::Exception()
+            << AliceO2::Rorc::errinfo_rorc_error_message("Environment variable 'DIM_DNS_NODE' not set"));
       }
 
       Alf::ServiceNames names(serialNumber, channelNumber);

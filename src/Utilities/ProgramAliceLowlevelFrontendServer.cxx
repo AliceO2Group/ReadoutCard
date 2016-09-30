@@ -70,8 +70,8 @@ class ProgramAliceLowlevelFrontendServer: public Program
       auto channel = AliceO2::Rorc::ChannelFactory().getSlave(serialNumber, channelNumber);
 
       if (getenv(std::string("DIM_DNS_NODE").c_str()) == nullptr) {
-        cout << "Using localhost as DIM DNS node\n";
-        putenv(Alf::toCharBuffer("DIM_DNS_NODE=localhost").data());
+        BOOST_THROW_EXCEPTION(Exception()
+            << errinfo_rorc_error_message("Environment variable 'DIM_DNS_NODE' not set"));
       }
 
       DimServerStartStopper dimStartStopper;
