@@ -65,7 +65,7 @@ class ProgramInitChannel: public Program
       auto channelNumber = Options::getOptionChannel(map);
       auto cardsFound = RorcDevice::findSystemDevices();
 
-      for (auto& card : cardsFound) {
+      for (const auto& card : cardsFound) {
         if (serialNumber == card.serialNumber) {
           cout << "Found card, initializing channel..." << endl;
 

@@ -153,7 +153,7 @@ std::shared_ptr<Interface> makeChannel(int serial, int dummySerial, Args&&... ar
 
     if (cardsFound.size() > 1) {
       std::vector<PciId> pciIds;
-      for (auto& c : cardsFound) { pciIds.push_back(c.pciId); }
+      for (const auto& c : cardsFound) { pciIds.push_back(c.pciId); }
       BOOST_THROW_EXCEPTION(Exception()
           << errinfo_rorc_error_message("Found more than one card with the given serial number")
           << errinfo_rorc_pci_ids(pciIds));

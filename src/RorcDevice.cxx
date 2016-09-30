@@ -40,11 +40,11 @@ RorcDevice::RorcDevice(int serialNumber)
     : pciId({"unknown", "unknown"}), serialNumber(-1), cardType(CardType::Unknown)
 {
   try {
-    for (auto& type : deviceTypes) {
+    for (const auto& type : deviceTypes) {
       Util::resetSmartPtr(pdaDevice, type.pciId);
       auto pciDevices = pdaDevice->getPciDevices();
 
-      for (auto& pciDevice : pciDevices) {
+      for (const auto& pciDevice : pciDevices) {
         int serial = type.getSerial(pciDevice);
         if (serial == serialNumber) {
           this->pciDevice = pciDevice;
@@ -72,11 +72,11 @@ std::vector<RorcDevice::CardDescriptor> RorcDevice::findSystemDevices()
 {
   std::vector<RorcDevice::CardDescriptor> cards;
 
-  for (auto& type : deviceTypes) {
+  for (const auto& type : deviceTypes) {
     Pda::PdaDevice pdaDevice(type.pciId);
     auto pciDevices = pdaDevice.getPciDevices();
 
-    for (auto& pciDevice : pciDevices) {
+    for (const auto& pciDevice : pciDevices) {
       RorcDevice::CardDescriptor cd;
       cd.cardType = type.cardType;
       cd.serialNumber = type.getSerial(pciDevice);
@@ -91,11 +91,11 @@ std::vector<RorcDevice::CardDescriptor> RorcDevice::findSystemDevices(int serial
 {
   std::vector<RorcDevice::CardDescriptor> cards;
   try {
-    for (auto& type : deviceTypes) {
+    for (const auto& type : deviceTypes) {
       Pda::PdaDevice pdaDevice(type.pciId);
       auto pciDevices = pdaDevice.getPciDevices();
 
-      for (auto& pciDevice : pciDevices) {
+      for (const auto& pciDevice : pciDevices) {
         int serial = type.getSerial(pciDevice);
         if (serial == serialNumber) {
           RorcDevice::CardDescriptor cd;

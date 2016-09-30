@@ -80,7 +80,7 @@ std::string to_string(const errinfo_rorc_possible_causes& e)
   else {
     std::ostringstream oss;
     oss << "[Possible causes]:\n";
-    for (auto& string : e.value()) {
+    for (const auto& string : e.value()) {
       oss << "  o  " << string << "\n";
     }
     return oss.str();

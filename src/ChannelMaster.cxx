@@ -126,7 +126,7 @@ void ChannelMaster::constructorCommonPhaseOne()
   ChannelPaths paths(cardType, serialNumber, channelNumber);
 
   // Create parent directories
-  for (auto& p : {paths.pages(), paths.state(), paths.fifo(), paths.lock()}) {
+  for (const auto& p : {paths.pages(), paths.state(), paths.fifo(), paths.lock()}) {
     makeParentDirectories(p);
   }
 

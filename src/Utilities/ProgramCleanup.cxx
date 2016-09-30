@@ -82,7 +82,7 @@ class ProgramCleanup: public Program
             throw;
           }
 
-          for (auto& p : paths) {
+          for (const auto& p : paths) {
             cout << "Deleting file '" << p << "'\n";
             boost::filesystem::remove(p.c_str());
           }

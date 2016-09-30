@@ -87,7 +87,7 @@ void CruChannelMaster::constructorCommon()
   }
 
   // Initialize the page addresses
-  for (auto& entry : getBufferPages().getScatterGatherList()) {
+  for (const auto& entry : getBufferPages().getScatterGatherList()) {
     // How many pages fit in this SGL entry
     int64_t pagesInSglEntry = entry.size / params.dma.pageSize;
 

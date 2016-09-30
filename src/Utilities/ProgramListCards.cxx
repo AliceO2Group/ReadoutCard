@@ -49,7 +49,7 @@ class ProgramListCards: public Program
 
       int i = 0;
       bool foundUninitialized = false;
-      for (auto& card : cardsFound) {
+      for (const auto& card : cardsFound) {
         // Try to figure out the firmware version
         std::string firmware = "n/a";
         try {

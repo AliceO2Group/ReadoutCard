@@ -92,7 +92,7 @@ void CrorcChannelMaster::constructorCommon()
   auto& params = getParams();
 
   // Initialize the page addresses
-  for (auto& entry : getBufferPages().getScatterGatherList()) {
+  for (const auto& entry : getBufferPages().getScatterGatherList()) {
     if (entry.size < (2l * 1024l * 1024l)) {
       BOOST_THROW_EXCEPTION(CrorcException()
           << errinfo_rorc_error_message("Unsupported configuration: DMA scatter-gather entry size less than 2 MiB")
