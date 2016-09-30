@@ -139,7 +139,7 @@ po::variables_map getVariablesMap(int argc, char** argv, const po::options_descr
 
 void addOptionHelp(po::options_description& optionsDescription)
 {
-  optionsDescription.add_options()("help,h", "Produce help message");
+  optionsDescription.add_options()("help", "Produce help message");
 }
 
 void addOptionChannel(po::options_description& optionsDescription)
