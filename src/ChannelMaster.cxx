@@ -237,7 +237,7 @@ ChannelMaster::SharedData::SharedData()
 
 void ChannelMaster::SharedData::initialize(const ChannelParameters& params)
 {
-  this->mParams = params;
+  mParams = params;
   mInitializationState = InitializationState::INITIALIZED;
   mDmaState = DmaState::STOPPED;
 }
@@ -276,7 +276,6 @@ void ChannelMaster::stopDma()
 
 uint32_t ChannelMaster::readRegister(int index)
 {
-  // TODO Range check
   return mPdaBar->getUserspaceAddressU32()[index];
 }
 

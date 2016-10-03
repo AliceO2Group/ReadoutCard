@@ -728,7 +728,7 @@ class ProgramCruExperimentalDma: public Program
     {
       // Read out to file
       if (mOptions.fileOutput) {
-        printToFile(handle);
+        printToFile(handle, mReadoutCounter);
       }
 
       // Data error checking
@@ -737,7 +737,7 @@ class ProgramCruExperimentalDma: public Program
           // First page initializes the counter
           mDataGeneratorCounter = getPageAddress(handle)[0];
         }
-        if (hasErrors(handle, mDataGeneratorCounter) && mOptions.resyncCounter) {
+        if (hasErrors(handle, mReadoutCounter, mDataGeneratorCounter) && mOptions.resyncCounter) {
           // Resync the counter
           mDataGeneratorCounter = getPageAddress(handle)[0];
         }
@@ -863,10 +863,10 @@ class ProgramCruExperimentalDma: public Program
       std::copy(source, source + DMA_PAGE_SIZE_32, target);
     }
 
-    void printToFile(const Handle& handle)
+    void printToFile(const Handle& handle, int64_t pageNumber)
     {
       uint32_t* page = getPageAddress(handle);
-      mReadoutStream << "Event #" << handle.pageIndex << '\n';
+      mReadoutStream << "Event #" << pageNumber << " Buffer #" << handle.pageIndex << '\n';
       int perLine = 8;
       for (int i = 0; i < DMA_PAGE_SIZE_32; i+= perLine) {
         for (int j = 0; j < perLine; ++j) {
@@ -877,30 +877,30 @@ class ProgramCruExperimentalDma: public Program
       mReadoutStream << '\n';
     }
 
-    bool hasErrors(const Handle& handle, int counter)
+    bool hasErrors(const Handle& handle, int64_t eventNumber, uint32_t counter)
     {
       /// The data emulator writes to every 8th 32-bit word
-      constexpr int PATTERN_STRIDE = 8;
+      constexpr uint32_t PATTERN_STRIDE = 8;
       /// The data emulator adds an offset of 2, apparently
-      constexpr int PATTERN_OFFSET = 2;
+      constexpr uint32_t PATTERN_OFFSET = 2;
       /// Pages are pushed in 4 consecutive patterns, i.e. the data emulator's counter resets every 4 pages
-      constexpr int PATTERN_SECTIONS = 4;
+      constexpr uint32_t PATTERN_SECTIONS = 4;
 
       uint32_t* page = getPageAddress(handle);
 
       int64_t errorCountBefore = mErrorCount;
 
-      auto reportError = [&](int i, int expectedValue, int actualValue) {
+      auto reportError = [&](int i, uint32_t expectedValue, uint32_t actualValue) {
         mErrorCount++;
         if (isVerbose() && mErrorCount < MAX_RECORDED_ERRORS) {
-          mErrorStream << "Error @ page:" << handle.pageIndex << " i:" << i << " exp:" << expectedValue
-              << " val:" << actualValue << '\n';
+          mErrorStream << "Error @ event:" << eventNumber << " page:" << handle.pageIndex << " i:" << i << " exp:"
+              << expectedValue << " val:" << actualValue << '\n';
         }
       };
 
-      for (int i = 0; i < DMA_PAGE_SIZE_32; i += PATTERN_STRIDE)
+      for (uint32_t i = 0; i < DMA_PAGE_SIZE_32; i += PATTERN_STRIDE)
       {
-        int expectedValue = counter + i/8;
+        uint32_t expectedValue = counter + i/8;
         if (page[i] != expectedValue) {
           reportError(i, expectedValue, page[i]);
           return true;
