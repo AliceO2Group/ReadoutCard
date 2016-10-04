@@ -36,7 +36,7 @@ static constexpr size_t STATUS_BASE_CARD_HIGH = 3;
 
 /// Set to number of available pages - 1
 /// Byte address: 0x10
-static constexpr size_t DMA_POINTER = 4; // Now controlled by firmware
+[[gnu::deprecated]] static constexpr size_t DMA_POINTER = 4; // Now controlled by firmware
 
 /// Size of the descriptor table
 /// Set to the same as (number of available pages - 1)
@@ -52,22 +52,26 @@ static constexpr size_t DESCRIPTOR_TABLE_SIZE = 5;
 static constexpr size_t DONE_CONTROL = 6;
 
 /// Control register for the data emulator
-/// bit 0: set to indicate the software is ready for DMA
-/// bit 1: set to start internal data generator
+/// * bit 0: set to indicate the software is ready for DMA
+/// * bit 1: set to start internal data generator
 /// Byte address: 0x200
 static constexpr size_t DATA_EMULATOR_CONTROL = 128;
 
-/// Control register for DMA status
-/// Write 0x1 to this register to signal that the software handled the last 4 pages. Note that this is a "pulse" bit,
-/// not a sticky bit. It's used by the firmware to know when the software is ready to accept new data
+/// Command register for DMA
+/// * Write 0x1 to this register to signal that the software handled the last 4 pages. Note that this is a "pulse" bit,
+///   not a sticky bit. It's used by the firmware to know when the software is ready to accept new data
+/// * Write 0x2 to inject an error
 /// Byte address: 0x204
 static constexpr size_t SOFTWARE_BUFFER_READY = 129;
 
-///// Control register for DMA status
-///// The firmware indicates in this register which number the software should write into the DMA_POINTER (0x10) register
-///// to advance the DMA. Note: this will probably become unneeded in the near future.
-///// Byte address: 0x208
-//static constexpr size_t FIRMWARE_DMA_POINTER = 130; // No longer needed
+/// Configuration register for DMA
+/// Byte address: 0x208
+static constexpr size_t DMA_CONFIGURATION = 130;
+
+///// Control register for DMA FIFO pointer
+///// Write the DMA pointer to this register, i.e. the index of the highest available descriptor
+///// Byte address: 0x???
+//static constexpr size_t FIRMWARE_DMA_POINTER = ???;
 
 /// Some kind of control register
 /// One can "deassert reset for led module" by writing 0xd into this (not sure what that means).
@@ -107,16 +111,16 @@ static constexpr size_t SERIAL_NUMBER = 156;
 static constexpr size_t FIRMWARE_COMPILE_INFO = 160;
 
 /// Reset control register
-/// Write a 1 to reset the card
-/// Write a 2 to reset data generator counter
+/// * Write a 1 to reset the card
+/// * Write a 2 to reset data generator counter
 /// Byte address: 0x290
 static constexpr size_t RESET_CONTROL = 164;
 
 /// Temperature control & read register
-/// Write 0x1 to reset
-/// Write 0x0 to disable the reset
-/// Write 0x2 to enable the temperature sampling
-/// Read to get the temperature value
+/// * Write 0x1 to reset
+/// * Write 0x0 to disable the reset
+/// * Write 0x2 to enable the temperature sampling
+/// * Read to get the temperature value
 /// Byte address: 0x320
 static constexpr size_t TEMPERATURE = 200;
 

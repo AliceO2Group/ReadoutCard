@@ -15,6 +15,7 @@ struct GeneratorPattern
 {
   enum type
   {
+    Unknown = 0,
     Constant = 1,
     Alternating = 2,
     Flying0 = 3,

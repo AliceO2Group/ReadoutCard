@@ -99,6 +99,9 @@ constexpr int PAUSE_LENGTH_MIN = 1;
 /// Maximum random pause in milliseconds
 constexpr int PAUSE_LENGTH_MAX = 500;
 
+/// The data emulator writes to every 8th 32-bit word
+constexpr uint32_t PATTERN_STRIDE = 8;
+
 const std::string RESET_SWITCH = "reset";
 const std::string TO_FILE_SWITCH = "to-file";
 const std::string PAGES_SWITCH = "pages";
@@ -300,7 +303,7 @@ class ProgramCruExperimentalDma: public Program
       initDma();
 
       cout << "Starting temperature monitor" << endl;
-      mTemperatureMonitor.start(&(mPdaBar->getUserspaceAddressU32()[Register::TEMPERATURE]));
+      mTemperatureMonitor.start(&(bar(Register::TEMPERATURE)));
 
       cout << "Starting DMA test" << endl;
       runDma();
@@ -451,16 +454,15 @@ class ProgramCruExperimentalDma: public Program
         printDeviceInfo(mRorcDevice->getPciDevice());
       }
       Util::resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), channel);
-      auto bar = mPdaBar->getUserspaceAddressU32();
       Util::resetSmartPtr(mMappedFilePages, DMA_BUFFER_PAGES_PATH.c_str(), DMA_BUFFER_PAGES_SIZE);
       Util::resetSmartPtr(mBufferPages, mRorcDevice->getPciDevice(), mMappedFilePages->getAddress(),
           mMappedFilePages->getSize(), BUFFER_INDEX_PAGES);
 
       if (mOptions.resetCard) {
         cout << "Resetting..." << std::flush;
-        bar[Register::RESET_CONTROL] = 0x2;
+        bar(Register::RESET_CONTROL) = 0x2;
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        bar[Register::RESET_CONTROL] = 0x1;
+        bar(Register::RESET_CONTROL) = 0x1;
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         cout << "done!" << endl;
       }
@@ -496,11 +498,11 @@ class ProgramCruExperimentalDma: public Program
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
       // Init temperature sensor
-      bar[Register::TEMPERATURE] = 0x1;
+      bar(Register::TEMPERATURE) = 0x1;
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
-      bar[Register::TEMPERATURE] = 0x0;
+      bar(Register::TEMPERATURE) = 0x0;
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
-      bar[Register::TEMPERATURE] = 0x2;
+      bar(Register::TEMPERATURE) = 0x2;
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
       // Status base address in the bus address space
@@ -515,34 +517,39 @@ class ProgramCruExperimentalDma: public Program
       if (!checkAlignment(mFifoAddress.bus, DMA_ALIGNMENT)) {
         BOOST_THROW_EXCEPTION(CruException() << errinfo_rorc_error_message("mFifoDevice not 32 byte aligned"));
       }
-      bar[Register::STATUS_BASE_BUS_HIGH] = Util::getUpper32Bits(uint64_t(mFifoAddress.bus));
-      bar[Register::STATUS_BASE_BUS_LOW] = Util::getLower32Bits(uint64_t(mFifoAddress.bus));
+      bar(Register::STATUS_BASE_BUS_HIGH) = Util::getUpper32Bits(uint64_t(mFifoAddress.bus));
+      bar(Register::STATUS_BASE_BUS_LOW) = Util::getLower32Bits(uint64_t(mFifoAddress.bus));
 
       // Status table address in the card's address space
-      bar[Register::STATUS_BASE_CARD_HIGH] = 0x0;
-      bar[Register::STATUS_BASE_CARD_LOW] = 0x8000;
+      bar(Register::STATUS_BASE_CARD_HIGH) = 0x0;
+      bar(Register::STATUS_BASE_CARD_LOW) = 0x8000;
 
       // Set descriptor table size (must be size - 1)
-      bar[Register::DESCRIPTOR_TABLE_SIZE] = NUM_PAGES - 1;
+      bar(Register::DESCRIPTOR_TABLE_SIZE) = NUM_PAGES - 1;
 
       // Send command to the DMA engine to write to every status entry, not just the final one
-      bar[Register::DONE_CONTROL] = 0x1;
+      bar(Register::DONE_CONTROL) = 0x1;
 
       mFifoAddress.user->resetStatusEntries();
 
       // Give buffer ready signal
-      bar[Register::DATA_EMULATOR_CONTROL] = 0x3;
+      bar(Register::DATA_EMULATOR_CONTROL) = 0x3;
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-      cout << "  Firmware version  " << Utilities::Common::make32hexString(bar[Register::FIRMWARE_COMPILE_INFO]) << '\n';
-      cout << "  Serial number     " << Utilities::Common::make32hexString(bar[Register::SERIAL_NUMBER]) << '\n';
-      cout << "  Buffer size       " << mPageAddresses.size() << " pages, " << " "
-          << mPageAddresses.size() * DMA_BUFFER_PAGES_SIZE << " bytes\n";
+      // Print some info
+      {
+        auto firmwareVersion = Utilities::Common::make32hexString(bar(Register::FIRMWARE_COMPILE_INFO));
+        auto serialNumber = Utilities::Common::make32hexString(bar(Register::SERIAL_NUMBER));
+        cout << "  Firmware version  " << firmwareVersion << '\n';
+        cout << "  Serial number     " << serialNumber << '\n';
+        cout << "  Buffer size       " << mPageAddresses.size() << " pages, " << " "
+            << mPageAddresses.size() * DMA_BUFFER_PAGES_SIZE << " bytes\n";
 
-      mLogStream << "# Firmware version  " << Utilities::Common::make32hexString(bar[Register::FIRMWARE_COMPILE_INFO]) << '\n';
-      mLogStream << "# Serial number     " << Utilities::Common::make32hexString(bar[Register::SERIAL_NUMBER]) << '\n';
-      mLogStream << "# Buffer size       " << mPageAddresses.size() << " pages, " << " "
-          << mPageAddresses.size() * DMA_BUFFER_PAGES_SIZE << " bytes\n";
+        mLogStream << "# Firmware version  " << firmwareVersion << '\n';
+        mLogStream << "# Serial number     " << serialNumber << '\n';
+        mLogStream << "# Buffer size       " << mPageAddresses.size() << " pages, " << " "
+            << mPageAddresses.size() * DMA_BUFFER_PAGES_SIZE << " bytes\n";
+      }
     }
 
     void setDescriptor(int pageIndex, int descriptorIndex)
@@ -621,6 +628,11 @@ class ProgramCruExperimentalDma: public Program
       return reinterpret_cast<uint32_t*>(mPageAddresses[handle.pageIndex].user);
     }
 
+    volatile uint32_t& bar(size_t index)
+    {
+      return mPdaBar->getUserspaceAddressU32()[index];
+    }
+
     void lowPriorityTasks()
     {
       // Handle a max temperature abort
@@ -660,7 +672,7 @@ class ProgramCruExperimentalDma: public Program
         updateStatusDisplay();
       }
 
-      // Random pauses
+      // Random pauses in software: a thread sleep
       if (mOptions.randomPauseSoft) {
         auto now = std::chrono::high_resolution_clock::now();
         if (now >= mRandomPausesSoft.next) {
@@ -674,17 +686,17 @@ class ProgramCruExperimentalDma: public Program
         }
       }
 
-      // Random pauses
+      // Random pauses in hardware: pause the data emulator
       if (mOptions.randomPauseFirm) {
         auto now = std::chrono::high_resolution_clock::now();
         if (!mRandomPausesFirm.isPaused && now >= mRandomPausesFirm.next) {
           cout << b::format("fw pause %-4d ms\n") % mRandomPausesFirm.length.count() << std::flush;
-          mPdaBar->getUserspaceAddressU32()[CruRegisterIndex::DATA_EMULATOR_CONTROL] = 0x1;
+          bar(CruRegisterIndex::DATA_EMULATOR_CONTROL) = 0x1;
           mRandomPausesFirm.isPaused = true;
         }
 
         if (mRandomPausesFirm.isPaused && now >= mRandomPausesFirm.next + mRandomPausesFirm.length) {
-          mPdaBar->getUserspaceAddressU32()[CruRegisterIndex::DATA_EMULATOR_CONTROL] = 0x3;
+          bar(CruRegisterIndex::DATA_EMULATOR_CONTROL) = 0x3;
           mRandomPausesFirm.isPaused = false;
 
           // Schedule next pause
@@ -711,6 +723,9 @@ class ProgramCruExperimentalDma: public Program
         // Add the page to the readout queue
         mQueue.push(Handle{mDescriptorCounter, mPageIndexCounter});
 
+        // Informs the firmware about the available FIFO descriptors
+        //bar(CruRegisterIndex::FIRMWARE_DMA_POINTER) = mDescriptorCounter;
+
         // Increment counters
         mDescriptorCounter = (mDescriptorCounter + 1) % NUM_PAGES;
         mPageIndexCounter = (mPageIndexCounter + 1) % mPageAddresses.size();
@@ -722,6 +737,16 @@ class ProgramCruExperimentalDma: public Program
     bool readoutQueueHasPageAvailable()
     {
       return !mQueue.empty() && isPageArrived(mQueue.front());
+    }
+
+    GeneratorPattern::type getCurrentGeneratorPattern()
+    {
+      // Get first 2 bits of DMA configuration register, these contain the generator pattern
+      uint32_t dmaConfiguration = bar(CruRegisterIndex::DMA_CONFIGURATION) && 0b11;
+      return dmaConfiguration == 0 ? GeneratorPattern::Incremental
+           : dmaConfiguration == 1 ? GeneratorPattern::Alternating
+           : dmaConfiguration == 2 ? GeneratorPattern::Constant
+           : GeneratorPattern::Unknown;
     }
 
     void readoutPage(const Handle& handle)
@@ -737,7 +762,9 @@ class ProgramCruExperimentalDma: public Program
           // First page initializes the counter
           mDataGeneratorCounter = getPageAddress(handle)[0];
         }
-        if (hasErrors(handle, mReadoutCounter, mDataGeneratorCounter) && mOptions.resyncCounter) {
+
+        bool hasError = hasErrors(getCurrentGeneratorPattern(), handle, mReadoutCounter, mDataGeneratorCounter);
+        if (hasError && mOptions.resyncCounter) {
           // Resync the counter
           mDataGeneratorCounter = getPageAddress(handle)[0];
         }
@@ -788,7 +815,7 @@ class ProgramCruExperimentalDma: public Program
           readoutPage(mQueue.front());
           if (mReadoutCounter % PAGES_PER_PUSH == 0) {
             // Indicate to the firmware we've read out 4 pages
-            mPdaBar->getUserspaceAddressU32()[CruRegisterIndex::SOFTWARE_BUFFER_READY] = 0x1;
+            bar(CruRegisterIndex::SOFTWARE_BUFFER_READY) = 0x1;
           }
           mQueue.pop();
         }
@@ -877,37 +904,68 @@ class ProgramCruExperimentalDma: public Program
       mReadoutStream << '\n';
     }
 
-    bool hasErrors(const Handle& handle, int64_t eventNumber, uint32_t counter)
+    bool hasErrors(GeneratorPattern::type pattern, const Handle& handle, int64_t eventNumber, uint32_t counter)
     {
-      /// The data emulator writes to every 8th 32-bit word
-      constexpr uint32_t PATTERN_STRIDE = 8;
-      /// The data emulator adds an offset of 2, apparently
-      constexpr uint32_t PATTERN_OFFSET = 2;
-      /// Pages are pushed in 4 consecutive patterns, i.e. the data emulator's counter resets every 4 pages
-      constexpr uint32_t PATTERN_SECTIONS = 4;
+      if (pattern == GeneratorPattern::Incremental) {
+        return hasErrorsIncremental(handle, eventNumber, counter);
+      }
+      else if (pattern == GeneratorPattern::Alternating) {
+        return hasErrorsAlternating(handle, eventNumber, counter);
+      }
+      else if (pattern == GeneratorPattern::Constant) {
+        return hasErrorsConstant(handle, eventNumber, counter);
+      }
+      BOOST_THROW_EXCEPTION(CruException() << errinfo_rorc_error_message("Unrecognized generator pattern"));
+    }
 
+    void reportError(int i, int64_t eventNumber, int pageIndex, uint32_t expectedValue, uint32_t actualValue) {
+      mErrorCount++;
+      if (isVerbose() && mErrorCount < MAX_RECORDED_ERRORS) {
+        mErrorStream << "Error @ event:" << eventNumber << " page:" << pageIndex << " i:" << i << " exp:"
+            << expectedValue << " val:" << actualValue << '\n';
+      }
+    };
+
+    bool hasErrorsIncremental(const Handle& handle, int64_t eventNumber, uint32_t counter)
+    {
       uint32_t* page = getPageAddress(handle);
-
-      int64_t errorCountBefore = mErrorCount;
-
-      auto reportError = [&](int i, uint32_t expectedValue, uint32_t actualValue) {
-        mErrorCount++;
-        if (isVerbose() && mErrorCount < MAX_RECORDED_ERRORS) {
-          mErrorStream << "Error @ event:" << eventNumber << " page:" << handle.pageIndex << " i:" << i << " exp:"
-              << expectedValue << " val:" << actualValue << '\n';
-        }
-      };
-
       for (uint32_t i = 0; i < DMA_PAGE_SIZE_32; i += PATTERN_STRIDE)
       {
         uint32_t expectedValue = counter + i/8;
         if (page[i] != expectedValue) {
-          reportError(i, expectedValue, page[i]);
+          reportError(i, eventNumber, handle.pageIndex, expectedValue, page[i]);
           return true;
         }
       }
+      return false;
+    }
 
-      return mErrorCount > errorCountBefore;
+    bool hasErrorsAlternating(const Handle& handle, int64_t eventNumber, uint32_t counter)
+    {
+      uint32_t* page = getPageAddress(handle);
+      for (uint32_t i = 0; i < DMA_PAGE_SIZE_32; i += PATTERN_STRIDE)
+      {
+        uint32_t expectedValue = 0xa5a5a5a5;
+        if (page[i] != expectedValue) {
+          reportError(i, eventNumber, handle.pageIndex, expectedValue, page[i]);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    bool hasErrorsConstant(const Handle& handle, int64_t eventNumber, uint32_t counter)
+    {
+      uint32_t* page = getPageAddress(handle);
+      for (uint32_t i = 0; i < DMA_PAGE_SIZE_32; i += PATTERN_STRIDE)
+      {
+        uint32_t expectedValue = 0x12345678;
+        if (page[i] != expectedValue) {
+          reportError(i, eventNumber, handle.pageIndex, expectedValue, page[i]);
+          return true;
+        }
+      }
+      return false;
     }
 
     void resetPage(uint32_t* page)
