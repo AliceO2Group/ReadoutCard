@@ -40,7 +40,8 @@ endif()
 
 # This line finds the boost lib and headers.
 set(Boost_NO_BOOST_CMAKE ON) #  Don't do a find_package in config mode before searching for a regular boost install.
-find_package(Boost COMPONENTS 
+find_package(Boost 1.56 
+  COMPONENTS 
   unit_test_framework 
   filesystem 
   system 
