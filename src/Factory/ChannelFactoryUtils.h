@@ -16,6 +16,26 @@ namespace Rorc {
 
 namespace FactoryHelper {
 
+inline RorcDevice::CardDescriptor findCard(int serial)
+{
+  auto cardsFound = RorcDevice::findSystemDevices(serial);
+
+  if (cardsFound.empty()) {
+    BOOST_THROW_EXCEPTION(Exception()
+        << errinfo_rorc_error_message("Could not find a card with the given serial number"));
+  }
+
+  if (cardsFound.size() > 1) {
+    std::vector<PciId> pciIds;
+    for (const auto& c : cardsFound) { pciIds.push_back(c.pciId); }
+    BOOST_THROW_EXCEPTION(Exception()
+        << errinfo_rorc_error_message("Found more than one card with the given serial number")
+        << errinfo_rorc_pci_ids(pciIds));
+  }
+
+  return cardsFound.at(0);
+}
+
 /// Helper template method for the channel factories.
 /// \param serialNumber Serial number of the card
 /// \param dummySerial Serial number that indicates a dummy object should be instantiated
@@ -33,31 +53,17 @@ std::shared_ptr<Interface> channelFactoryHelper(int serialNumber, int dummySeria
   if (serialNumber == dummySerial) {
     return map.at(CardType::Dummy)();
   } else {
-    // Find the PCI device
-    auto cardsFound = RorcDevice::findSystemDevices(serialNumber);
 
-    if (cardsFound.empty()) {
-      BOOST_THROW_EXCEPTION(Exception()
-          << errinfo_rorc_error_message("Could not find card")
-          << errinfo_rorc_serial_number(serialNumber));
-    }
+    auto card = findCard(serialNumber);
 
-    if (cardsFound.size() > 1) {
-      BOOST_THROW_EXCEPTION(Exception()
-          << errinfo_rorc_error_message("Found multiple cards with the same serial number")
-          << errinfo_rorc_serial_number(serialNumber));
-    }
-
-    auto cardType = cardsFound[0].cardType;
-
-    if (map.count(cardType) == 0) {
+    if (map.count(card.cardType) == 0) {
       BOOST_THROW_EXCEPTION(Exception()
           << errinfo_rorc_error_message("Unknown card type")
           << errinfo_rorc_serial_number(serialNumber)
-          << errinfo_rorc_card_type(cardType));
+          << errinfo_rorc_card_type(card.cardType));
     }
 
-    return map.at(cardType)();
+    return map.at(card.cardType)();
   }
 #else
   return map.at(CardType::Dummy)();
@@ -68,11 +74,12 @@ std::shared_ptr<Interface> channelFactoryHelper(int serialNumber, int dummySeria
 namespace _make_impl {
 
 /// Declaration for the makeChannel implementation struct
-template <class... Args> struct MakeImpl;
+template <class... Args>
+struct Make;
 
 /// Stop condition implementation
 template <class Result>
-struct MakeImpl<Result>
+struct Make<Result>
 {
   static Result make(CardType::type cardType)
   {
@@ -84,7 +91,7 @@ struct MakeImpl<Result>
 
 /// Recursive step implementation
 template <class Result, class Tag, class Function, class... Args>
-struct MakeImpl<Result, Tag, Function, Args...>
+struct Make<Result, Tag, Function, Args...>
 {
   /// Pops two arguments from the front of the Args, a CardTypeTag and an accompanying instantiation function, and
   /// tries to match the tag with the 'select' argument. If there's no match, it recursively goes down the list of
@@ -92,24 +99,13 @@ struct MakeImpl<Result, Tag, Function, Args...>
   /// implementation
   static Result make(CardType::type select, Tag typeTag, Function func, Args&&... args)
   {
-    static_assert(CardTypeTag::isValidTag<Tag>(), "CType is not a valid tag");
+    // Make sure this tag is valid and not a dummy
+    static_assert(CardTypeTag::isValidTag<Tag>(), "CardTypeTag of pair is not a valid tag");
+    static_assert(!std::is_same<decltype(typeTag), CardTypeTag::DummyTag_>::value,
+              "DummyTag & accompanying function must be in first position");
 
-    if (typeTag.type == select) {
-      // Found the right tag, instantiate using accompanying function
-      return func();
-    } else {
-      // Recursively go down the argument list
-      return MakeImpl<Result, Args...>::make(select, std::forward<Args>(args)...);
-    }
-  }
-
-  /// Implementation for a dummy instantiation. It is assumed the first pair of tag & function in the Args... are
-  /// the dummy ones
-  static Result makeDummy(Tag, Function func, Args&&...)
-  {
-    static_assert(std::is_same<Tag, const decltype(CardTypeTag::DummyTag)&>::value,
-        "DummyTag & accompanying function must be in first position");
-    return func();
+    // If we find the right tag, instantiate using accompanying function, else recursively go down the argument list
+    return (typeTag.type == select) ? func() : Make<Result, Args...>::make(select, std::forward<Args>(args)...);
   }
 };
 } // namespace _make_impl
@@ -131,37 +127,33 @@ struct MakeImpl<Result, Tag, Function, Args...>
 ///   auto sharedPointer = make<ChannelMasterInterface>(12345, -1,
 ///       CardTypeTag::DummyTag, []{ return makeDummy(); },
 ///       CardTypeTag::CrorcTag, []{ return makeCrorc(); });
-///
-template<class Interface, class ... Args>
+/// \return A shared pointer to the constructed channel
+template<class Interface, class... Args>
 std::shared_ptr<Interface> makeChannel(int serial, int dummySerial, Args&&... args)
 {
   using SharedPtr = std::shared_ptr<Interface>;
+  using namespace _make_impl;
+
+
+  /// Implementation for a dummy instantiation. It is assumed the first pair of tag & function in the Args... are
+  /// the dummy ones
+  auto makeDummy = [&]{
+    return [&](auto tag, auto func, auto&&...) -> SharedPtr {
+      static_assert(std::is_same<decltype(tag), CardTypeTag::DummyTag_>::value,
+          "DummyTag & accompanying function must be in first position");
+      return func();
+    }(std::forward<Args>(args)...);
+  };
+
+  auto makeReal = [&](auto cardType){ return Make<SharedPtr, Args...>::make(cardType, std::forward<Args>(args)...); };
+
   try {
-#ifdef ALICEO2_RORC_PDA_ENABLED
-    if (dummySerial == serial) {
-#endif
-      return _make_impl::MakeImpl<SharedPtr, Args...>::makeDummy(std::forward<Args>(args)...);
-#ifdef ALICEO2_RORC_PDA_ENABLED
-    }
-
-    auto cardsFound = RorcDevice::findSystemDevices(serial);
-
-    if (cardsFound.empty()) {
-      BOOST_THROW_EXCEPTION(Exception()
-          << errinfo_rorc_error_message("Could not find a card with the given serial number"));
-    }
-
-    if (cardsFound.size() > 1) {
-      std::vector<PciId> pciIds;
-      for (const auto& c : cardsFound) { pciIds.push_back(c.pciId); }
-      BOOST_THROW_EXCEPTION(Exception()
-          << errinfo_rorc_error_message("Found more than one card with the given serial number")
-          << errinfo_rorc_pci_ids(pciIds));
-    }
-
-    auto cardType = cardsFound[0].cardType;
-
-    return _make_impl::MakeImpl<SharedPtr, Args...>::make(cardType, std::forward<Args>(args)...);
+#ifndef ALICEO2_RORC_PDA_ENABLED
+    // If PDA is NOT enabled we only make dummies
+    return makeDummy();
+#else
+    // If PDA IS enabled we can make a dummy or a real channel
+    return (dummySerial == serial) ? makeDummy() : makeReal(findCard(serial).cardType);
 #endif
   } catch (boost::exception& e) {
     e << errinfo_rorc_serial_number(serial);
