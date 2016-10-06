@@ -46,7 +46,7 @@ typename Map::mapped_type getValueFromMap(const Map& map, const typename Map::ke
   BOOST_THROW_EXCEPTION(std::runtime_error("Invalid conversion"));
 }
 
-namespace _TieConvertImpl {
+namespace _convertAssignImpl {
 template <typename Container, int Index, typename ...Args>
 struct Conv;
 
@@ -97,7 +97,7 @@ void convertAssign(const Container& strings, Args&... args)
     BOOST_THROW_EXCEPTION(UtilException()
         << errinfo_rorc_error_message("Container size smaller than amount of arguments"));
   }
-  _TieConvertImpl::Conv<Container, int(sizeof...(args)) - 1, Args...>()(strings, args...);
+  _convertAssignImpl::Conv<Container, int(sizeof...(args)) - 1, Args...>()(strings, args...);
 }
 
 template <typename T1, typename T2>
