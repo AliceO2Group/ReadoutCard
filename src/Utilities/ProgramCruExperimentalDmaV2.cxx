@@ -44,16 +44,14 @@ namespace bfs = boost::filesystem;
 namespace Register = AliceO2::Rorc::CruRegisterIndex;
 using namespace AliceO2::Rorc::Utilities;
 using namespace AliceO2::Rorc;
-//using namespace std::literals::chrono_literals;
+using namespace std::literals;
+using namespace std::chrono_literals;
 using std::cout;
 using std::endl;
 
 namespace {
 
-constexpr std::chrono::milliseconds DISPLAY_INTERVAL(10);
-
-/// Amount of pages to push at a time
-constexpr int PAGES_PER_PUSH = 4;
+constexpr auto DISPLAY_INTERVAL = 10ms;
 
 /// DMA addresses must be 32-byte aligned
 constexpr uint64_t DMA_ALIGNMENT = 32;
@@ -76,16 +74,8 @@ constexpr uint32_t BUFFER_DEFAULT_VALUE = 0xCcccCccc;
 /// PDA DMA buffer index for the pages buffer
 constexpr int BUFFER_INDEX_PAGES = 0;
 
-const bfs::path DMA_BUFFER_PAGES_PATH = "/mnt/hugetlbfs/rorc-cru-experimental-dma-pages-v2";
-
-/// Fields: Time(hour:minute:second), i, Counter, Errors, Fill, °C
-const std::string PROGRESS_FORMAT_HEADER("  %-8s   %-12s  %-12s  %-10s  %-10.1f");
-
-/// Fields: Time(hour:minute:second), i, Counter, Errors, Fill, °C
-const std::string PROGRESS_FORMAT("  %02s:%02s:%02s   %-12s  %-12s  %-10s  %-10.1f");
-
 /// Timeout of SIGINT handling
-constexpr std::chrono::milliseconds HANDLING_SIGINT_TIMEOUT {10};
+constexpr auto HANDLING_SIGINT_TIMEOUT = 10ms;
 
 /// Default number of pages
 constexpr int PAGES_DEFAULT = 1500;
@@ -102,20 +92,18 @@ constexpr int PAUSE_LENGTH_MAX = 500;
 /// The data emulator writes to every 8th 32-bit word
 constexpr uint32_t PATTERN_STRIDE = 8;
 
-const std::string RESET_SWITCH = "reset";
-const std::string TO_FILE_SWITCH = "to-file";
-const std::string PAGES_SWITCH = "pages";
-const std::string DISPLAY_FIFO_SWITCH = "show-fifo";
-const std::string RANDOM_PAUSE_SOFTWARE_SWITCH = "rand-pause-sw";
-const std::string RANDOM_PAUSE_FIRMWARE_SWITCH = "rand-pause-fw";
-const std::string NO_CHECK_SWITCH = "no-errorcheck";
-const std::string REMOVE_SHARED_MEMORY_SWITCH = "rm-sharedmem";
-const std::string RELOAD_KERNEL_MODULE_SWITCH = "reload-kmod";
-const std::string RESYNC_DATA_GENERATOR_COUNTER = "resync-counter";
+const bfs::path DMA_BUFFER_PAGES_PATH = "/mnt/hugetlbfs/rorc-cru-experimental-dma-pages-v2";
 
-const std::string READOUT_ERRORS_PATH = "readout_errors.txt";
-const std::string READOUT_DATA_PATH = "readout_data.txt";
-const std::string READOUT_LOG_FORMAT = "readout_log_%d.txt";
+/// Fields: Time(hour:minute:second), i, Counter, Errors, Fill, °C
+const std::string PROGRESS_FORMAT_HEADER("  %-8s   %-12s  %-12s  %-10s  %-10.1f");
+
+/// Fields: Time(hour:minute:second), i, Counter, Errors, Fill, °C
+const std::string PROGRESS_FORMAT("  %02s:%02s:%02s   %-12s  %-12s  %-10s  %-10.1f");
+
+auto READOUT_ERRORS_PATH = "readout_errors.txt";
+auto READOUT_DATA_PATH_ASCII = "readout_data.txt";
+auto READOUT_DATA_PATH_BIN = "readout_data.bin";
+auto READOUT_LOG_FORMAT = "readout_log_%d.txt";
 
 template <typename Predicate, typename Duration>
 bool waitOnPredicateWithTimeout(Duration duration, Predicate predicate)
@@ -130,8 +118,6 @@ bool waitOnPredicateWithTimeout(Duration duration, Predicate predicate)
   return true;
 }
 
-/// Test class for PCI interrupts
-
 /// Manages a temperature monitor thread
 class TemperatureMonitor {
   public:
@@ -141,6 +127,7 @@ class TemperatureMonitor {
     ///   The object using this must guarantee it will be accessible until stop() is called or this object is destroyed.
     void start(const volatile uint32_t* temperatureRegister)
     {
+      mStopFlag = true;
       mTemperatureRegister = temperatureRegister;
       mThread = std::thread(std::function<void(TemperatureMonitor*)>(TemperatureMonitor::function), this);
     }
@@ -215,7 +202,133 @@ class TemperatureMonitor {
             break;
           }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        std::this_thread::sleep_for(50ms);
+      }
+    }
+};
+
+class Thread
+{
+  public:
+
+    /// Start thread
+    template <typename Callable>
+    void start(Callable function)
+    {
+      mStopFlag = false;
+      mThread = std::thread(function, &mStopFlag);
+    }
+
+    void stop()
+    {
+      mStopFlag = true;
+      try {
+        if (mThread.joinable()) {
+          mThread.join();
+        }
+      } catch (const std::system_error& e) {
+        cout << "Failed to join thread: " << boost::diagnostic_information(e) << endl;
+      }
+    }
+
+  private:
+    /// Thread object
+    std::thread mThread;
+
+    /// Flag to stop the thread
+    std::atomic<bool> mStopFlag;
+};
+
+class RegisterHammer2
+{
+  public:
+    /// Start monitoring
+    /// \param temperatureRegister The register to read the temperature data from.
+    ///   The object using this must guarantee it will be accessible until stop() is called or this object is destroyed.
+    void start(volatile uint32_t* bar)
+    {
+      mThread.start([&bar](std::atomic<bool>* stopFlag){
+        auto& reg = bar[0x300];
+        while (!stopFlag->load() && !Program::isSigInt()) {
+          for (int i = 0; i < 256; ++i) {
+            uint32_t hostCounter = 0;
+            reg = hostCounter;
+            uint32_t pciCounter = reg && 0xff;
+            if (pciCounter != hostCounter) {
+              cout << "\nREGISTER HAMMER: Counter was " << pciCounter << ", should've been " << hostCounter << '\n';
+            }
+            hostCounter++;
+          }
+        }
+      });
+    }
+
+    void stop()
+    {
+      mThread.stop();
+    }
+
+  private:
+    Thread mThread;
+};
+
+
+class RegisterHammer
+{
+  public:
+
+    /// Start monitoring
+    /// \param temperatureRegister The register to read the temperature data from.
+    ///   The object using this must guarantee it will be accessible until stop() is called or this object is destroyed.
+    void start(volatile uint32_t* bar)
+    {
+      mStopFlag = false;
+      mBar = bar;
+      mThread = std::thread(std::function<void(RegisterHammer*)>(RegisterHammer::function), this);
+    }
+
+    void stop()
+    {
+      mStopFlag = true;
+      try {
+        if (mThread.joinable()) {
+          mThread.join();
+        }
+      } catch (const std::exception& e) {
+        cout << "Failed to join thread: " << boost::diagnostic_information(e) << endl;
+      }
+    }
+
+    ~RegisterHammer()
+    {
+      stop();
+    }
+
+  private:
+    /// Thread object
+    std::thread mThread;
+
+    /// Flag to stop the thread
+    std::atomic<bool> mStopFlag;
+
+    /// The BAR
+    volatile uint32_t* mBar;
+
+    // Thread function to monitor temperature
+    static void function(RegisterHammer* _this)
+    {
+      auto& reg = _this->mBar[0x300];
+
+      while (!_this->mStopFlag && !Program::isSigInt()) {
+        for (int i = 0; i < 256; ++i) {
+          uint32_t hostCounter = 0;
+          reg = hostCounter;
+          uint32_t pciCounter = reg && 0xff;
+          if (pciCounter != hostCounter) {
+            cout << "\nREGISTER HAMMER: Counter was " << pciCounter << ", should've been " << hostCounter << '\n';
+          }
+          hostCounter++;
+        }
       }
     }
 };
@@ -247,51 +360,65 @@ class ProgramCruExperimentalDma: public Program
 
     virtual void addOptions(boost::program_options::options_description& options) override
     {
+      namespace po = boost::program_options;
       options.add_options()
-          (RESET_SWITCH.c_str(),
+          ("reset",
+              po::bool_switch(&mOptions.resetCard),
               "Reset card during initialization")
-          (TO_FILE_SWITCH.c_str(),
-              "Read out to file")
-          (PAGES_SWITCH.c_str(),
-              boost::program_options::value<int64_t>(&mOptions.maxPages)->default_value(PAGES_DEFAULT),
+          ("to-file-ascii",
+              po::bool_switch(&mOptions.fileOutputAscii),
+              "Read out to file in ASCII format")
+          ("to-file-bin",
+              po::bool_switch(&mOptions.fileOutputBin),
+              "Read out to file in binary format (only contains raw data from pages)")
+          ("pages",
+              po::value<int64_t>(&mOptions.maxPages)->default_value(PAGES_DEFAULT),
               "Amount of pages to transfer. Give <= 0 for infinite.")
-          (DISPLAY_FIFO_SWITCH.c_str(),
+          ("show-fifo",
+              po::bool_switch(&mOptions.fifoDisplay),
               "Display FIFO status (wide terminal recommended)")
-          (RANDOM_PAUSE_SOFTWARE_SWITCH.c_str(),
+          ("rand-pause-sw",
+              po::bool_switch(&mOptions.randomPauseSoft),
               "Randomly pause readout using software method")
-          (RANDOM_PAUSE_FIRMWARE_SWITCH.c_str(),
+          ("rand-pause-fw",
+              po::bool_switch(&mOptions.randomPauseFirm),
               "Randomly pause readout using firmware method")
-          (NO_CHECK_SWITCH.c_str(),
+          ("no-errorcheck",
+              po::bool_switch(&mOptions.noErrorCheck),
               "Skip error checking")
-          (REMOVE_SHARED_MEMORY_SWITCH.c_str(),
+          ("rm-sharedmem",
+              po::bool_switch(&mOptions.removeSharedMemory),
               "Remove shared memory after DMA transfer")
-          (RELOAD_KERNEL_MODULE_SWITCH.c_str(),
+          ("reload-kmod",
+              po::bool_switch(&mOptions.reloadKernelModule),
               "Reload kernel module before DMA initialization")
-          (RESYNC_DATA_GENERATOR_COUNTER.c_str(),
+          ("resync-counter",
+              po::bool_switch(&mOptions.resyncCounter),
               "Automatically resynchronize data generator counter in case of errors")
-              ;
+          ("reg-hammer",
+              po::bool_switch(&mOptions.registerHammer),
+              "Stress-test the debug register with repeated writes/reads")
+          ("legacy-ack",
+              po::bool_switch(&mOptions.legacyAck),
+              "Legacy option: give ack every 4 pages instead of every 1 page");
     }
 
     virtual void run(const boost::program_options::variables_map& map) override
     {
       using namespace AliceO2::Rorc;
 
-      mInfinitePages = (mOptions.maxPages <= 0);
-      mOptions.resetCard = bool(map.count(RESET_SWITCH));
-      mOptions.fileOutput = bool(map.count(TO_FILE_SWITCH));
-      mOptions.fifoDisplay = bool(map.count(DISPLAY_FIFO_SWITCH));
-      mOptions.randomPauseSoft = bool(map.count(RANDOM_PAUSE_SOFTWARE_SWITCH));
-      mOptions.randomPauseFirm = bool(map.count(RANDOM_PAUSE_FIRMWARE_SWITCH));
-      mOptions.errorCheck = !bool(map.count(NO_CHECK_SWITCH));
-      mOptions.removeSharedMemory = bool(map.count(REMOVE_SHARED_MEMORY_SWITCH));
-      mOptions.reloadKernelModule = bool(map.count(RELOAD_KERNEL_MODULE_SWITCH));
-      mOptions.resyncCounter = bool(map.count(RESYNC_DATA_GENERATOR_COUNTER));
-
-//      mDataGeneratorOffsetNeedsResync = mOptions.resyncCounter;
-
-      if (mOptions.fileOutput) {
-        mReadoutStream.open(READOUT_DATA_PATH.c_str());
+      if (mOptions.fileOutputAscii && mOptions.fileOutputBin) {
+        BOOST_THROW_EXCEPTION(CruException()
+            << errinfo_rorc_error_message("File output can't be both ASCII and binary"));
       }
+      if (mOptions.fileOutputAscii) {
+        mReadoutStream.open(READOUT_DATA_PATH_ASCII);
+      }
+      if (mOptions.fileOutputBin) {
+        mReadoutStream.open(READOUT_DATA_PATH_BIN, std::ios::binary);
+      }
+
+      mInfinitePages = (mOptions.maxPages <= 0);
 
       auto time = std::chrono::duration_cast<std::chrono::seconds>(
           std::chrono::system_clock::now().time_since_epoch()).count();
@@ -305,9 +432,14 @@ class ProgramCruExperimentalDma: public Program
       cout << "Starting temperature monitor" << endl;
       mTemperatureMonitor.start(&(bar(Register::TEMPERATURE)));
 
+      if (mOptions.registerHammer) {
+        mRegisterHammer.start(mPdaBar->getUserspaceAddressU32());
+      }
+
       cout << "Starting DMA test" << endl;
       runDma();
       mTemperatureMonitor.stop();
+      mRegisterHammer.stop();
 
       if (mOptions.removeSharedMemory) {
         cout << "Removing shared memory file\n";
@@ -461,9 +593,9 @@ class ProgramCruExperimentalDma: public Program
       if (mOptions.resetCard) {
         cout << "Resetting..." << std::flush;
         bar(Register::RESET_CONTROL) = 0x2;
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(100ms);
         bar(Register::RESET_CONTROL) = 0x1;
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(100ms);
         cout << "done!" << endl;
       }
 
@@ -495,15 +627,15 @@ class ProgramCruExperimentalDma: public Program
 
       // Note: the sleeps are needed until firmware implements proper "handshakes"
 
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      std::this_thread::sleep_for(100ms);
 
       // Init temperature sensor
       bar(Register::TEMPERATURE) = 0x1;
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      std::this_thread::sleep_for(10ms);
       bar(Register::TEMPERATURE) = 0x0;
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      std::this_thread::sleep_for(10ms);
       bar(Register::TEMPERATURE) = 0x2;
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      std::this_thread::sleep_for(10ms);
 
       // Status base address in the bus address space
       if (Util::getUpper32Bits(uint64_t(mFifoAddress.bus)) != 0) {
@@ -534,7 +666,7 @@ class ProgramCruExperimentalDma: public Program
 
       // Give buffer ready signal
       bar(Register::DATA_EMULATOR_CONTROL) = 0x3;
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      std::this_thread::sleep_for(10ms);
 
       // Print some info
       {
@@ -568,19 +700,27 @@ class ProgramCruExperimentalDma: public Program
       auto hour = duration_cast<hours>(diff).count();
 
       auto format = b::format(PROGRESS_FORMAT) % hour % minute % second % mReadoutCounter;
-      mOptions.errorCheck ? format % mErrorCount : format % "n/a";
+      mOptions.noErrorCheck ? format % "n/a" : format % mErrorCount;
       format % mLastFillSize;
       mTemperatureMonitor.isValid() ? format % mTemperatureMonitor.getTemperature() : format % "n/a";
       cout << '\r' << format;
 
       if (mOptions.fifoDisplay) {
+        char separator = '|';
+        char waiting   = 'O';
+        char arrived   = 'X';
+        char empty     = ' ';
+
         for (int i = 0; i < 128; ++i) {
           if ((i % 8) == 0) {
-            cout << '|';
+            cout << separator;
           }
-          cout << (mFifoAddress.user->statusEntries.at(i).isPageArrived() ? 'X' : ' ');
+
+          cout << (i == mQueue.front().descriptorIndex) ? waiting
+              : mFifoAddress.user->statusEntries.at(i).isPageArrived() ? arrived
+              : empty;
         }
-        cout << '|';
+        cout << separator;
       }
 
       // This takes care of adding a "line" to the stdout and log table every so many seconds
@@ -714,7 +854,8 @@ class ProgramCruExperimentalDma: public Program
 
     void fillReadoutQueue()
     {
-      mLastFillSize = 0;
+      int pushed = 0;
+
       // Note: This should be more optimized later, since pages are always pushed in blocks of 4.
       while (shouldPushQueue()) {
         // Push page
@@ -723,14 +864,15 @@ class ProgramCruExperimentalDma: public Program
         // Add the page to the readout queue
         mQueue.push(Handle{mDescriptorCounter, mPageIndexCounter});
 
-        // Informs the firmware about the available FIFO descriptors
-        //bar(CruRegisterIndex::FIRMWARE_DMA_POINTER) = mDescriptorCounter;
-
         // Increment counters
         mDescriptorCounter = (mDescriptorCounter + 1) % NUM_PAGES;
         mPageIndexCounter = (mPageIndexCounter + 1) % mPageAddresses.size();
         mPushCounter++;
-        mLastFillSize++;
+        pushed++;
+      }
+
+      if (pushed) {
+        mLastFillSize = pushed;
       }
     }
 
@@ -752,12 +894,12 @@ class ProgramCruExperimentalDma: public Program
     void readoutPage(const Handle& handle)
     {
       // Read out to file
-      if (mOptions.fileOutput) {
+      if (mOptions.fileOutputAscii || mOptions.fileOutputBin) {
         printToFile(handle, mReadoutCounter);
       }
 
       // Data error checking
-      if (mOptions.errorCheck) {
+      if (!mOptions.noErrorCheck) {
         if (mDataGeneratorCounter == -1) {
           // First page initializes the counter
           mDataGeneratorCounter = getPageAddress(handle)[0];
@@ -813,10 +955,17 @@ class ProgramCruExperimentalDma: public Program
         // Read out a page if available
         if (readoutQueueHasPageAvailable()) {
           readoutPage(mQueue.front());
-          if (mReadoutCounter % PAGES_PER_PUSH == 0) {
-            // Indicate to the firmware we've read out 4 pages
-            bar(CruRegisterIndex::SOFTWARE_BUFFER_READY) = 0x1;
+
+          // Indicate to the firmware we've read out the page
+          if (mOptions.legacyAck) {
+            if (mReadoutCounter % 4 == 0) {
+              bar(CruRegisterIndex::DMA_COMMAND) = 0x1;
+            }
           }
+          else {
+            bar(CruRegisterIndex::DMA_COMMAND) = 0x1;
+          }
+
           mQueue.pop();
         }
       }
@@ -893,27 +1042,48 @@ class ProgramCruExperimentalDma: public Program
     void printToFile(const Handle& handle, int64_t pageNumber)
     {
       uint32_t* page = getPageAddress(handle);
-      mReadoutStream << "Event #" << pageNumber << " Buffer #" << handle.pageIndex << '\n';
-      int perLine = 8;
-      for (int i = 0; i < DMA_PAGE_SIZE_32; i+= perLine) {
-        for (int j = 0; j < perLine; ++j) {
-          mReadoutStream << page[i+j] << ' ';
+
+      if (mOptions.fileOutputAscii) {
+        mReadoutStream << "Event #" << pageNumber << " Buffer #" << handle.pageIndex << '\n';
+        int perLine = 8;
+        for (int i = 0; i < DMA_PAGE_SIZE_32; i+= perLine) {
+          for (int j = 0; j < perLine; ++j) {
+            mReadoutStream << page[i+j] << ' ';
+          }
+          mReadoutStream << '\n';
         }
         mReadoutStream << '\n';
       }
-      mReadoutStream << '\n';
+      else if (mOptions.fileOutputBin) {
+        mReadoutStream.write(reinterpret_cast<char*>(page), DMA_PAGE_SIZE);
+      }
+    }
+
+    template <typename Callable>
+    bool hasErrorsT(const Handle& handle, int64_t eventNumber, Callable expectedValueFunction)
+    {
+      uint32_t* page = getPageAddress(handle);
+      for (uint32_t i = 0; i < DMA_PAGE_SIZE_32; i += PATTERN_STRIDE)
+      {
+        uint32_t expectedValue = expectedValueFunction(i);
+        if (page[i] != expectedValue) {
+          reportError(i, eventNumber, handle.pageIndex, expectedValue, page[i]);
+          return true;
+        }
+      }
+      return false;
     }
 
     bool hasErrors(GeneratorPattern::type pattern, const Handle& handle, int64_t eventNumber, uint32_t counter)
     {
       if (pattern == GeneratorPattern::Incremental) {
-        return hasErrorsIncremental(handle, eventNumber, counter);
+        return hasErrorsT(handle, eventNumber, [&](uint32_t i){ return counter + i / 8; });
       }
       else if (pattern == GeneratorPattern::Alternating) {
-        return hasErrorsAlternating(handle, eventNumber, counter);
+        return hasErrorsT(handle, eventNumber, [&](uint32_t){ return 0xa5a5a5a5; });
       }
       else if (pattern == GeneratorPattern::Constant) {
-        return hasErrorsConstant(handle, eventNumber, counter);
+        return hasErrorsT(handle, eventNumber, [&](uint32_t){ return 0x12345678; });
       }
       BOOST_THROW_EXCEPTION(CruException() << errinfo_rorc_error_message("Unrecognized generator pattern"));
     }
@@ -925,48 +1095,6 @@ class ProgramCruExperimentalDma: public Program
             << expectedValue << " val:" << actualValue << '\n';
       }
     };
-
-    bool hasErrorsIncremental(const Handle& handle, int64_t eventNumber, uint32_t counter)
-    {
-      uint32_t* page = getPageAddress(handle);
-      for (uint32_t i = 0; i < DMA_PAGE_SIZE_32; i += PATTERN_STRIDE)
-      {
-        uint32_t expectedValue = counter + i/8;
-        if (page[i] != expectedValue) {
-          reportError(i, eventNumber, handle.pageIndex, expectedValue, page[i]);
-          return true;
-        }
-      }
-      return false;
-    }
-
-    bool hasErrorsAlternating(const Handle& handle, int64_t eventNumber, uint32_t counter)
-    {
-      uint32_t* page = getPageAddress(handle);
-      for (uint32_t i = 0; i < DMA_PAGE_SIZE_32; i += PATTERN_STRIDE)
-      {
-        uint32_t expectedValue = 0xa5a5a5a5;
-        if (page[i] != expectedValue) {
-          reportError(i, eventNumber, handle.pageIndex, expectedValue, page[i]);
-          return true;
-        }
-      }
-      return false;
-    }
-
-    bool hasErrorsConstant(const Handle& handle, int64_t eventNumber, uint32_t counter)
-    {
-      uint32_t* page = getPageAddress(handle);
-      for (uint32_t i = 0; i < DMA_PAGE_SIZE_32; i += PATTERN_STRIDE)
-      {
-        uint32_t expectedValue = 0x12345678;
-        if (page[i] != expectedValue) {
-          reportError(i, eventNumber, handle.pageIndex, expectedValue, page[i]);
-          return true;
-        }
-      }
-      return false;
-    }
 
     void resetPage(uint32_t* page)
     {
@@ -980,16 +1108,19 @@ class ProgramCruExperimentalDma: public Program
 
     /// Program options
     struct Options {
-        int64_t maxPages; ///< Limit of pages to push
-        bool fileOutput;
-        bool resetCard;
-        bool fifoDisplay;
-        bool randomPauseSoft;
-        bool randomPauseFirm;
-        bool errorCheck;
-        bool removeSharedMemory;
-        bool reloadKernelModule;
-        bool resyncCounter;
+        int64_t maxPages = 0; ///< Limit of pages to push
+        bool fileOutputAscii = false;
+        bool fileOutputBin = false;
+        bool resetCard = false;
+        bool fifoDisplay = false;
+        bool randomPauseSoft = false;
+        bool randomPauseFirm = false;
+        bool noErrorCheck = false;
+        bool removeSharedMemory = false;
+        bool reloadKernelModule = false;
+        bool resyncCounter = false;
+        bool registerHammer = false;
+        bool legacyAck = true;
     } mOptions;
 
     /// A value of true means no limit on page pushing
@@ -1003,6 +1134,9 @@ class ProgramCruExperimentalDma: public Program
 
     /// Temperature monitor thread thing
     TemperatureMonitor mTemperatureMonitor;
+
+    /// Register hammer
+    RegisterHammer mRegisterHammer;
 
     // PDA, buffer, etc stuff
     b::scoped_ptr<RorcDevice> mRorcDevice;
@@ -1022,10 +1156,9 @@ class ProgramCruExperimentalDma: public Program
     /// Data generator counter
     int64_t mDataGeneratorCounter = -1;
 
-    /// Indicates the offset should be reinitialized at the next page
-//    bool mDataGeneratorOffsetNeedsResync = true;
-
     /// Indicates current descriptor
+    /// Note: this could be mPushCounter % 128.
+    ///   And modulo 128 should be fast, since it's a power of 2: just take lower 7 bits
     int mDescriptorCounter = 0;
 
     /// Indicates current page in mPageAddresses

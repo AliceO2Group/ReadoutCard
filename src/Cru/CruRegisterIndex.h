@@ -36,7 +36,7 @@ static constexpr size_t STATUS_BASE_CARD_HIGH = 3;
 
 /// Set to number of available pages - 1
 /// Byte address: 0x10
-[[gnu::deprecated]] static constexpr size_t DMA_POINTER = 4; // Now controlled by firmware
+[[deprecated]] static constexpr size_t DMA_POINTER = 4; // Now controlled by firmware
 
 /// Size of the descriptor table
 /// Set to the same as (number of available pages - 1)
@@ -58,11 +58,12 @@ static constexpr size_t DONE_CONTROL = 6;
 static constexpr size_t DATA_EMULATOR_CONTROL = 128;
 
 /// Command register for DMA
-/// * Write 0x1 to this register to signal that the software handled the last 4 pages. Note that this is a "pulse" bit,
-///   not a sticky bit. It's used by the firmware to know when the software is ready to accept new data
+/// * Write 0x1 to this register to acknowledge that the software handled a page.
+///   Note that this is a "pulse" bit, not a sticky bit. It's used by the firmware to know when the software is ready to
+///   accept new data
 /// * Write 0x2 to inject an error
 /// Byte address: 0x204
-static constexpr size_t SOFTWARE_BUFFER_READY = 129;
+static constexpr size_t DMA_COMMAND = 129;
 
 /// Configuration register for DMA
 /// Byte address: 0x208
