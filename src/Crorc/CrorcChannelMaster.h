@@ -90,7 +90,7 @@ class CrorcChannelMaster final : public ChannelMaster
     /// Pushes a page to the CRORC's Free FIFO
     /// \param readyFifoIndex Index of the Ready FIFO to write the page's transfer status to
     /// \param pageBusAddress Address on the bus to push the page to
-    void pushFreeFifoPage(int readyFifoIndex, void* pageBusAddress);
+    void pushFreeFifoPage(int readyFifoIndex, volatile void* pageBusAddress);
 
     /// Get the bus address of the Ready FIFO
     void* getReadyFifoBusAddress() const;

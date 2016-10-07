@@ -113,8 +113,8 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
     /// A simple struct that holds the userspace and bus address of a page
     struct PageAddress
     {
-        void* user;
-        void* bus;
+        volatile void* user;
+        volatile void* bus;
     };
 
   private:

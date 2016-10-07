@@ -115,6 +115,35 @@ std::vector<RorcDevice::CardDescriptor> RorcDevice::findSystemDevices(int serial
   return cards;
 }
 
+void RorcDevice::printDeviceInfo(std::ostream& ostream)
+{
+  uint16_t domainId;
+  PciDevice_getDomainID(mPciDevice, &domainId);
+
+  uint8_t busId;
+  PciDevice_getBusID(mPciDevice, &busId);
+
+  uint8_t functionId;
+  PciDevice_getFunctionID(mPciDevice, &functionId);
+
+  const PciBarTypes* pciBarTypesPtr;
+  PciDevice_getBarTypes(mPciDevice, &pciBarTypesPtr);
+
+  auto barType = *pciBarTypesPtr;
+  auto barTypeString =
+      barType == PCIBARTYPES_NOT_MAPPED ? "NOT_MAPPED" :
+      barType == PCIBARTYPES_IO ? "IO" :
+      barType == PCIBARTYPES_BAR32 ? "BAR32" :
+      barType == PCIBARTYPES_BAR64 ? "BAR64" :
+      "n/a";
+
+  ostream << "Device info";
+  ostream << "\n  Domain ID      " << domainId;
+  ostream << "\n  Bus ID         " << uint32_t(busId);
+  ostream << "\n  Function ID    " << uint32_t(functionId);
+  ostream << "\n  BAR type       " << barTypeString << " (" << *pciBarTypesPtr << ")\n";
+}
+
 // The RORC headers have a lot of macros that cause problems with the rest of this file, so we include it down here.
 #include "c/rorc/rorc.h"
 

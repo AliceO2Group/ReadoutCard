@@ -264,7 +264,7 @@ void CrorcChannelMaster::initializeFreeFifo()
   }
 }
 
-void CrorcChannelMaster::pushFreeFifoPage(int readyFifoIndex, void* pageBusAddress)
+void CrorcChannelMaster::pushFreeFifoPage(int readyFifoIndex, volatile void* pageBusAddress)
 {
   size_t pageWords = getParams().dma.pageSize / 4; // Size in 32-bit words
   rorcPushRxFreeFifo(getBarUserspace(), reinterpret_cast<uint64_t>(pageBusAddress), pageWords, readyFifoIndex);

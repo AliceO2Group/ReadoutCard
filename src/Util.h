@@ -8,6 +8,7 @@
 #include <map>
 #include <set>
 #include <stdexcept>
+#include <chrono>
 #include <boost/throw_exception.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/lexical_cast.hpp>
@@ -138,6 +139,34 @@ std::string getFileSystemType(const boost::filesystem::path& path);
 ///   std::string: the found type
 std::pair<bool, std::string> isFileSystemTypeAnyOf(const boost::filesystem::path& path,
     const std::set<std::string>& types);
+
+/// Offset a pointer by a given amount of bytes
+template <typename T>
+T* offsetBytes(T* pointer, size_t bytes)
+{
+  return reinterpret_cast<T*>(reinterpret_cast<char*>(pointer) + bytes);
+}
+
+/// Get a range from std::rand()
+inline int getRandRange(int min, int max)
+{
+  return (std::rand() % max - min) + min;
+}
+
+/// Wait on a given condition to become true, with a timeout. Uses a busy wait
+/// \return false on timeout, true if the condition was satisfied before a timeout occurred
+template <typename Predicate, typename Duration>
+bool waitOnPredicateWithTimeout(Duration duration, Predicate predicate)
+{
+  auto start = std::chrono::high_resolution_clock::now();
+  while (predicate() == false) {
+    auto now = std::chrono::high_resolution_clock::now();
+    if ((now - start) > duration) {
+      return false;
+    }
+  }
+  return true;
+}
 
 } // namespace Util
 } // namespace Rorc

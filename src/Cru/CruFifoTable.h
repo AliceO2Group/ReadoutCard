@@ -35,7 +35,8 @@ struct CruFifoTable
     /// \param pageLength Size of the page in 32-bit words
     /// \param sourceAddress Page source address in device memory space
     /// \param destinationAddress Page destination address in device memory space
-    void setDescriptor(uint32_t index, uint32_t pageLength, void* sourceAddress, void* destinationAddress)
+    void setDescriptor(uint32_t index, uint32_t pageLength, volatile void* sourceAddress,
+        volatile void* destinationAddress)
     {
       auto& e = descriptorEntries[index];
       e.setControlRegister(index, pageLength);
@@ -86,7 +87,7 @@ struct CruFifoTable
 
         /// Set the source address registers
         /// \param address Page address in device memory space
-        void setSourceAddress(void* address)
+        void setSourceAddress(volatile void* address)
         {
           srcHigh = Util::getUpper32Bits(uint64_t(address));
           srcLow = Util::getLower32Bits(uint64_t(address));
@@ -94,7 +95,7 @@ struct CruFifoTable
 
         /// Set the source address registers
         /// \param address Page address in user memory space
-        void setDestinationAddress(void* address)
+        void setDestinationAddress(volatile void* address)
         {
           dstHigh = Util::getUpper32Bits(uint64_t(address));
           dstLow = Util::getLower32Bits(uint64_t(address));

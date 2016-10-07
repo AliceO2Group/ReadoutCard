@@ -117,6 +117,10 @@ static constexpr size_t FIRMWARE_COMPILE_INFO = 160;
 /// Byte address: 0x290
 static constexpr size_t RESET_CONTROL = 164;
 
+/// A debug register. The lower 8 bits of this register can be written to and read back from freely.
+/// Byte address: 0x310
+static constexpr size_t DEBUG_READ_WRITE = 196;
+
 /// Temperature control & read register
 /// * Write 0x1 to reset
 /// * Write 0x0 to disable the reset

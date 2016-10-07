@@ -41,6 +41,8 @@ class RorcDevice
       return mPciDevice;
     }
 
+    void printDeviceInfo(std::ostream& ostream);
+
     struct CardDescriptor
     {
         CardType::type cardType;
