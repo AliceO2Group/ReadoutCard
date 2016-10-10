@@ -56,6 +56,25 @@ constexpr bool isValidTag(Tag)
   return isValidTag<Tag>();
 }
 
+/// Checks if the given tag represents a non-dummy card type.
+template<class Tag>
+constexpr bool isNonDummyTag()
+{
+    // To make the comparison simpler, we strip Tag of cv-qualifiers and references
+    using tag = typename std::decay<Tag>::type;
+    return std::is_same<tag, CardTypeTag::CrorcTag_>::value ||
+        std::is_same<tag, CardTypeTag::CruTag_>::value;
+}
+	
+/// Checks if the given tag represents a dummy card type
+template<class Tag>
+constexpr bool isDummyTag()
+{
+    // To make the comparison simpler, we strip Tag of cv-qualifiers and references
+    using tag = typename std::decay<Tag>::type;
+    return std::is_same<tag, CardTypeTag::DummyTag_>::value;
+}
+
 static_assert(isValidTag<DummyTag_>() && isValidTag(DummyTag), "");
 static_assert(isValidTag<CrorcTag_>() && isValidTag(CrorcTag), "");
 static_assert(isValidTag<CruTag_>() && isValidTag(CruTag), "");

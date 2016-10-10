@@ -33,7 +33,7 @@ struct CruImpl : public TestInterface {};
 template<class ...Args>
 std::shared_ptr<TestInterface> _callMake(CardType::type cardType, Args&&... args)
 {
-  return FactoryHelper::_make_impl::Make<std::shared_ptr<TestInterface>, Args...>::make(cardType,
+  return FactoryHelper::_make_impl::Make<std::shared_ptr<TestInterface>, 0, Args...>::make(cardType,
       std::forward<Args>(args)...);
 }
 

@@ -16,6 +16,7 @@ namespace Rorc {
 
 namespace FactoryHelper {
 
+#ifdef ALICEO2_RORC_PDA_ENABLED
 inline RorcDevice::CardDescriptor findCard(int serial)
 {
   auto cardsFound = RorcDevice::findSystemDevices(serial);
@@ -35,6 +36,7 @@ inline RorcDevice::CardDescriptor findCard(int serial)
 
   return cardsFound.at(0);
 }
+#endif
 
 /// Helper template method for the channel factories.
 /// \param serialNumber Serial number of the card
@@ -74,12 +76,12 @@ std::shared_ptr<Interface> channelFactoryHelper(int serialNumber, int dummySeria
 namespace _make_impl {
 
 /// Declaration for the makeChannel implementation struct
-template <class... Args>
+template <class Result, int Index, class... Args>
 struct Make;
 
 /// Stop condition implementation
-template <class Result>
-struct Make<Result>
+template <class Result, int Index>
+struct Make<Result, Index>
 {
   static Result make(CardType::type cardType)
   {
@@ -90,8 +92,8 @@ struct Make<Result>
 };
 
 /// Recursive step implementation
-template <class Result, class Tag, class Function, class... Args>
-struct Make<Result, Tag, Function, Args...>
+template <class Result, int Index, class Tag, class Function, class... Args>
+struct Make<Result, Index, Tag, Function, Args...>
 {
   /// Pops two arguments from the front of the Args, a CardTypeTag and an accompanying instantiation function, and
   /// tries to match the tag with the 'select' argument. If there's no match, it recursively goes down the list of
@@ -100,12 +102,23 @@ struct Make<Result, Tag, Function, Args...>
   static Result make(CardType::type select, Tag typeTag, Function func, Args&&... args)
   {
     // Make sure this tag is valid and not a dummy
+    using TagDecay = typename std::decay<Tag>::type; 
     static_assert(CardTypeTag::isValidTag<Tag>(), "CardTypeTag of pair is not a valid tag");
-    static_assert(!std::is_same<decltype(typeTag), CardTypeTag::DummyTag_>::value,
-              "DummyTag & accompanying function must be in first position");
-
+    static_assert((Index == 0 && CardTypeTag::isDummyTag<Tag>()) || Index != 0,
+       "DummyTag & accompanying function must be in first position");
+    static_assert((Index != 0 && CardTypeTag::isNonDummyTag<Tag>()) || Index == 0,
+       "DummyTag & accompanying function may be in first position only");
+ 
     // If we find the right tag, instantiate using accompanying function, else recursively go down the argument list
-    return (typeTag.type == select) ? func() : Make<Result, Args...>::make(select, std::forward<Args>(args)...);
+    return (typeTag.type == select) ? func() : Make<Result, Index + 1, Args...>::make(select, std::forward<Args>(args)...);
+  }
+
+  static Result makeDummy(Tag typeTag, Function func, Args&&... args)
+  {
+    static_assert(Index == 0, "DummyTag & accompanying function must be in first position");
+    static_assert(std::is_same<typename std::decay<Tag>::type, CardTypeTag::DummyTag_>::value,
+       "DummyTag & accompanying function must be in first position");
+    return func();
   }
 };
 } // namespace _make_impl
@@ -134,18 +147,7 @@ std::shared_ptr<Interface> makeChannel(int serial, int dummySerial, Args&&... ar
   using SharedPtr = std::shared_ptr<Interface>;
   using namespace _make_impl;
 
-
-  /// Implementation for a dummy instantiation. It is assumed the first pair of tag & function in the Args... are
-  /// the dummy ones
-  auto makeDummy = [&]{
-    return [&](auto tag, auto func, auto&&...) -> SharedPtr {
-      static_assert(std::is_same<decltype(tag), CardTypeTag::DummyTag_>::value,
-          "DummyTag & accompanying function must be in first position");
-      return func();
-    }(std::forward<Args>(args)...);
-  };
-
-  auto makeReal = [&](auto cardType){ return Make<SharedPtr, Args...>::make(cardType, std::forward<Args>(args)...); };
+  auto makeDummy = [&]{ return Make<SharedPtr, 0, Args...>::makeDummy(std::forward<Args>(args)...); };
 
   try {
 #ifndef ALICEO2_RORC_PDA_ENABLED
@@ -153,6 +155,7 @@ std::shared_ptr<Interface> makeChannel(int serial, int dummySerial, Args&&... ar
     return makeDummy();
 #else
     // If PDA IS enabled we can make a dummy or a real channel
+    auto makeReal = [&](auto cardType){ return Make<SharedPtr, 0, Args...>::make(cardType, std::forward<Args>(args)...); };
     return (dummySerial == serial) ? makeDummy() : makeReal(findCard(serial).cardType);
 #endif
   } catch (boost::exception& e) {
