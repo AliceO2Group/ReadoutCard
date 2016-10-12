@@ -39,6 +39,9 @@ const bool reinsertDriverModule = true;
 // Explicit stopping should not be necessary, and will allow other processes to resume without restarting the DMA
 const bool stopDma = false;
 
+const size_t pageSize = 4*1024;
+const size_t bufferSize = 4*1024*1024;
+
 /// Prints the first 10 integers of a page
 void printPage(Rorc::Page& page, int index, std::ostream& ios)
 {
@@ -51,6 +54,16 @@ void printPage(Rorc::Page& page, int index, std::ostream& ios)
 
 } // Anonymous namespace
 
+Rorc::Parameters::Map makeParams()
+{
+  using namespace Rorc::Parameters;
+  return Map {
+      {Keys::dmaPageSize(),      std::to_string(pageSize)},
+      {Keys::dmaBufferSize(),    std::to_string(bufferSize)},
+      {Keys::generatorEnabled(), "true"},
+  };
+}
+
 int main(int, char**)
 {
   if (reinsertDriverModule) {
@@ -59,19 +72,10 @@ int main(int, char**)
   }
 
   try {
-    // Initialize the parameters for configuring the DMA channel
-    size_t pageSize = 4*1024;
-    size_t bufferSize = 4*1024*1024;
-    Rorc::Parameters::Map params = {
-        {"dma_page_size", std::to_string(pageSize)},
-        {"dma_buffer_size", std::to_string(bufferSize)},
-        {"generator_enabled", "true"},
-    };
-
     // Get the channel master object
     cout << "\n### Acquiring channel master object" << endl;
     std::shared_ptr<Rorc::ChannelMasterInterface> channel = Rorc::ChannelFactory().getMaster(serialNumber,
-        channelNumber, params);
+        channelNumber, makeParams());
 
     // Start the DMA
     cout << "\n### Starting DMA" << endl;
@@ -142,7 +146,8 @@ int main(int, char**)
     }
 
     cout << "\n### Releasing channel master object" << endl;
-  } catch (const std::exception& e) {
+  }
+  catch (const std::exception& e) {
     cout << boost::diagnostic_information(e) << endl;
   }
   return 0;

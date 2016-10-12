@@ -11,14 +11,16 @@
 #include "RORC/Parameters.h"
 #include "RORC/ChannelMasterInterface.h"
 #include "RORC/Exception.h"
+#include "ChannelParameters.h"
+#include "ChannelUtilityInterface.h"
 #include "FileSharedObject.h"
 #include "MemoryMappedFile.h"
-#include "TypedMemoryMappedFile.h"
-#include "RorcDevice.h"
-#include "ChannelParameters.h"
+#include "PageAddress.h"
 #include "Pda/PdaBar.h"
 #include "Pda/PdaDmaBuffer.h"
-#include "ChannelUtilityInterface.h"
+#include "RorcDevice.h"
+#include "TypedMemoryMappedFile.h"
+
 
 namespace AliceO2 {
 namespace Rorc {
@@ -110,13 +112,6 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
         };
     };
 
-    /// A simple struct that holds the userspace and bus address of a page
-    struct PageAddress
-    {
-        volatile void* user;
-        volatile void* bus;
-    };
-
   private:
 
     /// Persistent channel state/data that resides in shared memory
@@ -206,7 +201,7 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
 
     volatile uint32_t* getBarUserspace() const
     {
-      return mPdaBar->getUserspaceAddressU32();;
+      return mPdaBar->getUserspaceAddressU32();
     }
 
     const Pda::PdaDmaBuffer& getBufferPages() const

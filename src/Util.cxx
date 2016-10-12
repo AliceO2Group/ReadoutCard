@@ -88,6 +88,12 @@ std::pair<bool, std::string> isFileSystemTypeAnyOf(const boost::filesystem::path
   return {types.count(type), type};
 }
 
+template <typename T>
+bool checkAlignment(T* address, uint64_t alignment)
+{
+  return (uint64_t(address) % alignment) == 0;
+}
+
 } // namespace Util
 } // namespace Rorc
 } // namespace AliceO2

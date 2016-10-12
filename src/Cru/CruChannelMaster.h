@@ -51,50 +51,38 @@ class CruChannelMaster final : public ChannelMaster
 
   private:
 
-    /// Persistent device state/data that resides in shared memory
-    class SharedData
-    {
-      public:
-        SharedData();
+    void constructorCommon();
+    void initFifo();
+    void initCru();
+    void setDescriptor(int pageIndex, int descriptorIndex);
+    void resetBuffer();
+    void resetCru();
+    void resetPage(volatile uint32_t* page);
+    void resetPage(volatile void* page);
+    void setBufferReadyStatus(bool ready);
+    void setBufferReadyGuard();
+    volatile uint32_t& bar(size_t index);
+    void acknowledgePage();
 
-        /// Initialize the shared data fields
-        void initialize();
+    static constexpr CardType::type CARD_TYPE = CardType::Cru;
 
-        /// State of the initialization of the shared data
-        InitializationState::type mInitializationState;
+    std::unique_ptr<Util::GuardFunction> mBufferReadyGuard;
 
-        /// Index of next page available for writing
-        int mFifoIndexWrite;
+    /// Userspace FIFO
+    CruFifoTable* mFifoUser;
 
-        /// Index of oldest non-free page
-        int mFifoIndexRead;
-
-        /// Index to the next free page of the DMA buffer
-        int mPageIndex;
-    };
-
-    /// Memory mapped file containing the readyFifo
-    boost::scoped_ptr<TypedMemoryMappedFile<CruFifoTable>> mMappedFileFifo;
-
-    /// PDA DMABuffer object for the readyFifo
-    boost::scoped_ptr<Pda::PdaDmaBuffer> mBufferFifo;
-
-    /// Memory mapped data stored in the shared state file
-    boost::scoped_ptr<FileSharedObject::FileSharedObject<SharedData>> mCruSharedData;
-
-    /// Counter for the amount of pages that have been requested.
-    /// Since currently, the idea is to push 128 at a time, we wait until the client requests 128 pages...
-    /// XXX This is of course a dirty hack and should be replaced when the CRU development matures
-    int mPendingPages;
+    /// Bus FIFO
+    CruFifoTable* mFifoBus;
 
     /// Array to keep track of read pages (false: wasn't read out, true: was read out).
     std::vector<bool> mPageWasReadOut;
 
-  private:
+    /// Mapping from fifo page index to DMA buffer index
+    std::vector<int> mBufferPageIndexes;
 
-    void constructorCommon();
-
-    static constexpr CardType::type CARD_TYPE = CardType::Cru;
+    int mFifoIndexWrite; ///< Index of next FIFO page available for writing
+    int mFifoIndexRead; ///< Index of oldest non-free FIFO page
+    int mBufferPageIndex; ///< Index of next DMA buffer page available for writing
 };
 
 } // namespace Rorc

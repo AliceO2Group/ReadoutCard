@@ -91,6 +91,11 @@ The PageHandle and Page classes have similar roles. PageHandle contains an index
 to refer to a page. The Page class contains the raw address of a page and its size.
 The reason these are not combined into one class 
 
+Scatter-gather lists
+-------------------
+Scatter-gather lists (SGLs) contain a sequence of memory regions that the card's DMA engine can use.
+The granularity of the regions is in pages. Without an SGL, the DMA buffer would have to be a contiguous piece of 
+physical memory, which may be very difficult to allocate. With an SGL, we can use pages scattered over physical memory. The regions can also presented in userspace as contiguous memory, thanks to the magic of the MMU.   
 
 Known issues
 ===================

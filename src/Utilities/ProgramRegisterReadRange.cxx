@@ -6,8 +6,11 @@
 #include "Utilities/Program.h"
 #include "RORC/ChannelFactory.h"
 #include <iostream>
+#include <fstream>
+#include <string>
 
 using namespace AliceO2::Rorc::Utilities;
+namespace po = boost::program_options;
 
 namespace {
 class ProgramRegisterReadRange: public Program
@@ -16,16 +19,17 @@ class ProgramRegisterReadRange: public Program
 
     virtual UtilsDescription getDescription()
     {
-      return UtilsDescription("Read Register Range", "Read a range of registers",
-          "./rorc-reg-read-range --serial=12345 --channel=0 -a0x8 -r10");
+      return {"Read Register Range", "Read a range of registers",
+          "./rorc-reg-read-range --serial=12345 --channel=0 --address=0x8 --range=10"};
     }
 
-    virtual void addOptions(boost::program_options::options_description& options)
+    virtual void addOptions(po::options_description& options)
     {
       Options::addOptionRegisterAddress(options);
       Options::addOptionChannel(options);
       Options::addOptionSerialNumber(options);
       Options::addOptionRegisterRange(options);
+      options.add_options()("file", po::value<std::string>(&mFile), "Output to given file in binary format");
     }
 
     virtual void run(const boost::program_options::variables_map& map)
@@ -36,14 +40,29 @@ class ProgramRegisterReadRange: public Program
       int range = Options::getOptionRegisterRange(map);
       auto channel = AliceO2::Rorc::ChannelFactory().getSlave(serialNumber, channelNumber);
 
+      std::vector<uint32_t> values(range);
+
       // Registers are indexed by 32 bits (4 bytes)
       int baseIndex = baseAddress / 4;
 
       for (int i = 0; i < range; ++i) {
-        uint32_t value = channel->readRegister(baseIndex + i);
-        std::cout << Common::makeRegisterString((baseIndex + i) * 4, value);
+        values[i] = channel->readRegister(baseIndex + i);
+      }
+
+      if (mFile.empty()) {
+        for (int i = 0; i < range; ++i) {
+          std::cout << Common::makeRegisterString((baseIndex + i) * 4, values[i]);
+        }
+      }
+      else {
+        std::ofstream stream(mFile, std::ios_base::out);
+        stream.write(reinterpret_cast<char*>(values.data()), values.size() * sizeof(decltype(values)::value_type));
       }
     }
+
+  private:
+
+    std::string mFile;
 };
 } // Anonymous namespace
 

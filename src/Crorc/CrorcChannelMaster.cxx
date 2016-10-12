@@ -22,6 +22,7 @@ namespace bip = boost::interprocess;
 namespace bfs = boost::filesystem;
 using std::cout;
 using std::endl;
+using namespace std::literals;
 
 namespace AliceO2 {
 namespace Rorc {
@@ -61,7 +62,7 @@ void CrorcChannelMaster::constructorCommon()
 
   ChannelPaths paths(CARD_TYPE, getSerialNumber(), getChannelNumber());
 
-  resetSmartPtr(mMappedFileFifo, paths.fifo().c_str());
+  resetSmartPtr(mMappedFileFifo, paths.fifo().string());
 
   resetSmartPtr(mBufferReadyFifo, getRorcDevice().getPciDevice(), mMappedFileFifo->getAddress(), mMappedFileFifo->getSize(),
       getBufferId(BUFFER_INDEX_FIFO));
@@ -195,7 +196,7 @@ void CrorcChannelMaster::resetCard(ResetLevel::type resetLevel)
       {
         // Wait a little before SIU reset.
 
-        std::this_thread::sleep_for(std::chrono::microseconds(100000)); /// XXX Why???
+        std::this_thread::sleep_for(100ms); /// XXX Why???
         // Reset SIU.
         crorcArmDdl(RORC_RESET_SIU);
         crorcArmDdl(RORC_RESET_DIU);
@@ -210,7 +211,7 @@ void CrorcChannelMaster::resetCard(ResetLevel::type resetLevel)
   }
 
   // Wait a little after reset.
-  std::this_thread::sleep_for(std::chrono::microseconds(100000)); /// XXX Why???
+  std::this_thread::sleep_for(100ms); /// XXX Why???
 }
 
 void CrorcChannelMaster::startDataGenerator(const GeneratorParameters& gen)
@@ -223,12 +224,12 @@ void CrorcChannelMaster::startDataGenerator(const GeneratorParameters& gen)
 
   if (LoopbackMode::Rorc == gen.loopbackMode) {
     rorcParamOn(getBarUserspace(), PRORC_PARAM_LOOPB);
-    std::this_thread::sleep_for(std::chrono::microseconds(100000)); // XXX Why???
+    std::this_thread::sleep_for(100ms); // XXX Why???
   }
 
   if (LoopbackMode::Siu == gen.loopbackMode) {
     crorcSetSiuLoopback();
-    std::this_thread::sleep_for(std::chrono::microseconds(100000)); // XXX Why???
+    std::this_thread::sleep_for(100ms); // XXX Why???
     crorcCheckLink();
     crorcSiuCommand(RandCIFST);
     crorcDiuCommand(RandCIFST);
@@ -484,7 +485,7 @@ void CrorcChannelMaster::crorcStartTrigger()
   stword_t stw;
   int returnCode = rorcStartTrigger(getBarUserspace(), DDL_RESPONSE_TIME * csd->mPciLoopPerUsec, &stw);
   THROW_IF_BAD_STATUS(returnCode, CrorcStartTriggerException()
-          ADD_ERRINFO(returnCode, "Failed to start trigger"));
+      ADD_ERRINFO(returnCode, "Failed to start trigger"));
 }
 
 void CrorcChannelMaster::crorcStopTrigger()
@@ -493,7 +494,7 @@ void CrorcChannelMaster::crorcStopTrigger()
   uint64_t timeout = mCrorcSharedData->get()->mPciLoopPerUsec * DDL_RESPONSE_TIME;
   int returnCode = rorcStopTrigger(getBarUserspace(), timeout, &stw);
   THROW_IF_BAD_STATUS(returnCode, CrorcStopTriggerException()
-            ADD_ERRINFO(returnCode, "Failed to stop trigger"));
+      ADD_ERRINFO(returnCode, "Failed to stop trigger"));
 }
 
 std::vector<uint32_t> CrorcChannelMaster::utilityCopyFifo()

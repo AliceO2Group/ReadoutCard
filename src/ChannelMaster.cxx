@@ -153,7 +153,7 @@ void ChannelMaster::constructorCommonPhaseTwo()
 
   resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), mChannelNumber);
 
-  resetSmartPtr(mMappedFilePages, ChannelPaths(mCardType, mSerialNumber, mChannelNumber).pages().c_str(),
+  resetSmartPtr(mMappedFilePages, ChannelPaths(mCardType, mSerialNumber, mChannelNumber).pages().string(),
       getSharedData().getParams().dma.bufferSize);
 
   resetSmartPtr(mBufferPages, mRorcDevice->getPciDevice(), mMappedFilePages->getAddress(), mMappedFilePages->getSize(),
@@ -168,10 +168,9 @@ ChannelMaster::ChannelMaster(CardType::type cardType, int serial, int channel, i
 
   // Initialize (if needed) the shared data
   const auto& sd = mSharedData->get();
-  const auto& params = sd->getParams();
 
   if (sd->mInitializationState == InitializationState::INITIALIZED) {
-    validateParameters(params);
+    validateParameters(sd->getParams());
   }
   else {
     ChannelPaths paths(cardType, mSerialNumber, mChannelNumber);

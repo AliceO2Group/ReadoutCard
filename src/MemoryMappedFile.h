@@ -16,7 +16,7 @@ class MemoryMappedFile
 {
   public:
     MemoryMappedFile();
-    MemoryMappedFile(const char* fileName, size_t fileSize);
+    MemoryMappedFile(const std::string& fileName, size_t fileSize);
 
     void* getAddress() const
     {
@@ -32,7 +32,7 @@ class MemoryMappedFile
     boost::interprocess::file_mapping mFileMapping;
     boost::interprocess::mapped_region mMappedRegion;
 
-    void map(const char* fileName, size_t fileSize);
+    void map(const std::string& fileName, size_t fileSize);
 };
 
 } // namespace Rorc
