@@ -7,6 +7,7 @@
 #include "Factory/ChannelUtilityFactory.h"
 #include "RORC/Exception.h"
 #include <boost/filesystem/operations.hpp>
+#include <boost/interprocess/sync/named_mutex.hpp>
 #include <Utilities/Common.h>
 #include <Utilities/Options.h>
 #include <Utilities/Program.h>
@@ -75,8 +76,9 @@ class ProgramCleanup: public Program
           pushIfPresent<errinfo_rorc_shared_buffer_file>(e, paths);
           pushIfPresent<errinfo_rorc_shared_fifo_file>(e, paths);
           pushIfPresent<errinfo_rorc_shared_state_file>(e, paths);
+          auto namedMutex = boost::get_error_info<errinfo_rorc_named_mutex_name>(e);
 
-          if (paths.empty()) {
+          if (paths.empty() && !namedMutex) {
             cout << "Failed to discover files to clean up\n";
             cout << "### Forced cleanup failed!" << endl;
             throw;
@@ -86,6 +88,12 @@ class ProgramCleanup: public Program
             cout << "Deleting file '" << p << "'\n";
             boost::filesystem::remove(p.c_str());
           }
+
+          if (namedMutex) {
+            cout << "Deleting named mutex '" << namedMutex->c_str() << "'\n";
+            boost::interprocess::named_mutex::remove(namedMutex->c_str());
+          }
+
           cout << "### Done!" << endl;
         }
         else {

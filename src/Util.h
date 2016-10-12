@@ -168,6 +168,34 @@ bool waitOnPredicateWithTimeout(Duration duration, Predicate predicate)
   return true;
 }
 
+class GuardFunction
+{
+  public:
+    GuardFunction(std::function<void()> destruct)
+        : mDestruct(destruct)
+    {
+    }
+
+    GuardFunction(std::function<void()> construct, std::function<void()> destruct)
+        : mDestruct(destruct)
+    {
+      construct();
+    }
+
+    ~GuardFunction()
+    {
+      mDestruct();
+    }
+
+  private:
+    std::function<void()> mDestruct;
+};
+
+inline bool checkAlignment(void* address, uint64_t alignment)
+{
+  return (uint64_t(address) % alignment) == 0;
+}
+
 } // namespace Util
 } // namespace Rorc
 } // namespace AliceO2

@@ -34,6 +34,7 @@ DEFINE_ERRINFO(filesystem_type, std::string);
 DEFINE_ERRINFO(shared_state_file, std::string);
 DEFINE_ERRINFO(shared_lock_file, std::string);
 DEFINE_ERRINFO(shared_fifo_file, std::string);
+DEFINE_ERRINFO(named_mutex_name, std::string);
 DEFINE_ERRINFO(shared_buffer_file, std::string);
 DEFINE_ERRINFO(shared_object_name, std::string);
 DEFINE_ERRINFO(filesize, size_t);

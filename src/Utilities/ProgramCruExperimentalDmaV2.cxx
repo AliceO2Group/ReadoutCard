@@ -36,6 +36,8 @@
 #include "Pda/PdaDevice.h"
 #include "Pda/PdaBar.h"
 #include "Pda/PdaDmaBuffer.h"
+#include "Pda/Pda.h"
+#include "PageAddress.h"
 
 /// Use busy wait instead of condition variable (c.v. impl incomplete, is very slow)
 #define USE_BUSY_INTERRUPT_WAIT
@@ -51,13 +53,6 @@ using std::cout;
 using std::endl;
 
 namespace {
-
-/// A simple struct that holds the userspace and bus address of a page
-struct PageAddress
-{
-    volatile void* user;
-    volatile void* bus;
-};
 
 /// Max amount of errors that are recorded into the error stream
 static constexpr int64_t MAX_RECORDED_ERRORS = 1000;
@@ -263,59 +258,6 @@ struct AddressSpaces
     T* user;
     T* bus;
 };
-
-/// Partition the memory of the scatter gather list into pages
-/// \param list Scatter gather list
-/// \param fifoSpace Amount of space reserved for the FIFO, must use multiples of the page size for uniformity
-/// \return A tuple containing: address of the page for the FIFO, and a vector with addresses of the rest of the pages
-std::tuple<PageAddress, std::vector<PageAddress>> partitionScatterGatherList(
-    const Pda::PdaDmaBuffer::ScatterGatherVector& list, size_t fifoSize)
-{
-  std::tuple<PageAddress, std::vector<PageAddress>> tuple;
-  auto& fifoAddress = std::get<0>(tuple);
-  auto& pageAddresses = std::get<1>(tuple);
-
-  if (list.size() < 1) {
-    BOOST_THROW_EXCEPTION(CruException()
-        << errinfo_rorc_error_message("Scatter-gather list empty"));
-  }
-
-  if (list.at(0).size < fifoSize) {
-    BOOST_THROW_EXCEPTION(CruException()
-        << errinfo_rorc_error_message("First SGL entry size insufficient for FIFO"));
-  }
-
-  fifoAddress = {list.at(0).addressUser, list.at(0).addressBus};
-
-  for (int i = 0; i < list.size(); ++i) {
-    auto& entry = list[i];
-    if (entry.size < (2l * 1024l * 1024l)) {
-      BOOST_THROW_EXCEPTION(CruException()
-          << errinfo_rorc_error_message("Unsupported configuration: DMA scatter-gather entry size less than 2 MiB")
-          << errinfo_rorc_scatter_gather_entry_size(entry.size)
-          << errinfo_rorc_possible_causes(
-              {"DMA buffer was not allocated in hugepage shared memory (hugetlbfs may not be properly mounted)"}));
-    }
-
-    bool first = (i == 0);
-
-    // How many pages fit in this SGL entry
-    int64_t pagesInSglEntry = first
-        ? (entry.size - fifoSize) / DMA_PAGE_SIZE // First entry also contains the FIFO
-        : entry.size / DMA_PAGE_SIZE; // Otherwise, we can fill it up with pages
-
-    for (int64_t j = 0; j < pagesInSglEntry; ++j) {
-      int64_t offset = first
-        ? fifoSize + j * DMA_PAGE_SIZE // Keep that FIFO in mind...
-        : j * DMA_PAGE_SIZE;
-
-      pageAddresses.push_back({Util::offsetBytes(entry.addressUser, offset),
-        Util::offsetBytes(entry.addressBus, offset)});
-    }
-  }
-
-  return tuple;
-}
 
 bool checkAlignment(void* address, uint64_t alignment)
 {
@@ -606,8 +548,8 @@ class ProgramCruExperimentalDma: public Program
       size_t fifoSpace = ((sizeof(CruFifoTable) / DMA_PAGE_SIZE) + 1) * DMA_PAGE_SIZE;
 
       PageAddress fifoAddress;
-      std::tie(fifoAddress, mPageAddresses) = Stuff::partitionScatterGatherList(mBufferPages->getScatterGatherList(),
-          fifoSpace);
+      std::tie(fifoAddress, mPageAddresses) = Pda::partitionScatterGatherList(mBufferPages->getScatterGatherList(),
+          fifoSpace, DMA_PAGE_SIZE);
       mFifoAddress.user = reinterpret_cast<CruFifoTable*>(const_cast<void*>(fifoAddress.user));
       mFifoAddress.bus = reinterpret_cast<CruFifoTable*>(const_cast<void*>(fifoAddress.bus));
 
@@ -873,7 +815,6 @@ class ProgramCruExperimentalDma: public Program
     {
       int pushed = 0;
 
-      // Note: This should be more optimized later, since pages are always pushed in blocks of 4.
       while (shouldPushQueue()) {
         pushPage();
         pushed++;

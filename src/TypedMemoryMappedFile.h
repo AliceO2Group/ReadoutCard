@@ -18,7 +18,7 @@ template<typename T>
 class TypedMemoryMappedFile
 {
   public:
-    TypedMemoryMappedFile(const char* fileName)
+    TypedMemoryMappedFile(const std::string& fileName)
       : mMemoryMappedFile(fileName, sizeof(T))
     {
     }

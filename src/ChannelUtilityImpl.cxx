@@ -8,6 +8,7 @@
 #include <functional>
 #include <boost/format.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <boost/interprocess/sync/named_mutex.hpp>
 #include "ChannelPaths.h"
 #include "Cru/CruRegisterIndex.h"
 
@@ -70,7 +71,7 @@ void rorcCleanupState(const ChannelPaths& paths)
   remove(paths.state().c_str());
   remove(paths.fifo().c_str());
   remove(paths.lock().c_str());
-  remove(paths.lock().c_str());
+  boost::interprocess::named_mutex::remove(paths.namedMutex().c_str());
 }
 
 } // Anonymous namespace

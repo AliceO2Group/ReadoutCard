@@ -69,6 +69,10 @@ static constexpr size_t DMA_COMMAND = 129;
 /// Byte address: 0x208
 static constexpr size_t DMA_CONFIGURATION = 130;
 
+/// Contains the amount of 32 kilobyte blocks that the firmware has pushed
+/// Byte address: 0x218
+static constexpr size_t FIRMWARE_PUSH_COUNTER = 134;
+
 ///// Control register for DMA FIFO pointer
 ///// Write the DMA pointer to this register, i.e. the index of the highest available descriptor
 ///// Byte address: 0x???
