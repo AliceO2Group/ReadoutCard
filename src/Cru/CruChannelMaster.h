@@ -38,6 +38,15 @@ class CruChannelMaster final : public ChannelMaster
     virtual void utilityCleanupState() override;
     virtual int utilityGetFirmwareVersion() override;
 
+    /// TEST
+    virtual int _fillFifo(int maxFill = CRU_DESCRIPTOR_ENTRIES) override;
+    /// TEST
+    virtual boost::optional<_Page> _getPage() override;
+    /// TEST
+    virtual void _acknowledgePage() override;
+
+
+
   protected:
 
     virtual void deviceStartDma() override;
@@ -62,27 +71,52 @@ class CruChannelMaster final : public ChannelMaster
     void setBufferReadyStatus(bool ready);
     void setBufferReadyGuard();
     volatile uint32_t& bar(size_t index);
-    void acknowledgePage();
+    int getCanPushCount();
+    bool isTailArrived();
+    _Page getPageFromIndex(int index);
 
     static constexpr CardType::type CARD_TYPE = CardType::Cru;
 
     std::unique_ptr<Util::GuardFunction> mBufferReadyGuard;
 
-    /// Userspace FIFO
-    CruFifoTable* mFifoUser;
-
     /// Bus FIFO
     CruFifoTable* mFifoBus;
 
-    /// Array to keep track of read pages (false: wasn't read out, true: was read out).
-    std::vector<bool> mPageWasReadOut;
+    /// Userspace FIFO
+    CruFifoTable* mFifoUser;
 
-    /// Mapping from fifo page index to DMA buffer index
-    std::vector<int> mBufferPageIndexes;
+    struct Buffer
+    {
+      /// Index of page that's the tail of the circular buffer, i.e. the oldest page that has not yet been acknowledged
+      int tail;
 
-    int mFifoIndexWrite; ///< Index of next FIFO page available for writing
-    int mFifoIndexRead; ///< Index of oldest non-free FIFO page
-    int mBufferPageIndex; ///< Index of next DMA buffer page available for writing
+      /// Current amount of pages in buffer
+      int size;
+
+      /// Max amount of pages in buffer
+      int capacity;
+
+      int getCapacity() const
+      {
+        return capacity;
+      }
+    } mBuffer;
+
+    struct Fifo
+    {
+      /// Index of page that's the tail of the FIFO, i.e. the page that was least recently pushed
+      /// This is the page that must be checked for arrival
+      int tail;
+
+      /// Current amount of pages in FIFO
+      int size;
+
+      /// Max amount of pages in FIFO
+      int getCapacity()
+      {
+        return static_cast<int>(CRU_DESCRIPTOR_ENTRIES);
+      };
+    } mFifo;
 };
 
 } // namespace Rorc

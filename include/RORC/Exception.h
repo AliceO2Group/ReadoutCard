@@ -60,6 +60,7 @@ DEFINE_ERRINFO(card_type, CardType::type);
 DEFINE_ERRINFO(index, size_t);
 DEFINE_ERRINFO(range, size_t);
 DEFINE_ERRINFO(dma_buffer_size, size_t);
+DEFINE_ERRINFO(dma_buffer_pages, size_t);
 DEFINE_ERRINFO(dma_page_size, size_t);
 DEFINE_ERRINFO(scatter_gather_entry_size, size_t);
 

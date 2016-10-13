@@ -57,14 +57,17 @@ class Lock
       int result = std::try_lock(mFileLock, mNamedLock);
       if (result == 0) {
         // First lock failed
-        BOOST_THROW_EXCEPTION(FileLockException() << errinfo_rorc_error_message("Failed to acquire file lock"));
+        BOOST_THROW_EXCEPTION(FileLockException()
+            << errinfo_rorc_error_message("Failed to acquire file lock")
+            << errinfo_rorc_shared_lock_file(lockFilePath.string()));
       } else if (result == 1) {
         // Second lock failed
         BOOST_THROW_EXCEPTION(NamedMutexLockException()
             << errinfo_rorc_error_message("Failed to acquire named mutex only; file lock was successfully acquired")
             << errinfo_rorc_possible_causes({
                 "Named mutex is owned by other thread in current process",
-                "Previous Interprocess::Lock on same objects was not cleanly destroyed"}));
+                "Previous Interprocess::Lock on same objects was not cleanly destroyed"})
+            << errinfo_rorc_named_mutex_name(namedMutexName));
       }
     }
 
