@@ -28,7 +28,7 @@ class BufferManager
       return getHead(mFifo);
     }
 
-    void advanceHead()
+    void advanceHeads()
     {
       assert(mBuffer.size < mBuffer.getCapacity());
       assert(mFifo.size < mFifo.getCapacity());
@@ -37,13 +37,16 @@ class BufferManager
       mFifo.size++;
     }
 
-    void advanceTail()
+    void advanceBufferTail()
     {
       assert(mBuffer.size != 0);
-      assert(mFifo.size != 0);
-
-      incrementTail(mFifo);
       incrementTail(mBuffer);
+    }
+
+    void advanceFifoTail()
+    {
+      assert(mFifo.size != 0);
+      incrementTail(mFifo);
     }
 
     int getBufferSize() const
