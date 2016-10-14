@@ -4,22 +4,14 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "CruChannelMaster.h"
-#include <iostream>
-#include <cassert>
 #include <thread>
-#include "c/rorc/rorc.h"
 #include "ChannelPaths.h"
-#include "RORC/Exception.h"
-#include "Util.h"
 #include "ChannelUtilityImpl.h"
 #include "CruRegisterIndex.h"
 #include "Pda/Pda.h"
+#include "RORC/Exception.h"
+#include "Util.h"
 
-namespace b = boost;
-namespace bip = boost::interprocess;
-namespace bfs = boost::filesystem;
-using std::cout;
-using std::endl;
 using namespace std::literals;
 
 namespace AliceO2 {
@@ -29,47 +21,19 @@ namespace Register = CruRegisterIndex;
 
 namespace
 {
+
 /// DMA page length in bytes
 constexpr int DMA_PAGE_SIZE = 8 * 1024;
 /// DMA page length in 32-bit words
 constexpr int DMA_PAGE_SIZE_32 = DMA_PAGE_SIZE / 4;
 
-constexpr int FIFO_CAPACITY = static_cast<int>(CRU_DESCRIPTOR_ENTRIES);
-
 constexpr int FIFO_FW_ENTRIES = 4; ///< The firmware works in blocks of 4 pages
 constexpr int NUM_OF_FW_BUFFERS = 32; ///< ... And as such has 32 "buffers" in the FIFO
-constexpr int NUM_PAGES = FIFO_FW_ENTRIES * NUM_OF_FW_BUFFERS;
+constexpr int NUM_PAGES = FIFO_FW_ENTRIES * NUM_OF_FW_BUFFERS; ///<... For a total number of 128 pages
+static_assert(NUM_PAGES == CRU_DESCRIPTOR_ENTRIES, "");
 
 /// DMA addresses must be 32-byte aligned
 constexpr uint64_t DMA_ALIGNMENT = 32;
-
-constexpr uint32_t BUFFER_DEFAULT_VALUE = 0xCcccCccc;
-
-template<typename T>
-T addWrapped(const T& x, const T& add, const T& max)
-{
-  return (x + add) % max;
-}
-
-template<typename T>
-T wrappedDistance(const T& head, const T& tail, const T& size)
-{
-  return (head >= tail) ? (head - tail) : (head + size - tail);
-}
-
-// Some FIFO helper functions
-template <typename T>
-int getFreeCount(T& fifo)
-{
-  return fifo.getCapacity() - fifo.size;
-}
-
-template <typename T>
-void incrementTail(T& fifo)
-{
-  fifo.tail = addWrapped(fifo.tail, 1, fifo.getCapacity());
-  fifo.size--;
-}
 
 } // Anonymous namespace
 
@@ -99,12 +63,7 @@ void CruChannelMaster::constructorCommon()
 
   initFifo();
 
-  mBuffer.tail = 0;
-  mBuffer.size = 0;
-  mBuffer.capacity = getPageAddresses().size();
-
-  mFifo.tail = 0;
-  mFifo.size = 0;
+  mBufferManager.setBufferCapacity(getPageAddresses().size());
 
   if (getPageAddresses().size() <= CRU_DESCRIPTOR_ENTRIES) {
     BOOST_THROW_EXCEPTION(CruException()
@@ -132,8 +91,8 @@ void CruChannelMaster::setBufferReadyGuard()
 {
   if (!mBufferReadyGuard) {
     Util::resetSmartPtr(mBufferReadyGuard,
-        [&]{ setBufferReadyStatus(true); },
-        [&]{ setBufferReadyStatus(false); });
+        [&]{ bar(Register::DATA_EMULATOR_CONTROL) = 0x3; },
+        [&]{ bar(Register::DATA_EMULATOR_CONTROL) = 0x0; });
   }
 }
 
@@ -156,6 +115,7 @@ void CruChannelMaster::resetCard(ResetLevel::type resetLevel)
 PageHandle CruChannelMaster::pushNextPage()
 {
   _fillFifo(1);
+  return PageHandle(0);
 }
 
 bool CruChannelMaster::isPageArrived(const PageHandle&)
@@ -205,13 +165,6 @@ void CruChannelMaster::setDescriptor(int pageIndex, int descriptorIndex)
   mFifoUser->setDescriptor(descriptorIndex, DMA_PAGE_SIZE_32, sourceAddress, pageAddress.bus);
 }
 
-void CruChannelMaster::resetBuffer()
-{
-  for (auto& page : getPageAddresses()) {
-    resetPage(page.user);
-  }
-}
-
 void CruChannelMaster::resetCru()
 {
   bar(Register::RESET_CONTROL) = 0x2;
@@ -224,13 +177,15 @@ void CruChannelMaster::initCru()
 {
   // Status base address in the bus address space
   if (Util::getUpper32Bits(uint64_t(mFifoBus)) != 0) {
-    cout << "Info: using 64-bit region for status bus address, may be unsupported by PCI/BIOS configuration.\n";
+    // TODO InfoLogger
+    //cout << "Info: using 64-bit region for status bus address, may be unsupported by PCI/BIOS configuration.\n";
   } else {
-    cout << "Info: using 32-bit region for status bus address\n";
+    // TODO InfoLogger
+    //cout << "Info: using 32-bit region for status bus address\n";
   }
 
   if (!Util::checkAlignment(mFifoBus, DMA_ALIGNMENT)) {
-    BOOST_THROW_EXCEPTION(CruException() << errinfo_rorc_error_message("mFifoDevice not 32 byte aligned"));
+    BOOST_THROW_EXCEPTION(CruException() << errinfo_rorc_error_message("FIFO bus address not 32 byte aligned"));
   }
 
   bar(Register::STATUS_BASE_BUS_HIGH) = Util::getUpper32Bits(uint64_t(mFifoBus));
@@ -252,15 +207,18 @@ void CruChannelMaster::initCru()
 
 int CruChannelMaster::_fillFifo(int maxFill)
 {
-  int toPush = (maxFill <= 0) ? getCanPushCount() : std::min(maxFill, getCanPushCount());
+  // TODO Check if there are free FIFO descriptors, if so advance FIFO head separately from the buffer head.
+  // This will allow the buffer to fill up independently of the FIFO
+//  for (int i = mBufferManager.getFifoTail(); i < mBufferManager.getFifoSize(); ++i) {
+//  }
+
+  int free = mBufferManager.getFree();
+  int toPush = (maxFill <= 0) ? free : std::min(maxFill, free);
 
   for (int i = 0; i < toPush; ++i) {
-    auto head = [&](auto& fifo){ return addWrapped(fifo.tail, fifo.size + i, fifo.getCapacity()); };
-    setDescriptor(head(mBuffer), head(mFifo));
+    setDescriptor(mBufferManager.getBufferHead(), mBufferManager.getFifoHead());
+    mBufferManager.advanceHead();
   }
-
-  mFifo.size += toPush;
-  mBuffer.size += toPush;
 
   return toPush;
 }
@@ -270,19 +228,17 @@ auto CruChannelMaster::getPageFromIndex(int index) -> _Page
   return _Page{getPageAddresses()[index].user};
 }
 
-bool CruChannelMaster::isTailArrived()
+auto CruChannelMaster::_getPage() -> boost::optional<_Page>
 {
   // If buffer tail is more than the FIFO size behind the head, we know for sure the page has arrived and we can just
   // give it to the user. Else, we need to check the arrival status in the FIFO.
-  return (mBuffer.size != 0)
-      && ((mBuffer.size > FIFO_CAPACITY) || mFifoUser->statusEntries[mFifo.tail].isPageArrived());
-}
+  auto tailArrived = [&] { return
+      !mBufferManager.isBufferEmpty()
+      && (mBufferManager.isBufferTailOutOfFifo()
+          || mFifoUser->statusEntries[mBufferManager.getFifoTail()].isPageArrived());};
 
-auto CruChannelMaster::_getPage() -> boost::optional<_Page>
-{
-  if (isTailArrived()) {
-    return getPageFromIndex(mBuffer.tail);
-//    return getPageFromIndex(mBufferTail);
+  if (tailArrived()) {
+    return getPageFromIndex(mBufferManager.getBufferTail());
   } else {
     return boost::none;
   }
@@ -290,42 +246,21 @@ auto CruChannelMaster::_getPage() -> boost::optional<_Page>
 
 void CruChannelMaster::_acknowledgePage()
 {
-  if (mFifo.size == 0) {
+  if (mBufferManager.isFifoEmpty()) {
     BOOST_THROW_EXCEPTION(CruException() << errinfo_rorc_error_message("Cannot acknowledge; FIFO was empty"));
   }
 
-  if (mBuffer.size == 0) {
+  if (mBufferManager.isBufferEmpty()) {
     // Note: this should never ever happen
     BOOST_THROW_EXCEPTION(CruException() << errinfo_rorc_error_message("Cannot acknowledge; Buffer was empty"));
   }
 
+  mFifoUser->statusEntries[mBufferManager.getFifoTail()].reset();
+
   // Send the firmware the acknowledge signal
   bar(Register::DMA_COMMAND) = 0x1;
 
-  incrementTail(mFifo);
-  incrementTail(mBuffer);
-}
-
-void CruChannelMaster::setBufferReadyStatus(bool ready)
-{
-  bar(Register::DATA_EMULATOR_CONTROL) = ready ? 0x3 : 0x0;
-}
-
-int CruChannelMaster::getCanPushCount()
-{
-  return std::min(getFreeCount(mBuffer), getFreeCount(mFifo));
-}
-
-void CruChannelMaster::resetPage(volatile uint32_t* page)
-{
-  for (size_t i = 0; i < DMA_PAGE_SIZE_32; i++) {
-    page[i] = BUFFER_DEFAULT_VALUE;
-  }
-}
-
-void CruChannelMaster::resetPage(volatile void* page)
-{
-  resetPage(reinterpret_cast<volatile uint32_t*>(page));
+  mBufferManager.advanceTail();
 }
 
 volatile uint32_t& CruChannelMaster::bar(size_t index)

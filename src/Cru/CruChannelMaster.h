@@ -5,11 +5,11 @@
 
 #pragma once
 
-#include "RORC/Parameters.h"
-#include "ChannelMaster.h"
 #include <memory>
-#include <array>
+#include "BufferManager.h"
+#include "ChannelMaster.h"
 #include "CruFifoTable.h"
+#include "RORC/Parameters.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -64,15 +64,9 @@ class CruChannelMaster final : public ChannelMaster
     void initFifo();
     void initCru();
     void setDescriptor(int pageIndex, int descriptorIndex);
-    void resetBuffer();
     void resetCru();
-    void resetPage(volatile uint32_t* page);
-    void resetPage(volatile void* page);
-    void setBufferReadyStatus(bool ready);
     void setBufferReadyGuard();
     volatile uint32_t& bar(size_t index);
-    int getCanPushCount();
-    bool isTailArrived();
     _Page getPageFromIndex(int index);
 
     static constexpr CardType::type CARD_TYPE = CardType::Cru;
@@ -85,38 +79,7 @@ class CruChannelMaster final : public ChannelMaster
     /// Userspace FIFO
     CruFifoTable* mFifoUser;
 
-    struct Buffer
-    {
-      /// Index of page that's the tail of the circular buffer, i.e. the oldest page that has not yet been acknowledged
-      int tail;
-
-      /// Current amount of pages in buffer
-      int size;
-
-      /// Max amount of pages in buffer
-      int capacity;
-
-      int getCapacity() const
-      {
-        return capacity;
-      }
-    } mBuffer;
-
-    struct Fifo
-    {
-      /// Index of page that's the tail of the FIFO, i.e. the page that was least recently pushed
-      /// This is the page that must be checked for arrival
-      int tail;
-
-      /// Current amount of pages in FIFO
-      int size;
-
-      /// Max amount of pages in FIFO
-      int getCapacity()
-      {
-        return static_cast<int>(CRU_DESCRIPTOR_ENTRIES);
-      };
-    } mFifo;
+    BufferManager<static_cast<int>(CRU_DESCRIPTOR_ENTRIES)> mBufferManager;
 };
 
 } // namespace Rorc
