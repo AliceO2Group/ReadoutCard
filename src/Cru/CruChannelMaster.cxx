@@ -212,8 +212,6 @@ void CruChannelMaster::initCru()
   }
 }
 
-
-
 int CruChannelMaster::_fillFifo(int maxFill)
 {
   // TODO Check if there are free FIFO descriptors, if so advance FIFO tail separately from the buffer tail.

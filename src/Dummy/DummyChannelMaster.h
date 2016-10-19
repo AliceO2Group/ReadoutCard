@@ -19,7 +19,7 @@ namespace Rorc {
 /// In the future, a dummy implementation could be a simulated card.
 /// Currently, most methods of this implementation do nothing besides print which method was called.
 /// The getPage() function simulates incremental data generator output
-class DummyChannelMaster : public ChannelMasterInterface, public ChannelUtilityInterface
+class DummyChannelMaster final : public ChannelMasterInterface, public ChannelUtilityInterface
 {
   public:
 

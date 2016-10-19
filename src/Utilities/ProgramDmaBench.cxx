@@ -13,12 +13,31 @@
 #include <boost/format.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/lexical_cast.hpp>
+#include "Crorc/CrorcChannelMaster.h"
+#include "Cru/CruChannelMaster.h"
+#include "RORC/ChannelFactory.h"
 #include "RORC/Parameters.h"
 #include "Utilities/Common.h"
 #include "Utilities/Options.h"
 #include "Utilities/Program.h"
-#include "RORC/ChannelFactory.h"
 #include "Util.h"
+
+
+#define ALICEO2_RORC_DEVIRTUALIZE_CHANNEL(_channelptr_in, _lambda)\
+  do {\
+    auto _channelptr = _channelptr_in;\
+    auto _cardtype = _channelptr->getCardType();\
+    switch (_cardtype) {\
+      case (CardType::Cru): {_lambda(dynamic_cast<CruChannelMaster*>(_channelptr));} break;\
+      case (CardType::Crorc): {_lambda(dynamic_cast<CrorcChannelMaster*>(_channelptr));} break;\
+      default: {_lambda(_channelptr);} break;\
+    }\
+  } while (false);
+
+
+// This dynamic_casts the ChannelMasterInterface to a CruChannelMaster, allowing the compiler to more easily inline
+// functions and stuff
+//#define DEVIRTUALIZE_CHANNELMASTER
 
 using namespace AliceO2::Rorc::Utilities;
 using namespace AliceO2::Rorc;
@@ -53,6 +72,8 @@ constexpr uint32_t BUFFER_DEFAULT_VALUE = 0xCcccCccc;
 
 /// The data emulator writes to every 8th 32-bit word
 constexpr uint32_t PATTERN_STRIDE = 8;
+
+constexpr size_t PAGE_SIZE = 8*1024;
 
 /// Fields: Time(hour:minute:second), Pages, Errors, °C
 const std::string PROGRESS_FORMAT_HEADER("  %-8s   %-12s  %-12s  %-10.1f");
@@ -106,6 +127,9 @@ class ProgramDmaBench: public Program
           ("no-errorcheck",
               po::bool_switch(&mOptions.noErrorCheck),
               "Skip error checking")
+          ("no-pagereset",
+              po::bool_switch(&mOptions.noPageReset),
+              "Do not reset page to default values")
 //          ("rm-sharedmem",
 //              po::bool_switch(&mOptions.removeSharedMemory),
 //              "Remove shared memory after DMA transfer")
@@ -130,7 +154,7 @@ class ProgramDmaBench: public Program
     virtual void run(const po::variables_map& map)
     {
       if (mOptions.fileOutputAscii && mOptions.fileOutputBin) {
-        BOOST_THROW_EXCEPTION(CruException()
+        BOOST_THROW_EXCEPTION(Exception()
             << errinfo_rorc_error_message("File output can't be both ASCII and binary"));
       }
       if (mOptions.fileOutputAscii) {
@@ -145,8 +169,15 @@ class ProgramDmaBench: public Program
       int serialNumber = Options::getOptionSerialNumber(map);
       int channelNumber = Options::getOptionChannel(map);
       auto params = Options::getOptionsParameterMap(map);
-      mPageSize = boost::lexical_cast<size_t>(params.at(Parameters::Keys::dmaPageSize()));
-      params[Parameters::Keys::generatorDataSize()] = params.at(Parameters::Keys::dmaPageSize());
+      size_t pageSize = boost::lexical_cast<size_t>(params.at(Parameters::Keys::dmaPageSize()));
+      params[Parameters::Keys::dmaPageSize()] = std::to_string(PAGE_SIZE);
+      params[Parameters::Keys::generatorDataSize()] = std::to_string(PAGE_SIZE);
+
+//      if (pageSize != getPageSize()) {
+//        BOOST_THROW_EXCEPTION(Exception()
+//            << errinfo_rorc_error_message("Unsupported page size (must be 8 kiB)")
+//            << errinfo_rorc_dma_page_size(pageSize));
+//      }
 
       // Get master lock on channel
       auto channel = AliceO2::Rorc::ChannelFactory().getMaster(serialNumber, channelNumber, params);
@@ -162,7 +193,7 @@ class ProgramDmaBench: public Program
       }
 
       mRunTime.start = std::chrono::high_resolution_clock::now();
-      dmaLoop(*channel.get());
+      dmaLoop(channel.get());
       mRunTime.end = std::chrono::high_resolution_clock::now();
       channel->stopDma();
 
@@ -173,29 +204,52 @@ class ProgramDmaBench: public Program
       cout << "Pushed " << mPushCount << " pages" << endl;
     }
 
-    void dmaLoop(ChannelMasterInterface& channel)
+
+    template <typename CallableCru, typename CallableCrorc>
+    void devirtualizeChannel(ChannelMasterInterface* channel, CallableCru cru,
+        CallableCrorc crorc)
     {
-      while (!mDmaLoopBreak) {
-        // Check if we need to stop in the case of a page limit
-        if (!mInfinitePages && mReadoutCount >= mOptions.maxPages) {
-          mDmaLoopBreak = true;
-          cout << "\n\nMaximum amount of pages reached\n";
-          break;
-        }
-
-        // Note: these low priority tasks are not run on every cycle, to reduce overhead
-        lowPriorityTasks();
-
-        // Keep the readout queue filled
-        mPushCount += channel._fillFifo();
-
-        // Read out a page if available
-        if (boost::optional<_Page> page = channel._getPage()) {
-          readoutPage(page.get());
-          channel._acknowledgePage();
-          mReadoutCount++;
-        }
+      switch (channel->getCardType()) {
+        case (CardType::Cru): {cru(dynamic_cast<CruChannelMaster*>(channel));} break;
+        case (CardType::Crorc): {crorc(dynamic_cast<CrorcChannelMaster*>(channel));} break;
+        default: {};
       }
+    }
+
+  private:
+
+    void dmaLoop(ChannelMasterInterface* channelInterface)
+    {
+      auto loop = [&](auto channel){
+        while (!mDmaLoopBreak) {
+          // Check if we need to stop in the case of a page limit
+          if (!mInfinitePages && mReadoutCount >= mOptions.maxPages) {
+            mDmaLoopBreak = true;
+            cout << "\n\nMaximum amount of pages reached\n";
+            break;
+          }
+
+          // Note: these low priority tasks are not run on every cycle, to reduce overhead
+          lowPriorityTasks();
+
+          // Keep the readout queue filled
+          mPushCount += channel->_fillFifo();
+
+          // Read out a page if available
+          if (boost::optional<_Page> page = channel->_getPage()) {
+            readoutPage(page.get());
+            channel->_acknowledgePage();
+            mReadoutCount++;
+          }
+        }
+      };
+
+#ifdef DEVIRTUALIZE_CHANNELMASTER
+      //devirtualizeChannel(channelInterface, loop, loop);
+      ALICEO2_RORC_DEVIRTUALIZE_CHANNEL(channelInterface, loop);
+#else
+      loop(channelInterface);
+#endif
     }
 
     volatile uint32_t* pageData(_Page& page)
@@ -230,7 +284,9 @@ class ProgramDmaBench: public Program
       }
 
       // Setting the buffer to the default value after the readout
-      resetPage(page);
+      if (!mOptions.noPageReset) {
+        resetPage(page);
+      }
 
       mDataGeneratorCount++;
     }
@@ -287,9 +343,14 @@ class ProgramDmaBench: public Program
       }
     }
 
+    size_t getPageSize()
+    {
+      return PAGE_SIZE;
+    }
+
     size_t getPageSize32()
     {
-      return mPageSize / sizeof(int32_t);
+      return getPageSize() / sizeof(int32_t);
     }
 
     void lowPriorityTasks()
@@ -417,12 +478,11 @@ class ProgramDmaBench: public Program
        return false;
      }
 
-
      void outputStats()
      {
        // Calculating throughput
        double runTime = std::chrono::duration<double>(mRunTime.end - mRunTime.start).count();
-       double bytes = double(mReadoutCount) * mPageSize;
+       double bytes = double(mReadoutCount) * getPageSize();
        double GB = bytes / (1000 * 1000 * 1000);
        double GBs = GB / runTime;
        double Gbs = GBs * 8;
@@ -486,11 +546,10 @@ class ProgramDmaBench: public Program
         mReadoutStream << '\n';
       } else if (mOptions.fileOutputBin) {
         // TODO Is there a more elegant way to write from volatile memory?
-        mReadoutStream.write(reinterpret_cast<char*>(const_cast<uint32_t*>(page)), mPageSize);
+        mReadoutStream.write(reinterpret_cast<char*>(const_cast<uint32_t*>(page)), getPageSize());
       }
     }
 
-  private:
     /// Program options
     struct _OptionsStruct {
         int64_t maxPages = 0; ///< Limit of pages to push
@@ -501,6 +560,7 @@ class ProgramDmaBench: public Program
         bool randomPauseSoft = false;
 //        bool randomPauseFirm = false;
         bool noErrorCheck = false;
+        bool noPageReset = false;
 //        bool removeSharedMemory = false;
 //        bool reloadKernelModule = false;
         bool resyncCounter = false;
@@ -539,8 +599,6 @@ class ProgramDmaBench: public Program
 
     /// Enables / disables the pushing loop
     bool mPushEnabled = true;
-
-    size_t mPageSize = 0;
 
     struct RandomPausesSoft
     {

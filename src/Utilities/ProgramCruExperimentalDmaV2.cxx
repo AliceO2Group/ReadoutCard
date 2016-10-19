@@ -465,10 +465,15 @@ class ProgramCruExperimentalDma: public Program
       }
 
       // Finish up
+      mIdleCountLower32 = bar(0x210/4);
+      mIdleCountUpper32 = bar(0x23c/4);
       mRunTime.end = std::chrono::high_resolution_clock::now();
       outputErrors();
       outputStats();
     }
+
+    uint32_t mIdleCountLower32 = 0;
+    uint32_t mIdleCountUpper32 = 0;
 
     void acknowledgePage()
     {
@@ -878,6 +883,7 @@ class ProgramCruExperimentalDma: public Program
       double Gibs = GiBs * 8.0;
 
       auto format = b::format("  %-10s  %-10s\n");
+      auto formatHex = b::format("  %-10s  0x%-10x\n");
       std::ostringstream stream;
       stream << '\n';
       stream << format % "Seconds" % runTime;
@@ -895,6 +901,8 @@ class ProgramCruExperimentalDma: public Program
       if (mOptions.cumulativeIdle) {
         stream << format % "Idle" % mIdleCountCumulative;
       }
+      stream << formatHex % "idle_cnt lower" % mIdleCountLower32;
+      stream << formatHex % "idle_cnt upper" % mIdleCountUpper32;
       stream << '\n';
 
       auto str = stream.str();

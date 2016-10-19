@@ -45,8 +45,6 @@ class CruChannelMaster final : public ChannelMaster
     /// TEST
     virtual void _acknowledgePage() override;
 
-
-
   protected:
 
     virtual void deviceStartDma() override;
