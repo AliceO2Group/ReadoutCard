@@ -102,17 +102,9 @@ static constexpr size_t READ_STATUS_COUNT = 148;
 /// Byte address: 0x260
 static constexpr size_t LED_STATUS = 152;
 
-///// A read from this register will pop a value from the debug FIFO
-///// Byte address: 0x270
-//static constexpr size_t DEBUG_FIFO_POP = 156;
-
 /// Board serial number
 /// Byte address: 0x270
 static constexpr size_t SERIAL_NUMBER = 156;
-
-///// A write to this register will push a value into the debug FIFO
-///// Byte address: 0x274
-//static constexpr size_t DEBUG_FIFO_PUSH = 157;
 
 /// Register containing compilation info of the firmware
 /// Can be used as a sort of version number

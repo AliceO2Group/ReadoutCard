@@ -229,6 +229,9 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
       return *(mRorcDevice.get());
     }
 
+
+
+
 };
 
 } // namespace Rorc

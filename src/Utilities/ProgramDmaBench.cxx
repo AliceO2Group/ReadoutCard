@@ -220,7 +220,7 @@ class ProgramDmaBench: public Program
 
     void dmaLoop(ChannelMasterInterface* channelInterface)
     {
-      auto loop = [&](auto channel){
+      auto loop = [&](auto channel) {
         while (!mDmaLoopBreak) {
           // Check if we need to stop in the case of a page limit
           if (!mInfinitePages && mReadoutCount >= mOptions.maxPages) {
@@ -233,12 +233,14 @@ class ProgramDmaBench: public Program
           lowPriorityTasks();
 
           // Keep the readout queue filled
-          mPushCount += channel->_fillFifo();
+          int pushCount = channel->_fillFifo();
+          mPushCount += pushCount;
+//          mPushCount += channel->_fillFifo();
 
           // Read out a page if available
           if (boost::optional<_Page> page = channel->_getPage()) {
-            readoutPage(page.get());
-            channel->_acknowledgePage();
+            readoutPage(*page);
+            channel->_acknowledgePage(page);
             mReadoutCount++;
           }
         }

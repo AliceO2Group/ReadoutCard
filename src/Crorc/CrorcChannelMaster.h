@@ -8,6 +8,7 @@
 #include <boost/scoped_ptr.hpp>
 #include "RORC/Parameters.h"
 #include "ChannelMaster.h"
+#include "PageManager.h"
 #include "ReadyFifo.h"
 
 namespace AliceO2 {
@@ -23,10 +24,10 @@ class CrorcChannelMaster final : public ChannelMaster
     virtual ~CrorcChannelMaster() override;
 
     virtual void resetCard(ResetLevel::type resetLevel) override;
-    virtual PageHandle pushNextPage() override;
-    virtual bool isPageArrived(const PageHandle& handle) override;
-    virtual Page getPage(const PageHandle& handle) override;
-    virtual void markPageAsRead(const PageHandle& handle) override;
+//    virtual PageHandle pushNextPage() override;
+//    virtual bool isPageArrived(const PageHandle& handle) override;
+//    virtual Page getPage(const PageHandle& handle) override;
+//    virtual void markPageAsRead(const PageHandle& handle) override;
     virtual CardType::type getCardType() override;
 
     virtual std::vector<uint32_t> utilityCopyFifo() override;
@@ -35,6 +36,10 @@ class CrorcChannelMaster final : public ChannelMaster
     virtual void utilitySanityCheck(std::ostream& os) override;
     virtual void utilityCleanupState() override;
     virtual int utilityGetFirmwareVersion() override;
+
+    virtual int _fillFifo(int maxFill = READYFIFO_ENTRIES) override;
+    virtual boost::optional<_Page> _getPage() override;
+    virtual void _acknowledgePage(const _Page& page) override;
 
   protected:
 
@@ -160,6 +165,9 @@ class CrorcChannelMaster final : public ChannelMaster
     void constructorCommon();
 
     static constexpr CardType::type CARD_TYPE = CardType::Crorc;
+
+    // TODO: refactor into ChannelMaster
+    PageManager<READYFIFO_ENTRIES> mPageManager;
 };
 
 } // namespace Rorc

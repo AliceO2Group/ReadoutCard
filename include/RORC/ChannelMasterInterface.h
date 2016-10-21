@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <boost/optional.hpp>
+#include <boost/exception/all.hpp>
 #include "RORC/Parameters.h"
 #include "RORC/PageHandle.h"
 #include "RORC/Page.h"
@@ -41,21 +42,33 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
     /// Start pushing a page from the card to the host's DMA buffer and return a handle for the page.
     /// \return A handle to the page that can be used with other functions to check when it has arrived, and then to
     ///   access it.
-    virtual PageHandle pushNextPage() = 0;
+    virtual PageHandle pushNextPage()
+    {
+      BOOST_THROW_EXCEPTION(std::runtime_error("not implemented"));
+    }
 
     /// Check if the page has arrived from the card to the host's DMA buffer
     /// \param handle The handle of the page returned from pushNextPage()
     /// \return True if the page has arrived, else false
-    virtual bool isPageArrived(const PageHandle& handle) = 0;
+    virtual bool isPageArrived(const PageHandle& handle)
+    {
+      BOOST_THROW_EXCEPTION(std::runtime_error("not implemented"));
+    }
 
     /// Get a page
     /// \param handle The handle of the page returned from pushNextPage()
     /// \return A Page object containing the address and size of the page
-    virtual Page getPage(const PageHandle& handle) = 0;
+    virtual Page getPage(const PageHandle& handle)
+    {
+      BOOST_THROW_EXCEPTION(std::runtime_error("not implemented"));
+    }
 
     /// Mark a page as read, so it can be written to again
     /// \param handle The handle of the page returned from pushNextPage()
-    virtual void markPageAsRead(const PageHandle& handle) = 0;
+    virtual void markPageAsRead(const PageHandle& handle)
+    {
+      BOOST_THROW_EXCEPTION(std::runtime_error("not implemented"));
+    }
 
     /// Return the type of the RORC card this ChannelMaster is controlling
     /// \return The card type
@@ -76,7 +89,8 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
 
     struct _Page
     {
-        volatile void* userspace;
+        volatile void* const userspace;
+        int const index;
     };
 
     /// Get access to pages in sequential order, one by one
@@ -90,10 +104,14 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
     /// Indicate we're done with the page. This assumes pages are read out by the user in sequential order.
     /// Effectively, this represents an increment of the internal circular buffer's tail.
     /// If acknowledgePage() is not called, getPage() will keep returning the same page
-    /// Note: maybe it should take the Page as a parameter, and check if the user is acking the expected page.
-    virtual void _acknowledgePage()
+    virtual void _acknowledgePage(const _Page& page)
     {
       BOOST_THROW_EXCEPTION(std::runtime_error("not implemented"));
+    }
+
+    void _acknowledgePage(const boost::optional<_Page>& page)
+    {
+      _acknowledgePage(page.get());
     }
 };
 

@@ -120,6 +120,8 @@ void CrorcChannelMaster::constructorCommon()
         << errinfo_rorc_dma_buffer_size(params.dma.bufferSize)
         << errinfo_rorc_dma_page_size(params.dma.pageSize));
   }
+
+  mPageManager.setAmountOfPages(getPageAddresses().size());
 }
 
 CrorcChannelMaster::~CrorcChannelMaster()
@@ -271,37 +273,61 @@ void CrorcChannelMaster::pushFreeFifoPage(int readyFifoIndex, volatile void* pag
   rorcPushRxFreeFifo(getBarUserspace(), reinterpret_cast<uint64_t>(pageBusAddress), pageWords, readyFifoIndex);
 }
 
-PageHandle CrorcChannelMaster::pushNextPage()
-{
-  const auto& csd = mCrorcSharedData->get();
-
-  if (getSharedData().mDmaState != DmaState::STARTED) {
-    BOOST_THROW_EXCEPTION(CrorcException()
-        << errinfo_rorc_error_message("Not in required DMA state")
-        << errinfo_rorc_possible_causes({"startDma() not called"}));
-  }
-
-  // Handle for next page
-  auto fifoIndex = csd->mFifoIndexWrite;
-  auto bufferIndex = csd->mBufferPageIndex;
-
-  // Check if page is available to write to
-  if (mPageWasReadOut[fifoIndex] == false) {
-    BOOST_THROW_EXCEPTION(CrorcException()
-        << errinfo_rorc_error_message("Pushing page would overwrite")
-        << errinfo_rorc_fifo_index(fifoIndex));
-  }
-
-  mPageWasReadOut[fifoIndex] = false;
-  mBufferPageIndexes[fifoIndex] = bufferIndex;
-
-  pushFreeFifoPage(fifoIndex, getPageAddresses()[bufferIndex].bus);
-
-  csd->mFifoIndexWrite = (csd->mFifoIndexWrite + 1) % READYFIFO_ENTRIES;
-  csd->mBufferPageIndex = (csd->mBufferPageIndex + 1) % getPageAddresses().size();
-
-  return PageHandle(fifoIndex);
-}
+//PageHandle CrorcChannelMaster::pushNextPage()
+//{
+//  const auto& csd = mCrorcSharedData->get();
+//
+//  if (getSharedData().mDmaState != DmaState::STARTED) {
+//    BOOST_THROW_EXCEPTION(CrorcException()
+//        << errinfo_rorc_error_message("Not in required DMA state")
+//        << errinfo_rorc_possible_causes({"startDma() not called"}));
+//  }
+//
+//  // Handle for next page
+//  auto fifoIndex = csd->mFifoIndexWrite;
+//  auto bufferIndex = csd->mBufferPageIndex;
+//
+//  // Check if page is available to write to
+//  if (mPageWasReadOut[fifoIndex] == false) {
+//    BOOST_THROW_EXCEPTION(CrorcException()
+//        << errinfo_rorc_error_message("Pushing page would overwrite")
+//        << errinfo_rorc_fifo_index(fifoIndex));
+//  }
+//
+//  mPageWasReadOut[fifoIndex] = false;
+//  mBufferPageIndexes[fifoIndex] = bufferIndex;
+//
+//  pushFreeFifoPage(fifoIndex, getPageAddresses()[bufferIndex].bus);
+//
+//  csd->mFifoIndexWrite = (csd->mFifoIndexWrite + 1) % READYFIFO_ENTRIES;
+//  csd->mBufferPageIndex = (csd->mBufferPageIndex + 1) % getPageAddresses().size();
+//
+//  return PageHandle(fifoIndex);
+//}
+//
+//bool CrorcChannelMaster::isPageArrived(const PageHandle& handle)
+//{
+//  return dataArrived(handle.index) == DataArrivalStatus::WholeArrived;
+//}
+//
+//Page CrorcChannelMaster::getPage(const PageHandle& handle)
+//{
+//  auto fifoIndex = handle.index;
+//  auto bufferIndex = mBufferPageIndexes[fifoIndex];
+//  return Page(getPageAddresses()[bufferIndex].user, getReadyFifo().entries[fifoIndex].length);
+//}
+//
+//void CrorcChannelMaster::markPageAsRead(const PageHandle& handle)
+//{
+//  if (mPageWasReadOut[handle.index]) {
+//    BOOST_THROW_EXCEPTION(CrorcException()
+//        << errinfo_rorc_error_message("Page was already marked as read")
+//        << errinfo_rorc_page_index(handle.index));
+//  }
+//
+//  getReadyFifo().entries[handle.index].reset();
+//  mPageWasReadOut[handle.index] = true;
+//}
 
 void* CrorcChannelMaster::getReadyFifoBusAddress() const
 {
@@ -343,30 +369,6 @@ CrorcChannelMaster::DataArrivalStatus::type CrorcChannelMaster::dataArrived(int 
       << errinfo_rorc_fifo_index(index));
 }
 
-bool CrorcChannelMaster::isPageArrived(const PageHandle& handle)
-{
-  return dataArrived(handle.index) == DataArrivalStatus::WholeArrived;
-}
-
-Page CrorcChannelMaster::getPage(const PageHandle& handle)
-{
-  auto fifoIndex = handle.index;
-  auto bufferIndex = mBufferPageIndexes[fifoIndex];
-  return Page(getPageAddresses()[bufferIndex].user, getReadyFifo().entries[fifoIndex].length);
-}
-
-void CrorcChannelMaster::markPageAsRead(const PageHandle& handle)
-{
-  if (mPageWasReadOut[handle.index]) {
-    BOOST_THROW_EXCEPTION(CrorcException()
-        << errinfo_rorc_error_message("Page was already marked as read")
-        << errinfo_rorc_page_index(handle.index));
-  }
-
-  getReadyFifo().entries[handle.index].reset();
-  mPageWasReadOut[handle.index] = true;
-}
-
 CardType::type CrorcChannelMaster::getCardType()
 {
   return CardType::Crorc;
@@ -391,6 +393,38 @@ void CrorcChannelMaster::CrorcSharedData::initialize()
   mInitializationState = InitializationState::INITIALIZED;
 }
 
+int CrorcChannelMaster::_fillFifo(int maxFill)
+{
+  auto isArrived = [&](int descriptorIndex) {
+    return dataArrived(descriptorIndex) == DataArrivalStatus::WholeArrived;
+  };
+
+  auto resetDescriptor = [&](int descriptorIndex) {
+    getReadyFifo().entries[descriptorIndex].reset();
+  };
+
+  auto push = [&](int bufferIndex, int descriptorIndex) {
+    pushFreeFifoPage(descriptorIndex, getPageAddresses()[bufferIndex].bus);
+  };
+
+  mPageManager.freeQueueSlots(isArrived, resetDescriptor);
+  int pushCount = mPageManager.pushPages(maxFill, push);
+  return pushCount;
+}
+
+auto CrorcChannelMaster::_getPage() -> boost::optional<_Page>
+{
+  if (auto page = mPageManager.useArrivedPage()) {
+    int bufferIndex = *page;
+    return _Page{getPageAddresses()[bufferIndex].user, bufferIndex};
+  }
+  return boost::none;
+}
+
+void CrorcChannelMaster::_acknowledgePage(const _Page& page)
+{
+  mPageManager.freePage(page.index);
+}
 
 void CrorcChannelMaster::crorcArmDataGenerator()
 {
@@ -457,8 +491,8 @@ void CrorcChannelMaster::crorcCheckFreeFifoEmpty()
 {
   int returnCode = rorcCheckRxFreeFifo(getBarUserspace());
   if (returnCode != RORC_FF_EMPTY){
-    BOOST_THROW_EXCEPTION(CrorcFreeFifoException()
-        ADD_ERRINFO(returnCode, "Free FIFO not empty"));
+//    BOOST_THROW_EXCEPTION(CrorcFreeFifoException()
+//        ADD_ERRINFO(returnCode, "Free FIFO not empty"));
   }
 }
 

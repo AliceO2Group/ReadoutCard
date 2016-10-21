@@ -6,9 +6,9 @@
 #pragma once
 
 #include <memory>
-#include "BufferManager.h"
 #include "ChannelMaster.h"
 #include "CruFifoTable.h"
+#include "PageManager.h"
 #include "RORC/Parameters.h"
 
 namespace AliceO2 {
@@ -38,12 +38,9 @@ class CruChannelMaster final : public ChannelMaster
     virtual void utilityCleanupState() override;
     virtual int utilityGetFirmwareVersion() override;
 
-    /// TEST
     virtual int _fillFifo(int maxFill = CRU_DESCRIPTOR_ENTRIES) override;
-    /// TEST
     virtual boost::optional<_Page> _getPage() override;
-    /// TEST
-    virtual void _acknowledgePage() override;
+    virtual void _acknowledgePage(const _Page& page) override;
 
   protected:
 
@@ -58,14 +55,15 @@ class CruChannelMaster final : public ChannelMaster
 
   private:
 
+    // TODO: refactor into ChannelMaster
+    PageManager<CRU_DESCRIPTOR_ENTRIES> mPageManager;
+
     void constructorCommon();
     void initFifo();
     void initCru();
-    void setDescriptor(int pageIndex, int descriptorIndex);
     void resetCru();
     void setBufferReadyGuard();
     volatile uint32_t& bar(size_t index);
-    _Page getPageFromIndex(int index);
 
     static constexpr CardType::type CARD_TYPE = CardType::Cru;
 
@@ -76,8 +74,6 @@ class CruChannelMaster final : public ChannelMaster
 
     /// Userspace FIFO
     CruFifoTable* mFifoUser;
-
-    BufferManager<static_cast<int>(CRU_DESCRIPTOR_ENTRIES)> mBufferManager;
 };
 
 } // namespace Rorc

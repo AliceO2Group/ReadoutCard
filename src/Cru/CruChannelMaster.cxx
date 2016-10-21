@@ -4,6 +4,7 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "CruChannelMaster.h"
+#include <boost/dynamic_bitset.hpp>
 #include <thread>
 #include "ChannelPaths.h"
 #include "ChannelUtilityImpl.h"
@@ -70,13 +71,13 @@ void CruChannelMaster::constructorCommon()
 
   initFifo();
 
-  mBufferManager.setBufferCapacity(getPageAddresses().size());
-
   if (getPageAddresses().size() <= CRU_DESCRIPTOR_ENTRIES) {
     BOOST_THROW_EXCEPTION(CruException()
         << errinfo_rorc_error_message("Insufficient amount of pages fit in DMA buffer")
         << errinfo_rorc_dma_buffer_pages(getPageAddresses().size()));
   }
+
+  mPageManager.setAmountOfPages(getPageAddresses().size());
 }
 
 CruChannelMaster::~CruChannelMaster()
@@ -137,7 +138,7 @@ Page CruChannelMaster::getPage(const PageHandle&)
 
 void CruChannelMaster::markPageAsRead(const PageHandle&)
 {
-  _acknowledgePage();
+  _acknowledgePage(_Page{nullptr, 0});
 }
 
 CardType::type CruChannelMaster::getCardType()
@@ -163,13 +164,6 @@ void CruChannelMaster::initFifo()
   }
 
   mFifoUser->resetStatusEntries();
-}
-
-void CruChannelMaster::setDescriptor(int pageIndex, int descriptorIndex)
-{
-  auto& pageAddress = getPageAddresses()[pageIndex];
-  auto sourceAddress = reinterpret_cast<volatile void*>((descriptorIndex % NUM_OF_FW_BUFFERS) * DMA_PAGE_SIZE);
-  mFifoUser->setDescriptor(descriptorIndex, DMA_PAGE_SIZE_32, sourceAddress, pageAddress.bus);
 }
 
 void CruChannelMaster::resetCru()
@@ -214,85 +208,38 @@ void CruChannelMaster::initCru()
 
 int CruChannelMaster::_fillFifo(int maxFill)
 {
-  // TODO Check if there are free FIFO descriptors, if so advance FIFO tail separately from the buffer tail.
-  // This will allow the buffer to fill up independently of the FIFO
-  int fifoSize = mBufferManager.getFifoSize();
-  for (int i = 0; i < fifoSize; ++i) {
-    auto& status = mFifoUser->statusEntries[mBufferManager.getFifoTail()];
-    if (status.isPageArrived()) {
-      status.reset();
-      mBufferManager.advanceFifoTail();
-    } else {
-      break;
-    }
-  }
+  auto isArrived = [&](int descriptorIndex) {
+    return mFifoUser->statusEntries[descriptorIndex].isPageArrived();
+  };
 
-  int free = mBufferManager.getFree();
-  int toPush = (maxFill <= 0) ? free : std::min(maxFill, free);
+  auto resetDescriptor = [&](int descriptorIndex) {
+    mFifoUser->statusEntries[descriptorIndex].reset();
+  };
 
-  for (int i = 0; i < toPush; ++i) {
-    setDescriptor(mBufferManager.getBufferHead(), mBufferManager.getFifoHead());
-    mBufferManager.advanceHeads();
-  }
+  auto push = [&](int bufferIndex, int descriptorIndex) {
+    auto& pageAddress = getPageAddresses()[bufferIndex];
+    auto sourceAddress = reinterpret_cast<volatile void*>((descriptorIndex % NUM_OF_FW_BUFFERS) * DMA_PAGE_SIZE);
+    mFifoUser->setDescriptor(descriptorIndex, DMA_PAGE_SIZE_32, sourceAddress, pageAddress.bus);
+    bar(Register::DMA_COMMAND) = 0x1; // Is this the right location..? Or should it be in the freeing?
+  };
 
-  return toPush;
-}
-
-auto CruChannelMaster::getPageFromIndex(int index) -> _Page
-{
-  return _Page{getPageAddresses()[index].user};
+  mPageManager.freeQueueSlots(isArrived, resetDescriptor);
+  int pushCount = mPageManager.pushPages(maxFill, push);
+  return pushCount;
 }
 
 auto CruChannelMaster::_getPage() -> boost::optional<_Page>
 {
-  // If buffer tail is more than the FIFO size behind the head, we know for sure the page has arrived and we can just
-  // give it to the user. Else, we need to check the arrival status in the FIFO.
-  auto tailArrived = [&] {
-    return !mBufferManager.isBufferEmpty()
-      && (mBufferManager.isBufferTailOutOfFifo()
-          || mFifoUser->statusEntries[mBufferManager.getFifoTail()].isPageArrived());
-  };
-
-  auto arrived = [&] {
-    if (mBufferManager.isBufferEmpty()) {
-      return false;
-    }
-
-    if (mBufferManager.getBufferSize() > mBufferManager.getFifoSize()) {
-      // If the buffer size is greater than the FIFO size, we know for sure the page at the tail of the buffer has
-      // arrived already
-      return true;
-    } else {
-      // Otherwise, the buffer and FIFO tails (should...) both point at the same page and we need to check the status
-      // descriptor
-      return mFifoUser->statusEntries[mBufferManager.getFifoTail()].isPageArrived();
-    }
-  };
-
-  if (arrived()) {
-    return getPageFromIndex(mBufferManager.getBufferTail());
-  } else {
-    return boost::none;
+  if (auto page = mPageManager.useArrivedPage()) {
+    int bufferIndex = *page;
+    return _Page{getPageAddresses()[bufferIndex].user, bufferIndex};
   }
+  return boost::none;
 }
 
-void CruChannelMaster::_acknowledgePage()
+void CruChannelMaster::_acknowledgePage(const _Page& page)
 {
-  if (mBufferManager.isFifoEmpty()) {
-    BOOST_THROW_EXCEPTION(CruException() << errinfo_rorc_error_message("Cannot acknowledge; FIFO was empty"));
-  }
-
-  if (mBufferManager.isBufferEmpty()) {
-    // Note: this should never ever happen
-    BOOST_THROW_EXCEPTION(CruException() << errinfo_rorc_error_message("Cannot acknowledge; Buffer was empty"));
-  }
-
-  // TODO check if we're allowed to ack
-
-  // Send the firmware the acknowledge signal
-  bar(Register::DMA_COMMAND) = 0x1;
-
-  mBufferManager.advanceBufferTail();
+  mPageManager.freePage(page.index);
 }
 
 volatile uint32_t& CruChannelMaster::bar(size_t index)
