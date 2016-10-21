@@ -11,23 +11,24 @@
 #include <boost/filesystem/fstream.hpp>
 #include <functional>
 #include <iostream>
+#include "Crorc/Crorc.h"
+#include "Cru/CruRegisterIndex.h"
 #include "Pda/PdaBar.h"
 #include "Pda/PdaDevice.h"
 #include "RORC/Exception.h"
-#include "Crorc/Crorc.h"
 #include "Util.h"
 
 namespace AliceO2 {
 namespace Rorc {
 
-int crorcGetSerial(PciDevice* pciDevice);
-int cruGetSerial(PciDevice* pciDevice);
+uint32_t crorcGetSerial(PciDevice* pciDevice);
+uint32_t cruGetSerial(PciDevice* pciDevice);
 
 struct DeviceType
 {
     CardType::type cardType;
     const PciId pciId;
-    std::function<int(PciDevice* pciDevice)> getSerial;
+    std::function<uint32_t (PciDevice* pciDevice)> getSerial;
 };
 
 const std::vector<DeviceType> deviceTypes = {
@@ -47,10 +48,10 @@ RorcDevice::RorcDevice(int serialNumber)
       for (const auto& pciDevice : pciDevices) {
         int serial = type.getSerial(pciDevice);
         if (serial == serialNumber) {
-          this->mPciDevice = pciDevice;
-          this->mCardType = type.cardType;
-          this->mSerialNumber = serial;
-          this->mPciId = type.pciId;
+          mPciDevice = pciDevice;
+          mCardType = type.cardType;
+          mSerialNumber = serial;
+          mPciId = type.pciId;
           return;
         }
       }
@@ -81,6 +82,12 @@ std::vector<RorcDevice::CardDescriptor> RorcDevice::findSystemDevices()
       cd.cardType = type.cardType;
       cd.serialNumber = type.getSerial(pciDevice);
       cd.pciId = type.pciId;
+
+      std::cout << "type:" << CardType::toString(cd.cardType)
+          << " serial:" << cd.serialNumber
+          << " vendor:" << cd.pciId.vendor
+          << " device:" << cd.pciId.device << '\n';
+
       cards.push_back(cd);
     }
   }
@@ -136,30 +143,26 @@ void RorcDevice::printDeviceInfo(std::ostream& ostream)
       barType == PCIBARTYPES_BAR32 ? "BAR32" :
       barType == PCIBARTYPES_BAR64 ? "BAR64" :
       "n/a";
-
-  ostream << "Device info";
-  ostream << "\n  Domain ID      " << domainId;
-  ostream << "\n  Bus ID         " << uint32_t(busId);
-  ostream << "\n  Function ID    " << uint32_t(functionId);
-  ostream << "\n  BAR type       " << barTypeString << " (" << *pciBarTypesPtr << ")\n";
 }
 
 // The RORC headers have a lot of macros that cause problems with the rest of this file, so we include it down here.
 #include "c/rorc/rorc.h"
 
 // TODO Clean up, C++ificate
-int crorcGetSerial(PciDevice* pciDevice)
+uint32_t crorcGetSerial(PciDevice* pciDevice)
 {
   int channel = 0; // Must use channel 0 to access flash
   Pda::PdaBar pdaBar(pciDevice, channel);
-  return Crorc::getSerial(pdaBar.getUserspaceAddress());
+  uint32_t serial = Crorc::getSerial(pdaBar.getUserspaceAddress());
+  return serial;
 }
 
-int cruGetSerial(PciDevice*)
+uint32_t cruGetSerial(PciDevice* pciDevice)
 {
-  // XXX WARNING: CRU NOT REALLY SUPPORTED, SERIAL NR HARDCODED
-  return 12345;
-  //BOOST_THROW_EXCEPTION(DeviceFinderException() << errinfo_rorc_generic_message("CRU unsupported"));
+  int channel = 0; // Must use channel 0 to access serial number?
+  Pda::PdaBar pdaBar(pciDevice, channel);
+  uint32_t serial = pdaBar.getUserspaceAddressU32()[CruRegisterIndex::SERIAL_NUMBER];
+  return serial;
 }
 
 } // namespace Rorc
