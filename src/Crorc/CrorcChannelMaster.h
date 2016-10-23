@@ -97,12 +97,6 @@ class CrorcChannelMaster final : public ChannelMaster
     /// \param pageBusAddress Address on the bus to push the page to
     void pushFreeFifoPage(int readyFifoIndex, volatile void* pageBusAddress);
 
-    /// Get the bus address of the Ready FIFO
-    void* getReadyFifoBusAddress() const;
-
-    /// Get the userspace Ready FIFO object
-    ReadyFifo& getReadyFifo() const;
-
     /// Check if data has arrived
     DataArrivalStatus::type dataArrived(int index);
 
@@ -148,10 +142,16 @@ class CrorcChannelMaster final : public ChannelMaster
     void crorcSetSiuLoopback();
 
     /// Memory mapped file containing the readyFifo
-    boost::scoped_ptr<TypedMemoryMappedFile<ReadyFifo>> mMappedFileFifo;
+    //boost::scoped_ptr<TypedMemoryMappedFile<ReadyFifo>> mMappedFileFifo;
 
     /// PDA DMABuffer object for the Ready FIFO
-    boost::scoped_ptr<Pda::PdaDmaBuffer> mBufferReadyFifo;
+    //boost::scoped_ptr<Pda::PdaDmaBuffer> mBufferReadyFifo;
+
+    /// Bus FIFO
+    ReadyFifo* mFifoBus;
+
+    /// Userspace FIFO
+    ReadyFifo* mFifoUser;
 
     /// Memory mapped data stored in the shared state file
     boost::scoped_ptr<FileSharedObject::FileSharedObject<CrorcSharedData>> mCrorcSharedData;

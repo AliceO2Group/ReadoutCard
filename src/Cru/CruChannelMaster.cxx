@@ -223,7 +223,7 @@ int CruChannelMaster::_fillFifo(int maxFill)
     bar(Register::DMA_COMMAND) = 0x1; // Is this the right location..? Or should it be in the freeing?
   };
 
-  mPageManager.freeQueueSlots(isArrived, resetDescriptor);
+  mPageManager.handleArrivals(isArrived, resetDescriptor);
   int pushCount = mPageManager.pushPages(maxFill, push);
   return pushCount;
 }

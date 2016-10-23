@@ -282,6 +282,9 @@ class ProgramCruExperimentalDma: public Program
           ("reset",
               po::bool_switch(&mOptions.resetCard),
               "Reset card during initialization")
+          ("serial",
+              po::value<int>(&mOptions.serialNumber)->required(),
+              "Card's serial number")
           ("to-file-ascii",
               po::bool_switch(&mOptions.fileOutputAscii),
               "Read out to file in ASCII format")
@@ -322,8 +325,8 @@ class ProgramCruExperimentalDma: public Program
               po::bool_switch(&mOptions.legacyAck),
               "Legacy option: give ack every 4 pages instead of every 1 page")
           ("cumulative-idle",
-                   po::bool_switch(&mOptions.cumulativeIdle),
-                   "Calculate cumulative idle count")
+               po::bool_switch(&mOptions.cumulativeIdle),
+               "Calculate cumulative idle count")
           ("log-idle",
               po::bool_switch(&mOptions.logIdle),
               "Log idle counter");
@@ -564,7 +567,7 @@ class ProgramCruExperimentalDma: public Program
     /// Initializes PDA objects and accompanying shared memory files
     void initPda()
     {
-      Util::resetSmartPtr(mRorcDevice, mSerialNumber);
+      Util::resetSmartPtr(mRorcDevice, mOptions.serialNumber);
       Util::resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), mChannelNumber);
       Util::resetSmartPtr(mMappedFilePages, DMA_BUFFER_PAGES_PATH.c_str(), DMA_BUFFER_PAGES_SIZE);
       Util::resetSmartPtr(mBufferPages, mRorcDevice->getPciDevice(), mMappedFilePages->getAddress(),
@@ -1019,6 +1022,7 @@ class ProgramCruExperimentalDma: public Program
         bool noTwoHundred = false;
         bool logIdle = false;
         bool cumulativeIdle = false;
+        int serialNumber;
     } mOptions;
 
     /// A value of true means no limit on page pushing
@@ -1146,7 +1150,6 @@ class ProgramCruExperimentalDma: public Program
     /// we're not keeping the queue filled up all the time, i.e. not keeping up with the card.
     int mLastFillSize = 0;
 
-    int mSerialNumber = 12345;
     int mChannelNumber = 0;
 
     int64_t mIdleCountCumulative = 0;

@@ -10,6 +10,7 @@
 #include <chrono>
 #include <queue>
 #include <thread>
+#include <random>
 #include <boost/format.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/lexical_cast.hpp>
@@ -124,6 +125,9 @@ class ProgramDmaBench: public Program
 //          ("rand-pause-fw",
 //              po::bool_switch(&mOptions.randomPauseFirm),
 //              "Randomly pause readout using firmware method")
+          ("rand-readout",
+              po::bool_switch(&mOptions.randomReadout),
+              "Readout in non-sequential order")
           ("no-errorcheck",
               po::bool_switch(&mOptions.noErrorCheck),
               "Skip error checking")
@@ -173,15 +177,15 @@ class ProgramDmaBench: public Program
       params[Parameters::Keys::dmaPageSize()] = std::to_string(PAGE_SIZE);
       params[Parameters::Keys::generatorDataSize()] = std::to_string(PAGE_SIZE);
 
-//      if (pageSize != getPageSize()) {
-//        BOOST_THROW_EXCEPTION(Exception()
-//            << errinfo_rorc_error_message("Unsupported page size (must be 8 kiB)")
-//            << errinfo_rorc_dma_page_size(pageSize));
-//      }
-
       // Get master lock on channel
       auto channel = AliceO2::Rorc::ChannelFactory().getMaster(serialNumber, channelNumber, params);
-      //std::this_thread::sleep_for(std::chrono::microseconds(500)); // XXX See README.md
+      std::this_thread::sleep_for(std::chrono::microseconds(500)); // XXX See README.md
+
+      if (mOptions.resetCard) {
+        cout << "Resetting card...";
+        channel->resetCard(ResetLevel::Rorc);
+        cout << " done!\n";
+      }
 
       cout << "### Starting benchmark" << endl;
 
@@ -193,7 +197,11 @@ class ProgramDmaBench: public Program
       }
 
       mRunTime.start = std::chrono::high_resolution_clock::now();
-      dmaLoop(channel.get());
+      if (mOptions.randomReadout) {
+        dmaLoopReadoutRandom(channel.get());
+      } else {
+        dmaLoop(channel.get());
+      }
       mRunTime.end = std::chrono::high_resolution_clock::now();
       channel->stopDma();
 
@@ -233,9 +241,7 @@ class ProgramDmaBench: public Program
           lowPriorityTasks();
 
           // Keep the readout queue filled
-          int pushCount = channel->_fillFifo();
-          mPushCount += pushCount;
-//          mPushCount += channel->_fillFifo();
+          mPushCount += channel->_fillFifo();
 
           // Read out a page if available
           if (boost::optional<_Page> page = channel->_getPage()) {
@@ -252,6 +258,47 @@ class ProgramDmaBench: public Program
 #else
       loop(channelInterface);
 #endif
+    }
+
+    void dmaLoopReadoutRandom(ChannelMasterInterface* channel)
+    {
+      constexpr int READOUT_THRESHOLD = 200; ///< Amount of pages to "cache" before reading out randomly
+      std::default_random_engine generator;
+      using _PageT = std::tuple<volatile void*, int>; // Using tuple to work around vector not wanting to erase _Page
+      std::vector<_PageT> pages;
+
+      while (!mDmaLoopBreak) {
+        // Check if we need to stop in the case of a page limit
+        if (!mInfinitePages && mReadoutCount >= mOptions.maxPages) {
+          mDmaLoopBreak = true;
+          cout << "\n\nMaximum amount of pages reached\n";
+          break;
+        }
+
+        // Note: these low priority tasks are not run on every cycle, to reduce overhead
+        lowPriorityTasks();
+
+        // Keep the readout queue filled
+        mPushCount += channel->_fillFifo();
+
+        // Read out a page if available
+        if (boost::optional<_Page> page = channel->_getPage()) {
+          pages.push_back(std::make_tuple(page->userspace, page->index));
+        }
+
+        if (pages.size() > READOUT_THRESHOLD) {
+          std::uniform_int_distribution<size_t> distribution(0, pages.size() - 1);
+          size_t index = distribution(generator);
+          auto& pageTuple = pages[index];
+          auto page = _Page{std::get<0>(pageTuple), std::get<1>(pageTuple)};
+
+          readoutPage(page);
+          channel->_acknowledgePage(page);
+
+          pages.erase(pages.begin() + index);
+          mReadoutCount++;
+        }
+      }
     }
 
     volatile uint32_t* pageData(_Page& page)
@@ -569,6 +616,7 @@ class ProgramDmaBench: public Program
 //        bool registerHammer = false;
 //        bool legacyAck = false;
 //        bool noTwoHundred = false;
+        bool randomReadout = false;
     } mOptions;
 
     bool mDmaLoopBreak = false;
