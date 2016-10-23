@@ -43,7 +43,7 @@ const size_t pageSize = 4*1024;
 const size_t bufferSize = 4*1024*1024;
 
 /// Prints the first 10 integers of a page
-void printPage(Rorc::Page& page, int index, std::ostream& ios)
+void printPage(Rorc::ChannelMasterInterface::Page& page, int index, std::ostream& ios)
 {
     ios << std::setw(4) << index << " (0x" << std::hex << (uint64_t) page.getAddress() << std::dec << ") -> ";
     for (int j = 0; j < 10; ++j) {
@@ -109,22 +109,25 @@ int main(int, char**)
 
     for (int i = 0; i < pagesToPush; ++i) {
       // Get page handle (contains FIFO index)
-      Rorc::PageHandle handle = channel->pushNextPage();
+      Rorc::PageHandle handle = channel->fillFifo();
 
       // Wait for page to arrive
       // Uses a busy wait, because the wait time is (or should be) extremely short
-      while (!channel->isPageArrived(handle) && !timeExceeded()) { ; }
+      while (!timeExceeded()) {
+        if (auto page = channel->getPage()) {
+          // Get page (contains userspace address)
+          uint32_t eventNumber = page->getAddressU32()[0];
+          eventNumbers.push_back(eventNumber);
+
+          printPage(*page, handle.index, stringStream);
+
+          // Mark page as read so it can be written to again
+          channel->acknowledgePage(page);
+        }
+      }
       std::this_thread::sleep_for(std::chrono::microseconds(1)); // See README.md
 
-      // Get page (contains userspace address)
-      Rorc::Page page = channel->getPage(handle);
-      uint32_t eventNumber = page.getAddressU32()[0];
-      eventNumbers.push_back(eventNumber);
 
-      printPage(page, handle.index, stringStream);
-
-      // Mark page as read so it can be written to again
-      channel->markPageAsRead(handle);
     }
 
     if (stopDma) {

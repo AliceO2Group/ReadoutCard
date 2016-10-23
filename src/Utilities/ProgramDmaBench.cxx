@@ -49,7 +49,7 @@ namespace b = boost;
 namespace po = boost::program_options;
 namespace bfs = boost::filesystem;
 
-using _Page = ChannelMasterInterface::_Page;
+using Page = ChannelMasterInterface::Page;
 
 namespace {
 /// Determines how often the status display refreshes
@@ -241,12 +241,12 @@ class ProgramDmaBench: public Program
           lowPriorityTasks();
 
           // Keep the readout queue filled
-          mPushCount += channel->_fillFifo();
+          mPushCount += channel->fillFifo();
 
           // Read out a page if available
-          if (boost::optional<_Page> page = channel->_getPage()) {
+          if (boost::optional<Page> page = channel->getPage()) {
             readoutPage(*page);
-            channel->_acknowledgePage(page);
+            channel->acknowledgePage(page);
             mReadoutCount++;
           }
         }
@@ -279,10 +279,10 @@ class ProgramDmaBench: public Program
         lowPriorityTasks();
 
         // Keep the readout queue filled
-        mPushCount += channel->_fillFifo();
+        mPushCount += channel->fillFifo();
 
         // Read out a page if available
-        if (boost::optional<_Page> page = channel->_getPage()) {
+        if (boost::optional<Page> page = channel->getPage()) {
           pages.push_back(std::make_tuple(page->userspace, page->index));
         }
 
@@ -290,10 +290,10 @@ class ProgramDmaBench: public Program
           std::uniform_int_distribution<size_t> distribution(0, pages.size() - 1);
           size_t index = distribution(generator);
           auto& pageTuple = pages[index];
-          auto page = _Page{std::get<0>(pageTuple), std::get<1>(pageTuple)};
+          auto page = Page{std::get<0>(pageTuple), std::get<1>(pageTuple)};
 
           readoutPage(page);
-          channel->_acknowledgePage(page);
+          channel->acknowledgePage(page);
 
           pages.erase(pages.begin() + index);
           mReadoutCount++;
@@ -301,17 +301,17 @@ class ProgramDmaBench: public Program
       }
     }
 
-    volatile uint32_t* pageData(_Page& page)
+    volatile uint32_t* pageData(Page& page)
     {
       return reinterpret_cast<volatile uint32_t*>(page.userspace);
     }
 
-    uint32_t getEventNumber(_Page& page)
+    uint32_t getEventNumber(Page& page)
     {
       return pageData(page)[0] / 256;
     }
 
-    void readoutPage(_Page& page)
+    void readoutPage(Page& page)
     {
       // Read out to file
       if (mOptions.fileOutputAscii || mOptions.fileOutputBin) {
@@ -352,7 +352,7 @@ class ProgramDmaBench: public Program
     }
 
     /// Checks and reports errors
-    bool checkErrors(GeneratorPattern::type pattern, const _Page& _page, int64_t eventNumber, uint32_t counter)
+    bool checkErrors(GeneratorPattern::type pattern, const Page& _page, int64_t eventNumber, uint32_t counter)
     {
       auto check = [&](auto patternFunction) {
         volatile uint32_t* page = reinterpret_cast<volatile uint32_t*>(_page.userspace);
@@ -385,7 +385,7 @@ class ProgramDmaBench: public Program
           << errinfo_rorc_generator_pattern(pattern));
     }
 
-    void resetPage(_Page& page)
+    void resetPage(Page& page)
     {
       for (size_t i = 0; i < getPageSize32(); i++) {
         pageData(page)[i] = BUFFER_DEFAULT_VALUE;
@@ -579,7 +579,7 @@ class ProgramDmaBench: public Program
       stream << errorStr;
     }
 
-    void printToFile(_Page& handle, int64_t pageNumber)
+    void printToFile(Page& handle, int64_t pageNumber)
     {
       auto page = reinterpret_cast<volatile uint32_t*>(handle.userspace);
 

@@ -30,11 +30,11 @@ class DummyChannelMaster final : public ChannelMasterInterface, public ChannelUt
     virtual void resetCard(ResetLevel::type resetLevel) override;
     virtual uint32_t readRegister(int index) override;
     virtual void writeRegister(int index, uint32_t value) override;
-    virtual PageHandle pushNextPage() override;
-    virtual bool isPageArrived(const PageHandle& handle) override;
-    virtual Page getPage(const PageHandle& handle) override;
-    virtual void markPageAsRead(const PageHandle& handle) override;
     virtual CardType::type getCardType() override;
+
+    virtual int fillFifo(int maxFill) override;
+    virtual boost::optional<Page> getPage() override;
+    virtual void freePage(const Page& page) override;
 
     virtual std::vector<uint32_t> utilityCopyFifo() override;
     virtual void utilityPrintFifo(std::ostream& os) override;

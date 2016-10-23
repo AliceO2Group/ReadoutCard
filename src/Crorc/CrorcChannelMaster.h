@@ -24,10 +24,6 @@ class CrorcChannelMaster final : public ChannelMaster
     virtual ~CrorcChannelMaster() override;
 
     virtual void resetCard(ResetLevel::type resetLevel) override;
-//    virtual PageHandle pushNextPage() override;
-//    virtual bool isPageArrived(const PageHandle& handle) override;
-//    virtual Page getPage(const PageHandle& handle) override;
-//    virtual void markPageAsRead(const PageHandle& handle) override;
     virtual CardType::type getCardType() override;
 
     virtual std::vector<uint32_t> utilityCopyFifo() override;
@@ -37,9 +33,9 @@ class CrorcChannelMaster final : public ChannelMaster
     virtual void utilityCleanupState() override;
     virtual int utilityGetFirmwareVersion() override;
 
-    virtual int _fillFifo(int maxFill = READYFIFO_ENTRIES) override;
-    virtual boost::optional<_Page> _getPage() override;
-    virtual void _acknowledgePage(const _Page& page) override;
+    virtual int fillFifo(int maxFill = READYFIFO_ENTRIES) override;
+    virtual boost::optional<Page> getPage() override;
+    virtual void freePage(const Page& page) override;
 
   protected:
 

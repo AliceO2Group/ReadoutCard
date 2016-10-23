@@ -10,7 +10,6 @@
 #include <boost/exception/all.hpp>
 #include "RORC/Parameters.h"
 #include "RORC/PageHandle.h"
-#include "RORC/Page.h"
 #include "RORC/CardType.h"
 #include "RORC/ResetLevel.h"
 #include "RORC/RegisterReadWriteInterface.h"
@@ -42,33 +41,33 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
     /// Start pushing a page from the card to the host's DMA buffer and return a handle for the page.
     /// \return A handle to the page that can be used with other functions to check when it has arrived, and then to
     ///   access it.
-    virtual PageHandle pushNextPage()
-    {
-      BOOST_THROW_EXCEPTION(std::runtime_error("not implemented"));
-    }
+//    virtual PageHandle pushNextPage()
+//    {
+//      BOOST_THROW_EXCEPTION(std::runtime_error("not implemented"));
+//    }
 
     /// Check if the page has arrived from the card to the host's DMA buffer
     /// \param handle The handle of the page returned from pushNextPage()
     /// \return True if the page has arrived, else false
-    virtual bool isPageArrived(const PageHandle& handle)
-    {
-      BOOST_THROW_EXCEPTION(std::runtime_error("not implemented"));
-    }
+//    virtual bool isPageArrived(const PageHandle& handle)
+//    {
+//      BOOST_THROW_EXCEPTION(std::runtime_error("not implemented"));
+//    }
 
     /// Get a page
     /// \param handle The handle of the page returned from pushNextPage()
     /// \return A Page object containing the address and size of the page
-    virtual Page getPage(const PageHandle& handle)
-    {
-      BOOST_THROW_EXCEPTION(std::runtime_error("not implemented"));
-    }
+//    virtual Page getPage(const PageHandle& handle)
+//    {
+//      BOOST_THROW_EXCEPTION(std::runtime_error("not implemented"));
+//    }
 
     /// Mark a page as read, so it can be written to again
     /// \param handle The handle of the page returned from pushNextPage()
-    virtual void markPageAsRead(const PageHandle& handle)
-    {
-      BOOST_THROW_EXCEPTION(std::runtime_error("not implemented"));
-    }
+//    virtual void markPageAsRead(const PageHandle& handle)
+//    {
+//      BOOST_THROW_EXCEPTION(std::runtime_error("not implemented"));
+//    }
 
     /// Return the type of the RORC card this ChannelMaster is controlling
     /// \return The card type
@@ -82,21 +81,31 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
     /// acknowledgePage()
     /// \param maxFill Maximum amount of pages to push. If <= 0, will push as many as possible
     /// \return Amount of pages pushed
-    virtual int _fillFifo(int maxFill = -1)
+    virtual int fillFifo(int maxFill = -1)
     {
       BOOST_THROW_EXCEPTION(std::runtime_error("not implemented"));
     }
 
-    struct _Page
+    struct Page
     {
         volatile void* const userspace;
         int const index;
+
+        volatile void* getAddress() const
+        {
+          return userspace;
+        }
+
+        volatile uint32_t* getAddressU32() const
+        {
+          return reinterpret_cast<volatile uint32_t*>(userspace);
+        }
     };
 
     /// Get access to pages in sequential order, one by one
     /// If a page is not available, returns an empty optional.
     /// If a page has not been acked yet, it will be returned again.
-    virtual boost::optional<_Page> _getPage()
+    virtual boost::optional<Page> getPage()
     {
       BOOST_THROW_EXCEPTION(std::runtime_error("not implemented"));
     }
@@ -104,14 +113,14 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
     /// Indicate we're done with the page. This assumes pages are read out by the user in sequential order.
     /// Effectively, this represents an increment of the internal circular buffer's tail.
     /// If acknowledgePage() is not called, getPage() will keep returning the same page
-    virtual void _acknowledgePage(const _Page& page)
+    virtual void freePage(const Page& page)
     {
       BOOST_THROW_EXCEPTION(std::runtime_error("not implemented"));
     }
 
-    void _acknowledgePage(const boost::optional<_Page>& page)
+    void acknowledgePage(const boost::optional<Page>& page)
     {
-      _acknowledgePage(page.get());
+      freePage(page.get());
     }
 };
 

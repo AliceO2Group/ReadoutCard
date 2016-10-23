@@ -395,7 +395,7 @@ void CrorcChannelMaster::CrorcSharedData::initialize()
   mInitializationState = InitializationState::INITIALIZED;
 }
 
-int CrorcChannelMaster::_fillFifo(int maxFill)
+int CrorcChannelMaster::fillFifo(int maxFill)
 {
   auto isArrived = [&](int descriptorIndex) {
     return dataArrived(descriptorIndex) == DataArrivalStatus::WholeArrived;
@@ -414,16 +414,16 @@ int CrorcChannelMaster::_fillFifo(int maxFill)
   return pushCount;
 }
 
-auto CrorcChannelMaster::_getPage() -> boost::optional<_Page>
+auto CrorcChannelMaster::getPage() -> boost::optional<Page>
 {
   if (auto page = mPageManager.useArrivedPage()) {
     int bufferIndex = *page;
-    return _Page{getPageAddresses()[bufferIndex].user, bufferIndex};
+    return Page{getPageAddresses()[bufferIndex].user, bufferIndex};
   }
   return boost::none;
 }
 
-void CrorcChannelMaster::_acknowledgePage(const _Page& page)
+void CrorcChannelMaster::freePage(const Page& page)
 {
   mPageManager.freePage(page.index);
 }

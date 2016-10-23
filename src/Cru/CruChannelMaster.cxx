@@ -89,7 +89,7 @@ void CruChannelMaster::deviceStartDma()
   resetCru();
   initCru();
   // Push initial 128 pages
-  _fillFifo();
+  fillFifo();
   setBufferReadyGuard();
 }
 
@@ -118,27 +118,6 @@ void CruChannelMaster::resetCard(ResetLevel::type resetLevel)
   stopDma();
   resetCru();
   startDma();
-}
-
-PageHandle CruChannelMaster::pushNextPage()
-{
-  _fillFifo(1);
-  return PageHandle(0);
-}
-
-bool CruChannelMaster::isPageArrived(const PageHandle&)
-{
-  return _getPage().is_initialized();
-}
-
-Page CruChannelMaster::getPage(const PageHandle&)
-{
-  return Page(_getPage()->userspace, DMA_PAGE_SIZE);
-}
-
-void CruChannelMaster::markPageAsRead(const PageHandle&)
-{
-  _acknowledgePage(_Page{nullptr, 0});
 }
 
 CardType::type CruChannelMaster::getCardType()
@@ -206,7 +185,7 @@ void CruChannelMaster::initCru()
   }
 }
 
-int CruChannelMaster::_fillFifo(int maxFill)
+int CruChannelMaster::fillFifo(int maxFill)
 {
   auto isArrived = [&](int descriptorIndex) {
     return mFifoUser->statusEntries[descriptorIndex].isPageArrived();
@@ -228,16 +207,16 @@ int CruChannelMaster::_fillFifo(int maxFill)
   return pushCount;
 }
 
-auto CruChannelMaster::_getPage() -> boost::optional<_Page>
+auto CruChannelMaster::getPage() -> boost::optional<Page>
 {
   if (auto page = mPageManager.useArrivedPage()) {
     int bufferIndex = *page;
-    return _Page{getPageAddresses()[bufferIndex].user, bufferIndex};
+    return Page{getPageAddresses()[bufferIndex].user, bufferIndex};
   }
   return boost::none;
 }
 
-void CruChannelMaster::_acknowledgePage(const _Page& page)
+void CruChannelMaster::freePage(const Page& page)
 {
   mPageManager.freePage(page.index);
 }
