@@ -6,11 +6,20 @@
 
 set(RORC_LIB_HEADERS
   "${CMAKE_CURRENT_BINARY_DIR}/../include/RORC/Version.h" # Generated header
-  ../include/RORC/ChannelFactory.h # Normal header
-  ../include/RORC/ChannelMasterInterface.h # Normal header
-  ../include/RORC/ChannelSlaveInterface.h # Normal header
-  ../include/RORC/Page.h # Normal header
-  ../include/RORC/RORC.h # Normal header
+  # Normal headers
+  ../include/RORC/CardType.h 
+  ../include/RORC/ChannelFactory.h
+  ../include/RORC/ChannelMasterInterface.h
+  ../include/RORC/ChannelSlaveInterface.h
+  ../include/RORC/Exception.h
+  ../include/RORC/GeneratorPattern.h
+  ../include/RORC/LoopbackMode.h
+  ../include/RORC/PageHandle.h
+  ../include/RORC/Parameters.h
+  ../include/RORC/PciId.h
+  ../include/RORC/RegisterReadWriteInterface.h
+  ../include/RORC/ResetLevel.h
+  ../include/RORC/RORC.h
 )
 
 set(RORC_LIB_SOURCES
