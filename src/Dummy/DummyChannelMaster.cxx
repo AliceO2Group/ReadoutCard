@@ -49,36 +49,23 @@ void DummyChannelMaster::writeRegister(int index, uint32_t value)
   cout << "DummyChannelMaster::writeRegister(index:" << index << ", value:" << value << ")" << endl;
 }
 
-PageHandle DummyChannelMaster::pushNextPage()
+
+int DummyChannelMaster::fillFifo(int maxFill)
 {
-  cout << "DummyChannelMaster::pushNextPage()" << endl;
-  auto handle = PageHandle(mPageCounter);
+  cout << "DummyChannelMaster::fillFifo()" << endl;
   mPageCounter++;
-  return handle;
+  return 1;
 }
 
-bool DummyChannelMaster::isPageArrived(const PageHandle& handle)
+auto DummyChannelMaster::getPage() -> boost::optional<Page>
 {
-  cout << "DummyChannelMaster::isPageArrived(handle:" << handle.index << ")" << endl;
-  return true;
+  cout << "DummyChannelMaster::getPage()" << endl;
+  return boost::none;
 }
 
-Page DummyChannelMaster::getPage(const PageHandle& handle)
+void DummyChannelMaster::freePage(const Page& page)
 {
-  cout << "DummyChannelMaster::getPage(handle:" << handle.index << ")" << endl;
-
-  mPageBuffer[0] = handle.index; // Puts the "event number" in the first word
-  for (size_t i = 1; i < mPageBuffer.size(); ++i) {
-    mPageBuffer[i] = i - 1;
-  }
-
-  auto page = Page(mPageBuffer.data(), mPageBuffer.size());
-  return page;
-}
-
-void DummyChannelMaster::markPageAsRead(const PageHandle& handle)
-{
-  cout << "DummyChannelMaster::markPageAsRead(handle:" << handle.index << ")" << endl;
+  cout << "DummyChannelMaster::freePage()" << endl;
 }
 
 CardType::type DummyChannelMaster::getCardType()

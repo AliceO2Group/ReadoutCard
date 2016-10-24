@@ -112,6 +112,7 @@ auto READOUT_ERRORS_PATH = "readout_errors.txt";
 auto READOUT_DATA_PATH_ASCII = "readout_data.txt";
 auto READOUT_DATA_PATH_BIN = "readout_data.bin";
 auto READOUT_LOG_FORMAT = "readout_log_%d.txt";
+auto READOUT_IDLE_LOG_PATH = "readout_idle_log.txt";
 
 namespace Stuff
 {
@@ -281,6 +282,9 @@ class ProgramCruExperimentalDma: public Program
           ("reset",
               po::bool_switch(&mOptions.resetCard),
               "Reset card during initialization")
+          ("serial",
+              po::value<int>(&mOptions.serialNumber)->required(),
+              "Card's serial number")
           ("to-file-ascii",
               po::bool_switch(&mOptions.fileOutputAscii),
               "Read out to file in ASCII format")
@@ -319,7 +323,13 @@ class ProgramCruExperimentalDma: public Program
               "Disable writing ready status to 0x200")
           ("legacy-ack",
               po::bool_switch(&mOptions.legacyAck),
-              "Legacy option: give ack every 4 pages instead of every 1 page");
+              "Legacy option: give ack every 4 pages instead of every 1 page")
+          ("cumulative-idle",
+               po::bool_switch(&mOptions.cumulativeIdle),
+               "Calculate cumulative idle count")
+          ("log-idle",
+              po::bool_switch(&mOptions.logIdle),
+              "Log idle counter");
     }
 
     virtual void run(const boost::program_options::variables_map&) override
@@ -344,6 +354,10 @@ class ProgramCruExperimentalDma: public Program
       auto filename = b::str(b::format(READOUT_LOG_FORMAT) % time);
       mLogStream.open(filename, std::ios_base::out);
       mLogStream << "# Time " << time << "\n";
+
+      if (mOptions.logIdle) {
+        mIdleLogStream.open(READOUT_IDLE_LOG_PATH);
+      }
 
       cout << "Initializing" << endl;
       initDma();
@@ -454,14 +468,33 @@ class ProgramCruExperimentalDma: public Program
       }
 
       // Finish up
+      mIdleCountLower32 = bar(0x210/4);
+      mIdleCountUpper32 = bar(0x23c/4);
       mRunTime.end = std::chrono::high_resolution_clock::now();
       outputErrors();
       outputStats();
     }
 
+    uint32_t mIdleCountLower32 = 0;
+    uint32_t mIdleCountUpper32 = 0;
+
     void acknowledgePage()
     {
-      bar(CruRegisterIndex::DMA_COMMAND) = 0x1;
+      bar(Register::DMA_COMMAND) = 0x1;
+
+      if (mOptions.cumulativeIdle || mOptions.logIdle) {
+        uint32_t idle = bar(Register::IDLE_COUNTER);
+
+        if (mOptions.cumulativeIdle) {
+          mIdleCountCumulative += idle;
+        }
+
+        if (mOptions.logIdle) {
+          auto time = std::chrono::high_resolution_clock::now() - mRunTime.start;
+          auto nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(time).count();
+          mIdleLogStream << nanos << " " << idle << '\n';
+        }
+      }
     }
 
     void readoutPage(const Handle& handle)
@@ -534,7 +567,7 @@ class ProgramCruExperimentalDma: public Program
     /// Initializes PDA objects and accompanying shared memory files
     void initPda()
     {
-      Util::resetSmartPtr(mRorcDevice, mSerialNumber);
+      Util::resetSmartPtr(mRorcDevice, mOptions.serialNumber);
       Util::resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), mChannelNumber);
       Util::resetSmartPtr(mMappedFilePages, DMA_BUFFER_PAGES_PATH.c_str(), DMA_BUFFER_PAGES_SIZE);
       Util::resetSmartPtr(mBufferPages, mRorcDevice->getPciDevice(), mMappedFilePages->getAddress(),
@@ -853,6 +886,7 @@ class ProgramCruExperimentalDma: public Program
       double Gibs = GiBs * 8.0;
 
       auto format = b::format("  %-10s  %-10s\n");
+      auto formatHex = b::format("  %-10s  0x%-10x\n");
       std::ostringstream stream;
       stream << '\n';
       stream << format % "Seconds" % runTime;
@@ -867,6 +901,11 @@ class ProgramCruExperimentalDma: public Program
         stream << format % "Gibit/s" % Gibs;
         stream << format % "Errors" % mErrorCount;
       }
+      if (mOptions.cumulativeIdle) {
+        stream << format % "Idle" % mIdleCountCumulative;
+      }
+      stream << formatHex % "idle_cnt lower" % mIdleCountLower32;
+      stream << formatHex % "idle_cnt upper" % mIdleCountUpper32;
       stream << '\n';
 
       auto str = stream.str();
@@ -981,6 +1020,9 @@ class ProgramCruExperimentalDma: public Program
         bool registerHammer = false;
         bool legacyAck = false;
         bool noTwoHundred = false;
+        bool logIdle = false;
+        bool cumulativeIdle = false;
+        int serialNumber;
     } mOptions;
 
     /// A value of true means no limit on page pushing
@@ -1049,8 +1091,11 @@ class ProgramCruExperimentalDma: public Program
     /// Amount of data errors detected
     int64_t mErrorCount = 0;
 
-    /// Stream for file readout, only opened if enabled by the --tofile program option
+    /// Stream for file readout; only opened if enabled by the --tofile program option
     std::ofstream mReadoutStream;
+
+    /// Stream for idle log; only opened if enabled by the --log-idle program option
+    std::ofstream mIdleLogStream;
 
     /// Stream for log output
     std::ofstream mLogStream;
@@ -1105,8 +1150,9 @@ class ProgramCruExperimentalDma: public Program
     /// we're not keeping the queue filled up all the time, i.e. not keeping up with the card.
     int mLastFillSize = 0;
 
-    int mSerialNumber = 12345;
     int mChannelNumber = 0;
+
+    int64_t mIdleCountCumulative = 0;
 };
 
 } // Anonymous namespace

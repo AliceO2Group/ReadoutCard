@@ -16,10 +16,9 @@ using namespace AliceO2::Rorc::Utilities;
 using namespace AliceO2::Rorc;
 using std::cout;
 using std::endl;
+namespace po = boost::program_options;
 
 namespace {
-
-const char* FORCE_SWITCH = "force";
 
 template <typename ErrInfo, typename Exception, typename Vector>
 void pushIfPresent(const Exception& exception, Vector& vector)
@@ -35,21 +34,21 @@ class ProgramCleanup: public Program
 
     virtual UtilsDescription getDescription()
     {
-      return UtilsDescription("Cleanup", "Cleans up RORC state", "./rorc-cleanup --serial=12345 --channel=0");
+      return {"Cleanup", "Cleans up RORC state", "./rorc-cleanup --serial=12345 --channel=0"};
     }
 
-    virtual void addOptions(boost::program_options::options_description& options)
+    virtual void addOptions(po::options_description& options)
     {
       Options::addOptionSerialNumber(options);
       Options::addOptionChannel(options);
-      options.add_options()(FORCE_SWITCH,"Force cleanup of shared state files if normal cleanup fails");
+      options.add_options()("force",po::bool_switch(&mForceCleanup),
+          "Force cleanup of shared state files if normal cleanup fails");
     }
 
     virtual void run(const boost::program_options::variables_map& map)
     {
       auto serialNumber = Options::getOptionSerialNumber(map);
       auto channelNumber = Options::getOptionChannel(map);
-      auto forceEnabled = bool(map.count(FORCE_SWITCH));
 
       try {
         // This non-forced cleanup asks the ChannelMaster to clean up itself.
@@ -62,7 +61,7 @@ class ProgramCleanup: public Program
       catch (const std::exception& e) {
         cout << "### Cleanup failed!" << endl;
 
-        if (forceEnabled) {
+        if (mForceCleanup) {
           // The forced cleanup will try to delete the files belonging to the channel
           if (isVerbose()) {
             cout << "Error: \n" << boost::diagnostic_information(e);
@@ -98,10 +97,15 @@ class ProgramCleanup: public Program
         }
         else {
           // Forced cleanup was not enabled, so rethrow the exception, which will abort the program
+          cout << "(can rerun with --force)\n";
           throw;
         }
       }
     }
+
+  private:
+
+    bool mForceCleanup;
 };
 } // Anonymous namespace
 

@@ -4,22 +4,22 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "CruChannelMaster.h"
-#include <iostream>
-#include <cassert>
+#include <boost/dynamic_bitset.hpp>
 #include <thread>
-#include "c/rorc/rorc.h"
 #include "ChannelPaths.h"
-#include "RORC/Exception.h"
-#include "Util.h"
 #include "ChannelUtilityImpl.h"
 #include "CruRegisterIndex.h"
 #include "Pda/Pda.h"
+#include "RORC/Exception.h"
+#include "Util.h"
 
-namespace b = boost;
-namespace bip = boost::interprocess;
-namespace bfs = boost::filesystem;
+
+// TODO remove
+#include <iostream>
 using std::cout;
 using std::endl;
+
+
 using namespace std::literals;
 
 namespace AliceO2 {
@@ -29,19 +29,19 @@ namespace Register = CruRegisterIndex;
 
 namespace
 {
+
 /// DMA page length in bytes
 constexpr int DMA_PAGE_SIZE = 8 * 1024;
 /// DMA page length in 32-bit words
 constexpr int DMA_PAGE_SIZE_32 = DMA_PAGE_SIZE / 4;
 
-constexpr int NUM_OF_BUFFERS = 32;
-constexpr int FIFO_ENTRIES = 4;
-constexpr int NUM_PAGES = FIFO_ENTRIES * NUM_OF_BUFFERS;
+constexpr int FIFO_FW_ENTRIES = 4; ///< The firmware works in blocks of 4 pages
+constexpr int NUM_OF_FW_BUFFERS = 32; ///< ... And as such has 32 "buffers" in the FIFO
+constexpr int NUM_PAGES = FIFO_FW_ENTRIES * NUM_OF_FW_BUFFERS; ///<... For a total number of 128 pages
+static_assert(NUM_PAGES == CRU_DESCRIPTOR_ENTRIES, "");
 
 /// DMA addresses must be 32-byte aligned
 constexpr uint64_t DMA_ALIGNMENT = 32;
-
-constexpr uint32_t BUFFER_DEFAULT_VALUE = 0xCcccCccc;
 
 } // Anonymous namespace
 
@@ -69,21 +69,15 @@ void CruChannelMaster::constructorCommon()
 {
   using Util::resetSmartPtr;
 
-  mFifoIndexWrite = 0;
-  mFifoIndexRead = 0;
-  mBufferPageIndex = 0;
-
-  mPageWasReadOut.resize(NUM_PAGES, true);
-  mBufferPageIndexes.resize(CRU_DESCRIPTOR_ENTRIES, -1);
-
-  // Initialize the page addresses
   initFifo();
-  //resetBuffer();
 
   if (getPageAddresses().size() <= CRU_DESCRIPTOR_ENTRIES) {
     BOOST_THROW_EXCEPTION(CruException()
-        << errinfo_rorc_error_message("Insufficient amount of pages fit in DMA buffer"));
+        << errinfo_rorc_error_message("Insufficient amount of pages fit in DMA buffer")
+        << errinfo_rorc_dma_buffer_pages(getPageAddresses().size()));
   }
+
+  mPageManager.setAmountOfPages(getPageAddresses().size());
 }
 
 CruChannelMaster::~CruChannelMaster()
@@ -94,6 +88,8 @@ void CruChannelMaster::deviceStartDma()
 {
   resetCru();
   initCru();
+  // Push initial 128 pages
+  fillFifo();
   setBufferReadyGuard();
 }
 
@@ -103,8 +99,8 @@ void CruChannelMaster::setBufferReadyGuard()
 {
   if (!mBufferReadyGuard) {
     Util::resetSmartPtr(mBufferReadyGuard,
-        [&]{ setBufferReadyStatus(true); },
-        [&]{ setBufferReadyStatus(false); });
+        [&]{ bar(Register::DATA_EMULATOR_CONTROL) = 0x3; },
+        [&]{ bar(Register::DATA_EMULATOR_CONTROL) = 0x0; });
   }
 }
 
@@ -124,59 +120,110 @@ void CruChannelMaster::resetCard(ResetLevel::type resetLevel)
   startDma();
 }
 
-PageHandle CruChannelMaster::pushNextPage()
-{
-  if (getSharedData().mDmaState != DmaState::STARTED) {
-    BOOST_THROW_EXCEPTION(CrorcException()
-        << errinfo_rorc_error_message("Not in required DMA state")
-        << errinfo_rorc_possible_causes({"startDma() not called"}));
-  }
-
-  // Handle for next page
-  auto fifoIndex = mFifoIndexWrite;
-  auto bufferIndex = mBufferPageIndex;
-
-  // Check if page is available to write to
-  if (mPageWasReadOut[fifoIndex] == false) {
-    BOOST_THROW_EXCEPTION(CrorcException()
-        << errinfo_rorc_error_message("Pushing page would overwrite")
-        << errinfo_rorc_fifo_index(fifoIndex));
-  }
-
-  mPageWasReadOut[fifoIndex] = false;
-  mBufferPageIndexes[fifoIndex] = bufferIndex;
-
-  setDescriptor(fifoIndex, bufferIndex);
-
-  mFifoIndexWrite = (mFifoIndexWrite + 1) % CRU_DESCRIPTOR_ENTRIES;
-  mBufferPageIndex = (mBufferPageIndex + 1) % getPageAddresses().size();
-
-  return PageHandle(fifoIndex);
-}
-
-bool CruChannelMaster::isPageArrived(const PageHandle& handle)
-{
-  return mFifoUser->statusEntries[handle.index].isPageArrived();
-}
-
-Page CruChannelMaster::getPage(const PageHandle& handle)
-{
-  return Page(getPageAddresses()[handle.index].user, DMA_PAGE_SIZE);
-}
-
-void CruChannelMaster::markPageAsRead(const PageHandle& handle)
-{
-  if (mPageWasReadOut[handle.index]) {
-    BOOST_THROW_EXCEPTION(CruException() << errinfo_rorc_error_message("Page was already marked as read"));
-  }
-  mPageWasReadOut[handle.index] = true;
-
-  acknowledgePage();
-}
-
 CardType::type CruChannelMaster::getCardType()
 {
   return CardType::Cru;
+}
+
+/// Initializes the FIFO and the page addresses for it
+void CruChannelMaster::initFifo()
+{
+  /// Amount of space reserved for the FIFO, we use multiples of the page size for uniformity
+  size_t fifoSpace = ((sizeof(CruFifoTable) / DMA_PAGE_SIZE) + 1) * DMA_PAGE_SIZE;
+
+  PageAddress fifoAddress;
+  std::tie(fifoAddress, getPageAddresses()) = Pda::partitionScatterGatherList(getBufferPages().getScatterGatherList(),
+      fifoSpace, DMA_PAGE_SIZE);
+  mFifoUser = reinterpret_cast<CruFifoTable*>(const_cast<void*>(fifoAddress.user));
+  mFifoBus = reinterpret_cast<CruFifoTable*>(const_cast<void*>(fifoAddress.bus));
+
+  if (getPageAddresses().size() <= CRU_DESCRIPTOR_ENTRIES) {
+    BOOST_THROW_EXCEPTION(CruException()
+        << errinfo_rorc_error_message("Insufficient amount of pages fit in DMA buffer"));
+  }
+
+  mFifoUser->resetStatusEntries();
+}
+
+void CruChannelMaster::resetCru()
+{
+  bar(Register::RESET_CONTROL) = 0x2;
+  std::this_thread::sleep_for(100ms);
+  bar(Register::RESET_CONTROL) = 0x1;
+  std::this_thread::sleep_for(100ms);
+}
+
+void CruChannelMaster::initCru()
+{
+  // Status base address in the bus address space
+  if (Util::getUpper32Bits(uint64_t(mFifoBus)) != 0) {
+    // TODO InfoLogger
+    //cout << "Info: using 64-bit region for status bus address, may be unsupported by PCI/BIOS configuration.\n";
+  } else {
+    // TODO InfoLogger
+    //cout << "Info: using 32-bit region for status bus address\n";
+  }
+
+  if (!Util::checkAlignment(mFifoBus, DMA_ALIGNMENT)) {
+    BOOST_THROW_EXCEPTION(CruException() << errinfo_rorc_error_message("FIFO bus address not 32 byte aligned"));
+  }
+
+  bar(Register::STATUS_BASE_BUS_HIGH) = Util::getUpper32Bits(uint64_t(mFifoBus));
+  bar(Register::STATUS_BASE_BUS_LOW) = Util::getLower32Bits(uint64_t(mFifoBus));
+
+  // TODO Note: this stuff will be set by firmware in the future
+  {
+    // Status base address in the card's address space
+    bar(Register::STATUS_BASE_CARD_HIGH) = 0x0;
+    bar(Register::STATUS_BASE_CARD_LOW) = 0x8000;
+
+    // Set descriptor table size (must be size - 1)
+    bar(Register::DESCRIPTOR_TABLE_SIZE) = NUM_PAGES - 1;
+
+    // Send command to the DMA engine to write to every status entry, not just the final one
+    bar(Register::DONE_CONTROL) = 0x1;
+  }
+}
+
+int CruChannelMaster::fillFifo(int maxFill)
+{
+  auto isArrived = [&](int descriptorIndex) {
+    return mFifoUser->statusEntries[descriptorIndex].isPageArrived();
+  };
+
+  auto resetDescriptor = [&](int descriptorIndex) {
+    mFifoUser->statusEntries[descriptorIndex].reset();
+  };
+
+  auto push = [&](int bufferIndex, int descriptorIndex) {
+    auto& pageAddress = getPageAddresses()[bufferIndex];
+    auto sourceAddress = reinterpret_cast<volatile void*>((descriptorIndex % NUM_OF_FW_BUFFERS) * DMA_PAGE_SIZE);
+    mFifoUser->setDescriptor(descriptorIndex, DMA_PAGE_SIZE_32, sourceAddress, pageAddress.bus);
+    bar(Register::DMA_COMMAND) = 0x1; // Is this the right location..? Or should it be in the freeing?
+  };
+
+  mPageManager.handleArrivals(isArrived, resetDescriptor);
+  int pushCount = mPageManager.pushPages(maxFill, push);
+  return pushCount;
+}
+
+auto CruChannelMaster::getPage() -> boost::optional<Page>
+{
+  if (auto page = mPageManager.useArrivedPage()) {
+    int bufferIndex = *page;
+    return Page{getPageAddresses()[bufferIndex].user, bufferIndex};
+  }
+  return boost::none;
+}
+
+void CruChannelMaster::freePage(const Page& page)
+{
+  mPageManager.freePage(page.index);
+}
+
+volatile uint32_t& CruChannelMaster::bar(size_t index)
+{
+  return *(&getBarUserspace()[index]);
 }
 
 std::vector<uint32_t> CruChannelMaster::utilityCopyFifo()
@@ -218,114 +265,6 @@ void CruChannelMaster::utilityCleanupState()
 int CruChannelMaster::utilityGetFirmwareVersion()
 {
   return getBarUserspace()[CruRegisterIndex::FIRMWARE_COMPILE_INFO];
-}
-
-/// Initializes the FIFO and the page addresses for it
-void CruChannelMaster::initFifo()
-{
-  /// Amount of space reserved for the FIFO, we use multiples of the page size for uniformity
-  size_t fifoSpace = ((sizeof(CruFifoTable) / DMA_PAGE_SIZE) + 1) * DMA_PAGE_SIZE;
-
-  PageAddress fifoAddress;
-  std::tie(fifoAddress, getPageAddresses()) = Pda::partitionScatterGatherList(getBufferPages().getScatterGatherList(),
-      fifoSpace, DMA_PAGE_SIZE);
-  mFifoUser = reinterpret_cast<CruFifoTable*>(const_cast<void*>(fifoAddress.user));
-  mFifoBus = reinterpret_cast<CruFifoTable*>(const_cast<void*>(fifoAddress.bus));
-
-  if (getPageAddresses().size() <= CRU_DESCRIPTOR_ENTRIES) {
-    BOOST_THROW_EXCEPTION(CruException()
-        << errinfo_rorc_error_message("Insufficient amount of pages fit in DMA buffer"));
-  }
-
-  // Initializing the descriptor table
-  mFifoUser->resetStatusEntries();
-
-  // As a safety measure, we put "valid" addresses in the descriptor table, even though we're not pushing pages yet
-  // This helps prevent the card from writing to invalid addresses and crashing absolutely everything
-  for (int i = 0; i < mFifoUser->descriptorEntries.size(); i++) {
-    setDescriptor(i, i);
-  }
-}
-
-void CruChannelMaster::setDescriptor(int pageIndex, int descriptorIndex)
-{
-  auto& pageAddress = getPageAddresses()[pageIndex];
-  auto sourceAddress = reinterpret_cast<volatile void*>((descriptorIndex % NUM_OF_BUFFERS) * DMA_PAGE_SIZE);
-  mFifoUser->setDescriptor(descriptorIndex, DMA_PAGE_SIZE_32, sourceAddress, pageAddress.bus);
-}
-
-void CruChannelMaster::resetBuffer()
-{
-  for (auto& page : getPageAddresses()) {
-    resetPage(page.user);
-  }
-}
-
-void CruChannelMaster::resetCru()
-{
-  bar(Register::RESET_CONTROL) = 0x2;
-  std::this_thread::sleep_for(100ms);
-  bar(Register::RESET_CONTROL) = 0x1;
-  std::this_thread::sleep_for(100ms);
-}
-
-void CruChannelMaster::resetPage(volatile uint32_t* page)
-{
-  for (size_t i = 0; i < DMA_PAGE_SIZE_32; i++) {
-    page[i] = BUFFER_DEFAULT_VALUE;
-  }
-}
-
-void CruChannelMaster::resetPage(volatile void* page)
-{
-  resetPage(reinterpret_cast<volatile uint32_t*>(page));
-}
-
-volatile uint32_t& CruChannelMaster::bar(size_t index)
-{
-  return *(&getBarUserspace()[index]);
-}
-
-void CruChannelMaster::initCru()
-{
-  // Status base address in the bus address space
-  if (Util::getUpper32Bits(uint64_t(mFifoBus)) != 0) {
-    cout << "Warning: using 64-bit region for status bus address (" << reinterpret_cast<volatile void*>(mFifoBus)
-        << "), may be unsupported by PCI/BIOS configuration.\n";
-  } else {
-    cout << "Info: using 32-bit region for status bus address (" << reinterpret_cast<volatile void*>(mFifoBus) << ")\n";
-  }
-  cout << "Info: status user address (" << reinterpret_cast<volatile void*>(mFifoUser) << ")\n";
-
-  if (!Util::checkAlignment(mFifoBus, DMA_ALIGNMENT)) {
-    BOOST_THROW_EXCEPTION(CruException() << errinfo_rorc_error_message("mFifoDevice not 32 byte aligned"));
-  }
-
-  bar(Register::STATUS_BASE_BUS_HIGH) = Util::getUpper32Bits(uint64_t(mFifoBus));
-  bar(Register::STATUS_BASE_BUS_LOW) = Util::getLower32Bits(uint64_t(mFifoBus));
-
-  // TODO Note: this stuff will be set by firmware in the future
-  {
-    // Status base address in the card's address space
-    bar(Register::STATUS_BASE_CARD_HIGH) = 0x0;
-    bar(Register::STATUS_BASE_CARD_LOW) = 0x8000;
-
-    // Set descriptor table size (must be size - 1)
-    bar(Register::DESCRIPTOR_TABLE_SIZE) = NUM_PAGES - 1;
-
-    // Send command to the DMA engine to write to every status entry, not just the final one
-    bar(Register::DONE_CONTROL) = 0x1;
-  }
-}
-
-void CruChannelMaster::setBufferReadyStatus(bool ready)
-{
-  bar(Register::DATA_EMULATOR_CONTROL) = ready ? 0x3 : 0x0;
-}
-
-void CruChannelMaster::acknowledgePage()
-{
-  bar(Register::DMA_COMMAND) = 0x1;
 }
 
 } // namespace Rorc

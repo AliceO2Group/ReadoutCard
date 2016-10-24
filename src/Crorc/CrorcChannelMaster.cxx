@@ -13,9 +13,10 @@
 #include "c/rorc/rorc.h"
 #include "c/rorc/ddl_def.h"
 #include "ChannelPaths.h"
+#include "ChannelUtilityImpl.h"
+#include "Pda/Pda.h"
 #include "RorcStatusCode.h"
 #include "Util.h"
-#include "ChannelUtilityImpl.h"
 
 namespace b = boost;
 namespace bip = boost::interprocess;
@@ -39,10 +40,7 @@ namespace Rorc {
     << errinfo_rorc_status_code(_status_code)
 
 /// Amount of additional DMA buffers for this channel
-static constexpr int CRORC_BUFFERS_PER_CHANNEL = 1;
-
-/// The index of the DMA buffer of the Ready FIFO
-static constexpr int BUFFER_INDEX_FIFO = 1;
+static constexpr int CRORC_BUFFERS_PER_CHANNEL = 0;
 
 CrorcChannelMaster::CrorcChannelMaster(int serial, int channel)
     : ChannelMaster(CARD_TYPE, serial, channel, CRORC_BUFFERS_PER_CHANNEL)
@@ -59,13 +57,24 @@ CrorcChannelMaster::CrorcChannelMaster(int serial, int channel, const Parameters
 void CrorcChannelMaster::constructorCommon()
 {
   using Util::resetSmartPtr;
+  auto& params = getParams();
 
   ChannelPaths paths(CARD_TYPE, getSerialNumber(), getChannelNumber());
 
-  resetSmartPtr(mMappedFileFifo, paths.fifo().string());
+  // Initialize the page addresses
+  /// Amount of space reserved for the FIFO, we use multiples of the page size for uniformity
+  size_t fifoSpace = ((sizeof(ReadyFifo) / params.dma.pageSize) + 1) * params.dma.pageSize;
 
-  resetSmartPtr(mBufferReadyFifo, getRorcDevice().getPciDevice(), mMappedFileFifo->getAddress(), mMappedFileFifo->getSize(),
-      getBufferId(BUFFER_INDEX_FIFO));
+  PageAddress fifoAddress;
+  std::tie(fifoAddress, getPageAddresses()) = Pda::partitionScatterGatherList(getBufferPages().getScatterGatherList(),
+      fifoSpace, params.dma.pageSize);
+  mFifoUser = reinterpret_cast<ReadyFifo*>(const_cast<void*>(fifoAddress.user));
+  mFifoBus = reinterpret_cast<ReadyFifo*>(const_cast<void*>(fifoAddress.bus));
+
+  if (getPageAddresses().size() <= CRU_DESCRIPTOR_ENTRIES) {
+    BOOST_THROW_EXCEPTION(CruException()
+        << errinfo_rorc_error_message("Insufficient amount of pages fit in DMA buffer"));
+  }
 
   resetSmartPtr(mCrorcSharedData, paths.state(), getSharedDataSize(), getCrorcSharedDataName().c_str(),
       FileSharedObject::find_or_construct);
@@ -87,31 +96,7 @@ void CrorcChannelMaster::constructorCommon()
    csd->initialize();
 
    //cout << "Clearing readyFifo" << endl;
-   mMappedFileFifo->get()->reset();
-  }
-
-  auto& params = getParams();
-
-  // Initialize the page addresses
-  for (const auto& entry : getBufferPages().getScatterGatherList()) {
-    if (entry.size < (2l * 1024l * 1024l)) {
-      BOOST_THROW_EXCEPTION(CrorcException()
-          << errinfo_rorc_error_message("Unsupported configuration: DMA scatter-gather entry size less than 2 MiB")
-          << errinfo_rorc_scatter_gather_entry_size(entry.size)
-          << errinfo_rorc_possible_causes(
-              {"DMA buffer was not allocated in hugepage shared memory (hugetlbfs may not be properly mounted)"}));
-    }
-
-    // How many pages fit in this SGL entry
-    int64_t pagesInSglEntry = entry.size / params.dma.pageSize;
-
-    for (int64_t i = 0; i < pagesInSglEntry; ++i) {
-      int64_t offset = i * params.dma.pageSize;
-      PageAddress pa;
-      pa.bus = (void*) (((char*) entry.addressBus) + offset);
-      pa.user = (void*) (((char*) entry.addressUser) + offset);
-      getPageAddresses().push_back(pa);
-    }
+   mFifoUser->reset();
   }
 
   if (getPageAddresses().size() <= READYFIFO_ENTRIES) {
@@ -120,6 +105,8 @@ void CrorcChannelMaster::constructorCommon()
         << errinfo_rorc_dma_buffer_size(params.dma.bufferSize)
         << errinfo_rorc_dma_page_size(params.dma.pageSize));
   }
+
+  mPageManager.setAmountOfPages(getPageAddresses().size());
 }
 
 CrorcChannelMaster::~CrorcChannelMaster()
@@ -156,6 +143,8 @@ void CrorcChannelMaster::deviceStartDma()
       crorcStartTrigger();
     }
   }
+
+  std::this_thread::sleep_for(10ms);
 }
 
 int rorcStopDataGenerator(volatile uint32_t* buff)
@@ -259,9 +248,8 @@ void CrorcChannelMaster::initializeFreeFifo()
 {
   // Pushing a given number of pages to the firmware FIFO.
   for(int i = 0; i < READYFIFO_ENTRIES; ++i){
-    getReadyFifo().entries[i].reset();
+    mFifoUser->entries[i].reset();
     pushFreeFifoPage(i, getPageAddresses()[i].bus);
-    //while(dataArrived(i) != DataArrivalStatus::WHOLE_ARRIVED) { ; }
   }
 }
 
@@ -271,52 +259,66 @@ void CrorcChannelMaster::pushFreeFifoPage(int readyFifoIndex, volatile void* pag
   rorcPushRxFreeFifo(getBarUserspace(), reinterpret_cast<uint64_t>(pageBusAddress), pageWords, readyFifoIndex);
 }
 
-PageHandle CrorcChannelMaster::pushNextPage()
-{
-  const auto& csd = mCrorcSharedData->get();
-
-  if (getSharedData().mDmaState != DmaState::STARTED) {
-    BOOST_THROW_EXCEPTION(CrorcException()
-        << errinfo_rorc_error_message("Not in required DMA state")
-        << errinfo_rorc_possible_causes({"startDma() not called"}));
-  }
-
-  // Handle for next page
-  auto fifoIndex = csd->mFifoIndexWrite;
-  auto bufferIndex = csd->mBufferPageIndex;
-
-  // Check if page is available to write to
-  if (mPageWasReadOut[fifoIndex] == false) {
-    BOOST_THROW_EXCEPTION(CrorcException()
-        << errinfo_rorc_error_message("Pushing page would overwrite")
-        << errinfo_rorc_fifo_index(fifoIndex));
-  }
-
-  mPageWasReadOut[fifoIndex] = false;
-  mBufferPageIndexes[fifoIndex] = bufferIndex;
-
-  pushFreeFifoPage(fifoIndex, getPageAddresses()[bufferIndex].bus);
-
-  csd->mFifoIndexWrite = (csd->mFifoIndexWrite + 1) % READYFIFO_ENTRIES;
-  csd->mBufferPageIndex = (csd->mBufferPageIndex + 1) % getPageAddresses().size();
-
-  return PageHandle(fifoIndex);
-}
-
-void* CrorcChannelMaster::getReadyFifoBusAddress() const
-{
-  return mBufferReadyFifo->getScatterGatherList()[0].addressBus;
-}
-
-ReadyFifo& CrorcChannelMaster::getReadyFifo() const
-{
-  return *mMappedFileFifo->get();
-}
+//PageHandle CrorcChannelMaster::pushNextPage()
+//{
+//  const auto& csd = mCrorcSharedData->get();
+//
+//  if (getSharedData().mDmaState != DmaState::STARTED) {
+//    BOOST_THROW_EXCEPTION(CrorcException()
+//        << errinfo_rorc_error_message("Not in required DMA state")
+//        << errinfo_rorc_possible_causes({"startDma() not called"}));
+//  }
+//
+//  // Handle for next page
+//  auto fifoIndex = csd->mFifoIndexWrite;
+//  auto bufferIndex = csd->mBufferPageIndex;
+//
+//  // Check if page is available to write to
+//  if (mPageWasReadOut[fifoIndex] == false) {
+//    BOOST_THROW_EXCEPTION(CrorcException()
+//        << errinfo_rorc_error_message("Pushing page would overwrite")
+//        << errinfo_rorc_fifo_index(fifoIndex));
+//  }
+//
+//  mPageWasReadOut[fifoIndex] = false;
+//  mBufferPageIndexes[fifoIndex] = bufferIndex;
+//
+//  pushFreeFifoPage(fifoIndex, getPageAddresses()[bufferIndex].bus);
+//
+//  csd->mFifoIndexWrite = (csd->mFifoIndexWrite + 1) % READYFIFO_ENTRIES;
+//  csd->mBufferPageIndex = (csd->mBufferPageIndex + 1) % getPageAddresses().size();
+//
+//  return PageHandle(fifoIndex);
+//}
+//
+//bool CrorcChannelMaster::isPageArrived(const PageHandle& handle)
+//{
+//  return dataArrived(handle.index) == DataArrivalStatus::WholeArrived;
+//}
+//
+//Page CrorcChannelMaster::getPage(const PageHandle& handle)
+//{
+//  auto fifoIndex = handle.index;
+//  auto bufferIndex = mBufferPageIndexes[fifoIndex];
+//  return Page(getPageAddresses()[bufferIndex].user, getReadyFifo().entries[fifoIndex].length);
+//}
+//
+//void CrorcChannelMaster::markPageAsRead(const PageHandle& handle)
+//{
+//  if (mPageWasReadOut[handle.index]) {
+//    BOOST_THROW_EXCEPTION(CrorcException()
+//        << errinfo_rorc_error_message("Page was already marked as read")
+//        << errinfo_rorc_page_index(handle.index));
+//  }
+//
+//  getReadyFifo().entries[handle.index].reset();
+//  mPageWasReadOut[handle.index] = true;
+//}
 
 CrorcChannelMaster::DataArrivalStatus::type CrorcChannelMaster::dataArrived(int index)
 {
-  auto length = getReadyFifo().entries[index].length;
-  auto status = getReadyFifo().entries[index].status;
+  auto length = mFifoUser->entries[index].length;
+  auto status = mFifoUser->entries[index].status;
 
   if (status == -1) {
     return DataArrivalStatus::NoneArrived;
@@ -343,30 +345,6 @@ CrorcChannelMaster::DataArrivalStatus::type CrorcChannelMaster::dataArrived(int 
       << errinfo_rorc_fifo_index(index));
 }
 
-bool CrorcChannelMaster::isPageArrived(const PageHandle& handle)
-{
-  return dataArrived(handle.index) == DataArrivalStatus::WholeArrived;
-}
-
-Page CrorcChannelMaster::getPage(const PageHandle& handle)
-{
-  auto fifoIndex = handle.index;
-  auto bufferIndex = mBufferPageIndexes[fifoIndex];
-  return Page(getPageAddresses()[bufferIndex].user, getReadyFifo().entries[fifoIndex].length);
-}
-
-void CrorcChannelMaster::markPageAsRead(const PageHandle& handle)
-{
-  if (mPageWasReadOut[handle.index]) {
-    BOOST_THROW_EXCEPTION(CrorcException()
-        << errinfo_rorc_error_message("Page was already marked as read")
-        << errinfo_rorc_page_index(handle.index));
-  }
-
-  getReadyFifo().entries[handle.index].reset();
-  mPageWasReadOut[handle.index] = true;
-}
-
 CardType::type CrorcChannelMaster::getCardType()
 {
   return CardType::Crorc;
@@ -391,6 +369,38 @@ void CrorcChannelMaster::CrorcSharedData::initialize()
   mInitializationState = InitializationState::INITIALIZED;
 }
 
+int CrorcChannelMaster::fillFifo(int maxFill)
+{
+  auto isArrived = [&](int descriptorIndex) {
+    return dataArrived(descriptorIndex) == DataArrivalStatus::WholeArrived;
+  };
+
+  auto resetDescriptor = [&](int descriptorIndex) {
+    mFifoUser->entries[descriptorIndex].reset();
+  };
+
+  auto push = [&](int bufferIndex, int descriptorIndex) {
+    pushFreeFifoPage(descriptorIndex, getPageAddresses()[bufferIndex].bus);
+  };
+
+  mPageManager.handleArrivals(isArrived, resetDescriptor);
+  int pushCount = mPageManager.pushPages(maxFill, push);
+  return pushCount;
+}
+
+auto CrorcChannelMaster::getPage() -> boost::optional<Page>
+{
+  if (auto page = mPageManager.useArrivedPage()) {
+    int bufferIndex = *page;
+    return Page{getPageAddresses()[bufferIndex].user, bufferIndex};
+  }
+  return boost::none;
+}
+
+void CrorcChannelMaster::freePage(const Page& page)
+{
+  mPageManager.freePage(page.index);
+}
 
 void CrorcChannelMaster::crorcArmDataGenerator()
 {
@@ -465,7 +475,7 @@ void CrorcChannelMaster::crorcCheckFreeFifoEmpty()
 void CrorcChannelMaster::crorcStartDataReceiver()
 {
   auto csd = mCrorcSharedData->get();
-  auto busAddress = (unsigned long) getReadyFifoBusAddress();
+  auto busAddress = reinterpret_cast<unsigned long>(mFifoBus);
   rorcStartDataReceiver(getBarUserspace(), busAddress, csd->mRorcRevision);
 }
 
@@ -500,14 +510,14 @@ void CrorcChannelMaster::crorcStopTrigger()
 std::vector<uint32_t> CrorcChannelMaster::utilityCopyFifo()
 {
   std::vector<uint32_t> copy;
-  auto& fifo = mMappedFileFifo->get()->dataInt32;
+  auto& fifo = mFifoUser->dataInt32;
   copy.insert(copy.begin(), fifo.begin(), fifo.end());
   return copy;
 }
 
 void CrorcChannelMaster::utilityPrintFifo(std::ostream& os)
 {
-  ChannelUtility::printCrorcFifo(mMappedFileFifo->get(), os);
+  ChannelUtility::printCrorcFifo(mFifoUser, os);
 }
 
 void CrorcChannelMaster::utilitySetLedState(bool)

@@ -8,6 +8,7 @@
 #include <boost/scoped_ptr.hpp>
 #include "RORC/Parameters.h"
 #include "ChannelMaster.h"
+#include "PageManager.h"
 #include "ReadyFifo.h"
 
 namespace AliceO2 {
@@ -23,10 +24,6 @@ class CrorcChannelMaster final : public ChannelMaster
     virtual ~CrorcChannelMaster() override;
 
     virtual void resetCard(ResetLevel::type resetLevel) override;
-    virtual PageHandle pushNextPage() override;
-    virtual bool isPageArrived(const PageHandle& handle) override;
-    virtual Page getPage(const PageHandle& handle) override;
-    virtual void markPageAsRead(const PageHandle& handle) override;
     virtual CardType::type getCardType() override;
 
     virtual std::vector<uint32_t> utilityCopyFifo() override;
@@ -35,6 +32,10 @@ class CrorcChannelMaster final : public ChannelMaster
     virtual void utilitySanityCheck(std::ostream& os) override;
     virtual void utilityCleanupState() override;
     virtual int utilityGetFirmwareVersion() override;
+
+    virtual int fillFifo(int maxFill = READYFIFO_ENTRIES) override;
+    virtual boost::optional<Page> getPage() override;
+    virtual void freePage(const Page& page) override;
 
   protected:
 
@@ -92,12 +93,6 @@ class CrorcChannelMaster final : public ChannelMaster
     /// \param pageBusAddress Address on the bus to push the page to
     void pushFreeFifoPage(int readyFifoIndex, volatile void* pageBusAddress);
 
-    /// Get the bus address of the Ready FIFO
-    void* getReadyFifoBusAddress() const;
-
-    /// Get the userspace Ready FIFO object
-    ReadyFifo& getReadyFifo() const;
-
     /// Check if data has arrived
     DataArrivalStatus::type dataArrived(int index);
 
@@ -143,10 +138,16 @@ class CrorcChannelMaster final : public ChannelMaster
     void crorcSetSiuLoopback();
 
     /// Memory mapped file containing the readyFifo
-    boost::scoped_ptr<TypedMemoryMappedFile<ReadyFifo>> mMappedFileFifo;
+    //boost::scoped_ptr<TypedMemoryMappedFile<ReadyFifo>> mMappedFileFifo;
 
     /// PDA DMABuffer object for the Ready FIFO
-    boost::scoped_ptr<Pda::PdaDmaBuffer> mBufferReadyFifo;
+    //boost::scoped_ptr<Pda::PdaDmaBuffer> mBufferReadyFifo;
+
+    /// Bus FIFO
+    ReadyFifo* mFifoBus;
+
+    /// Userspace FIFO
+    ReadyFifo* mFifoUser;
 
     /// Memory mapped data stored in the shared state file
     boost::scoped_ptr<FileSharedObject::FileSharedObject<CrorcSharedData>> mCrorcSharedData;
@@ -160,6 +161,9 @@ class CrorcChannelMaster final : public ChannelMaster
     void constructorCommon();
 
     static constexpr CardType::type CARD_TYPE = CardType::Crorc;
+
+    // TODO: refactor into ChannelMaster
+    PageManager<READYFIFO_ENTRIES> mPageManager;
 };
 
 } // namespace Rorc

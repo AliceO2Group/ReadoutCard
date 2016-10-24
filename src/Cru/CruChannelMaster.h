@@ -5,11 +5,11 @@
 
 #pragma once
 
-#include "RORC/Parameters.h"
-#include "ChannelMaster.h"
 #include <memory>
-#include <array>
+#include "ChannelMaster.h"
 #include "CruFifoTable.h"
+#include "PageManager.h"
+#include "RORC/Parameters.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -25,10 +25,6 @@ class CruChannelMaster final : public ChannelMaster
     virtual ~CruChannelMaster() override;
 
     virtual void resetCard(ResetLevel::type resetLevel) override;
-    virtual PageHandle pushNextPage() override;
-    virtual bool isPageArrived(const PageHandle& handle) override;
-    virtual Page getPage(const PageHandle& handle) override;
-    virtual void markPageAsRead(const PageHandle& handle) override;
     virtual CardType::type getCardType() override;
 
     virtual std::vector<uint32_t> utilityCopyFifo() override;
@@ -37,6 +33,10 @@ class CruChannelMaster final : public ChannelMaster
     virtual void utilitySanityCheck(std::ostream& os) override;
     virtual void utilityCleanupState() override;
     virtual int utilityGetFirmwareVersion() override;
+
+    virtual int fillFifo(int maxFill = CRU_DESCRIPTOR_ENTRIES) override;
+    virtual boost::optional<Page> getPage() override;
+    virtual void freePage(const Page& page) override;
 
   protected:
 
@@ -51,38 +51,25 @@ class CruChannelMaster final : public ChannelMaster
 
   private:
 
+    // TODO: refactor into ChannelMaster
+    PageManager<CRU_DESCRIPTOR_ENTRIES> mPageManager;
+
     void constructorCommon();
     void initFifo();
     void initCru();
-    void setDescriptor(int pageIndex, int descriptorIndex);
-    void resetBuffer();
     void resetCru();
-    void resetPage(volatile uint32_t* page);
-    void resetPage(volatile void* page);
-    void setBufferReadyStatus(bool ready);
     void setBufferReadyGuard();
     volatile uint32_t& bar(size_t index);
-    void acknowledgePage();
 
     static constexpr CardType::type CARD_TYPE = CardType::Cru;
 
     std::unique_ptr<Util::GuardFunction> mBufferReadyGuard;
 
-    /// Userspace FIFO
-    CruFifoTable* mFifoUser;
-
     /// Bus FIFO
     CruFifoTable* mFifoBus;
 
-    /// Array to keep track of read pages (false: wasn't read out, true: was read out).
-    std::vector<bool> mPageWasReadOut;
-
-    /// Mapping from fifo page index to DMA buffer index
-    std::vector<int> mBufferPageIndexes;
-
-    int mFifoIndexWrite; ///< Index of next FIFO page available for writing
-    int mFifoIndexRead; ///< Index of oldest non-free FIFO page
-    int mBufferPageIndex; ///< Index of next DMA buffer page available for writing
+    /// Userspace FIFO
+    CruFifoTable* mFifoUser;
 };
 
 } // namespace Rorc

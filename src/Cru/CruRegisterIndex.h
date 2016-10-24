@@ -69,6 +69,10 @@ static constexpr size_t DMA_COMMAND = 129;
 /// Byte address: 0x208
 static constexpr size_t DMA_CONFIGURATION = 130;
 
+/// Idle counter register
+/// Byte address: 0x210
+static constexpr size_t IDLE_COUNTER = 132;
+
 /// Contains the amount of 32 kilobyte blocks that the firmware has pushed
 /// Byte address: 0x218
 static constexpr size_t FIRMWARE_PUSH_COUNTER = 134;
@@ -98,17 +102,9 @@ static constexpr size_t READ_STATUS_COUNT = 148;
 /// Byte address: 0x260
 static constexpr size_t LED_STATUS = 152;
 
-///// A read from this register will pop a value from the debug FIFO
-///// Byte address: 0x270
-//static constexpr size_t DEBUG_FIFO_POP = 156;
-
 /// Board serial number
 /// Byte address: 0x270
 static constexpr size_t SERIAL_NUMBER = 156;
-
-///// A write to this register will push a value into the debug FIFO
-///// Byte address: 0x274
-//static constexpr size_t DEBUG_FIFO_PUSH = 157;
 
 /// Register containing compilation info of the firmware
 /// Can be used as a sort of version number

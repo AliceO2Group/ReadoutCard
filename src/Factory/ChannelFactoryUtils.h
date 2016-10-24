@@ -102,7 +102,6 @@ struct Make<Result, Index, Tag, Function, Args...>
   static Result make(CardType::type select, Tag typeTag, Function func, Args&&... args)
   {
     // Make sure this tag is valid and not a dummy
-    using TagDecay = typename std::decay<Tag>::type; 
     static_assert(CardTypeTag::isValidTag<Tag>(), "CardTypeTag of pair is not a valid tag");
     static_assert((Index == 0 && CardTypeTag::isDummyTag<Tag>()) || Index != 0,
        "DummyTag & accompanying function must be in first position");
@@ -113,7 +112,7 @@ struct Make<Result, Index, Tag, Function, Args...>
     return (typeTag.type == select) ? func() : Make<Result, Index + 1, Args...>::make(select, std::forward<Args>(args)...);
   }
 
-  static Result makeDummy(Tag typeTag, Function func, Args&&... args)
+  static Result makeDummy(Tag, Function func, Args&&...)
   {
     static_assert(Index == 0, "DummyTag & accompanying function must be in first position");
     static_assert(std::is_same<typename std::decay<Tag>::type, CardTypeTag::DummyTag_>::value,
