@@ -22,8 +22,8 @@ class PageManager
   public:
     struct Page
     {
-        int descriptorIndex; ///< Index for CRU DMA descriptor table
-        int bufferIndex; ///< Index for mPageAddresses
+        int descriptorIndex; ///< Index for DMA FIFO descriptor table
+        int bufferIndex; ///< Index for DMA buffer
     };
 
     enum class PageStatus
@@ -93,13 +93,13 @@ class PageManager
       for (int i = 0; i < pushCount; ++i) {
         auto page = mQueueFree.front();
         mQueueFree.pop();
+
         page.descriptorIndex = getFifoHeadIndex(); // Assign new descriptor to page
+        advanceFifoHead();
 
 //        std::cout << "PUSH      bi:" << page.bufferIndex << " di:"<< page.descriptorIndex << '\n';
         push(page.bufferIndex, page.descriptorIndex);
-
         mQueuePushing.push(page);
-        advanceFifoHead();
       }
       return pushCount;
     }

@@ -204,6 +204,7 @@ class ProgramDmaBench: public Program
         dmaLoop(channel.get());
       }
       mRunTime.end = std::chrono::high_resolution_clock::now();
+      freeExcessPages(channel.get(), 10ms);
       channel->stopDma();
 
       outputErrors();
@@ -247,7 +248,7 @@ class ProgramDmaBench: public Program
           // Read out a page if available
           if (boost::optional<Page> page = channel->getPage()) {
             readoutPage(*page);
-            channel->acknowledgePage(page);
+            channel->freePage(page);
             mReadoutCount++;
           }
         }
@@ -294,10 +295,21 @@ class ProgramDmaBench: public Program
           auto page = Page{std::get<0>(pageTuple), std::get<1>(pageTuple)};
 
           readoutPage(page);
-          channel->acknowledgePage(page);
+          channel->freePage(page);
 
           pages.erase(pages.begin() + index);
           mReadoutCount++;
+        }
+      }
+    }
+
+    /// Free the pages that were pushed in excess
+    void freeExcessPages(ChannelMasterInterface* channel, std::chrono::milliseconds timeout)
+    {
+      auto start = std::chrono::high_resolution_clock::now();
+      while ((std::chrono::high_resolution_clock::now() - start) < timeout) {
+        if (auto page = channel->getPage()) {
+          channel->freePage(page);
         }
       }
     }

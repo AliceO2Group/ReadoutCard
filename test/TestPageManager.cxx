@@ -163,10 +163,10 @@ BOOST_AUTO_TEST_CASE(PageManagerEmptyTest)
   BOOST_CHECK_THROW(manager.freePage(3459873), Exception);
   BOOST_REQUIRE(not manager.useArrivedPage().is_initialized());
   BOOST_CHECK_NO_THROW(manager.handleArrivals(
-      [](auto x){return true;},
-      [](auto x){}));
+      [](auto){return true;},
+      [](auto){}));
   BOOST_CHECK_NO_THROW(manager.pushPages(12345,
-      [](auto x, auto y){}));
+      [](auto, auto){}));
 }
 
 } // Anonymous namespace

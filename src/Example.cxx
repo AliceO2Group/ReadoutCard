@@ -122,7 +122,7 @@ int main(int, char**)
           printPage(*page, handle.index, stringStream);
 
           // Mark page as read so it can be written to again
-          channel->acknowledgePage(page);
+          channel->freePage(page);
         }
       }
       std::this_thread::sleep_for(std::chrono::microseconds(1)); // See README.md

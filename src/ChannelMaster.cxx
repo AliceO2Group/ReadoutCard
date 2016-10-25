@@ -183,7 +183,7 @@ ChannelMaster::ChannelMaster(CardType::type cardType, int serial, int channel, i
         << errinfo_rorc_shared_fifo_file(paths.fifo().string())
         << errinfo_rorc_named_mutex_name(paths.namedMutex())
         << errinfo_rorc_possible_causes({
-            "Channel was never initialized with ChannelParameters",
+            "Channel was never initialized with parameters",
             "Channel state file was corrupted",
             "Channel state file was used by incompatible library versions"}));
   }

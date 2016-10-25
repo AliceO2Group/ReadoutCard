@@ -74,7 +74,7 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
     /// If acknowledgePage() is not called, getPage() will keep returning the same page
     virtual void freePage(const Page& page) = 0;
 
-    void acknowledgePage(const boost::optional<Page>& page)
+    void freePage(const boost::optional<Page>& page)
     {
       freePage(page.get());
     }

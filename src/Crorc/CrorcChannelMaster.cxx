@@ -468,7 +468,8 @@ void CrorcChannelMaster::crorcCheckFreeFifoEmpty()
   int returnCode = rorcCheckRxFreeFifo(getBarUserspace());
   if (returnCode != RORC_FF_EMPTY){
     BOOST_THROW_EXCEPTION(CrorcFreeFifoException()
-        ADD_ERRINFO(returnCode, "Free FIFO not empty"));
+        ADD_ERRINFO(returnCode, "Free FIFO not empty")
+        << errinfo_rorc_possible_causes({"Previous DMA did not get/free all received pages"}));
   }
 }
 
