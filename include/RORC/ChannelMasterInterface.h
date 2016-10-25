@@ -50,8 +50,8 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
     virtual int fillFifo(int maxFill = -1) = 0;
     struct Page
     {
-        volatile void* const userspace;
-        int const index;
+        volatile void* userspace;
+        int index;
 
         volatile void* getAddress() const
         {

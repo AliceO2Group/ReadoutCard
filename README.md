@@ -5,7 +5,7 @@ Authors
 ===================
 
 * C layer: Tuan Mate Nguyen (tuan.mate@outlook.com)
-* C++ interface: Pascal Boeschoten (pascal.boeschoten@cern.ch)
+* C++: Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 
 Description
@@ -59,6 +59,13 @@ Utility programs
 The RORC module contains some utility programs to assist with RORC debugging and administration.
 Currently, only utilities for reading and writing registers are available, but more are planned.
 
+Exceptions
+-------------------
+The RORC module makes use of exceptions. Nearly all of these are derived from `boost::exception`.
+They are defined in the header 'RORC/Exception.h'. These exceptions may contain extensive information about the cause
+of the issue in the form of `boost::error_info` structs which can aid in debugging. 
+To generate a diagnostic report, you may use `boost::diagnostic_information(exception)`.      
+
 
 Design notes
 ===================
@@ -85,12 +92,6 @@ Shared memory usage
 * For mutex (inter & intra process channel lock
 TODO elaborate a bit more
 
-PageHandle & Page classes
--------------------
-The PageHandle and Page classes have similar roles. PageHandle contains an index that the ChannelMaster uses internally
-to refer to a page. The Page class contains the raw address of a page and its size.
-The reason these are not combined into one class 
-
 Scatter-gather lists
 -------------------
 Scatter-gather lists (SGLs) contain a sequence of memory regions that the card's DMA engine can use.
@@ -102,41 +103,11 @@ Known issues
 
 C-RORC page arrival
 -------------------
-It appears that with the C-RORC, the isPageArrived() function does not work properly and returns 'true' too early.
+It appears that with the C-RORC, the page arrival detection does not work properly and returns 'arrived' too early.
 It is suspected to be a firmware bug, where the page status in the Ready FIFO is marked as fully transferred while the
 actual DMA transfer has not yet been completed.
 The investigation is ongoing, but for the time being we can work around the issue with a manual delay.
 The Example.cxx uses a microsecond wait, which is probably overkill.
-
-The FIFO of the C-RORC is initialized by pushing 128 pages. The framework should wait until these pages are fully
-transferred before continuing. This is not yet implemented, because of the isPageArrived() issue described above.
-Again, clients must wait manually.
-
-CRU implementation
--------------------
-The support for the CRU is in very preliminary stages.
-Currently, the serial number for the CRU is hard-coded. As of this writing, that serial number is 12345.
-See the function cruGetSerial() in RorcDevice.cxx, which is *supposed* to retrieve the serial from the card.
-
-Parameters & re-initialization
--------------------
-The ChannelParameters used to initialize the ChannelMaster object are stored in the shared memory. The purpose of this
-is to know when a ChannelMaster object has released the lock, and then another one takes it using different parameters.
-In that case, some things must be re-initialized. However, this is not yet implemented and a change of parameters
-currently requires the user to delete the shared files.  
-
-Unsynchronized utilities
--------------------
-Not all of the utility programs go through the ChannelMaster/ChannelSlave interface.
-For example, RorcUtilsPrintFifo.cxx and RorcUtilsListCards.cxx use "internal" libraries.
-This means that the way they access the cards is not synchronized. If these utilities are used while the cards are also
-otherwise being accessed, there is a chance of undefined behaviour.
-
-Multithreaded
--------------------
-Currently, there are no protections in the ChannelMaster/ChannelSlave against multi-threaded access, since it relies
-purely on file locks at the moment. This is of course planned for a future release, probably by just adding a mutex to 
-the ChannelMaster\/ChannelSlave object.
 
 Permissions
 -------------------
