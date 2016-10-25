@@ -1,4 +1,4 @@
-/// \file ProgramCruExperimentalDmaV2.cxx
+/// \file ProgramCruExperimentalDma.cxx
 /// \brief Based on https://gitlab.cern.ch/alice-cru/pciedma_eval
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
@@ -327,6 +327,9 @@ class ProgramCruExperimentalDma: public Program
           ("cumulative-idle",
                po::bool_switch(&mOptions.cumulativeIdle),
                "Calculate cumulative idle count")
+          ("old-serial",
+               po::bool_switch(&mOptions.oldSerialLocation),
+               "Use old serial number location")
           ("log-idle",
               po::bool_switch(&mOptions.logIdle),
               "Log idle counter");
@@ -567,7 +570,7 @@ class ProgramCruExperimentalDma: public Program
     /// Initializes PDA objects and accompanying shared memory files
     void initPda()
     {
-      Util::resetSmartPtr(mRorcDevice, mOptions.serialNumber);
+      Util::resetSmartPtr(mRorcDevice, mOptions.serialNumber, !mOptions.oldSerialLocation);
       Util::resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), mChannelNumber);
       Util::resetSmartPtr(mMappedFilePages, DMA_BUFFER_PAGES_PATH.c_str(), DMA_BUFFER_PAGES_SIZE);
       Util::resetSmartPtr(mBufferPages, mRorcDevice->getPciDevice(), mMappedFilePages->getAddress(),
@@ -1007,21 +1010,22 @@ class ProgramCruExperimentalDma: public Program
     /// Program options
     struct Options {
         int64_t maxPages = 0; ///< Limit of pages to push
-        bool fileOutputAscii = false;
-        bool fileOutputBin = false;
-        bool resetCard = false;
-        bool fifoDisplay = false;
-        bool randomPauseSoft = false;
-        bool randomPauseFirm = false;
-        bool noErrorCheck = false;
-        bool removeSharedMemory = false;
-        bool reloadKernelModule = false;
-        bool resyncCounter = false;
-        bool registerHammer = false;
-        bool legacyAck = false;
-        bool noTwoHundred = false;
-        bool logIdle = false;
-        bool cumulativeIdle = false;
+        bool fileOutputAscii;
+        bool fileOutputBin;
+        bool resetCard;
+        bool fifoDisplay;
+        bool randomPauseSoft;
+        bool randomPauseFirm;
+        bool noErrorCheck;
+        bool removeSharedMemory;
+        bool reloadKernelModule;
+        bool resyncCounter;
+        bool registerHammer;
+        bool legacyAck;
+        bool noTwoHundred;
+        bool logIdle;
+        bool cumulativeIdle;
+        bool oldSerialLocation;
         int serialNumber;
     } mOptions;
 

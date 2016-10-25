@@ -23,7 +23,7 @@ BOOST_AUTO_TEST_CASE(UtilOptions)
   std::vector<const char*> args = {
       "/test",
       "--address=0x100",
-      "--regrange=200",
+      "--range=200",
       "--value=0x250",
       "--cp-dma-pagesize=300",
       "--cp-dma-bufmb=400",

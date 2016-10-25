@@ -113,7 +113,6 @@ if(PDA_FOUND)
   build_util_exec(rorc-channel-cleanup Utilities/ProgramCleanup.cxx)
   build_util_exec(rorc-dma-bench Utilities/ProgramDmaBench.cxx)
   build_util_exec(rorc-cru-experimental-dma Utilities/ProgramCruExperimentalDma.cxx)
-  build_util_exec(rorc-cru-experimental-dma-v2 Utilities/ProgramCruExperimentalDmaV2.cxx)
 endif()
 
 if(DIM_FOUND)

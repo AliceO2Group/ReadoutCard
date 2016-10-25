@@ -87,6 +87,32 @@ auto READOUT_DATA_PATH_ASCII = "readout_data.txt";
 auto READOUT_DATA_PATH_BIN = "readout_data.bin";
 auto READOUT_LOG_FORMAT = "readout_log_%d.txt";
 
+class SharedPage
+{
+  public:
+    using SharedChannel = std::shared_ptr<AliceO2::Rorc::ChannelMasterInterface>;
+    using Page = AliceO2::Rorc::ChannelMasterInterface::Page;
+
+    SharedPage(const SharedChannel& channel, const Page& page)
+        : mChannel(channel), mPage(page)
+    {
+    }
+
+    ~SharedPage()
+    {
+      mChannel->freePage(mPage);
+    }
+
+    const Page& getPage() const
+    {
+      return mPage;
+    }
+
+  private:
+    SharedChannel mChannel;
+    Page mPage;
+};
+
 }
 
 class ProgramDmaBench: public Program
@@ -116,15 +142,9 @@ class ProgramDmaBench: public Program
           ("pages",
               po::value<int64_t>(&mOptions.maxPages)->default_value(1500),
               "Amount of pages to transfer. Give <= 0 for infinite.")
-//          ("show-fifo",
-//              po::bool_switch(&mOptions.fifoDisplay),
-//              "Display FIFO status (wide terminal recommended)")
           ("rand-pause-sw",
               po::bool_switch(&mOptions.randomPauseSoft),
               "Randomly pause readout using software method")
-//          ("rand-pause-fw",
-//              po::bool_switch(&mOptions.randomPauseFirm),
-//              "Randomly pause readout using firmware method")
           ("rand-readout",
               po::bool_switch(&mOptions.randomReadout),
               "Readout in non-sequential order")
@@ -133,26 +153,7 @@ class ProgramDmaBench: public Program
               "Skip error checking")
           ("no-pagereset",
               po::bool_switch(&mOptions.noPageReset),
-              "Do not reset page to default values")
-//          ("rm-sharedmem",
-//              po::bool_switch(&mOptions.removeSharedMemory),
-//              "Remove shared memory after DMA transfer")
-//          ("reload-kmod",
-//              po::bool_switch(&mOptions.reloadKernelModule),
-//              "Reload kernel module before DMA initialization")
-//          ("resync-counter",
-//              po::bool_switch(&mOptions.resyncCounter),
-//              "Automatically resynchronize data generator counter in case of errors")
-//          ("reg-hammer",
-//              po::bool_switch(&mOptions.registerHammer),
-//              "Stress-test the debug register with repeated writes/reads")
-//          ("no-200",
-//              po::bool_switch(&mOptions.noTwoHundred),
-//              "Disable writing ready status to 0x200")
-//          ("legacy-ack",
-//              po::bool_switch(&mOptions.legacyAck),
-//              "Legacy option: give ack every 4 pages instead of every 1 page")
-              ;
+              "Do not reset page to default values");
     }
 
     virtual void run(const po::variables_map& map)
@@ -178,7 +179,7 @@ class ProgramDmaBench: public Program
       params[Parameters::Keys::generatorDataSize()] = std::to_string(PAGE_SIZE);
 
       // Get master lock on channel
-      auto channel = AliceO2::Rorc::ChannelFactory().getMaster(serialNumber, channelNumber, params);
+      auto channel = ChannelFactory().getMaster(serialNumber, channelNumber, params);
       std::this_thread::sleep_for(std::chrono::microseconds(500)); // XXX See README.md
 
       if (mOptions.resetCard) {
@@ -438,27 +439,6 @@ class ProgramDmaBench: public Program
           mRandomPausesSoft.length = std::chrono::milliseconds(Util::getRandRange(PAUSE_LENGTH_MIN, PAUSE_LENGTH_MAX));
         }
       }
-
-      // Random pauses in hardware: pause the data emulator
-      // TODO
-//      if (mOptions.randomPauseFirm) {
-//        auto now = std::chrono::high_resolution_clock::now();
-//        if (!mRandomPausesFirm.isPaused && now >= mRandomPausesFirm.next) {
-//          cout << b::format("fw pause %-4d ms\n") % mRandomPausesFirm.length.count() << std::flush;
-//          bar(CruRegisterIndex::DATA_EMULATOR_CONTROL) = 0x1;
-//          mRandomPausesFirm.isPaused = true;
-//        }
-//
-//        if (mRandomPausesFirm.isPaused && now >= mRandomPausesFirm.next + mRandomPausesFirm.length) {
-//          bar(CruRegisterIndex::DATA_EMULATOR_CONTROL) = 0x3;
-//          mRandomPausesFirm.isPaused = false;
-//
-//          // Schedule next pause
-//          auto now = std::chrono::high_resolution_clock::now();
-//          mRandomPausesFirm.next = now + std::chrono::milliseconds(Util::getRandRange(NEXT_PAUSE_MIN, NEXT_PAUSE_MAX));
-//          mRandomPausesFirm.length = std::chrono::milliseconds(Util::getRandRange(PAUSE_LENGTH_MIN, PAUSE_LENGTH_MAX));
-//        }
-//      }
     }
 
     void updateStatusDisplay()
@@ -475,25 +455,6 @@ class ProgramDmaBench: public Program
        mOptions.noErrorCheck ? format % "n/a" : format % mErrorCount; // Errors
        format % "n/a"; // TODO Temperature
        cout << '\r' << format;
-
-//       if (mOptions.fifoDisplay) {
-         // TODO
-//         char separator = '|';
-//         char waiting   = 'O';
-//         char arrived   = 'X';
-//         char available = ' ';
-//
-//         for (int i = 0; i < 128; ++i) {
-//           if ((i % 8) == 0) {
-//             cout << separator;
-//           }
-//
-//           cout << (i == mQueue.front().descriptorIndex) ? waiting  // We're waiting on this page
-//               : mFifoAddress.user->statusEntries.at(i).isPageArrived() ? arrived // This page has arrived
-//               : available; // This page is clear/available
-//         }
-//         cout << separator;
-//       }
 
        // This takes care of adding a "line" to the stdout and log table every so many seconds
        {
@@ -605,17 +566,10 @@ class ProgramDmaBench: public Program
         bool fileOutputAscii = false;
         bool fileOutputBin = false;
         bool resetCard = false;
-//        bool fifoDisplay = false;
         bool randomPauseSoft = false;
-//        bool randomPauseFirm = false;
         bool noErrorCheck = false;
         bool noPageReset = false;
-//        bool removeSharedMemory = false;
-//        bool reloadKernelModule = false;
         bool resyncCounter = false;
-//        bool registerHammer = false;
-//        bool legacyAck = false;
-//        bool noTwoHundred = false;
         bool randomReadout = false;
     } mOptions;
 
@@ -655,13 +609,6 @@ class ProgramDmaBench: public Program
         TimePoint next; ///< Next pause at this time
         std::chrono::milliseconds length; ///< Next pause has this length
     } mRandomPausesSoft;
-
-//    struct RandomPausesFirm
-//    {
-//        bool isPaused = false;
-//        TimePoint next; ///< Next pause at this time
-//        std::chrono::milliseconds length; ///< Next pause has this length
-//    } mRandomPausesFirm;
 };
 
 int main(int argc, char** argv)

@@ -40,7 +40,8 @@ void MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
     // Similar operation to calling "touch" command, making sure the file exists
     try {
       std::ofstream ofs(fileName.c_str(), std::ios::app);
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
       BOOST_THROW_EXCEPTION(MemoryMapException()
           << errinfo_rorc_error_message("Failed to open memory map file"));
     }
@@ -48,7 +49,8 @@ void MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
     // Resize and map file to memory
     try {
       bfs::resize_file(fileName.c_str(), fileSize);
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
       BOOST_THROW_EXCEPTION(MemoryMapException()
           << errinfo_rorc_error_message("Failed to resize memory map file")
           << errinfo_rorc_possible_causes({

@@ -22,7 +22,8 @@ namespace AliceO2 {
 namespace Rorc {
 
 uint32_t crorcGetSerial(PciDevice* pciDevice);
-uint32_t cruGetSerial(PciDevice* pciDevice);
+uint32_t cruGetSerialOld(PciDevice* pciDevice);
+uint32_t cruGetSerialNew(PciDevice* pciDevice);
 
 struct DeviceType
 {
@@ -31,17 +32,21 @@ struct DeviceType
     std::function<uint32_t (PciDevice* pciDevice)> getSerial;
 };
 
-const std::vector<DeviceType> deviceTypes = {
+const std::vector<DeviceType> deviceTypesOld = {
     { CardType::Crorc, {"0033", "10dc"}, crorcGetSerial }, // C-RORC
-    { CardType::Cru, {"e001", "1172"}, cruGetSerial }, // Altera dev board CRU
-    //{ CardType::CRU, {"????", "10dc"}, cruGetSerial }, // Actual CRU? To be determined...
+    { CardType::Cru, {"e001", "1172"}, cruGetSerialOld }, // Altera dev board CRU
+};
+
+const std::vector<DeviceType> deviceTypesNew = {
+    { CardType::Crorc, {"0033", "10dc"}, crorcGetSerial }, // C-RORC
+    { CardType::Cru, {"e001", "1172"}, cruGetSerialNew }, // Altera dev board CRU
 };
 
 RorcDevice::RorcDevice(int serialNumber)
     : mPciId({"unknown", "unknown"}), mSerialNumber(-1), mCardType(CardType::Unknown)
 {
   try {
-    for (const auto& type : deviceTypes) {
+    for (const auto& type : deviceTypesOld) {
       Util::resetSmartPtr(mPdaDevice, type.pciId);
       auto pciDevices = mPdaDevice->getPciDevices();
 
@@ -65,6 +70,34 @@ RorcDevice::RorcDevice(int serialNumber)
   }
 }
 
+RorcDevice::RorcDevice(int serialNumber, bool useNewCruSerialLocation)
+  : mPciId({"unknown", "unknown"}), mSerialNumber(-1), mCardType(CardType::Unknown)
+{
+  try {
+    for (const auto& type : useNewCruSerialLocation ? deviceTypesNew : deviceTypesOld) {
+      Util::resetSmartPtr(mPdaDevice, type.pciId);
+      auto pciDevices = mPdaDevice->getPciDevices();
+
+      for (const auto& pciDevice : pciDevices) {
+        int serial = type.getSerial(pciDevice);
+        if (serial == serialNumber) {
+          mPciDevice = pciDevice;
+          mCardType = type.cardType;
+          mSerialNumber = serial;
+          mPciId = type.pciId;
+          return;
+        }
+      }
+    }
+    BOOST_THROW_EXCEPTION(Exception() << errinfo_rorc_error_message("Could not find card"));
+  }
+  catch (boost::exception& e) {
+    e << errinfo_rorc_serial_number(serialNumber);
+    addPossibleCauses(e, { "Invalid serial number search target" });
+    throw;
+  }
+}
+
 RorcDevice::~RorcDevice()
 {
 }
@@ -73,7 +106,7 @@ std::vector<RorcDevice::CardDescriptor> RorcDevice::findSystemDevices()
 {
   std::vector<RorcDevice::CardDescriptor> cards;
 
-  for (const auto& type : deviceTypes) {
+  for (const auto& type : deviceTypesOld) {
     Pda::PdaDevice pdaDevice(type.pciId);
     auto pciDevices = pdaDevice.getPciDevices();
 
@@ -98,7 +131,7 @@ std::vector<RorcDevice::CardDescriptor> RorcDevice::findSystemDevices(int serial
 {
   std::vector<RorcDevice::CardDescriptor> cards;
   try {
-    for (const auto& type : deviceTypes) {
+    for (const auto& type : deviceTypesOld) {
       Pda::PdaDevice pdaDevice(type.pciId);
       auto pciDevices = pdaDevice.getPciDevices();
 
@@ -145,23 +178,34 @@ void RorcDevice::printDeviceInfo(std::ostream& ostream)
       "n/a";
 }
 
+/// Uses old location of serial number
+uint32_t cruGetSerialOld(PciDevice* pciDevice)
+{
+  int channel = 0; // Must use BAR 0 to access serial number
+  Pda::PdaBar pdaBar(pciDevice, channel);
+  uint32_t serial = pdaBar.getUserspaceAddressU32()[CruRegisterIndex::SERIAL_NUMBER];
+  return serial;
+}
+
+/// Uses new location of serial number
+uint32_t cruGetSerialNew(PciDevice* pciDevice)
+{
+//  BOOST_THROW_EXCEPTION(CruException() << errinfo_rorc_error_message("New serial number location not yet supported"));
+  int channel = 2; // Must use BAR 2 to access serial number
+  Pda::PdaBar pdaBar(pciDevice, channel);
+  uint32_t serial = pdaBar.getUserspaceAddressU32()[0x0020002c / 4];
+  return serial;
+}
+
 // The RORC headers have a lot of macros that cause problems with the rest of this file, so we include it down here.
 #include "c/rorc/rorc.h"
 
 // TODO Clean up, C++ificate
 uint32_t crorcGetSerial(PciDevice* pciDevice)
 {
-  int channel = 0; // Must use channel 0 to access flash
+  int channel = 0; // Must use BAR 0 to access flash
   Pda::PdaBar pdaBar(pciDevice, channel);
   uint32_t serial = Crorc::getSerial(pdaBar.getUserspaceAddress());
-  return serial;
-}
-
-uint32_t cruGetSerial(PciDevice* pciDevice)
-{
-  int channel = 0; // Must use channel 0 to access serial number?
-  Pda::PdaBar pdaBar(pciDevice, channel);
-  uint32_t serial = pdaBar.getUserspaceAddressU32()[CruRegisterIndex::SERIAL_NUMBER];
   return serial;
 }
 

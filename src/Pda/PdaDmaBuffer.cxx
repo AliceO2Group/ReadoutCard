@@ -43,7 +43,8 @@ PdaDmaBuffer::PdaDmaBuffer(PciDevice* pciDevice, void* userBufferAddress, size_t
             "Failed to register external DMA buffer; Failed retry after automatic cleanup of previous buffer"));
       }
     }
-  } catch (RorcPdaException& e) {
+  }
+  catch (RorcPdaException& e) {
     addPossibleCauses(e, {"Program previously exited without cleaning up DMA buffer, reinserting DMA kernel module may "
         " help, but ensure no channels are open before reinsertion (modprobe -r uio_pci_dma; modprobe uio_pci_dma"});
   }

@@ -137,12 +137,6 @@ class CrorcChannelMaster final : public ChannelMaster
     /// Set SIU loopback
     void crorcSetSiuLoopback();
 
-    /// Memory mapped file containing the readyFifo
-    //boost::scoped_ptr<TypedMemoryMappedFile<ReadyFifo>> mMappedFileFifo;
-
-    /// PDA DMABuffer object for the Ready FIFO
-    //boost::scoped_ptr<Pda::PdaDmaBuffer> mBufferReadyFifo;
-
     /// Bus FIFO
     ReadyFifo* mFifoBus;
 

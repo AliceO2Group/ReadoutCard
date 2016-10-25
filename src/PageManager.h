@@ -36,7 +36,6 @@ class PageManager
 
     void setAmountOfPages(size_t amount)
     {
-//      mFifoPageStatus.resize(amount, PageStatus::FREE);
       mMaxPages = amount;
 
       mQueueFree = Queue(typename Queue::container_type(amount));
@@ -53,23 +52,28 @@ class PageManager
     /// Check for arrived pages and free up FIFO slots that are no longer needed
     /// \tparam IsArrived Function to check if the page with the given descriptor index has been completely pushed
     /// \tparam ResetDescriptor Function reset the descriptor with the given index
+    /// \return Amount of arrived pages
     template<class IsArrived, class ResetDescriptor>
-    void handleArrivals(IsArrived isArrived, ResetDescriptor resetDescriptor)
+    int handleArrivals(IsArrived isArrived, ResetDescriptor resetDescriptor)
     {
       checkInvariant();
 
+      int arrived = 0;
       int queueSize = mQueuePushing.size();
       for (int i = 0; i < queueSize; ++i) {
         auto page = mQueuePushing.front();
         if (isArrived(page.descriptorIndex)) {
           resetDescriptor(page.descriptorIndex);
 //          std::cout << "ARRIVED   bi:" << page.bufferIndex << " di:"<< page.descriptorIndex << '\n';
+          arrived++;
           mQueuePushing.pop();
           mQueueArrived.push(page);
         } else {
           break;
         }
       }
+
+      return arrived;
     }
 
     /// Push pages
@@ -84,7 +88,6 @@ class PageManager
       size_t freeDescriptors = FIRMWARE_QUEUE_CAPACITY - mQueuePushing.size();
       size_t freePages = mQueueFree.size();
       size_t possibleToPush = std::min(freeDescriptors, freePages);
-//      std::cout << "poss:" << possibleToPush << " fq:" << freeQueueFree << " fwq:" << firmwareQueueFree << '\n';
       int pushCount = (pushLimit <= 0) ? possibleToPush : std::min(pushLimit, possibleToPush);
 
       for (int i = 0; i < pushCount; ++i) {
@@ -129,6 +132,8 @@ class PageManager
     {
       checkInvariant();
 
+//      std::cout << "FREE      bi:" << bufferIndex << '\n';
+
       auto iterator = mMapInUse.find(bufferIndex);
       if (iterator == mMapInUse.end()) {
         BOOST_THROW_EXCEPTION(Exception()
@@ -139,7 +144,6 @@ class PageManager
 
       assert(bufferIndex == page.bufferIndex);
 
-//      std::cout << "FREE      bi:" << bufferIndex << '\n';
       mMapInUse.erase(bufferIndex);
       mQueueFree.push(page);
     }
@@ -148,7 +152,7 @@ class PageManager
 
     void checkInvariant()
     {
-//#ifndef NDEBUG
+#ifndef NDEBUG
       auto free = mQueueFree.size();
       auto pushing = mQueuePushing.size();
       auto arrived = mQueueArrived.size();
@@ -173,7 +177,7 @@ class PageManager
       if (pushing > FIRMWARE_QUEUE_CAPACITY) {
         BOOST_THROW_EXCEPTION(std::runtime_error("invariant violated"));
       }
-//#endif
+#endif
     }
 
     int getFifoHeadIndex() const
@@ -203,9 +207,6 @@ class PageManager
 
     /// Pages that are in use
     std::unordered_map<int, Page> mMapInUse;
-
-    /// A map to keep track of which pages are arrived, free (can push into) and not-free (in use by client)
-    //std::vector<PageStatus> mFifoPageStatus;
 
     int mFifoHead = 0;
 

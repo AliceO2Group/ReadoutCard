@@ -10,6 +10,7 @@ set(TEST_FILES
     TestFileSharedObject.cxx
     TestInterprocessLock.cxx
     TestMemoryMappedFile.cxx
+    TestPageManager.cxx
     TestProgramOptions.cxx
     TestRorcException.cxx
     TestUtil.cxx

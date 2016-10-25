@@ -19,6 +19,9 @@ class RorcDevice
 {
   public:
     RorcDevice(int serialNumber);
+
+    /// Workaround to be able to use new and old CRU serial number location
+    RorcDevice(int serialNumber, bool useNewCruSerialLocation);
     ~RorcDevice();
 
     const PciId& getPciId() const
