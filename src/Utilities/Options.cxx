@@ -237,14 +237,7 @@ int getOptionRegisterRange(const po::variables_map& variablesMap)
 
 int getOptionSerialNumber(const po::variables_map& variablesMap)
 {
-  auto value = getOptionRequired(option::serialNumber, variablesMap);
-
-  if (value < 0) {
-    BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-            << errinfo_rorc_error_message("Serial number negative"));
-  }
-
-  return value;
+  return getOptionRequired(option::serialNumber, variablesMap);
 }
 
 void addOptionsChannelParameters(po::options_description& optionsDescription)
