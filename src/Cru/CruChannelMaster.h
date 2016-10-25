@@ -15,7 +15,6 @@ namespace AliceO2 {
 namespace Rorc {
 
 /// Extends ChannelMaster object, and provides device-specific functionality
-/// XXX Note: this class is very under construction
 class CruChannelMaster final : public ChannelMaster
 {
   public:
@@ -37,6 +36,8 @@ class CruChannelMaster final : public ChannelMaster
     virtual int fillFifo(int maxFill = CRU_DESCRIPTOR_ENTRIES) override;
     virtual boost::optional<Page> getPage() override;
     virtual void freePage(const Page& page) override;
+
+    AllowedChannels allowedChannels();
 
   protected:
 

@@ -5,6 +5,9 @@
 
 #include "DummyChannelMaster.h"
 #include <iostream>
+#include <string>
+#include <vector>
+#include "Util.h"
 
 using std::cout;
 using std::endl;
@@ -12,60 +15,82 @@ using std::endl;
 namespace AliceO2 {
 namespace Rorc {
 
-DummyChannelMaster::DummyChannelMaster(int serial, int channel, const Parameters::Map&) : mPageCounter(128)
+DummyChannelMaster::DummyChannelMaster(int serial, int channel, const Parameters::Map& params) : mPageCounter(128)
 {
-  cout << "DummyChannelMaster::DummyChannelMaster(serial:" << serial << ", channel:" << channel << ", params:...)"
-      << endl;
+//  cout << "DummyChannelMaster::DummyChannelMaster(serial:" << serial << ", channel:" << channel << ", params:...)"
+//      << endl;
+
+  std::vector<std::string> strings {
+    params.at(Parameters::Keys::dmaBufferSize()),
+    params.at(Parameters::Keys::dmaPageSize())
+  };
+  Util::convertAssign(strings, mBufferSize, mPageSize);
+
+  mMaxPages = mBufferSize / mPageSize;
+  mPageBuffer.resize(mBufferSize, -1);
+  mPageManager.setAmountOfPages(mMaxPages);
 }
 
 DummyChannelMaster::~DummyChannelMaster()
 {
-  cout << "DummyChannelMaster::~DummyChannelMaster()" << endl;
+//  cout << "DummyChannelMaster::~DummyChannelMaster()" << endl;
 }
 
 void DummyChannelMaster::startDma()
 {
-  cout << "DummyChannelMaster::startDma()" << endl;
+//  cout << "DummyChannelMaster::startDma()" << endl;
 }
 
 void DummyChannelMaster::stopDma()
 {
-  cout << "DummyChannelMaster::stopDma()" << endl;
+//  cout << "DummyChannelMaster::stopDma()" << endl;
 }
 
 void DummyChannelMaster::resetCard(ResetLevel::type resetLevel)
 {
-  cout << "DummyChannelMaster::resetCard(" << ResetLevel::toString(resetLevel) << ")" << endl;
+//  cout << "DummyChannelMaster::resetCard(" << ResetLevel::toString(resetLevel) << ")" << endl;
 }
 
 uint32_t DummyChannelMaster::readRegister(int index)
 {
-  cout << "DummyChannelMaster::readRegister(" << index << ")" << endl;
+//  cout << "DummyChannelMaster::readRegister(" << index << ")" << endl;
   return 0;
 }
 
 void DummyChannelMaster::writeRegister(int index, uint32_t value)
 {
-  cout << "DummyChannelMaster::writeRegister(index:" << index << ", value:" << value << ")" << endl;
+//  cout << "DummyChannelMaster::writeRegister(index:" << index << ", value:" << value << ")" << endl;
 }
 
 
 int DummyChannelMaster::fillFifo(int maxFill)
 {
-  cout << "DummyChannelMaster::fillFifo()" << endl;
-  mPageCounter++;
-  return 1;
+//  cout << "DummyChannelMaster::fillFifo()" << endl;
+  auto isArrived = [&](int) { return true; };
+  auto resetDescriptor = [&](int) {};
+  auto push = [&](int, int) { };
+
+  mPageManager.handleArrivals(isArrived, resetDescriptor);
+  int pushCount = mPageManager.pushPages(maxFill, push);
+
+  mPageCounter += pushCount;
+  return pushCount;
 }
 
 auto DummyChannelMaster::getPage() -> boost::optional<Page>
 {
-  cout << "DummyChannelMaster::getPage()" << endl;
+//  cout << "DummyChannelMaster::getPage()" << endl;
+  if (auto page = mPageManager.useArrivedPage()) {
+    int bufferIndex = *page;
+    return Page{&mPageBuffer[bufferIndex * mPageSize], bufferIndex};
+  }
   return boost::none;
 }
 
 void DummyChannelMaster::freePage(const Page& page)
 {
-  cout << "DummyChannelMaster::freePage()" << endl;
+//  cout << "DummyChannelMaster::freePage()" << endl;
+  mPageManager.freePage(page.index);
 }
 
 CardType::type DummyChannelMaster::getCardType()
@@ -80,17 +105,17 @@ std::vector<uint32_t> DummyChannelMaster::utilityCopyFifo()
 
 void DummyChannelMaster::utilityPrintFifo(std::ostream&)
 {
-  cout << "DummyChannelMaster::utilityPrintFifo()" << endl;
+//  cout << "DummyChannelMaster::utilityPrintFifo()" << endl;
 }
 
 void DummyChannelMaster::utilitySetLedState(bool state)
 {
-  cout << "DummyChannelMaster::utilitySetLedState(" << (state ? "ON" : "OFF") << ")" << endl;
+//  cout << "DummyChannelMaster::utilitySetLedState(" << (state ? "ON" : "OFF") << ")" << endl;
 }
 
 void DummyChannelMaster::utilitySanityCheck(std::ostream&)
 {
-  cout << "DummyChannelMaster::utilitySanityCheck()" << endl;
+//  cout << "DummyChannelMaster::utilitySanityCheck()" << endl;
 }
 
 void DummyChannelMaster::utilityCleanupState()

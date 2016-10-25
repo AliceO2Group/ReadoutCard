@@ -5,10 +5,11 @@
 
 #pragma once
 
+#include <array>
+#include "ChannelUtilityInterface.h"
+#include "PageManager.h"
 #include "RORC/Parameters.h"
 #include "RORC/ChannelMasterInterface.h"
-#include "ChannelUtilityInterface.h"
-#include <array>
 
 namespace AliceO2 {
 namespace Rorc {
@@ -44,11 +45,14 @@ class DummyChannelMaster final : public ChannelMasterInterface, public ChannelUt
     virtual int utilityGetFirmwareVersion() override;
 
   private:
+    static constexpr size_t FIFO_CAPACITY = 128;
+    PageManager<FIFO_CAPACITY> mPageManager;
 
-    static constexpr size_t DUMMY_PAGE_SIZE = 4l * 1024l;
-
+    size_t mBufferSize;
+    size_t mPageSize;
+    size_t mMaxPages;
     int mPageCounter;
-    std::array<int, DUMMY_PAGE_SIZE> mPageBuffer;
+    std::vector<char> mPageBuffer;
 };
 
 } // namespace Rorc

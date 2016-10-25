@@ -7,10 +7,11 @@
 #define ALICEO2_RORC_SRC_PAGEMANAGER_H_
 
 #include <iostream>
-#include <boost/circular_buffer.hpp>
-#include <boost/dynamic_bitset.hpp>
 #include <queue>
 #include <unordered_map>
+#include <boost/circular_buffer.hpp>
+#include <boost/dynamic_bitset.hpp>
+#include <boost/optional.hpp>
 #include "RORC/Exception.h"
 
 namespace AliceO2 {

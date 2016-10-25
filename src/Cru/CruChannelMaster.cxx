@@ -13,12 +13,10 @@
 #include "RORC/Exception.h"
 #include "Util.h"
 
-
-// TODO remove
-#include <iostream>
-using std::cout;
-using std::endl;
-
+/// Creates a CruException and attaches data using the given message string
+#define CRU_EXCEPTION(_err_message) \
+  CruException() \
+      << errinfo_rorc_generic_message(_err_message)
 
 using namespace std::literals;
 
@@ -43,26 +41,26 @@ static_assert(NUM_PAGES == CRU_DESCRIPTOR_ENTRIES, "");
 /// DMA addresses must be 32-byte aligned
 constexpr uint64_t DMA_ALIGNMENT = 32;
 
-} // Anonymous namespace
-
-/// Creates a CruException and attaches data using the given message string
-#define CRU_EXCEPTION(_err_message) \
-  CruException() \
-      << errinfo_rorc_generic_message(_err_message)
-
 /// Amount of additional DMA buffers for this channel
 static constexpr int CRU_BUFFERS_PER_CHANNEL = 0;
 
+} // Anonymous namespace
+
 CruChannelMaster::CruChannelMaster(int serial, int channel)
-    : ChannelMaster(CARD_TYPE, serial, channel, CRU_BUFFERS_PER_CHANNEL)
+    : ChannelMaster(CARD_TYPE, serial, channel, CRU_BUFFERS_PER_CHANNEL, allowedChannels())
 {
   constructorCommon();
 }
 
 CruChannelMaster::CruChannelMaster(int serial, int channel, const Parameters::Map& params)
-    : ChannelMaster(CARD_TYPE, serial, channel, params, CRU_BUFFERS_PER_CHANNEL)
+    : ChannelMaster(CARD_TYPE, serial, channel, params, CRU_BUFFERS_PER_CHANNEL, allowedChannels())
 {
   constructorCommon();
+}
+
+auto CruChannelMaster::allowedChannels() -> AllowedChannels {
+  // Note: BAR 1 is not available because BAR 0 is 64-bit wide, so it 'consumes' two BARs.
+  return {0, 2};
 }
 
 void CruChannelMaster::constructorCommon()

@@ -18,7 +18,7 @@ class PdaBar
 {
   public:
     PdaBar();
-    PdaBar(PciDevice* pciDevice, int channel);
+    PdaBar(PciDevice* pciDevice, int barNumber);
 
     size_t getBarLength() const
     {

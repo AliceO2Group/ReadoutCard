@@ -27,6 +27,28 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
     {
     }
 
+    /// Struct representing a page
+    struct Page
+    {
+        volatile void* getAddress() const
+        {
+          return userspace;
+        }
+
+        volatile uint32_t* getAddressU32() const
+        {
+          return reinterpret_cast<volatile uint32_t*>(userspace);
+        }
+
+        int getIndex() const
+        {
+          return index;
+        }
+
+        volatile void* userspace; ///< Userspace address of the page's memory
+        int index; ///< Index used for internal bookkeeping
+    };
+
     /// Start DMA for the given channel
     /// This must be called before pushing pages
     virtual void startDma() = 0;
@@ -48,21 +70,6 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
     /// \param maxFill Maximum amount of pages to push. If <= 0, will push as many as possible
     /// \return Amount of pages pushed
     virtual int fillFifo(int maxFill = -1) = 0;
-    struct Page
-    {
-        volatile void* userspace;
-        int index;
-
-        volatile void* getAddress() const
-        {
-          return userspace;
-        }
-
-        volatile uint32_t* getAddressU32() const
-        {
-          return reinterpret_cast<volatile uint32_t*>(userspace);
-        }
-    };
 
     /// Get access to pages in sequential order, one by one
     /// If a page is not available, returns an empty optional.

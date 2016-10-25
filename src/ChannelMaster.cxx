@@ -63,6 +63,15 @@ int ChannelMaster::getBufferId(int index) const
   return mChannelNumber * dmaBuffersPerChannel + index;
 }
 
+void ChannelMaster::checkChannelNumber(const AllowedChannels& allowedChannels)
+{
+  if (!allowedChannels.count(mChannelNumber)) {
+    BOOST_THROW_EXCEPTION(InvalidParameterException()
+        << errinfo_rorc_error_message("Channel number not supported")
+        << errinfo_rorc_channel_number(mChannelNumber));
+  }
+}
+
 ChannelParameters ChannelMaster::convertParameters(const Parameters::Map& map)
 {
   ChannelParameters cp;
@@ -119,9 +128,11 @@ void ChannelMaster::validateParameters(const ChannelParameters& cp)
   }
 }
 
-void ChannelMaster::constructorCommonPhaseOne()
+void ChannelMaster::constructorCommonPhaseOne(const AllowedChannels& allowedChannels)
 {
   using namespace Util;
+
+  checkChannelNumber(allowedChannels);
 
   ChannelPaths paths(mCardType, mSerialNumber, mChannelNumber);
 
@@ -160,11 +171,12 @@ void ChannelMaster::constructorCommonPhaseTwo()
       getBufferId(BUFFER_INDEX_PAGES));
 }
 
-ChannelMaster::ChannelMaster(CardType::type cardType, int serial, int channel, int additionalBuffers)
+ChannelMaster::ChannelMaster(CardType::type cardType, int serial, int channel, int additionalBuffers,
+    const AllowedChannels& allowedChannels)
     : mCardType(cardType), mSerialNumber(serial), mChannelNumber(channel), dmaBuffersPerChannel(
         additionalBuffers + CHANNELMASTER_DMA_BUFFERS_PER_CHANNEL)
 {
-  constructorCommonPhaseOne();
+  constructorCommonPhaseOne(allowedChannels);
 
   // Initialize (if needed) the shared data
   const auto& sd = mSharedData->get();
@@ -192,13 +204,13 @@ ChannelMaster::ChannelMaster(CardType::type cardType, int serial, int channel, i
 }
 
 ChannelMaster::ChannelMaster(CardType::type cardType, int serial, int channel, const Parameters::Map& paramMap,
-    int additionalBuffers)
+    int additionalBuffers, const AllowedChannels& allowedChannels)
     : mCardType(cardType), mSerialNumber(serial), mChannelNumber(channel), dmaBuffersPerChannel(
         additionalBuffers + CHANNELMASTER_DMA_BUFFERS_PER_CHANNEL)
 {
   auto params = convertParameters(paramMap);
   validateParameters(params);
-  constructorCommonPhaseOne();
+  constructorCommonPhaseOne(allowedChannels);
 
   // Initialize (if needed) the shared data
   const auto& sd = mSharedData->get();

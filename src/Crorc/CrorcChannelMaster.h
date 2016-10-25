@@ -37,6 +37,8 @@ class CrorcChannelMaster final : public ChannelMaster
     virtual boost::optional<Page> getPage() override;
     virtual void freePage(const Page& page) override;
 
+    AllowedChannels allowedChannels();
+
   protected:
 
     virtual void deviceStartDma() override;
@@ -120,7 +122,7 @@ class CrorcChannelMaster final : public ChannelMaster
     void crorcDiuCommand(int command);
 
     /// Reset the C-RORC
-    void crorcReset();
+    void crorcReset(int command);
 
     /// Checks if the C-RORC's Free FIFO is empty
     void crorcCheckFreeFifoEmpty();

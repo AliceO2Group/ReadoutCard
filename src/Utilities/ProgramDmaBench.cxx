@@ -266,8 +266,7 @@ class ProgramDmaBench: public Program
     {
       constexpr int READOUT_THRESHOLD = 200; ///< Amount of pages to "cache" before reading out randomly
       std::default_random_engine generator;
-      using _PageT = std::tuple<volatile void*, int>; // Using tuple to work around vector not wanting to erase _Page
-      std::vector<_PageT> pages;
+      std::vector<Page> pages;
 
       while (!mDmaLoopBreak) {
         // Check if we need to stop in the case of a page limit
@@ -285,14 +284,13 @@ class ProgramDmaBench: public Program
 
         // Read out a page if available
         if (boost::optional<Page> page = channel->getPage()) {
-          pages.push_back(std::make_tuple(page->userspace, page->index));
+          pages.push_back(*page);
         }
 
         if (pages.size() > READOUT_THRESHOLD) {
           std::uniform_int_distribution<size_t> distribution(0, pages.size() - 1);
           size_t index = distribution(generator);
-          auto& pageTuple = pages[index];
-          auto page = Page{std::get<0>(pageTuple), std::get<1>(pageTuple)};
+          auto page = pages[index];
 
           readoutPage(page);
           channel->freePage(page);

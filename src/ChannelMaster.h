@@ -5,9 +5,10 @@
 
 #pragma once
 
+#include <set>
 #include <vector>
 #include <boost/scoped_ptr.hpp>
-#include <InterprocessLock.h>
+#include "InterprocessLock.h"
 #include "RORC/Parameters.h"
 #include "RORC/ChannelMasterInterface.h"
 #include "RORC/Exception.h"
@@ -31,6 +32,7 @@ namespace Rorc {
 class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterface
 {
   public:
+    using AllowedChannels = std::set<int>;
 
     /// Constructor for the ChannelMaster object
     /// \param cardType Type of the card
@@ -39,8 +41,9 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
     /// \param params Parameters of the channel
     /// \param additionalBuffers Subclasses must provide here the amount of DMA buffers the channel uses in total,
     ///        excluding the one used by the ChannelMaster itself.
+    /// \param allowedChannels Channels allowed by this card type
     ChannelMaster(CardType::type cardType, int serial, int channel, const Parameters::Map& params,
-        int additionalBuffers);
+        int additionalBuffers, const AllowedChannels& allowedChannels);
 
     /// Constructor for the ChannelMaster object, without passing ChannelParameters
     /// Construction will not succeed without these criteria:
@@ -52,7 +55,9 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
     /// \param channel Channel number of the channel
     /// \param additionalBuffers Subclasses must provide here the amount of DMA buffers the channel uses in total,
     ///        excluding the one used by the ChannelMaster itself.
-    ChannelMaster(CardType::type cardType, int serial, int channel, int additionalBuffers);
+    /// \param allowedChannels Channels allowed by this card type
+    ChannelMaster(CardType::type cardType, int serial, int channel, int additionalBuffers,
+        const AllowedChannels& allowedChannels);
 
     ~ChannelMaster();
 
@@ -114,6 +119,10 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
 
   private:
 
+    void checkChannelNumber(const AllowedChannels& allowedChannels);
+    void constructorCommonPhaseOne(const AllowedChannels& allowedChannels);
+    void constructorCommonPhaseTwo();
+
     /// Persistent channel state/data that resides in shared memory
     class SharedData
     {
@@ -173,9 +182,6 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
 
     /// Addresses to pages in the DMA buffer
     std::vector<PageAddress> mPageAddresses;
-
-    void constructorCommonPhaseOne();
-    void constructorCommonPhaseTwo();
 
   public:
 

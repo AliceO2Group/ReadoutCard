@@ -39,19 +39,26 @@ namespace Rorc {
     << errinfo_rorc_error_message(_err_message) \
     << errinfo_rorc_status_code(_status_code)
 
+namespace {
 /// Amount of additional DMA buffers for this channel
 static constexpr int CRORC_BUFFERS_PER_CHANNEL = 0;
 
+}
+
 CrorcChannelMaster::CrorcChannelMaster(int serial, int channel)
-    : ChannelMaster(CARD_TYPE, serial, channel, CRORC_BUFFERS_PER_CHANNEL)
+    : ChannelMaster(CARD_TYPE, serial, channel, CRORC_BUFFERS_PER_CHANNEL, allowedChannels())
 {
   constructorCommon();
 }
 
 CrorcChannelMaster::CrorcChannelMaster(int serial, int channel, const Parameters::Map& params)
-    : ChannelMaster(CARD_TYPE, serial, channel, params, CRORC_BUFFERS_PER_CHANNEL)
+    : ChannelMaster(CARD_TYPE, serial, channel, params, CRORC_BUFFERS_PER_CHANNEL, allowedChannels())
 {
   constructorCommon();
+}
+
+auto CrorcChannelMaster::allowedChannels() -> AllowedChannels {
+  return {0, 1, 2, 3, 4, 5};
 }
 
 void CrorcChannelMaster::constructorCommon()
@@ -76,19 +83,18 @@ void CrorcChannelMaster::constructorCommon()
         << errinfo_rorc_error_message("Insufficient amount of pages fit in DMA buffer"));
   }
 
-  resetSmartPtr(mCrorcSharedData, paths.state(), getSharedDataSize(), getCrorcSharedDataName().c_str(),
-      FileSharedObject::find_or_construct);
-
   mBufferPageIndexes.resize(READYFIFO_ENTRIES, -1);
   mPageWasReadOut.resize(READYFIFO_ENTRIES, true);
+
+  resetSmartPtr(mCrorcSharedData, paths.state(), getSharedDataSize(), getCrorcSharedDataName().c_str(),
+      FileSharedObject::find_or_construct);
 
   // Initialize (if needed) the shared data
   const auto& csd = mCrorcSharedData->get();
 
   if (csd->mInitializationState == InitializationState::INITIALIZED) {
    //cout << "CRORC shared channel state already initialized" << endl;
-  }
-  else {
+  } else {
    if (csd->mInitializationState == InitializationState::UNKNOWN) {
      //cout << "Warning: unknown CRORC shared channel state. Proceeding with initialization" << endl;
    }
@@ -159,7 +165,7 @@ void CrorcChannelMaster::deviceStopDma()
   if (getParams().generator.useDataGenerator) {
     rorcStopDataGenerator(getBarUserspace());
     rorcStopDataReceiver(getBarUserspace());
-  } else if(getParams().noRDYRX) {
+  } else if (getParams().noRDYRX) {
     // Sending EOBTR to FEE.
     crorcStopTrigger();
   }
@@ -173,9 +179,14 @@ void CrorcChannelMaster::resetCard(ResetLevel::type resetLevel)
 
   auto loopbackMode = getParams().generator.loopbackMode;
 
+  if (getSharedData().mDmaState == DmaState::STARTED) {
+    stopDma();
+  }
+
   try {
     if (resetLevel == ResetLevel::Rorc) {
-      crorcArmDdl(RORC_RESET_RORC);
+      crorcReset(RORC_RESET_FF);
+      crorcReset(RORC_RESET_RORC);
     }
 
     if (LoopbackMode::isExternal(loopbackMode)) {
@@ -184,7 +195,6 @@ void CrorcChannelMaster::resetCard(ResetLevel::type resetLevel)
       if ((resetLevel == ResetLevel::RorcDiuSiu) && (loopbackMode != LoopbackMode::Diu))
       {
         // Wait a little before SIU reset.
-
         std::this_thread::sleep_for(100ms); /// XXX Why???
         // Reset SIU.
         crorcArmDdl(RORC_RESET_SIU);
@@ -193,7 +203,8 @@ void CrorcChannelMaster::resetCard(ResetLevel::type resetLevel)
 
       crorcArmDdl(RORC_RESET_RORC);
     }
-  } catch (Exception& e) {
+  }
+  catch (Exception& e) {
     e << errinfo_rorc_reset_level(resetLevel);
     e << errinfo_rorc_loopback_mode(loopbackMode);
     throw;
@@ -239,7 +250,7 @@ void CrorcChannelMaster::startDataReceiving()
     crorcDiuCommand(RandCIFST);
   }
 
-  crorcReset();
+  crorcReset(RORC_RESET_FF);
   crorcCheckFreeFifoEmpty();
   crorcStartDataReceiver();
 }
@@ -457,10 +468,10 @@ void CrorcChannelMaster::crorcDiuCommand(int command)
       << errinfo_rorc_diu_command(command));
 }
 
-void CrorcChannelMaster::crorcReset()
+void CrorcChannelMaster::crorcReset(int command)
 {
   auto csd = mCrorcSharedData->get();
-  rorcReset(getBarUserspace(), RORC_RESET_FF, csd->mPciLoopPerUsec);
+  rorcReset(getBarUserspace(), command, csd->mPciLoopPerUsec);
 }
 
 void CrorcChannelMaster::crorcCheckFreeFifoEmpty()
