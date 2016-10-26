@@ -25,6 +25,14 @@ using std::cout;
 using std::endl;
 using namespace std::literals;
 
+//#define CRORC_CHANNEL_MASTER_DISABLE_LOCKGUARDS
+
+#ifdef CRORC_CHANNEL_MASTER_DISABLE_LOCKGUARDS
+#define CHANNEL_LOCKGUARD()
+#else
+#define CHANNEL_LOCKGUARD() LockGuard guard(mFreeMutex)
+#endif
+
 namespace AliceO2 {
 namespace Rorc {
 
@@ -383,7 +391,8 @@ void CrorcChannelMaster::CrorcSharedData::initialize()
 
 int CrorcChannelMaster::fillFifo(int maxFill)
 {
-  LockGuard guard(mFreeMutex);
+  CHANNEL_LOCKGUARD();
+
   auto isArrived = [&](int descriptorIndex) {
     return dataArrived(descriptorIndex) == DataArrivalStatus::WholeArrived;
   };
@@ -403,13 +412,15 @@ int CrorcChannelMaster::fillFifo(int maxFill)
 
 int CrorcChannelMaster::getAvailableCount()
 {
-  LockGuard guard(mFreeMutex);
+  CHANNEL_LOCKGUARD();
+
   return mPageManager.getArrivedCount();
 }
 
 auto CrorcChannelMaster::popPageInternal(const MasterSharedPtr& channel) -> std::shared_ptr<Page>
 {
-  LockGuard guard(mFreeMutex);
+  CHANNEL_LOCKGUARD();
+
   if (auto page = mPageManager.useArrivedPage()) {
     int bufferIndex = *page;
     return std::make_shared<Page>(getPageAddresses()[bufferIndex].user, getSharedData().getParams().dma.pageSize,
@@ -420,7 +431,8 @@ auto CrorcChannelMaster::popPageInternal(const MasterSharedPtr& channel) -> std:
 
 void CrorcChannelMaster::freePage(const Page& page)
 {
-  LockGuard guard(mFreeMutex);
+  CHANNEL_LOCKGUARD();
+
   mPageManager.freePage(page.getId());
 }
 
