@@ -10,7 +10,6 @@
 #include <boost/optional.hpp>
 #include <boost/exception/all.hpp>
 #include "RORC/Parameters.h"
-#include "RORC/Page.h"
 #include "RORC/CardType.h"
 #include "RORC/ResetLevel.h"
 #include "RORC/RegisterReadWriteInterface.h"

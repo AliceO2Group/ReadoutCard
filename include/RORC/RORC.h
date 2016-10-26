@@ -12,7 +12,6 @@
 #include <RORC/Exception.h>
 #include <RORC/GeneratorPattern.h>
 #include <RORC/LoopbackMode.h>
-#include <RORC/Page.h>
 #include <RORC/Parameters.h>
 #include <RORC/PciId.h>
 #include <RORC/RegisterReadWriteInterface.h>
