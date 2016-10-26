@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <mutex>
 #include <boost/scoped_ptr.hpp>
 #include "RORC/Parameters.h"
 #include "ChannelMaster.h"
@@ -81,6 +82,9 @@ class CrorcChannelMaster final : public ChannelMaster
         int mSiuVersion;
         int mDiuVersion;
     };
+
+    using Mutex = std::mutex;
+    using LockGuard = std::lock_guard<Mutex>;
 
     /// Enables data receiving in the RORC
     void startDataReceiving();
@@ -162,6 +166,9 @@ class CrorcChannelMaster final : public ChannelMaster
 
     // TODO: refactor into ChannelMaster
     PageManager<READYFIFO_ENTRIES> mPageManager;
+
+    /// Mutex to lock the page free operation
+    std::mutex mFreeMutex;
 };
 
 } // namespace Rorc

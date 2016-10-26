@@ -417,6 +417,7 @@ auto CrorcChannelMaster::popPageInternal(const MasterSharedPtr& channel) -> std:
 
 void CrorcChannelMaster::freePage(const Page& page)
 {
+  LockGuard guard(mFreeMutex);
   mPageManager.freePage(page.getId());
 }
 
