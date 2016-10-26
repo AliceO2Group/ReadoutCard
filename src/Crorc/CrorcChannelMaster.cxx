@@ -383,6 +383,7 @@ void CrorcChannelMaster::CrorcSharedData::initialize()
 
 int CrorcChannelMaster::fillFifo(int maxFill)
 {
+  LockGuard guard(mFreeMutex);
   auto isArrived = [&](int descriptorIndex) {
     return dataArrived(descriptorIndex) == DataArrivalStatus::WholeArrived;
   };
@@ -402,11 +403,13 @@ int CrorcChannelMaster::fillFifo(int maxFill)
 
 int CrorcChannelMaster::getAvailableCount()
 {
+  LockGuard guard(mFreeMutex);
   return mPageManager.getArrivedCount();
 }
 
 auto CrorcChannelMaster::popPageInternal(const MasterSharedPtr& channel) -> std::shared_ptr<Page>
 {
+  LockGuard guard(mFreeMutex);
   if (auto page = mPageManager.useArrivedPage()) {
     int bufferIndex = *page;
     return std::make_shared<Page>(getPageAddresses()[bufferIndex].user, getSharedData().getParams().dma.pageSize,
