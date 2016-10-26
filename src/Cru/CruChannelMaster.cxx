@@ -205,18 +205,23 @@ int CruChannelMaster::fillFifo(int maxFill)
   return pushCount;
 }
 
-auto CruChannelMaster::getPage() -> boost::optional<Page>
+int CruChannelMaster::getAvailableCount()
+{
+  return mPageManager.getArrivedCount();
+}
+
+auto CruChannelMaster::popPageInternal(const MasterSharedPtr& channel) -> std::shared_ptr<Page>
 {
   if (auto page = mPageManager.useArrivedPage()) {
     int bufferIndex = *page;
-    return Page{getPageAddresses()[bufferIndex].user, bufferIndex};
+    return std::make_shared<Page>(getPageAddresses()[bufferIndex].user, DMA_PAGE_SIZE, bufferIndex, channel);
   }
-  return boost::none;
+  return nullptr;
 }
 
 void CruChannelMaster::freePage(const Page& page)
 {
-  mPageManager.freePage(page.index);
+  mPageManager.freePage(page.getId());
 }
 
 volatile uint32_t& CruChannelMaster::bar(size_t index)

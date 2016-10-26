@@ -34,8 +34,10 @@ class CruChannelMaster final : public ChannelMaster
     virtual int utilityGetFirmwareVersion() override;
 
     virtual int fillFifo(int maxFill = CRU_DESCRIPTOR_ENTRIES) override;
-    virtual boost::optional<Page> getPage() override;
+    virtual int getAvailableCount() override;
+    virtual std::shared_ptr<Page> popPageInternal(const MasterSharedPtr& channel) override;
     virtual void freePage(const Page& page) override;
+
 
     AllowedChannels allowedChannels();
 

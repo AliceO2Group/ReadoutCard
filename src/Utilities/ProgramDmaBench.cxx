@@ -50,6 +50,8 @@ namespace po = boost::program_options;
 namespace bfs = boost::filesystem;
 
 using Page = ChannelMasterInterface::Page;
+using PageSharedPtr = ChannelMasterInterface::PageSharedPtr;
+using MasterSharedPtr = ChannelMasterInterface::MasterSharedPtr;
 
 namespace {
 /// Determines how often the status display refreshes
@@ -179,18 +181,18 @@ class ProgramDmaBench: public Program
       params[Parameters::Keys::generatorDataSize()] = std::to_string(PAGE_SIZE);
 
       // Get master lock on channel
-      auto channel = ChannelFactory().getMaster(serialNumber, channelNumber, params);
+      mChannel = ChannelFactory().getMaster(serialNumber, channelNumber, params);
       std::this_thread::sleep_for(std::chrono::microseconds(500)); // XXX See README.md
 
       if (mOptions.resetCard) {
         cout << "Resetting card...";
-        channel->resetCard(ResetLevel::Rorc);
+        mChannel->resetCard(ResetLevel::Rorc);
         cout << " done!\n";
       }
 
       cout << "### Starting benchmark" << endl;
 
-      channel->startDma();
+      mChannel->startDma();
 
       // Get started
       if (isVerbose()) {
@@ -199,13 +201,13 @@ class ProgramDmaBench: public Program
 
       mRunTime.start = std::chrono::high_resolution_clock::now();
       if (mOptions.randomReadout) {
-        dmaLoopReadoutRandom(channel.get());
+        dmaLoopReadoutRandom();
       } else {
-        dmaLoop(channel.get());
+        dmaLoop();
       }
       mRunTime.end = std::chrono::high_resolution_clock::now();
-      freeExcessPages(channel.get(), 10ms);
-      channel->stopDma();
+      freeExcessPages(10ms);
+      mChannel->stopDma();
 
       outputErrors();
       outputStats();
@@ -228,45 +230,35 @@ class ProgramDmaBench: public Program
 
   private:
 
-    void dmaLoop(ChannelMasterInterface* channelInterface)
+    void dmaLoop()
     {
-      auto loop = [&](auto channel) {
-        while (!mDmaLoopBreak) {
-          // Check if we need to stop in the case of a page limit
-          if (!mInfinitePages && mReadoutCount >= mOptions.maxPages) {
-            mDmaLoopBreak = true;
-            cout << "\n\nMaximum amount of pages reached\n";
-            break;
-          }
-
-          // Note: these low priority tasks are not run on every cycle, to reduce overhead
-          lowPriorityTasks();
-
-          // Keep the readout queue filled
-          mPushCount += channel->fillFifo();
-
-          // Read out a page if available
-          if (boost::optional<Page> page = channel->getPage()) {
-            readoutPage(*page);
-            channel->freePage(page);
-            mReadoutCount++;
-          }
+      while (!mDmaLoopBreak) {
+        // Check if we need to stop in the case of a page limit
+        if (!mInfinitePages && mReadoutCount >= mOptions.maxPages) {
+          mDmaLoopBreak = true;
+          cout << "\n\nMaximum amount of pages reached\n";
+          break;
         }
-      };
 
-#ifdef DEVIRTUALIZE_CHANNELMASTER
-      //devirtualizeChannel(channelInterface, loop, loop);
-      ALICEO2_RORC_DEVIRTUALIZE_CHANNEL(channelInterface, loop);
-#else
-      loop(channelInterface);
-#endif
+        // Note: these low priority tasks are not run on every cycle, to reduce overhead
+        lowPriorityTasks();
+
+        // Keep the readout queue filled
+        mPushCount += mChannel->fillFifo();
+
+        // Read out a page if available
+        if (auto sharedPage = ChannelMasterInterface::popPage(mChannel)) {
+          readoutPage(sharedPage);
+          mReadoutCount++;
+        }
+      }
     }
 
-    void dmaLoopReadoutRandom(ChannelMasterInterface* channel)
+    void dmaLoopReadoutRandom()
     {
       constexpr int READOUT_THRESHOLD = 200; ///< Amount of pages to "cache" before reading out randomly
       std::default_random_engine generator;
-      std::vector<Page> pages;
+      std::vector<PageSharedPtr> pages;
 
       while (!mDmaLoopBreak) {
         // Check if we need to stop in the case of a page limit
@@ -280,20 +272,18 @@ class ProgramDmaBench: public Program
         lowPriorityTasks();
 
         // Keep the readout queue filled
-        mPushCount += channel->fillFifo();
+        mPushCount += mChannel->fillFifo();
 
         // Read out a page if available
-        if (boost::optional<Page> page = channel->getPage()) {
-          pages.push_back(*page);
+        if (auto sharedPage = ChannelMasterInterface::popPage(mChannel)) {
+          pages.push_back(sharedPage);
         }
 
         if (pages.size() > READOUT_THRESHOLD) {
           std::uniform_int_distribution<size_t> distribution(0, pages.size() - 1);
           size_t index = distribution(generator);
-          auto page = pages[index];
 
-          readoutPage(page);
-          channel->freePage(page);
+          readoutPage(pages[index]);
 
           pages.erase(pages.begin() + index);
           mReadoutCount++;
@@ -302,19 +292,21 @@ class ProgramDmaBench: public Program
     }
 
     /// Free the pages that were pushed in excess
-    void freeExcessPages(ChannelMasterInterface* channel, std::chrono::milliseconds timeout)
+    void freeExcessPages(std::chrono::milliseconds timeout)
     {
       auto start = std::chrono::high_resolution_clock::now();
+      int popped = 0;
       while ((std::chrono::high_resolution_clock::now() - start) < timeout) {
-        if (auto page = channel->getPage()) {
-          channel->freePage(page);
+        if (auto page = ChannelMasterInterface::popPage(mChannel)) {
+          popped++;
         }
       }
+      cout << "Freed " << popped << " excess pages\n";
     }
 
     volatile uint32_t* pageData(Page& page)
     {
-      return reinterpret_cast<volatile uint32_t*>(page.userspace);
+      return page.getAddressU32();
     }
 
     uint32_t getEventNumber(Page& page)
@@ -322,8 +314,10 @@ class ProgramDmaBench: public Program
       return pageData(page)[0] / 256;
     }
 
-    void readoutPage(Page& page)
+    void readoutPage(PageSharedPtr sharedPage)
     {
+      auto& page = *sharedPage.get();
+
       // Read out to file
       if (mOptions.fileOutputAscii || mOptions.fileOutputBin) {
         printToFile(page, mReadoutCount);
@@ -366,7 +360,7 @@ class ProgramDmaBench: public Program
     bool checkErrors(GeneratorPattern::type pattern, const Page& _page, int64_t eventNumber, uint32_t counter)
     {
       auto check = [&](auto patternFunction) {
-        volatile uint32_t* page = reinterpret_cast<volatile uint32_t*>(_page.userspace);
+        volatile uint32_t* page = _page.getAddressU32();
         for (uint32_t i = 0; i < getPageSize32(); i += PATTERN_STRIDE)
         {
           uint32_t expectedValue = patternFunction(i);
@@ -552,7 +546,7 @@ class ProgramDmaBench: public Program
 
     void printToFile(Page& handle, int64_t pageNumber)
     {
-      auto page = reinterpret_cast<volatile uint32_t*>(handle.userspace);
+      auto page = handle.getAddressU32();
 
       if (mOptions.fileOutputAscii) {
         mReadoutStream << "Event #" << pageNumber << '\n';
@@ -569,6 +563,8 @@ class ProgramDmaBench: public Program
         mReadoutStream.write(reinterpret_cast<char*>(const_cast<uint32_t*>(page)), getPageSize());
       }
     }
+
+    std::shared_ptr<ChannelMasterInterface> mChannel;
 
     /// Program options
     struct _OptionsStruct {

@@ -151,6 +151,7 @@ void CrorcChannelMaster::deviceStartDma()
   }
 
   std::this_thread::sleep_for(10ms);
+  mFifoUser->reset();
 }
 
 int rorcStopDataGenerator(volatile uint32_t* buff)
@@ -399,18 +400,24 @@ int CrorcChannelMaster::fillFifo(int maxFill)
   return pushCount;
 }
 
-auto CrorcChannelMaster::getPage() -> boost::optional<Page>
+int CrorcChannelMaster::getAvailableCount()
+{
+  return mPageManager.getArrivedCount();
+}
+
+auto CrorcChannelMaster::popPageInternal(const MasterSharedPtr& channel) -> std::shared_ptr<Page>
 {
   if (auto page = mPageManager.useArrivedPage()) {
     int bufferIndex = *page;
-    return Page{getPageAddresses()[bufferIndex].user, bufferIndex};
+    return std::make_shared<Page>(getPageAddresses()[bufferIndex].user, getSharedData().getParams().dma.pageSize,
+        bufferIndex, channel);
   }
-  return boost::none;
+  return nullptr;
 }
 
 void CrorcChannelMaster::freePage(const Page& page)
 {
-  mPageManager.freePage(page.index);
+  mPageManager.freePage(page.getId());
 }
 
 void CrorcChannelMaster::crorcArmDataGenerator()

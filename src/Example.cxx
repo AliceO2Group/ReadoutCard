@@ -108,21 +108,20 @@ int main(int, char**)
     std::stringstream stringStream;
 
     for (int i = 0; i < pagesToPush; ++i) {
-      // Get page handle (contains FIFO index)
-      Rorc::PageHandle handle = channel->fillFifo();
+      // Fill FIFO
+      channel->fillFifo();
 
       // Wait for page to arrive
       // Uses a busy wait, because the wait time is (or should be) extremely short
       while (!timeExceeded()) {
-        if (auto page = channel->getPage()) {
+        if (std::shared_ptr<Rorc::ChannelMasterInterface::Page> page = Rorc::ChannelMasterInterface::popPage(channel)) {
           // Get page (contains userspace address)
           uint32_t eventNumber = page->getAddressU32()[0];
           eventNumbers.push_back(eventNumber);
 
-          printPage(*page, handle.index, stringStream);
+          printPage(*page.get(), page->getId(), stringStream);
 
-          // Mark page as read so it can be written to again
-          channel->freePage(page);
+          // Page is automatically freed when shared pointer is destroyed
         }
       }
       std::this_thread::sleep_for(std::chrono::microseconds(1)); // See README.md

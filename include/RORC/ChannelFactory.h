@@ -20,7 +20,7 @@ class ChannelFactory
   public:
     static constexpr int DUMMY_SERIAL_NUMBER = -1;
 
-    using MasterSharedPtr = std::shared_ptr<ChannelMasterInterface>;
+    using MasterSharedPtr = ChannelMasterInterface::MasterSharedPtr;
     using SlaveSharedPtr = std::shared_ptr<ChannelSlaveInterface>;
 
     ChannelFactory();

@@ -77,20 +77,24 @@ int DummyChannelMaster::fillFifo(int maxFill)
   return pushCount;
 }
 
-auto DummyChannelMaster::getPage() -> boost::optional<Page>
+int DummyChannelMaster::getAvailableCount()
 {
-//  cout << "DummyChannelMaster::getPage()" << endl;
+  return mPageManager.getArrivedCount();
+}
+
+auto DummyChannelMaster::popPageInternal(const MasterSharedPtr& channel) -> std::shared_ptr<Page>
+{
   if (auto page = mPageManager.useArrivedPage()) {
     int bufferIndex = *page;
-    return Page{&mPageBuffer[bufferIndex * mPageSize], bufferIndex};
+    return std::make_shared<Page>(&mPageBuffer[bufferIndex * mPageSize], mPageSize, bufferIndex, channel);
   }
-  return boost::none;
+  return nullptr;
 }
 
 void DummyChannelMaster::freePage(const Page& page)
 {
 //  cout << "DummyChannelMaster::freePage()" << endl;
-  mPageManager.freePage(page.index);
+  mPageManager.freePage(page.getId());
 }
 
 CardType::type DummyChannelMaster::getCardType()

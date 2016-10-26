@@ -34,7 +34,8 @@ class DummyChannelMaster final : public ChannelMasterInterface, public ChannelUt
     virtual CardType::type getCardType() override;
 
     virtual int fillFifo(int maxFill) override;
-    virtual boost::optional<Page> getPage() override;
+    virtual int getAvailableCount() override;
+    virtual std::shared_ptr<Page> popPageInternal(const MasterSharedPtr& channel) override;
     virtual void freePage(const Page& page) override;
 
     virtual std::vector<uint32_t> utilityCopyFifo() override;

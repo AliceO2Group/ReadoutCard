@@ -21,12 +21,16 @@ using namespace ::AliceO2::Rorc;
 namespace {
 
 constexpr size_t FIFO_CAPACITY = 128; ///< Firmware FIFO capacity
-using Page = ChannelMasterInterface::Page;
 using Manager = PageManager<FIFO_CAPACITY>;
 using Fifo = std::array<bool, FIFO_CAPACITY>;
 
 constexpr int MAGIC_OFFSET = 0xabc0000;
 
+struct Page
+{
+    void* userspace;
+    int index;
+};
 
 int handleArrivals(Fifo& fifo, Manager& manager)
 {
@@ -52,7 +56,6 @@ int pushPages(Fifo& fifo, Manager& manager, int amount)
 
   return manager.pushPages(amount, push);
 }
-
 
 auto getPage(Fifo& fifo, Manager& manager) -> boost::optional<Page>
 {

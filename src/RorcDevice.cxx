@@ -46,7 +46,7 @@ RorcDevice::RorcDevice(int serialNumber)
     : mPciId({"unknown", "unknown"}), mSerialNumber(-1), mCardType(CardType::Unknown)
 {
   try {
-    for (const auto& type : deviceTypesOld) {
+    for (const auto& type : deviceTypesNew) {
       Util::resetSmartPtr(mPdaDevice, type.pciId);
       auto pciDevices = mPdaDevice->getPciDevices();
 
@@ -106,7 +106,7 @@ std::vector<RorcDevice::CardDescriptor> RorcDevice::findSystemDevices()
 {
   std::vector<RorcDevice::CardDescriptor> cards;
 
-  for (const auto& type : deviceTypesOld) {
+  for (const auto& type : deviceTypesNew) {
     Pda::PdaDevice pdaDevice(type.pciId);
     auto pciDevices = pdaDevice.getPciDevices();
 
@@ -131,7 +131,7 @@ std::vector<RorcDevice::CardDescriptor> RorcDevice::findSystemDevices(int serial
 {
   std::vector<RorcDevice::CardDescriptor> cards;
   try {
-    for (const auto& type : deviceTypesOld) {
+    for (const auto& type : deviceTypesNew) {
       Pda::PdaDevice pdaDevice(type.pciId);
       auto pciDevices = pdaDevice.getPciDevices();
 
@@ -193,7 +193,7 @@ uint32_t cruGetSerialNew(PciDevice* pciDevice)
 //  BOOST_THROW_EXCEPTION(CruException() << errinfo_rorc_error_message("New serial number location not yet supported"));
   int channel = 2; // Must use BAR 2 to access serial number
   Pda::PdaBar pdaBar(pciDevice, channel);
-  uint32_t serial = pdaBar.getUserspaceAddressU32()[0x0020002c / 4];
+  uint32_t serial = pdaBar.getUserspaceAddressU32()[0x0 / 4];
   return serial;
 }
 

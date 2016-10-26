@@ -106,6 +106,7 @@ class PageManager
     }
 
     /// Gets a page with ARRIVED status and puts it in NONFREE status
+    /// \return The page ID
     boost::optional<int> useArrivedPage()
     {
       checkInvariant();
@@ -147,6 +148,11 @@ class PageManager
 
       mMapInUse.erase(bufferIndex);
       mQueueFree.push(page);
+    }
+
+    int getArrivedCount()
+    {
+      return mQueueArrived.size();
     }
 
   private:
