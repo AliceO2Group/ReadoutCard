@@ -46,24 +46,8 @@ static constexpr int CRU_BUFFERS_PER_CHANNEL = 0;
 
 } // Anonymous namespace
 
-CruChannelMaster::CruChannelMaster(int serial, int channel)
-    : ChannelMaster(CARD_TYPE, serial, channel, CRU_BUFFERS_PER_CHANNEL, allowedChannels())
-{
-  constructorCommon();
-}
-
 CruChannelMaster::CruChannelMaster(int serial, int channel, const Parameters::Map& params)
     : ChannelMaster(CARD_TYPE, serial, channel, params, CRU_BUFFERS_PER_CHANNEL, allowedChannels())
-{
-  constructorCommon();
-}
-
-auto CruChannelMaster::allowedChannels() -> AllowedChannels {
-  // Note: BAR 1 is not available because BAR 0 is 64-bit wide, so it 'consumes' two BARs.
-  return {0, 2};
-}
-
-void CruChannelMaster::constructorCommon()
 {
   using Util::resetSmartPtr;
 
@@ -76,6 +60,11 @@ void CruChannelMaster::constructorCommon()
   }
 
   mPageManager.setAmountOfPages(getPageAddresses().size());
+}
+
+auto CruChannelMaster::allowedChannels() -> AllowedChannels {
+  // Note: BAR 1 is not available because BAR 0 is 64-bit wide, so it 'consumes' two BARs.
+  return {0, 2};
 }
 
 CruChannelMaster::~CruChannelMaster()

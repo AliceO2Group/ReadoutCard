@@ -20,7 +20,6 @@ class CrorcChannelMaster final : public ChannelMaster
 {
   public:
 
-    CrorcChannelMaster(int serial, int channel);
     CrorcChannelMaster(int serial, int channel, const Parameters::Map& params);
     virtual ~CrorcChannelMaster() override;
 
@@ -64,23 +63,6 @@ class CrorcChannelMaster final : public ChannelMaster
           PartArrived,
           WholeArrived,
         };
-    };
-
-    /// Persistent device state/data that resides in shared memory
-    class CrorcSharedData
-    {
-      public:
-        CrorcSharedData();
-        void initialize();
-        InitializationState::type mInitializationState;
-        int mFifoIndexWrite; ///< Index of next FIFO page available for writing
-        int mFifoIndexRead; ///< Index of oldest non-free FIFO page
-        int mBufferPageIndex; ///< Index of next DMA buffer page available for writing
-        long long int mLoopPerUsec; ///< Some timing parameter used during communications with the card
-        double mPciLoopPerUsec; ///< Some timing parameters used during communications with the card
-        int mRorcRevision;
-        int mSiuVersion;
-        int mDiuVersion;
     };
 
     using Mutex = std::mutex;
@@ -145,22 +127,26 @@ class CrorcChannelMaster final : public ChannelMaster
     /// Set SIU loopback
     void crorcSetSiuLoopback();
 
+    int mFifoIndexWrite; ///< Index of next FIFO page available for writing
+    int mFifoIndexRead; ///< Index of oldest non-free FIFO page
+    int mBufferPageIndex; ///< Index of next DMA buffer page available for writing
+    long long int mLoopPerUsec; ///< Some timing parameter used during communications with the card
+    double mPciLoopPerUsec; ///< Some timing parameters used during communications with the card
+    int mRorcRevision;
+    int mSiuVersion;
+    int mDiuVersion;
+
     /// Bus FIFO
     ReadyFifo* mFifoBus;
 
     /// Userspace FIFO
     ReadyFifo* mFifoUser;
 
-    /// Memory mapped data stored in the shared state file
-    boost::scoped_ptr<FileSharedObject::FileSharedObject<CrorcSharedData>> mCrorcSharedData;
-
     /// Mapping from fifo page index to DMA buffer index
     std::vector<int> mBufferPageIndexes;
 
     /// Array to keep track of read pages (false: wasn't read out, true: was read out).
     std::vector<bool> mPageWasReadOut;
-
-    void constructorCommon();
 
     static constexpr CardType::type CARD_TYPE = CardType::Crorc;
 

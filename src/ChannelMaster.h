@@ -42,22 +42,8 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
     /// \param additionalBuffers Subclasses must provide here the amount of DMA buffers the channel uses in total,
     ///        excluding the one used by the ChannelMaster itself.
     /// \param allowedChannels Channels allowed by this card type
-    ChannelMaster(CardType::type cardType, int serial, int channel, const Parameters::Map& params,
+    ChannelMaster(CardType::type cardType, int serial, int channel, const Parameters::Map& parameterMap,
         int additionalBuffers, const AllowedChannels& allowedChannels);
-
-    /// Constructor for the ChannelMaster object, without passing ChannelParameters
-    /// Construction will not succeed without these criteria:
-    ///  - A ChannelMaster *with* ChannelParameters was already successfully constructed
-    ///  - It successfully released
-    ///  - Its state has been preserved in shared memory
-    /// \param cardType Type of the card
-    /// \param serial Serial number of the card
-    /// \param channel Channel number of the channel
-    /// \param additionalBuffers Subclasses must provide here the amount of DMA buffers the channel uses in total,
-    ///        excluding the one used by the ChannelMaster itself.
-    /// \param allowedChannels Channels allowed by this card type
-    ChannelMaster(CardType::type cardType, int serial, int channel, int additionalBuffers,
-        const AllowedChannels& allowedChannels);
 
     ~ChannelMaster();
 
@@ -120,33 +106,8 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
   private:
 
     void checkChannelNumber(const AllowedChannels& allowedChannels);
-    void constructorCommonPhaseOne(const AllowedChannels& allowedChannels);
-    void constructorCommonPhaseTwo();
 
-    /// Persistent channel state/data that resides in shared memory
-    class SharedData
-    {
-      public:
-        SharedData();
-
-        void initialize(const ChannelParameters& params);
-
-        const ChannelParameters& getParams() const
-        {
-          return mParams;
-        }
-
-        InitializationState::type getState() const
-        {
-          return mInitializationState;
-        }
-
-        DmaState::type mDmaState;
-        InitializationState::type mInitializationState;
-
-      private:
-        ChannelParameters mParams;
-    };
+    DmaState::type mDmaState;
 
     /// Card type ofthe device
     const CardType::type mCardType;
@@ -161,9 +122,6 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
     /// Is the sum of the buffers needed by this class and by the subclass. The subclass indicates its need in the
     /// constructor of this class.
     const int dmaBuffersPerChannel;
-
-    /// Memory mapped data stored in the shared state file
-    boost::scoped_ptr<FileSharedObject::FileSharedObject<SharedData>> mSharedData;
 
     /// Lock that guards against both inter- and intra-process ownership
     boost::scoped_ptr<Interprocess::Lock> mInterprocessLock;
@@ -183,16 +141,18 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
     /// Addresses to pages in the DMA buffer
     std::vector<PageAddress> mPageAddresses;
 
+    ChannelParameters mChannelParameters;
+
   public:
 
-    SharedData& getSharedData() const
+    const ChannelParameters& getChannelParameters() const
     {
-      return *(mSharedData->get());
+      return mChannelParameters;
     }
 
-    const ChannelParameters& getParams() const
+    DmaState::type getDmaState() const
     {
-      return mSharedData->get()->getParams();
+      return mDmaState;
     }
 
     int getChannelNumber() const

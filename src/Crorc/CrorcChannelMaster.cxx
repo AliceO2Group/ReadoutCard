@@ -53,38 +53,23 @@ static constexpr int CRORC_BUFFERS_PER_CHANNEL = 0;
 
 }
 
-CrorcChannelMaster::CrorcChannelMaster(int serial, int channel)
-    : ChannelMaster(CARD_TYPE, serial, channel, CRORC_BUFFERS_PER_CHANNEL, allowedChannels())
-{
-  constructorCommon();
-}
-
-CrorcChannelMaster::CrorcChannelMaster(int serial, int channel, const Parameters::Map& params)
-    : ChannelMaster(CARD_TYPE, serial, channel, params, CRORC_BUFFERS_PER_CHANNEL, allowedChannels())
-{
-  constructorCommon();
-}
-
-auto CrorcChannelMaster::allowedChannels() -> AllowedChannels {
-  return {0, 1, 2, 3, 4, 5};
-}
-
-void CrorcChannelMaster::constructorCommon()
+CrorcChannelMaster::CrorcChannelMaster(int serial, int channel, const Parameters::Map& parameters)
+    : ChannelMaster(CARD_TYPE, serial, channel, parameters, CRORC_BUFFERS_PER_CHANNEL, allowedChannels())
 {
   using Util::resetSmartPtr;
-  auto& params = getParams();
+  auto& params = getChannelParameters();
 
   ChannelPaths paths(CARD_TYPE, getSerialNumber(), getChannelNumber());
 
   // Initialize the page addresses
   /// Amount of space reserved for the FIFO, we use multiples of the page size for uniformity
   size_t fifoSpace = ((sizeof(ReadyFifo) / params.dma.pageSize) + 1) * params.dma.pageSize;
-
   PageAddress fifoAddress;
   std::tie(fifoAddress, getPageAddresses()) = Pda::partitionScatterGatherList(getBufferPages().getScatterGatherList(),
       fifoSpace, params.dma.pageSize);
   mFifoUser = reinterpret_cast<ReadyFifo*>(const_cast<void*>(fifoAddress.user));
   mFifoBus = reinterpret_cast<ReadyFifo*>(const_cast<void*>(fifoAddress.bus));
+  mFifoUser->reset();
 
   if (getPageAddresses().size() <= CRU_DESCRIPTOR_ENTRIES) {
     BOOST_THROW_EXCEPTION(CruException()
@@ -93,25 +78,6 @@ void CrorcChannelMaster::constructorCommon()
 
   mBufferPageIndexes.resize(READYFIFO_ENTRIES, -1);
   mPageWasReadOut.resize(READYFIFO_ENTRIES, true);
-
-  resetSmartPtr(mCrorcSharedData, paths.state(), getSharedDataSize(), getCrorcSharedDataName().c_str(),
-      FileSharedObject::find_or_construct);
-
-  // Initialize (if needed) the shared data
-  const auto& csd = mCrorcSharedData->get();
-
-  if (csd->mInitializationState == InitializationState::INITIALIZED) {
-   //cout << "CRORC shared channel state already initialized" << endl;
-  } else {
-   if (csd->mInitializationState == InitializationState::UNKNOWN) {
-     //cout << "Warning: unknown CRORC shared channel state. Proceeding with initialization" << endl;
-   }
-   //cout << "Initializing CRORC shared channel state" << endl;
-   csd->initialize();
-
-   //cout << "Clearing readyFifo" << endl;
-   mFifoUser->reset();
-  }
 
   if (getPageAddresses().size() <= READYFIFO_ENTRIES) {
     BOOST_THROW_EXCEPTION(CrorcException()
@@ -123,13 +89,17 @@ void CrorcChannelMaster::constructorCommon()
   mPageManager.setAmountOfPages(getPageAddresses().size());
 }
 
+auto CrorcChannelMaster::allowedChannels() -> AllowedChannels {
+  return {0, 1, 2, 3, 4, 5};
+}
+
 CrorcChannelMaster::~CrorcChannelMaster()
 {
 }
 
 void CrorcChannelMaster::deviceStartDma()
 {
-  auto& params = getParams();
+  auto& params = getChannelParameters();
 
   // Find DIU version, required for armDdl()
   crorcInitDiuVersion();
@@ -171,10 +141,10 @@ int rorcStopDataGenerator(volatile uint32_t* buff)
 void CrorcChannelMaster::deviceStopDma()
 {
   // Stopping receiving data
-  if (getParams().generator.useDataGenerator) {
+  if (getChannelParameters().generator.useDataGenerator) {
     rorcStopDataGenerator(getBarUserspace());
     rorcStopDataReceiver(getBarUserspace());
-  } else if (getParams().noRDYRX) {
+  } else if (getChannelParameters().noRDYRX) {
     // Sending EOBTR to FEE.
     crorcStopTrigger();
   }
@@ -186,9 +156,9 @@ void CrorcChannelMaster::resetCard(ResetLevel::type resetLevel)
     return;
   }
 
-  auto loopbackMode = getParams().generator.loopbackMode;
+  auto loopbackMode = getChannelParameters().generator.loopbackMode;
 
-  if (getSharedData().mDmaState == DmaState::STARTED) {
+  if (getDmaState() == DmaState::STARTED) {
     stopDma();
   }
 
@@ -252,7 +222,7 @@ void CrorcChannelMaster::startDataReceiving()
   crorcInitDiuVersion();
 
   // Preparing the card.
-  if (LoopbackMode::Siu == getParams().generator.loopbackMode) {
+  if (LoopbackMode::Siu == getChannelParameters().generator.loopbackMode) {
     resetCard(ResetLevel::RorcDiuSiu);
     crorcCheckLink();
     crorcSiuCommand(RandCIFST);
@@ -275,7 +245,7 @@ void CrorcChannelMaster::initializeFreeFifo()
 
 void CrorcChannelMaster::pushFreeFifoPage(int readyFifoIndex, volatile void* pageBusAddress)
 {
-  size_t pageWords = getParams().dma.pageSize / 4; // Size in 32-bit words
+  size_t pageWords = getChannelParameters().dma.pageSize / 4; // Size in 32-bit words
   rorcPushRxFreeFifo(getBarUserspace(), reinterpret_cast<uint64_t>(pageBusAddress), pageWords, readyFifoIndex);
 }
 
@@ -370,25 +340,6 @@ CardType::type CrorcChannelMaster::getCardType()
   return CardType::Crorc;
 }
 
-CrorcChannelMaster::CrorcSharedData::CrorcSharedData()
-    : mInitializationState(InitializationState::UNKNOWN), mFifoIndexWrite(0), mFifoIndexRead(0), mBufferPageIndex(0), mLoopPerUsec(
-        0), mPciLoopPerUsec(0), mRorcRevision(0), mSiuVersion(0), mDiuVersion(0)
-{
-}
-
-void CrorcChannelMaster::CrorcSharedData::initialize()
-{
-  mFifoIndexWrite = 0;
-  mFifoIndexRead = 0;
-  mBufferPageIndex = 0;
-  mLoopPerUsec = 0;
-  mPciLoopPerUsec = 0;
-  mRorcRevision = 0;
-  mSiuVersion = 0;
-  mDiuVersion = 0;
-  mInitializationState = InitializationState::INITIALIZED;
-}
-
 int CrorcChannelMaster::fillFifo(int maxFill)
 {
   CHANNEL_LOCKGUARD();
@@ -423,7 +374,7 @@ auto CrorcChannelMaster::popPageInternal(const MasterSharedPtr& channel) -> std:
 
   if (auto page = mPageManager.useArrivedPage()) {
     int bufferIndex = *page;
-    return std::make_shared<Page>(getPageAddresses()[bufferIndex].user, getSharedData().getParams().dma.pageSize,
+    return std::make_shared<Page>(getPageAddresses()[bufferIndex].user, getChannelParameters().dma.pageSize,
         bufferIndex, channel);
   }
   return nullptr;
@@ -438,7 +389,7 @@ void CrorcChannelMaster::freePage(const Page& page)
 
 void CrorcChannelMaster::crorcArmDataGenerator()
 {
-  auto& gen = getParams().generator;
+  auto& gen = getChannelParameters().generator;
   int roundedLen;
   int returnCode = rorcArmDataGenerator(getBarUserspace(), gen.initialValue, gen.initialWord, gen.pattern,
       gen.dataSize / 4, gen.seed, &roundedLen);
@@ -450,8 +401,7 @@ void CrorcChannelMaster::crorcArmDataGenerator()
 
 void CrorcChannelMaster::crorcArmDdl(int resetMask)
 {
-  auto csd = mCrorcSharedData->get();
-  int returnCode = rorcArmDDL(getBarUserspace(), resetMask, csd->mDiuVersion, csd->mPciLoopPerUsec);
+  int returnCode = rorcArmDDL(getBarUserspace(), resetMask, mDiuVersion, mPciLoopPerUsec);
   THROW_IF_BAD_STATUS(returnCode, CrorcArmDdlException()
       ADD_ERRINFO(returnCode, "Failed to arm DDL")
       << errinfo_rorc_ddl_reset_mask(b::str(b::format("0x%x") % resetMask)));
@@ -459,9 +409,8 @@ void CrorcChannelMaster::crorcArmDdl(int resetMask)
 
 void CrorcChannelMaster::crorcInitDiuVersion()
 {
-  auto csd = mCrorcSharedData->get();
-  setLoopPerSec(&csd->mLoopPerUsec, &csd->mPciLoopPerUsec, getBarUserspace());
-  int returnCode = ddlFindDiuVersion(getBarUserspace(), csd->mPciLoopPerUsec, &csd->mRorcRevision, &csd->mDiuVersion);
+  setLoopPerSec(&mLoopPerUsec, &mPciLoopPerUsec, getBarUserspace());
+  int returnCode = ddlFindDiuVersion(getBarUserspace(), mPciLoopPerUsec, &mRorcRevision, &mDiuVersion);
   THROW_IF_BAD_STATUS(returnCode, CrorcInitDiuException()
       ADD_ERRINFO(returnCode, "Failed to initialize DIU version"));
 }
@@ -475,8 +424,7 @@ void CrorcChannelMaster::crorcCheckLink()
 
 void CrorcChannelMaster::crorcSiuCommand(int command)
 {
-  auto csd = mCrorcSharedData->get();
-  int returnCode = ddlReadSiu(getBarUserspace(), command, DDL_RESPONSE_TIME, csd->mPciLoopPerUsec);
+  int returnCode = ddlReadSiu(getBarUserspace(), command, DDL_RESPONSE_TIME, mPciLoopPerUsec);
   THROW_IF_BAD_STATUS(returnCode, CrorcSiuCommandException()
       ADD_ERRINFO(returnCode, "Failed to send SIU command")
       << errinfo_rorc_siu_command(command));
@@ -484,8 +432,7 @@ void CrorcChannelMaster::crorcSiuCommand(int command)
 
 void CrorcChannelMaster::crorcDiuCommand(int command)
 {
-  auto csd = mCrorcSharedData->get();
-  int returnCode = ddlReadDiu(getBarUserspace(), command, DDL_RESPONSE_TIME, csd->mPciLoopPerUsec);
+  int returnCode = ddlReadDiu(getBarUserspace(), command, DDL_RESPONSE_TIME, mPciLoopPerUsec);
   THROW_IF_BAD_STATUS(returnCode, CrorcSiuCommandException()
       ADD_ERRINFO(returnCode, "Failed to send DIU command")
       << errinfo_rorc_diu_command(command));
@@ -493,8 +440,7 @@ void CrorcChannelMaster::crorcDiuCommand(int command)
 
 void CrorcChannelMaster::crorcReset(int command)
 {
-  auto csd = mCrorcSharedData->get();
-  rorcReset(getBarUserspace(), command, csd->mPciLoopPerUsec);
+  rorcReset(getBarUserspace(), command, mPciLoopPerUsec);
 }
 
 void CrorcChannelMaster::crorcCheckFreeFifoEmpty()
@@ -509,26 +455,22 @@ void CrorcChannelMaster::crorcCheckFreeFifoEmpty()
 
 void CrorcChannelMaster::crorcStartDataReceiver()
 {
-  auto csd = mCrorcSharedData->get();
   auto busAddress = reinterpret_cast<unsigned long>(mFifoBus);
-  rorcStartDataReceiver(getBarUserspace(), busAddress, csd->mRorcRevision);
+  rorcStartDataReceiver(getBarUserspace(), busAddress, mRorcRevision);
 }
 
 void CrorcChannelMaster::crorcSetSiuLoopback()
 {
-  auto csd = mCrorcSharedData->get();
   stword_t stw;
-  int returnCode = ddlSetSiuLoopBack(getBarUserspace(), DDL_RESPONSE_TIME * csd->mPciLoopPerUsec,
-      csd->mPciLoopPerUsec, &stw);
+  int returnCode = ddlSetSiuLoopBack(getBarUserspace(), DDL_RESPONSE_TIME * mPciLoopPerUsec, mPciLoopPerUsec, &stw);
   THROW_IF_BAD_STATUS(returnCode, CrorcSiuLoopbackException()
         ADD_ERRINFO(returnCode, "Failed to set SIU loopback"));
 }
 
 void CrorcChannelMaster::crorcStartTrigger()
 {
-  auto csd = mCrorcSharedData->get();
   stword_t stw;
-  int returnCode = rorcStartTrigger(getBarUserspace(), DDL_RESPONSE_TIME * csd->mPciLoopPerUsec, &stw);
+  int returnCode = rorcStartTrigger(getBarUserspace(), DDL_RESPONSE_TIME * mPciLoopPerUsec, &stw);
   THROW_IF_BAD_STATUS(returnCode, CrorcStartTriggerException()
       ADD_ERRINFO(returnCode, "Failed to start trigger"));
 }
@@ -536,7 +478,7 @@ void CrorcChannelMaster::crorcStartTrigger()
 void CrorcChannelMaster::crorcStopTrigger()
 {
   stword_t stw;
-  uint64_t timeout = mCrorcSharedData->get()->mPciLoopPerUsec * DDL_RESPONSE_TIME;
+  uint64_t timeout = mPciLoopPerUsec * DDL_RESPONSE_TIME;
   int returnCode = rorcStopTrigger(getBarUserspace(), timeout, &stw);
   THROW_IF_BAD_STATUS(returnCode, CrorcStopTriggerException()
       ADD_ERRINFO(returnCode, "Failed to stop trigger"));

@@ -37,17 +37,6 @@ ChannelFactory::~ChannelFactory()
 {
 }
 
-auto ChannelFactory::getMaster(int serial, int channel) -> MasterSharedPtr
-{
-  return makeChannel<ChannelMasterInterface>(serial, DUMMY_SERIAL_NUMBER
-    , DummyTag, [&]{ return std::make_shared<DummyChannelMaster>(serial, channel, Parameters::Map()); }
-#ifdef ALICEO2_RORC_PDA_ENABLED
-    , CrorcTag, [&]{ return std::make_shared<CrorcChannelMaster>(serial, channel); }
-    , CruTag,   [&]{ return std::make_shared<CruChannelMaster>(serial, channel); }
-#endif
-    );
-}
-
 auto ChannelFactory::getMaster(int serial, int channel, const Parameters::Map& params) -> MasterSharedPtr
 {
   return makeChannel<ChannelMasterInterface>(serial, DUMMY_SERIAL_NUMBER

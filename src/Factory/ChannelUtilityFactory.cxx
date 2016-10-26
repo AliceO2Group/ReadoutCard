@@ -34,8 +34,8 @@ auto ChannelUtilityFactory::getUtility(int serial, int channel) -> UtilityShared
   return makeChannel<ChannelUtilityInterface>(serial, DUMMY_SERIAL_NUMBER
     , DummyTag, [&]{ return std::make_shared<DummyChannelMaster>(serial, channel, Parameters::Map()); }
 #ifdef ALICEO2_RORC_PDA_ENABLED
-    , CrorcTag, [&]{ return std::make_shared<CrorcChannelMaster>(serial, channel); }
-    , CruTag,   [&]{ return std::make_shared<CruChannelMaster>(serial, channel); }
+    , CrorcTag, [&]{ return std::make_shared<CrorcChannelMaster>(serial, channel, Parameters::Map()); }
+    , CruTag,   [&]{ return std::make_shared<CruChannelMaster>(serial, channel, Parameters::Map()); }
 #endif
     );
 }

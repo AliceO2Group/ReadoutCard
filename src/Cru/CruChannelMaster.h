@@ -19,7 +19,6 @@ class CruChannelMaster final : public ChannelMaster
 {
   public:
 
-    CruChannelMaster(int serial, int channel);
     CruChannelMaster(int serial, int channel, const Parameters::Map& params);
     virtual ~CruChannelMaster() override;
 
@@ -57,7 +56,6 @@ class CruChannelMaster final : public ChannelMaster
     // TODO: refactor into ChannelMaster
     PageManager<CRU_DESCRIPTOR_ENTRIES> mPageManager;
 
-    void constructorCommon();
     void initFifo();
     void initCru();
     void resetCru();
