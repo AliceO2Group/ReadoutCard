@@ -46,7 +46,7 @@ void DummyChannelMaster::stopDma()
 //  cout << "DummyChannelMaster::stopDma()" << endl;
 }
 
-void DummyChannelMaster::resetCard(ResetLevel::type resetLevel)
+void DummyChannelMaster::resetChannel(ResetLevel::type resetLevel)
 {
 //  cout << "DummyChannelMaster::resetCard(" << ResetLevel::toString(resetLevel) << ")" << endl;
 }

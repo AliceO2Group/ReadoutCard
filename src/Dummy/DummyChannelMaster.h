@@ -26,9 +26,9 @@ class DummyChannelMaster final : public ChannelMasterInterface, public ChannelUt
 
     DummyChannelMaster(int serial, int channel, const Parameters::Map& params);
     virtual ~DummyChannelMaster();
+    virtual void resetChannel(ResetLevel::type resetLevel) override;
     virtual void startDma() override;
     virtual void stopDma() override;
-    virtual void resetCard(ResetLevel::type resetLevel) override;
     virtual uint32_t readRegister(int index) override;
     virtual void writeRegister(int index, uint32_t value) override;
     virtual CardType::type getCardType() override;

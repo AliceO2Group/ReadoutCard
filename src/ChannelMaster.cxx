@@ -179,6 +179,8 @@ ChannelMaster::~ChannelMaster()
 // Checks DMA state and forwards call to subclass if necessary
 void ChannelMaster::startDma()
 {
+  CHANNELMASTER_LOCKGUARD();
+
   if (mDmaState == DmaState::UNKNOWN) {
     cout << "Warning: Unknown DMA state" << endl;
   } else if (mDmaState == DmaState::STARTED) {
@@ -192,6 +194,8 @@ void ChannelMaster::startDma()
 // Checks DMA state and forwards call to subclass if necessary
 void ChannelMaster::stopDma()
 {
+  CHANNELMASTER_LOCKGUARD();
+
   if (mDmaState == DmaState::UNKNOWN) {
     cout << "Warning: Unknown DMA state" << endl;
   } else if (mDmaState == DmaState::STOPPED) {
@@ -200,6 +204,20 @@ void ChannelMaster::stopDma()
     deviceStopDma();
   }
   mDmaState = DmaState::STOPPED;
+}
+
+void ChannelMaster::resetChannel(ResetLevel::type resetLevel)
+{
+  CHANNELMASTER_LOCKGUARD();
+
+  if (mDmaState == DmaState::UNKNOWN) {
+    BOOST_THROW_EXCEPTION(Exception() << errinfo_rorc_error_message("Reset channel failed: DMA in unknown state"));
+  }
+  if (mDmaState != DmaState::STOPPED) {
+    BOOST_THROW_EXCEPTION(Exception() << errinfo_rorc_error_message("Reset channel failed: DMA was not stopped"));
+  }
+
+  deviceResetChannel(resetLevel);
 }
 
 uint32_t ChannelMaster::readRegister(int index)

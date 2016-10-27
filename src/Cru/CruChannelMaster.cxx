@@ -96,15 +96,13 @@ void CruChannelMaster::deviceStopDma()
   mBufferReadyGuard.reset(); // see setBufferReadyGuard()
 }
 
-void CruChannelMaster::resetCard(ResetLevel::type resetLevel)
+void CruChannelMaster::deviceResetChannel(ResetLevel::type resetLevel)
 {
   if (resetLevel == ResetLevel::Nothing) {
     return;
   }
 
-  stopDma();
   resetCru();
-  startDma();
 }
 
 CardType::type CruChannelMaster::getCardType()
@@ -174,6 +172,8 @@ void CruChannelMaster::initCru()
 
 int CruChannelMaster::fillFifo(int maxFill)
 {
+  CHANNELMASTER_LOCKGUARD();
+
   auto isArrived = [&](int descriptorIndex) {
     return mFifoUser->statusEntries[descriptorIndex].isPageArrived();
   };
@@ -196,11 +196,15 @@ int CruChannelMaster::fillFifo(int maxFill)
 
 int CruChannelMaster::getAvailableCount()
 {
+  CHANNELMASTER_LOCKGUARD();
+
   return mPageManager.getArrivedCount();
 }
 
 auto CruChannelMaster::popPageInternal(const MasterSharedPtr& channel) -> std::shared_ptr<Page>
 {
+  CHANNELMASTER_LOCKGUARD();
+
   if (auto page = mPageManager.useArrivedPage()) {
     int bufferIndex = *page;
     return std::make_shared<Page>(getPageAddresses()[bufferIndex].user, DMA_PAGE_SIZE, bufferIndex, channel);
@@ -210,6 +214,8 @@ auto CruChannelMaster::popPageInternal(const MasterSharedPtr& channel) -> std::s
 
 void CruChannelMaster::freePage(const Page& page)
 {
+  CHANNELMASTER_LOCKGUARD();
+
   mPageManager.freePage(page.getId());
 }
 

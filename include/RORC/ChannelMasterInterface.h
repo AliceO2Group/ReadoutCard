@@ -80,9 +80,9 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
     /// Stops DMA for the given channel
     virtual void stopDma() = 0;
 
-    /// Resets the channel
+    /// Resets the channel. Requires the DMA to be stopped.
     /// \param resetLevel The depth of the reset
-    virtual void resetCard(ResetLevel::type resetLevel) = 0;
+    virtual void resetChannel(ResetLevel::type resetLevel) = 0;
 
     /// Returns the type of the RORC card this ChannelMaster is controlling
     /// \return The card type

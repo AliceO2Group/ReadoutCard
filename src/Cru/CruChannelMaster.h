@@ -22,7 +22,6 @@ class CruChannelMaster final : public ChannelMaster
     CruChannelMaster(int serial, int channel, const Parameters::Map& params);
     virtual ~CruChannelMaster() override;
 
-    virtual void resetCard(ResetLevel::type resetLevel) override;
     virtual CardType::type getCardType() override;
 
     virtual std::vector<uint32_t> utilityCopyFifo() override;
@@ -44,6 +43,7 @@ class CruChannelMaster final : public ChannelMaster
 
     virtual void deviceStartDma() override;
     virtual void deviceStopDma() override;
+    virtual void deviceResetChannel(ResetLevel::type resetLevel) override;
 
     /// Name for the CRU shared data object in the shared state file
     static std::string getCruSharedDataName()

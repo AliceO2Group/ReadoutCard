@@ -22,6 +22,13 @@
 #include "RorcDevice.h"
 #include "TypedMemoryMappedFile.h"
 
+//#define ALICEO2_RORC_CHANNEL_MASTER_DISABLE_LOCKGUARDS
+#ifdef ALICEO2_RORC_CHANNEL_MASTER_DISABLE_LOCKGUARDS
+#define CHANNELMASTER_LOCKGUARD()
+#else
+#define CHANNELMASTER_LOCKGUARD() auto&& _lockGuard = getLockGuard()
+#endif
+
 namespace AliceO2 {
 namespace Rorc {
 
@@ -48,6 +55,7 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
 
     virtual void startDma() final override;
     virtual void stopDma() final override;
+    void resetChannel(ResetLevel::type resetLevel) final override;
     virtual uint32_t readRegister(int index) final override;
     virtual void writeRegister(int index, uint32_t value) final override;
 
@@ -57,16 +65,28 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
 
   protected:
 
+    using Mutex = std::mutex;
+    using LockGuard = std::lock_guard<Mutex>;
+
     /// Get the buffer ID belonging to the buffer. Note that index 0 is reserved for use by ChannelMaster
     /// See dmaBuffersPerChannel() for more info
     /// Non-virtual because it must be callable in constructors, and there's no need to override it.
     int getBufferId(int index) const;
 
     /// Template method called by startDma() to do device-specific (CRORC, RCU...) actions
+    /// Note: subclasses should not call getLockGuard() in this function, as the ChannelMaster will have the lock
+    /// already.
     virtual void deviceStartDma() = 0;
 
     /// Template method called by stopDma() to do device-specific (CRORC, RCU...) actions
+    /// Note: subclasses should not call getLockGuard() in this function, as the ChannelMaster will have the lock
+    /// already.
     virtual void deviceStopDma() = 0;
+
+    /// Template method called by resetChannel() to do device-specific (CRORC, RCU...) actions
+    /// Note: subclasses should not call getLockGuard() in this function, as the ChannelMaster will have the lock
+    /// already.
+    virtual void deviceResetChannel(ResetLevel::type resetLevel) = 0;
 
     /// The size of the shared state data file. It should be over-provisioned, since subclasses may also allocate their
     /// own shared data in this file.
@@ -101,6 +121,15 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
           UNKNOWN = 0, STOPPED = 1, STARTED = 2
         };
     };
+
+    /// Acquires a mutex lock to make operations thread-safe
+    /// usage:
+    /// auto&& lockGuard = getLockGuard();
+    LockGuard getLockGuard()
+    {
+      mMutex.lock();
+      return { mMutex, std::adopt_lock };
+    }
 
   private:
 
@@ -141,6 +170,9 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
     std::vector<PageAddress> mPageAddresses;
 
     ChannelParameters mChannelParameters;
+
+    /// Mutex to lock operations
+    std::mutex mMutex;
 
   public:
 

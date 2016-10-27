@@ -133,8 +133,8 @@ class ProgramDmaBench: public Program
       Options::addOptionsChannelParameters(options);
       options.add_options()
           ("reset",
-              po::bool_switch(&mOptions.resetCard),
-              "Reset card during initialization")
+              po::bool_switch(&mOptions.resetChannel),
+              "Reset channel during initialization")
           ("to-file-ascii",
               po::bool_switch(&mOptions.fileOutputAscii),
               "Read out to file in ASCII format")
@@ -184,9 +184,9 @@ class ProgramDmaBench: public Program
       mChannel = ChannelFactory().getMaster(serialNumber, channelNumber, params);
       std::this_thread::sleep_for(std::chrono::microseconds(500)); // XXX See README.md
 
-      if (mOptions.resetCard) {
-        cout << "Resetting card...";
-        mChannel->resetCard(ResetLevel::Rorc);
+      if (mOptions.resetChannel) {
+        cout << "Resetting channel...";
+        mChannel->resetChannel(ResetLevel::Rorc);
         cout << " done!\n";
       }
 
@@ -571,7 +571,7 @@ class ProgramDmaBench: public Program
         int64_t maxPages = 0; ///< Limit of pages to push
         bool fileOutputAscii = false;
         bool fileOutputBin = false;
-        bool resetCard = false;
+        bool resetChannel = false;
         bool randomPauseSoft = false;
         bool noErrorCheck = false;
         bool noPageReset = false;

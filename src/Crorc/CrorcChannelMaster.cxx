@@ -25,14 +25,6 @@ using std::cout;
 using std::endl;
 using namespace std::literals;
 
-//#define CRORC_CHANNEL_MASTER_DISABLE_LOCKGUARDS
-
-#ifdef CRORC_CHANNEL_MASTER_DISABLE_LOCKGUARDS
-#define CHANNEL_LOCKGUARD()
-#else
-#define CHANNEL_LOCKGUARD() LockGuard guard(mFreeMutex)
-#endif
-
 namespace AliceO2 {
 namespace Rorc {
 
@@ -105,7 +97,7 @@ void CrorcChannelMaster::deviceStartDma()
   crorcInitDiuVersion();
 
   // Resetting the card,according to the RESET LEVEL parameter
-  resetCard(params.initialResetLevel);
+  deviceResetChannel(params.initialResetLevel);
 
   // Setting the card to be able to receive data
   startDataReceiving();
@@ -150,17 +142,13 @@ void CrorcChannelMaster::deviceStopDma()
   }
 }
 
-void CrorcChannelMaster::resetCard(ResetLevel::type resetLevel)
+void CrorcChannelMaster::deviceResetChannel(ResetLevel::type resetLevel)
 {
   if (resetLevel == ResetLevel::Nothing) {
     return;
   }
 
   auto loopbackMode = getChannelParameters().generator.loopbackMode;
-
-  if (getDmaState() == DmaState::STARTED) {
-    stopDma();
-  }
 
   try {
     if (resetLevel == ResetLevel::Rorc) {
@@ -223,7 +211,7 @@ void CrorcChannelMaster::startDataReceiving()
 
   // Preparing the card.
   if (LoopbackMode::Siu == getChannelParameters().generator.loopbackMode) {
-    resetCard(ResetLevel::RorcDiuSiu);
+    deviceResetChannel(ResetLevel::RorcDiuSiu);
     crorcCheckLink();
     crorcSiuCommand(RandCIFST);
     crorcDiuCommand(RandCIFST);
@@ -342,7 +330,7 @@ CardType::type CrorcChannelMaster::getCardType()
 
 int CrorcChannelMaster::fillFifo(int maxFill)
 {
-  CHANNEL_LOCKGUARD();
+  CHANNELMASTER_LOCKGUARD();
 
   auto isArrived = [&](int descriptorIndex) {
     return dataArrived(descriptorIndex) == DataArrivalStatus::WholeArrived;
@@ -363,14 +351,14 @@ int CrorcChannelMaster::fillFifo(int maxFill)
 
 int CrorcChannelMaster::getAvailableCount()
 {
-  CHANNEL_LOCKGUARD();
+  CHANNELMASTER_LOCKGUARD();
 
   return mPageManager.getArrivedCount();
 }
 
 auto CrorcChannelMaster::popPageInternal(const MasterSharedPtr& channel) -> std::shared_ptr<Page>
 {
-  CHANNEL_LOCKGUARD();
+  CHANNELMASTER_LOCKGUARD();
 
   if (auto page = mPageManager.useArrivedPage()) {
     int bufferIndex = *page;
@@ -382,7 +370,7 @@ auto CrorcChannelMaster::popPageInternal(const MasterSharedPtr& channel) -> std:
 
 void CrorcChannelMaster::freePage(const Page& page)
 {
-  CHANNEL_LOCKGUARD();
+  CHANNELMASTER_LOCKGUARD();
 
   mPageManager.freePage(page.getId());
 }

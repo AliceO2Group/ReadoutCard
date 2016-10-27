@@ -23,7 +23,6 @@ class CrorcChannelMaster final : public ChannelMaster
     CrorcChannelMaster(int serial, int channel, const Parameters::Map& params);
     virtual ~CrorcChannelMaster() override;
 
-    virtual void resetCard(ResetLevel::type resetLevel) override;
     virtual CardType::type getCardType() override;
 
     virtual std::vector<uint32_t> utilityCopyFifo() override;
@@ -45,6 +44,7 @@ class CrorcChannelMaster final : public ChannelMaster
 
     virtual void deviceStartDma() override;
     virtual void deviceStopDma() override;
+    virtual void deviceResetChannel(ResetLevel::type resetLevel) override;
 
     /// Name for the CRORC shared data object in the shared state file
     static std::string getCrorcSharedDataName()
@@ -64,9 +64,6 @@ class CrorcChannelMaster final : public ChannelMaster
           WholeArrived,
         };
     };
-
-    using Mutex = std::mutex;
-    using LockGuard = std::lock_guard<Mutex>;
 
     /// Enables data receiving in the RORC
     void startDataReceiving();
@@ -152,9 +149,6 @@ class CrorcChannelMaster final : public ChannelMaster
 
     // TODO: refactor into ChannelMaster
     PageManager<READYFIFO_ENTRIES> mPageManager;
-
-    /// Mutex to lock the page free operation
-    std::mutex mFreeMutex;
 };
 
 } // namespace Rorc
