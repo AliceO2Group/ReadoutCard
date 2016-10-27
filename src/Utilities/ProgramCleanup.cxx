@@ -101,15 +101,13 @@ class ProgramCleanup: public Program
           files.push_back(channelPaths.state().string());
           namedMutexes.push_back(channelPaths.namedMutex());
         } else {
-          cout << "### Attempting to find files to delete cleanup...\n";
+          cout << "### Attempting to find files to clean up...\n";
           // Try to get paths of the shared state files from the exception's error info
           pushIfPresent<errinfo_rorc_shared_lock_file>(e, files);
           pushIfPresent<errinfo_rorc_shared_buffer_file>(e, files);
           pushIfPresent<errinfo_rorc_shared_fifo_file>(e, files);
           pushIfPresent<errinfo_rorc_shared_state_file>(e, files);
-          if (auto namedMutex = boost::get_error_info<errinfo_rorc_named_mutex_name>(e)) {
-            namedMutexes.push_back(*namedMutex);
-          }
+          pushIfPresent<errinfo_rorc_named_mutex_name>(e, namedMutexes);
         }
 
         if (files.empty() && namedMutexes.empty()) {
