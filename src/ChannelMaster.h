@@ -8,6 +8,7 @@
 #include <set>
 #include <vector>
 #include <boost/scoped_ptr.hpp>
+#include <InfoLogger/InfoLogger.hxx>
 #include "ChannelParameters.h"
 #include "ChannelUtilityInterface.h"
 #include "InterprocessLock.h"
@@ -26,7 +27,7 @@
 #ifdef ALICEO2_RORC_CHANNEL_MASTER_DISABLE_LOCKGUARDS
 #define CHANNELMASTER_LOCKGUARD()
 #else
-#define CHANNELMASTER_LOCKGUARD() auto&& _lockGuard = getLockGuard()
+#define CHANNELMASTER_LOCKGUARD() LockGuard _lockGuard(getMutex());
 #endif
 
 namespace AliceO2 {
@@ -58,13 +59,13 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
     void resetChannel(ResetLevel::type resetLevel) final override;
     virtual uint32_t readRegister(int index) final override;
     virtual void writeRegister(int index, uint32_t value) final override;
+    virtual void setLogLevel(InfoLogger::InfoLogger::Severity severity) final override;
 
     /// Convert ParameterMap to ChannelParameters
     static ChannelParameters convertParameters(const Parameters::Map& params);
     static void validateParameters(const ChannelParameters& ps);
 
   protected:
-
     using Mutex = std::mutex;
     using LockGuard = std::lock_guard<Mutex>;
 
@@ -122,59 +123,10 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
         };
     };
 
-    /// Acquires a mutex lock to make operations thread-safe
-    /// usage:
-    /// auto&& lockGuard = getLockGuard();
-    LockGuard getLockGuard()
+    Mutex& getMutex()
     {
-      mMutex.lock();
-      return { mMutex, std::adopt_lock };
+      return mMutex;
     }
-
-  private:
-
-    void checkChannelNumber(const AllowedChannels& allowedChannels);
-
-    DmaState::type mDmaState;
-
-    /// Card type ofthe device
-    const CardType::type mCardType;
-
-    /// Serial number of the device
-    const int mSerialNumber;
-
-    /// DMA channel number
-    const int mChannelNumber;
-
-    /// Amount of DMA buffers per channel that will be registered to PDA
-    /// Is the sum of the buffers needed by this class and by the subclass. The subclass indicates its need in the
-    /// constructor of this class.
-    const int dmaBuffersPerChannel;
-
-    /// Lock that guards against both inter- and intra-process ownership
-    boost::scoped_ptr<Interprocess::Lock> mInterprocessLock;
-
-    /// PDA device objects
-    boost::scoped_ptr<RorcDevice> mRorcDevice;
-
-    /// PDA BAR object
-    boost::scoped_ptr<Pda::PdaBar> mPdaBar;
-
-    /// Memory mapped file containing pages used for DMA transfer destination
-    boost::scoped_ptr<MemoryMappedFile> mMappedFilePages;
-
-    /// PDA DMABuffer object for the pages
-    boost::scoped_ptr<Pda::PdaDmaBuffer> mBufferPages;
-
-    /// Addresses to pages in the DMA buffer
-    std::vector<PageAddress> mPageAddresses;
-
-    ChannelParameters mChannelParameters;
-
-    /// Mutex to lock operations
-    std::mutex mMutex;
-
-  public:
 
     const ChannelParameters& getChannelParameters() const
     {
@@ -225,6 +177,58 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
     {
       return *(mRorcDevice.get());
     }
+
+    InfoLogger::InfoLogger& getLogger()
+    {
+      return mLogger;
+    }
+
+  private:
+    void checkChannelNumber(const AllowedChannels& allowedChannels);
+
+    /// Mutex to lock thread-unsafe operations
+    Mutex mMutex;
+
+    /// Current state of the DMA
+    DmaState::type mDmaState;
+
+    /// Serial number of the device
+    const int mSerialNumber;
+
+    /// DMA channel number
+    const int mChannelNumber;
+
+    /// Amount of DMA buffers per channel that will be registered to PDA
+    /// Is the sum of the buffers needed by this class and by the subclass. The subclass indicates its need in the
+    /// constructor of this class.
+    const int dmaBuffersPerChannel;
+
+    /// Lock that guards against both inter- and intra-process ownership
+    boost::scoped_ptr<Interprocess::Lock> mInterprocessLock;
+
+    /// PDA device objects
+    boost::scoped_ptr<RorcDevice> mRorcDevice;
+
+    /// PDA BAR object
+    boost::scoped_ptr<Pda::PdaBar> mPdaBar;
+
+    /// Memory mapped file containing pages used for DMA transfer destination
+    boost::scoped_ptr<MemoryMappedFile> mMappedFilePages;
+
+    /// PDA DMABuffer object for the pages
+    boost::scoped_ptr<Pda::PdaDmaBuffer> mBufferPages;
+
+    /// Addresses to pages in the DMA buffer
+    std::vector<PageAddress> mPageAddresses;
+
+    /// Parameters of this channel TODO refactor
+    ChannelParameters mChannelParameters;
+
+    /// InfoLogger instance
+    InfoLogger::InfoLogger mLogger;
+
+    /// Current log level
+    InfoLogger::InfoLogger::Severity mLogLevel;
 };
 
 } // namespace Rorc

@@ -131,5 +131,10 @@ int DummyChannelMaster::utilityGetFirmwareVersion()
   return 0;
 }
 
+void DummyChannelMaster::setLogLevel(InfoLogger::InfoLogger::Severity severity)
+{
+  mLogLevel = severity;
+}
+
 } // namespace Rorc
 } // namespace AliceO2

@@ -134,7 +134,7 @@ void ChannelMaster::validateParameters(const ChannelParameters& cp)
 
 ChannelMaster::ChannelMaster(CardType::type cardType, int serial, int channel, const Parameters::Map& parameterMap,
     int additionalBuffers, const AllowedChannels& allowedChannels)
-    : mCardType(cardType), mSerialNumber(serial), mChannelNumber(channel), dmaBuffersPerChannel(
+    : mSerialNumber(serial), mChannelNumber(channel), dmaBuffersPerChannel(
         additionalBuffers + CHANNELMASTER_DMA_BUFFERS_PER_CHANNEL), mDmaState(DmaState::STOPPED)
 {
   using namespace Util;
@@ -144,7 +144,7 @@ ChannelMaster::ChannelMaster(CardType::type cardType, int serial, int channel, c
 
   checkChannelNumber(allowedChannels);
 
-  ChannelPaths paths(mCardType, mSerialNumber, mChannelNumber);
+  ChannelPaths paths(cardType, mSerialNumber, mChannelNumber);
 
   // Create parent directories
   for (const auto& p : {paths.pages(), paths.state(), paths.fifo(), paths.lock()}) {
@@ -165,7 +165,7 @@ ChannelMaster::ChannelMaster(CardType::type cardType, int serial, int channel, c
 
   resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), mChannelNumber);
 
-  resetSmartPtr(mMappedFilePages, ChannelPaths(mCardType, mSerialNumber, mChannelNumber).pages().string(),
+  resetSmartPtr(mMappedFilePages, ChannelPaths(cardType, mSerialNumber, mChannelNumber).pages().string(),
       getChannelParameters().dma.bufferSize);
 
   resetSmartPtr(mBufferPages, mRorcDevice->getPciDevice(), mMappedFilePages->getAddress(), mMappedFilePages->getSize(),
@@ -229,6 +229,11 @@ void ChannelMaster::writeRegister(int index, uint32_t value)
 {
   // TODO Range check
   mPdaBar->getUserspaceAddressU32()[index] = value;
+}
+
+void ChannelMaster::setLogLevel(InfoLogger::InfoLogger::Severity severity)
+{
+  mLogLevel = severity;
 }
 
 } // namespace Rorc

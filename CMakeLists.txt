@@ -50,7 +50,7 @@ find_package(Boost 1.56
   )
   
 # Other sub-projects
-#link_o2_subproject(InfoLogger)
+link_o2_subproject(InfoLogger)
 #link_o2_subproject(Common)
 link_o2_subproject(Configuration)
  

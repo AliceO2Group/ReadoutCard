@@ -71,11 +71,14 @@ endif()
 
 set(RORC_LIB_NAME rorc)
 add_library(${RORC_LIB_NAME} SHARED ${RORC_LIB_SOURCES})
-target_link_libraries(${RORC_LIB_NAME} 
+target_link_libraries(
+  ${RORC_LIB_NAME} 
   ${PDA_LIBRARIES_MAYBE}
   ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  InfoLogger-shared
+  Common
   rt # For shared memory
   pthread
 )

@@ -9,6 +9,7 @@
 #include <memory>
 #include <boost/optional.hpp>
 #include <boost/exception/all.hpp>
+#include <InfoLogger/InfoLogger.hxx>
 #include "RORC/Parameters.h"
 #include "RORC/CardType.h"
 #include "RORC/ResetLevel.h"
@@ -107,6 +108,9 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
 
     /// Indicates the client is no longer using the page. Called by the Page class's destructor.
     virtual void freePage(const Page& page) = 0;
+
+    /// Set the InfoLogger log level for this channel
+    virtual void setLogLevel(InfoLogger::InfoLogger::Severity severity) = 0;
 
   private:
     /// Pops and gets a page from the DMA buffer.
