@@ -17,8 +17,70 @@
 namespace AliceO2 {
 namespace Rorc {
 
+/// CRTP base class for PageManager implementations
+template <class Derived>
+class PageManagerBase
+{
+  public:
+    /// Set the amount of pages that fit in the buffer
+    /// This method effectively resets the manager
+    void setAmountOfPages(size_t amount)
+    {
+      _this()._setAmountOfPages(amount);
+    }
+
+    /// Check for arrived pages and free up FIFO slots that are no longer needed
+    /// \tparam IsArrived Function to check if the page with the given descriptor index has been completely pushed
+    /// \tparam ResetDescriptor Function reset the descriptor with the given index
+    /// \return Amount of arrived pages
+    template<class IsArrived, class ResetDescriptor>
+    int handleArrivals(IsArrived isArrived, ResetDescriptor resetDescriptor)
+    {
+      return _this()._handleArrivals(isArrived, resetDescriptor);
+    }
+
+    /// Push pages
+    /// \tparam Push Function to push a single page with the given buffer index and descriptor index.
+    /// \param pushLimit Limit on the amount of pages to push. If <= 0, will push as many pages as fit in the queue.
+    /// \return The amount of pages that were pushed
+    template<class Push>
+    int pushPages(size_t pushLimit, Push push)
+    {
+      return _this()._pushPages(pushLimit, push);
+    }
+
+    /// Gets a page with ARRIVED status and puts it in NONFREE status
+    /// \return The page ID
+    boost::optional<int> useArrivedPage()
+    {
+      return _this()._useArrivedPage();
+    }
+
+    void freePage(int bufferIndex)
+    {
+      _this()._freePage(bufferIndex);
+    }
+
+    int getArrivedCount()
+    {
+      return _this()._getArrivedCount();
+    }
+
+  private:
+    Derived& _this()
+    {
+      return *static_cast<Derived*>(this);
+    }
+};
+
+//template<size_t FIRMWARE_QUEUE_CAPACITY>
+//class QueuePageManager
+//{
+//
+//};
+
 template<size_t FIRMWARE_QUEUE_CAPACITY>
-class PageManager
+class PageManager : public PageManagerBase<PageManager<FIRMWARE_QUEUE_CAPACITY>>
 {
   public:
     struct Page
@@ -27,18 +89,11 @@ class PageManager
         int bufferIndex; ///< Index for DMA buffer
     };
 
-    enum class PageStatus
-    {
-      FREE,    ///< Page is free and may be used to push into
-      PUSHING, ///< Page is being pushed into
-      ARRIVED, ///< Page has been fully pushed
-      IN_USE   ///< Page is in use by the client
-    };
-
-    void setAmountOfPages(size_t amount)
+    void _setAmountOfPages(size_t amount)
     {
       mMaxPages = amount;
-
+      mFifoHead = 0;
+      mQueuePushing = Queue(typename Queue::container_type(FIRMWARE_QUEUE_CAPACITY));
       mQueueFree = Queue(typename Queue::container_type(amount));
       mQueueArrived = Queue(typename Queue::container_type(amount));
 
@@ -50,12 +105,8 @@ class PageManager
       checkInvariant();
     }
 
-    /// Check for arrived pages and free up FIFO slots that are no longer needed
-    /// \tparam IsArrived Function to check if the page with the given descriptor index has been completely pushed
-    /// \tparam ResetDescriptor Function reset the descriptor with the given index
-    /// \return Amount of arrived pages
     template<class IsArrived, class ResetDescriptor>
-    int handleArrivals(IsArrived isArrived, ResetDescriptor resetDescriptor)
+    int _handleArrivals(IsArrived isArrived, ResetDescriptor resetDescriptor)
     {
       checkInvariant();
 
@@ -82,7 +133,7 @@ class PageManager
     /// \param pushLimit Limit on the amount of pages to push. If <= 0, will push as many pages as fit in the queue.
     /// \return The amount of pages that were pushed
     template<class Push>
-    int pushPages(size_t pushLimit, Push push)
+    int _pushPages(size_t pushLimit, Push push)
     {
       checkInvariant();
 
@@ -107,7 +158,7 @@ class PageManager
 
     /// Gets a page with ARRIVED status and puts it in NONFREE status
     /// \return The page ID
-    boost::optional<int> useArrivedPage()
+    boost::optional<int> _useArrivedPage()
     {
       checkInvariant();
 
@@ -130,7 +181,7 @@ class PageManager
       return boost::none;
     }
 
-    void freePage(int bufferIndex)
+    void _freePage(int bufferIndex)
     {
       checkInvariant();
 
@@ -150,7 +201,7 @@ class PageManager
       mQueueFree.push(page);
     }
 
-    int getArrivedCount()
+    int _getArrivedCount()
     {
       return mQueueArrived.size();
     }
@@ -204,7 +255,7 @@ class PageManager
     using Queue = std::queue<typename QueueBackend::value_type, QueueBackend>;
 
     /// Queue for pages in the firmware FIFO
-    Queue mQueuePushing = Queue(typename Queue::container_type(FIRMWARE_QUEUE_CAPACITY));
+    Queue mQueuePushing;
 
     /// Pages that have arrived
     Queue mQueueArrived;
@@ -215,10 +266,8 @@ class PageManager
     /// Pages that are in use
     std::unordered_map<int, Page> mMapInUse;
 
+    /// Current head of the firmware FIFO
     int mFifoHead = 0;
-
-    /// When the queue size is above this threshold, we do not fill the queue
-    //int mFillThreshold = QUEUE_CAPACITY;
 
     size_t mMaxPages = 0;
 };
