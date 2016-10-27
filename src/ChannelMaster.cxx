@@ -84,11 +84,15 @@ ChannelParameters ChannelMaster::convertParameters(const Parameters::Map& map)
 
   using namespace Parameters::Keys;
 
-  require(dmaBufferSize());
-  Util::lexicalCast(map.at(dmaBufferSize()), cp.dma.bufferSize);
+  auto convert = [&map](const auto& key, auto& destination) {
+    auto keyIter = map.find(key);
+    if (keyIter != map.end()) {
+      Util::lexicalCast(keyIter->second, destination);
+    }
+  };
 
-  require(dmaPageSize());
-  Util::lexicalCast(map.at(dmaPageSize()), cp.dma.pageSize);
+  convert(dmaBufferSize(), cp.dma.bufferSize);
+  convert(dmaPageSize(), cp.dma.pageSize);
 
   if (map.count(generatorEnabled())) {
     cp.generator.useDataGenerator = true;

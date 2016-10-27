@@ -8,20 +8,19 @@
 #include <set>
 #include <vector>
 #include <boost/scoped_ptr.hpp>
-#include "InterprocessLock.h"
-#include "RORC/Parameters.h"
-#include "RORC/ChannelMasterInterface.h"
-#include "RORC/Exception.h"
 #include "ChannelParameters.h"
 #include "ChannelUtilityInterface.h"
+#include "InterprocessLock.h"
 #include "FileSharedObject.h"
 #include "MemoryMappedFile.h"
 #include "PageAddress.h"
 #include "Pda/PdaBar.h"
 #include "Pda/PdaDmaBuffer.h"
+#include "RORC/ChannelMasterInterface.h"
+#include "RORC/Exception.h"
+#include "RORC/Parameters.h"
 #include "RorcDevice.h"
 #include "TypedMemoryMappedFile.h"
-
 
 namespace AliceO2 {
 namespace Rorc {

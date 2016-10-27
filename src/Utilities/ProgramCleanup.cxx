@@ -4,13 +4,15 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include <iostream>
-#include "Factory/ChannelUtilityFactory.h"
-#include "RORC/Exception.h"
 #include <boost/filesystem/operations.hpp>
 #include <boost/interprocess/sync/named_mutex.hpp>
-#include <Utilities/Common.h>
-#include <Utilities/Options.h>
-#include <Utilities/Program.h>
+#include "Factory/ChannelUtilityFactory.h"
+#include "ChannelPaths.h"
+#include "RORC/Exception.h"
+#include "RorcDevice.h"
+#include "Utilities/Common.h"
+#include "Utilities/Options.h"
+#include "Utilities/Program.h"
 
 using namespace AliceO2::Rorc::Utilities;
 using namespace AliceO2::Rorc;
@@ -45,6 +47,25 @@ class ProgramCleanup: public Program
           "Force cleanup of shared state files if normal cleanup fails");
     }
 
+    void cleanFiles(std::vector<boost::filesystem::path> files, std::vector<std::string> namedMutexes)
+    {
+
+      if (files.empty() && namedMutexes.empty()) {
+        cout << "Failed to discover files to clean up\n";
+        cout << "### Cleanup failed" << endl;
+      }
+
+      for (const auto& f : files) {
+        cout << "Deleting file '" << f << "'\n";
+        boost::filesystem::remove(f.c_str());
+      }
+
+      for (const auto& n : namedMutexes) {
+        cout << "Deleting named mutex '" << n << "'\n";
+        boost::interprocess::named_mutex::remove(n.c_str());
+      }
+    }
+
     virtual void run(const boost::program_options::variables_map& map)
     {
       auto serialNumber = Options::getOptionSerialNumber(map);
@@ -53,52 +74,63 @@ class ProgramCleanup: public Program
       try {
         // This non-forced cleanup asks the ChannelMaster to clean up itself.
         // It will not succeed if the channel was not initialized properly before the running of this program.
-        cout << "### Attempting cleanup..." << endl;
+        cout << "### Attempting cleanup...\n";
         auto channel = ChannelUtilityFactory().getUtility(serialNumber, channelNumber);
         channel->utilityCleanupState();
-        cout << "### Done!" << endl;
+        cout << "### Done!\n";
       }
+
       catch (const std::exception& e) {
-        cout << "### Cleanup failed!" << endl;
+        cout << "### Channel self-cleanup failed\n";
+
+        if (isVerbose()) {
+          cout << "Error: \n" << boost::diagnostic_information(e);
+        }
+
+        std::vector<boost::filesystem::path> files;
+        std::vector<std::string> namedMutexes;
 
         if (mForceCleanup) {
-          // The forced cleanup will try to delete the files belonging to the channel
-          if (isVerbose()) {
-            cout << "Error: \n" << boost::diagnostic_information(e);
-          }
-
-          cout << "### Attempting forced cleanup..." << endl;
-
+          cout << "### Attempting forced cleanup...\n";
+          // Try to get paths of the shared state files the internal way
+          RorcDevice rorcDevice(serialNumber);
+          ChannelPaths channelPaths(rorcDevice.getCardType(), serialNumber, channelNumber);
+          files.push_back(channelPaths.fifo().string());
+          files.push_back(channelPaths.lock().string());
+          files.push_back(channelPaths.pages().string());
+          files.push_back(channelPaths.state().string());
+          namedMutexes.push_back(channelPaths.namedMutex());
+        } else {
+          cout << "### Attempting to find files to delete cleanup...\n";
           // Try to get paths of the shared state files from the exception's error info
-          std::vector<std::string> paths;
-          pushIfPresent<errinfo_rorc_shared_lock_file>(e, paths);
-          pushIfPresent<errinfo_rorc_shared_buffer_file>(e, paths);
-          pushIfPresent<errinfo_rorc_shared_fifo_file>(e, paths);
-          pushIfPresent<errinfo_rorc_shared_state_file>(e, paths);
-          auto namedMutex = boost::get_error_info<errinfo_rorc_named_mutex_name>(e);
+          pushIfPresent<errinfo_rorc_shared_lock_file>(e, files);
+          pushIfPresent<errinfo_rorc_shared_buffer_file>(e, files);
+          pushIfPresent<errinfo_rorc_shared_fifo_file>(e, files);
+          pushIfPresent<errinfo_rorc_shared_state_file>(e, files);
+          if (auto namedMutex = boost::get_error_info<errinfo_rorc_named_mutex_name>(e)) {
+            namedMutexes.push_back(*namedMutex);
+          }
+        }
 
-          if (paths.empty() && !namedMutex) {
-            cout << "Failed to discover files to clean up\n";
-            cout << "### Forced cleanup failed!" << endl;
-            throw;
+        if (files.empty() && namedMutexes.empty()) {
+          cout << "Failed to discover files to clean up\n";
+          cout << "### Cleanup failed";
+          if (mForceCleanup) {
+            cout << " (can rerun with --force)\n";
+          }
+          cout << '\n';
+        } else {
+          for (const auto& f : files) {
+            cout << "Deleting file '" << f << "'\n";
+            boost::filesystem::remove(f.c_str());
           }
 
-          for (const auto& p : paths) {
-            cout << "Deleting file '" << p << "'\n";
-            boost::filesystem::remove(p.c_str());
-          }
-
-          if (namedMutex) {
-            cout << "Deleting named mutex '" << namedMutex->c_str() << "'\n";
-            boost::interprocess::named_mutex::remove(namedMutex->c_str());
+          for (const auto& n : namedMutexes) {
+            cout << "Deleting named mutex '" << n << "'\n";
+            boost::interprocess::named_mutex::remove(n.c_str());
           }
 
           cout << "### Done!" << endl;
-        }
-        else {
-          // Forced cleanup was not enabled, so rethrow the exception, which will abort the program
-          cout << "(can rerun with --force)\n";
-          throw;
         }
       }
     }
