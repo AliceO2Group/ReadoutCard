@@ -132,13 +132,13 @@ PDA installation
 2. Download & extract PDA 11.0.7
   ```
   wget https://compeng.uni-frankfurt.de/fileadmin/Images/pda/pda-11.0.7.tar.gz
-  tar zxvf pda-11.0.7.tar.gz
+  tar zxf pda-11.0.7.tar.gz
   cd pda-11.0.7
   ```
 
 3. Compile
   ```
-  ./configure --debug=true --numa=true --modprobe=true
+  ./configure --debug=false --numa=true --modprobe=true
   make install
   cd patches/linux_uio
   make install
