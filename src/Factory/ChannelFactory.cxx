@@ -37,24 +37,26 @@ ChannelFactory::~ChannelFactory()
 {
 }
 
-auto ChannelFactory::getMaster(int serial, int channel, const Parameters::Map& params) -> MasterSharedPtr
+auto ChannelFactory::getMaster(const Parameters& params) -> MasterSharedPtr
 {
+  auto serial = params.getRequired<Parameters::SerialNumber>();
   return makeChannel<ChannelMasterInterface>(serial, DUMMY_SERIAL_NUMBER
-    , DummyTag, [&]{ return std::make_shared<DummyChannelMaster>(serial, channel, params); }
+    , DummyTag, [&]{ return std::make_shared<DummyChannelMaster>(params); }
 #ifdef ALICEO2_RORC_PDA_ENABLED
-    , CrorcTag, [&]{ return std::make_shared<CrorcChannelMaster>(serial, channel, params); }
-    , CruTag,   [&]{ return std::make_shared<CruChannelMaster>(serial, channel, params); }
+    , CrorcTag, [&]{ return std::make_shared<CrorcChannelMaster>(params); }
+    , CruTag,   [&]{ return std::make_shared<CruChannelMaster>(params); }
 #endif
     );
 }
 
-auto ChannelFactory::getSlave(int serial, int channel) -> SlaveSharedPtr
+auto ChannelFactory::getSlave(const Parameters& params) -> SlaveSharedPtr
 {
+  auto serial = params.getRequired<Parameters::SerialNumber>();
   return makeChannel<ChannelSlaveInterface>(serial, DUMMY_SERIAL_NUMBER
-    , DummyTag, [&]{ return std::make_shared<DummyChannelSlave>(serial, channel); }
+    , DummyTag, [&]{ return std::make_shared<DummyChannelSlave>(params); }
 #ifdef ALICEO2_RORC_PDA_ENABLED
-    , CrorcTag, [&]{ return std::make_shared<CrorcChannelSlave>(serial, channel); }
-    , CruTag,   [&]{ return std::make_shared<CruChannelSlave>(serial, channel); }
+    , CrorcTag, [&]{ return std::make_shared<CrorcChannelSlave>(params); }
+    , CruTag,   [&]{ return std::make_shared<CruChannelSlave>(params); }
 #endif
     );
 }

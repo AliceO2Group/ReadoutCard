@@ -75,7 +75,8 @@ class ProgramCleanup: public Program
         // This non-forced cleanup asks the ChannelMaster to clean up itself.
         // It will not succeed if the channel was not initialized properly before the running of this program.
         cout << "### Attempting cleanup...\n";
-        auto channel = ChannelUtilityFactory().getUtility(serialNumber, channelNumber);
+        auto params = AliceO2::Rorc::Parameters::makeParameters(serialNumber, channelNumber);
+        auto channel = ChannelUtilityFactory().getUtility(params);
         channel->utilityCleanupState();
         cout << "### Done!\n";
       }

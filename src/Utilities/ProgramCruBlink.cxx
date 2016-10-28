@@ -36,7 +36,8 @@ class ProgramCruBlink: public Program
 
       auto serialNumber = Options::getOptionSerialNumber(map);
       auto channelNumber = 0;
-      auto channel = AliceO2::Rorc::ChannelUtilityFactory().getUtility(serialNumber, channelNumber);
+      auto params = AliceO2::Rorc::Parameters::makeParameters(serialNumber, channelNumber);
+      auto channel = AliceO2::Rorc::ChannelUtilityFactory().getUtility(params);
 
       const auto cycle = std::chrono::milliseconds(250);
       bool nextLedState = true;

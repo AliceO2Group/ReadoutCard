@@ -9,11 +9,11 @@
 namespace AliceO2 {
 namespace Rorc {
 
-ChannelSlave::ChannelSlave(int serial, int channel)
- : mSerialNumber(serial),
-   mChannelNumber(channel),
-   mRorcDevice(serial),
-   mPdaBar(mRorcDevice.getPciDevice(), channel)
+ChannelSlave::ChannelSlave(const Parameters& parameters)
+ : mSerialNumber(parameters.getRequired<Parameters::SerialNumber>()),
+   mChannelNumber(parameters.getRequired<Parameters::ChannelNumber>()),
+   mRorcDevice(mSerialNumber),
+   mPdaBar(mRorcDevice.getPciDevice(), mChannelNumber)
 {
 }
 

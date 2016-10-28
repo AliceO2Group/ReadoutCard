@@ -91,7 +91,7 @@ struct Conv
 /// \param strings A container of strings to convert. Must support random access. Size must be equal or greater than
 ///   amount of arguments.
 /// \param args References to arguments that the conversions will be assigned to.
-template <typename Container, typename ...Args>
+template <typename Container = std::vector<std::string>, typename ...Args>
 void convertAssign(const Container& strings, Args&... args)
 {
   if (strings.size() < sizeof...(args)) {

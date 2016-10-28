@@ -22,7 +22,7 @@ class DummyChannelMaster final : public ChannelMasterInterface, public ChannelUt
 {
   public:
 
-    DummyChannelMaster(int serial, int channel, const Parameters::Map& params);
+    DummyChannelMaster(const Parameters& parameters);
     virtual ~DummyChannelMaster();
     virtual void resetChannel(ResetLevel::type resetLevel) override;
     virtual void startDma() override;

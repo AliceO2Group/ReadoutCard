@@ -20,7 +20,7 @@ class DummyChannelSlave : public ChannelSlaveInterface
 {
   public:
 
-    DummyChannelSlave(int serial, int channel);
+    DummyChannelSlave(const Parameters& parameters);
     virtual ~DummyChannelSlave();
     virtual uint32_t readRegister(int index) override;
     virtual void writeRegister(int index, uint32_t value) override;

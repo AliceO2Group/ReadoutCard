@@ -15,7 +15,7 @@ class CruChannelSlave: public ChannelSlave
 {
   public:
 
-    CruChannelSlave(int serial, int channel);
+    CruChannelSlave(const Parameters& parameters);
     virtual ~CruChannelSlave();
     virtual CardType::type getCardType();
 };

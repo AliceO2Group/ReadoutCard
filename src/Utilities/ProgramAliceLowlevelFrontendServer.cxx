@@ -67,7 +67,8 @@ class ProgramAliceLowlevelFrontendServer: public Program
     {
       int serialNumber = Options::getOptionSerialNumber(map);
       int channelNumber = Options::getOptionChannel(map);
-      auto channel = AliceO2::Rorc::ChannelFactory().getSlave(serialNumber, channelNumber);
+      auto params = AliceO2::Rorc::Parameters::makeParameters(serialNumber, channelNumber);
+      auto channel = AliceO2::Rorc::ChannelFactory().getSlave(params);
 
       if (getenv(std::string("DIM_DNS_NODE").c_str()) == nullptr) {
         BOOST_THROW_EXCEPTION(Exception()

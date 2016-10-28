@@ -278,14 +278,14 @@ ChannelParameters getOptionsChannelParameters(const boost::program_options::vari
   return cp;
 }
 
-Parameters::Map getOptionsParameterMap(const boost::program_options::variables_map& variablesMap)
+Parameters getOptionsParameterMap(const boost::program_options::variables_map& variablesMap)
 {
-  Parameters::Map map;
+  Parameters map;
   auto cp = getOptionsChannelParameters(variablesMap);
-  map.emplace("dma_page_size", std::to_string(cp.dma.pageSize));
-  map.emplace("dma_buffer_size", std::to_string(cp.dma.bufferSize));
-  map.emplace("generator_enabled", std::to_string(cp.generator.useDataGenerator));
-  map.emplace("generator_loopback_mode", LoopbackMode::toString(cp.generator.loopbackMode));
+  map.put<Parameters::DmaPageSize>(cp.dma.pageSize);
+  map.put<Parameters::DmaBufferSize>(cp.dma.bufferSize);
+  map.put<Parameters::GeneratorEnabled>(cp.generator.useDataGenerator);
+  map.put<Parameters::GeneratorLoopbackMode>(cp.generator.loopbackMode);
   return map;
 }
 

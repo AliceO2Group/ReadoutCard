@@ -45,8 +45,8 @@ static constexpr int CRORC_BUFFERS_PER_CHANNEL = 0;
 
 }
 
-CrorcChannelMaster::CrorcChannelMaster(int serial, int channel, const Parameters::Map& parameters)
-    : ChannelMaster(CARD_TYPE, serial, channel, parameters, CRORC_BUFFERS_PER_CHANNEL, allowedChannels())
+CrorcChannelMaster::CrorcChannelMaster(const Parameters& parameters)
+    : ChannelMaster(CARD_TYPE, parameters, CRORC_BUFFERS_PER_CHANNEL, allowedChannels())
 {
   using Util::resetSmartPtr;
   auto& params = getChannelParameters();
@@ -63,17 +63,13 @@ CrorcChannelMaster::CrorcChannelMaster(int serial, int channel, const Parameters
   mFifoBus = reinterpret_cast<ReadyFifo*>(const_cast<void*>(fifoAddress.bus));
   mFifoUser->reset();
 
-  if (getPageAddresses().size() <= CRU_DESCRIPTOR_ENTRIES) {
-    BOOST_THROW_EXCEPTION(CruException()
-        << errinfo_rorc_error_message("Insufficient amount of pages fit in DMA buffer"));
-  }
-
   mBufferPageIndexes.resize(READYFIFO_ENTRIES, -1);
   mPageWasReadOut.resize(READYFIFO_ENTRIES, true);
 
   if (getPageAddresses().size() <= READYFIFO_ENTRIES) {
     BOOST_THROW_EXCEPTION(CrorcException()
         << errinfo_rorc_error_message("Insufficient amount of pages fit in DMA buffer")
+        << errinfo_rorc_pages(getPageAddresses().size())
         << errinfo_rorc_dma_buffer_size(params.dma.bufferSize)
         << errinfo_rorc_dma_page_size(params.dma.pageSize));
   }

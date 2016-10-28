@@ -176,12 +176,13 @@ class ProgramDmaBench: public Program
       int serialNumber = Options::getOptionSerialNumber(map);
       int channelNumber = Options::getOptionChannel(map);
       auto params = Options::getOptionsParameterMap(map);
-      size_t pageSize = boost::lexical_cast<size_t>(params.at(Parameters::Keys::dmaPageSize()));
-      params[Parameters::Keys::dmaPageSize()] = std::to_string(PAGE_SIZE);
-      params[Parameters::Keys::generatorDataSize()] = std::to_string(PAGE_SIZE);
+      mPageSize = params.get<Parameters::DmaPageSize>().get();
+      params.put<Parameters::SerialNumber>(serialNumber);
+      params.put<Parameters::ChannelNumber>(channelNumber);
+      params.put<Parameters::GeneratorDataSize>(mPageSize);
 
       // Get master lock on channel
-      mChannel = ChannelFactory().getMaster(serialNumber, channelNumber, params);
+      mChannel = ChannelFactory().getMaster(params);
       std::this_thread::sleep_for(std::chrono::microseconds(500)); // XXX See README.md
 
       if (mOptions.resetChannel) {
@@ -361,7 +362,8 @@ class ProgramDmaBench: public Program
     {
       auto check = [&](auto patternFunction) {
         volatile uint32_t* page = _page.getAddressU32();
-        for (uint32_t i = 0; i < getPageSize32(); i += PATTERN_STRIDE)
+        auto pageSize32 = _page.getSize() / sizeof(int32_t);
+        for (uint32_t i = 0; i < pageSize32; i += PATTERN_STRIDE)
         {
           uint32_t expectedValue = patternFunction(i);
           uint32_t actualValue = page[i];
@@ -392,19 +394,10 @@ class ProgramDmaBench: public Program
 
     void resetPage(Page& page)
     {
-      for (size_t i = 0; i < getPageSize32(); i++) {
+      auto pageSize32 = page.getSize() / sizeof(int32_t);
+      for (size_t i = 0; i < pageSize32; i++) {
         pageData(page)[i] = BUFFER_DEFAULT_VALUE;
       }
-    }
-
-    size_t getPageSize()
-    {
-      return PAGE_SIZE;
-    }
-
-    size_t getPageSize32()
-    {
-      return getPageSize() / sizeof(int32_t);
     }
 
     void lowPriorityTasks()
@@ -496,7 +489,7 @@ class ProgramDmaBench: public Program
      {
        // Calculating throughput
        double runTime = std::chrono::duration<double>(mRunTime.end - mRunTime.start).count();
-       double bytes = double(mReadoutCount) * getPageSize();
+       double bytes = double(mReadoutCount) * mPageSize;
        double GB = bytes / (1000 * 1000 * 1000);
        double GBs = GB / runTime;
        double Gbs = GBs * 8;
@@ -547,11 +540,14 @@ class ProgramDmaBench: public Program
     void printToFile(Page& handle, int64_t pageNumber)
     {
       auto page = handle.getAddressU32();
+      auto pageSize = handle.getSize();
+      auto pageSize32 = pageSize / sizeof(int32_t);
 
       if (mOptions.fileOutputAscii) {
         mReadoutStream << "Event #" << pageNumber << '\n';
         int perLine = 8;
-        for (int i = 0; i < getPageSize32(); i += perLine) {
+
+        for (int i = 0; i < pageSize32; i += perLine) {
           for (int j = 0; j < perLine; ++j) {
             mReadoutStream << page[i + j] << ' ';
           }
@@ -560,7 +556,7 @@ class ProgramDmaBench: public Program
         mReadoutStream << '\n';
       } else if (mOptions.fileOutputBin) {
         // TODO Is there a more elegant way to write from volatile memory?
-        mReadoutStream.write(reinterpret_cast<char*>(const_cast<uint32_t*>(page)), getPageSize());
+        mReadoutStream.write(reinterpret_cast<char*>(const_cast<uint32_t*>(page)), pageSize);
       }
     }
 
@@ -615,6 +611,8 @@ class ProgramDmaBench: public Program
         TimePoint next; ///< Next pause at this time
         std::chrono::milliseconds length; ///< Next pause has this length
     } mRandomPausesSoft;
+
+    size_t mPageSize;
 };
 
 int main(int argc, char** argv)

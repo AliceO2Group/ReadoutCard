@@ -39,7 +39,8 @@ class ProgramPrintFifo: public Program
     {
       int serialNumber = Options::getOptionSerialNumber(map);
       int channelNumber = Options::getOptionChannel(map);
-      auto channel = ChannelUtilityFactory().getUtility(serialNumber, channelNumber);
+      auto params = AliceO2::Rorc::Parameters::makeParameters(serialNumber, channelNumber);
+      auto channel = ChannelUtilityFactory().getUtility(params);
 
       if (map.count("nopretty")) {
         // Dump contents

@@ -8,6 +8,7 @@
 #include "RorcDevice.h"
 #include "Pda/PdaBar.h"
 #include "RORC/ChannelSlaveInterface.h"
+#include "RORC/Parameters.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -19,7 +20,7 @@ class ChannelSlave: public ChannelSlaveInterface
 {
   public:
 
-    ChannelSlave(int serial, int channel);
+    ChannelSlave(const Parameters& parameters);
     ~ChannelSlave();
 
     virtual uint32_t readRegister(int index);

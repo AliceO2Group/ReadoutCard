@@ -44,19 +44,17 @@ class ProgramInitChannel: public Program
           (CONF_URI_OPTION.c_str(), po::value<std::string>(), "Use Configuration URI to get channel parameters");
     }
 
-    Parameters::Map getParametersFromConfiguration(const std::string& uri, CardType::type cardType,
+    Parameters getParametersFromConfiguration(const std::string& uri, CardType::type cardType,
         int serial, int channel)
     {
       auto conf = AliceO2::Configuration::ConfigurationFactory::getConfiguration(uri);
       const auto prefix = b::str(b::format("/RORC/card_%s/serial_%i/channel_%i/parameters/")
           % CardType::toString(cardType) % serial % channel);
 
-      Parameters::Map map;
-      for (const auto& parameterKey : Parameters::Keys::all()) {
-        std::string value = conf->getString(prefix + parameterKey).value();
-        map.emplace(parameterKey, value);
-      }
-      return map;
+      auto params = Parameters::makeParameters(serial, channel);
+      if (auto param = conf->getInt(prefix + "dma_buffer_size")) { params.put<Parameters::DmaBufferSize>(*param); }
+      if (auto param = conf->getInt(prefix + "dma_page_size")) { params.put<Parameters::DmaPageSize>(*param); }
+      return params;
     }
 
     virtual void run(const boost::program_options::variables_map& map)
@@ -75,7 +73,7 @@ class ProgramInitChannel: public Program
               : Options::getOptionsParameterMap(map);
 
           // Don't assign it to any value so it constructs and destructs completely before we say things are done
-          ChannelFactory().getMaster(serialNumber, channelNumber, parameters);
+          ChannelFactory().getMaster(parameters);
           cout << "Done!" << endl;
           return;
         }

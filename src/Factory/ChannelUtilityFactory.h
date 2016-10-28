@@ -7,6 +7,7 @@
 
 #include <memory>
 #include "ChannelUtilityInterface.h"
+#include "RORC/Parameters.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -22,12 +23,9 @@ class ChannelUtilityFactory
     ChannelUtilityFactory();
     virtual ~ChannelUtilityFactory();
 
-    /// Get a channel object with the given serial number and channel number.
-    /// It is not yet implemented fully, currently it will just pick the
-    /// first CRORC it comes across. If the PDA dependency is not available, a dummy implementation will be returned.
-    /// \param serialNumber The serial number of the card. Passing 'DUMMY_SERIAL_NUMBER' returns a dummy implementation
-    /// \param channelNumber The number of the channel to open.
-    UtilitySharedPtr getUtility(int serialNumber, int channelNumber);
+    /// Get a channel object with the given serial number and channel number that gives access to utility functions
+    /// Passing 'DUMMY_SERIAL_NUMBER' returns a dummy implementation
+    UtilitySharedPtr getUtility(const Parameters& params);
 };
 
 } // namespace Rorc

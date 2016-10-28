@@ -53,7 +53,9 @@ class ProgramListCards: public Program
         // Try to figure out the firmware version
         std::string firmware = "n/a";
         try {
-          auto firmwareVersion = ChannelUtilityFactory().getUtility(card.serialNumber, 0)->utilityGetFirmwareVersion();
+          Parameters params = Parameters::makeParameters(card.serialNumber, 0);
+          auto firmwareVersion =
+              ChannelUtilityFactory().getUtility(params)->utilityGetFirmwareVersion();
           firmware = std::to_string(firmwareVersion);
         } catch (const SharedStateException& e) {
           foundUninitialized = true;

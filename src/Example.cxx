@@ -54,14 +54,16 @@ void printPage(Rorc::ChannelMasterInterface::Page& page, int index, std::ostream
 
 } // Anonymous namespace
 
-Rorc::Parameters::Map makeParams()
+Rorc::Parameters makeParams()
 {
-  using namespace Rorc::Parameters;
-  return Map {
-      {Keys::dmaPageSize(),      std::to_string(pageSize)},
-      {Keys::dmaBufferSize(),    std::to_string(bufferSize)},
-      {Keys::generatorEnabled(), "true"},
-  };
+  using namespace Rorc;
+  Parameters params;
+  params.put<Parameters::SerialNumber>(serialNumber);
+  params.put<Parameters::ChannelNumber>(channelNumber);
+  params.put<Parameters::DmaPageSize>(pageSize);
+  params.put<Parameters::DmaBufferSize>(bufferSize);
+  params.put<Parameters::GeneratorEnabled>(true);
+  return params;
 }
 
 int main(int, char**)
@@ -74,8 +76,7 @@ int main(int, char**)
   try {
     // Get the channel master object
     cout << "\n### Acquiring channel master object" << endl;
-    std::shared_ptr<Rorc::ChannelMasterInterface> channel = Rorc::ChannelFactory().getMaster(serialNumber,
-        channelNumber, makeParams());
+    std::shared_ptr<Rorc::ChannelMasterInterface> channel = Rorc::ChannelFactory().getMaster(makeParams());
 
     // Start the DMA
     cout << "\n### Starting DMA" << endl;

@@ -12,8 +12,10 @@ using std::endl;
 namespace AliceO2 {
 namespace Rorc {
 
-DummyChannelSlave::DummyChannelSlave(int serial, int channel)
+DummyChannelSlave::DummyChannelSlave(const Parameters& parameters)
 {
+  auto serial = parameters.getRequired<Parameters::SerialNumber>();
+  auto channel = parameters.getRequired<Parameters::ChannelNumber>();
   cout << "DummyChannelSlave::DummyChannelSlave(serial:" << serial << ", channel:" << channel << ")" << endl;
 }
 

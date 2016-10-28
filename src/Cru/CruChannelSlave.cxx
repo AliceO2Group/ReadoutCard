@@ -8,8 +8,8 @@
 namespace AliceO2 {
 namespace Rorc {
 
-CruChannelSlave::CruChannelSlave(int serial, int channel)
-    : ChannelSlave(serial, channel)
+CruChannelSlave::CruChannelSlave(const Parameters& parameters)
+    : ChannelSlave(parameters)
 {
 }
 

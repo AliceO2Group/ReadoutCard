@@ -19,7 +19,7 @@ class CruChannelMaster final : public ChannelMaster
 {
   public:
 
-    CruChannelMaster(int serial, int channel, const Parameters::Map& params);
+    CruChannelMaster(const Parameters& parameters);
     virtual ~CruChannelMaster() override;
 
     virtual CardType::type getCardType() override;

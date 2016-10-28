@@ -8,6 +8,7 @@
 #include <cstdint>
 #include "RORC/CardType.h"
 #include "RORC/RegisterReadWriteInterface.h"
+#include "RORC/Parameters.h"
 
 namespace AliceO2 {
 namespace Rorc {

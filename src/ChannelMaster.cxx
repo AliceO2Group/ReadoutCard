@@ -72,45 +72,14 @@ void ChannelMaster::checkChannelNumber(const AllowedChannels& allowedChannels)
   }
 }
 
-ChannelParameters ChannelMaster::convertParameters(const Parameters::Map& map)
+ChannelParameters ChannelMaster::convertParameters(const Parameters& map)
 {
   ChannelParameters cp;
-
-  auto require = [&](const std::string& key) {
-    if (!map.count(key)) {
-      BOOST_THROW_EXCEPTION(ParameterException() << errinfo_rorc_error_message("Parameter '" + key + "' is required"));
-    }
-  };
-
-  using namespace Parameters::Keys;
-
-  auto convert = [&map](const auto& key, auto& destination) {
-    auto keyIter = map.find(key);
-    if (keyIter != map.end()) {
-      Util::lexicalCast(keyIter->second, destination);
-    }
-  };
-
-  convert(dmaBufferSize(), cp.dma.bufferSize);
-  convert(dmaPageSize(), cp.dma.pageSize);
-
-  if (map.count(generatorEnabled())) {
-    cp.generator.useDataGenerator = true;
-
-    if (map.count(generatorDataSize())) {
-      Util::lexicalCast(map.at(generatorDataSize()), cp.generator.dataSize);
-    }
-
-    if (map.count(generatorLoopbackMode())) {
-      try {
-        cp.generator.loopbackMode = LoopbackMode::fromString(map.at(generatorLoopbackMode()));
-      } catch (const std::out_of_range& e) {
-        BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-            << errinfo_rorc_error_message("Invalid value for parameter '" + generatorLoopbackMode() + "'"));
-      }
-    }
-  }
-
+  cp.dma.bufferSize = map.get<Parameters::DmaBufferSize>().get_value_or(4*1024*1024);
+  cp.dma.pageSize = map.get<Parameters::DmaPageSize>().get_value_or(8*1024);
+  cp.generator.useDataGenerator = map.get<Parameters::GeneratorEnabled>().get_value_or(true);
+  cp.generator.dataSize = map.get<Parameters::GeneratorDataSize>().get_value_or(cp.dma.pageSize);
+  cp.generator.loopbackMode = map.get<Parameters::GeneratorLoopbackMode>().get_value_or(LoopbackMode::Rorc);
   return cp;
 }
 
@@ -132,14 +101,16 @@ void ChannelMaster::validateParameters(const ChannelParameters& cp)
   }
 }
 
-ChannelMaster::ChannelMaster(CardType::type cardType, int serial, int channel, const Parameters::Map& parameterMap,
-    int additionalBuffers, const AllowedChannels& allowedChannels)
-    : mSerialNumber(serial), mChannelNumber(channel), dmaBuffersPerChannel(
-        additionalBuffers + CHANNELMASTER_DMA_BUFFERS_PER_CHANNEL), mDmaState(DmaState::STOPPED)
+ChannelMaster::ChannelMaster(CardType::type cardType, const Parameters& parameters, int additionalBuffers,
+    const AllowedChannels& allowedChannels)
+    : mSerialNumber(parameters.getRequired<Parameters::SerialNumber>()),
+      mChannelNumber(parameters.getRequired<Parameters::ChannelNumber>()),
+      dmaBuffersPerChannel(additionalBuffers + CHANNELMASTER_DMA_BUFFERS_PER_CHANNEL),
+      mDmaState(DmaState::STOPPED)
 {
   using namespace Util;
 
-  mChannelParameters = convertParameters(parameterMap);
+  mChannelParameters = convertParameters(parameters);
   validateParameters(mChannelParameters);
 
   checkChannelNumber(allowedChannels);

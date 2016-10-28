@@ -49,8 +49,8 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
     /// \param additionalBuffers Subclasses must provide here the amount of DMA buffers the channel uses in total,
     ///        excluding the one used by the ChannelMaster itself.
     /// \param allowedChannels Channels allowed by this card type
-    ChannelMaster(CardType::type cardType, int serial, int channel, const Parameters::Map& parameterMap,
-        int additionalBuffers, const AllowedChannels& allowedChannels);
+    ChannelMaster(CardType::type cardType, const Parameters& parameters, int additionalBuffers,
+        const AllowedChannels& allowedChannels);
 
     ~ChannelMaster();
 
@@ -62,7 +62,7 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
     virtual void setLogLevel(InfoLogger::InfoLogger::Severity severity) final override;
 
     /// Convert ParameterMap to ChannelParameters
-    static ChannelParameters convertParameters(const Parameters::Map& params);
+    static ChannelParameters convertParameters(const Parameters& params);
     static void validateParameters(const ChannelParameters& ps);
 
   protected:

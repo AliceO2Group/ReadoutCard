@@ -29,13 +29,14 @@ ChannelUtilityFactory::~ChannelUtilityFactory()
 {
 }
 
-auto ChannelUtilityFactory::getUtility(int serial, int channel) -> UtilitySharedPtr
+auto ChannelUtilityFactory::getUtility(const Parameters& params) -> UtilitySharedPtr
 {
+  auto serial = params.getRequired<Parameters::SerialNumber>();
   return makeChannel<ChannelUtilityInterface>(serial, DUMMY_SERIAL_NUMBER
-    , DummyTag, [&]{ return std::make_shared<DummyChannelMaster>(serial, channel, Parameters::Map()); }
+    , DummyTag, [&]{ return std::make_shared<DummyChannelMaster>(params); }
 #ifdef ALICEO2_RORC_PDA_ENABLED
-    , CrorcTag, [&]{ return std::make_shared<CrorcChannelMaster>(serial, channel, Parameters::Map()); }
-    , CruTag,   [&]{ return std::make_shared<CruChannelMaster>(serial, channel, Parameters::Map()); }
+    , CrorcTag, [&]{ return std::make_shared<CrorcChannelMaster>(params); }
+    , CruTag,   [&]{ return std::make_shared<CruChannelMaster>(params); }
 #endif
     );
 }

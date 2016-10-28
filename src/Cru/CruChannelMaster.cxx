@@ -46,19 +46,16 @@ static constexpr int CRU_BUFFERS_PER_CHANNEL = 0;
 
 } // Anonymous namespace
 
-CruChannelMaster::CruChannelMaster(int serial, int channel, const Parameters::Map& params)
-    : ChannelMaster(CARD_TYPE, serial, channel, params, CRU_BUFFERS_PER_CHANNEL, allowedChannels())
+CruChannelMaster::CruChannelMaster(const Parameters& params)
+    : ChannelMaster(CARD_TYPE, params, CRU_BUFFERS_PER_CHANNEL, allowedChannels())
 {
-  using Util::resetSmartPtr;
-
-  initFifo();
-
-  if (getPageAddresses().size() <= CRU_DESCRIPTOR_ENTRIES) {
+  if (getChannelParameters().dma.pageSize != DMA_PAGE_SIZE) {
     BOOST_THROW_EXCEPTION(CruException()
-        << errinfo_rorc_error_message("Insufficient amount of pages fit in DMA buffer")
-        << errinfo_rorc_dma_buffer_pages(getPageAddresses().size()));
+        << errinfo_rorc_error_message("CRU only supports an 8kB page size")
+        << errinfo_rorc_dma_page_size(getChannelParameters().dma.pageSize));
   }
 
+  initFifo();
   mPageManager.setAmountOfPages(getPageAddresses().size());
 }
 
@@ -124,7 +121,10 @@ void CruChannelMaster::initFifo()
 
   if (getPageAddresses().size() <= CRU_DESCRIPTOR_ENTRIES) {
     BOOST_THROW_EXCEPTION(CruException()
-        << errinfo_rorc_error_message("Insufficient amount of pages fit in DMA buffer"));
+        << errinfo_rorc_error_message("Insufficient amount of pages fit in DMA buffer")
+        << errinfo_rorc_pages(getPageAddresses().size())
+        << errinfo_rorc_dma_buffer_size(getChannelParameters().dma.bufferSize)
+        << errinfo_rorc_dma_page_size(getChannelParameters().dma.pageSize));
   }
 
   mFifoUser->resetStatusEntries();

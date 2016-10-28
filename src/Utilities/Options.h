@@ -41,7 +41,7 @@ int getOptionChannel(const boost::program_options::variables_map& variablesMap);
 int getOptionSerialNumber(const boost::program_options::variables_map& variablesMap);
 int getOptionRegisterRange(const boost::program_options::variables_map& variablesMap);
 ChannelParameters getOptionsChannelParameters(const boost::program_options::variables_map& variablesMap);
-Parameters::Map getOptionsParameterMap(const boost::program_options::variables_map& variablesMap);
+Parameters getOptionsParameterMap(const boost::program_options::variables_map& variablesMap);
 
 } // namespace Options
 } // namespace Utilities

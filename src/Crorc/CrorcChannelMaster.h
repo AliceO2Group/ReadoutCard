@@ -20,7 +20,7 @@ class CrorcChannelMaster final : public ChannelMaster
 {
   public:
 
-    CrorcChannelMaster(int serial, int channel, const Parameters::Map& params);
+    CrorcChannelMaster(const Parameters& parameters);
     virtual ~CrorcChannelMaster() override;
 
     virtual CardType::type getCardType() override;

@@ -27,15 +27,12 @@ class ChannelFactory
     virtual ~ChannelFactory();
 
     /// Get a channel object with the given serial number and channel number.
-    /// \param serialNumber The serial number of the card. Passing 'DUMMY_SERIAL_NUMBER' returns a dummy implementation
-    /// \param channelNumber The number of the channel to open.
-    /// \param params Parameters to pass onto the ChannelMasterInterface implementation
-    MasterSharedPtr getMaster(int serialNumber, int channelNumber, const Parameters::Map& params);
+    /// Passing 'DUMMY_SERIAL_NUMBER' as serial number returns a dummy implementation
+    MasterSharedPtr getMaster(const Parameters& params);
 
     /// Get a channel object with the given serial number and channel number.
-    /// \param serialNumber The serial number of the card. Passing 'DUMMY_SERIAL_NUMBER' returns a dummy implementation
-    /// \param channelNumber The number of the channel to open.
-    SlaveSharedPtr getSlave(int serialNumber, int channelNumber);
+    /// Passing 'DUMMY_SERIAL_NUMBER' as serial number returns a dummy implementation
+    SlaveSharedPtr getSlave(const Parameters& params);
 };
 
 } // namespace Rorc

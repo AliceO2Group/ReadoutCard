@@ -49,7 +49,8 @@ class ProgramSanityCheck: public Program
         return;
       }
 
-      auto channel = AliceO2::Rorc::ChannelUtilityFactory().getUtility(serialNumber, channelNumber);
+      auto params = AliceO2::Rorc::Parameters::makeParameters(serialNumber, channelNumber);
+      auto channel = AliceO2::Rorc::ChannelUtilityFactory().getUtility(params);
       channel->utilitySanityCheck(cout);
     }
 };

@@ -33,7 +33,8 @@ class ProgramRegisterRead: public Program
       int serialNumber = Options::getOptionSerialNumber(map);
       int address = Options::getOptionRegisterAddress(map);
       int channelNumber = Options::getOptionChannel(map);
-      auto channel = AliceO2::Rorc::ChannelFactory().getSlave(serialNumber, channelNumber);
+      auto params = AliceO2::Rorc::Parameters::makeParameters(serialNumber, channelNumber);
+      auto channel = AliceO2::Rorc::ChannelFactory().getSlave(params);
 
       // Registers are indexed by 32 bits (4 bytes)
       uint32_t value = channel->readRegister(address / 4);

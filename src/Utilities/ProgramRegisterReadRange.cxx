@@ -38,7 +38,8 @@ class ProgramRegisterReadRange: public Program
       int baseAddress = Options::getOptionRegisterAddress(map);
       int channelNumber = Options::getOptionChannel(map);
       int range = Options::getOptionRegisterRange(map);
-      auto channel = AliceO2::Rorc::ChannelFactory().getSlave(serialNumber, channelNumber);
+      auto params = AliceO2::Rorc::Parameters::makeParameters(serialNumber, channelNumber);
+      auto channel = AliceO2::Rorc::ChannelFactory().getSlave(params);
 
       std::vector<uint32_t> values(range);
 

@@ -15,7 +15,7 @@ class CrorcChannelSlave: public ChannelSlave
 {
   public:
 
-    CrorcChannelSlave(int serial, int channel);
+    CrorcChannelSlave(const Parameters& parameters);
     virtual ~CrorcChannelSlave();
     virtual CardType::type getCardType();
 };

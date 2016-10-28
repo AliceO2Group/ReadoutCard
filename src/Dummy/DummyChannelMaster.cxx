@@ -15,16 +15,13 @@ using std::endl;
 namespace AliceO2 {
 namespace Rorc {
 
-DummyChannelMaster::DummyChannelMaster(int serial, int channel, const Parameters::Map& params) : mPageCounter(128)
+DummyChannelMaster::DummyChannelMaster(const Parameters& params) : mPageCounter(128)
 {
 //  cout << "DummyChannelMaster::DummyChannelMaster(serial:" << serial << ", channel:" << channel << ", params:...)"
 //      << endl;
 
-  std::vector<std::string> strings {
-    params.at(Parameters::Keys::dmaBufferSize()),
-    params.at(Parameters::Keys::dmaPageSize())
-  };
-  Util::convertAssign(strings, mBufferSize, mPageSize);
+  mBufferSize = params.get<Parameters::DmaBufferSize>().get_value_or(8*1024);
+  mPageSize = params.get<Parameters::DmaPageSize>().get_value_or(8*1024);
 
   mMaxPages = mBufferSize / mPageSize;
   mPageBuffer.resize(mBufferSize, -1);
