@@ -17,8 +17,9 @@ namespace AliceO2 {
 namespace Rorc {
 
 /// Class for channel parameters
-struct Parameters
+class Parameters
 {
+  public:
     using Variant = boost::variant<size_t, int32_t, bool, LoopbackMode::type>;
     using Key = std::string;
     using Map = std::map<Key, Variant>;
@@ -74,7 +75,7 @@ struct Parameters
     template <typename Parameter>
     void put(const typename Parameter::type& value)
     {
-      map[Parameter::key()] = value;
+      mMap[Parameter::key()] = value;
     }
 
     /// Get a parameter from the map
@@ -85,8 +86,8 @@ struct Parameters
     template <typename Parameter>
     boost::optional<typename Parameter::type> get() const
     {
-      auto iterator = map.find(Parameter::key());
-      if (iterator != map.end()) {
+      auto iterator = mMap.find(Parameter::key());
+      if (iterator != mMap.end()) {
         Variant variant = iterator->second;
         auto value = boost::get<typename Parameter::type>(variant);
         return value;
@@ -123,7 +124,13 @@ struct Parameters
       return params;
     }
 
-    Map map;
+    const Map& getMap() const
+    {
+      return mMap;
+    }
+
+  private:
+    Map mMap;
 };
 
 } // namespace Rorc
