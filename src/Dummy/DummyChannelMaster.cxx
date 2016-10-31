@@ -15,6 +15,8 @@ using std::endl;
 namespace AliceO2 {
 namespace Rorc {
 
+constexpr auto endm = InfoLogger::InfoLogger::StreamOps::endm;
+
 DummyChannelMaster::DummyChannelMaster(const Parameters& params) : mPageCounter(128)
 {
 //  cout << "DummyChannelMaster::DummyChannelMaster(serial:" << serial << ", channel:" << channel << ", params:...)"

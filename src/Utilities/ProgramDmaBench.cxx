@@ -5,6 +5,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <iomanip>
 #include <stdexcept>
 #include <chrono>
@@ -16,6 +17,8 @@
 #include <boost/lexical_cast.hpp>
 #include "Crorc/CrorcChannelMaster.h"
 #include "Cru/CruChannelMaster.h"
+#include "ExceptionLogging.h"
+#include "InfoLogger/InfoLogger.hxx"
 #include "RORC/ChannelFactory.h"
 #include "RORC/Parameters.h"
 #include "Utilities/Common.h"
@@ -23,25 +26,9 @@
 #include "Utilities/Program.h"
 #include "Util.h"
 
-
-#define ALICEO2_RORC_DEVIRTUALIZE_CHANNEL(_channelptr_in, _lambda)\
-  do {\
-    auto _channelptr = _channelptr_in;\
-    auto _cardtype = _channelptr->getCardType();\
-    switch (_cardtype) {\
-      case (CardType::Cru): {_lambda(dynamic_cast<CruChannelMaster*>(_channelptr));} break;\
-      case (CardType::Crorc): {_lambda(dynamic_cast<CrorcChannelMaster*>(_channelptr));} break;\
-      default: {_lambda(_channelptr);} break;\
-    }\
-  } while (false);
-
-
-// This dynamic_casts the ChannelMasterInterface to a CruChannelMaster, allowing the compiler to more easily inline
-// functions and stuff
-//#define DEVIRTUALIZE_CHANNELMASTER
-
 using namespace AliceO2::Rorc::Utilities;
 using namespace AliceO2::Rorc;
+using namespace AliceO2::InfoLogger;
 using std::cout;
 using std::endl;
 using namespace std::literals;
@@ -54,6 +41,8 @@ using PageSharedPtr = ChannelMasterInterface::PageSharedPtr;
 using MasterSharedPtr = ChannelMasterInterface::MasterSharedPtr;
 
 namespace {
+constexpr auto endm = InfoLogger::StreamOps::endm;
+
 /// Determines how often the status display refreshes
 constexpr auto DISPLAY_INTERVAL = 10ms;
 
@@ -75,8 +64,6 @@ constexpr uint32_t BUFFER_DEFAULT_VALUE = 0xCcccCccc;
 
 /// The data emulator writes to every 8th 32-bit word
 constexpr uint32_t PATTERN_STRIDE = 8;
-
-constexpr size_t PAGE_SIZE = 8*1024;
 
 /// Fields: Time(hour:minute:second), Pages, Errors, °C
 const std::string PROGRESS_FORMAT_HEADER("  %-8s   %-12s  %-12s  %-10.1f");
@@ -217,20 +204,7 @@ class ProgramDmaBench: public Program
       cout << "Pushed " << mPushCount << " pages" << endl;
     }
 
-
-    template <typename CallableCru, typename CallableCrorc>
-    void devirtualizeChannel(ChannelMasterInterface* channel, CallableCru cru,
-        CallableCrorc crorc)
-    {
-      switch (channel->getCardType()) {
-        case (CardType::Cru): {cru(dynamic_cast<CruChannelMaster*>(channel));} break;
-        case (CardType::Crorc): {crorc(dynamic_cast<CrorcChannelMaster*>(channel));} break;
-        default: {};
-      }
-    }
-
   private:
-
     void dmaLoop()
     {
       while (!mDmaLoopBreak) {

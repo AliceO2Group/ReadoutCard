@@ -25,7 +25,7 @@ class PdaDevice
     int getPciDeviceCount();
     PciDevice* getPciDevice(int index);
 
-    const std::vector<PciDevice*>& getPciDevices() const
+    const std::vector<PciDevice*> getPciDevices() const
     {
       return mPciDevices;
     }

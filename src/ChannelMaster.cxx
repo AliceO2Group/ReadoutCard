@@ -6,6 +6,7 @@
 #include "ChannelMaster.h"
 #include <iostream>
 #include "ChannelPaths.h"
+#include "Pda/Pda.h"
 #include "Util.h"
 
 namespace AliceO2 {
@@ -49,19 +50,12 @@ void assertFileSystemType(const bfs::path& path, const std::set<std::string>& va
   }
 }
 
-static constexpr int CHANNELMASTER_DMA_BUFFERS_PER_CHANNEL = 1;
-static constexpr int BUFFER_INDEX_PAGES = 0;
+int getBufferId(int channel)
+{
+  return channel;
+}
 
 } // Anonymous namespace
-
-int ChannelMaster::getBufferId(int index) const
-{
-  if (index >= dmaBuffersPerChannel || index < 0) {
-    BOOST_THROW_EXCEPTION(InvalidParameterException()
-        << errinfo_rorc_error_message("Tried to get buffer ID using invalid index"));
-  }
-  return mChannelNumber * dmaBuffersPerChannel + index;
-}
 
 void ChannelMaster::checkChannelNumber(const AllowedChannels& allowedChannels)
 {
@@ -101,11 +95,10 @@ void ChannelMaster::validateParameters(const ChannelParameters& cp)
   }
 }
 
-ChannelMaster::ChannelMaster(CardType::type cardType, const Parameters& parameters, int additionalBuffers,
-    const AllowedChannels& allowedChannels)
+ChannelMaster::ChannelMaster(CardType::type cardType, const Parameters& parameters,
+    const AllowedChannels& allowedChannels, size_t fifoSize)
     : mSerialNumber(parameters.getRequired<Parameters::SerialNumber>()),
       mChannelNumber(parameters.getRequired<Parameters::ChannelNumber>()),
-      dmaBuffersPerChannel(additionalBuffers + CHANNELMASTER_DMA_BUFFERS_PER_CHANNEL),
       mDmaState(DmaState::STOPPED)
 {
   using namespace Util;
@@ -140,7 +133,9 @@ ChannelMaster::ChannelMaster(CardType::type cardType, const Parameters& paramete
       getChannelParameters().dma.bufferSize);
 
   resetSmartPtr(mBufferPages, mRorcDevice->getPciDevice(), mMappedFilePages->getAddress(), mMappedFilePages->getSize(),
-      getBufferId(BUFFER_INDEX_PAGES));
+      getBufferId(mChannelNumber));
+
+  partitionDmaBuffer(fifoSize, mChannelParameters.dma.pageSize);
 }
 
 ChannelMaster::~ChannelMaster()
@@ -153,9 +148,9 @@ void ChannelMaster::startDma()
   CHANNELMASTER_LOCKGUARD();
 
   if (mDmaState == DmaState::UNKNOWN) {
-    cout << "Warning: Unknown DMA state" << endl;
+    log("Unknown DMA state");
   } else if (mDmaState == DmaState::STARTED) {
-    cout << "Warning: DMA already started. Ignoring startDma() call" << endl;
+    log("DMA already started. Ignoring startDma() call");
   } else {
     deviceStartDma();
   }
@@ -168,9 +163,9 @@ void ChannelMaster::stopDma()
   CHANNELMASTER_LOCKGUARD();
 
   if (mDmaState == DmaState::UNKNOWN) {
-    cout << "Warning: Unknown DMA state" << endl;
+    log("Unknown DMA state");
   } else if (mDmaState == DmaState::STOPPED) {
-    cout << "Warning: DMA already stopped. Ignoring stopDma() call" << endl;
+    log("Warning: DMA already stopped. Ignoring stopDma() call");
   } else {
     deviceStopDma();
   }
@@ -206,6 +201,18 @@ void ChannelMaster::setLogLevel(InfoLogger::InfoLogger::Severity severity)
 {
   mLogLevel = severity;
 }
+
+void ChannelMaster::partitionDmaBuffer(size_t fifoSize, size_t pageSize)
+{
+  /// Amount of space reserved for the FIFO, we use multiples of the page size for uniformity
+  size_t fifoSpace = ((fifoSize / pageSize) + 1) * pageSize;
+  PageAddress fifoAddress;
+  std::tie(fifoAddress, mPageAddresses) = Pda::partitionScatterGatherList(mBufferPages->getScatterGatherList(),
+      fifoSpace, pageSize);
+  mFifoAddressUser = const_cast<void*>(fifoAddress.user);
+  mFifoAddressBus = const_cast<void*>(fifoAddress.bus);
+}
+
 
 } // namespace Rorc
 } // namespace AliceO2

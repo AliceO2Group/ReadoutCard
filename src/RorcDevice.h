@@ -19,24 +19,21 @@ class RorcDevice
 {
   public:
     RorcDevice(int serialNumber);
-
-    /// Workaround to be able to use new and old CRU serial number location
-    RorcDevice(int serialNumber, bool useNewCruSerialLocation);
     ~RorcDevice();
 
     const PciId& getPciId() const
     {
-      return mPciId;
+      return mDescriptor.pciId;
     }
 
     CardType::type getCardType() const
     {
-      return mCardType;
+      return mDescriptor.cardType;
     }
 
     int getSerialNumber() const
     {
-      return mSerialNumber;
+      return mDescriptor.serialNumber;
     }
 
     PciDevice* getPciDevice() const
@@ -62,9 +59,7 @@ class RorcDevice
   private:
     boost::scoped_ptr<Pda::PdaDevice> mPdaDevice;
     PciDevice* mPciDevice;
-    PciId mPciId;
-    int mSerialNumber;
-    CardType::type mCardType;
+    CardDescriptor mDescriptor;
 };
 
 } // namespace Rorc

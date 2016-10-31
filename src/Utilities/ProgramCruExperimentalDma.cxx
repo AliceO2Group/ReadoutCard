@@ -327,9 +327,6 @@ class ProgramCruExperimentalDma: public Program
           ("cumulative-idle",
                po::bool_switch(&mOptions.cumulativeIdle),
                "Calculate cumulative idle count")
-          ("old-serial",
-               po::bool_switch(&mOptions.oldSerialLocation),
-               "Use old serial number location")
           ("log-idle",
               po::bool_switch(&mOptions.logIdle),
               "Log idle counter");
@@ -471,22 +468,22 @@ class ProgramCruExperimentalDma: public Program
       }
 
       // Finish up
-      mIdleCountLower32 = bar(0x210/4);
-      mIdleCountUpper32 = bar(0x23c/4);
+      mIdleCountLower32 = bar(Register::IDLE_COUNTER_LOWER);
+      mIdleCountUpper32 = bar(Register::IDLE_COUNTER_UPPER);
+      mIdleMaxValue = bar(Register::MAX_IDLE_VALUE);
       mRunTime.end = std::chrono::high_resolution_clock::now();
       outputErrors();
       outputStats();
     }
-
-    uint32_t mIdleCountLower32 = 0;
-    uint32_t mIdleCountUpper32 = 0;
 
     void acknowledgePage()
     {
       bar(Register::DMA_COMMAND) = 0x1;
 
       if (mOptions.cumulativeIdle || mOptions.logIdle) {
-        uint32_t idle = bar(Register::IDLE_COUNTER);
+        uint64_t idleLower = bar(Register::IDLE_COUNTER_LOWER);
+        uint64_t idleUpper = bar(Register::IDLE_COUNTER_UPPER);
+        uint64_t idle = idleUpper << 32 + idleLower;
 
         if (mOptions.cumulativeIdle) {
           mIdleCountCumulative += idle;
@@ -570,7 +567,7 @@ class ProgramCruExperimentalDma: public Program
     /// Initializes PDA objects and accompanying shared memory files
     void initPda()
     {
-      Util::resetSmartPtr(mRorcDevice, mOptions.serialNumber, !mOptions.oldSerialLocation);
+      Util::resetSmartPtr(mRorcDevice, mOptions.serialNumber);
       Util::resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), mChannelNumber);
       Util::resetSmartPtr(mMappedFilePages, DMA_BUFFER_PAGES_PATH.c_str(), DMA_BUFFER_PAGES_SIZE);
       Util::resetSmartPtr(mBufferPages, mRorcDevice->getPciDevice(), mMappedFilePages->getAddress(),
@@ -909,6 +906,7 @@ class ProgramCruExperimentalDma: public Program
       }
       stream << formatHex % "idle_cnt lower" % mIdleCountLower32;
       stream << formatHex % "idle_cnt upper" % mIdleCountUpper32;
+      stream << formatHex % "max_idle_value" % mIdleMaxValue;
       stream << '\n';
 
       auto str = stream.str();
@@ -1025,7 +1023,6 @@ class ProgramCruExperimentalDma: public Program
         bool noTwoHundred;
         bool logIdle;
         bool cumulativeIdle;
-        bool oldSerialLocation;
         int serialNumber;
     } mOptions;
 
@@ -1157,6 +1154,9 @@ class ProgramCruExperimentalDma: public Program
     int mChannelNumber = 0;
 
     int64_t mIdleCountCumulative = 0;
+    uint32_t mIdleCountLower32 = 0;
+    uint32_t mIdleCountUpper32 = 0;
+    uint32_t mIdleMaxValue = 0;
 };
 
 } // Anonymous namespace

@@ -65,6 +65,16 @@ class CrorcChannelMaster final : public ChannelMaster
         };
     };
 
+    ReadyFifo* getFifoUser()
+    {
+      return reinterpret_cast<ReadyFifo*>(getFifoAddressUser());
+    }
+
+    ReadyFifo* getFifoBus()
+    {
+      return reinterpret_cast<ReadyFifo*>(getFifoAddressBus());
+    }
+
     /// Enables data receiving in the RORC
     void startDataReceiving();
 

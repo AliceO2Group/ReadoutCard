@@ -43,14 +43,11 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
 
     /// Constructor for the ChannelMaster object
     /// \param cardType Type of the card
-    /// \param serial Serial number of the card
-    /// \param channel Channel number of the channel
-    /// \param params Parameters of the channel
-    /// \param additionalBuffers Subclasses must provide here the amount of DMA buffers the channel uses in total,
-    ///        excluding the one used by the ChannelMaster itself.
+    /// \param parameters Parameters of the channel
     /// \param allowedChannels Channels allowed by this card type
-    ChannelMaster(CardType::type cardType, const Parameters& parameters, int additionalBuffers,
-        const AllowedChannels& allowedChannels);
+    /// \param fifoSize Size of the Firmware FIFO in the DMA buffer
+    ChannelMaster(CardType::type cardType, const Parameters& parameters, const AllowedChannels& allowedChannels, size_t
+        fifoSize);
 
     ~ChannelMaster();
 
@@ -61,18 +58,9 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
     virtual void writeRegister(int index, uint32_t value) final override;
     virtual void setLogLevel(InfoLogger::InfoLogger::Severity severity) final override;
 
-    /// Convert ParameterMap to ChannelParameters
-    static ChannelParameters convertParameters(const Parameters& params);
-    static void validateParameters(const ChannelParameters& ps);
-
   protected:
     using Mutex = std::mutex;
     using LockGuard = std::lock_guard<Mutex>;
-
-    /// Get the buffer ID belonging to the buffer. Note that index 0 is reserved for use by ChannelMaster
-    /// See dmaBuffersPerChannel() for more info
-    /// Non-virtual because it must be callable in constructors, and there's no need to override it.
-    int getBufferId(int index) const;
 
     /// Template method called by startDma() to do device-specific (CRORC, RCU...) actions
     /// Note: subclasses should not call getLockGuard() in this function, as the ChannelMaster will have the lock
@@ -122,6 +110,16 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
           UNKNOWN = 0, STOPPED = 1, STARTED = 2
         };
     };
+
+    void* getFifoAddressBus() const
+    {
+      return mFifoAddressBus;
+    }
+
+    void* getFifoAddressUser() const
+    {
+      return mFifoAddressUser;
+    }
 
     Mutex& getMutex()
     {
@@ -183,7 +181,39 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
       return mLogger;
     }
 
+    InfoLogger::InfoLogger::Severity getLogLevel()
+    {
+      return mLogLevel;
+    }
+
+    void log(const std::string& message, boost::optional<InfoLogger::InfoLogger::Severity> severity = boost::none)
+    {
+      mLogger << severity.get_value_or(mLogLevel);
+      mLogger << message;
+      mLogger << InfoLogger::InfoLogger::endm;
+    }
+
+    /// Log a message using a callable, which is passed the logger instance
+    template <class Callable>
+    void withLogger(Callable callable, boost::optional<InfoLogger::InfoLogger::Severity> severity = boost::none)
+    {
+        mLogger << severity.get_value_or(mLogLevel);
+        callable(mLogger);
+        mLogger << InfoLogger::InfoLogger::endm;
+    }
+
   private:
+
+    /// Convert ParameterMap to ChannelParameters
+    static ChannelParameters convertParameters(const Parameters& params);
+
+    /// Validate ChannelParameters
+    static void validateParameters(const ChannelParameters& ps);
+
+    /// Helper function for partitioning the DMA buffer into FIFO and data pages
+    void partitionDmaBuffer(size_t fifoSize, size_t pageSize);
+
+    /// Check if the channel number is valid
     void checkChannelNumber(const AllowedChannels& allowedChannels);
 
     /// Mutex to lock thread-unsafe operations
@@ -197,11 +227,6 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
 
     /// DMA channel number
     const int mChannelNumber;
-
-    /// Amount of DMA buffers per channel that will be registered to PDA
-    /// Is the sum of the buffers needed by this class and by the subclass. The subclass indicates its need in the
-    /// constructor of this class.
-    const int dmaBuffersPerChannel;
 
     /// Lock that guards against both inter- and intra-process ownership
     boost::scoped_ptr<Interprocess::Lock> mInterprocessLock;
@@ -220,6 +245,12 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
 
     /// Addresses to pages in the DMA buffer
     std::vector<PageAddress> mPageAddresses;
+
+    /// Userspace address of FIFO in DMA buffer
+    void* mFifoAddressUser;
+
+    /// Bus address of FIFO in DMA buffer
+    void* mFifoAddressBus;
 
     /// Parameters of this channel TODO refactor
     ChannelParameters mChannelParameters;

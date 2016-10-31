@@ -13,6 +13,7 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/lexical_cast.hpp>
 #include <string>
+#include "InfoLogger/InfoLogger.hxx"
 #include "RORC/Exception.h"
 
 namespace AliceO2 {

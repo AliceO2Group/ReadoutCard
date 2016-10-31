@@ -14,7 +14,6 @@
 #include "c/rorc/ddl_def.h"
 #include "ChannelPaths.h"
 #include "ChannelUtilityImpl.h"
-#include "Pda/Pda.h"
 #include "RorcStatusCode.h"
 #include "Util.h"
 
@@ -39,29 +38,15 @@ namespace Rorc {
     << errinfo_rorc_error_message(_err_message) \
     << errinfo_rorc_status_code(_status_code)
 
-namespace {
-/// Amount of additional DMA buffers for this channel
-static constexpr int CRORC_BUFFERS_PER_CHANNEL = 0;
-
-}
-
 CrorcChannelMaster::CrorcChannelMaster(const Parameters& parameters)
-    : ChannelMaster(CARD_TYPE, parameters, CRORC_BUFFERS_PER_CHANNEL, allowedChannels())
+    : ChannelMaster(CARD_TYPE, parameters, allowedChannels(), sizeof(ReadyFifo))
 {
   using Util::resetSmartPtr;
   auto& params = getChannelParameters();
 
   ChannelPaths paths(CARD_TYPE, getSerialNumber(), getChannelNumber());
 
-  // Initialize the page addresses
-  /// Amount of space reserved for the FIFO, we use multiples of the page size for uniformity
-  size_t fifoSpace = ((sizeof(ReadyFifo) / params.dma.pageSize) + 1) * params.dma.pageSize;
-  PageAddress fifoAddress;
-  std::tie(fifoAddress, getPageAddresses()) = Pda::partitionScatterGatherList(getBufferPages().getScatterGatherList(),
-      fifoSpace, params.dma.pageSize);
-  mFifoUser = reinterpret_cast<ReadyFifo*>(const_cast<void*>(fifoAddress.user));
-  mFifoBus = reinterpret_cast<ReadyFifo*>(const_cast<void*>(fifoAddress.bus));
-  mFifoUser->reset();
+  getFifoUser()->reset();
 
   mBufferPageIndexes.resize(READYFIFO_ENTRIES, -1);
   mPageWasReadOut.resize(READYFIFO_ENTRIES, true);
@@ -117,7 +102,7 @@ void CrorcChannelMaster::deviceStartDma()
   }
 
   std::this_thread::sleep_for(10ms);
-  mFifoUser->reset();
+  getFifoUser()->reset();
 }
 
 int rorcStopDataGenerator(volatile uint32_t* buff)
@@ -222,7 +207,7 @@ void CrorcChannelMaster::initializeFreeFifo()
 {
   // Pushing a given number of pages to the firmware FIFO.
   for(int i = 0; i < READYFIFO_ENTRIES; ++i){
-    mFifoUser->entries[i].reset();
+    getFifoUser()->entries[i].reset();
     pushFreeFifoPage(i, getPageAddresses()[i].bus);
   }
 }
@@ -291,8 +276,8 @@ void CrorcChannelMaster::pushFreeFifoPage(int readyFifoIndex, volatile void* pag
 
 CrorcChannelMaster::DataArrivalStatus::type CrorcChannelMaster::dataArrived(int index)
 {
-  auto length = mFifoUser->entries[index].length;
-  auto status = mFifoUser->entries[index].status;
+  auto length = getFifoUser()->entries[index].length;
+  auto status = getFifoUser()->entries[index].status;
 
   if (status == -1) {
     return DataArrivalStatus::NoneArrived;
@@ -333,7 +318,7 @@ int CrorcChannelMaster::fillFifo(int maxFill)
   };
 
   auto resetDescriptor = [&](int descriptorIndex) {
-    mFifoUser->entries[descriptorIndex].reset();
+    getFifoUser()->entries[descriptorIndex].reset();
   };
 
   auto push = [&](int bufferIndex, int descriptorIndex) {
@@ -439,7 +424,7 @@ void CrorcChannelMaster::crorcCheckFreeFifoEmpty()
 
 void CrorcChannelMaster::crorcStartDataReceiver()
 {
-  auto busAddress = reinterpret_cast<unsigned long>(mFifoBus);
+  auto busAddress = reinterpret_cast<unsigned long>(getFifoBus());
   rorcStartDataReceiver(getBarUserspace(), busAddress, mRorcRevision);
 }
 
@@ -471,14 +456,14 @@ void CrorcChannelMaster::crorcStopTrigger()
 std::vector<uint32_t> CrorcChannelMaster::utilityCopyFifo()
 {
   std::vector<uint32_t> copy;
-  auto& fifo = mFifoUser->dataInt32;
+  auto& fifo = getFifoUser()->dataInt32;
   copy.insert(copy.begin(), fifo.begin(), fifo.end());
   return copy;
 }
 
 void CrorcChannelMaster::utilityPrintFifo(std::ostream& os)
 {
-  ChannelUtility::printCrorcFifo(mFifoUser, os);
+  ChannelUtility::printCrorcFifo(getFifoUser(), os);
 }
 
 void CrorcChannelMaster::utilitySetLedState(bool)

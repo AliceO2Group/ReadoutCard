@@ -7,6 +7,7 @@
 
 #include <atomic>
 #include <boost/program_options.hpp>
+#include "InfoLogger/InfoLogger.hxx"
 #include "Utilities/Common.h"
 #include "Utilities/Options.h"
 #include "Utilities/UtilsDescription.h"
@@ -25,7 +26,6 @@ namespace Utilities {
 class Program
 {
   public:
-
     Program();
     virtual ~Program();
 
@@ -39,15 +39,29 @@ class Program
     }
 
   protected:
-
     /// Should output be verbose
     bool isVerbose() const
     {
       return mVerbose;
     }
 
-  private:
+    /// Get Program's InfoLogger instance
+    InfoLogger::InfoLogger& getLogger()
+    {
+      return mLogger;
+    }
 
+    InfoLogger::InfoLogger::Severity getLogLevel() const
+    {
+      return mLogLevel;
+    }
+
+    void setLogLevel(InfoLogger::InfoLogger::Severity logLevel = InfoLogger::InfoLogger::Severity::Info)
+    {
+      mLogLevel = logLevel;
+    }
+
+  private:
     /// Get the description of the program
     virtual UtilsDescription getDescription() = 0;
 
@@ -57,13 +71,16 @@ class Program
     /// The main function of the program
     virtual void run(const boost::program_options::variables_map& variablesMap) = 0;
 
+    static void sigIntHandler(int);
+
+    void printHelp(const boost::program_options::options_description& optionsDescription);
+
     static std::atomic<bool> sFlagSigInt;
 
     bool mVerbose;
 
-    static void sigIntHandler(int);
-
-    void printHelp (const boost::program_options::options_description& optionsDescription);
+    InfoLogger::InfoLogger mLogger;
+    InfoLogger::InfoLogger::Severity mLogLevel = InfoLogger::InfoLogger::Severity::Info;
 };
 
 } // namespace Utilities

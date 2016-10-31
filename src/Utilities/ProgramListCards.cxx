@@ -24,8 +24,7 @@ class ProgramListCards: public Program
 
     virtual UtilsDescription getDescription()
     {
-      return UtilsDescription("List Cards", "Lists installed RORC cards and some basic information about them",
-          "./rorc-list-cards");
+      return {"List Cards", "Lists installed RORC cards and some basic information about them", "./rorc-list-cards"};
     }
 
     virtual void addOptions(boost::program_options::options_description&)
@@ -54,10 +53,10 @@ class ProgramListCards: public Program
         std::string firmware = "n/a";
         try {
           Parameters params = Parameters::makeParameters(card.serialNumber, 0);
-          auto firmwareVersion =
-              ChannelUtilityFactory().getUtility(params)->utilityGetFirmwareVersion();
+          auto firmwareVersion = ChannelUtilityFactory().getUtility(params)->utilityGetFirmwareVersion();
           firmware = std::to_string(firmwareVersion);
-        } catch (const SharedStateException& e) {
+        }
+        catch (const SharedStateException& e) {
           foundUninitialized = true;
           cout << e.what() << '\n';
         }

@@ -66,11 +66,15 @@ class CruChannelMaster final : public ChannelMaster
 
     std::unique_ptr<Util::GuardFunction> mBufferReadyGuard;
 
-    /// Bus FIFO
-    CruFifoTable* mFifoBus;
+    CruFifoTable* getFifoUser()
+    {
+      return reinterpret_cast<CruFifoTable*>(getFifoAddressUser());
+    }
 
-    /// Userspace FIFO
-    CruFifoTable* mFifoUser;
+    CruFifoTable* getFifoBus()
+    {
+      return reinterpret_cast<CruFifoTable*>(getFifoAddressBus());
+    }
 };
 
 } // namespace Rorc
