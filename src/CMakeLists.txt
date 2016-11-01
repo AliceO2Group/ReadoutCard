@@ -45,7 +45,7 @@ if(PDA_FOUND)
     c/rorc/aux.c
     c/rorc/ddl.c
     c/rorc/rorc.c
-    ChannelMaster.cxx
+    ChannelMasterBase.cxx
     ChannelSlave.cxx
     ChannelUtilityImpl.cxx
     Crorc/Crorc.cxx
@@ -53,7 +53,6 @@ if(PDA_FOUND)
     Crorc/CrorcChannelSlave.cxx
     Cru/CruChannelMaster.cxx
     Cru/CruChannelSlave.cxx
-    Cru/Temperature.cxx
     Pda/PdaBar.cxx
     Pda/PdaDevice.cxx
     Pda/PdaDmaBuffer.cxx

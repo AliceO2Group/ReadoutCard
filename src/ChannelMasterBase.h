@@ -36,7 +36,7 @@ namespace Rorc {
 /// Partially implements the ChannelMasterInterface. It takes care of:
 /// - Interprocess synchronization
 /// - PDA-based functionality that is common to the CRORC and CRU.
-class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterface
+class ChannelMasterBase: public ChannelMasterInterface, public ChannelUtilityInterface
 {
   public:
     using AllowedChannels = std::set<int>;
@@ -46,10 +46,10 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
     /// \param parameters Parameters of the channel
     /// \param allowedChannels Channels allowed by this card type
     /// \param fifoSize Size of the Firmware FIFO in the DMA buffer
-    ChannelMaster(CardType::type cardType, const Parameters& parameters, const AllowedChannels& allowedChannels, size_t
-        fifoSize);
+    ChannelMasterBase(CardType::type cardType, const Parameters& parameters, const AllowedChannels& allowedChannels,
+        size_t fifoSize);
 
-    ~ChannelMaster();
+    ~ChannelMasterBase();
 
     virtual void startDma() final override;
     virtual void stopDma() final override;

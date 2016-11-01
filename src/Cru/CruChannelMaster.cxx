@@ -27,7 +27,9 @@ namespace
 {
 
 /// DMA page length in bytes
+/// Note: the CRU has a firmware defined fixed page size
 constexpr int DMA_PAGE_SIZE = 8 * 1024;
+
 /// DMA page length in 32-bit words
 constexpr int DMA_PAGE_SIZE_32 = DMA_PAGE_SIZE / 4;
 
@@ -42,7 +44,7 @@ constexpr uint64_t DMA_ALIGNMENT = 32;
 } // Anonymous namespace
 
 CruChannelMaster::CruChannelMaster(const Parameters& params)
-    : ChannelMaster(CARD_TYPE, params, allowedChannels(), sizeof(CruFifoTable))
+    : ChannelMasterBase(CARD_TYPE, params, allowedChannels(), sizeof(CruFifoTable))
 {
   if (getChannelParameters().dma.pageSize != DMA_PAGE_SIZE) {
     BOOST_THROW_EXCEPTION(CruException()

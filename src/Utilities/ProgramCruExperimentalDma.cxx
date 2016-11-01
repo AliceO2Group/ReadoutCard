@@ -28,11 +28,9 @@
 #include "RORC/Exception.h"
 #include "RorcDevice.h"
 #include "MemoryMappedFile.h"
-#include "ChannelMaster.h"
 #include "Cru/CruRegisterIndex.h"
 #include "Cru/CruFifoTable.h"
 #include "Cru/CruRegisterIndex.h"
-#include "Cru/Temperature.h"
 #include "Pda/PdaDevice.h"
 #include "Pda/PdaBar.h"
 #include "Pda/PdaDmaBuffer.h"
@@ -185,15 +183,14 @@ class TemperatureMonitor : public Thread
     {
       Thread::start([&](std::atomic<bool>* stopFlag) {
         while (!stopFlag->load() && !Program::isSigInt()) {
-          uint32_t value = bar[CruRegisterIndex::TEMPERATURE];
-
-          b::optional<double> temperature = Cru::Temperature::convertRegisterValue(value);
+//          uint32_t value = bar[CruRegisterIndex::TEMPERATURE];
+          b::optional<double> temperature = boost::none;//Cru::Temperature::convertRegisterValue(value);
           if (!mTemperature) {
             mValidFlag = false;
           } else {
             mValidFlag = true;
             mTemperature = *temperature;
-            if (*temperature > Cru::Temperature::MAX_TEMPERATURE) {
+            if (*temperature > 80.0) {
               mMaxExceeded = true;
               cout << "\n!!! MAXIMUM TEMPERATURE WAS EXCEEDED: " << *temperature << endl;
               break;
@@ -483,7 +480,7 @@ class ProgramCruExperimentalDma: public Program
       if (mOptions.cumulativeIdle || mOptions.logIdle) {
         uint64_t idleLower = bar(Register::IDLE_COUNTER_LOWER);
         uint64_t idleUpper = bar(Register::IDLE_COUNTER_UPPER);
-        uint64_t idle = idleUpper << 32 + idleLower;
+        uint64_t idle = (idleUpper << 32) + idleLower;
 
         if (mOptions.cumulativeIdle) {
           mIdleCountCumulative += idle;

@@ -7,8 +7,8 @@
 
 #include <mutex>
 #include <boost/scoped_ptr.hpp>
+#include "ChannelMasterBase.h"
 #include "RORC/Parameters.h"
-#include "ChannelMaster.h"
 #include "PageManager.h"
 #include "ReadyFifo.h"
 
@@ -16,7 +16,7 @@ namespace AliceO2 {
 namespace Rorc {
 
 /// Extends ChannelMaster object, and provides device-specific functionality
-class CrorcChannelMaster final : public ChannelMaster
+class CrorcChannelMaster final : public ChannelMasterBase
 {
   public:
 

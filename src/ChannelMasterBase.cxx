@@ -3,7 +3,7 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "ChannelMaster.h"
+#include "ChannelMasterBase.h"
 #include <iostream>
 #include "ChannelPaths.h"
 #include "Pda/Pda.h"
@@ -57,7 +57,7 @@ int getBufferId(int channel)
 
 } // Anonymous namespace
 
-void ChannelMaster::checkChannelNumber(const AllowedChannels& allowedChannels)
+void ChannelMasterBase::checkChannelNumber(const AllowedChannels& allowedChannels)
 {
   if (!allowedChannels.count(mChannelNumber)) {
     BOOST_THROW_EXCEPTION(InvalidParameterException()
@@ -66,7 +66,7 @@ void ChannelMaster::checkChannelNumber(const AllowedChannels& allowedChannels)
   }
 }
 
-ChannelParameters ChannelMaster::convertParameters(const Parameters& map)
+ChannelParameters ChannelMasterBase::convertParameters(const Parameters& map)
 {
   ChannelParameters cp;
   cp.dma.bufferSize = map.get<Parameters::DmaBufferSize>().get_value_or(4*1024*1024);
@@ -77,7 +77,7 @@ ChannelParameters ChannelMaster::convertParameters(const Parameters& map)
   return cp;
 }
 
-void ChannelMaster::validateParameters(const ChannelParameters& cp)
+void ChannelMasterBase::validateParameters(const ChannelParameters& cp)
 {
   if (cp.dma.bufferSize % (2l * 1024l * 1024l) != 0) {
     BOOST_THROW_EXCEPTION(InvalidParameterException()
@@ -95,7 +95,7 @@ void ChannelMaster::validateParameters(const ChannelParameters& cp)
   }
 }
 
-ChannelMaster::ChannelMaster(CardType::type cardType, const Parameters& parameters,
+ChannelMasterBase::ChannelMasterBase(CardType::type cardType, const Parameters& parameters,
     const AllowedChannels& allowedChannels, size_t fifoSize)
     : mSerialNumber(parameters.getRequired<Parameters::SerialNumber>()),
       mChannelNumber(parameters.getRequired<Parameters::ChannelNumber>()),
@@ -138,12 +138,12 @@ ChannelMaster::ChannelMaster(CardType::type cardType, const Parameters& paramete
   partitionDmaBuffer(fifoSize, mChannelParameters.dma.pageSize);
 }
 
-ChannelMaster::~ChannelMaster()
+ChannelMasterBase::~ChannelMasterBase()
 {
 }
 
 // Checks DMA state and forwards call to subclass if necessary
-void ChannelMaster::startDma()
+void ChannelMasterBase::startDma()
 {
   CHANNELMASTER_LOCKGUARD();
 
@@ -158,7 +158,7 @@ void ChannelMaster::startDma()
 }
 
 // Checks DMA state and forwards call to subclass if necessary
-void ChannelMaster::stopDma()
+void ChannelMasterBase::stopDma()
 {
   CHANNELMASTER_LOCKGUARD();
 
@@ -172,7 +172,7 @@ void ChannelMaster::stopDma()
   mDmaState = DmaState::STOPPED;
 }
 
-void ChannelMaster::resetChannel(ResetLevel::type resetLevel)
+void ChannelMasterBase::resetChannel(ResetLevel::type resetLevel)
 {
   CHANNELMASTER_LOCKGUARD();
 
@@ -186,22 +186,22 @@ void ChannelMaster::resetChannel(ResetLevel::type resetLevel)
   deviceResetChannel(resetLevel);
 }
 
-uint32_t ChannelMaster::readRegister(int index)
+uint32_t ChannelMasterBase::readRegister(int index)
 {
   return mPdaBar->getRegister<uint32_t>(index);
 }
 
-void ChannelMaster::writeRegister(int index, uint32_t value)
+void ChannelMasterBase::writeRegister(int index, uint32_t value)
 {
   mPdaBar->setRegister<uint32_t>(index, value);
 }
 
-void ChannelMaster::setLogLevel(InfoLogger::InfoLogger::Severity severity)
+void ChannelMasterBase::setLogLevel(InfoLogger::InfoLogger::Severity severity)
 {
   mLogLevel = severity;
 }
 
-void ChannelMaster::partitionDmaBuffer(size_t fifoSize, size_t pageSize)
+void ChannelMasterBase::partitionDmaBuffer(size_t fifoSize, size_t pageSize)
 {
   /// Amount of space reserved for the FIFO, we use multiples of the page size for uniformity
   size_t fifoSpace = ((fifoSize / pageSize) + 1) * pageSize;
