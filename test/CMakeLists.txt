@@ -7,7 +7,6 @@ set(TEST_FILES
     TestChannelFactoryUtils.cxx
     TestChannelPaths.cxx
     TestEnums.cxx
-    TestFileSharedObject.cxx
     TestInterprocessLock.cxx
     TestMemoryMappedFile.cxx
     TestPageManager.cxx

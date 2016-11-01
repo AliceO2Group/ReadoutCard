@@ -12,7 +12,6 @@
 #include "ChannelParameters.h"
 #include "ChannelUtilityInterface.h"
 #include "InterprocessLock.h"
-#include "FileSharedObject.h"
 #include "MemoryMappedFile.h"
 #include "PageAddress.h"
 #include "Pda/PdaBar.h"

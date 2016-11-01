@@ -68,28 +68,28 @@ class Parameters
 #   undef _DEFINE_PARAMETER
 
     /// Put a parameter in the map
-    /// \tparam Parameter The parameter type to put
+    /// \tparam P The parameter type to put
     /// \param value The value to put
     /// Usage example:
     /// parameters.put<Parameters::SerialNumber>(12345);
-    template <typename Parameter>
-    void put(const typename Parameter::value_type& value)
+    template <typename P>
+    void put(const typename P::value_type& value)
     {
-      mMap[Parameter::key()] = value;
+      mMap[P::key()] = value;
     }
 
     /// Get a parameter from the map
-    /// \tparam Parameter The parameter type to get
+    /// \tparam P The parameter type to get
     /// \return The value wrapped in an optional if it was found, or boost::none if it was not
     /// Usage example:
     /// auto serial = parameters.get<Parameters::SerialNumber>().get_value_or(-1);
-    template <typename Parameter>
-    boost::optional<typename Parameter::value_type> get() const
+    template <typename P>
+    boost::optional<typename P::value_type> get() const
     {
-      auto iterator = mMap.find(Parameter::key());
+      auto iterator = mMap.find(P::key());
       if (iterator != mMap.end()) {
         Variant variant = iterator->second;
-        auto value = boost::get<typename Parameter::value_type>(variant);
+        auto value = boost::get<typename P::value_type>(variant);
         return value;
       } else {
         return boost::none;
@@ -97,20 +97,20 @@ class Parameters
     }
 
     /// Get a parameter from the map, throwing an exception if it is not present
-    /// \tparam Parameter The parameter type to get
+    /// \tparam P The parameter type to get
     /// \return The value
     /// Usage example:
-    /// auto serial = parameters.get<Parameters::SerialNumber>();
-    template <typename Parameter>
-    typename Parameter::value_type getRequired() const
+    /// auto serial = parameters.getRequired<Parameters::SerialNumber>();
+    template <typename P>
+    typename P::value_type getRequired() const
     {
-      if (auto optional = get<Parameter>()) {
+      if (auto optional = get<P>()) {
         return *optional;
       } else {
         BOOST_THROW_EXCEPTION(ParameterException()
-            << errinfo_rorc_error_message("Parameter not found in map")
-            << errinfo_rorc_parameter_name(Parameter::name())
-            << errinfo_rorc_parameter_key(Parameter::key()));
+            << errinfo_rorc_error_message("Parameter was not set")
+            << errinfo_rorc_parameter_name(P::name())
+            << errinfo_rorc_parameter_key(P::key()));
       }
     }
 

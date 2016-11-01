@@ -3,8 +3,6 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "FileSharedObject.h"
-
 #define BOOST_TEST_MODULE RORC_TestFileSharedObject
 #define BOOST_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
