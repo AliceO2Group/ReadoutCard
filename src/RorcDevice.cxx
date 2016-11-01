@@ -13,7 +13,7 @@
 #include <functional>
 #include <iostream>
 #include "Crorc/Crorc.h"
-#include "Cru/CruRegisterIndex.h"
+#include "Cru/CruBarAccessor.h"
 #include "Pda/PdaBar.h"
 #include "Pda/PdaDevice.h"
 #include "RORC/Exception.h"
@@ -124,20 +124,18 @@ void RorcDevice::printDeviceInfo(std::ostream& ostream)
       barType == PCIBARTYPES_BAR64 ? "BAR64" :
       "n/a";
 
-  auto f = boost::format("%14-s %10%s\n");
-  ostream << f % "Domain ID" << domainId;
-  ostream << f % "Bus ID" << busId;
-  ostream << f % "Function ID" << functionId;
-  ostream << f % "BAR type" << barTypeString;
+//  auto f = boost::format("%-14s %10s\n");
+//  ostream << f % "Domain ID" << domainId;
+//  ostream << f % "Bus ID" << busId;
+//  ostream << f % "Function ID" << functionId;
+//  ostream << f % "BAR type" << barTypeString;
 }
 
 uint32_t cruGetSerial(PciDevice* pciDevice)
 {
-//  BOOST_THROW_EXCEPTION(CruException() << errinfo_rorc_error_message("New serial number location not yet supported"));
   int channel = 2; // Must use BAR 2 to access serial number
   Pda::PdaBar pdaBar(pciDevice, channel);
-  uint32_t serial = pdaBar.getUserspaceAddressU32()[CruRegisterIndex::SERIAL_NUMBER];
-  return serial;
+  return CruBarAccessor(pdaBar).getSerialNumber();
 }
 
 // The RORC headers have a lot of macros that cause problems with the rest of this file, so we include it down here.

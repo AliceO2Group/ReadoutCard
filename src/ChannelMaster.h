@@ -161,12 +161,12 @@ class ChannelMaster: public ChannelMasterInterface, public ChannelUtilityInterfa
       return *(mMappedFilePages.get());
     }
 
-    std::vector<PageAddress>& getPageAddresses()
+    const std::vector<PageAddress>& getPageAddresses() const
     {
       return mPageAddresses;
     }
 
-    const Pda::PdaBar& getPdaBar() const
+    Pda::PdaBar& getPdaBar()
     {
       return *(mPdaBar.get());
     }

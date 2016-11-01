@@ -149,7 +149,7 @@ void cruSanityCheck(std::ostream& os, RegisterReadWriteInterface* channel)
 {
   {
     // Writing to the LED register has been known to crash and reboot the machine if the CRU is in a bad state.
-    // That makes it a good part of this sanity test!
+    // That makes it a good part of this sanity test..?
 
     int ledAddress = CruRegisterIndex::LED_STATUS;
     int valueOn = 0xff;

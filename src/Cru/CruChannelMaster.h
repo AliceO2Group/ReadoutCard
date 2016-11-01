@@ -8,6 +8,7 @@
 #include <memory>
 #include "ChannelMaster.h"
 #include "CruFifoTable.h"
+#include "CruBarAccessor.h"
 #include "PageManager.h"
 #include "RORC/Parameters.h"
 
@@ -60,7 +61,11 @@ class CruChannelMaster final : public ChannelMaster
     void initCru();
     void resetCru();
     void setBufferReadyGuard();
-    volatile uint32_t& bar(size_t index);
+
+    const CruBarAccessor& getBar()
+    {
+      return CruBarAccessor(getPdaBar());
+    }
 
     static constexpr CardType::type CARD_TYPE = CardType::Cru;
 

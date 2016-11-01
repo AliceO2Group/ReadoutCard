@@ -188,13 +188,12 @@ void ChannelMaster::resetChannel(ResetLevel::type resetLevel)
 
 uint32_t ChannelMaster::readRegister(int index)
 {
-  return mPdaBar->getUserspaceAddressU32()[index];
+  return mPdaBar->getRegister<uint32_t>(index);
 }
 
 void ChannelMaster::writeRegister(int index, uint32_t value)
 {
-  // TODO Range check
-  mPdaBar->getUserspaceAddressU32()[index] = value;
+  mPdaBar->setRegister<uint32_t>(index, value);
 }
 
 void ChannelMaster::setLogLevel(InfoLogger::InfoLogger::Severity severity)

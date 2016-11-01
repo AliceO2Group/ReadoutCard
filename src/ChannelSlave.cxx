@@ -25,14 +25,15 @@ uint32_t ChannelSlave::readRegister(int index)
 {
   // TODO Range check
   // TODO Access restriction
-  return mPdaBar[index];
+  return mPdaBar.getRegister<uint32_t>(index);
 }
 
 void ChannelSlave::writeRegister(int index, uint32_t value)
 {
   // TODO Range check
   // TODO Access restriction
-  mPdaBar[index] = value;
+  mPdaBar.setRegister<uint32_t>(index, value);
+
 }
 
 } // namespace Rorc

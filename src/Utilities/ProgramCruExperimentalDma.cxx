@@ -645,14 +645,14 @@ class ProgramCruExperimentalDma: public Program
       }
 
       auto firmwareVersion = Utilities::Common::make32hexString(bar(Register::FIRMWARE_COMPILE_INFO));
-      auto serialNumber = Utilities::Common::make32hexString(bar(Register::SERIAL_NUMBER));
+//      auto serialNumber = Utilities::Common::make32hexString(bar(Register::SERIAL_NUMBER));
       cout << "  Firmware version  " << firmwareVersion << '\n';
-      cout << "  Serial number     " << serialNumber << '\n';
+//      cout << "  Serial number     " << serialNumber << '\n';
       cout << "  Buffer size       " << mPageAddresses.size() << " pages, " << " "
           << mPageAddresses.size() * DMA_BUFFER_PAGES_SIZE << " bytes\n";
 
       mLogStream << "# Firmware version  " << firmwareVersion << '\n';
-      mLogStream << "# Serial number     " << serialNumber << '\n';
+//      mLogStream << "# Serial number     " << serialNumber << '\n';
       mLogStream << "# Buffer size       " << mPageAddresses.size() << " pages, " << " "
           << mPageAddresses.size() * DMA_BUFFER_PAGES_SIZE << " bytes\n";
     }
@@ -736,6 +736,7 @@ class ProgramCruExperimentalDma: public Program
 
     volatile uint32_t& bar(size_t index)
     {
+//      return mPdaBar->at<uint32_t>(index);
       return mPdaBar->getUserspaceAddressU32()[index];
     }
 

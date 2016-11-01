@@ -15,15 +15,15 @@ namespace AliceO2 {
 namespace Rorc {
 namespace Pda {
 
-PdaBar::PdaBar() : mPdaBar(nullptr), mBarLength(-1), mUserspaceAddress(nullptr)
+PdaBar::PdaBar() : mPdaBar(nullptr), mBarLength(-1), mBarNumber(-1), mUserspaceAddress(nullptr)
 {
 }
 
-PdaBar::PdaBar(PciDevice* pciDevice, int barNumberInt)
+PdaBar::PdaBar(PciDevice* pciDevice, int barNumberInt) : mBarNumber(barNumberInt)
 {
-  uint8_t barNumber = barNumberInt;
+  uint8_t barNumber = mBarNumber;
 
-  if (barNumberInt > std::numeric_limits<decltype(barNumber)>::max()) {
+  if (mBarNumber > std::numeric_limits<decltype(barNumber)>::max()) {
     BOOST_THROW_EXCEPTION(Exception()
         << errinfo_rorc_error_message("BAR number out of range (max 256)")
         << errinfo_rorc_channel_number(barNumber));

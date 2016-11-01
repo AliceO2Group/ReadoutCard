@@ -8,7 +8,6 @@
 #include <thread>
 #include "ChannelPaths.h"
 #include "ChannelUtilityImpl.h"
-#include "CruRegisterIndex.h"
 #include "RORC/Exception.h"
 #include "Util.h"
 
@@ -79,8 +78,8 @@ void CruChannelMaster::setBufferReadyGuard()
 {
   if (!mBufferReadyGuard) {
     Util::resetSmartPtr(mBufferReadyGuard,
-        [&]{ bar(Register::DATA_EMULATOR_CONTROL) = 0x3; },
-        [&]{ bar(Register::DATA_EMULATOR_CONTROL) = 0x0; });
+        [&]{ getBar().setDataEmulatorEnabled(true); },
+        [&]{ getBar().setDataEmulatorEnabled(false); });
   }
 }
 
@@ -119,9 +118,9 @@ void CruChannelMaster::initFifo()
 
 void CruChannelMaster::resetCru()
 {
-  bar(Register::RESET_CONTROL) = 0x2;
+  getBar().resetDataGeneratorCounter();
   std::this_thread::sleep_for(100ms);
-  bar(Register::RESET_CONTROL) = 0x1;
+  getBar().resetCard();
   std::this_thread::sleep_for(100ms);
 }
 
@@ -136,20 +135,18 @@ void CruChannelMaster::initCru()
     BOOST_THROW_EXCEPTION(CruException() << errinfo_rorc_error_message("FIFO bus address not 32 byte aligned"));
   }
 
-  bar(Register::STATUS_BASE_BUS_HIGH) = Util::getUpper32Bits(uint64_t(getFifoBus()));
-  bar(Register::STATUS_BASE_BUS_LOW) = Util::getLower32Bits(uint64_t(getFifoBus()));
+  getBar().setFifoBusAddress(getFifoBus());
 
   // TODO Note: this stuff will be set by firmware in the future
   {
     // Status base address in the card's address space
-    bar(Register::STATUS_BASE_CARD_HIGH) = 0x0;
-    bar(Register::STATUS_BASE_CARD_LOW) = 0x8000;
+    getBar().setFifoCardAddress();
 
     // Set descriptor table size (must be size - 1)
-    bar(Register::DESCRIPTOR_TABLE_SIZE) = NUM_PAGES - 1;
+    getBar().setDescriptorTableSize();
 
     // Send command to the DMA engine to write to every status entry, not just the final one
-    bar(Register::DONE_CONTROL) = 0x1;
+    getBar().setDoneControl();
   }
 }
 
@@ -169,7 +166,7 @@ int CruChannelMaster::fillFifo(int maxFill)
     auto& pageAddress = getPageAddresses()[bufferIndex];
     auto sourceAddress = reinterpret_cast<volatile void*>((descriptorIndex % NUM_OF_FW_BUFFERS) * DMA_PAGE_SIZE);
     getFifoUser()->setDescriptor(descriptorIndex, DMA_PAGE_SIZE_32, sourceAddress, pageAddress.bus);
-    bar(Register::DMA_COMMAND) = 0x1; // Is this the right location..? Or should it be in the freeing?
+    getBar().sendAcknowledge(); // Is this the right location..? Or should it be in the freeing?
   };
 
   mPageManager.handleArrivals(isArrived, resetDescriptor);
@@ -200,11 +197,6 @@ void CruChannelMaster::freePage(const Page& page)
   CHANNELMASTER_LOCKGUARD();
 
   mPageManager.freePage(page.getId());
-}
-
-volatile uint32_t& CruChannelMaster::bar(size_t index)
-{
-  return *(&getBarUserspace()[index]);
 }
 
 std::vector<uint32_t> CruChannelMaster::utilityCopyFifo()

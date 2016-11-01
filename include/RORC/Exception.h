@@ -24,6 +24,8 @@ namespace Rorc {
   using errinfo_rorc_##name = boost::error_info<struct errinfo_rorc_##name##_, type>
 
 // errinfo definitions
+DEFINE_ERRINFO(bar_index, size_t);
+DEFINE_ERRINFO(bar_size, size_t);
 DEFINE_ERRINFO(card_type, CardType::type);
 DEFINE_ERRINFO(channel_number, int);
 DEFINE_ERRINFO(ddl_reset_mask, std::string);

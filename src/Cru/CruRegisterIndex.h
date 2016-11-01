@@ -1,11 +1,13 @@
 /// \file CruRegisterIndex.h
-/// \brief Definition of CRU register indexes.
+/// \brief Definitions of CRU register indexes.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #pragma once
 
 #include <cstddef>
+#include "Pda/PdaBar.h"
+#include "Util.h"
 
 namespace AliceO2 {
 namespace Rorc {
