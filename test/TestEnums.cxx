@@ -3,8 +3,9 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "RORC/RORC.h"
-#include "Utilities/Options.h"
+#include "RORC/CardType.h"
+#include "RORC/LoopbackMode.h"
+#include "RORC/ResetLevel.h"
 
 #define BOOST_TEST_MODULE RORC_TestEnums
 #define BOOST_TEST_MAIN

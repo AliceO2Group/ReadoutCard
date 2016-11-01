@@ -29,7 +29,7 @@ class Parameters
     struct Parameter
     {
         /// The type of the parameter's value
-        using type = ValueType;
+        using value_type = ValueType;
     };
 
     /// Helper macro to define Parameter types
@@ -73,7 +73,7 @@ class Parameters
     /// Usage example:
     /// parameters.put<Parameters::SerialNumber>(12345);
     template <typename Parameter>
-    void put(const typename Parameter::type& value)
+    void put(const typename Parameter::value_type& value)
     {
       mMap[Parameter::key()] = value;
     }
@@ -84,12 +84,12 @@ class Parameters
     /// Usage example:
     /// auto serial = parameters.get<Parameters::SerialNumber>().get_value_or(-1);
     template <typename Parameter>
-    boost::optional<typename Parameter::type> get() const
+    boost::optional<typename Parameter::value_type> get() const
     {
       auto iterator = mMap.find(Parameter::key());
       if (iterator != mMap.end()) {
         Variant variant = iterator->second;
-        auto value = boost::get<typename Parameter::type>(variant);
+        auto value = boost::get<typename Parameter::value_type>(variant);
         return value;
       } else {
         return boost::none;
@@ -102,7 +102,7 @@ class Parameters
     /// Usage example:
     /// auto serial = parameters.get<Parameters::SerialNumber>();
     template <typename Parameter>
-    typename Parameter::type getRequired() const
+    typename Parameter::value_type getRequired() const
     {
       if (auto optional = get<Parameter>()) {
         return *optional;
@@ -116,7 +116,7 @@ class Parameters
 
     /// Convenience function to make parameters object with serial and channel number, since these are the most
     /// frequently used parameters
-    static Parameters makeParameters(SerialNumber::type serial, ChannelNumber::type channel)
+    static Parameters makeParameters(SerialNumber::value_type serial, ChannelNumber::value_type channel)
     {
       Parameters params;
       params.put<Parameters::SerialNumber>(serial);

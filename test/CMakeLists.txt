@@ -11,6 +11,7 @@ set(TEST_FILES
     TestInterprocessLock.cxx
     TestMemoryMappedFile.cxx
     TestPageManager.cxx
+    TestParameters.cxx
     TestProgramOptions.cxx
     TestRorcException.cxx
     TestUtil.cxx
