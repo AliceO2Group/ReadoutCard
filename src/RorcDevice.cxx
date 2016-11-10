@@ -22,14 +22,14 @@
 namespace AliceO2 {
 namespace Rorc {
 
-uint32_t crorcGetSerial(PciDevice* pciDevice);
-uint32_t cruGetSerial(PciDevice* pciDevice);
+int32_t crorcGetSerial(PciDevice* pciDevice);
+int32_t cruGetSerial(PciDevice* pciDevice);
 
 struct DeviceType
 {
     CardType::type cardType;
     const PciId pciId;
-    std::function<uint32_t (PciDevice* pciDevice)> getSerial;
+    std::function<int32_t (PciDevice* pciDevice)> getSerial;
 };
 
 const std::vector<DeviceType> deviceTypes = {
@@ -131,7 +131,7 @@ void RorcDevice::printDeviceInfo(std::ostream& ostream)
 //  ostream << f % "BAR type" << barTypeString;
 }
 
-uint32_t cruGetSerial(PciDevice* pciDevice)
+int32_t cruGetSerial(PciDevice* pciDevice)
 {
   int channel = 2; // Must use BAR 2 to access serial number
   Pda::PdaBar pdaBar(pciDevice, channel);
@@ -141,7 +141,7 @@ uint32_t cruGetSerial(PciDevice* pciDevice)
 // The RORC headers have a lot of macros that cause problems with the rest of this file, so we include it down here.
 #include "c/rorc/rorc.h"
 
-uint32_t crorcGetSerial(PciDevice* pciDevice)
+int32_t crorcGetSerial(PciDevice* pciDevice)
 {
   int channel = 0; // Must use BAR 0 to access flash
   Pda::PdaBar pdaBar(pciDevice, channel);
