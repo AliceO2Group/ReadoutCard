@@ -46,8 +46,11 @@ find_package(Boost 1.56
   filesystem 
   system 
   program_options 
+  python
   REQUIRED
   )
+find_package(PythonLibs 2.7 REQUIRED) # for Boost Python
+include_directories(${PYTHON_INCLUDE_DIRS})
   
 # Other sub-projects
 link_o2_subproject(InfoLogger)
