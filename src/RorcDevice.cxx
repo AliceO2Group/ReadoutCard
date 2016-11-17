@@ -135,7 +135,7 @@ int32_t cruGetSerial(PciDevice* pciDevice)
 {
   int channel = 2; // Must use BAR 2 to access serial number
   Pda::PdaBar pdaBar(pciDevice, channel);
-  return CruBarAccessor(pdaBar).getSerialNumber();
+  return CruBarAccessor(&pdaBar).getSerialNumber();
 }
 
 // The RORC headers have a lot of macros that cause problems with the rest of this file, so we include it down here.

@@ -73,9 +73,10 @@ class Parameters
     /// Usage example:
     /// parameters.put<Parameters::SerialNumber>(12345);
     template <typename P>
-    void put(const typename P::value_type& value)
+    Parameters& put(const typename P::value_type& value)
     {
       mMap[P::key()] = value;
+      return *this;
     }
 
     /// Get a parameter from the map

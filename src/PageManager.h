@@ -229,10 +229,12 @@ class PageManager : public PageManagerBase<PageManager<FIRMWARE_QUEUE_CAPACITY>>
       };
 
       if (total != mMaxPages) {
+        print();
         BOOST_THROW_EXCEPTION(std::runtime_error("invariant violated"));
       }
 
       if (pushing > FIRMWARE_QUEUE_CAPACITY) {
+        print();
         BOOST_THROW_EXCEPTION(std::runtime_error("invariant violated"));
       }
 #endif

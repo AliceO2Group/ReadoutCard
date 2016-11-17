@@ -62,9 +62,9 @@ class CruChannelMaster final : public ChannelMasterBase
     void resetCru();
     void setBufferReadyGuard();
 
-    const CruBarAccessor& getBar()
+    CruBarAccessor getBar()
     {
-      return CruBarAccessor(getPdaBar());
+      return CruBarAccessor(getPdaBarPtr());
     }
 
     static constexpr CardType::type CARD_TYPE = CardType::Cru;

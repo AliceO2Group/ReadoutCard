@@ -28,9 +28,8 @@
 #include "RORC/Exception.h"
 #include "RorcDevice.h"
 #include "MemoryMappedFile.h"
-#include "Cru/CruRegisterIndex.h"
+#include "Cru/CruBarAccessor.h"
 #include "Cru/CruFifoTable.h"
-#include "Cru/CruRegisterIndex.h"
 #include "Pda/PdaDevice.h"
 #include "Pda/PdaBar.h"
 #include "Pda/PdaDmaBuffer.h"
@@ -42,7 +41,7 @@
 
 namespace b = boost;
 namespace bfs = boost::filesystem;
-namespace Register = AliceO2::Rorc::CruRegisterIndex;
+//namespace Register = AliceO2::Rorc::CruRegisterIndex;
 using namespace AliceO2::Rorc::Utilities;
 using namespace AliceO2::Rorc;
 using namespace std::literals;
@@ -426,7 +425,7 @@ class ProgramCruExperimentalDma: public Program
 
       // Set first round of pages, and inform the firmware we're ready to receive
       fillReadoutQueue();
-      BufferReadyGuard bufferReadyGuard {&bar(0)};
+      BufferReadyGuard bufferReadyGuard {mPdaBar.get()};
 
       while (true) {
         // Check if we need to stop in the case of a page limit
@@ -465,9 +464,9 @@ class ProgramCruExperimentalDma: public Program
       }
 
       // Finish up
-      mIdleCountLower32 = bar(Register::IDLE_COUNTER_LOWER);
-      mIdleCountUpper32 = bar(Register::IDLE_COUNTER_UPPER);
-      mIdleMaxValue = bar(Register::MAX_IDLE_VALUE);
+      mIdleCountLower32 = getBar().getIdleCounterLower();
+      mIdleCountUpper32 = getBar().getIdleCounterUpper();
+      mIdleMaxValue = getBar().getIdleMaxValue();
       mRunTime.end = std::chrono::high_resolution_clock::now();
       outputErrors();
       outputStats();
@@ -475,12 +474,10 @@ class ProgramCruExperimentalDma: public Program
 
     void acknowledgePage()
     {
-      bar(Register::DMA_COMMAND) = 0x1;
+      getBar().sendAcknowledge();
 
       if (mOptions.cumulativeIdle || mOptions.logIdle) {
-        uint64_t idleLower = bar(Register::IDLE_COUNTER_LOWER);
-        uint64_t idleUpper = bar(Register::IDLE_COUNTER_UPPER);
-        uint64_t idle = (idleUpper << 32) + idleLower;
+        uint64_t idle = getBar().getIdleCounter();
 
         if (mOptions.cumulativeIdle) {
           mIdleCountCumulative += idle;
@@ -539,26 +536,18 @@ class ProgramCruExperimentalDma: public Program
       if (!Stuff::checkAlignment(mFifoAddress.bus, DMA_ALIGNMENT)) {
         BOOST_THROW_EXCEPTION(CruException() << errinfo_rorc_error_message("mFifoDevice not 32 byte aligned"));
       }
-      bar(Register::STATUS_BASE_BUS_HIGH) = Util::getUpper32Bits(uint64_t(mFifoAddress.bus));
-      bar(Register::STATUS_BASE_BUS_LOW) = Util::getLower32Bits(uint64_t(mFifoAddress.bus));
 
-      // TODO Note: this stuff will be set by firmware in the future
+      getBar().setFifoBusAddress(mFifoAddress.bus);
+
+      // TODO Note: this stuff may be set by firmware in the future
       {
         // Status base address in the card's address space
-        bar(Register::STATUS_BASE_CARD_HIGH) = 0x0;
-        bar(Register::STATUS_BASE_CARD_LOW) = 0x8000;
-
+        getBar().setFifoCardAddress();
         // Set descriptor table size (must be size - 1)
-        bar(Register::DESCRIPTOR_TABLE_SIZE) = NUM_PAGES - 1;
-
+        getBar().setDescriptorTableSize();
         // Send command to the DMA engine to write to every status entry, not just the final one
-        bar(Register::DONE_CONTROL) = 0x1;
+        getBar().setDoneControl();
       }
-    }
-
-    void setBufferReadyStatus(bool ready)
-    {
-      bar(Register::DATA_EMULATOR_CONTROL) = ready ? 0x3 : 0x0;
     }
 
     /// Initializes PDA objects and accompanying shared memory files
@@ -609,9 +598,10 @@ class ProgramCruExperimentalDma: public Program
     {
       if (mOptions.resetCard) {
         cout << "Resetting..." << std::flush;
-        bar(Register::RESET_CONTROL) = 0x2;
+
+        getBar().resetDataGeneratorCounter();
         std::this_thread::sleep_for(100ms);
-        bar(Register::RESET_CONTROL) = 0x1;
+        getBar().resetCard();
         std::this_thread::sleep_for(100ms);
         cout << "done!" << endl;
       }
@@ -619,14 +609,13 @@ class ProgramCruExperimentalDma: public Program
 
     void resetTemperatureSensor()
     {
-      bar(Register::TEMPERATURE) = 0x1;
-      std::this_thread::sleep_for(10ms);
-      bar(Register::TEMPERATURE) = 0x0;
-      std::this_thread::sleep_for(10ms);
-      bar(Register::TEMPERATURE) = 0x2;
-      std::this_thread::sleep_for(10ms);
+//      bar(Register::TEMPERATURE) = 0x1;
+//      std::this_thread::sleep_for(10ms);
+//      bar(Register::TEMPERATURE) = 0x0;
+//      std::this_thread::sleep_for(10ms);
+//      bar(Register::TEMPERATURE) = 0x2;
+//      std::this_thread::sleep_for(10ms);
     }
-
 
     void setDescriptor(int pageIndex, int descriptorIndex)
     {
@@ -641,7 +630,7 @@ class ProgramCruExperimentalDma: public Program
         mRorcDevice->printDeviceInfo(cout);
       }
 
-      auto firmwareVersion = Utilities::Common::make32hexString(bar(Register::FIRMWARE_COMPILE_INFO));
+      auto firmwareVersion = Utilities::Common::make32hexString(getBar().getFirmwareCompileInfo());
 //      auto serialNumber = Utilities::Common::make32hexString(bar(Register::SERIAL_NUMBER));
       cout << "  Firmware version  " << firmwareVersion << '\n';
 //      cout << "  Serial number     " << serialNumber << '\n';
@@ -1003,6 +992,11 @@ class ProgramCruExperimentalDma: public Program
       resetPage(reinterpret_cast<volatile uint32_t*>(page));
     }
 
+    CruBarAccessor getBar()
+    {
+      return CruBarAccessor(mPdaBar.get());
+    }
+
     /// Program options
     struct Options {
         int64_t maxPages = 0; ///< Limit of pages to push
@@ -1036,7 +1030,7 @@ class ProgramCruExperimentalDma: public Program
     class BufferReadyGuard
     {
       public:
-        BufferReadyGuard(volatile uint32_t* bar) : mBar(bar)
+        BufferReadyGuard(Pda::PdaBar* bar) : mBar(bar)
         {
           setStatus(true);
         }
@@ -1049,10 +1043,10 @@ class ProgramCruExperimentalDma: public Program
       private:
         void setStatus(bool ready)
         {
-          mBar[Register::DATA_EMULATOR_CONTROL] = ready ? 0x3 : 0x0;
+          CruBarAccessor(mBar).setDataEmulatorEnabled(ready);
         }
 
-        volatile uint32_t* mBar;
+        Pda::PdaBar* mBar;
     };
 
     /// Temperature monitor thread thing

@@ -170,6 +170,11 @@ class ChannelMasterBase: public ChannelMasterInterface, public ChannelUtilityInt
       return *(mPdaBar.get());
     }
 
+    Pda::PdaBar* getPdaBarPtr()
+    {
+      return mPdaBar.get();
+    }
+
     const RorcDevice& getRorcDevice() const
     {
       return *(mRorcDevice.get());

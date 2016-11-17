@@ -23,16 +23,14 @@ ChannelSlave::~ChannelSlave()
 
 uint32_t ChannelSlave::readRegister(int index)
 {
-  // TODO Range check
   // TODO Access restriction
-  return mPdaBar.getRegister<uint32_t>(index);
+  return mPdaBar.getRegister<uint32_t>(index * sizeof(uint32_t));
 }
 
 void ChannelSlave::writeRegister(int index, uint32_t value)
 {
-  // TODO Range check
   // TODO Access restriction
-  mPdaBar.setRegister<uint32_t>(index, value);
+  mPdaBar.setRegister<uint32_t>(index * sizeof(uint32_t), value);
 
 }
 

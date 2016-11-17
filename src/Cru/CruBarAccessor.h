@@ -17,7 +17,7 @@ namespace Rorc {
 class CruBarAccessor
 {
   public:
-    CruBarAccessor(Pda::PdaBar& pdaBar)
+    CruBarAccessor(Pda::PdaBar* pdaBar)
         : mPdaBar(pdaBar)
     {
     }
@@ -39,7 +39,6 @@ class CruBarAccessor
 
     void setFifoBusAddress(void* address) const
     {
-      // TODO see if this works with BAR uint64_t setter
       at32(CruRegisterIndex::STATUS_BASE_BUS_HIGH) = Util::getUpper32Bits(uint64_t(address));
       at32(CruRegisterIndex::STATUS_BASE_BUS_LOW) = Util::getLower32Bits(uint64_t(address));
     }
@@ -67,11 +66,12 @@ class CruBarAccessor
 
     uint32_t getSerialNumber() const
     {
-      if (mPdaBar.getBarNumber() != 2) {
+      if (mPdaBar->getBarNumber() != 2) {
         BOOST_THROW_EXCEPTION(Exception()
             << errinfo_rorc_error_message("Can only get serial number from BAR 2")
-            << errinfo_rorc_bar_index(mPdaBar.getBarNumber()));
+            << errinfo_rorc_bar_index(mPdaBar->getBarNumber()));
       }
+
       return at32(CruRegisterIndex::SERIAL_NUMBER);
     }
 
@@ -108,13 +108,49 @@ class CruBarAccessor
       return convertTemperatureRaw(getTemperatureRaw());
     }
 
-  private:
-    volatile uint32_t& at32(size_t index) const
+    uint32_t getIdleCounterLower()
     {
-      return mPdaBar.at<uint32_t>(CruRegisterIndex::toByteAddress(index));
+      return at32(CruRegisterIndex::IDLE_COUNTER_LOWER);
     }
 
-    const Pda::PdaBar& mPdaBar;
+    uint32_t getIdleCounterUpper()
+    {
+      return at32(CruRegisterIndex::IDLE_COUNTER_UPPER);
+    }
+
+    uint64_t getIdleCounter()
+    {
+      return (uint64_t(getIdleCounterUpper()) << 32) + uint64_t(getIdleCounterLower());
+    }
+
+    uint32_t getIdleMaxValue()
+    {
+      return at32(CruRegisterIndex::MAX_IDLE_VALUE);
+    }
+
+    uint32_t getFirmwareCompileInfo()
+    {
+      return at32(CruRegisterIndex::FIRMWARE_COMPILE_INFO);
+    }
+
+    uint8_t getDebugReadWriteRegister()
+    {
+      return mPdaBar->getRegister<uint8_t>(CruRegisterIndex::toByteAddress(CruRegisterIndex::DEBUG_READ_WRITE));
+    }
+
+    void setDebugReadWriteRegister(uint8_t value)
+    {
+      return mPdaBar->setRegister<uint8_t>(CruRegisterIndex::toByteAddress(CruRegisterIndex::DEBUG_READ_WRITE), value);
+    }
+
+  private:
+
+    volatile uint32_t& at32(size_t index) const
+    {
+      return mPdaBar->at<uint32_t>(CruRegisterIndex::toByteAddress(index));
+    }
+
+    const Pda::PdaBar* mPdaBar;
 };
 
 } // namespace Rorc

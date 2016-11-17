@@ -97,9 +97,9 @@ void ChannelMasterBase::validateParameters(const ChannelParameters& cp)
 
 ChannelMasterBase::ChannelMasterBase(CardType::type cardType, const Parameters& parameters,
     const AllowedChannels& allowedChannels, size_t fifoSize)
-    : mSerialNumber(parameters.getRequired<Parameters::SerialNumber>()),
-      mChannelNumber(parameters.getRequired<Parameters::ChannelNumber>()),
-      mDmaState(DmaState::STOPPED)
+    : mDmaState(DmaState::STOPPED),
+      mSerialNumber(parameters.getRequired<Parameters::SerialNumber>()),
+      mChannelNumber(parameters.getRequired<Parameters::ChannelNumber>())
 {
   using namespace Util;
 
@@ -188,12 +188,12 @@ void ChannelMasterBase::resetChannel(ResetLevel::type resetLevel)
 
 uint32_t ChannelMasterBase::readRegister(int index)
 {
-  return mPdaBar->getRegister<uint32_t>(index);
+  return mPdaBar->getRegister<uint32_t>(index * sizeof(uint32_t));
 }
 
 void ChannelMasterBase::writeRegister(int index, uint32_t value)
 {
-  mPdaBar->setRegister<uint32_t>(index, value);
+  mPdaBar->setRegister<uint32_t>(index * sizeof(uint32_t), value);
 }
 
 void ChannelMasterBase::setLogLevel(InfoLogger::InfoLogger::Severity severity)

@@ -76,32 +76,6 @@ auto READOUT_DATA_PATH_ASCII = "readout_data.txt";
 auto READOUT_DATA_PATH_BIN = "readout_data.bin";
 auto READOUT_LOG_FORMAT = "readout_log_%d.txt";
 
-class SharedPage
-{
-  public:
-    using SharedChannel = std::shared_ptr<AliceO2::Rorc::ChannelMasterInterface>;
-    using Page = AliceO2::Rorc::ChannelMasterInterface::Page;
-
-    SharedPage(const SharedChannel& channel, const Page& page)
-        : mChannel(channel), mPage(page)
-    {
-    }
-
-    ~SharedPage()
-    {
-      mChannel->freePage(mPage);
-    }
-
-    const Page& getPage() const
-    {
-      return mPage;
-    }
-
-  private:
-    SharedChannel mChannel;
-    Page mPage;
-};
-
 }
 
 class ProgramDmaBench: public Program
@@ -142,7 +116,11 @@ class ProgramDmaBench: public Program
               "Skip error checking")
           ("no-pagereset",
               po::bool_switch(&mOptions.noPageReset),
-              "Do not reset page to default values");
+              "Do not reset page to default values")
+//          ("bar-hammer",
+//              po::bool_switch(&mOptions.barHammer),
+//              "Stress the BAR with repeated accesses and measure performance")
+              ;
     }
 
     virtual void run(const po::variables_map& map)
@@ -170,7 +148,6 @@ class ProgramDmaBench: public Program
 
       // Get master lock on channel
       mChannel = ChannelFactory().getMaster(params);
-      std::this_thread::sleep_for(std::chrono::microseconds(500)); // XXX See README.md
 
       if (mOptions.resetChannel) {
         cout << "Resetting channel...";
@@ -427,7 +404,7 @@ class ProgramDmaBench: public Program
        format % "n/a"; // TODO Temperature
        cout << '\r' << format;
 
-       // This takes care of adding a "line" to the stdout and log table every so many seconds
+       // This takes care of adding a "line" to the stdout every so many seconds
        {
          int interval = 60;
          auto second = duration_cast<seconds>(diff).count() % interval;
@@ -547,6 +524,7 @@ class ProgramDmaBench: public Program
         bool noPageReset = false;
         bool resyncCounter = false;
         bool randomReadout = false;
+        bool barHammer = false;
     } mOptions;
 
     bool mDmaLoopBreak = false;

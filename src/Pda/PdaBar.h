@@ -36,41 +36,60 @@ class PdaBar
     }
 
     template <typename T>
-    bool isInRange(size_t index) const
+    bool isInRange(size_t offset) const
     {
       auto address = reinterpret_cast<volatile char*>(mUserspaceAddress);
-      return address[index + sizeof(T)] < address[mBarLength];
+      return &address[offset + sizeof(T)] < &address[mBarLength];
     }
 
     /// Get the value of a register from the BAR
-    /// \param index The byte index of the register
+    /// \param offset The byte offset of the register
     template <typename T>
-    T getRegister(size_t index) const
+    T getRegister(size_t offset) const
     {
-      return at<T>(index);
+      return at<T>(offset);
     }
 
     /// Set the value of a register from the BAR
-    /// \param index The byte index of the register
-    /// \param
-    template <typename T> const
-    void setRegister(size_t index, T value)
+    /// \param offset The byte offset of the register
+    /// \param value The value to set
+    template <typename T>
+    void setRegister(size_t offset, T value) const
     {
-      at<T>(index) = value;
+      at<T>(offset) = value;
     }
 
     /// Get a reference to a register from the BAR
-    /// \param index The byte index of the register
+    /// \param offset The byte offset of the register
     template <typename T>
-    volatile T& at(size_t index) const
+    volatile T& at(size_t offset) const
     {
-      if (!isInRange<T>(index)) {
+      if (!isInRange<T>(offset)) {
         BOOST_THROW_EXCEPTION(Exception()
-            << errinfo_rorc_error_message("BAR index out of range")
-            << errinfo_rorc_bar_index(index)
+            << errinfo_rorc_error_message("BAR offset out of range")
+            << errinfo_rorc_bar_index(offset)
             << errinfo_rorc_bar_size(getBarLength()));
       }
-      return *reinterpret_cast<volatile T*>(reinterpret_cast<volatile char*>(getUserspaceAddress())[index]);
+
+      return *reinterpret_cast<volatile T*>(static_cast<volatile char*>(getUserspaceAddress()) + offset);
+    }
+
+    /// Get a pointer to a register from the BAR
+    /// \param offset The byte offset of the register
+    template <typename T>
+    volatile T* addressAt(size_t offset) const
+    {
+      if (!isInRange<T>(offset)) {
+        BOOST_THROW_EXCEPTION(Exception()
+            << errinfo_rorc_error_message("BAR offset out of range")
+            << errinfo_rorc_bar_index(offset)
+            << errinfo_rorc_bar_size(getBarLength()));
+      }
+
+      volatile char* baseAddress = static_cast<volatile char*>(mUserspaceAddress);
+      volatile char* offsetAddress = baseAddress + offset;
+      volatile T* typed = reinterpret_cast<volatile T*>(offsetAddress);
+      return typed;
     }
 
     volatile void* getUserspaceAddress() const
@@ -81,12 +100,6 @@ class PdaBar
     volatile uint32_t* getUserspaceAddressU32() const
     {
       return reinterpret_cast<volatile uint32_t*>(mUserspaceAddress);
-    }
-
-    /// Get reference to register
-    volatile uint32_t& operator[](size_t i)
-    {
-      return getUserspaceAddressU32()[i];
     }
 
   private:
