@@ -9,6 +9,8 @@
 #include <boost/scoped_ptr.hpp>
 #include "Pda/PdaDevice.h"
 #include "RORC/CardType.h"
+#include "RORC/Parameters.h"
+#include "RORC/PciAddress.h"
 #include "RORC/PciId.h"
 
 namespace AliceO2 {
@@ -19,6 +21,11 @@ class RorcDevice
 {
   public:
     RorcDevice(int serialNumber);
+
+    RorcDevice(const PciAddress& address);
+
+    RorcDevice(const Parameters::CardId::value_type& cardId);
+
     ~RorcDevice();
 
     const PciId& getPciId() const
@@ -48,6 +55,7 @@ class RorcDevice
         CardType::type cardType;
         int serialNumber;
         PciId pciId;
+        PciAddress pciAddress;
     };
 
     // Finds RORC devices on the system
@@ -56,7 +64,14 @@ class RorcDevice
     // Finds RORC devices on the system with the given serial number
     static std::vector<CardDescriptor> findSystemDevices(int serialNumber);
 
+    // Finds RORC devices on the system with the given address
+    static std::vector<CardDescriptor> findSystemDevices(const PciAddress& address);
+
   private:
+
+    void initWithSerial(int serialNumber);
+    void initWithAddress(const PciAddress& address);
+
     boost::scoped_ptr<Pda::PdaDevice> mPdaDevice;
     PciDevice* mPciDevice;
     CardDescriptor mDescriptor;

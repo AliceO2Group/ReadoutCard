@@ -17,23 +17,22 @@ class ProgramRegisterRead: public Program
 
     virtual UtilsDescription getDescription()
     {
-      return UtilsDescription("Read Register", "Read a single register",
-          "./rorc-reg-read --serial=12345 --channel=0 --address=0x8");
+      return {"Read Register", "Read a single register", "./rorc-reg-read --serial=12345 --channel=0 --address=0x8"};
     }
 
     virtual void addOptions(boost::program_options::options_description& options)
     {
       Options::addOptionRegisterAddress(options);
       Options::addOptionChannel(options);
-      Options::addOptionSerialNumber(options);
+      Options::addOptionCardId(options);
     }
 
     virtual void run(const boost::program_options::variables_map& map)
     {
-      int serialNumber = Options::getOptionSerialNumber(map);
+      auto cardId = Options::getOptionCardId(map);
       int address = Options::getOptionRegisterAddress(map);
       int channelNumber = Options::getOptionChannel(map);
-      auto params = AliceO2::Rorc::Parameters::makeParameters(serialNumber, channelNumber);
+      auto params = AliceO2::Rorc::Parameters::makeParameters(cardId, channelNumber);
       auto channel = AliceO2::Rorc::ChannelFactory().getSlave(params);
 
       // Registers are indexed by 32 bits (4 bytes)

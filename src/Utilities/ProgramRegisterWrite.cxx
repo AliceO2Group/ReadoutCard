@@ -26,19 +26,19 @@ class ProgramRegisterWrite: public Program
     {
       Options::addOptionRegisterAddress(options);
       Options::addOptionChannel(options);
-      Options::addOptionSerialNumber(options);
+      Options::addOptionCardId(options);
       Options::addOptionRegisterValue(options);
       options.add_options()(NOREAD_SWITCH, "No readback of register after write");
     }
 
     virtual void run(const boost::program_options::variables_map& map)
     {
-      int serialNumber = Options::getOptionSerialNumber(map);
+      auto cardId = Options::getOptionCardId(map);
       int address = Options::getOptionRegisterAddress(map);
       int channelNumber = Options::getOptionChannel(map);
       int registerValue = Options::getOptionRegisterValue(map);
       auto readback = !bool(map.count(NOREAD_SWITCH));
-      auto params = AliceO2::Rorc::Parameters::makeParameters(serialNumber, channelNumber);
+      auto params = AliceO2::Rorc::Parameters::makeParameters(cardId, channelNumber);
       auto channel = AliceO2::Rorc::ChannelFactory().getSlave(params);
 
       // Registers are indexed by 32 bits (4 bytes)

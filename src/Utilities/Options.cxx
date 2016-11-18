@@ -9,6 +9,7 @@
 #include <bitset>
 #include <boost/algorithm/string.hpp>
 #include <boost/optional.hpp>
+#include <boost/variant.hpp>
 #include "Utilities/Common.h"
 #include "Utilities/Options.h"
 #include "Utilities/UtilsDescription.h"
@@ -60,6 +61,7 @@ static Option<std::string> registerAddress("address", "Register address in hex f
 static Option<int> registerRange("range", "Amount of registers to print past given address");
 static Option<int> serialNumber("serial", "Card serial number");
 static Option<std::string> registerValue("value", "Register value, either in decimal or hex (prefix with 0x)");
+static Option<std::string> cardId("id", "Card ID: either serial number or PCI address in 'lspci' format");
 
 // Options for ChannelParameters
 static Option<size_t> cpDmaPageSize("cp-dma-pagesize", "RORC page size in kibibytes", true, 4l);
@@ -130,7 +132,8 @@ po::variables_map getVariablesMap(int argc, char** argv, const po::options_descr
   try {
     po::store(po::parse_command_line(argc, argv, optionsDescription), variablesMap);
     po::notify(variablesMap);
-  } catch (const po::unknown_option& e) {
+  }
+  catch (const po::unknown_option& e) {
     BOOST_THROW_EXCEPTION(ProgramOptionException()
         << errinfo_rorc_error_message("Unknown option '" + e.get_option_name() + "'"));
   }
@@ -165,6 +168,11 @@ void addOptionRegisterRange(po::options_description& optionsDescription)
 void addOptionSerialNumber(po::options_description& optionsDescription)
 {
   addOption(option::serialNumber, optionsDescription);
+}
+
+void addOptionCardId(po::options_description& optionsDescription)
+{
+  addOption(option::cardId, optionsDescription);
 }
 
 int getOptionChannel(const po::variables_map& variablesMap)
@@ -217,7 +225,7 @@ int getOptionRegisterValue(const po::variables_map& variablesMap)
 
   if (ss.fail()) {
     BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-        << errinfo_rorc_error_message("Failed to read register value option"));
+        << errinfo_rorc_error_message("Failed to parse 'register value' option"));
   }
 
   return value;
@@ -238,6 +246,29 @@ int getOptionRegisterRange(const po::variables_map& variablesMap)
 int getOptionSerialNumber(const po::variables_map& variablesMap)
 {
   return getOptionRequired(option::serialNumber, variablesMap);
+}
+
+Parameters::CardId::value_type getOptionCardId(const po::variables_map& variablesMap)
+{
+  std::string string = getOptionRequired(option::cardId, variablesMap);
+
+  // Try to convert to PciAddress
+  try {
+    return PciAddress(string);
+  }
+  catch (const ParseException& e) {
+  }
+
+  // Try to convert to serial number (int)
+  try {
+    return boost::lexical_cast<int>(string);
+  }
+  catch (const boost::bad_lexical_cast& e) {
+  }
+
+  // Give up
+  BOOST_THROW_EXCEPTION(InvalidOptionValueException()
+      << errinfo_rorc_error_message("Failed to parse 'card id' option"));
 }
 
 void addOptionsChannelParameters(po::options_description& optionsDescription)

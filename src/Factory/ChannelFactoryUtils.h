@@ -7,6 +7,7 @@
 #include <algorithm>
 #include "RORC/CardType.h"
 #include "RORC/Exception.h"
+#include "RORC/Parameters.h"
 #ifdef ALICEO2_RORC_PDA_ENABLED
 # include "RorcDevice.h"
 #endif
@@ -23,7 +24,8 @@ inline RorcDevice::CardDescriptor findCard(int serial)
 
   if (cardsFound.empty()) {
     BOOST_THROW_EXCEPTION(Exception()
-        << errinfo_rorc_error_message("Could not find a card with the given serial number"));
+        << errinfo_rorc_error_message("Could not find a card with the given serial number")
+        << errinfo_rorc_serial_number(serial));
   }
 
   if (cardsFound.size() > 1) {
@@ -31,6 +33,29 @@ inline RorcDevice::CardDescriptor findCard(int serial)
     for (const auto& c : cardsFound) { pciIds.push_back(c.pciId); }
     BOOST_THROW_EXCEPTION(Exception()
         << errinfo_rorc_error_message("Found more than one card with the given serial number")
+        << errinfo_rorc_serial_number(serial)
+        << errinfo_rorc_pci_ids(pciIds));
+  }
+
+  return cardsFound.at(0);
+}
+
+inline RorcDevice::CardDescriptor findCard(const PciAddress& address)
+{
+  auto cardsFound = RorcDevice::findSystemDevices(address);
+
+  if (cardsFound.empty()) {
+    BOOST_THROW_EXCEPTION(Exception()
+        << errinfo_rorc_error_message("Could not find a card with the given PCI address number")
+        << errinfo_rorc_pci_address(address));
+  }
+
+  if (cardsFound.size() > 1) {
+    std::vector<PciId> pciIds;
+    for (const auto& c : cardsFound) { pciIds.push_back(c.pciId); }
+    BOOST_THROW_EXCEPTION(Exception()
+        << errinfo_rorc_error_message("Found more than one card with the given PCI address number")
+        << errinfo_rorc_pci_address(address)
         << errinfo_rorc_pci_ids(pciIds));
   }
 
@@ -131,7 +156,7 @@ struct Make<Result, Index, Tag, Function, Args...>
 /// Is that worth the ugliness of the template implementation? Good question...
 ///
 /// \tparam Interface The pointer type of the returned smart_ptr
-/// \param serial Serial number of the card
+/// \param params Parameters for the channel
 /// \param dummySerial Serial number that indicates a dummy object should be instantiated
 /// \param args A mapping of CardType to functions that create a shared pointer to an implementation of the Interface.
 ///   Formed by pairs of arguments of a CardTypeTag tag and a callable object. The first mapping must use DummyTag.
@@ -141,26 +166,34 @@ struct Make<Result, Index, Tag, Function, Args...>
 ///       CardTypeTag::CrorcTag, []{ return makeCrorc(); });
 /// \return A shared pointer to the constructed channel
 template<class Interface, class... Args>
-std::shared_ptr<Interface> makeChannel(int serial, int dummySerial, Args&&... args)
+std::shared_ptr<Interface> makeChannel(const Parameters& params, int dummySerial, Args&&... args)
 {
   using SharedPtr = std::shared_ptr<Interface>;
   using namespace _make_impl;
 
-  auto makeDummy = [&]{ return Make<SharedPtr, 0, Args...>::makeDummy(std::forward<Args>(args)...); };
+  auto makeDummy = [&]{
+    return Make<SharedPtr, 0, Args...>::makeDummy(std::forward<Args>(args)...);
+  };
 
-  try {
 #ifndef ALICEO2_RORC_PDA_ENABLED
-    // If PDA is NOT enabled we only make dummies
-    return makeDummy();
+  // If PDA is NOT enabled we only make dummies
+  return makeDummy();
 #else
-    // If PDA IS enabled we can make a dummy or a real channel
-    auto makeReal = [&](auto cardType){ return Make<SharedPtr, 0, Args...>::make(cardType, std::forward<Args>(args)...); };
-    return (dummySerial == serial) ? makeDummy() : makeReal(findCard(serial).cardType);
-#endif
-  } catch (boost::exception& e) {
-    e << errinfo_rorc_serial_number(serial);
-    throw;
+  // If PDA IS enabled we can make a dummy or a real channel
+  auto makeReal = [&](auto cardType){
+    return Make<SharedPtr, 0, Args...>::make(cardType, std::forward<Args>(args)...);
+  };
+
+  auto id = params.getRequired<Parameters::CardId>();
+
+  if (auto serial = boost::get<int>(&id)) {
+    return (dummySerial == *serial) ? makeDummy() : makeReal(findCard(*serial).cardType);
+  } else if (auto address = boost::get<PciAddress>(&id)) {
+    return makeReal(findCard(*address).cardType);
+  } else {
+    BOOST_THROW_EXCEPTION(Exception() << errinfo_rorc_error_message("Invalid Card ID"));
   }
+#endif
 }
 } // namespace FactoryHelper
 

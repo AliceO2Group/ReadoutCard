@@ -227,7 +227,7 @@ class ChannelMasterBase: public ChannelMasterInterface, public ChannelUtilityInt
     DmaState::type mDmaState;
 
     /// Serial number of the device
-    const int mSerialNumber;
+    int mSerialNumber;
 
     /// DMA channel number
     const int mChannelNumber;

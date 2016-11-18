@@ -22,21 +22,21 @@ class ProgramCruBlink: public Program
 
     virtual UtilsDescription getDescription()
     {
-      return UtilsDescription("CRU Blink", "Blinks the CRU LED", "./rorc-cru-blink --serial=12345");
+      return {"CRU Blink", "Blinks the CRU LED", "./rorc-cru-blink --id=12345"};
     }
 
     virtual void addOptions(boost::program_options::options_description& options)
     {
-      Options::addOptionSerialNumber(options);
+      Options::addOptionCardId(options);
     }
 
     virtual void run(const boost::program_options::variables_map& map)
     {
       using namespace AliceO2::Rorc;
 
-      auto serialNumber = Options::getOptionSerialNumber(map);
+      auto cardId = Options::getOptionCardId(map);
       auto channelNumber = 0;
-      auto params = AliceO2::Rorc::Parameters::makeParameters(serialNumber, channelNumber);
+      auto params = AliceO2::Rorc::Parameters::makeParameters(cardId, channelNumber);
       auto channel = AliceO2::Rorc::ChannelUtilityFactory().getUtility(params);
 
       const auto cycle = std::chrono::milliseconds(250);

@@ -24,22 +24,21 @@ class ProgramPrintFifo: public Program
 
     virtual UtilsDescription getDescription()
     {
-      return UtilsDescription("Print FIFO", "Prints the FIFO of a RORC",
-          "./rorc-print-fifo --serial=12345 --channel=0");
+      return {"Print FIFO", "Prints the FIFO of a RORC", "./rorc-print-fifo --id=12345 --channel=0"};
     }
 
     virtual void addOptions(boost::program_options::options_description& options)
     {
       Options::addOptionChannel(options);
-      Options::addOptionSerialNumber(options);
+      Options::addOptionCardId(options);
       options.add_options()("nopretty", "Dump FIFO contents instead of making a nice table");
     }
 
     virtual void run(const boost::program_options::variables_map& map)
     {
-      int serialNumber = Options::getOptionSerialNumber(map);
+      auto cardId = Options::getOptionCardId(map);
       int channelNumber = Options::getOptionChannel(map);
-      auto params = AliceO2::Rorc::Parameters::makeParameters(serialNumber, channelNumber);
+      auto params = AliceO2::Rorc::Parameters::makeParameters(cardId, channelNumber);
       auto channel = ChannelUtilityFactory().getUtility(params);
 
       if (map.count("nopretty")) {

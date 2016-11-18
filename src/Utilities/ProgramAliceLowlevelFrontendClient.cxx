@@ -50,6 +50,7 @@ class ProgramAliceLowlevelFrontendClient: public Program
     {
       Options::addOptionChannel(options);
       Options::addOptionSerialNumber(options);
+      Options::addOptionCardId(options);
     }
 
     virtual void run(const boost::program_options::variables_map& map) override

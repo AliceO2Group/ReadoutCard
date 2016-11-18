@@ -10,6 +10,7 @@
 #include <vector>
 #include <boost/exception/all.hpp>
 #include <cstdint>
+#include "RORC/PciAddress.h"
 #include "RORC/PciId.h"
 #include "RORC/CardType.h"
 #include "RORC/ResetLevel.h"
@@ -49,6 +50,10 @@ DEFINE_ERRINFO(page_index, int);
 DEFINE_ERRINFO(pages, size_t);
 DEFINE_ERRINFO(parameter_key, std::string);
 DEFINE_ERRINFO(parameter_name, std::string);
+DEFINE_ERRINFO(pci_address, PciAddress);
+DEFINE_ERRINFO(pci_address_bus_number, int);
+DEFINE_ERRINFO(pci_address_slot_number, int);
+DEFINE_ERRINFO(pci_address_function_number, int);
 DEFINE_ERRINFO(pci_device_index, int);
 DEFINE_ERRINFO(pci_id, PciId);
 DEFINE_ERRINFO(pci_ids, std::vector<PciId>);
@@ -82,6 +87,7 @@ struct Exception : virtual boost::exception, virtual std::exception
 struct RorcPdaException : virtual Exception {};
 struct MemoryMapException : virtual Exception {};
 struct ParameterException : virtual Exception {};
+struct ParseException : virtual Exception {};
 struct InvalidParameterException : virtual ParameterException {};
 struct OutOfRangeException : virtual Exception {};
 struct LockException : virtual Exception {};
@@ -127,14 +133,15 @@ void addPossibleCauses(boost::exception& exception, const std::vector<std::strin
 namespace boost {
 
 // These functions convert the errinfos to strings for diagnostic messages
+std::string to_string(const AliceO2::Rorc::errinfo_rorc_card_type& e);
 std::string to_string(const AliceO2::Rorc::errinfo_rorc_error_message& e);
-std::string to_string(const AliceO2::Rorc::errinfo_rorc_possible_causes& e);
-std::string to_string(const AliceO2::Rorc::errinfo_rorc_readyfifo_status& e);
 std::string to_string(const AliceO2::Rorc::errinfo_rorc_loopback_mode& e);
-std::string to_string(const AliceO2::Rorc::errinfo_rorc_reset_level& e);
-std::string to_string(const AliceO2::Rorc::errinfo_rorc_status_code& e);
+std::string to_string(const AliceO2::Rorc::errinfo_rorc_pci_address& e);
 std::string to_string(const AliceO2::Rorc::errinfo_rorc_pci_id& e);
 std::string to_string(const AliceO2::Rorc::errinfo_rorc_pci_ids& e);
-std::string to_string(const AliceO2::Rorc::errinfo_rorc_card_type& e);
+std::string to_string(const AliceO2::Rorc::errinfo_rorc_possible_causes& e);
+std::string to_string(const AliceO2::Rorc::errinfo_rorc_readyfifo_status& e);
+std::string to_string(const AliceO2::Rorc::errinfo_rorc_reset_level& e);
+std::string to_string(const AliceO2::Rorc::errinfo_rorc_status_code& e);
 
 }

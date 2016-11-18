@@ -98,15 +98,35 @@ void ChannelMasterBase::validateParameters(const ChannelParameters& cp)
 ChannelMasterBase::ChannelMasterBase(CardType::type cardType, const Parameters& parameters,
     const AllowedChannels& allowedChannels, size_t fifoSize)
     : mDmaState(DmaState::STOPPED),
-      mSerialNumber(parameters.getRequired<Parameters::SerialNumber>()),
       mChannelNumber(parameters.getRequired<Parameters::ChannelNumber>())
 {
   using namespace Util;
 
+  // Check the channel number is allowed
+  checkChannelNumber(allowedChannels);
+
+  // Convert parameters to internal representation
   mChannelParameters = convertParameters(parameters);
   validateParameters(mChannelParameters);
 
-  checkChannelNumber(allowedChannels);
+  // Get serial number, either from parameter or via PciAddress and find the device
+  {
+    auto id = parameters.getRequired<Parameters::CardId>();
+
+    if (auto serial = boost::get<int>(&id)) {
+      resetSmartPtr(mRorcDevice, *serial);
+      mSerialNumber = *serial;
+    } else if (auto address = boost::get<PciAddress>(&id)) {
+      resetSmartPtr(mRorcDevice, *address);
+      mSerialNumber = mRorcDevice->getSerialNumber();
+    }
+
+    // Failed
+    if (!mRorcDevice) {
+      BOOST_THROW_EXCEPTION(ParameterException()
+          << errinfo_rorc_error_message("Either SerialNumber or PciAddress parameter required"));
+    }
+  }
 
   ChannelPaths paths(cardType, mSerialNumber, mChannelNumber);
 
@@ -122,19 +142,13 @@ ChannelMasterBase::ChannelMasterBase(CardType::type cardType, const Parameters& 
     assertFileSystemType(paths.pages().parent_path(), {HUGEPAGE}, "DMA buffer");
   }
 
-  // Get lock on shared data
+  // Get lock on shared data and initialize PDA & DMA objects
   resetSmartPtr(mInterprocessLock, paths.lock(), paths.namedMutex());
-
-  resetSmartPtr(mRorcDevice, mSerialNumber);
-
   resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), mChannelNumber);
-
-  resetSmartPtr(mMappedFilePages, ChannelPaths(cardType, mSerialNumber, mChannelNumber).pages().string(),
+  resetSmartPtr(mMappedFilePages, paths.pages().string(),
       getChannelParameters().dma.bufferSize);
-
   resetSmartPtr(mBufferPages, mRorcDevice->getPciDevice(), mMappedFilePages->getAddress(), mMappedFilePages->getSize(),
       getBufferId(mChannelNumber));
-
   partitionDmaBuffer(fifoSize, mChannelParameters.dma.pageSize);
 }
 

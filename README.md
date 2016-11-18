@@ -40,7 +40,7 @@ They should also be deleted with new releases of the RORC module, since their in
 Once a ChannelMaster has acquired the lock, clients can:
 * Read and write registers
 * Start and stop DMA
-* Pushing and reading pages
+* Push and read pages
 
 For a usage example, see the program in RORC/src/Example.cxx
 
@@ -98,6 +98,7 @@ Scatter-gather lists (SGLs) contain a sequence of memory regions that the card's
 The granularity of the regions is in pages. Without an SGL, the DMA buffer would have to be a contiguous piece of 
 physical memory, which may be very difficult to allocate. With an SGL, we can use pages scattered over physical memory. The regions can also presented in userspace as contiguous memory, thanks to the magic of the MMU.   
 
+
 Known issues
 ===================
 
@@ -111,9 +112,11 @@ The Example.cxx uses a microsecond wait, which is probably overkill.
 
 Permissions
 -------------------
-Running the utilities as non-root is untested. We know there is a capability in the PDA driver to give permissions to 
-non-root users, but this is untested as of yet. However, the PDA kernel module must be inserted as root in any case. 
-The "modprobe uio\_pci\_dma" must be run as root at some point
+The library must be run by either root users, or users part of the group 'pda'. In case of 'pda' group users, make sure
+the `/dev/shm/alice_o2` and `/mnt/hugetlbfs/alice_o2` directories have sufficient permissions that allow those 
+users to create/read/write files.
+Also, the PDA kernel module must be inserted as root in any case.
+
 
 Dependencies
 ===================

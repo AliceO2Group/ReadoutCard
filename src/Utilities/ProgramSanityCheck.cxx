@@ -27,18 +27,19 @@ class ProgramSanityCheck: public Program
     virtual UtilsDescription getDescription()
     {
       return UtilsDescription("Sanity Check", "Does some basic sanity checks on the card",
-          "./rorc-sanity-check --serial=12345 --channel=0");
+          "./rorc-sanity-check --id=12345 --channel=0");
     }
 
     virtual void addOptions(boost::program_options::options_description& options)
     {
       Options::addOptionSerialNumber(options);
       Options::addOptionChannel(options);
+      Options::addOptionCardId(options);
     }
 
     virtual void run(const boost::program_options::variables_map& map)
     {
-      const int serialNumber = Options::getOptionSerialNumber(map);
+      auto cardId = Options::getOptionCardId(map);
       const int channelNumber = Options::getOptionChannel(map);
 
       cout << "Warning: if the RORC is in a bad state, this program may result in a crash and reboot of the host\n";
@@ -49,7 +50,7 @@ class ProgramSanityCheck: public Program
         return;
       }
 
-      auto params = AliceO2::Rorc::Parameters::makeParameters(serialNumber, channelNumber);
+      auto params = AliceO2::Rorc::Parameters::makeParameters(cardId, channelNumber);
       auto channel = AliceO2::Rorc::ChannelUtilityFactory().getUtility(params);
       channel->utilitySanityCheck(cout);
     }

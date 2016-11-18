@@ -57,13 +57,10 @@ void printPage(Rorc::ChannelMasterInterface::Page& page, int index, std::ostream
 Rorc::Parameters makeParams()
 {
   using namespace Rorc;
-  Parameters params;
-  params.put<Parameters::SerialNumber>(serialNumber);
-  params.put<Parameters::ChannelNumber>(channelNumber);
-  params.put<Parameters::DmaPageSize>(pageSize);
-  params.put<Parameters::DmaBufferSize>(bufferSize);
-  params.put<Parameters::GeneratorEnabled>(true);
-  return params;
+  return Parameters::makeParameters(serialNumber, channelNumber)
+      .put<Parameters::DmaPageSize>(pageSize)
+      .put<Parameters::DmaBufferSize>(bufferSize)
+      .put<Parameters::GeneratorEnabled>(true);
 }
 
 int main(int, char**)

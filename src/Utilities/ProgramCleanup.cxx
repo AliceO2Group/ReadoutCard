@@ -36,12 +36,12 @@ class ProgramCleanup: public Program
 
     virtual UtilsDescription getDescription()
     {
-      return {"Cleanup", "Cleans up RORC state", "./rorc-cleanup --serial=12345 --channel=0"};
+      return {"Cleanup", "Cleans up RORC state", "./rorc-cleanup --id=12345 --channel=0"};
     }
 
     virtual void addOptions(po::options_description& options)
     {
-      Options::addOptionSerialNumber(options);
+      Options::addOptionCardId(options);
       Options::addOptionChannel(options);
       options.add_options()("force",po::bool_switch(&mForceCleanup),
           "Force cleanup of shared state files if normal cleanup fails");
@@ -68,14 +68,14 @@ class ProgramCleanup: public Program
 
     virtual void run(const boost::program_options::variables_map& map)
     {
-      auto serialNumber = Options::getOptionSerialNumber(map);
+      auto cardId = Options::getOptionCardId(map);
       auto channelNumber = Options::getOptionChannel(map);
 
       try {
         // This non-forced cleanup asks the ChannelMaster to clean up itself.
         // It will not succeed if the channel was not initialized properly before the running of this program.
         cout << "### Attempting cleanup...\n";
-        auto params = AliceO2::Rorc::Parameters::makeParameters(serialNumber, channelNumber);
+        auto params = AliceO2::Rorc::Parameters::makeParameters(cardId, channelNumber);
         auto channel = ChannelUtilityFactory().getUtility(params);
         channel->utilityCleanupState();
         cout << "### Done!\n";
@@ -94,8 +94,8 @@ class ProgramCleanup: public Program
         if (mForceCleanup) {
           cout << "### Attempting forced cleanup...\n";
           // Try to get paths of the shared state files the internal way
-          RorcDevice rorcDevice(serialNumber);
-          ChannelPaths channelPaths(rorcDevice.getCardType(), serialNumber, channelNumber);
+          RorcDevice rorcDevice(cardId);
+          ChannelPaths channelPaths(rorcDevice.getCardType(), rorcDevice.getSerialNumber(), channelNumber);
           files.push_back(channelPaths.fifo().string());
           files.push_back(channelPaths.lock().string());
           files.push_back(channelPaths.pages().string());

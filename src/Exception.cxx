@@ -137,5 +137,9 @@ std::string to_string(const errinfo_rorc_card_type& e)
   return toStringHelper("RORC card type", e.value(), CardType::toString(e.value()));
 }
 
+std::string to_string(const errinfo_rorc_pci_address& e)
+{
+  return toStringHelper("RORC PCI address", e.value().toString());
+}
 
 } // namespace boost

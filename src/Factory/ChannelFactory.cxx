@@ -39,8 +39,7 @@ ChannelFactory::~ChannelFactory()
 
 auto ChannelFactory::getMaster(const Parameters& params) -> MasterSharedPtr
 {
-  auto serial = params.getRequired<Parameters::SerialNumber>();
-  return makeChannel<ChannelMasterInterface>(serial, DUMMY_SERIAL_NUMBER
+  return makeChannel<ChannelMasterInterface>(params, DUMMY_SERIAL_NUMBER
     , DummyTag, [&]{ return std::make_shared<DummyChannelMaster>(params); }
 #ifdef ALICEO2_RORC_PDA_ENABLED
     , CrorcTag, [&]{ return std::make_shared<CrorcChannelMaster>(params); }
@@ -51,8 +50,7 @@ auto ChannelFactory::getMaster(const Parameters& params) -> MasterSharedPtr
 
 auto ChannelFactory::getSlave(const Parameters& params) -> SlaveSharedPtr
 {
-  auto serial = params.getRequired<Parameters::SerialNumber>();
-  return makeChannel<ChannelSlaveInterface>(serial, DUMMY_SERIAL_NUMBER
+  return makeChannel<ChannelSlaveInterface>(params, DUMMY_SERIAL_NUMBER
     , DummyTag, [&]{ return std::make_shared<DummyChannelSlave>(params); }
 #ifdef ALICEO2_RORC_PDA_ENABLED
     , CrorcTag, [&]{ return std::make_shared<CrorcChannelSlave>(params); }

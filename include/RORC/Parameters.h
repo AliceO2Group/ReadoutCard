@@ -12,6 +12,7 @@
 #include <boost/variant.hpp>
 #include "RORC/Exception.h"
 #include "RORC/LoopbackMode.h"
+#include "RORC/PciAddress.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -20,7 +21,9 @@ namespace Rorc {
 class Parameters
 {
   public:
-    using Variant = boost::variant<size_t, int32_t, bool, LoopbackMode::type>;
+    /// Variant for the CardId parameter
+    using CardIdVariant = boost::variant<int, ::AliceO2::Rorc::PciAddress>;
+    using Variant = boost::variant<size_t, int32_t, bool, LoopbackMode::type, CardIdVariant>;
     using Key = std::string;
     using Map = std::map<Key, Variant>;
 
@@ -44,7 +47,10 @@ class Parameters
       } _##_param_name = {}
 
     /// The serial number of the card.
-    _DEFINE_PARAMETER(int32_t, "serial_number", SerialNumber);
+//    _DEFINE_PARAMETER(int32_t, "serial_number", SerialNumber);
+
+    /// An identifier of the card: either a serial number or PCI address
+    _DEFINE_PARAMETER(CardIdVariant, "card_id", CardId);
 
     /// The number of the channel to open.
     _DEFINE_PARAMETER(int32_t, "channel_number", ChannelNumber);
@@ -115,14 +121,13 @@ class Parameters
       }
     }
 
-    /// Convenience function to make parameters object with serial and channel number, since these are the most
+    /// Convenience function to make parameters object with card ID and channel number, since these are the most
     /// frequently used parameters
-    static Parameters makeParameters(SerialNumber::value_type serial, ChannelNumber::value_type channel)
+    static Parameters makeParameters(CardId::value_type cardId, ChannelNumber::value_type channel)
     {
-      Parameters params;
-      params.put<Parameters::SerialNumber>(serial);
-      params.put<Parameters::ChannelNumber>(channel);
-      return params;
+      return Parameters()
+          .put<Parameters::CardId>(cardId)
+          .put<Parameters::ChannelNumber>(channel);
     }
 
     const Map& getMap() const

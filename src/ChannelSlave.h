@@ -6,6 +6,7 @@
 #pragma once
 
 #include "RorcDevice.h"
+#include <boost/scoped_ptr.hpp>
 #include "Pda/PdaBar.h"
 #include "RORC/ChannelSlaveInterface.h"
 #include "RORC/Parameters.h"
@@ -35,10 +36,10 @@ class ChannelSlave: public ChannelSlaveInterface
     int mChannelNumber;
 
     /// PDA device objects
-    RorcDevice mRorcDevice;
+    boost::scoped_ptr<RorcDevice> mRorcDevice;
 
     /// PDA BAR object
-    Pda::PdaBar mPdaBar;
+    boost::scoped_ptr<Pda::PdaBar> mPdaBar;
 };
 
 } // namespace Rorc

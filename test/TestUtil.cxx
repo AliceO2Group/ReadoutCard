@@ -29,8 +29,6 @@ BOOST_AUTO_TEST_CASE(ChannelFactoryHelperTest)
 
   int tooMany;
   BOOST_CHECK_THROW(Util::convertAssign(strings, x, y, z, tooMany), UtilException);
-
-
 }
 
 } // Anonymous namespace

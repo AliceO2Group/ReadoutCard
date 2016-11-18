@@ -37,10 +37,10 @@ class ProgramListCards: public Program
 
       std::ostringstream table;
 
-      auto formatHeader = "  %-3s %-12s %-12s %-12s %-12s %-12s\n";
-      auto formatRow = "  %-3s %-12s 0x%-10s 0x%-10s %-12s %-12s\n";
-      auto header = boost::str(boost::format(formatHeader) % "#" % "Card Type" % "Vendor ID" % "Device ID" % "Serial Nr"
-          % "FW Version");
+      auto formatHeader = "  %-3s %-12s %-12s %-12s %-12s %-12s %-12s\n";
+      auto formatRow = "  %-3s %-12s %-12s 0x%-10s 0x%-10s %-12s %-12s\n";
+      auto header = boost::str(boost::format(formatHeader)
+          % "#" % "Card Type" % "PCI Address" % "Vendor ID" % "Device ID" % "Serial Nr" % "FW Version");
       auto lineFat = std::string(header.length(), '=') + '\n';
       auto lineThin = std::string(header.length(), '-') + '\n';
 
@@ -61,8 +61,8 @@ class ProgramListCards: public Program
           cout << e.what() << '\n';
         }
 
-        table << boost::str(boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciId.vendor
-            % card.pciId.device % card.serialNumber % firmware);
+        table << boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciAddress.toString()
+            % card.pciId.vendor % card.pciId.device % card.serialNumber % firmware;
         i++;
       }
 

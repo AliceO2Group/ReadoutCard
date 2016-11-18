@@ -38,7 +38,11 @@ class Lock
         Util::resetSmartPtr(mFileMutex, lockFilePath.c_str());
       }
       catch (const boost::interprocess::interprocess_exception& e) {
-        BOOST_THROW_EXCEPTION(e);
+        BOOST_THROW_EXCEPTION(LockException()
+            << errinfo_rorc_error_message(e.what())
+            << errinfo_rorc_shared_lock_file(lockFilePath.string())
+            << errinfo_rorc_named_mutex_name(namedMutexName)
+            << errinfo_rorc_possible_causes({"Invalid lock file path"}));
       }
       try {
         Util::resetSmartPtr(mNamedMutex, boost::interprocess::open_or_create, namedMutexName.c_str());
@@ -46,6 +50,8 @@ class Lock
       catch (const boost::interprocess::interprocess_exception& e) {
         BOOST_THROW_EXCEPTION(LockException()
             << errinfo_rorc_error_message(e.what())
+            << errinfo_rorc_shared_lock_file(lockFilePath.string())
+            << errinfo_rorc_named_mutex_name(namedMutexName)
             << errinfo_rorc_possible_causes({"Invalid mutex name (note: it should be a name, not a path)"}));
       }
 
@@ -59,15 +65,16 @@ class Lock
         // First lock failed
         BOOST_THROW_EXCEPTION(FileLockException()
             << errinfo_rorc_error_message("Failed to acquire file lock")
-            << errinfo_rorc_shared_lock_file(lockFilePath.string()));
+            << errinfo_rorc_shared_lock_file(lockFilePath.string())
+            << errinfo_rorc_named_mutex_name(namedMutexName));
       } else if (result == 1) {
         // Second lock failed
         BOOST_THROW_EXCEPTION(NamedMutexLockException()
             << errinfo_rorc_error_message("Failed to acquire named mutex only; file lock was successfully acquired")
-            << errinfo_rorc_possible_causes({
-                "Named mutex is owned by other thread in current process",
-                "Previous Interprocess::Lock on same objects was not cleanly destroyed"})
-            << errinfo_rorc_named_mutex_name(namedMutexName));
+            << errinfo_rorc_shared_lock_file(lockFilePath.string())
+            << errinfo_rorc_named_mutex_name(namedMutexName)
+            << errinfo_rorc_possible_causes({"Named mutex is owned by other thread in current process",
+                "Previous Interprocess::Lock on same objects was not cleanly destroyed"}));
       }
     }
 

@@ -43,7 +43,7 @@ void MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
     }
     catch (const std::exception& e) {
       BOOST_THROW_EXCEPTION(MemoryMapException()
-          << errinfo_rorc_error_message("Failed to open memory map file"));
+          << errinfo_rorc_error_message(std::string("Failed to open memory map file: ") + e.what()));
     }
 
     // Resize and map file to memory
@@ -52,10 +52,11 @@ void MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
     }
     catch (const std::exception& e) {
       BOOST_THROW_EXCEPTION(MemoryMapException()
-          << errinfo_rorc_error_message("Failed to resize memory map file")
+          << errinfo_rorc_error_message(std::string("Failed to resize memory map file: ") + e.what())
           << errinfo_rorc_possible_causes({
               "Size not a multiple of page size (possibly multiple of hugepages); ",
-              "Not enough memory available (check hugepage allocation)"}));
+              "Not enough memory available (check hugepage allocation)",
+              "Insufficient permissions"}));
     }
 
     try {
@@ -63,7 +64,7 @@ void MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
       mMappedRegion = bip::mapped_region(mFileMapping, bip::read_write, 0, fileSize);
     } catch (const std::exception& e) {
       BOOST_THROW_EXCEPTION(MemoryMapException()
-          << errinfo_rorc_error_message("Failed to memory map file")
+          << errinfo_rorc_error_message(std::string("Failed to memory map file: ") + e.what())
           << errinfo_rorc_possible_causes({"Not enough memory available (possibly not enough hugepages allocated)"}));
     }
   }

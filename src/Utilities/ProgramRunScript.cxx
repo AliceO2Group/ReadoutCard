@@ -96,7 +96,7 @@ class ProgramRunScript : public Program
     virtual void addOptions(boost::program_options::options_description& options)
     {
       Options::addOptionChannel(options);
-      Options::addOptionSerialNumber(options);
+      Options::addOptionCardId(options);
       options.add_options()
           ("script", boost::program_options::value<std::string>(&mScriptFilename), "Python script path")
           ("example", boost::program_options::bool_switch(&mPrintExample), "Print example script");
@@ -114,9 +114,9 @@ class ProgramRunScript : public Program
         << AliceO2::Rorc::errinfo_rorc_error_message("Empty script path"));
       }
 
-      int serialNumber = Options::getOptionSerialNumber(map);
+      auto cardId = Options::getOptionCardId(map);
       int channelNumber = Options::getOptionChannel(map);
-      auto params = AliceO2::Rorc::Parameters::makeParameters(serialNumber, channelNumber);
+      auto params = AliceO2::Rorc::Parameters::makeParameters(cardId, channelNumber);
       auto channel = AliceO2::Rorc::ChannelFactory().getSlave(params);
 
       try {

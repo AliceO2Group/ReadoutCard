@@ -5,16 +5,24 @@
 
 #include "ChannelSlave.h"
 #include <iostream>
+#include "Util.h"
 
 namespace AliceO2 {
 namespace Rorc {
 
 ChannelSlave::ChannelSlave(const Parameters& parameters)
- : mSerialNumber(parameters.getRequired<Parameters::SerialNumber>()),
-   mChannelNumber(parameters.getRequired<Parameters::ChannelNumber>()),
-   mRorcDevice(mSerialNumber),
-   mPdaBar(mRorcDevice.getPciDevice(), mChannelNumber)
+ : mChannelNumber(parameters.getRequired<Parameters::ChannelNumber>())
 {
+  auto id = parameters.getRequired<Parameters::CardId>();
+  if (auto serial = boost::get<int>(&id)) {
+    Util::resetSmartPtr(mRorcDevice, *serial);
+    mSerialNumber = *serial;
+  } else if (auto address = boost::get<PciAddress>(&id)) {
+    Util::resetSmartPtr(mRorcDevice, *address);
+    mSerialNumber = mRorcDevice->getSerialNumber();
+  }
+
+  Util::resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), mChannelNumber);
 }
 
 ChannelSlave::~ChannelSlave()
@@ -24,14 +32,13 @@ ChannelSlave::~ChannelSlave()
 uint32_t ChannelSlave::readRegister(int index)
 {
   // TODO Access restriction
-  return mPdaBar.getRegister<uint32_t>(index * sizeof(uint32_t));
+  return mPdaBar->getRegister<uint32_t>(index * sizeof(uint32_t));
 }
 
 void ChannelSlave::writeRegister(int index, uint32_t value)
 {
   // TODO Access restriction
-  mPdaBar.setRegister<uint32_t>(index * sizeof(uint32_t), value);
-
+  mPdaBar->setRegister<uint32_t>(index * sizeof(uint32_t), value);
 }
 
 } // namespace Rorc

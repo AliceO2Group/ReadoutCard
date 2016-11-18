@@ -40,7 +40,8 @@ PdaDevice::PdaDevice(const PciId& pciId) : mDeviceOperator(nullptr)
     if(mDeviceOperator == nullptr){
       BOOST_THROW_EXCEPTION(RorcPdaException()
           << errinfo_rorc_error_message("Failed to get DeviceOperator")
-          << errinfo_rorc_possible_causes({"Invalid PCI ID", "Insufficient permissions"}));
+          << errinfo_rorc_possible_causes({"Invalid PCI ID",
+              "Insufficient permissions (must be root or member of group 'pda')"}));
     }
 
     uint64_t deviceCount = getPciDeviceCount();

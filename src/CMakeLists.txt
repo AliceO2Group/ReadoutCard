@@ -15,6 +15,7 @@ set(RORC_LIB_HEADERS
   ../include/RORC/GeneratorPattern.h
   ../include/RORC/LoopbackMode.h
   ../include/RORC/Parameters.h
+  ../include/RORC/PciAddress.h
   ../include/RORC/PciId.h
   ../include/RORC/RegisterReadWriteInterface.h
   ../include/RORC/ResetLevel.h
@@ -32,6 +33,7 @@ set(RORC_LIB_SOURCES
   Exception.cxx
   LoopbackMode.cxx
   MemoryMappedFile.cxx
+  PciAddress.cxx
   ResetLevel.cxx
   RorcStatusCode.cxx
   Utilities/Common.cxx

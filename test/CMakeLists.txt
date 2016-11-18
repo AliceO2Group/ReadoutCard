@@ -11,6 +11,7 @@ set(TEST_FILES
     TestMemoryMappedFile.cxx
     TestPageManager.cxx
     TestParameters.cxx
+    TestPciAddress.cxx
     TestProgramOptions.cxx
     TestRorcException.cxx
     TestUtil.cxx

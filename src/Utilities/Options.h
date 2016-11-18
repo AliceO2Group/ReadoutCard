@@ -8,9 +8,9 @@
 #include <boost/program_options.hpp>
 #include <boost/exception/all.hpp>
 #include <boost/exception/diagnostic_information.hpp>
-#include "RORC/Parameters.h"
 #include <Utilities/UtilsDescription.h>
 #include <iostream>
+#include "RORC/Parameters.h"
 #include "RORC/Exception.h"
 #include "ChannelParameters.h"
 
@@ -34,11 +34,13 @@ void addOptionRegisterValue(boost::program_options::options_description& options
 void addOptionRegisterRange(boost::program_options::options_description& optionsDescription);
 void addOptionChannel(boost::program_options::options_description& optionsDescription);
 void addOptionSerialNumber(boost::program_options::options_description& optionsDescription);
+void addOptionCardId(boost::program_options::options_description& optionsDescription);
 void addOptionsChannelParameters(boost::program_options::options_description& optionsDescription);
 int getOptionRegisterAddress(const boost::program_options::variables_map& variablesMap);
 int getOptionRegisterValue(const boost::program_options::variables_map& variablesMap);
 int getOptionChannel(const boost::program_options::variables_map& variablesMap);
 int getOptionSerialNumber(const boost::program_options::variables_map& variablesMap);
+Parameters::CardId::value_type getOptionCardId(const boost::program_options::variables_map& variablesMap);
 int getOptionRegisterRange(const boost::program_options::variables_map& variablesMap);
 ChannelParameters getOptionsChannelParameters(const boost::program_options::variables_map& variablesMap);
 Parameters getOptionsParameterMap(const boost::program_options::variables_map& variablesMap);

@@ -7,32 +7,40 @@
 #include <iostream>
 
 using std::cout;
-using std::endl;
 
 namespace AliceO2 {
 namespace Rorc {
 
 DummyChannelSlave::DummyChannelSlave(const Parameters& parameters)
 {
-  auto serial = parameters.getRequired<Parameters::SerialNumber>();
+  auto id = parameters.getRequired<Parameters::CardId>();
   auto channel = parameters.getRequired<Parameters::ChannelNumber>();
-  cout << "DummyChannelSlave::DummyChannelSlave(serial:" << serial << ", channel:" << channel << ")" << endl;
+
+  cout << "DummyChannelSlave::DummyChannelSlave(";
+  if (auto serial = boost::get<int>(&id)) {
+    cout << "serial:" << *serial << ", ";
+  }
+  if (auto address = boost::get<PciAddress>(&id)) {
+    cout << "address:" << address->toString() << ", ";
+  }
+
+  cout << "channel:" << channel << ")\n";
 }
 
 DummyChannelSlave::~DummyChannelSlave()
 {
-  cout << "DummyChannelSlave::~DummyChannelSlave()" << endl;
+  cout << "DummyChannelSlave::~DummyChannelSlave()\n";
 }
 
 uint32_t DummyChannelSlave::readRegister(int index)
 {
-  cout << "DummyChannelSlave::readRegister(" << index << ")" << endl;
+  cout << "DummyChannelSlave::readRegister(" << index << ")\n";
   return 0;
 }
 
 void DummyChannelSlave::writeRegister(int index, uint32_t value)
 {
-  cout << "DummyChannelSlave::writeRegister(index:" << index << ", value:" << value << ")" << endl;
+  cout << "DummyChannelSlave::writeRegister(index:" << index << ", value:" << value << ")\n";
 }
 
 CardType::type DummyChannelSlave::getCardType()

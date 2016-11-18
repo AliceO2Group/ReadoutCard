@@ -27,18 +27,18 @@ class ProgramRegisterReadRange: public Program
     {
       Options::addOptionRegisterAddress(options);
       Options::addOptionChannel(options);
-      Options::addOptionSerialNumber(options);
+      Options::addOptionCardId(options);
       Options::addOptionRegisterRange(options);
       options.add_options()("file", po::value<std::string>(&mFile), "Output to given file in binary format");
     }
 
     virtual void run(const boost::program_options::variables_map& map)
     {
-      int serialNumber = Options::getOptionSerialNumber(map);
+      auto cardId = Options::getOptionCardId(map);
       int baseAddress = Options::getOptionRegisterAddress(map);
       int channelNumber = Options::getOptionChannel(map);
       int range = Options::getOptionRegisterRange(map);
-      auto params = AliceO2::Rorc::Parameters::makeParameters(serialNumber, channelNumber);
+      auto params = AliceO2::Rorc::Parameters::makeParameters(cardId, channelNumber);
       auto channel = AliceO2::Rorc::ChannelFactory().getSlave(params);
 
       std::vector<uint32_t> values(range);

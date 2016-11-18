@@ -84,13 +84,13 @@ class ProgramDmaBench: public Program
 
     virtual UtilsDescription getDescription()
     {
-      return {"DMA Benchmark", "Test RORC DMA performance", "./rorc-dma-bench --serial=12345 --channel=0"};
+      return {"DMA Benchmark", "Test RORC DMA performance", "./rorc-dma-bench --id=12345 --channel=0"};
     }
 
     virtual void addOptions(po::options_description& options)
     {
       Options::addOptionChannel(options);
-      Options::addOptionSerialNumber(options);
+      Options::addOptionCardId(options);
       Options::addOptionsChannelParameters(options);
       options.add_options()
           ("reset",
@@ -117,9 +117,9 @@ class ProgramDmaBench: public Program
           ("no-pagereset",
               po::bool_switch(&mOptions.noPageReset),
               "Do not reset page to default values")
-//          ("bar-hammer",
-//              po::bool_switch(&mOptions.barHammer),
-//              "Stress the BAR with repeated accesses and measure performance")
+          ("bar-hammer",
+              po::bool_switch(&mOptions.barHammer),
+              "Stress the BAR with repeated accesses and measure performance")
               ;
     }
 
@@ -138,11 +138,11 @@ class ProgramDmaBench: public Program
 
       mInfinitePages = (mOptions.maxPages <= 0);
 
-      int serialNumber = Options::getOptionSerialNumber(map);
+      auto cardId = Options::getOptionCardId(map);
       int channelNumber = Options::getOptionChannel(map);
       auto params = Options::getOptionsParameterMap(map);
       mPageSize = params.get<Parameters::DmaPageSize>().get();
-      params.put<Parameters::SerialNumber>(serialNumber);
+      params.put<Parameters::CardId>(cardId);
       params.put<Parameters::ChannelNumber>(channelNumber);
       params.put<Parameters::GeneratorDataSize>(mPageSize);
 

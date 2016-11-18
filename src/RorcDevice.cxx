@@ -25,6 +25,7 @@ namespace Rorc {
 int32_t crorcGetSerial(PciDevice* pciDevice);
 int32_t cruGetSerial(PciDevice* pciDevice);
 
+namespace {
 struct DeviceType
 {
     CardType::type cardType;
@@ -37,8 +38,23 @@ const std::vector<DeviceType> deviceTypes = {
     { CardType::Cru, {"e001", "1172"}, cruGetSerial }, // Altera dev board CRU
 };
 
-RorcDevice::RorcDevice(int serialNumber)
-    : mDescriptor({CardType::Unknown, -1, {"unknown", "unknown"}})
+PciAddress addressFromDevice(PciDevice* pciDevice){
+  uint8_t busId;
+  uint8_t deviceId;
+  uint8_t functionId;
+  PciDevice_getBusID(pciDevice, &busId);
+  PciDevice_getDeviceID(pciDevice, &deviceId);
+  PciDevice_getFunctionID(pciDevice, &functionId);
+  PciAddress address (busId, deviceId, functionId);
+  return address;
+}
+
+RorcDevice::CardDescriptor defaultDescriptor() {
+  return {CardType::Unknown, -1, {"unknown", "unknown"}, PciAddress(0,0,0)};
+}
+} // Anonymous namespace
+
+void RorcDevice::initWithSerial(int serialNumber)
 {
   try {
     for (const auto& type : deviceTypes) {
@@ -48,7 +64,7 @@ RorcDevice::RorcDevice(int serialNumber)
         int serial = type.getSerial(pciDevice);
         if (serial == serialNumber) {
           mPciDevice = pciDevice;
-          mDescriptor = CardDescriptor{type.cardType, serial, type.pciId};
+          mDescriptor = CardDescriptor{type.cardType, serial, type.pciId, addressFromDevice(pciDevice)};
           return;
         }
       }
@@ -59,6 +75,51 @@ RorcDevice::RorcDevice(int serialNumber)
     e << errinfo_rorc_serial_number(serialNumber);
     addPossibleCauses(e, {"Invalid serial number search target"});
     throw;
+  }
+}
+
+void RorcDevice::initWithAddress(const PciAddress& address)
+{
+  try {
+    for (const auto& type : deviceTypes) {
+      Util::resetSmartPtr(mPdaDevice, type.pciId);
+      auto pciDevices = mPdaDevice->getPciDevices();
+      for (const auto& pciDevice : pciDevices) {
+        auto deviceAddress = addressFromDevice(pciDevice);
+        if (deviceAddress == address) {
+          mPciDevice = pciDevice;
+          mDescriptor = CardDescriptor { type.cardType, type.getSerial(pciDevice), type.pciId, address };
+          return;
+        }
+      }
+    }
+    BOOST_THROW_EXCEPTION(Exception() << errinfo_rorc_error_message("Could not find card"));
+  } catch (boost::exception& e) {
+    e << errinfo_rorc_pci_address(address);
+    addPossibleCauses(e, { "Invalid PCI address search target" });
+    throw;
+  }
+}
+
+RorcDevice::RorcDevice(int serialNumber)
+    : mDescriptor(defaultDescriptor())
+{
+  initWithSerial(serialNumber);
+}
+
+RorcDevice::RorcDevice(const PciAddress& address)
+    : mDescriptor(defaultDescriptor())
+{
+  initWithAddress(address);
+}
+
+RorcDevice::RorcDevice(const Parameters::CardId::value_type& cardId)
+    : mDescriptor(defaultDescriptor())
+{
+  if (auto serial = boost::get<int>(&cardId)) {
+    initWithSerial(*serial);
+  } else {
+    initWithAddress(boost::get<PciAddress>(cardId));
   }
 }
 
@@ -73,8 +134,8 @@ std::vector<RorcDevice::CardDescriptor> RorcDevice::findSystemDevices()
     Pda::PdaDevice pdaDevice(type.pciId);
     auto pciDevices = pdaDevice.getPciDevices();
     for (const auto& pciDevice : pciDevices) {
-      RorcDevice::CardDescriptor cd;
-      cards.push_back(CardDescriptor{type.cardType, type.getSerial(pciDevice), type.pciId});
+      cards.push_back(CardDescriptor{type.cardType, type.getSerial(pciDevice), type.pciId,
+        addressFromDevice(pciDevice)});
     }
   }
   return cards;
@@ -90,7 +151,8 @@ std::vector<RorcDevice::CardDescriptor> RorcDevice::findSystemDevices(int serial
       for (const auto& pciDevice : pciDevices) {
         int serial = type.getSerial(pciDevice);
         if (serial == serialNumber) {
-          cards.push_back(CardDescriptor{type.cardType, type.getSerial(pciDevice), type.pciId});
+          cards.push_back(CardDescriptor{type.cardType, type.getSerial(pciDevice), type.pciId,
+                  addressFromDevice(pciDevice)});
         }
       }
     }
@@ -98,6 +160,32 @@ std::vector<RorcDevice::CardDescriptor> RorcDevice::findSystemDevices(int serial
   catch (boost::exception& e) {
     e << errinfo_rorc_serial_number(serialNumber);
     addPossibleCauses(e, {"Invalid serial number search target"});
+    throw;
+  }
+  return cards;
+}
+
+std::vector<RorcDevice::CardDescriptor> RorcDevice::findSystemDevices(const PciAddress& address)
+{
+  std::vector<RorcDevice::CardDescriptor> cards;
+  try {
+    for (const auto& type : deviceTypes) {
+      Pda::PdaDevice pdaDevice(type.pciId);
+      auto pciDevices = pdaDevice.getPciDevices();
+      for (const auto& pciDevice : pciDevices) {
+        auto deviceAddress = addressFromDevice(pciDevice);
+
+        printf("Address: %s\n", deviceAddress.toString().c_str());
+
+        if (deviceAddress == address) {
+          cards.push_back(CardDescriptor{type.cardType, type.getSerial(pciDevice), type.pciId, address});
+        }
+      }
+    }
+  }
+  catch (boost::exception& e) {
+    e << errinfo_rorc_pci_address(address);
+    addPossibleCauses(e, {"Invalid PCI address search target"});
     throw;
   }
   return cards;
