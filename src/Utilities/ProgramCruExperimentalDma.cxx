@@ -114,53 +114,8 @@ auto READOUT_IDLE_LOG_PATH = "readout_idle_log.txt";
 namespace Stuff
 {
 
-class Thread
-{
-  public:
-
-    void start(std::function<void(std::atomic<bool>* stopFlag)> function)
-    {
-      join();
-      mStopFlag = false;
-      mThread = std::thread(function, &mStopFlag);
-    }
-
-    void stop()
-    {
-      mStopFlag = true;
-    }
-
-    void join()
-    {
-      stop();
-      if (mThread.joinable()) {
-        mThread.join();
-      }
-    }
-
-    ~Thread()
-    {
-      try {
-        join();
-      }
-      catch (const std::system_error& e) {
-        cout << "Failed to join thread: " << boost::diagnostic_information(e) << endl;
-      }
-      catch (const std::exception& e) {
-        cout << "Unexpected exception while joining thread: " << boost::diagnostic_information(e) << endl;
-      }
-    }
-
-  private:
-    /// Thread object
-    std::thread mThread;
-
-    /// Flag to stop the thread
-    std::atomic<bool> mStopFlag;
-};
-
 /// Manages a temperature monitor thread
-class TemperatureMonitor : public Thread
+class TemperatureMonitor : public Util::Thread
 {
   public:
     bool isValid() const
@@ -212,7 +167,7 @@ class TemperatureMonitor : public Thread
 };
 
 
-class RegisterHammer : public Thread
+class RegisterHammer : public Util::Thread
 {
   public:
     /// Start monitoring

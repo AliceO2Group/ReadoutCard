@@ -78,6 +78,46 @@ auto READOUT_LOG_FORMAT = "readout_log_%d.txt";
 
 }
 
+class BarHammer : public Util::Thread
+{
+  public:
+    void start(const std::shared_ptr<ChannelMasterInterface>& channelIn)
+    {
+      mChannel = channelIn;
+      Thread::start([&](std::atomic<bool>* stopFlag) {
+        auto channel = mChannel;
+
+        if (channel->getCardType() != CardType::Cru) {
+          cout << "BarHammer only supported for CRU\n";
+          return;
+        }
+
+        if (!channel) {
+          return;
+        }
+
+        int64_t hammerCount = 0;
+        while (!stopFlag->load() && !Program::isSigInt()) {
+          for (int i = 0; i < 10000; ++i) {
+            channel->writeRegister(CruRegisterIndex::DEBUG_READ_WRITE, static_cast<uint32_t>(hammerCount));
+            hammerCount++;
+          }
+        }
+
+        mHammerCount = hammerCount;
+      });
+    }
+
+    int64_t getCount()
+    {
+      return mHammerCount.load();
+    }
+
+  private:
+    std::shared_ptr<ChannelMasterInterface> mChannel;
+    std::atomic<int64_t> mHammerCount;
+};
+
 class ProgramDmaBench: public Program
 {
   public:
@@ -119,7 +159,7 @@ class ProgramDmaBench: public Program
               "Do not reset page to default values")
           ("bar-hammer",
               po::bool_switch(&mOptions.barHammer),
-              "Stress the BAR with repeated accesses and measure performance")
+              "Stress the BAR with repeated writes and measure performance")
               ;
     }
 
@@ -164,13 +204,30 @@ class ProgramDmaBench: public Program
         printStatusHeader();
       }
 
+      if (mOptions.barHammer) {
+        if (mChannel->getCardType() != CardType::Cru) {
+          BOOST_THROW_EXCEPTION(ParameterException()
+              << errinfo_rorc_error_message("BarHammer option currently only supported for CRU\n"));
+        }
+        Util::resetSmartPtr(mBarHammer);
+        mBarHammer->start(mChannel);
+      }
+
       mRunTime.start = std::chrono::high_resolution_clock::now();
+
       if (mOptions.randomReadout) {
         dmaLoopReadoutRandom();
       } else {
         dmaLoop();
       }
       mRunTime.end = std::chrono::high_resolution_clock::now();
+
+      if (mBarHammer) {
+        mBarHammer->stop();
+        mHammerCount = mBarHammer->getCount();
+        mBarHammer.reset();
+      }
+
       freeExcessPages(10ms);
       mChannel->stopDma();
 
@@ -429,7 +486,8 @@ class ProgramDmaBench: public Program
      bool isStatusDisplayInterval()
      {
        auto now = std::chrono::high_resolution_clock::now();
-       if (std::chrono::duration_cast<std::chrono::milliseconds, int64_t>(now - mLastDisplayUpdate) > DISPLAY_INTERVAL) {
+       if (std::chrono::duration_cast<std::chrono::milliseconds, int64_t>(now - mLastDisplayUpdate)
+           > DISPLAY_INTERVAL) {
          mLastDisplayUpdate = now;
          return true;
        }
@@ -448,9 +506,8 @@ class ProgramDmaBench: public Program
        double GiBs = GiB / runTime;
        double Gibs = GiBs * 8;
 
-       std::ostringstream stream;
-       auto put = [&](auto label, auto value) { stream << b::format("  %-10s  %-10s\n") % label % value; };
-       stream << '\n';
+       auto put = [&](auto label, auto value) { cout << b::format("  %-10s  %-10s\n") % label % value; };
+       cout << '\n';
        put("Seconds", runTime);
        put("Pages", mReadoutCount);
        if (bytes > 0.00001) {
@@ -463,10 +520,18 @@ class ProgramDmaBench: public Program
          put("Gibit/s", Gibs);
          put("Errors", mErrorCount);
        }
-       stream << '\n';
+       if (mHammerCount) {
+         size_t writeSize = sizeof(uint32_t);
+         double bytes = double(mHammerCount) * writeSize;
+         double MB = bytes / (1000 * 1000);
+         double MBs = MB / runTime;
+         put("BAR writes", mHammerCount);
+         put("BAR write size", writeSize);
+         put("BAR MB", MB);
+         put("BAR MB/s", MBs);
+       }
 
-       auto str = stream.str();
-       cout << str;
+       cout << '\n';
      }
 
     void outputErrors()
@@ -565,6 +630,9 @@ class ProgramDmaBench: public Program
     } mRandomPausesSoft;
 
     size_t mPageSize;
+
+    int64_t mHammerCount = 0;
+    std::unique_ptr<BarHammer> mBarHammer;
 };
 
 int main(int argc, char** argv)
