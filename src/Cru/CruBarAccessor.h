@@ -59,6 +59,23 @@ class CruBarAccessor
       at32(CruRegisterIndex::DONE_CONTROL) = 0x1;
     }
 
+    void setDataGeneratorPattern(GeneratorPattern::type pattern)
+    {
+      constexpr uint32_t INCREMENTAL = 0b01;
+      constexpr uint32_t ALTERNATING = 0b10;
+      constexpr uint32_t CONSTANT = 0b11;
+
+      auto value = [&pattern]{ switch (pattern) {
+          case GeneratorPattern::Incremental: return INCREMENTAL;
+          case GeneratorPattern::Alternating: return ALTERNATING;
+          case GeneratorPattern::Constant:    return CONSTANT;
+          default: BOOST_THROW_EXCEPTION(Exception()
+              << errinfo_rorc_error_message("Unsupported generator pattern for CRU")
+              << errinfo_rorc_generator_pattern(pattern)); }};
+
+      at32(CruRegisterIndex::DATA_EMULATOR_CONTROL) = value();
+    }
+
     void sendAcknowledge() const
     {
       at32(CruRegisterIndex::DMA_COMMAND) = 0x1;

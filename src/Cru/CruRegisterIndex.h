@@ -68,6 +68,10 @@ static constexpr size_t DATA_EMULATOR_CONTROL = 128;
 static constexpr size_t DMA_COMMAND = 129;
 
 /// Configuration register for DMA
+/// First two bits determine the data generator pattern
+///   0b01 -> Counter
+///   0b10 -> 0xa5a5a5a5
+///   0b11 -> 0x12345678
 /// Byte address: 0x208
 static constexpr size_t DMA_CONFIGURATION = 130;
 

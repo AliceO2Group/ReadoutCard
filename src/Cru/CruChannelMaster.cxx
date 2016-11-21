@@ -128,6 +128,11 @@ void CruChannelMaster::resetCru()
 
 void CruChannelMaster::initCru()
 {
+  // Set data generator pattern
+  if (getChannelParameters().generator.useDataGenerator) {
+    getBar().setDataGeneratorPattern(getChannelParameters().generator.pattern);
+  }
+
   // Status base address in the bus address space
   log((Util::getUpper32Bits(uint64_t(getFifoBus())) != 0)
         ? "Using 64-bit region for status bus address, may be unsupported by PCI/BIOS configuration"
