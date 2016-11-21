@@ -55,14 +55,18 @@ class ProgramAliceLowlevelFrontendClient: public Program
 
     virtual void run(const boost::program_options::variables_map& map) override
     {
+      // Get DIM DNS node from environment
+      if (getenv(std::string("DIM_DNS_NODE").c_str()) == nullptr) {
+        BOOST_THROW_EXCEPTION(
+            AliceO2::Rorc::Exception()
+                << AliceO2::Rorc::errinfo_rorc_error_message("Environment variable 'DIM_DNS_NODE' not set"));
+      }
+
+      // Get program options
       int serialNumber = Options::getOptionSerialNumber(map);
       int channelNumber = Options::getOptionChannel(map);
 
-      if (getenv(std::string("DIM_DNS_NODE").c_str()) == nullptr) {
-        BOOST_THROW_EXCEPTION(AliceO2::Rorc::Exception()
-            << AliceO2::Rorc::errinfo_rorc_error_message("Environment variable 'DIM_DNS_NODE' not set"));
-      }
-
+      // Initialize DIM objects
       Alf::ServiceNames names(serialNumber, channelNumber);
       TemperatureInfo alfTestInt(names.temperature());
       Alf::RegisterReadRpc readRpc(names.registerReadRpc());
@@ -72,7 +76,7 @@ class ProgramAliceLowlevelFrontendClient: public Program
         cout << "-------------------------------------\n";
         cout << "Temperature   = " << gTemperature << endl;
 
-        int writes = 10;//std::rand() % 50;
+        int writes = 10; //std::rand() % 50;
         cout << "Write   0x1f8 = 0x1 times " << writes << endl;
         for (int i = 0; i < writes; ++i) {
           writeRpc.writeRegister(0x1f8, 0x1);
