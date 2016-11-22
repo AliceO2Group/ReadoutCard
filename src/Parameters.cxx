@@ -9,7 +9,7 @@
 #include <string>
 #include <boost/optional.hpp>
 #include <boost/variant.hpp>
-#include "RORC/Exception.h"
+#include "ExceptionInternal.h"
 #include "RORC/LoopbackMode.h"
 #include "RORC/PciAddress.h"
 

@@ -3,8 +3,7 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "RORC/RORC.h"
-#include "RORC/Exception.h"
+#include "ExceptionInternal.h"
 #define BOOST_TEST_MODULE RORC_TestRorcException
 #define BOOST_TEST_MAIN
 #define BOOST_TEST_DYN_LINK

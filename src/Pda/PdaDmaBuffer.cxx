@@ -5,7 +5,7 @@
 
 #include "PdaDmaBuffer.h"
 #include <pda.h>
-#include "RORC/Exception.h"
+#include "ExceptionInternal.h"
 
 namespace AliceO2 {
 namespace Rorc {

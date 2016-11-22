@@ -6,8 +6,7 @@
 #include "MemoryMappedFile.h"
 #include <fstream>
 #include <boost/filesystem.hpp>
-#include "RORC/Exception.h"
-
+#include "ExceptionInternal.h"
 
 namespace AliceO2 {
 namespace Rorc {

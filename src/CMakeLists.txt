@@ -31,6 +31,7 @@ set(RORC_LIB_SOURCES
   Dummy/DummyChannelMaster.cxx
   Dummy/DummyChannelSlave.cxx
   Exception.cxx
+  ExceptionInternal.cxx
   LoopbackMode.cxx
   MemoryMappedFile.cxx
   Parameters.cxx

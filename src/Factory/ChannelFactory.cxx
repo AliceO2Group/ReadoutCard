@@ -9,9 +9,10 @@
 #include "RORC/ResetLevel.h"
 #include "RORC/GeneratorPattern.h"
 #include "RORC/LoopbackMode.h"
-#include "RORC/Exception.h"
 #include "Dummy/DummyChannelMaster.h"
 #include "Dummy/DummyChannelSlave.h"
+#include "ExceptionInternal.h"
+#include "Factory/ChannelFactoryUtils.h"
 #ifdef ALICEO2_RORC_PDA_ENABLED
 #  include <pda.h>
 #  include "Crorc/CrorcChannelMaster.h"
@@ -21,7 +22,6 @@
 #else
 #  pragma message("PDA not enabled, ChannelFactory will always return a dummy implementation")
 #endif
-#include "Factory/ChannelFactoryUtils.h"
 
 namespace AliceO2 {
 namespace Rorc {

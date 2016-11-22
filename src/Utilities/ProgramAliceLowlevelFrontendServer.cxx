@@ -13,7 +13,7 @@
 #include <boost/lexical_cast.hpp>
 #include "RORC/Parameters.h"
 #include "RORC/ChannelFactory.h"
-#include "RORC/Exception.h"
+#include "ExceptionInternal.h"
 #include "AliceLowlevelFrontend.h"
 #include "Util.h"
 

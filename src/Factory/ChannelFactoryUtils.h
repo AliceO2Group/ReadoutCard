@@ -6,7 +6,7 @@
 #include <map>
 #include <algorithm>
 #include "RORC/CardType.h"
-#include "RORC/Exception.h"
+#include "ExceptionInternal.h"
 #include "RORC/Parameters.h"
 #ifdef ALICEO2_RORC_PDA_ENABLED
 # include "RorcDevice.h"

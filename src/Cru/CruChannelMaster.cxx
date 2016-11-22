@@ -8,7 +8,7 @@
 #include <thread>
 #include "ChannelPaths.h"
 #include "ChannelUtilityImpl.h"
-#include "RORC/Exception.h"
+#include "ExceptionInternal.h"
 #include "Util.h"
 
 /// Creates a CruException and attaches data using the given message string

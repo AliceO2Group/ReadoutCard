@@ -12,7 +12,7 @@
 #include <boost/circular_buffer.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/optional.hpp>
-#include "RORC/Exception.h"
+#include "ExceptionInternal.h"
 
 namespace AliceO2 {
 namespace Rorc {

@@ -6,9 +6,9 @@
 #ifndef SRC_PDA_PDA_H_
 #define SRC_PDA_PDA_H_
 
-#include "PdaDmaBuffer.h"
+#include "ExceptionInternal.h"
 #include "PageAddress.h"
-#include "RORC/Exception.h"
+#include "PdaDmaBuffer.h"
 
 namespace AliceO2 {
 namespace Rorc {

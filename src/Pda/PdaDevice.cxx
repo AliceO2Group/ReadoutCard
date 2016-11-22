@@ -10,7 +10,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/range/iterator_range.hpp>
 #include <boost/filesystem/fstream.hpp>
-#include "RORC/Exception.h"
+#include "ExceptionInternal.h"
 
 /// Throws the given exception if the given status code is not equal to RORC_STATUS_OK
 #define THROW_IF_BAD_STATUS(_status_code_in, _exception) do { \

@@ -13,6 +13,7 @@
 #include <boost/range/irange.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include "RORC/RORC.h"
+#include "RORC/Exception.h"
 
 using std::cout;
 using std::endl;

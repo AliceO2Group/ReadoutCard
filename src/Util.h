@@ -16,8 +16,9 @@
 #include <boost/throw_exception.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/lexical_cast.hpp>
+#include "ExceptionInternal.h"
 #include "InfoLogger/InfoLogger.hxx"
-#include "RORC/Exception.h"
+
 
 namespace AliceO2 {
 namespace Rorc {

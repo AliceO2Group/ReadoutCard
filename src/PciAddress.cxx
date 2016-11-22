@@ -7,7 +7,7 @@
 #include <iomanip>
 #include <sstream>
 #include <boost/spirit/include/qi.hpp>
-#include "RORC/Exception.h"
+#include "ExceptionInternal.h"
 
 namespace AliceO2 {
 namespace Rorc {

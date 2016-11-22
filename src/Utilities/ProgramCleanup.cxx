@@ -8,7 +8,7 @@
 #include <boost/interprocess/sync/named_mutex.hpp>
 #include "Factory/ChannelUtilityFactory.h"
 #include "ChannelPaths.h"
-#include "RORC/Exception.h"
+#include "ExceptionInternal.h"
 #include "RorcDevice.h"
 #include "Utilities/Common.h"
 #include "Utilities/Options.h"

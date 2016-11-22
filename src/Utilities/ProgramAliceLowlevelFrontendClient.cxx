@@ -9,7 +9,7 @@
 #include <chrono>
 #include <boost/optional/optional_io.hpp>
 #include <dim/dic.hxx>
-#include "RORC/Exception.h"
+#include "ExceptionInternal.h"
 #include "AliceLowlevelFrontend.h"
 
 using std::cout;
