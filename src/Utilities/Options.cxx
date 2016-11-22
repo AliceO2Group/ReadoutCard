@@ -91,7 +91,7 @@ T getOptionRequired(const Option<T>& option, const po::variables_map& variablesM
 
   if (variablesMap.count(switchLong) == 0){
     BOOST_THROW_EXCEPTION(OptionRequiredException()
-        << errinfo_rorc_error_message("The option '" + option.swtch + "' is required but missing"));
+        << ErrorInfo::Message("The option '" + option.swtch + "' is required but missing"));
   }
 
   po::variable_value v = variablesMap.at(switchLong);
@@ -135,7 +135,7 @@ po::variables_map getVariablesMap(int argc, char** argv, const po::options_descr
   }
   catch (const po::unknown_option& e) {
     BOOST_THROW_EXCEPTION(ProgramOptionException()
-        << errinfo_rorc_error_message("Unknown option '" + e.get_option_name() + "'"));
+        << ErrorInfo::Message("Unknown option '" + e.get_option_name() + "'"));
   }
   return variablesMap;
 }
@@ -181,7 +181,7 @@ int getOptionChannel(const po::variables_map& variablesMap)
 
   if (value < 0) {
     BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-        << errinfo_rorc_error_message("Channel value is negative"));
+        << ErrorInfo::Message("Channel value is negative"));
   }
 
   return value;
@@ -198,12 +198,12 @@ int getOptionRegisterAddress(const po::variables_map& variablesMap)
 
   if (address < 0) {
     BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-        << errinfo_rorc_error_message("Address must be positive"));
+        << ErrorInfo::Message("Address must be positive"));
   }
 
   if (address % 4) {
     BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-        << errinfo_rorc_error_message("Address not a multiple of 4"));
+        << ErrorInfo::Message("Address not a multiple of 4"));
   }
 
   return address;
@@ -225,7 +225,7 @@ int getOptionRegisterValue(const po::variables_map& variablesMap)
 
   if (ss.fail()) {
     BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-        << errinfo_rorc_error_message("Failed to parse 'register value' option"));
+        << ErrorInfo::Message("Failed to parse 'register value' option"));
   }
 
   return value;
@@ -237,7 +237,7 @@ int getOptionRegisterRange(const po::variables_map& variablesMap)
 
   if (value < 0) {
     BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-        << errinfo_rorc_error_message("Register range negative"));
+        << ErrorInfo::Message("Register range negative"));
   }
 
   return value;
@@ -268,7 +268,7 @@ Parameters::CardIdType getOptionCardId(const po::variables_map& variablesMap)
 
   // Give up
   BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-      << errinfo_rorc_error_message("Failed to parse 'card id' option"));
+      << ErrorInfo::Message("Failed to parse 'card id' option"));
 }
 
 void addOptionsChannelParameters(po::options_description& optionsDescription)
@@ -302,7 +302,7 @@ ChannelParameters getOptionsChannelParameters(const boost::program_options::vari
         cp.generator.loopbackMode = loopback;
       } catch (const std::out_of_range& e) {
         BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-            << errinfo_rorc_error_message("Invalid value for option '" + option::cpGenLoopback.swtch + "'"));
+            << ErrorInfo::Message("Invalid value for option '" + option::cpGenLoopback.swtch + "'"));
       }
     }
   }

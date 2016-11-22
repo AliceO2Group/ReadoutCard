@@ -101,7 +101,7 @@ void convertAssign(const Container& strings, Args&... args)
 {
   if (strings.size() < sizeof...(args)) {
     BOOST_THROW_EXCEPTION(UtilException()
-        << errinfo_rorc_error_message("Container size smaller than amount of arguments"));
+        << ErrorInfo::Message("Container size smaller than amount of arguments"));
   }
   _convertAssignImpl::Conv<Container, int(sizeof...(args)) - 1, Args...>()(strings, args...);
 }

@@ -48,8 +48,8 @@ namespace {
       return *optional;
     } else {
       BOOST_THROW_EXCEPTION(ParameterException()
-          << errinfo_rorc_error_message("Parameter was not set")
-          << errinfo_rorc_parameter_key(key));
+          << ErrorInfo::Message("Parameter was not set")
+          << ErrorInfo::ParameterKey(key));
     }
   }
 }

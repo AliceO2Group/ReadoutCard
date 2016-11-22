@@ -161,9 +161,9 @@ class PageManager : public PageManagerBase<PageManager<FIRMWARE_QUEUE_CAPACITY>>
         auto iterator = mMapInUse.find(page.bufferIndex);
         if (iterator != mMapInUse.end()) {
           BOOST_THROW_EXCEPTION(Exception()
-              << errinfo_rorc_error_message("Cannot free page: was already in use")
-              << errinfo_rorc_fifo_index(page.descriptorIndex)
-              << errinfo_rorc_page_index(page.bufferIndex));
+              << ErrorInfo::Message("Cannot free page: was already in use")
+              << ErrorInfo::FifoIndex(page.descriptorIndex)
+              << ErrorInfo::PageIndex(page.bufferIndex));
         }
 
         mMapInUse[page.bufferIndex] = page;
@@ -181,8 +181,8 @@ class PageManager : public PageManagerBase<PageManager<FIRMWARE_QUEUE_CAPACITY>>
       auto iterator = mMapInUse.find(bufferIndex);
       if (iterator == mMapInUse.end()) {
         BOOST_THROW_EXCEPTION(Exception()
-            << errinfo_rorc_error_message("Cannot free page: was not in use")
-            << errinfo_rorc_page_index(bufferIndex));
+            << ErrorInfo::Message("Cannot free page: was not in use")
+            << ErrorInfo::PageIndex(bufferIndex));
       }
       auto page = iterator->second;
 

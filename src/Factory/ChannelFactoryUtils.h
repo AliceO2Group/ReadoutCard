@@ -24,17 +24,17 @@ inline RorcDevice::CardDescriptor findCard(int serial)
 
   if (cardsFound.empty()) {
     BOOST_THROW_EXCEPTION(Exception()
-        << errinfo_rorc_error_message("Could not find a card with the given serial number")
-        << errinfo_rorc_serial_number(serial));
+        << ErrorInfo::Message("Could not find a card with the given serial number")
+        << ErrorInfo::SerialNumber(serial));
   }
 
   if (cardsFound.size() > 1) {
     std::vector<PciId> pciIds;
     for (const auto& c : cardsFound) { pciIds.push_back(c.pciId); }
     BOOST_THROW_EXCEPTION(Exception()
-        << errinfo_rorc_error_message("Found more than one card with the given serial number")
-        << errinfo_rorc_serial_number(serial)
-        << errinfo_rorc_pci_ids(pciIds));
+        << ErrorInfo::Message("Found more than one card with the given serial number")
+        << ErrorInfo::SerialNumber(serial)
+        << ErrorInfo::PciIds(pciIds));
   }
 
   return cardsFound.at(0);
@@ -46,17 +46,17 @@ inline RorcDevice::CardDescriptor findCard(const PciAddress& address)
 
   if (cardsFound.empty()) {
     BOOST_THROW_EXCEPTION(Exception()
-        << errinfo_rorc_error_message("Could not find a card with the given PCI address number")
-        << errinfo_rorc_pci_address(address));
+        << ErrorInfo::Message("Could not find a card with the given PCI address number")
+        << ErrorInfo::PciAddress(address));
   }
 
   if (cardsFound.size() > 1) {
     std::vector<PciId> pciIds;
     for (const auto& c : cardsFound) { pciIds.push_back(c.pciId); }
     BOOST_THROW_EXCEPTION(Exception()
-        << errinfo_rorc_error_message("Found more than one card with the given PCI address number")
-        << errinfo_rorc_pci_address(address)
-        << errinfo_rorc_pci_ids(pciIds));
+        << ErrorInfo::Message("Found more than one card with the given PCI address number")
+        << ErrorInfo::PciAddress(address)
+        << ErrorInfo::PciIds(pciIds));
   }
 
   return cardsFound.at(0);
@@ -85,9 +85,9 @@ std::shared_ptr<Interface> channelFactoryHelper(int serialNumber, int dummySeria
 
     if (map.count(card.cardType) == 0) {
       BOOST_THROW_EXCEPTION(Exception()
-          << errinfo_rorc_error_message("Unknown card type")
-          << errinfo_rorc_serial_number(serialNumber)
-          << errinfo_rorc_card_type(card.cardType));
+          << ErrorInfo::Message("Unknown card type")
+          << ErrorInfo::SerialNumber(serialNumber)
+          << ErrorInfo::CardType(card.cardType));
     }
 
     return map.at(card.cardType)();
@@ -111,8 +111,8 @@ struct Make<Result, Index>
   static Result make(CardType::type cardType)
   {
     BOOST_THROW_EXCEPTION(Exception()
-        << errinfo_rorc_error_message("No card match found")
-        << errinfo_rorc_card_type(cardType));
+        << ErrorInfo::Message("No card match found")
+        << ErrorInfo::CardType(cardType));
   }
 };
 
@@ -191,7 +191,7 @@ std::shared_ptr<Interface> makeChannel(const Parameters& params, int dummySerial
   } else if (auto address = boost::get<PciAddress>(&id)) {
     return makeReal(findCard(*address).cardType);
   } else {
-    BOOST_THROW_EXCEPTION(Exception() << errinfo_rorc_error_message("Invalid Card ID"));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Invalid Card ID"));
   }
 #endif
 }

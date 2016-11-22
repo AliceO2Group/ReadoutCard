@@ -48,8 +48,8 @@ CruChannelMaster::CruChannelMaster(const Parameters& params)
 {
   if (getChannelParameters().dma.pageSize != DMA_PAGE_SIZE) {
     BOOST_THROW_EXCEPTION(CruException()
-        << errinfo_rorc_error_message("CRU only supports an 8kB page size")
-        << errinfo_rorc_dma_page_size(getChannelParameters().dma.pageSize));
+        << ErrorInfo::Message("CRU only supports an 8kB page size")
+        << ErrorInfo::DmaPageSize(getChannelParameters().dma.pageSize));
   }
 
   initFifo();
@@ -109,10 +109,10 @@ void CruChannelMaster::initFifo()
 {
   if (getPageAddresses().size() <= CRU_DESCRIPTOR_ENTRIES) {
     BOOST_THROW_EXCEPTION(CruException()
-        << errinfo_rorc_error_message("Insufficient amount of pages fit in DMA buffer")
-        << errinfo_rorc_pages(getPageAddresses().size())
-        << errinfo_rorc_dma_buffer_size(getChannelParameters().dma.bufferSize)
-        << errinfo_rorc_dma_page_size(getChannelParameters().dma.pageSize));
+        << ErrorInfo::Message("Insufficient amount of pages fit in DMA buffer")
+        << ErrorInfo::Pages(getPageAddresses().size())
+        << ErrorInfo::DmaBufferSize(getChannelParameters().dma.bufferSize)
+        << ErrorInfo::DmaPageSize(getChannelParameters().dma.pageSize));
   }
 
   getFifoUser()->resetStatusEntries();
@@ -139,7 +139,7 @@ void CruChannelMaster::initCru()
         : "Using 32-bit region for status bus address");
 
   if (!Util::checkAlignment(getFifoBus(), DMA_ALIGNMENT)) {
-    BOOST_THROW_EXCEPTION(CruException() << errinfo_rorc_error_message("FIFO bus address not 32 byte aligned"));
+    BOOST_THROW_EXCEPTION(CruException() << ErrorInfo::Message("FIFO bus address not 32 byte aligned"));
   }
 
   getBar().setFifoBusAddress(getFifoBus());

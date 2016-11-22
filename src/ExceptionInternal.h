@@ -20,64 +20,66 @@
 
 namespace AliceO2 {
 namespace Rorc {
+namespace ErrorInfo {
 
 /// Helper macro for defining errinfo types for Boost exceptions
 #define DEFINE_ERRINFO(name, type) \
-  using errinfo_rorc_##name = boost::error_info<struct errinfo_rorc_##name##_, type>
+  using name = ::boost::error_info<struct _ErrorInfo##name, type>
 
 // errinfo definitions
-DEFINE_ERRINFO(bar_index, size_t);
-DEFINE_ERRINFO(bar_size, size_t);
-DEFINE_ERRINFO(card_type, CardType::type);
-DEFINE_ERRINFO(channel_number, int);
-DEFINE_ERRINFO(ddl_reset_mask, std::string);
-DEFINE_ERRINFO(directory, std::string);
-DEFINE_ERRINFO(diu_command, int);
-DEFINE_ERRINFO(dma_buffer_pages, size_t);
-DEFINE_ERRINFO(dma_buffer_size, size_t);
-DEFINE_ERRINFO(dma_page_size, size_t);
-DEFINE_ERRINFO(error_message, std::string);
-DEFINE_ERRINFO(fifo_index, int);
-DEFINE_ERRINFO(filename, std::string);
-DEFINE_ERRINFO(filesize, size_t);
-DEFINE_ERRINFO(filesystem_type, std::string);
-DEFINE_ERRINFO(generator_event_length, size_t);
-DEFINE_ERRINFO(generator_pattern, int);
-DEFINE_ERRINFO(generator_seed, int);
-DEFINE_ERRINFO(index, size_t);
-DEFINE_ERRINFO(loopback_mode, LoopbackMode::type);
-DEFINE_ERRINFO(named_mutex_name, std::string);
-DEFINE_ERRINFO(page_index, int);
-DEFINE_ERRINFO(pages, size_t);
-DEFINE_ERRINFO(parameter_key, std::string);
-DEFINE_ERRINFO(pci_address, PciAddress);
-DEFINE_ERRINFO(pci_address_bus_number, int);
-DEFINE_ERRINFO(pci_address_slot_number, int);
-DEFINE_ERRINFO(pci_address_function_number, int);
-DEFINE_ERRINFO(pci_device_index, int);
-DEFINE_ERRINFO(pci_id, PciId);
-DEFINE_ERRINFO(pci_ids, std::vector<PciId>);
-DEFINE_ERRINFO(pda_status_code, int);
-DEFINE_ERRINFO(possible_causes, std::vector<std::string>);
-DEFINE_ERRINFO(range, size_t);
-DEFINE_ERRINFO(readyfifo_length, int32_t);
-DEFINE_ERRINFO(readyfifo_status, int);
-DEFINE_ERRINFO(reset_level, ResetLevel::type);
-DEFINE_ERRINFO(scatter_gather_entry_size, size_t);
-DEFINE_ERRINFO(serial_number, int);
-DEFINE_ERRINFO(shared_buffer_file, std::string);
-DEFINE_ERRINFO(shared_fifo_file, std::string);
-DEFINE_ERRINFO(shared_lock_file, std::string);
-DEFINE_ERRINFO(shared_object_name, std::string);
-DEFINE_ERRINFO(shared_state_file, std::string);
-DEFINE_ERRINFO(siu_command, int);
-DEFINE_ERRINFO(status_code, int);
+DEFINE_ERRINFO(BarIndex, size_t);
+DEFINE_ERRINFO(BarSize, size_t);
+DEFINE_ERRINFO(CardType, ::AliceO2::Rorc::CardType::type);
+DEFINE_ERRINFO(ChannelNumber, int);
+DEFINE_ERRINFO(DdlResetMask, std::string);
+DEFINE_ERRINFO(Directory, std::string);
+DEFINE_ERRINFO(DiuCommand, int);
+DEFINE_ERRINFO(DmaBufferPages, size_t);
+DEFINE_ERRINFO(DmaBufferSize, size_t);
+DEFINE_ERRINFO(DmaPageSize, size_t);
+DEFINE_ERRINFO(Message, std::string);
+DEFINE_ERRINFO(FifoIndex, int);
+DEFINE_ERRINFO(FileName, std::string);
+DEFINE_ERRINFO(FileSize, size_t);
+DEFINE_ERRINFO(FilesystemType, std::string);
+DEFINE_ERRINFO(GeneratorEventLength, size_t);
+DEFINE_ERRINFO(GeneratorPattern, int);
+DEFINE_ERRINFO(GeneratorSeed, int);
+DEFINE_ERRINFO(Index, size_t);
+DEFINE_ERRINFO(LoopbackMode, ::AliceO2::Rorc::LoopbackMode::type);
+DEFINE_ERRINFO(NamedMutexName, std::string);
+DEFINE_ERRINFO(PageIndex, int);
+DEFINE_ERRINFO(Pages, size_t);
+DEFINE_ERRINFO(ParameterKey, std::string);
+DEFINE_ERRINFO(PciAddress, PciAddress);
+DEFINE_ERRINFO(PciAddressBusNumber, int);
+DEFINE_ERRINFO(PciAddressSlotNumber, int);
+DEFINE_ERRINFO(PciAddressFunctionNumber, int);
+DEFINE_ERRINFO(PciDeviceIndex, int);
+DEFINE_ERRINFO(PciId, ::AliceO2::Rorc::PciId);
+DEFINE_ERRINFO(PciIds, std::vector<::AliceO2::Rorc::PciId>);
+DEFINE_ERRINFO(PdaStatusCode, int);
+DEFINE_ERRINFO(PossibleCauses, std::vector<std::string>);
+DEFINE_ERRINFO(Range, size_t);
+DEFINE_ERRINFO(ReadyFifoLength, int32_t);
+DEFINE_ERRINFO(ReadyFifoStatus, int);
+DEFINE_ERRINFO(ResetLevel, ::AliceO2::Rorc::ResetLevel::type);
+DEFINE_ERRINFO(ScatterGatherEntrySize, size_t);
+DEFINE_ERRINFO(SerialNumber, int);
+DEFINE_ERRINFO(SharedBufferFile, std::string);
+DEFINE_ERRINFO(SharedFifoFile, std::string);
+DEFINE_ERRINFO(SharedLockFile, std::string);
+DEFINE_ERRINFO(SharedObjectName, std::string);
+DEFINE_ERRINFO(SharedStateFile, std::string);
+DEFINE_ERRINFO(SiuCommand, int);
+DEFINE_ERRINFO(StatusCode, int);
+} // namespace ErrorInfo
 
 // Undefine macro for header safety (we don't want to pollute the global namespace with collision-prone names)
 #undef DEFINE_ERRINFO
 
 /// Adds the given possible causes to the exception object.
-/// Meant for catch & re-throw site usage, to avoid overwriting old errinfo_rorc_possible_causes.
+/// Meant for catch & re-throw site usage, to avoid overwriting old ErrorInfo::PossibleCauses.
 /// This is necessary, because adding an errinfo overwrites any previous one present.
 void addPossibleCauses(boost::exception& exception, const std::vector<std::string>& possibleCauses);
 
@@ -88,15 +90,15 @@ void addPossibleCauses(boost::exception& exception, const std::vector<std::strin
 namespace boost {
 
 // These functions convert the errinfos to strings for diagnostic messages
-std::string to_string(const AliceO2::Rorc::errinfo_rorc_card_type& e);
-std::string to_string(const AliceO2::Rorc::errinfo_rorc_error_message& e);
-std::string to_string(const AliceO2::Rorc::errinfo_rorc_loopback_mode& e);
-std::string to_string(const AliceO2::Rorc::errinfo_rorc_pci_address& e);
-std::string to_string(const AliceO2::Rorc::errinfo_rorc_pci_id& e);
-std::string to_string(const AliceO2::Rorc::errinfo_rorc_pci_ids& e);
-std::string to_string(const AliceO2::Rorc::errinfo_rorc_possible_causes& e);
-std::string to_string(const AliceO2::Rorc::errinfo_rorc_readyfifo_status& e);
-std::string to_string(const AliceO2::Rorc::errinfo_rorc_reset_level& e);
-std::string to_string(const AliceO2::Rorc::errinfo_rorc_status_code& e);
+std::string to_string(const AliceO2::Rorc::ErrorInfo::CardType& e);
+std::string to_string(const AliceO2::Rorc::ErrorInfo::Message& e);
+std::string to_string(const AliceO2::Rorc::ErrorInfo::LoopbackMode& e);
+std::string to_string(const AliceO2::Rorc::ErrorInfo::PciAddress& e);
+std::string to_string(const AliceO2::Rorc::ErrorInfo::PciId& e);
+std::string to_string(const AliceO2::Rorc::ErrorInfo::PciIds& e);
+std::string to_string(const AliceO2::Rorc::ErrorInfo::PossibleCauses& e);
+std::string to_string(const AliceO2::Rorc::ErrorInfo::ReadyFifoStatus& e);
+std::string to_string(const AliceO2::Rorc::ErrorInfo::ResetLevel& e);
+std::string to_string(const AliceO2::Rorc::ErrorInfo::StatusCode& e);
 
 }

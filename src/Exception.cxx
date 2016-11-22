@@ -17,7 +17,7 @@ namespace Rorc {
 const char* Exception::what() const noexcept
 {
   try {
-    if (auto info = boost::get_error_info<errinfo_rorc_error_message>(*this)) {
+    if (auto info = boost::get_error_info<ErrorInfo::Message>(*this)) {
       return info->data();
     } else {
       return "AliceO2::Rorc::Exception";

@@ -70,8 +70,8 @@ class CruBarAccessor
           case GeneratorPattern::Alternating: return ALTERNATING;
           case GeneratorPattern::Constant:    return CONSTANT;
           default: BOOST_THROW_EXCEPTION(Exception()
-              << errinfo_rorc_error_message("Unsupported generator pattern for CRU")
-              << errinfo_rorc_generator_pattern(pattern)); }};
+              << ErrorInfo::Message("Unsupported generator pattern for CRU")
+              << ErrorInfo::GeneratorPattern(pattern)); }};
 
       at32(CruRegisterIndex::DATA_EMULATOR_CONTROL) = value();
     }
@@ -85,8 +85,8 @@ class CruBarAccessor
     {
       if (mPdaBar->getBarNumber() != 2) {
         BOOST_THROW_EXCEPTION(Exception()
-            << errinfo_rorc_error_message("Can only get serial number from BAR 2")
-            << errinfo_rorc_bar_index(mPdaBar->getBarNumber()));
+            << ErrorInfo::Message("Can only get serial number from BAR 2")
+            << ErrorInfo::BarIndex(mPdaBar->getBarNumber()));
       }
 
       return at32(CruRegisterIndex::SERIAL_NUMBER);

@@ -39,20 +39,20 @@ class Lock
       }
       catch (const boost::interprocess::interprocess_exception& e) {
         BOOST_THROW_EXCEPTION(LockException()
-            << errinfo_rorc_error_message(e.what())
-            << errinfo_rorc_shared_lock_file(lockFilePath.string())
-            << errinfo_rorc_named_mutex_name(namedMutexName)
-            << errinfo_rorc_possible_causes({"Invalid lock file path"}));
+            << ErrorInfo::Message(e.what())
+            << ErrorInfo::SharedLockFile(lockFilePath.string())
+            << ErrorInfo::NamedMutexName(namedMutexName)
+            << ErrorInfo::PossibleCauses({"Invalid lock file path"}));
       }
       try {
         Util::resetSmartPtr(mNamedMutex, boost::interprocess::open_or_create, namedMutexName.c_str());
       }
       catch (const boost::interprocess::interprocess_exception& e) {
         BOOST_THROW_EXCEPTION(LockException()
-            << errinfo_rorc_error_message(e.what())
-            << errinfo_rorc_shared_lock_file(lockFilePath.string())
-            << errinfo_rorc_named_mutex_name(namedMutexName)
-            << errinfo_rorc_possible_causes({"Invalid mutex name (note: it should be a name, not a path)"}));
+            << ErrorInfo::Message(e.what())
+            << ErrorInfo::SharedLockFile(lockFilePath.string())
+            << ErrorInfo::NamedMutexName(namedMutexName)
+            << ErrorInfo::PossibleCauses({"Invalid mutex name (note: it should be a name, not a path)"}));
       }
 
       // Initialize locks
@@ -64,16 +64,16 @@ class Lock
       if (result == 0) {
         // First lock failed
         BOOST_THROW_EXCEPTION(FileLockException()
-            << errinfo_rorc_error_message("Failed to acquire file lock")
-            << errinfo_rorc_shared_lock_file(lockFilePath.string())
-            << errinfo_rorc_named_mutex_name(namedMutexName));
+            << ErrorInfo::Message("Failed to acquire file lock")
+            << ErrorInfo::SharedLockFile(lockFilePath.string())
+            << ErrorInfo::NamedMutexName(namedMutexName));
       } else if (result == 1) {
         // Second lock failed
         BOOST_THROW_EXCEPTION(NamedMutexLockException()
-            << errinfo_rorc_error_message("Failed to acquire named mutex only; file lock was successfully acquired")
-            << errinfo_rorc_shared_lock_file(lockFilePath.string())
-            << errinfo_rorc_named_mutex_name(namedMutexName)
-            << errinfo_rorc_possible_causes({"Named mutex is owned by other thread in current process",
+            << ErrorInfo::Message("Failed to acquire named mutex only; file lock was successfully acquired")
+            << ErrorInfo::SharedLockFile(lockFilePath.string())
+            << ErrorInfo::NamedMutexName(namedMutexName)
+            << ErrorInfo::PossibleCauses({"Named mutex is owned by other thread in current process",
                 "Previous Interprocess::Lock on same objects was not cleanly destroyed"}));
       }
     }

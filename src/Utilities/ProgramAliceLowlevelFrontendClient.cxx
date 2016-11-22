@@ -59,7 +59,7 @@ class ProgramAliceLowlevelFrontendClient: public Program
       if (getenv(std::string("DIM_DNS_NODE").c_str()) == nullptr) {
         BOOST_THROW_EXCEPTION(
             AliceO2::Rorc::Exception()
-                << AliceO2::Rorc::errinfo_rorc_error_message("Environment variable 'DIM_DNS_NODE' not set"));
+                << AliceO2::Rorc::ErrorInfo::Message("Environment variable 'DIM_DNS_NODE' not set"));
       }
 
       // Get program options

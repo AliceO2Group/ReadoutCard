@@ -32,7 +32,7 @@ void MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
       auto dir = bfs::path(fileName.c_str()).parent_path();
       if (!(bfs::is_directory(dir) && bfs::exists(dir))) {
         BOOST_THROW_EXCEPTION(MemoryMapException()
-            << errinfo_rorc_error_message("Failed to open memory map file, parent directory does not exist"));
+            << ErrorInfo::Message("Failed to open memory map file, parent directory does not exist"));
       }
     }
 
@@ -42,7 +42,7 @@ void MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
     }
     catch (const std::exception& e) {
       BOOST_THROW_EXCEPTION(MemoryMapException()
-          << errinfo_rorc_error_message(std::string("Failed to open memory map file: ") + e.what()));
+          << ErrorInfo::Message(std::string("Failed to open memory map file: ") + e.what()));
     }
 
     // Resize and map file to memory
@@ -51,8 +51,8 @@ void MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
     }
     catch (const std::exception& e) {
       BOOST_THROW_EXCEPTION(MemoryMapException()
-          << errinfo_rorc_error_message(std::string("Failed to resize memory map file: ") + e.what())
-          << errinfo_rorc_possible_causes({
+          << ErrorInfo::Message(std::string("Failed to resize memory map file: ") + e.what())
+          << ErrorInfo::PossibleCauses({
               "Size not a multiple of page size (possibly multiple of hugepages); ",
               "Not enough memory available (check hugepage allocation)",
               "Insufficient permissions"}));
@@ -63,12 +63,12 @@ void MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
       mMappedRegion = bip::mapped_region(mFileMapping, bip::read_write, 0, fileSize);
     } catch (const std::exception& e) {
       BOOST_THROW_EXCEPTION(MemoryMapException()
-          << errinfo_rorc_error_message(std::string("Failed to memory map file: ") + e.what())
-          << errinfo_rorc_possible_causes({"Not enough memory available (possibly not enough hugepages allocated)"}));
+          << ErrorInfo::Message(std::string("Failed to memory map file: ") + e.what())
+          << ErrorInfo::PossibleCauses({"Not enough memory available (possibly not enough hugepages allocated)"}));
     }
   }
   catch (MemoryMapException& e) {
-    e << errinfo_rorc_filename(fileName) << errinfo_rorc_filesize(fileSize);
+    e << ErrorInfo::FileName(fileName) << ErrorInfo::FileSize(fileSize);
     throw;
   }
 }

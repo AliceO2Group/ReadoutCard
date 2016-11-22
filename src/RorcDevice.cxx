@@ -69,10 +69,10 @@ void RorcDevice::initWithSerial(int serialNumber)
         }
       }
     }
-    BOOST_THROW_EXCEPTION(Exception() << errinfo_rorc_error_message("Could not find card"));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not find card"));
   }
   catch (boost::exception& e) {
-    e << errinfo_rorc_serial_number(serialNumber);
+    e << ErrorInfo::SerialNumber(serialNumber);
     addPossibleCauses(e, {"Invalid serial number search target"});
     throw;
   }
@@ -93,9 +93,9 @@ void RorcDevice::initWithAddress(const PciAddress& address)
         }
       }
     }
-    BOOST_THROW_EXCEPTION(Exception() << errinfo_rorc_error_message("Could not find card"));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not find card"));
   } catch (boost::exception& e) {
-    e << errinfo_rorc_pci_address(address);
+    e << ErrorInfo::PciAddress(address);
     addPossibleCauses(e, { "Invalid PCI address search target" });
     throw;
   }
@@ -158,7 +158,7 @@ std::vector<RorcDevice::CardDescriptor> RorcDevice::findSystemDevices(int serial
     }
   }
   catch (boost::exception& e) {
-    e << errinfo_rorc_serial_number(serialNumber);
+    e << ErrorInfo::SerialNumber(serialNumber);
     addPossibleCauses(e, {"Invalid serial number search target"});
     throw;
   }
@@ -184,7 +184,7 @@ std::vector<RorcDevice::CardDescriptor> RorcDevice::findSystemDevices(const PciA
     }
   }
   catch (boost::exception& e) {
-    e << errinfo_rorc_pci_address(address);
+    e << ErrorInfo::PciAddress(address);
     addPossibleCauses(e, {"Invalid PCI address search target"});
     throw;
   }

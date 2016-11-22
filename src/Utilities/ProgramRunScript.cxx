@@ -111,7 +111,7 @@ class ProgramRunScript : public Program
 
       if (mScriptFilename.empty()) {
         BOOST_THROW_EXCEPTION(AliceO2::Rorc::Exception()
-        << AliceO2::Rorc::errinfo_rorc_error_message("Empty script path"));
+        << AliceO2::Rorc::ErrorInfo::Message("Empty script path"));
       }
 
       auto cardId = Options::getOptionCardId(map);

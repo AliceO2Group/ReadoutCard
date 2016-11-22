@@ -28,12 +28,12 @@ inline std::tuple<PageAddress, std::vector<PageAddress>> partitionScatterGatherL
 
   if (list.size() < 1) {
     BOOST_THROW_EXCEPTION(CruException()
-        << errinfo_rorc_error_message("Scatter-gather list empty"));
+        << ErrorInfo::Message("Scatter-gather list empty"));
   }
 
   if (list.at(0).size < fifoSize) {
     BOOST_THROW_EXCEPTION(CruException()
-        << errinfo_rorc_error_message("First SGL entry size insufficient for FIFO"));
+        << ErrorInfo::Message("First SGL entry size insufficient for FIFO"));
   }
 
   fifoAddress = {list.at(0).addressUser, list.at(0).addressBus};
@@ -42,9 +42,9 @@ inline std::tuple<PageAddress, std::vector<PageAddress>> partitionScatterGatherL
     auto& entry = list[i];
     if (entry.size < (2l * 1024l * 1024l)) {
       BOOST_THROW_EXCEPTION(CruException()
-          << errinfo_rorc_error_message("Unsupported configuration: DMA scatter-gather entry size less than 2 MiB")
-          << errinfo_rorc_scatter_gather_entry_size(entry.size)
-          << errinfo_rorc_possible_causes(
+          << ErrorInfo::Message("Unsupported configuration: DMA scatter-gather entry size less than 2 MiB")
+          << ErrorInfo::ScatterGatherEntrySize(entry.size)
+          << ErrorInfo::PossibleCauses(
               {"DMA buffer was not allocated in hugepage shared memory (hugetlbfs may not be properly mounted)"}));
     }
 

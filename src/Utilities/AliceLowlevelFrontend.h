@@ -113,7 +113,7 @@ class RegisterReadRpc: public DimRpcInfo
       auto returnValue = std::string(getString());
       printf("Read got return: %s\n", returnValue.c_str());
       if (isFail(returnValue)) {
-        BOOST_THROW_EXCEPTION(AliceO2::Rorc::Exception() << AliceO2::Rorc::errinfo_rorc_error_message(returnValue));
+        BOOST_THROW_EXCEPTION(AliceO2::Rorc::Exception() << AliceO2::Rorc::ErrorInfo::Message(returnValue));
       }
       return boost::lexical_cast<uint32_t>(stripPrefix(returnValue));
     }
@@ -134,7 +134,7 @@ class RegisterWriteRpc: public DimRpcInfo
       auto returnValue = std::string(getString());
       printf("Write got return: %s\n", returnValue.c_str());
       if (isFail(returnValue)) {
-        BOOST_THROW_EXCEPTION(AliceO2::Rorc::Exception() << AliceO2::Rorc::errinfo_rorc_error_message(returnValue));
+        BOOST_THROW_EXCEPTION(AliceO2::Rorc::Exception() << AliceO2::Rorc::ErrorInfo::Message(returnValue));
       }
     }
 };

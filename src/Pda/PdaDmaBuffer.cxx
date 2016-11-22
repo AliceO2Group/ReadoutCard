@@ -25,21 +25,21 @@ PdaDmaBuffer::PdaDmaBuffer(PciDevice* pciDevice, void* userBufferAddress, size_t
       DMABuffer* tempDmaBuffer;
       if (PciDevice_getDMABuffer(pciDevice, dmaBufferId, &tempDmaBuffer) != PDA_SUCCESS) {
         // Give up
-        BOOST_THROW_EXCEPTION(RorcPdaException() << errinfo_rorc_error_message(
+        BOOST_THROW_EXCEPTION(RorcPdaException() << ErrorInfo::Message(
             "Failed to register external DMA buffer; Failed to get previous buffer for cleanup"));
       }
 
       // Free it
       if (PciDevice_deleteDMABuffer(pciDevice, tempDmaBuffer) != PDA_SUCCESS) {
         // Give up
-        BOOST_THROW_EXCEPTION(RorcPdaException() << errinfo_rorc_error_message(
+        BOOST_THROW_EXCEPTION(RorcPdaException() << ErrorInfo::Message(
             "Failed to register external DMA buffer; Failed to delete previous buffer for cleanup"));
       }
 
       // Retry the registration of our new buffer
       if(PciDevice_registerDMABuffer(pciDevice, dmaBufferId, userBufferAddress, userBufferSize, &mDmaBuffer) != PDA_SUCCESS) {
         // Give up
-        BOOST_THROW_EXCEPTION(RorcPdaException() << errinfo_rorc_error_message(
+        BOOST_THROW_EXCEPTION(RorcPdaException() << ErrorInfo::Message(
             "Failed to register external DMA buffer; Failed retry after automatic cleanup of previous buffer"));
       }
     }
@@ -51,7 +51,7 @@ PdaDmaBuffer::PdaDmaBuffer(PciDevice* pciDevice, void* userBufferAddress, size_t
 
   DMABuffer_SGNode* sgList;
   if (DMABuffer_getSGList(mDmaBuffer, &sgList) != PDA_SUCCESS) {
-    BOOST_THROW_EXCEPTION(RorcPdaException() << errinfo_rorc_error_message("Failed to get scatter-gather list"));
+    BOOST_THROW_EXCEPTION(RorcPdaException() << ErrorInfo::Message("Failed to get scatter-gather list"));
   }
 
   auto node = sgList;
@@ -67,7 +67,7 @@ PdaDmaBuffer::PdaDmaBuffer(PciDevice* pciDevice, void* userBufferAddress, size_t
   }
 
   if (mScatterGatherVector.empty()) {
-    BOOST_THROW_EXCEPTION(RorcPdaException() << errinfo_rorc_error_message(
+    BOOST_THROW_EXCEPTION(RorcPdaException() << ErrorInfo::Message(
         "Failed to initialize scatter-gather list, was empty"));
   }
 }

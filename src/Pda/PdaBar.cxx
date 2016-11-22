@@ -25,22 +25,22 @@ PdaBar::PdaBar(PciDevice* pciDevice, int barNumberInt) : mBarNumber(barNumberInt
 
   if (mBarNumber > std::numeric_limits<decltype(barNumber)>::max()) {
     BOOST_THROW_EXCEPTION(Exception()
-        << errinfo_rorc_error_message("BAR number out of range (max 256)")
-        << errinfo_rorc_channel_number(barNumber));
+        << ErrorInfo::Message("BAR number out of range (max 256)")
+        << ErrorInfo::ChannelNumber(barNumber));
   }
 
   // Getting the BAR struct
   if(PciDevice_getBar(pciDevice, &mPdaBar, barNumber) != PDA_SUCCESS) {
     BOOST_THROW_EXCEPTION(Exception()
-        << errinfo_rorc_error_message("Failed to get BAR")
-        << errinfo_rorc_channel_number(barNumber));
+        << ErrorInfo::Message("Failed to get BAR")
+        << ErrorInfo::ChannelNumber(barNumber));
   }
 
   // Mapping the BAR starting  address
   if(Bar_getMap(mPdaBar, const_cast<void**>(&mUserspaceAddress), &mBarLength) != PDA_SUCCESS) {
     BOOST_THROW_EXCEPTION(Exception()
-        << errinfo_rorc_error_message("Failed to map BAR")
-        << errinfo_rorc_channel_number(barNumber));
+        << ErrorInfo::Message("Failed to map BAR")
+        << ErrorInfo::ChannelNumber(barNumber));
   }
 }
 

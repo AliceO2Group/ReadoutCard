@@ -90,7 +90,7 @@ int Program::execute(int argc, char** argv)
     run(variablesMap);
   }
   catch (const ProgramOptionException& e) {
-    auto message = boost::get_error_info<AliceO2::Rorc::errinfo_rorc_error_message>(e);
+    auto message = boost::get_error_info<AliceO2::Rorc::ErrorInfo::Message>(e);
     std::cout << "Program options invalid: " << *message << "\n\n";
     prnHelp();
   }

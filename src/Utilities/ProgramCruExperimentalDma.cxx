@@ -289,7 +289,7 @@ class ProgramCruExperimentalDma: public Program
 
       if (mOptions.fileOutputAscii && mOptions.fileOutputBin) {
         BOOST_THROW_EXCEPTION(CruException()
-            << errinfo_rorc_error_message("File output can't be both ASCII and binary"));
+            << ErrorInfo::Message("File output can't be both ASCII and binary"));
       }
       if (mOptions.fileOutputAscii) {
         mReadoutStream.open(READOUT_DATA_PATH_ASCII);
@@ -490,7 +490,7 @@ class ProgramCruExperimentalDma: public Program
       cout << "Info: status user address (" << reinterpret_cast<void*>(mFifoAddress.user) << ")\n";
 
       if (!Stuff::checkAlignment(mFifoAddress.bus, DMA_ALIGNMENT)) {
-        BOOST_THROW_EXCEPTION(CruException() << errinfo_rorc_error_message("mFifoDevice not 32 byte aligned"));
+        BOOST_THROW_EXCEPTION(CruException() << ErrorInfo::Message("mFifoDevice not 32 byte aligned"));
       }
 
       getBar().setFifoBusAddress(mFifoAddress.bus);
@@ -530,7 +530,7 @@ class ProgramCruExperimentalDma: public Program
 
       if (mPageAddresses.size() <= NUM_PAGES) {
         BOOST_THROW_EXCEPTION(CrorcException()
-            << errinfo_rorc_error_message("Insufficient amount of pages fit in DMA buffer"));
+            << ErrorInfo::Message("Insufficient amount of pages fit in DMA buffer"));
       }
 
       // Initializing the descriptor table
@@ -939,8 +939,8 @@ class ProgramCruExperimentalDma: public Program
       }
 
       BOOST_THROW_EXCEPTION(CruException()
-          << errinfo_rorc_error_message("Unrecognized generator pattern")
-          << errinfo_rorc_generator_pattern(pattern));
+          << ErrorInfo::Message("Unrecognized generator pattern")
+          << ErrorInfo::GeneratorPattern(pattern));
     }
 
     void outputErrors()

@@ -35,8 +35,8 @@ namespace Rorc {
 
 /// Adds errinfo using the given status code and error message
 #define ADD_ERRINFO(_status_code, _err_message) \
-    << errinfo_rorc_error_message(_err_message) \
-    << errinfo_rorc_status_code(_status_code)
+    << ErrorInfo::Message(_err_message) \
+    << ErrorInfo::StatusCode(_status_code)
 
 CrorcChannelMaster::CrorcChannelMaster(const Parameters& parameters)
     : ChannelMasterBase(CARD_TYPE, parameters, allowedChannels(), sizeof(ReadyFifo))
@@ -53,10 +53,10 @@ CrorcChannelMaster::CrorcChannelMaster(const Parameters& parameters)
 
   if (getPageAddresses().size() <= READYFIFO_ENTRIES) {
     BOOST_THROW_EXCEPTION(CrorcException()
-        << errinfo_rorc_error_message("Insufficient amount of pages fit in DMA buffer")
-        << errinfo_rorc_pages(getPageAddresses().size())
-        << errinfo_rorc_dma_buffer_size(params.dma.bufferSize)
-        << errinfo_rorc_dma_page_size(params.dma.pageSize));
+        << ErrorInfo::Message("Insufficient amount of pages fit in DMA buffer")
+        << ErrorInfo::Pages(getPageAddresses().size())
+        << ErrorInfo::DmaBufferSize(params.dma.bufferSize)
+        << ErrorInfo::DmaPageSize(params.dma.pageSize));
   }
 
   mPageManager.setAmountOfPages(getPageAddresses().size());
@@ -153,8 +153,8 @@ void CrorcChannelMaster::deviceResetChannel(ResetLevel::type resetLevel)
     }
   }
   catch (Exception& e) {
-    e << errinfo_rorc_reset_level(resetLevel);
-    e << errinfo_rorc_loopback_mode(loopbackMode);
+    e << ErrorInfo::ResetLevel(resetLevel);
+    e << ErrorInfo::LoopbackMode(loopbackMode);
     throw;
   }
 
@@ -224,8 +224,8 @@ void CrorcChannelMaster::pushFreeFifoPage(int readyFifoIndex, volatile void* pag
 //
 //  if (getSharedData().mDmaState != DmaState::STARTED) {
 //    BOOST_THROW_EXCEPTION(CrorcException()
-//        << errinfo_rorc_error_message("Not in required DMA state")
-//        << errinfo_rorc_possible_causes({"startDma() not called"}));
+//        << ErrorInfo::Message("Not in required DMA state")
+//        << ErrorInfo::PossibleCauses({"startDma() not called"}));
 //  }
 //
 //  // Handle for next page
@@ -235,8 +235,8 @@ void CrorcChannelMaster::pushFreeFifoPage(int readyFifoIndex, volatile void* pag
 //  // Check if page is available to write to
 //  if (mPageWasReadOut[fifoIndex] == false) {
 //    BOOST_THROW_EXCEPTION(CrorcException()
-//        << errinfo_rorc_error_message("Pushing page would overwrite")
-//        << errinfo_rorc_fifo_index(fifoIndex));
+//        << ErrorInfo::Message("Pushing page would overwrite")
+//        << ErrorInfo::FifoIndex(fifoIndex));
 //  }
 //
 //  mPageWasReadOut[fifoIndex] = false;
@@ -266,8 +266,8 @@ void CrorcChannelMaster::pushFreeFifoPage(int readyFifoIndex, volatile void* pag
 //{
 //  if (mPageWasReadOut[handle.index]) {
 //    BOOST_THROW_EXCEPTION(CrorcException()
-//        << errinfo_rorc_error_message("Page was already marked as read")
-//        << errinfo_rorc_page_index(handle.index));
+//        << ErrorInfo::Message("Page was already marked as read")
+//        << ErrorInfo::PageIndex(handle.index));
 //  }
 //
 //  getReadyFifo().entries[handle.index].reset();
@@ -289,19 +289,19 @@ CrorcChannelMaster::DataArrivalStatus::type CrorcChannelMaster::dataArrived(int 
     if ((status & (1 << 31)) != 0) {
       // The error bit is set
       BOOST_THROW_EXCEPTION(CrorcDataArrivalException()
-          << errinfo_rorc_error_message("Data arrival status word contains error bits")
-          << errinfo_rorc_readyfifo_status(status)
-          << errinfo_rorc_readyfifo_length(length)
-          << errinfo_rorc_fifo_index(index));
+          << ErrorInfo::Message("Data arrival status word contains error bits")
+          << ErrorInfo::ReadyFifoStatus(status)
+          << ErrorInfo::ReadyFifoLength(length)
+          << ErrorInfo::FifoIndex(index));
     }
     return DataArrivalStatus::WholeArrived;
   }
 
   BOOST_THROW_EXCEPTION(CrorcDataArrivalException()
-      << errinfo_rorc_error_message("Unrecognized data arrival status word")
-      << errinfo_rorc_readyfifo_status(status)
-      << errinfo_rorc_readyfifo_length(length)
-      << errinfo_rorc_fifo_index(index));
+      << ErrorInfo::Message("Unrecognized data arrival status word")
+      << ErrorInfo::ReadyFifoStatus(status)
+      << ErrorInfo::ReadyFifoLength(length)
+      << ErrorInfo::FifoIndex(index));
 }
 
 CardType::type CrorcChannelMaster::getCardType()
@@ -364,8 +364,8 @@ void CrorcChannelMaster::crorcArmDataGenerator()
       gen.dataSize / 4, gen.seed, &roundedLen);
   THROW_IF_BAD_STATUS(returnCode, CrorcArmDataGeneratorException()
       ADD_ERRINFO(returnCode, "Failed to arm data generator")
-      << errinfo_rorc_generator_pattern(gen.pattern)
-      << errinfo_rorc_generator_event_length(gen.dataSize / 4));
+      << ErrorInfo::GeneratorPattern(gen.pattern)
+      << ErrorInfo::GeneratorEventLength(gen.dataSize / 4));
 }
 
 void CrorcChannelMaster::crorcArmDdl(int resetMask)
@@ -373,7 +373,7 @@ void CrorcChannelMaster::crorcArmDdl(int resetMask)
   int returnCode = rorcArmDDL(getBarUserspace(), resetMask, mDiuVersion, mPciLoopPerUsec);
   THROW_IF_BAD_STATUS(returnCode, CrorcArmDdlException()
       ADD_ERRINFO(returnCode, "Failed to arm DDL")
-      << errinfo_rorc_ddl_reset_mask(b::str(b::format("0x%x") % resetMask)));
+      << ErrorInfo::DdlResetMask(b::str(b::format("0x%x") % resetMask)));
 }
 
 void CrorcChannelMaster::crorcInitDiuVersion()
@@ -396,7 +396,7 @@ void CrorcChannelMaster::crorcSiuCommand(int command)
   int returnCode = ddlReadSiu(getBarUserspace(), command, DDL_RESPONSE_TIME, mPciLoopPerUsec);
   THROW_IF_BAD_STATUS(returnCode, CrorcSiuCommandException()
       ADD_ERRINFO(returnCode, "Failed to send SIU command")
-      << errinfo_rorc_siu_command(command));
+      << ErrorInfo::SiuCommand(command));
 }
 
 void CrorcChannelMaster::crorcDiuCommand(int command)
@@ -404,7 +404,7 @@ void CrorcChannelMaster::crorcDiuCommand(int command)
   int returnCode = ddlReadDiu(getBarUserspace(), command, DDL_RESPONSE_TIME, mPciLoopPerUsec);
   THROW_IF_BAD_STATUS(returnCode, CrorcSiuCommandException()
       ADD_ERRINFO(returnCode, "Failed to send DIU command")
-      << errinfo_rorc_diu_command(command));
+      << ErrorInfo::DiuCommand(command));
 }
 
 void CrorcChannelMaster::crorcReset(int command)
@@ -418,7 +418,7 @@ void CrorcChannelMaster::crorcCheckFreeFifoEmpty()
   if (returnCode != RORC_FF_EMPTY){
     BOOST_THROW_EXCEPTION(CrorcFreeFifoException()
         ADD_ERRINFO(returnCode, "Free FIFO not empty")
-        << errinfo_rorc_possible_causes({"Previous DMA did not get/free all received pages"}));
+        << ErrorInfo::PossibleCauses({"Previous DMA did not get/free all received pages"}));
   }
 }
 
@@ -468,7 +468,7 @@ void CrorcChannelMaster::utilityPrintFifo(std::ostream& os)
 
 void CrorcChannelMaster::utilitySetLedState(bool)
 {
-  BOOST_THROW_EXCEPTION(CrorcException() << errinfo_rorc_error_message("C-RORC does not support setting LED state"));
+  BOOST_THROW_EXCEPTION(CrorcException() << ErrorInfo::Message("C-RORC does not support setting LED state"));
 }
 
 void CrorcChannelMaster::utilitySanityCheck(std::ostream& os)

@@ -167,7 +167,7 @@ class ProgramDmaBench: public Program
     {
       if (mOptions.fileOutputAscii && mOptions.fileOutputBin) {
         BOOST_THROW_EXCEPTION(Exception()
-            << errinfo_rorc_error_message("File output can't be both ASCII and binary"));
+            << ErrorInfo::Message("File output can't be both ASCII and binary"));
       }
       if (mOptions.fileOutputAscii) {
         mReadoutStream.open("readout_data.txt");
@@ -207,7 +207,7 @@ class ProgramDmaBench: public Program
       if (mOptions.barHammer) {
         if (mChannel->getCardType() != CardType::Cru) {
           BOOST_THROW_EXCEPTION(ParameterException()
-              << errinfo_rorc_error_message("BarHammer option currently only supported for CRU\n"));
+              << ErrorInfo::Message("BarHammer option currently only supported for CRU\n"));
         }
         Util::resetSmartPtr(mBarHammer);
         mBarHammer->start(mChannel);
@@ -396,8 +396,8 @@ class ProgramDmaBench: public Program
       }
 
       BOOST_THROW_EXCEPTION(CruException()
-          << errinfo_rorc_error_message("Unrecognized generator pattern")
-          << errinfo_rorc_generator_pattern(pattern));
+          << ErrorInfo::Message("Unrecognized generator pattern")
+          << ErrorInfo::GeneratorPattern(pattern));
     }
 
     void resetPage(Page& page)

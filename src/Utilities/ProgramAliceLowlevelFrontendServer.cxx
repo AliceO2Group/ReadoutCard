@@ -43,7 +43,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
       // Get DIM DNS node from environment
       if (getenv(std::string("DIM_DNS_NODE").c_str()) == nullptr) {
         BOOST_THROW_EXCEPTION(Exception()
-            << errinfo_rorc_error_message("Environment variable 'DIM_DNS_NODE' not set"));
+            << ErrorInfo::Message("Environment variable 'DIM_DNS_NODE' not set"));
       }
 
       // Get card channel for register access
@@ -91,7 +91,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
     {
       if (address < 0x1e8 || address > 0x1fc) {
         BOOST_THROW_EXCEPTION(Exception()
-            << errinfo_rorc_error_message("Address out of range"));
+            << ErrorInfo::Message("Address out of range"));
       }
     }
 
@@ -116,7 +116,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
 
       if (params.size() != 2) {
         BOOST_THROW_EXCEPTION(Exception()
-            << errinfo_rorc_error_message("Write RPC call did not have 2 parameters"));
+            << ErrorInfo::Message("Write RPC call did not have 2 parameters"));
       }
 
       auto address = boost::lexical_cast<uint64_t>(params[0]);

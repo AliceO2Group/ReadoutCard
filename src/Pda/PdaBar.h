@@ -65,9 +65,9 @@ class PdaBar
     {
       if (!isInRange<T>(offset)) {
         BOOST_THROW_EXCEPTION(Exception()
-            << errinfo_rorc_error_message("BAR offset out of range")
-            << errinfo_rorc_bar_index(offset)
-            << errinfo_rorc_bar_size(getBarLength()));
+            << ErrorInfo::Message("BAR offset out of range")
+            << ErrorInfo::BarIndex(offset)
+            << ErrorInfo::BarSize(getBarLength()));
       }
 
       return *reinterpret_cast<volatile T*>(static_cast<volatile char*>(getUserspaceAddress()) + offset);
@@ -80,9 +80,9 @@ class PdaBar
     {
       if (!isInRange<T>(offset)) {
         BOOST_THROW_EXCEPTION(Exception()
-            << errinfo_rorc_error_message("BAR offset out of range")
-            << errinfo_rorc_bar_index(offset)
-            << errinfo_rorc_bar_size(getBarLength()));
+            << ErrorInfo::Message("BAR offset out of range")
+            << ErrorInfo::BarIndex(offset)
+            << ErrorInfo::BarSize(getBarLength()));
       }
 
       volatile char* baseAddress = static_cast<volatile char*>(mUserspaceAddress);

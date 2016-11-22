@@ -44,9 +44,9 @@ void assertFileSystemType(const bfs::path& path, const std::set<std::string>& va
     oss << ")";
 
     BOOST_THROW_EXCEPTION(Exception()
-        << errinfo_rorc_error_message(oss.str())
-        << errinfo_rorc_filename(path.c_str())
-        << errinfo_rorc_filesystem_type(type));
+        << ErrorInfo::Message(oss.str())
+        << ErrorInfo::FileName(path.c_str())
+        << ErrorInfo::FilesystemType(type));
   }
 }
 
@@ -61,8 +61,8 @@ void ChannelMasterBase::checkChannelNumber(const AllowedChannels& allowedChannel
 {
   if (!allowedChannels.count(mChannelNumber)) {
     BOOST_THROW_EXCEPTION(InvalidParameterException()
-        << errinfo_rorc_error_message("Channel number not supported")
-        << errinfo_rorc_channel_number(mChannelNumber));
+        << ErrorInfo::Message("Channel number not supported")
+        << ErrorInfo::ChannelNumber(mChannelNumber));
   }
 }
 
@@ -81,17 +81,17 @@ void ChannelMasterBase::validateParameters(const ChannelParameters& cp)
 {
   if (cp.dma.bufferSize % (2l * 1024l * 1024l) != 0) {
     BOOST_THROW_EXCEPTION(InvalidParameterException()
-        << errinfo_rorc_error_message("Parameter 'dma.bufferSize' not a multiple of 2 mebibytes"));
+        << ErrorInfo::Message("Parameter 'dma.bufferSize' not a multiple of 2 mebibytes"));
   }
 
   if (cp.generator.dataSize > cp.dma.pageSize) {
     BOOST_THROW_EXCEPTION(InvalidParameterException()
-        << errinfo_rorc_error_message("Parameter 'generator.dataSize' greater than 'dma.pageSize'"));
+        << ErrorInfo::Message("Parameter 'generator.dataSize' greater than 'dma.pageSize'"));
   }
 
   if ((cp.dma.bufferSize % cp.dma.pageSize) != 0) {
     BOOST_THROW_EXCEPTION(InvalidParameterException()
-        << errinfo_rorc_error_message("DMA buffer size not a multiple of 'dma.pageSize'"));
+        << ErrorInfo::Message("DMA buffer size not a multiple of 'dma.pageSize'"));
   }
 }
 
@@ -124,7 +124,7 @@ ChannelMasterBase::ChannelMasterBase(CardType::type cardType, const Parameters& 
     // Failed
     if (!mRorcDevice) {
       BOOST_THROW_EXCEPTION(ParameterException()
-          << errinfo_rorc_error_message("Either SerialNumber or PciAddress parameter required"));
+          << ErrorInfo::Message("Either SerialNumber or PciAddress parameter required"));
     }
   }
 
@@ -191,10 +191,10 @@ void ChannelMasterBase::resetChannel(ResetLevel::type resetLevel)
   CHANNELMASTER_LOCKGUARD();
 
   if (mDmaState == DmaState::UNKNOWN) {
-    BOOST_THROW_EXCEPTION(Exception() << errinfo_rorc_error_message("Reset channel failed: DMA in unknown state"));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Reset channel failed: DMA in unknown state"));
   }
   if (mDmaState != DmaState::STOPPED) {
-    BOOST_THROW_EXCEPTION(Exception() << errinfo_rorc_error_message("Reset channel failed: DMA was not stopped"));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Reset channel failed: DMA was not stopped"));
   }
 
   deviceResetChannel(resetLevel);

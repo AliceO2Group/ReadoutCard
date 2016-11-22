@@ -24,7 +24,7 @@ const std::string CAUSE_2("cause_2");
 BOOST_AUTO_TEST_CASE(TestRorcException)
 {
   try {
-    BOOST_THROW_EXCEPTION(Exception() << errinfo_rorc_error_message(TEST_MESSAGE_1));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(TEST_MESSAGE_1));
   }
   catch (const std::exception& e) {
     BOOST_CHECK(std::string(e.what()) == TEST_MESSAGE_1);
@@ -35,14 +35,14 @@ BOOST_AUTO_TEST_CASE(TestRorcException)
 BOOST_AUTO_TEST_CASE(TestRorcException2)
 {
   try {
-    BOOST_THROW_EXCEPTION(Exception() << errinfo_rorc_error_message(TEST_MESSAGE_1));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(TEST_MESSAGE_1));
   }
   catch (Exception& e) {
     auto what1 = e.what();
     BOOST_CHECK(std::string(what1) == TEST_MESSAGE_1);
 
     // Overwrite old message
-    e << errinfo_rorc_error_message(TEST_MESSAGE_2);
+    e << ErrorInfo::Message(TEST_MESSAGE_2);
 
     // Will the old message now explode? Doesn't seem to be the case...
     BOOST_CHECK(std::string(what1) == TEST_MESSAGE_1);
@@ -58,12 +58,12 @@ BOOST_AUTO_TEST_CASE(TestAddCauses)
 {
   try {
     auto e = Exception();
-    e << errinfo_rorc_possible_causes({CAUSE_1});
+    e << ErrorInfo::PossibleCauses({CAUSE_1});
     addPossibleCauses(e, {CAUSE_2});
     BOOST_THROW_EXCEPTION(e);
   }
   catch (const Exception& e) {
-    auto causes = boost::get_error_info<errinfo_rorc_possible_causes>(e);
+    auto causes = boost::get_error_info<ErrorInfo::PossibleCauses>(e);
     BOOST_REQUIRE(causes != nullptr);
     BOOST_CHECK(causes->at(0) == CAUSE_1);
     BOOST_CHECK(causes->at(1) == CAUSE_2);
@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE(TestAddCauses2)
     BOOST_THROW_EXCEPTION(e);
   }
   catch (const Exception& e) {
-    auto causes = boost::get_error_info<errinfo_rorc_possible_causes>(e);
+    auto causes = boost::get_error_info<ErrorInfo::PossibleCauses>(e);
     BOOST_REQUIRE(causes != nullptr);
     BOOST_CHECK(causes->at(0) == CAUSE_1);
     BOOST_CHECK(causes->at(1) == CAUSE_2);
@@ -94,11 +94,11 @@ BOOST_AUTO_TEST_CASE(TestAddCauses3)
     auto e = Exception();
     addPossibleCauses(e, {CAUSE_1});
     // This will overwrite the old info
-    e << errinfo_rorc_possible_causes({CAUSE_2});
+    e << ErrorInfo::PossibleCauses({CAUSE_2});
     BOOST_THROW_EXCEPTION(e);
   }
   catch (const Exception& e) {
-    auto causes = boost::get_error_info<errinfo_rorc_possible_causes>(e);
+    auto causes = boost::get_error_info<ErrorInfo::PossibleCauses>(e);
     BOOST_REQUIRE(causes != nullptr);
     BOOST_CHECK(causes->size() == 1);
     BOOST_CHECK(causes->at(0) == CAUSE_2);

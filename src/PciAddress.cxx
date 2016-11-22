@@ -23,20 +23,20 @@ namespace {
   {
     if (bus < 0 || bus > 0xff) {
       BOOST_THROW_EXCEPTION(ParameterException()
-          << errinfo_rorc_error_message("Bus number out of range")
-          << errinfo_rorc_pci_address_bus_number(bus));
+          << ErrorInfo::Message("Bus number out of range")
+          << ErrorInfo::PciAddressBusNumber(bus));
     }
 
     if (slot < 0 || slot > 0x1f) {
       BOOST_THROW_EXCEPTION(ParameterException()
-          << errinfo_rorc_error_message("Slot number out of range")
-          << errinfo_rorc_pci_address_slot_number(slot));
+          << ErrorInfo::Message("Slot number out of range")
+          << ErrorInfo::PciAddressSlotNumber(slot));
     }
 
     if (function < 0 || function > 7) {
       BOOST_THROW_EXCEPTION(ParameterException()
-          << errinfo_rorc_error_message("Function number out of range")
-          << errinfo_rorc_pci_address_function_number(function));
+          << ErrorInfo::Message("Function number out of range")
+          << ErrorInfo::PciAddressFunctionNumber(function));
     }
   }
 } // Anonymous namespace
@@ -52,7 +52,7 @@ PciAddress::PciAddress(const std::string& string)
 {
   if (!parseLspciFormat(string, bus, slot, function)) {
     BOOST_THROW_EXCEPTION(ParseException()
-        << errinfo_rorc_error_message("Parsing PCI address failed"));
+        << ErrorInfo::Message("Parsing PCI address failed"));
   }
   checkRanges(bus, slot, function);
 }
