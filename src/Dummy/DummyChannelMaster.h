@@ -6,7 +6,9 @@
 #pragma once
 
 #include <array>
+#include <boost/scoped_ptr.hpp>
 #include "ChannelUtilityInterface.h"
+#include "InterprocessLock.h"
 #include "PageManager.h"
 #include "RORC/Parameters.h"
 #include "RORC/ChannelMasterInterface.h"
@@ -46,6 +48,10 @@ class DummyChannelMaster final : public ChannelMasterInterface, public ChannelUt
 
   private:
     static constexpr size_t FIFO_CAPACITY = 128;
+
+    /// Lock that guards against both inter- and intra-process ownership
+    boost::scoped_ptr<Interprocess::Lock> mInterprocessLock;
+
     PageManager<FIFO_CAPACITY> mPageManager;
 
     size_t mBufferSize;

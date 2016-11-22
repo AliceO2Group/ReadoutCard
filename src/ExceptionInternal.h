@@ -24,9 +24,8 @@ namespace ErrorInfo {
 
 /// Helper macro for defining errinfo types for Boost exceptions
 #define DEFINE_ERRINFO(name, type) \
-  using name = ::boost::error_info<struct _ErrorInfo##name, type>
+  using name = ::boost::error_info<struct _##name, type>
 
-// errinfo definitions
 DEFINE_ERRINFO(BarIndex, size_t);
 DEFINE_ERRINFO(BarSize, size_t);
 DEFINE_ERRINFO(CardType, ::AliceO2::Rorc::CardType::type);
@@ -51,7 +50,7 @@ DEFINE_ERRINFO(NamedMutexName, std::string);
 DEFINE_ERRINFO(PageIndex, int);
 DEFINE_ERRINFO(Pages, size_t);
 DEFINE_ERRINFO(ParameterKey, std::string);
-DEFINE_ERRINFO(PciAddress, PciAddress);
+DEFINE_ERRINFO(PciAddress, ::AliceO2::Rorc::PciAddress);
 DEFINE_ERRINFO(PciAddressBusNumber, int);
 DEFINE_ERRINFO(PciAddressSlotNumber, int);
 DEFINE_ERRINFO(PciAddressFunctionNumber, int);
@@ -73,10 +72,10 @@ DEFINE_ERRINFO(SharedObjectName, std::string);
 DEFINE_ERRINFO(SharedStateFile, std::string);
 DEFINE_ERRINFO(SiuCommand, int);
 DEFINE_ERRINFO(StatusCode, int);
-} // namespace ErrorInfo
 
 // Undefine macro for header safety (we don't want to pollute the global namespace with collision-prone names)
 #undef DEFINE_ERRINFO
+} // namespace ErrorInfo
 
 /// Adds the given possible causes to the exception object.
 /// Meant for catch & re-throw site usage, to avoid overwriting old ErrorInfo::PossibleCauses.

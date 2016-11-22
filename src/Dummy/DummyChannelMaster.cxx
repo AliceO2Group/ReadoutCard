@@ -7,6 +7,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include "ChannelPaths.h"
 #include "Util.h"
 
 using std::cout;
@@ -21,6 +22,11 @@ DummyChannelMaster::DummyChannelMaster(const Parameters& params) : mPageCounter(
 {
 //  cout << "DummyChannelMaster::DummyChannelMaster(serial:" << serial << ", channel:" << channel << ", params:...)"
 //      << endl;
+
+  // Interprocess lock
+  ChannelPaths paths(CardType::Dummy, -1, params.getChannelNumberRequired());
+  Util::makeParentDirectories(paths.lock());
+  Util::resetSmartPtr(mInterprocessLock, paths.lock(), paths.namedMutex());
 
   mBufferSize = params.getDmaBufferSize().get_value_or(8*1024);
   mPageSize = params.getDmaPageSize().get_value_or(8*1024);
