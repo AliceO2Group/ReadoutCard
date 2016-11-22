@@ -3,7 +3,9 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_INCLUDE_RORC_PCIID_H_
+#define ALICEO2_INCLUDE_RORC_PCIID_H_
+
 #include <string>
 
 namespace AliceO2 {
@@ -28,3 +30,5 @@ struct PciId
 
 } // namespace Rorc
 } // namespace AliceO2
+
+#endif // ALICEO2_INCLUDE_RORC_PCIID_H_

@@ -3,7 +3,9 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_INCLUDE_RORC_CHANNELFACTORY_H_
+#define ALICEO2_INCLUDE_RORC_CHANNELFACTORY_H_
+
 
 #include "RORC/Parameters.h"
 #include <memory>
@@ -39,3 +41,5 @@ class ChannelFactory
 
 } // namespace Rorc
 } // namespace AliceO2
+
+#endif // ALICEO2_INCLUDE_RORC_CHANNELFACTORY_H_

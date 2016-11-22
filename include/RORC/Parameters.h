@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_INCLUDE_RORC_PARAMETERS_H_
+#define ALICEO2_INCLUDE_RORC_PARAMETERS_H_
 
 #include <map>
 #include <string>
@@ -173,3 +174,5 @@ class Parameters
 
 } // namespace Rorc
 } // namespace AliceO2
+
+#endif // ALICEO2_INCLUDE_RORC_PARAMETERS_H_

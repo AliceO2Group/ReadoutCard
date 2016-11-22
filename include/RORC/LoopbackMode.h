@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_INCLUDE_RORC_LOOPBACKMODE_H_
+#define ALICEO2_INCLUDE_RORC_LOOPBACKMODE_H_
 
 #include <string>
 
@@ -31,3 +32,5 @@ struct LoopbackMode
 
 } // namespace Rorc
 } // namespace AliceO2
+
+#endif // ALICEO2_INCLUDE_RORC_LOOPBACKMODE_H_

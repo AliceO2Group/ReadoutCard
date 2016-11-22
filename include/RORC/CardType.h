@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_INCLUDE_RORC_CARDTYPE_H_
+#define ALICEO2_INCLUDE_RORC_CARDTYPE_H_
 
 #include <string>
 
@@ -85,3 +86,5 @@ static_assert(!isValidTag<int>(), "");
 
 } // namespace Rorc
 } // namespace AliceO2
+
+#endif // ALICEO2_INCLUDE_RORC_CARDTYPE_H_

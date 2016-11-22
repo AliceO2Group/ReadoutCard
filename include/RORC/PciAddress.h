@@ -3,8 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_RORC_INCLUDE_RORC_PCIADDRESS_H_
-#define ALICEO2_RORC_INCLUDE_RORC_PCIADDRESS_H_
+#ifndef ALICEO2_RORC_INCLUDE_PCIADDRESS_H_
+#define ALICEO2_RORC_INCLUDE_PCIADDRESS_H_
 
 #include <string>
 
@@ -65,4 +65,4 @@ class PciAddress
 } // namespace Rorc
 } // namespace AliceO2
 
-#endif // ALICEO2_RORC_INCLUDE_RORC_PCIADDRESS_H_
+#endif // ALICEO2_RORC_INCLUDE_RORC_H_

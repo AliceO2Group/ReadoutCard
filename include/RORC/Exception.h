@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_INCLUDE_RORC_EXCEPTION_H_
+#define ALICEO2_INCLUDE_RORC_EXCEPTION_H_
 
 #include <stdexcept>
 #include <boost/exception/exception.hpp>
@@ -58,3 +59,5 @@ struct OptionRequiredException : virtual ProgramOptionException {};
 
 } // namespace Rorc
 } // namespace AliceO2
+
+#endif // ALICEO2_INCLUDE_RORC_EXCEPTION_H_

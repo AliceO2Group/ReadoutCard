@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_INCLUDE_RORC_CHANNELSLAVEINTERFACE_H_
+#define ALICEO2_INCLUDE_RORC_CHANNELSLAVEINTERFACE_H_
 
 #include <cstdint>
 #include "RORC/CardType.h"
@@ -31,3 +32,5 @@ class ChannelSlaveInterface: public virtual RegisterReadWriteInterface
 
 } // namespace Rorc
 } // namespace AliceO2
+
+#endif // ALICEO2_INCLUDE_RORC_CHANNELSLAVEINTERFACE_H_

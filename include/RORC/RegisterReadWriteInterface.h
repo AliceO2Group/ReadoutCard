@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_INCLUDE_RORC_REGISTERREADWRITEINTERFACE_H_
+#define ALICEO2_INCLUDE_RORC_REGISTERREADWRITEINTERFACE_H_
 
 #include <cstdint>
 
@@ -30,3 +31,5 @@ class RegisterReadWriteInterface
 
 } // namespace Rorc
 } // namespace AliceO2
+
+#endif // ALICEO2_INCLUDE_RORC_REGISTERREADWRITEINTERFACE_H_

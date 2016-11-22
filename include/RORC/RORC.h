@@ -3,8 +3,6 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
-
 #include <RORC/CardType.h>
 #include <RORC/ChannelFactory.h>
 #include <RORC/ChannelMasterInterface.h>
