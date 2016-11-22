@@ -24,7 +24,7 @@ class RorcDevice
 
     RorcDevice(const PciAddress& address);
 
-    RorcDevice(const Parameters::CardId::value_type& cardId);
+    RorcDevice(const Parameters::CardIdType& cardId);
 
     ~RorcDevice();
 

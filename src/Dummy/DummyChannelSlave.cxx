@@ -13,8 +13,8 @@ namespace Rorc {
 
 DummyChannelSlave::DummyChannelSlave(const Parameters& parameters)
 {
-  auto id = parameters.getRequired<Parameters::CardId>();
-  auto channel = parameters.getRequired<Parameters::ChannelNumber>();
+  auto id = parameters.getCardIdRequired();
+  auto channel = parameters.getChannelNumberRequired();
 
   cout << "DummyChannelSlave::DummyChannelSlave(";
   if (auto serial = boost::get<int>(&id)) {

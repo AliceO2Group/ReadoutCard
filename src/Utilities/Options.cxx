@@ -248,7 +248,7 @@ int getOptionSerialNumber(const po::variables_map& variablesMap)
   return getOptionRequired(option::serialNumber, variablesMap);
 }
 
-Parameters::CardId::value_type getOptionCardId(const po::variables_map& variablesMap)
+Parameters::CardIdType getOptionCardId(const po::variables_map& variablesMap)
 {
   std::string string = getOptionRequired(option::cardId, variablesMap);
 
@@ -311,13 +311,12 @@ ChannelParameters getOptionsChannelParameters(const boost::program_options::vari
 
 Parameters getOptionsParameterMap(const boost::program_options::variables_map& variablesMap)
 {
-  Parameters map;
   auto cp = getOptionsChannelParameters(variablesMap);
-  map.put<Parameters::DmaPageSize>(cp.dma.pageSize);
-  map.put<Parameters::DmaBufferSize>(cp.dma.bufferSize);
-  map.put<Parameters::GeneratorEnabled>(cp.generator.useDataGenerator);
-  map.put<Parameters::GeneratorLoopbackMode>(cp.generator.loopbackMode);
-  return map;
+  return Parameters()
+      .setDmaPageSize(cp.dma.pageSize)
+      .setDmaBufferSize(cp.dma.bufferSize)
+      .setGeneratorEnabled(cp.generator.useDataGenerator)
+      .setGeneratorLoopback(cp.generator.loopbackMode);
 }
 
 } // namespace Options

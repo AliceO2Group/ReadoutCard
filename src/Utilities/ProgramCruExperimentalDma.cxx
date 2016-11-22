@@ -99,11 +99,11 @@ constexpr uint32_t PATTERN_STRIDE = 8;
 /// Path of the DMA buffer shared memory file
 const bfs::path DMA_BUFFER_PAGES_PATH = "/mnt/hugetlbfs/rorc-cru-experimental-dma-pages-v2";
 
-/// Fields: Time(hour:minute:second), i, Counter, Errors, Fill, °C
-const std::string PROGRESS_FORMAT_HEADER("  %-8s   %-12s  %-12s  %-10s  %-10.1f");
+/// Fields: Time(hour:minute:second), i, Counter, Errors, Fill, °C, GB/s, AvgPolls
+const std::string PROGRESS_FORMAT_HEADER("  %-8s   %-12s  %-12s  %-10s  %-8.1f %-8s %-8s");
 
-/// Fields: Time(hour:minute:second), i, Counter, Errors, Fill, °C
-const std::string PROGRESS_FORMAT("  %02s:%02s:%02s   %-12s  %-12s  %-10s  %-10.1f");
+/// Fields: Time(hour:minute:second), i, Counter, Errors, Fill, °C, GB/s, AvgPolls
+const std::string PROGRESS_FORMAT("  %02s:%02s:%02s   %-12s  %-12s  %-10s  %-8.1f %-8s %-8s");
 
 auto READOUT_ERRORS_PATH = "readout_errors.txt";
 auto READOUT_DATA_PATH_ASCII = "readout_data.txt";
@@ -566,7 +566,8 @@ class ProgramCruExperimentalDma: public Program
     {
 //      bar(Register::TEMPERATURE) = 0x1;
 //      std::this_thread::sleep_for(10ms);
-//      bar(Register::TEMPERATURE) = 0x0;
+
+      //      bar(Register::TEMPERATURE) = 0x0;
 //      std::this_thread::sleep_for(10ms);
 //      bar(Register::TEMPERATURE) = 0x2;
 //      std::this_thread::sleep_for(10ms);
@@ -600,16 +601,37 @@ class ProgramCruExperimentalDma: public Program
 
     void updateStatusDisplay()
     {
+      mIntervalMeasurements.setEnd();
+
+      auto format = b::format(PROGRESS_FORMAT);
+
       using namespace std::chrono;
       auto diff = high_resolution_clock::now() - mRunTime.start;
       auto second = duration_cast<seconds>(diff).count() % 60;
       auto minute = duration_cast<minutes>(diff).count() % 60;
       auto hour = duration_cast<hours>(diff).count();
+      format % hour % minute % second;
 
-      auto format = b::format(PROGRESS_FORMAT) % hour % minute % second % mReadoutCounter;
+      format % mReadoutCounter;
+
       mOptions.noErrorCheck ? format % "n/a" : format % mErrorCount;
+
       format % mLastFillSize;
+
       mTemperatureMonitor.isValid() ? format % mTemperatureMonitor.getTemperature() : format % "n/a";
+
+      {
+        double seconds = mIntervalMeasurements.getSeconds();
+        double bytes = double(mIntervalMeasurements.pages) * DMA_PAGE_SIZE;
+        double GB = bytes / (1000 * 1000 * 1000);
+        double GBs = GB / seconds;
+        format % GBs;
+
+        double mLastMinutePolls = mIntervalMeasurements.polls;
+        double AvgPolls = mLastMinutePolls / seconds;
+        format % AvgPolls;
+      }
+
       cout << '\r' << format;
 
       if (mOptions.fifoDisplay) {
@@ -643,12 +665,15 @@ class ProgramCruExperimentalDma: public Program
           mDisplayUpdateNewline = true;
         }
       }
+
+      mIntervalMeasurements.setStart();
     }
 
     void printStatusHeader()
     {
-      auto line1 = b::format(PROGRESS_FORMAT_HEADER) % "Time" % "Pages" % "Errors" % "Fill" % "°C";
-      auto line2 = b::format(PROGRESS_FORMAT) % "00" % "00" % "00" % '-' % '-' % '-' % '-';
+      auto line1 = b::format(PROGRESS_FORMAT_HEADER) % "Time" % "Pages" % "Errors" % "Fill" % "°C" % "GB/s"
+          % "AvgPolls";
+      auto line2 = b::format(PROGRESS_FORMAT) % "00" % "00" % "00" % '-' % '-' % '-' % '-' % '-' % '-';
       cout << '\n' << line1;
       cout << '\n' << line2;
       mLogStream << '\n' << line1;
@@ -809,9 +834,9 @@ class ProgramCruExperimentalDma: public Program
     {
       // Get first 2 bits of DMA configuration register, these contain the generator pattern
       uint32_t dmaConfiguration = bar(CruRegisterIndex::DMA_CONFIGURATION) && 0b11;
-      return dmaConfiguration == 0 ? GeneratorPattern::Incremental
-           : dmaConfiguration == 1 ? GeneratorPattern::Alternating
-           : dmaConfiguration == 2 ? GeneratorPattern::Constant
+      return dmaConfiguration == 0b01 ? GeneratorPattern::Incremental
+           : dmaConfiguration == 0b10 ? GeneratorPattern::Alternating
+           : dmaConfiguration == 0b11 ? GeneratorPattern::Constant
            : GeneratorPattern::Unknown;
     }
 
@@ -1104,6 +1129,31 @@ class ProgramCruExperimentalDma: public Program
     uint32_t mIdleCountLower32 = 0;
     uint32_t mIdleCountUpper32 = 0;
     uint32_t mIdleMaxValue = 0;
+
+    struct IntervalMeasurements
+    {
+        int pages = 0;
+        int polls = 0;
+        TimePoint start;
+        TimePoint end;
+
+        void setStart()
+        {
+          pages = 0;
+          polls = 0;
+          start = std::chrono::high_resolution_clock::now();
+        }
+
+        void setEnd()
+        {
+          end = std::chrono::high_resolution_clock::now();
+        }
+
+        double getSeconds()
+        {
+          return std::chrono::duration<double>(end - start).count();
+        }
+    } mIntervalMeasurements;
 };
 
 } // Anonymous namespace

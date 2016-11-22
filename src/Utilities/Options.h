@@ -40,7 +40,7 @@ int getOptionRegisterAddress(const boost::program_options::variables_map& variab
 int getOptionRegisterValue(const boost::program_options::variables_map& variablesMap);
 int getOptionChannel(const boost::program_options::variables_map& variablesMap);
 int getOptionSerialNumber(const boost::program_options::variables_map& variablesMap);
-Parameters::CardId::value_type getOptionCardId(const boost::program_options::variables_map& variablesMap);
+Parameters::CardIdType getOptionCardId(const boost::program_options::variables_map& variablesMap);
 int getOptionRegisterRange(const boost::program_options::variables_map& variablesMap);
 ChannelParameters getOptionsChannelParameters(const boost::program_options::variables_map& variablesMap);
 Parameters getOptionsParameterMap(const boost::program_options::variables_map& variablesMap);

@@ -22,8 +22,8 @@ DummyChannelMaster::DummyChannelMaster(const Parameters& params) : mPageCounter(
 //  cout << "DummyChannelMaster::DummyChannelMaster(serial:" << serial << ", channel:" << channel << ", params:...)"
 //      << endl;
 
-  mBufferSize = params.get<Parameters::DmaBufferSize>().get_value_or(8*1024);
-  mPageSize = params.get<Parameters::DmaPageSize>().get_value_or(8*1024);
+  mBufferSize = params.getDmaBufferSize().get_value_or(8*1024);
+  mPageSize = params.getDmaPageSize().get_value_or(8*1024);
 
   mMaxPages = mBufferSize / mPageSize;
   mPageBuffer.resize(mBufferSize, -1);

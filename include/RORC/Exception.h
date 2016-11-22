@@ -49,7 +49,6 @@ DEFINE_ERRINFO(named_mutex_name, std::string);
 DEFINE_ERRINFO(page_index, int);
 DEFINE_ERRINFO(pages, size_t);
 DEFINE_ERRINFO(parameter_key, std::string);
-DEFINE_ERRINFO(parameter_name, std::string);
 DEFINE_ERRINFO(pci_address, PciAddress);
 DEFINE_ERRINFO(pci_address_bus_number, int);
 DEFINE_ERRINFO(pci_address_slot_number, int);

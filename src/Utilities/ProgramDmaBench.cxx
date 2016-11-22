@@ -181,10 +181,10 @@ class ProgramDmaBench: public Program
       auto cardId = Options::getOptionCardId(map);
       int channelNumber = Options::getOptionChannel(map);
       auto params = Options::getOptionsParameterMap(map);
-      mPageSize = params.get<Parameters::DmaPageSize>().get();
-      params.put<Parameters::CardId>(cardId);
-      params.put<Parameters::ChannelNumber>(channelNumber);
-      params.put<Parameters::GeneratorDataSize>(mPageSize);
+      mPageSize = params.getDmaPageSize().get();
+      params.setCardId(cardId);
+      params.setChannelNumber(channelNumber);
+      params.setGeneratorDataSize(mPageSize);
 
       // Get master lock on channel
       mChannel = ChannelFactory().getMaster(params);

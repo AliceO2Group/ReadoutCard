@@ -69,11 +69,11 @@ void ChannelMasterBase::checkChannelNumber(const AllowedChannels& allowedChannel
 ChannelParameters ChannelMasterBase::convertParameters(const Parameters& map)
 {
   ChannelParameters cp;
-  cp.dma.bufferSize = map.get<Parameters::DmaBufferSize>().get_value_or(4*1024*1024);
-  cp.dma.pageSize = map.get<Parameters::DmaPageSize>().get_value_or(8*1024);
-  cp.generator.useDataGenerator = map.get<Parameters::GeneratorEnabled>().get_value_or(true);
-  cp.generator.dataSize = map.get<Parameters::GeneratorDataSize>().get_value_or(cp.dma.pageSize);
-  cp.generator.loopbackMode = map.get<Parameters::GeneratorLoopbackMode>().get_value_or(LoopbackMode::Rorc);
+  cp.dma.bufferSize = map.getDmaBufferSize().get_value_or(4*1024*1024);
+  cp.dma.pageSize = map.getDmaPageSize().get_value_or(8*1024);
+  cp.generator.useDataGenerator = map.getGeneratorEnabled().get_value_or(true);
+  cp.generator.dataSize = map.getGeneratorDataSize().get_value_or(cp.dma.pageSize);
+  cp.generator.loopbackMode = map.getGeneratorLoopback().get_value_or(LoopbackMode::Rorc);
   return cp;
 }
 
@@ -98,7 +98,7 @@ void ChannelMasterBase::validateParameters(const ChannelParameters& cp)
 ChannelMasterBase::ChannelMasterBase(CardType::type cardType, const Parameters& parameters,
     const AllowedChannels& allowedChannels, size_t fifoSize)
     : mDmaState(DmaState::STOPPED),
-      mChannelNumber(parameters.getRequired<Parameters::ChannelNumber>())
+      mChannelNumber(parameters.getChannelNumberRequired())
 {
   using namespace Util;
 
@@ -111,7 +111,7 @@ ChannelMasterBase::ChannelMasterBase(CardType::type cardType, const Parameters& 
 
   // Get serial number, either from parameter or via PciAddress and find the device
   {
-    auto id = parameters.getRequired<Parameters::CardId>();
+    auto id = parameters.getCardIdRequired();
 
     if (auto serial = boost::get<int>(&id)) {
       resetSmartPtr(mRorcDevice, *serial);

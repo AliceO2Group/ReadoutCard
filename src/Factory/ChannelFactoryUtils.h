@@ -184,7 +184,7 @@ std::shared_ptr<Interface> makeChannel(const Parameters& params, int dummySerial
     return Make<SharedPtr, 0, Args...>::make(cardType, std::forward<Args>(args)...);
   };
 
-  auto id = params.getRequired<Parameters::CardId>();
+  auto id = params.getCardIdRequired();
 
   if (auto serial = boost::get<int>(&id)) {
     return (dummySerial == *serial) ? makeDummy() : makeReal(findCard(*serial).cardType);

@@ -58,9 +58,9 @@ Rorc::Parameters makeParams()
 {
   using namespace Rorc;
   return Parameters::makeParameters(serialNumber, channelNumber)
-      .put<Parameters::DmaPageSize>(pageSize)
-      .put<Parameters::DmaBufferSize>(bufferSize)
-      .put<Parameters::GeneratorEnabled>(true);
+      .setDmaPageSize(pageSize)
+      .setDmaBufferSize(bufferSize)
+      .setGeneratorEnabled(true);
 }
 
 int main(int, char**)

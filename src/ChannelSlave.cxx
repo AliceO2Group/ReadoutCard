@@ -11,9 +11,9 @@ namespace AliceO2 {
 namespace Rorc {
 
 ChannelSlave::ChannelSlave(const Parameters& parameters)
- : mChannelNumber(parameters.getRequired<Parameters::ChannelNumber>())
+ : mChannelNumber(parameters.getChannelNumberRequired())
 {
-  auto id = parameters.getRequired<Parameters::CardId>();
+  auto id = parameters.getCardIdRequired();
   if (auto serial = boost::get<int>(&id)) {
     Util::resetSmartPtr(mRorcDevice, *serial);
     mSerialNumber = *serial;

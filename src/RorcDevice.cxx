@@ -113,7 +113,7 @@ RorcDevice::RorcDevice(const PciAddress& address)
   initWithAddress(address);
 }
 
-RorcDevice::RorcDevice(const Parameters::CardId::value_type& cardId)
+RorcDevice::RorcDevice(const Parameters::CardIdType& cardId)
     : mDescriptor(defaultDescriptor())
 {
   if (auto serial = boost::get<int>(&cardId)) {

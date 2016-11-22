@@ -33,6 +33,7 @@ set(RORC_LIB_SOURCES
   Exception.cxx
   LoopbackMode.cxx
   MemoryMappedFile.cxx
+  Parameters.cxx
   PciAddress.cxx
   ResetLevel.cxx
   RorcStatusCode.cxx
