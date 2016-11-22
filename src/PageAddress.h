@@ -1,4 +1,4 @@
-/// \file ChannelMaster.h
+/// \file PageAddress.h
 /// \brief Definition of the PageAddress struct.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)

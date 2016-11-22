@@ -30,8 +30,8 @@ class PageManagerBase
     }
 
     /// Check for arrived pages and free up FIFO slots that are no longer needed
-    /// \tparam IsArrived Function to check if the page with the given descriptor index has been completely pushed
-    /// \tparam ResetDescriptor Function reset the descriptor with the given index
+    /// \param isArrived Function to check if the page with the given descriptor index has been completely pushed
+    /// \param resetDescriptor Function reset the descriptor with the given index
     /// \return Amount of arrived pages
     template<class IsArrived, class ResetDescriptor>
     int handleArrivals(IsArrived isArrived, ResetDescriptor resetDescriptor)
@@ -40,8 +40,8 @@ class PageManagerBase
     }
 
     /// Push pages
-    /// \tparam Push Function to push a single page with the given buffer index and descriptor index.
     /// \param pushLimit Limit on the amount of pages to push. If <= 0, will push as many pages as fit in the queue.
+    /// \param push Function to push a single page with the given buffer index and descriptor index.
     /// \return The amount of pages that were pushed
     template<class Push>
     int pushPages(size_t pushLimit, Push push)
@@ -73,12 +73,7 @@ class PageManagerBase
     }
 };
 
-//template<size_t FIRMWARE_QUEUE_CAPACITY>
-//class QueuePageManager
-//{
-//
-//};
-
+/// Standard implementation of PageManagerBase
 template<size_t FIRMWARE_QUEUE_CAPACITY>
 class PageManager : public PageManagerBase<PageManager<FIRMWARE_QUEUE_CAPACITY>>
 {
@@ -128,10 +123,6 @@ class PageManager : public PageManagerBase<PageManager<FIRMWARE_QUEUE_CAPACITY>>
       return arrived;
     }
 
-    /// Push pages
-    /// \tparam Push Function to push a single page with the given buffer index and descriptor index.
-    /// \param pushLimit Limit on the amount of pages to push. If <= 0, will push as many pages as fit in the queue.
-    /// \return The amount of pages that were pushed
     template<class Push>
     int _pushPages(size_t pushLimit, Push push)
     {

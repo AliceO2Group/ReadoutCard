@@ -23,10 +23,8 @@ namespace {
   }
 
   /// Get a parameter from the map
-  /// \tparam P The parameter type to get
+  /// \tparam T The parameter type to get
   /// \return The value wrapped in an optional if it was found, or boost::none if it was not
-  /// Usage example:
-  /// auto serial = parameters.get<Parameters::SerialNumber>().get_value_or(-1);
   template <typename T>
   auto getParam(const Parameters::Map& map, std::string key) -> boost::optional<T>
   {
@@ -41,10 +39,8 @@ namespace {
   }
 
   /// Get a parameter from the map, throwing an exception if it is not present
-  /// \tparam P The parameter type to get
+  /// \tparam T The parameter type to get
   /// \return The value
-  /// Usage example:
-  /// auto serial = parameters.getRequired<Parameters::SerialNumber>();
   template <typename T>
   auto getParamRequired(const Parameters::Map& map, std::string key) -> T
   {

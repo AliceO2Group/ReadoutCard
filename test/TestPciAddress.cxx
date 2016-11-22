@@ -20,18 +20,18 @@ namespace {
 BOOST_AUTO_TEST_CASE(PciAddressTest)
 {
   PciAddress address("01:02.3");
-  BOOST_REQUIRE(address.bus == 1);
-  BOOST_REQUIRE(address.slot == 2);
-  BOOST_REQUIRE(address.function == 3);
+  BOOST_REQUIRE(address.getBus() == 1);
+  BOOST_REQUIRE(address.getSlot() == 2);
+  BOOST_REQUIRE(address.getFunction() == 3);
 }
 
 // Test integer-based constructor
 BOOST_AUTO_TEST_CASE(PciAddressTest2)
 {
   PciAddress address(1, 2, 3);
-  BOOST_REQUIRE(address.bus == 1);
-  BOOST_REQUIRE(address.slot == 2);
-  BOOST_REQUIRE(address.function == 3);
+  BOOST_REQUIRE(address.getBus() == 1);
+  BOOST_REQUIRE(address.getSlot() == 2);
+  BOOST_REQUIRE(address.getFunction() == 3);
 }
 
 // Test formatting

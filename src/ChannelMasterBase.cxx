@@ -1,5 +1,5 @@
-/// \file ChannelMaster.cxx
-/// \brief Implementation of the ChannelMaster class.
+/// \file ChannelMasterBase.cxx
+/// \brief Implementation of the ChannelMasterBase class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 

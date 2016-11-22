@@ -139,7 +139,7 @@ class TemperatureMonitor : public Util::Thread
         while (!stopFlag->load() && !Program::isSigInt()) {
 //          uint32_t value = bar[CruRegisterIndex::TEMPERATURE];
           b::optional<double> temperature = boost::none;//Cru::Temperature::convertRegisterValue(value);
-          if (!mTemperature) {
+          if (!temperature) {
             mValidFlag = false;
           } else {
             mValidFlag = true;
@@ -377,6 +377,7 @@ class ProgramCruExperimentalDma: public Program
         printStatusHeader();
       }
       mRunTime.start = std::chrono::high_resolution_clock::now();
+      mIntervalMeasurements.reset();
 
       // Set first round of pages, and inform the firmware we're ready to receive
       fillReadoutQueue();
@@ -601,8 +602,6 @@ class ProgramCruExperimentalDma: public Program
 
     void updateStatusDisplay()
     {
-      mIntervalMeasurements.setEnd();
-
       auto format = b::format(PROGRESS_FORMAT);
 
       using namespace std::chrono;
@@ -621,15 +620,19 @@ class ProgramCruExperimentalDma: public Program
       mTemperatureMonitor.isValid() ? format % mTemperatureMonitor.getTemperature() : format % "n/a";
 
       {
-        double seconds = mIntervalMeasurements.getSeconds();
+        double seconds = mIntervalMeasurements.getSecondsSinceStart();
+        if (seconds > 0.1) {
         double bytes = double(mIntervalMeasurements.pages) * DMA_PAGE_SIZE;
         double GB = bytes / (1000 * 1000 * 1000);
         double GBs = GB / seconds;
         format % GBs;
 
-        double mLastMinutePolls = mIntervalMeasurements.polls;
-        double AvgPolls = mLastMinutePolls / seconds;
+        double polls = mIntervalMeasurements.polls;
+        double AvgPolls = polls / seconds;
         format % AvgPolls;
+        } else {
+          format % '-' % '-';
+        }
       }
 
       cout << '\r' << format;
@@ -660,13 +663,12 @@ class ProgramCruExperimentalDma: public Program
           cout << '\n';
           mLogStream << '\n' << format;
           mDisplayUpdateNewline = false;
+          mIntervalMeasurements.reset();
         }
         if (second >= 1) {
           mDisplayUpdateNewline = true;
         }
       }
-
-      mIntervalMeasurements.setStart();
     }
 
     void printStatusHeader()
@@ -1135,23 +1137,17 @@ class ProgramCruExperimentalDma: public Program
         int pages = 0;
         int polls = 0;
         TimePoint start;
-        TimePoint end;
 
-        void setStart()
+        void reset()
         {
           pages = 0;
           polls = 0;
           start = std::chrono::high_resolution_clock::now();
         }
 
-        void setEnd()
+        double getSecondsSinceStart()
         {
-          end = std::chrono::high_resolution_clock::now();
-        }
-
-        double getSeconds()
-        {
-          return std::chrono::duration<double>(end - start).count();
+          return std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start).count();
         }
     } mIntervalMeasurements;
 };

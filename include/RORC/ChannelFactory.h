@@ -26,13 +26,15 @@ class ChannelFactory
     ChannelFactory();
     virtual ~ChannelFactory();
 
-    /// Get a channel object with the given serial number and channel number.
+    /// Get a master channel object with the given serial number and channel number.
     /// Passing 'DUMMY_SERIAL_NUMBER' as serial number returns a dummy implementation
-    MasterSharedPtr getMaster(const Parameters& params);
+    /// \param parameters Parameters for the channel
+    MasterSharedPtr getMaster(const Parameters& parameters);
 
-    /// Get a channel object with the given serial number and channel number.
+    /// Get a slave channel object with the given serial number and channel number.
     /// Passing 'DUMMY_SERIAL_NUMBER' as serial number returns a dummy implementation
-    SlaveSharedPtr getSlave(const Parameters& params);
+    /// \param parameters Parameters for the channel
+    SlaveSharedPtr getSlave(const Parameters& parameters);
 };
 
 } // namespace Rorc

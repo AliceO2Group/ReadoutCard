@@ -1,5 +1,5 @@
-/// \file ChannelMaster.h
-/// \brief Definition of the ChannelMaster class.
+/// \file ChannelMasterBase.h
+/// \brief Definition of the ChannelMasterBase class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 

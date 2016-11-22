@@ -11,10 +11,11 @@
 namespace AliceO2 {
 namespace Rorc {
 
-/// Simple data holder class for a PCI address, consisting of a bus, slot and function number
-struct PciAddress
+/// Data holder class for a PCI address, consisting of a bus, slot and function number
+class PciAddress
 {
-    /// Constructs a PciAddress object using a string in "lspci" format: <bus>:<slot>.<function>
+  public:
+    /// Constructs a PciAddress object using a string in "lspci" format: "[bus]:[slot].[function]".
     /// For example: "01:23.0"
     /// \param string String with lspci format
     PciAddress(const std::string& string);
@@ -25,7 +26,7 @@ struct PciAddress
     /// \param function Function number, allowed numbers: 0 to 7
     PciAddress(int bus, int slot, int function);
 
-    /// Converts a PciAddress object to a string in "lspci" format: <bus>:<slot>.<function>
+    /// Converts a PciAddress object to a string in "lspci" format: "[bus]:[slot].[function]".
     /// For example: "01:23.0"
     std::string toString() const;
 
@@ -34,6 +35,28 @@ struct PciAddress
       return (bus == other.bus) && (slot == other.slot) && (function == other.function);
     }
 
+    /// Gets the bus number of this address
+    /// \return Integer from 0 to 255 (0xff)
+    int getBus() const
+    {
+      return bus;
+    }
+
+    /// Gets the function number of this address
+    /// \return Integer from 0 to 31 (0x1f)
+    int getFunction() const
+    {
+      return function;
+    }
+
+    /// Gets the slot number of this address
+    /// \return Integer from 0 to 7
+    int getSlot() const
+    {
+      return slot;
+    }
+
+  private:
     int bus;
     int slot;
     int function;

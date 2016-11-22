@@ -118,7 +118,6 @@ class CruBarAccessor
     }
 
     /// Gets the temperature in °C, or nothing if the temperature value was invalid.
-    /// \param registerValue Value of the temperature register to convert
     /// \return Temperature value in °C or nothing if the temperature value was invalid
     boost::optional<double> getTemperatureCelsius() const
     {

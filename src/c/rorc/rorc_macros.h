@@ -1,8 +1,6 @@
-////
-/// \file rorc_macros.cxx
+/// \file rorc_macros.h
 ///
 /// Private rorc macros
-///
 
 #pragma once
 
