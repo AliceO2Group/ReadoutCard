@@ -4,10 +4,11 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "Utilities/Program.h"
-#include <iostream>
-#include <thread>
 #include <chrono>
+#include <iostream>
 #include <functional>
+#include <thread>
+#include <unordered_map>
 #include <dim/dis.hxx>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
@@ -135,7 +136,12 @@ class ProgramAliceLowlevelFrontendServer: public Program
       return "";
     }
 
+    using DimServicePtr = std::unique_ptr<DimService>;
+
     double mTemperature = 45;
+
+    /// Map of register addresses to corresponding services
+    std::unordered_map<uint64_t, DimServicePtr> mServices;
 };
 } // Anonymous namespace
 

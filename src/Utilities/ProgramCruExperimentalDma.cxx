@@ -30,6 +30,7 @@
 #include "MemoryMappedFile.h"
 #include "Cru/CruBarAccessor.h"
 #include "Cru/CruFifoTable.h"
+#include "Options.h"
 #include "Pda/PdaDevice.h"
 #include "Pda/PdaBar.h"
 #include "Pda/PdaDmaBuffer.h"
@@ -233,9 +234,6 @@ class ProgramCruExperimentalDma: public Program
           ("reset",
               po::bool_switch(&mOptions.resetCard),
               "Reset card during initialization")
-          ("serial",
-              po::value<int>(&mOptions.serialNumber)->required(),
-              "Card's serial number")
           ("to-file-ascii",
               po::bool_switch(&mOptions.fileOutputAscii),
               "Read out to file in ASCII format")
@@ -254,9 +252,9 @@ class ProgramCruExperimentalDma: public Program
           ("rand-pause-fw",
               po::bool_switch(&mOptions.randomPauseFirm),
               "Randomly pause readout using firmware method")
-          ("no-errorcheck",
-              po::bool_switch(&mOptions.noErrorCheck),
-              "Skip error checking")
+          ("check-pattern",
+              po::value<std::string>(&mOptions.generatorPatternString),
+              "Error check with given pattern []")
           ("rm-sharedmem",
               po::bool_switch(&mOptions.removeSharedMemory),
               "Remove shared memory after DMA transfer")
@@ -281,11 +279,17 @@ class ProgramCruExperimentalDma: public Program
           ("log-idle",
               po::bool_switch(&mOptions.logIdle),
               "Log idle counter");
+        AliceO2::Rorc::Utilities::Options::addOptionCardId(options);
+
     }
 
-    virtual void run(const boost::program_options::variables_map&) override
+    virtual void run(const boost::program_options::variables_map& variablesMap) override
     {
       using namespace AliceO2::Rorc;
+
+      mOptions.generatorPattern = GeneratorPattern::fromString(mOptions.generatorPatternString);
+
+      mOptions.cardId = AliceO2::Rorc::Utilities::Options::getOptionCardId(variablesMap);
 
       if (mOptions.fileOutputAscii && mOptions.fileOutputBin) {
         BOOST_THROW_EXCEPTION(CruException()
@@ -455,13 +459,13 @@ class ProgramCruExperimentalDma: public Program
       }
 
       // Data error checking
-      if (!mOptions.noErrorCheck) {
+      if (!mOptions.checkError) {
         if (mDataGeneratorCounter == -1) {
           // First page initializes the counter
           mDataGeneratorCounter = getPageAddress(handle)[0];
         }
 
-        bool hasError = checkErrors(getCurrentGeneratorPattern(), handle, mReadoutCounter, mDataGeneratorCounter);
+        bool hasError = checkErrors(mOptions.generatorPattern, handle, mReadoutCounter, mDataGeneratorCounter);
         if (hasError && mOptions.resyncCounter) {
           // Resync the counter
           mDataGeneratorCounter = getPageAddress(handle)[0];
@@ -509,7 +513,7 @@ class ProgramCruExperimentalDma: public Program
     /// Initializes PDA objects and accompanying shared memory files
     void initPda()
     {
-      Util::resetSmartPtr(mRorcDevice, mOptions.serialNumber);
+      Util::resetSmartPtr(mRorcDevice, mOptions.cardId);
       Util::resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), mChannelNumber);
       Util::resetSmartPtr(mMappedFilePages, DMA_BUFFER_PAGES_PATH.c_str(), DMA_BUFFER_PAGES_SIZE);
       Util::resetSmartPtr(mBufferPages, mRorcDevice->getPciDevice(), mMappedFilePages->getAddress(),
@@ -613,7 +617,7 @@ class ProgramCruExperimentalDma: public Program
 
       format % mReadoutCounter;
 
-      mOptions.noErrorCheck ? format % "n/a" : format % mErrorCount;
+      mOptions.checkError ? format % mErrorCount : format % "n/a";
 
       format % mLastFillSize;
 
@@ -981,6 +985,7 @@ class ProgramCruExperimentalDma: public Program
 
     /// Program options
     struct Options {
+        AliceO2::Rorc::Parameters::CardIdType cardId;
         int64_t maxPages = 0; ///< Limit of pages to push
         bool fileOutputAscii;
         bool fileOutputBin;
@@ -988,7 +993,6 @@ class ProgramCruExperimentalDma: public Program
         bool fifoDisplay;
         bool randomPauseSoft;
         bool randomPauseFirm;
-        bool noErrorCheck;
         bool removeSharedMemory;
         bool reloadKernelModule;
         bool resyncCounter;
@@ -997,7 +1001,9 @@ class ProgramCruExperimentalDma: public Program
         bool noTwoHundred;
         bool logIdle;
         bool cumulativeIdle;
-        int serialNumber;
+        std::string generatorPatternString;
+        GeneratorPattern::type generatorPattern;
+        bool checkError;
     } mOptions;
 
     /// A value of true means no limit on page pushing

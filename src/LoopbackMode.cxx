@@ -9,7 +9,7 @@
 
 namespace AliceO2 {
 namespace Rorc {
-
+namespace {
 static const std::map<LoopbackMode::type, std::string> loopbackModeMap {
   { LoopbackMode::None, "NONE" },
   { LoopbackMode::Rorc, "RORC" },
@@ -18,6 +18,7 @@ static const std::map<LoopbackMode::type, std::string> loopbackModeMap {
 };
 
 static const auto loopbackModeMapReverse = Util::reverseMap(loopbackModeMap);
+} // Anonymous namespace
 
 bool LoopbackMode::isExternal(const LoopbackMode::type& mode)
 {

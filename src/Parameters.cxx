@@ -52,7 +52,7 @@ namespace {
           << ErrorInfo::ParameterKey(key));
     }
   }
-}
+} // Anonymous namespace
 
 /// Helper macro to implement getters/setters
 /// \param _param_name The name of the parameter

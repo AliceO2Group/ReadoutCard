@@ -62,6 +62,7 @@ static Option<int> registerRange("range", "Amount of registers to print past giv
 static Option<int> serialNumber("serial", "Card serial number");
 static Option<std::string> registerValue("value", "Register value, either in decimal or hex (prefix with 0x)");
 static Option<std::string> cardId("id", "Card ID: either serial number or PCI address in 'lspci' format");
+static Option<std::string> resetLevel("reset", "Reset level [NOTHING, RORC, RORC_DIU, RORC_DIU_SIU]", false);
 
 // Options for ChannelParameters
 static Option<size_t> cpDmaPageSize("cp-dma-pagesize", "RORC page size in kibibytes", true, 4l);
@@ -69,6 +70,7 @@ static Option<size_t> cpDmaBufSize("cp-dma-bufmb", "DMA buffer size in mebibytes
 static Option<bool> cpGenEnable("cp-gen-enable", "Enable data generator", true, true);
 static Option<std::string> cpGenLoopback("cp-gen-loopb",
     "Loopback mode [NONE, RORC, DIU, SIU]", true, "RORC");
+
 }
 
 /// Adds the given Option to the options_description
@@ -175,6 +177,11 @@ void addOptionCardId(po::options_description& optionsDescription)
   addOption(option::cardId, optionsDescription);
 }
 
+void addOptionResetLevel(po::options_description& optionsDescription)
+{
+  addOption(option::resetLevel, optionsDescription);
+}
+
 int getOptionChannel(const po::variables_map& variablesMap)
 {
   auto value = getOptionRequired(option::channel, variablesMap);
@@ -246,6 +253,18 @@ int getOptionRegisterRange(const po::variables_map& variablesMap)
 int getOptionSerialNumber(const po::variables_map& variablesMap)
 {
   return getOptionRequired(option::serialNumber, variablesMap);
+}
+
+ResetLevel::type getOptionResetLevel(const po::variables_map& variablesMap)
+{
+  std::string string = getOptionRequired(option::resetLevel, variablesMap);
+  try {
+    return ResetLevel::fromString(string);
+  }
+  catch (const std::runtime_error& e) {
+    BOOST_THROW_EXCEPTION(InvalidOptionValueException()
+        << ErrorInfo::Message("Failed to parse 'reset level' option"));
+  }
 }
 
 Parameters::CardIdType getOptionCardId(const po::variables_map& variablesMap)

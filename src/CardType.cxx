@@ -8,7 +8,6 @@
 
 namespace AliceO2 {
 namespace Rorc {
-
 namespace {
 
 static const std::map<CardType::type, std::string> typeMap = {
@@ -19,7 +18,6 @@ static const std::map<CardType::type, std::string> typeMap = {
 };
 
 static const std::map<std::string, CardType::type> typeMapReverse = Util::reverseMap(typeMap);
-
 } // Anonymous namespace
 
 std::string CardType::toString(const CardType::type& type)

@@ -16,18 +16,20 @@ using namespace AliceO2::Rorc::Utilities;
 namespace bpy = boost::python;
 
 /// Simple example script
-auto sExampleScript =
-  "# Run this with:\n"
-  "# rorc-run-script --script=file_with_this_script.py --serial=-1 --channel=0\n"
-  "\n"
-  "print 'Hello RORC Python script!'\n"
-  "\n"
-  "print rorc_channel.register_read.__doc__\n"
-  "print rorc_channel.register_write.__doc__\n"
-  "print '\\n'\n"
-  "\n"
-  "rorc_channel.register_read(0)\n"
-  "rorc_channel.register_write(0, 123)";
+auto sExampleScript = R"(
+# Run this with:
+# rorc-run-script --example > example.py
+# rorc-run-script --script=example.py --id=-1 --channel=0
+
+print 'Hello RORC Python script!'
+
+print rorc_channel.register_read.__doc__
+print rorc_channel.register_write.__doc__
+print '\\n'
+
+rorc_channel.register_read(0)
+rorc_channel.register_write(0, 123)
+)";
 
 /// Pointer for Python interface
 AliceO2::Rorc::ChannelFactory::SlaveSharedPtr sChannel = nullptr;

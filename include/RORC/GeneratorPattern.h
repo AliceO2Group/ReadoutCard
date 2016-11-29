@@ -25,6 +25,12 @@ struct GeneratorPattern
     Decremental = 6,
     Random = 7
   };
+
+  /// Converts a GeneratorPattern to a string
+  static auto toString(const GeneratorPattern::type& type) -> std::string;
+
+  /// Converts a string to a GeneratorPattern
+  static auto fromString(const std::string& string) -> GeneratorPattern::type;
 };
 
 } // namespace Rorc

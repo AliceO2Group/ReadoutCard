@@ -32,6 +32,7 @@ set(RORC_LIB_SOURCES
   Dummy/DummyChannelSlave.cxx
   Exception.cxx
   ExceptionInternal.cxx
+  GeneratorPattern.cxx
   LoopbackMode.cxx
   MemoryMappedFile.cxx
   Parameters.cxx
@@ -106,23 +107,24 @@ function(build_util_exec execname filename)
 endfunction()
 
 if(PDA_FOUND)
+  build_util_exec(rorc-channel-cleanup Utilities/ProgramCleanup.cxx)
+  build_util_exec(rorc-cru-blink Utilities/ProgramCruBlink.cxx)
+  build_util_exec(rorc-cru-experimental-dma Utilities/ProgramCruExperimentalDma.cxx)
+  build_util_exec(rorc-dma-bench Utilities/ProgramDmaBench.cxx)
   build_util_exec(rorc-example Example.cxx)
+  build_util_exec(rorc-list-cards Utilities/ProgramListCards.cxx)
+  build_util_exec(rorc-print-fifo Utilities/ProgramPrintFifo.cxx)
+  build_util_exec(rorc-reset Utilities/ProgramReset.cxx)
   build_util_exec(rorc-reg-read Utilities/ProgramRegisterRead.cxx)
   build_util_exec(rorc-reg-read-range Utilities/ProgramRegisterReadRange)
   build_util_exec(rorc-reg-write Utilities/ProgramRegisterWrite.cxx)
-  build_util_exec(rorc-list-cards Utilities/ProgramListCards.cxx)
-  build_util_exec(rorc-print-fifo Utilities/ProgramPrintFifo.cxx)
-  build_util_exec(rorc-cru-blink Utilities/ProgramCruBlink.cxx)
-  build_util_exec(rorc-sanity-check Utilities/ProgramSanityCheck.cxx)
-  build_util_exec(rorc-channel-cleanup Utilities/ProgramCleanup.cxx)
-  build_util_exec(rorc-dma-bench Utilities/ProgramDmaBench.cxx)
-  build_util_exec(rorc-cru-experimental-dma Utilities/ProgramCruExperimentalDma.cxx)
   build_util_exec(rorc-run-script Utilities/ProgramRunScript.cxx ${Boost_PYTHON_LIBRARY} ${PYTHON_LIBRARIES})
+  build_util_exec(rorc-sanity-check Utilities/ProgramSanityCheck.cxx)
 endif()
 
 if(DIM_FOUND)
-  build_util_exec(rorc-alf-server Utilities/ProgramAliceLowlevelFrontendServer.cxx ${DIM_LIBRARY})
   build_util_exec(rorc-alf-client Utilities/ProgramAliceLowlevelFrontendClient.cxx ${DIM_LIBRARY})
+    build_util_exec(rorc-alf-server Utilities/ProgramAliceLowlevelFrontendServer.cxx ${DIM_LIBRARY})
 endif()
 
 # -------

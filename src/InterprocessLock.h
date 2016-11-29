@@ -1,5 +1,5 @@
-/// \file InterprocessLock.h
-/// \brief Definitions for InterprocessMutex class
+/// \file Lock.h
+/// \brief Definitions for Lock class
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
@@ -73,7 +73,8 @@ class Lock
             << ErrorInfo::Message("Failed to acquire named mutex only; file lock was successfully acquired")
             << ErrorInfo::SharedLockFile(lockFilePath.string())
             << ErrorInfo::NamedMutexName(namedMutexName)
-            << ErrorInfo::PossibleCauses({"Named mutex is owned by other thread in current process",
+            << ErrorInfo::PossibleCauses({
+                "Named mutex is owned by other thread in current process",
                 "Previous Interprocess::Lock on same objects was not cleanly destroyed"}));
       }
     }
