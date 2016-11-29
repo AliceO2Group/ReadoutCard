@@ -174,9 +174,6 @@ std::vector<RorcDevice::CardDescriptor> RorcDevice::findSystemDevices(const PciA
       auto pciDevices = pdaDevice.getPciDevices();
       for (const auto& pciDevice : pciDevices) {
         auto deviceAddress = addressFromDevice(pciDevice);
-
-        printf("Address: %s\n", deviceAddress.toString().c_str());
-
         if (deviceAddress == address) {
           cards.push_back(CardDescriptor{type.cardType, type.getSerial(pciDevice), type.pciId, address});
         }
