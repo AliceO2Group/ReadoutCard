@@ -73,7 +73,7 @@ class CruBarAccessor
               << ErrorInfo::Message("Unsupported generator pattern for CRU")
               << ErrorInfo::GeneratorPattern(pattern)); }};
 
-      at32(CruRegisterIndex::DATA_EMULATOR_CONTROL) = value();
+      at32(CruRegisterIndex::DMA_CONFIGURATION) = value();
     }
 
     void sendAcknowledge() const

@@ -70,7 +70,7 @@ void CruChannelMaster::deviceStartDma()
   resetCru();
   initCru();
   // Push initial 128 pages
-  fillFifo();
+  fillFifoNonLocking();
   setBufferReadyGuard();
 }
 
@@ -160,7 +160,12 @@ void CruChannelMaster::initCru()
 int CruChannelMaster::fillFifo(int maxFill)
 {
   CHANNELMASTER_LOCKGUARD();
+  return fillFifoNonLocking(maxFill);
+}
 
+/// We need this because deviceStartDma() needs fillFifo() functionality, but is already a synchronized function itself.
+int CruChannelMaster::fillFifoNonLocking(int maxFill)
+{
   auto isArrived = [&](int descriptorIndex) {
     return getFifoUser()->statusEntries[descriptorIndex].isPageArrived();
   };

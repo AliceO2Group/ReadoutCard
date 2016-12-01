@@ -49,8 +49,9 @@ find_package(Boost 1.56
   python
   REQUIRED
   )
-find_package(PythonLibs 2.7 REQUIRED) # for Boost Python
-include_directories(${PYTHON_INCLUDE_DIRS})
+  
+# for Boost Python, used in Python scripting interface
+find_package(PythonLibs 2.7) 
   
 # Other sub-projects
 link_o2_subproject(InfoLogger)

@@ -97,25 +97,31 @@ class BarHammer : public Util::Thread
         }
 
         int64_t hammerCount = 0;
+        uint32_t writeCounter = 0;
         while (!stopFlag->load() && !Program::isSigInt()) {
-          for (int i = 0; i < 10000; ++i) {
-            channel->writeRegister(CruRegisterIndex::DEBUG_READ_WRITE, static_cast<uint32_t>(hammerCount));
-            hammerCount++;
+          for (int i = 0; i < getMultiplier(); ++i) {
+            channel->writeRegister(CruRegisterIndex::DEBUG_READ_WRITE, writeCounter);
+            writeCounter++;
           }
+          hammerCount++;
         }
-
         mHammerCount = hammerCount;
       });
     }
 
-    int64_t getCount()
+    double getCount()
     {
-      return mHammerCount.load();
+      return double(mHammerCount.load()) * double(getMultiplier());
     }
 
   private:
     std::shared_ptr<ChannelMasterInterface> mChannel;
     std::atomic<int64_t> mHammerCount;
+
+    int64_t getMultiplier()
+    {
+      return 10000;
+    }
 };
 
 class ProgramDmaBench: public Program
@@ -223,9 +229,7 @@ class ProgramDmaBench: public Program
       mRunTime.end = std::chrono::high_resolution_clock::now();
 
       if (mBarHammer) {
-        mBarHammer->stop();
-        mHammerCount = mBarHammer->getCount();
-        mBarHammer.reset();
+        mBarHammer->join();
       }
 
       freeExcessPages(10ms);
@@ -520,13 +524,15 @@ class ProgramDmaBench: public Program
          put("Gibit/s", Gibs);
          put("Errors", mErrorCount);
        }
-       if (mHammerCount) {
+
+       if (mOptions.barHammer) {
          size_t writeSize = sizeof(uint32_t);
-         double bytes = double(mHammerCount) * writeSize;
+         double hammerCount = mBarHammer->getCount();
+         double bytes = hammerCount * writeSize;
          double MB = bytes / (1000 * 1000);
          double MBs = MB / runTime;
-         put("BAR writes", mHammerCount);
-         put("BAR write size", writeSize);
+         put("BAR writes", hammerCount);
+         put("BAR write size (bytes)", writeSize);
          put("BAR MB", MB);
          put("BAR MB/s", MBs);
        }
@@ -631,7 +637,6 @@ class ProgramDmaBench: public Program
 
     size_t mPageSize;
 
-    int64_t mHammerCount = 0;
     std::unique_ptr<BarHammer> mBarHammer;
 };
 

@@ -139,6 +139,26 @@ class RegisterWriteRpc: public DimRpcInfo
     }
 };
 
+class RegisterWriteBlockRpc: public DimRpcInfo
+{
+  public:
+    RegisterWriteBlockRpc(const std::string& serviceName)
+        : DimRpcInfo(serviceName.c_str(), toCharBuffer("").data())
+    {
+    }
+
+    void writeRegister(uint64_t registerAddress, uint32_t registerValue)
+    {
+      auto string = std::to_string(registerAddress) + ',' + std::to_string(registerValue);
+      setDataString(string, *this);
+      auto returnValue = std::string(getString());
+      printf("Write got return: %s\n", returnValue.c_str());
+      if (isFail(returnValue)) {
+        BOOST_THROW_EXCEPTION(AliceO2::Rorc::Exception() << AliceO2::Rorc::ErrorInfo::Message(returnValue));
+      }
+    }
+};
+
 class BasicRpcServer: public DimRpc
 {
   public:

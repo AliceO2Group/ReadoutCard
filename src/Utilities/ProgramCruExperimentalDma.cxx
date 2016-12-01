@@ -254,7 +254,7 @@ class ProgramCruExperimentalDma: public Program
               "Randomly pause readout using firmware method")
           ("check-pattern",
               po::value<std::string>(&mOptions.generatorPatternString),
-              "Error check with given pattern []")
+              "Error check with given pattern [INCREMENTAL, ALTERNATING, CONSTANT]")
           ("rm-sharedmem",
               po::bool_switch(&mOptions.removeSharedMemory),
               "Remove shared memory after DMA transfer")
@@ -274,8 +274,8 @@ class ProgramCruExperimentalDma: public Program
               po::bool_switch(&mOptions.legacyAck),
               "Legacy option: give ack every 4 pages instead of every 1 page")
           ("cumulative-idle",
-               po::bool_switch(&mOptions.cumulativeIdle),
-               "Calculate cumulative idle count")
+              po::bool_switch(&mOptions.cumulativeIdle),
+              "Calculate cumulative idle count")
           ("log-idle",
               po::bool_switch(&mOptions.logIdle),
               "Log idle counter");
@@ -287,7 +287,12 @@ class ProgramCruExperimentalDma: public Program
     {
       using namespace AliceO2::Rorc;
 
-      mOptions.generatorPattern = GeneratorPattern::fromString(mOptions.generatorPatternString);
+      if (!mOptions.generatorPatternString.empty()) {
+        mOptions.checkError = true;
+        mOptions.generatorPattern = GeneratorPattern::fromString(mOptions.generatorPatternString);
+      } else {
+        mOptions.checkError = false;
+      }
 
       mOptions.cardId = AliceO2::Rorc::Utilities::Options::getOptionCardId(variablesMap);
 
@@ -459,7 +464,7 @@ class ProgramCruExperimentalDma: public Program
       }
 
       // Data error checking
-      if (!mOptions.checkError) {
+      if (mOptions.checkError) {
         if (mDataGeneratorCounter == -1) {
           // First page initializes the counter
           mDataGeneratorCounter = getPageAddress(handle)[0];
@@ -507,6 +512,10 @@ class ProgramCruExperimentalDma: public Program
         getBar().setDescriptorTableSize();
         // Send command to the DMA engine to write to every status entry, not just the final one
         getBar().setDoneControl();
+      }
+
+      if (mOptions.checkError) {
+        getBar().setDataGeneratorPattern(mOptions.generatorPattern);
       }
     }
 

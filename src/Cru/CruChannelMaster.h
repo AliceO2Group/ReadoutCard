@@ -61,6 +61,7 @@ class CruChannelMaster final : public ChannelMasterBase
     void initCru();
     void resetCru();
     void setBufferReadyGuard();
+    int fillFifoNonLocking(int maxFill = CRU_DESCRIPTOR_ENTRIES);
 
     CruBarAccessor getBar()
     {

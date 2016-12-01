@@ -118,14 +118,24 @@ if(PDA_FOUND)
   build_util_exec(rorc-reg-read Utilities/ProgramRegisterRead.cxx)
   build_util_exec(rorc-reg-read-range Utilities/ProgramRegisterReadRange)
   build_util_exec(rorc-reg-write Utilities/ProgramRegisterWrite.cxx)
-  build_util_exec(rorc-run-script Utilities/ProgramRunScript.cxx ${Boost_PYTHON_LIBRARY} ${PYTHON_LIBRARIES})
   build_util_exec(rorc-sanity-check Utilities/ProgramSanityCheck.cxx)
+  
+  if(DIM_FOUND)
+    build_util_exec(rorc-alf-client Utilities/ProgramAliceLowlevelFrontendClient.cxx ${DIM_LIBRARY})
+    build_util_exec(rorc-alf-server Utilities/ProgramAliceLowlevelFrontendServer.cxx ${DIM_LIBRARY})
+  else()
+    message(INFO "DIM not found, ALF client & server will not be built")
+  endif()
+  
+  if(PYTHONLIBS_FOUND)
+    include_directories(${PYTHON_INCLUDE_DIRS})
+    build_util_exec(rorc-run-script Utilities/ProgramRunScript.cxx ${Boost_PYTHON_LIBRARY} ${PYTHON_LIBRARIES})
+  else()
+    message(INFO "PythonLibs not found, 'rorc-run-script' utility will not be built")
+  endif()
 endif()
 
-if(DIM_FOUND)
-  build_util_exec(rorc-alf-client Utilities/ProgramAliceLowlevelFrontendClient.cxx ${DIM_LIBRARY})
-    build_util_exec(rorc-alf-server Utilities/ProgramAliceLowlevelFrontendServer.cxx ${DIM_LIBRARY})
-endif()
+
 
 # -------
 # Targets export for all libraries and executables
