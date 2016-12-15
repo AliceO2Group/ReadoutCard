@@ -34,13 +34,13 @@ DummyChannelSlave::~DummyChannelSlave()
 
 uint32_t DummyChannelSlave::readRegister(int index)
 {
-  cout << "DummyChannelSlave::readRegister(" << index << ")\n";
+//  cout << "DummyChannelSlave::readRegister(" << index << ")\n";
   return 0;
 }
 
 void DummyChannelSlave::writeRegister(int index, uint32_t value)
 {
-  cout << "DummyChannelSlave::writeRegister(index:" << index << ", value:" << value << ")\n";
+//  cout << "DummyChannelSlave::writeRegister(index:" << index << ", value:" << value << ")\n";
 }
 
 CardType::type DummyChannelSlave::getCardType()

@@ -72,6 +72,12 @@ class ProgramAliceLowlevelFrontendClient: public Program
       Alf::RegisterReadRpc readRpc(names.registerReadRpc());
       Alf::RegisterWriteRpc writeRpc(names.registerWriteRpc());
 
+
+      Alf::PublishRpc publishRpc(names.publishCommandRpc());
+
+      publishRpc.publish("ALF/TEST/1", 1.0, {0x1fc});
+      publishRpc.publish("ALF/TEST/2", 3.0, {0x1ec});
+
       while (!isSigInt()) {
         cout << "-------------------------------------\n";
         cout << "Temperature   = " << gTemperature << endl;

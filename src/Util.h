@@ -181,7 +181,8 @@ class GuardFunction
     {
     }
 
-    GuardFunction(std::function<void()> construct, std::function<void()> destruct)
+    template <class Callable>
+    GuardFunction(Callable&& construct, std::function<void()> destruct)
         : mDestruct(destruct)
     {
       construct();

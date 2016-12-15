@@ -36,6 +36,16 @@ struct ServiceNames
       return boost::str(boost::format("ALF/SERIAL_%d/CHANNEL_%d/REGISTER_WRITE") % serial % channel);
     }
 
+    std::string publishCommandRpc()
+    {
+      return boost::str(boost::format("ALF/SERIAL_%d/CHANNEL_%d/PUBLISH_SERVICE") % serial % channel);
+    }
+
+    std::string publishStopCommandRpc()
+    {
+      return boost::str(boost::format("ALF/SERIAL_%d/CHANNEL_%d/PUBLISH_SERVICE_STOP") % serial % channel);
+    }
+
     std::string temperature()
     {
       return boost::str(boost::format("ALF/SERIAL_%d/CHANNEL_%d/TEMPERATURE") % serial % channel);
@@ -99,6 +109,36 @@ inline std::string stripPrefix(const std::string& string)
   return string.substr(PREFIX_LENGTH);
 }
 
+class PublishRpc: public DimRpcInfo
+{
+  public:
+    PublishRpc(const std::string& serviceName)
+        : DimRpcInfo(serviceName.c_str(), toCharBuffer("").data())
+    {
+    }
+
+    void publish(std::string dnsName, double frequency, std::vector<size_t> addresses)
+    {
+      std::ostringstream stream;
+      stream << dnsName << ';';
+      for (int i = 0; i < addresses.size(); ++i) {
+        stream << addresses[i];
+        if (i+1 < addresses.size()) {
+          stream << ',';
+        }
+      }
+      stream << ';' << frequency;
+      printf("Publish: %s\n", stream.str().c_str());
+      setDataString(stream.str(), *this);
+
+      auto returnValue = std::string(getString());
+//      printf("Publish got return: %s\n", returnValue.c_str());
+      if (isFail(returnValue)) {
+        BOOST_THROW_EXCEPTION(AliceO2::Rorc::Exception() << AliceO2::Rorc::ErrorInfo::Message(returnValue));
+      }
+    }
+};
+
 class RegisterReadRpc: public DimRpcInfo
 {
   public:
@@ -111,7 +151,7 @@ class RegisterReadRpc: public DimRpcInfo
     {
       setDataString(std::to_string(registerAddress), *this);
       auto returnValue = std::string(getString());
-      printf("Read got return: %s\n", returnValue.c_str());
+//      printf("Read got return: %s\n", returnValue.c_str());
       if (isFail(returnValue)) {
         BOOST_THROW_EXCEPTION(AliceO2::Rorc::Exception() << AliceO2::Rorc::ErrorInfo::Message(returnValue));
       }
@@ -132,7 +172,7 @@ class RegisterWriteRpc: public DimRpcInfo
       auto string = std::to_string(registerAddress) + ',' + std::to_string(registerValue);
       setDataString(string, *this);
       auto returnValue = std::string(getString());
-      printf("Write got return: %s\n", returnValue.c_str());
+//      printf("Write got return: %s\n", returnValue.c_str());
       if (isFail(returnValue)) {
         BOOST_THROW_EXCEPTION(AliceO2::Rorc::Exception() << AliceO2::Rorc::ErrorInfo::Message(returnValue));
       }
