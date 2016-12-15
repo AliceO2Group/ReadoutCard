@@ -49,7 +49,7 @@ void touchFile(const bfs::path& path)
 
 std::string executeCommand(const std::string& command)
 {
-  std::shared_ptr<FILE> input(popen(command.c_str(), "r"), pclose);
+  std::unique_ptr<FILE, void(*)(FILE*)> input(popen(command.c_str(), "r"), [](FILE* f){pclose(f);});
 
   if(!input.get()){
     BOOST_THROW_EXCEPTION(std::runtime_error("Call to popen failed"));
