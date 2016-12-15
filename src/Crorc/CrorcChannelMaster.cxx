@@ -218,62 +218,6 @@ void CrorcChannelMaster::pushFreeFifoPage(int readyFifoIndex, volatile void* pag
   rorcPushRxFreeFifo(getBarUserspace(), reinterpret_cast<uint64_t>(pageBusAddress), pageWords, readyFifoIndex);
 }
 
-//PageHandle CrorcChannelMaster::pushNextPage()
-//{
-//  const auto& csd = mCrorcSharedData->get();
-//
-//  if (getSharedData().mDmaState != DmaState::STARTED) {
-//    BOOST_THROW_EXCEPTION(CrorcException()
-//        << ErrorInfo::Message("Not in required DMA state")
-//        << ErrorInfo::PossibleCauses({"startDma() not called"}));
-//  }
-//
-//  // Handle for next page
-//  auto fifoIndex = csd->mFifoIndexWrite;
-//  auto bufferIndex = csd->mBufferPageIndex;
-//
-//  // Check if page is available to write to
-//  if (mPageWasReadOut[fifoIndex] == false) {
-//    BOOST_THROW_EXCEPTION(CrorcException()
-//        << ErrorInfo::Message("Pushing page would overwrite")
-//        << ErrorInfo::FifoIndex(fifoIndex));
-//  }
-//
-//  mPageWasReadOut[fifoIndex] = false;
-//  mBufferPageIndexes[fifoIndex] = bufferIndex;
-//
-//  pushFreeFifoPage(fifoIndex, getPageAddresses()[bufferIndex].bus);
-//
-//  csd->mFifoIndexWrite = (csd->mFifoIndexWrite + 1) % READYFIFO_ENTRIES;
-//  csd->mBufferPageIndex = (csd->mBufferPageIndex + 1) % getPageAddresses().size();
-//
-//  return PageHandle(fifoIndex);
-//}
-//
-//bool CrorcChannelMaster::isPageArrived(const PageHandle& handle)
-//{
-//  return dataArrived(handle.index) == DataArrivalStatus::WholeArrived;
-//}
-//
-//Page CrorcChannelMaster::getPage(const PageHandle& handle)
-//{
-//  auto fifoIndex = handle.index;
-//  auto bufferIndex = mBufferPageIndexes[fifoIndex];
-//  return Page(getPageAddresses()[bufferIndex].user, getReadyFifo().entries[fifoIndex].length);
-//}
-//
-//void CrorcChannelMaster::markPageAsRead(const PageHandle& handle)
-//{
-//  if (mPageWasReadOut[handle.index]) {
-//    BOOST_THROW_EXCEPTION(CrorcException()
-//        << ErrorInfo::Message("Page was already marked as read")
-//        << ErrorInfo::PageIndex(handle.index));
-//  }
-//
-//  getReadyFifo().entries[handle.index].reset();
-//  mPageWasReadOut[handle.index] = true;
-//}
-
 CrorcChannelMaster::DataArrivalStatus::type CrorcChannelMaster::dataArrived(int index)
 {
   auto length = getFifoUser()->entries[index].length;
