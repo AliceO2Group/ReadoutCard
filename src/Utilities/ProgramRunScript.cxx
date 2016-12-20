@@ -23,12 +23,12 @@ auto sExampleScript = R"(
 
 print 'Hello RORC Python script!'
 
-print rorc_channel.register_read.__doc__
-print rorc_channel.register_write.__doc__
+print rorc_channel.register_read_32.__doc__
+print rorc_channel.register_write_32.__doc__
 print '\\n'
 
-rorc_channel.register_read(0)
-rorc_channel.register_write(0, 123)
+rorc_channel.register_read_32(0x40)
+rorc_channel.register_write_32(0x40, 123)
 )";
 
 /// Pointer for Python interface
@@ -36,11 +36,11 @@ AliceO2::Rorc::ChannelFactory::SlaveSharedPtr sChannel = nullptr;
 
 struct PythonWrapper
 {
-    static int registerRead(int index)
+    static int registerRead(int address)
     {
       auto channel = sChannel;
       if (channel) {
-        return channel->readRegister(index);
+        return channel->readRegister(address / 4);
       } else {
         // TODO throw exception
         printf("Invalid channel state\n");
@@ -48,11 +48,11 @@ struct PythonWrapper
       }
     }
 
-    static void registerWrite(int index, int value)
+    static void registerWrite(int address, int value)
     {
       auto channel = sChannel;
       if (channel) {
-        return channel->writeRegister(index, value);
+        return channel->writeRegister(address / 4, value);
       } else {
         // TODO throw exception
         printf("Invalid channel state\n");
@@ -63,21 +63,21 @@ struct PythonWrapper
     static void putClass(bpy::object& mainNamespace)
     {
       auto className = "rorc_channel";
-      auto readName = "register_read";
-      auto writeName = "register_write";
+      auto readName = "register_read_32";
+      auto writeName = "register_write_32";
       auto readDoc =
-          "Read the 32-bit value at given 32-bit index\n"
+          "Read the 32-bit value at given 32-bit aligned address\n"
           "\n"
           "Args:\n"
-          "    index: 32-bit based index of the register\n"
+          "    index: 32-bit aligned address of the register\n"
           "Returns:\n"
           "    The 32-bit value of the register";
       auto writeDoc =
-          "Write a 32-bit value at given 32-bit index\n"
+          "Write a 32-bit value at given 32-bit aligned address\n"
           "\n"
           "Args:\n"
-          "    index: 32-bit based index of the register\n"
-          "    value: 32-bit value";
+          "    index: 32-bit aligned address of the register\n"
+          "    value: 32-bit value to write to the register";
 
       mainNamespace[className] = bpy::class_<PythonWrapper>(className)
           .def(readName, &registerRead, readDoc).staticmethod(readName)
@@ -112,8 +112,8 @@ class ProgramRunScript : public Program
       }
 
       if (mScriptFilename.empty()) {
-        BOOST_THROW_EXCEPTION(AliceO2::Rorc::Exception()
-        << AliceO2::Rorc::ErrorInfo::Message("Empty script path"));
+        BOOST_THROW_EXCEPTION(AliceO2::Rorc::ProgramOptionException()
+            << AliceO2::Rorc::ErrorInfo::Message("Empty script path"));
       }
 
       auto cardId = Options::getOptionCardId(map);
