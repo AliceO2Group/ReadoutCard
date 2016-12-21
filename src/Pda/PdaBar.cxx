@@ -19,7 +19,7 @@ PdaBar::PdaBar() : mPdaBar(nullptr), mBarLength(-1), mBarNumber(-1), mUserspaceA
 {
 }
 
-PdaBar::PdaBar(PciDevice* pciDevice, int barNumberInt) : mBarNumber(barNumberInt)
+PdaBar::PdaBar(PdaDevice::PdaPciDevice pciDevice, int barNumberInt) : mBarNumber(barNumberInt)
 {
   uint8_t barNumber = mBarNumber;
 
@@ -30,7 +30,7 @@ PdaBar::PdaBar(PciDevice* pciDevice, int barNumberInt) : mBarNumber(barNumberInt
   }
 
   // Getting the BAR struct
-  if(PciDevice_getBar(pciDevice, &mPdaBar, barNumber) != PDA_SUCCESS) {
+  if(PciDevice_getBar(pciDevice.get(), &mPdaBar, barNumber) != PDA_SUCCESS) {
     BOOST_THROW_EXCEPTION(Exception()
         << ErrorInfo::Message("Failed to get BAR")
         << ErrorInfo::ChannelNumber(barNumber));

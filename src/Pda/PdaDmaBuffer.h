@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <pda.h>
+#include "Pda/PdaDevice.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -22,7 +23,7 @@ class PdaDmaBuffer
     /// \param userBufferAddress Address of the user-allocated buffer
     /// \param userBufferSize Size of the user-allocated buffer
     /// \param dmaBufferId Unique ID to use for registering the buffer (uniqueness must be channel-wide, probably)
-    PdaDmaBuffer(PciDevice* pciDevice, void* userBufferAddress, size_t userBufferSize, int dmaBufferId);
+    PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAddress, size_t userBufferSize, int dmaBufferId);
     ~PdaDmaBuffer();
 
     struct ScatterGatherEntry
@@ -41,7 +42,7 @@ class PdaDmaBuffer
 
   private:
     DMABuffer* mDmaBuffer;
-    PciDevice* mPciDevice;
+    PdaDevice::PdaPciDevice mPciDevice;
     ScatterGatherVector mScatterGatherVector;
 };
 

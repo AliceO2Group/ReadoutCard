@@ -6,6 +6,7 @@
 #pragma once
 
 #include <pda.h>
+#include "PdaDevice.h"
 #include "ExceptionInternal.h"
 
 namespace AliceO2 {
@@ -17,7 +18,7 @@ class PdaBar
 {
   public:
     PdaBar();
-    PdaBar(PciDevice* pciDevice, int barNumber);
+    PdaBar(PdaDevice::PdaPciDevice pciDevice, int barNumber);
 
     int getBarNumber() const
     {

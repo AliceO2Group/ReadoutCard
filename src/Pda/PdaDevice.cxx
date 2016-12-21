@@ -68,10 +68,10 @@ PdaDevice::~PdaDevice()
   }
 }
 
-DeviceOperator* PdaDevice::getDeviceOperator()
-{
-  return mDeviceOperator;
-}
+//DeviceOperator* PdaDevice::getDeviceOperator()
+//{
+//  return mDeviceOperator;
+//}
 
 PciDevice* PdaDevice::getPciDevice(int index)
 {

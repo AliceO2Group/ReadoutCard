@@ -43,9 +43,9 @@ class RorcDevice
       return mDescriptor.serialNumber;
     }
 
-    PciDevice* getPciDevice() const
+    Pda::PdaDevice::PdaPciDevice getPciDevice() const
     {
-      return mPciDevice;
+      return *mPciDevice.get();
     }
 
     void printDeviceInfo(std::ostream& ostream);
@@ -72,8 +72,8 @@ class RorcDevice
     void initWithSerial(int serialNumber);
     void initWithAddress(const PciAddress& address);
 
-    boost::scoped_ptr<Pda::PdaDevice> mPdaDevice;
-    PciDevice* mPciDevice;
+    Pda::PdaDevice::SharedPdaDevice mPdaDevice;
+    std::unique_ptr<Pda::PdaDevice::PdaPciDevice> mPciDevice;
     CardDescriptor mDescriptor;
 };
 
