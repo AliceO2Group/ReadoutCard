@@ -7,6 +7,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include "RORC/ChannelFactory.h"
 #include "ChannelPaths.h"
 #include "Util.h"
 
@@ -18,16 +19,12 @@ namespace Rorc {
 
 constexpr auto endm = InfoLogger::InfoLogger::StreamOps::endm;
 
-DummyChannelMaster::DummyChannelMaster(const Parameters& params) : mPageCounter(128)
+DummyChannelMaster::DummyChannelMaster(const Parameters& params)
+    : ChannelMasterBase(CardType::Dummy, params, ChannelFactory::DUMMY_SERIAL_NUMBER, { 0, 1, 2, 3, 4, 5, 6, 7 }), mPageCounter(
+        128)
 {
 //  cout << "DummyChannelMaster::DummyChannelMaster(serial:" << serial << ", channel:" << channel << ", params:...)"
 //      << endl;
-
-  // Interprocess lock
-  ChannelPaths paths(CardType::Dummy, -1, params.getChannelNumberRequired());
-  Util::makeParentDirectories(paths.lock());
-  Util::resetSmartPtr(mInterprocessLock, paths.lock(), paths.namedMutex());
-
   mBufferSize = params.getDmaBufferSize().get_value_or(8*1024);
   mPageSize = params.getDmaPageSize().get_value_or(8*1024);
 
@@ -134,11 +131,6 @@ void DummyChannelMaster::utilityCleanupState()
 int DummyChannelMaster::utilityGetFirmwareVersion()
 {
   return 0;
-}
-
-void DummyChannelMaster::setLogLevel(InfoLogger::InfoLogger::Severity severity)
-{
-  mLogLevel = severity;
 }
 
 } // namespace Rorc

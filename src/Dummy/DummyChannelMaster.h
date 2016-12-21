@@ -8,10 +8,8 @@
 #include <array>
 #include <boost/scoped_ptr.hpp>
 #include "ChannelUtilityInterface.h"
-#include "InterprocessLock.h"
 #include "PageManager.h"
-#include "RORC/Parameters.h"
-#include "RORC/ChannelMasterInterface.h"
+#include "ChannelMasterBase.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -20,7 +18,7 @@ namespace Rorc {
 /// This exists so that the RORC module may be built even if the all the dependencies of the 'real' card
 /// implementation are not met (this mainly concerns the PDA driver library).
 /// It provides some basic simulation of page pushing and output.
-class DummyChannelMaster final : public ChannelMasterInterface, public ChannelUtilityInterface
+class DummyChannelMaster final : public ChannelMasterBase
 {
   public:
 
@@ -32,7 +30,6 @@ class DummyChannelMaster final : public ChannelMasterInterface, public ChannelUt
     virtual uint32_t readRegister(int index) override;
     virtual void writeRegister(int index, uint32_t value) override;
     virtual CardType::type getCardType() override;
-    virtual void setLogLevel(InfoLogger::InfoLogger::Severity severity) override;
 
     virtual int fillFifo(int maxFill) override;
     virtual int getAvailableCount() override;
@@ -59,9 +56,6 @@ class DummyChannelMaster final : public ChannelMasterInterface, public ChannelUt
     size_t mMaxPages;
     int mPageCounter;
     std::vector<char> mPageBuffer;
-
-    InfoLogger::InfoLogger mLogger;
-    InfoLogger::InfoLogger::Severity mLogLevel = InfoLogger::InfoLogger::Severity::Info;
 };
 
 } // namespace Rorc
