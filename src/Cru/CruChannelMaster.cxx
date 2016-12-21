@@ -44,7 +44,7 @@ constexpr uint64_t DMA_ALIGNMENT = 32;
 } // Anonymous namespace
 
 CruChannelMaster::CruChannelMaster(const Parameters& params)
-    : ChannelMasterBase(CARD_TYPE, params, allowedChannels(), sizeof(CruFifoTable))
+    : ChannelMasterPdaBase(CARD_TYPE, params, allowedChannels(), sizeof(CruFifoTable))
 {
   if (getChannelParameters().dma.pageSize != DMA_PAGE_SIZE) {
     BOOST_THROW_EXCEPTION(CruException()

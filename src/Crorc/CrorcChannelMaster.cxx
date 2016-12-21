@@ -39,7 +39,7 @@ namespace Rorc {
     << ErrorInfo::StatusCode(_status_code)
 
 CrorcChannelMaster::CrorcChannelMaster(const Parameters& parameters)
-    : ChannelMasterBase(CARD_TYPE, parameters, allowedChannels(), sizeof(ReadyFifo))
+    : ChannelMasterPdaBase(CARD_TYPE, parameters, allowedChannels(), sizeof(ReadyFifo))
 {
   using Util::resetSmartPtr;
   auto& params = getChannelParameters();

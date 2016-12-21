@@ -51,6 +51,7 @@ if(PDA_FOUND)
     c/rorc/ddl.c
     c/rorc/rorc.c
     ChannelMasterBase.cxx
+    ChannelMasterPdaBase.cxx
     ChannelSlave.cxx
     ChannelUtilityImpl.cxx
     Crorc/Crorc.cxx

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "ChannelMasterBase.h"
+#include "ChannelMasterPdaBase.h"
 #include <memory>
 #include "CruFifoTable.h"
 #include "CruBarAccessor.h"
@@ -16,7 +16,7 @@ namespace AliceO2 {
 namespace Rorc {
 
 /// Extends ChannelMaster object, and provides device-specific functionality
-class CruChannelMaster final : public ChannelMasterBase
+class CruChannelMaster final : public ChannelMasterPdaBase
 {
   public:
 
