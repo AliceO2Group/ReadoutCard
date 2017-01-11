@@ -10,9 +10,9 @@
 #include "RORC/CardType.h"
 #include "RORC/Exception.h"
 #include <boost/format.hpp>
-#include "Utilities/Program.h"
+#include "CommandLineUtilities/Program.h"
 
-using namespace AliceO2::Rorc::Utilities;
+using namespace AliceO2::Rorc::CommandLineUtilities;
 using namespace AliceO2::Rorc;
 using std::cout;
 using std::endl;
@@ -24,9 +24,9 @@ class ProgramSanityCheck: public Program
 {
   public:
 
-    virtual UtilsDescription getDescription()
+    virtual Description getDescription()
     {
-      return UtilsDescription("Sanity Check", "Does some basic sanity checks on the card",
+      return Description("Sanity Check", "Does some basic sanity checks on the card",
           "./rorc-sanity-check --id=12345 --channel=0");
     }
 

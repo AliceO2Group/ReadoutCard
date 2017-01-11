@@ -3,7 +3,7 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "Utilities/Program.h"
+#include "CommandLineUtilities/Program.h"
 #include <iostream>
 #include <iomanip>
 #include <condition_variable>
@@ -43,7 +43,7 @@
 namespace b = boost;
 namespace bfs = boost::filesystem;
 //namespace Register = AliceO2::Rorc::CruRegisterIndex;
-using namespace AliceO2::Rorc::Utilities;
+using namespace AliceO2::Rorc::CommandLineUtilities;
 using namespace AliceO2::Rorc;
 using namespace std::literals;
 using namespace std::chrono_literals;
@@ -222,7 +222,7 @@ class ProgramCruExperimentalDma: public Program
 {
   public:
 
-    virtual UtilsDescription getDescription() override
+    virtual Description getDescription() override
     {
       return { "CRU EXPERIMENTAL DMA", "!!! USE WITH CAUTION !!!", "./rorc-cru-experimental-dma" };
     }
@@ -279,7 +279,7 @@ class ProgramCruExperimentalDma: public Program
           ("log-idle",
               po::bool_switch(&mOptions.logIdle),
               "Log idle counter");
-        AliceO2::Rorc::Utilities::Options::addOptionCardId(options);
+        AliceO2::Rorc::CommandLineUtilities::Options::addOptionCardId(options);
 
     }
 
@@ -294,7 +294,7 @@ class ProgramCruExperimentalDma: public Program
         mOptions.checkError = false;
       }
 
-      mOptions.cardId = AliceO2::Rorc::Utilities::Options::getOptionCardId(variablesMap);
+      mOptions.cardId = AliceO2::Rorc::CommandLineUtilities::Options::getOptionCardId(variablesMap);
 
       if (mOptions.fileOutputAscii && mOptions.fileOutputBin) {
         BOOST_THROW_EXCEPTION(CruException()
@@ -600,7 +600,7 @@ class ProgramCruExperimentalDma: public Program
         mRorcDevice->printDeviceInfo(cout);
       }
 
-      auto firmwareVersion = Utilities::Common::make32hexString(getBar().getFirmwareCompileInfo());
+      auto firmwareVersion = CommandLineUtilities::Common::make32hexString(getBar().getFirmwareCompileInfo());
 //      auto serialNumber = Utilities::Common::make32hexString(bar(Register::SERIAL_NUMBER));
       cout << "  Firmware version  " << firmwareVersion << '\n';
 //      cout << "  Serial number     " << serialNumber << '\n';

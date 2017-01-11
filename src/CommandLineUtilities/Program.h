@@ -7,15 +7,15 @@
 
 #include <atomic>
 #include <boost/program_options.hpp>
-#include "InfoLogger/InfoLogger.hxx"
-#include "Utilities/Common.h"
-#include "Utilities/Options.h"
-#include "Utilities/UtilsDescription.h"
+#include <InfoLogger/InfoLogger.hxx>
+#include "CommandLineUtilities/Common.h"
+#include "CommandLineUtilities/Options.h"
+#include "CommandLineUtilities/Description.h"
 #include "RORC/Exception.h"
 
 namespace AliceO2 {
 namespace Rorc {
-namespace Utilities {
+namespace CommandLineUtilities {
 
 /// Helper class for making a RORC utility program. It handles:
 /// - Creation of the options_descripotion object
@@ -63,7 +63,7 @@ class Program
 
   private:
     /// Get the description of the program
-    virtual UtilsDescription getDescription() = 0;
+    virtual Description getDescription() = 0;
 
     /// Add the program's options
     virtual void addOptions(boost::program_options::options_description& optionsDescription) = 0;
@@ -83,6 +83,6 @@ class Program
     InfoLogger::InfoLogger::Severity mLogLevel = InfoLogger::InfoLogger::Severity::Info;
 };
 
-} // namespace Utilities
+} // namespace CommandLineUtilities
 } // namespace Rorc
 } // namespace AliceO2

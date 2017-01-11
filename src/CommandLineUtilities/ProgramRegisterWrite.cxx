@@ -3,10 +3,10 @@
 ///
 /// \brief Utility that writes to a register on a RORC
 
-#include "Utilities/Program.h"
+#include "CommandLineUtilities/Program.h"
 #include "RORC/ChannelFactory.h"
 
-using namespace AliceO2::Rorc::Utilities;
+using namespace AliceO2::Rorc::CommandLineUtilities;
 
 namespace {
 
@@ -16,9 +16,9 @@ class ProgramRegisterWrite: public Program
 {
   public:
 
-    virtual UtilsDescription getDescription()
+    virtual Description getDescription()
     {
-      return UtilsDescription("Write Register", "Write a value to a single register",
+      return Description("Write Register", "Write a value to a single register",
           "./rorc-reg-write --serial=12345 --channel=0 --address=0x8 --value=0");
     }
 

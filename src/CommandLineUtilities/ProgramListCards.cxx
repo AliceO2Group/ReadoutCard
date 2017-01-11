@@ -5,14 +5,14 @@
 
 #include <iostream>
 #include <sstream>
-#include "Utilities/Options.h"
-#include "Utilities/Program.h"
-#include "Utilities/Common.h"
+#include "CommandLineUtilities/Options.h"
+#include "CommandLineUtilities/Program.h"
+#include "CommandLineUtilities/Common.h"
 #include "RorcDevice.h"
 #include "Factory/ChannelUtilityFactory.h"
 #include <boost/format.hpp>
 
-using namespace AliceO2::Rorc::Utilities;
+using namespace AliceO2::Rorc::CommandLineUtilities;
 using namespace AliceO2::Rorc;
 using std::cout;
 using std::endl;
@@ -22,7 +22,7 @@ class ProgramListCards: public Program
 {
   public:
 
-    virtual UtilsDescription getDescription()
+    virtual Description getDescription()
     {
       return {"List Cards", "Lists installed RORC cards and some basic information about them", "./rorc-list-cards"};
     }

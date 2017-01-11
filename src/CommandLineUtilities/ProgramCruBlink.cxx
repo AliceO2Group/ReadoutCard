@@ -3,7 +3,7 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "Utilities/Program.h"
+#include "CommandLineUtilities/Program.h"
 #include <iostream>
 #include <thread>
 #include <chrono>
@@ -11,7 +11,7 @@
 #include "RORC/ChannelFactory.h"
 #include "RORC/Exception.h"
 
-using namespace AliceO2::Rorc::Utilities;
+using namespace AliceO2::Rorc::CommandLineUtilities;
 using std::cout;
 using std::endl;
 
@@ -20,7 +20,7 @@ class ProgramCruBlink: public Program
 {
   public:
 
-    virtual UtilsDescription getDescription()
+    virtual Description getDescription()
     {
       return {"CRU Blink", "Blinks the CRU LED", "./rorc-cru-blink --id=12345"};
     }

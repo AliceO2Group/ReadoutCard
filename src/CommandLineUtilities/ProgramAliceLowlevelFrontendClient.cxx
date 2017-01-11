@@ -3,7 +3,7 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "Utilities/Program.h"
+#include "CommandLineUtilities/Program.h"
 #include <iostream>
 #include <thread>
 #include <chrono>
@@ -16,7 +16,7 @@ using std::cout;
 using std::endl;
 
 namespace {
-using namespace AliceO2::Rorc::Utilities;
+using namespace AliceO2::Rorc::CommandLineUtilities;
 
 double gTemperature = 0;
 
@@ -41,7 +41,7 @@ class ProgramAliceLowlevelFrontendClient: public Program
 {
   public:
 
-    virtual UtilsDescription getDescription() override
+    virtual Description getDescription() override
     {
       return {"ALF DIM Client example", "ALICE low-level front-end DIM Client example", "./rorc-alf-client"};
     }

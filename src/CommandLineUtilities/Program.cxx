@@ -3,18 +3,17 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
+#include "CommandLineUtilities/Program.h"
 #include <iostream>
 #include <iomanip>
 #include <boost/version.hpp>
-#include "Utilities/Options.h"
-#include "Utilities/Program.h"
+#include "RORC/Exception.h"
 #include "RORC/Version.h"
 #include "Util.h"
-#include "RORC/Exception.h"
 
 namespace AliceO2 {
 namespace Rorc {
-namespace Utilities {
+namespace CommandLineUtilities {
 
 using std::cout;
 using std::endl;
@@ -106,6 +105,6 @@ int Program::execute(int argc, char** argv)
   return 0;
 }
 
-} // namespace Utilities
+} // namespace CommandLineUtilities
 } // namespace Rorc
 } // namespace AliceO2

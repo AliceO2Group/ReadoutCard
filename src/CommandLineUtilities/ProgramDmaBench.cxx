@@ -21,12 +21,12 @@
 #include "InfoLogger/InfoLogger.hxx"
 #include "RORC/ChannelFactory.h"
 #include "RORC/Parameters.h"
-#include "Utilities/Common.h"
-#include "Utilities/Options.h"
-#include "Utilities/Program.h"
+#include "CommandLineUtilities/Common.h"
+#include "CommandLineUtilities/Options.h"
+#include "CommandLineUtilities/Program.h"
 #include "Util.h"
 
-using namespace AliceO2::Rorc::Utilities;
+using namespace AliceO2::Rorc::CommandLineUtilities;
 using namespace AliceO2::Rorc;
 using namespace AliceO2::InfoLogger;
 using std::cout;
@@ -128,7 +128,7 @@ class ProgramDmaBench: public Program
 {
   public:
 
-    virtual UtilsDescription getDescription()
+    virtual Description getDescription()
     {
       return {"DMA Benchmark", "Test RORC DMA performance", "./rorc-dma-bench --id=12345 --channel=0"};
     }

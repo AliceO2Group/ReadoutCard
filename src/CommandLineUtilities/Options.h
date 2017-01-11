@@ -8,7 +8,6 @@
 #include <boost/program_options.hpp>
 #include <boost/exception/all.hpp>
 #include <boost/exception/diagnostic_information.hpp>
-#include <Utilities/UtilsDescription.h>
 #include <iostream>
 #include "RORC/Parameters.h"
 #include "RORC/Exception.h"
@@ -16,7 +15,7 @@
 
 namespace AliceO2 {
 namespace Rorc {
-namespace Utilities {
+namespace CommandLineUtilities {
 namespace Options {
 
 /// Create an options_description object, with the help switch already added
@@ -48,6 +47,6 @@ ChannelParameters getOptionsChannelParameters(const boost::program_options::vari
 Parameters getOptionsParameterMap(const boost::program_options::variables_map& variablesMap);
 
 } // namespace Options
-} // namespace Utilities
+} // namespace CommandLineUtilities
 } // namespace Rorc
 } // namespace AliceO2

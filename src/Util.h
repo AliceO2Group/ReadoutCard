@@ -128,6 +128,8 @@ void setSigIntHandler(void(*function)(int));
 /// Checks if there's a SIGINT handler installed (not sure if it actually works correctly)
 bool isSigIntHandlerSet();
 
+std::string executeCommand(const std::string& command);
+
 /// Like the "mkdir -p" command.
 /// TODO Currently it actually calls that command.. not very portable, should refactor
 void makeParentDirectories(const boost::filesystem::path& path);

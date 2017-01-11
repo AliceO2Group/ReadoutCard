@@ -3,13 +3,13 @@
 ///
 /// \brief Utility that reads a range of registers from a RORC
 
-#include "Utilities/Program.h"
+#include "CommandLineUtilities/Program.h"
 #include "RORC/ChannelFactory.h"
 #include <iostream>
 #include <fstream>
 #include <string>
 
-using namespace AliceO2::Rorc::Utilities;
+using namespace AliceO2::Rorc::CommandLineUtilities;
 namespace po = boost::program_options;
 
 namespace {
@@ -17,7 +17,7 @@ class ProgramRegisterReadRange: public Program
 {
   public:
 
-    virtual UtilsDescription getDescription()
+    virtual Description getDescription()
     {
       return {"Read Register Range", "Read a range of registers",
           "./rorc-reg-read-range --serial=12345 --channel=0 --address=0x8 --range=10"};

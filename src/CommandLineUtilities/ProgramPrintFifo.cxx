@@ -7,11 +7,11 @@
 #include <iostream>
 #include <iomanip>
 #include <boost/exception/diagnostic_information.hpp>
-#include "Utilities/Program.h"
+#include "CommandLineUtilities/Program.h"
 #include "Factory/ChannelUtilityFactory.h"
 #include "RORC/Exception.h"
 
-using namespace AliceO2::Rorc::Utilities;
+using namespace AliceO2::Rorc::CommandLineUtilities;
 using namespace AliceO2::Rorc;
 namespace b = boost;
 using std::cout;
@@ -22,7 +22,7 @@ class ProgramPrintFifo: public Program
 {
   public:
 
-    virtual UtilsDescription getDescription()
+    virtual Description getDescription()
     {
       return {"Print FIFO", "Prints the FIFO of a RORC", "./rorc-print-fifo --id=12345 --channel=0"};
     }

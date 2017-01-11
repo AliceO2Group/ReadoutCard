@@ -4,7 +4,7 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "RORC/RORC.h"
-#include "Utilities/Options.h"
+#include "CommandLineUtilities/Options.h"
 
 #define BOOST_TEST_MODULE RORC_TestProgramOptions
 #define BOOST_TEST_MAIN
@@ -16,7 +16,7 @@
 /// Test handling of program options in the utilities
 BOOST_AUTO_TEST_CASE(UtilOptions)
 {
-  using namespace AliceO2::Rorc::Utilities::Options;
+  using namespace AliceO2::Rorc::CommandLineUtilities::Options;
   namespace po = boost::program_options;
 
   // Our mock options

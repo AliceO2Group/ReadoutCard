@@ -3,21 +3,20 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include <sys/ioctl.h>
-#include <iostream>
-#include <iomanip>
+#include "CommandLineUtilities/Options.h"
 #include <bitset>
+#include <iomanip>
+#include <iostream>
+#include <sys/ioctl.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/optional.hpp>
 #include <boost/variant.hpp>
+#include "CommandLineUtilities/Common.h"
 #include "ExceptionInternal.h"
-#include "Utilities/Common.h"
-#include "Utilities/Options.h"
-#include "Utilities/UtilsDescription.h"
 
 namespace AliceO2 {
 namespace Rorc {
-namespace Utilities {
+namespace CommandLineUtilities {
 namespace Options {
 
 using std::cout;

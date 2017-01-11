@@ -1,22 +1,22 @@
-/// \file ProgramReset.cxx
-/// \brief Utility that resets a RORC
+/// \file ProgramRegisterRead.cxx
+/// \brief Utility that reads a register from a RORC
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "Utilities/Program.h"
+#include "CommandLineUtilities/Program.h"
 #include <iostream>
 #include "RORC/ChannelFactory.h"
 
 namespace {
-using namespace AliceO2::Rorc::Utilities;
+using namespace AliceO2::Rorc::CommandLineUtilities;
 
 class ProgramRegisterRead: public Program
 {
   public:
 
-    virtual UtilsDescription getDescription()
+    virtual Description getDescription()
     {
-      return {"Reset", "Resets a channel", "./rorc-reset --id=12345 --channel=0 --reset=RORC_DIU_SIU"};
+      return {"Read Register", "Read a single register", "./rorc-reg-read --serial=12345 --channel=0 --address=0x8"};
     }
 
     virtual void addOptions(boost::program_options::options_description& options)
@@ -24,18 +24,23 @@ class ProgramRegisterRead: public Program
       Options::addOptionRegisterAddress(options);
       Options::addOptionChannel(options);
       Options::addOptionCardId(options);
-      Options::addOptionResetLevel(options);
     }
 
     virtual void run(const boost::program_options::variables_map& map)
     {
-      auto resetLevel = Options::getOptionResetLevel(map);
       auto cardId = Options::getOptionCardId(map);
+      int address = Options::getOptionRegisterAddress(map);
       int channelNumber = Options::getOptionChannel(map);
-
       auto params = AliceO2::Rorc::Parameters::makeParameters(cardId, channelNumber);
-      auto channel = AliceO2::Rorc::ChannelFactory().getMaster(params);
-      channel->resetChannel(resetLevel);
+      auto channel = AliceO2::Rorc::ChannelFactory().getSlave(params);
+
+      // Registers are indexed by 32 bits (4 bytes)
+      uint32_t value = channel->readRegister(address / 4);
+      if (isVerbose()) {
+        std::cout << Common::makeRegisterString(address, value);
+      } else {
+        std::cout << "0x" << std::hex << value << '\n';
+      }
     }
 };
 } // Anonymous namespace

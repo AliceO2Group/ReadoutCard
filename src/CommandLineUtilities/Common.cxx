@@ -3,14 +3,14 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include <Utilities/Common.h>
+#include "CommandLineUtilities/Common.h"
 #include <iostream>
 #include <iomanip>
 #include <bitset>
 
 namespace AliceO2 {
 namespace Rorc {
-namespace Utilities {
+namespace CommandLineUtilities {
 namespace Common {
 
 using std::cout;
@@ -56,6 +56,6 @@ std::string makeRegisterString(int address, uint32_t value)
 }
 
 } // namespace Common
-} // namespace Utilities
+} // namespace CommandLineUtilities
 } // namespace Rorc
 } // namespace AliceO2

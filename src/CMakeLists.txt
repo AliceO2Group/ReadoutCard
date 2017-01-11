@@ -39,9 +39,9 @@ set(RORC_LIB_SOURCES
   PciAddress.cxx
   ResetLevel.cxx
   RorcStatusCode.cxx
-  Utilities/Common.cxx
-  Utilities/Options.cxx
-  Utilities/Program.cxx
+  CommandLineUtilities/Common.cxx
+  CommandLineUtilities/Options.cxx
+  CommandLineUtilities/Program.cxx
   Util.cxx
 )
 
@@ -108,29 +108,29 @@ function(build_util_exec execname filename)
 endfunction()
 
 if(PDA_FOUND)
-  build_util_exec(rorc-channel-cleanup Utilities/ProgramCleanup.cxx)
-  build_util_exec(rorc-cru-blink Utilities/ProgramCruBlink.cxx)
-  build_util_exec(rorc-cru-experimental-dma Utilities/ProgramCruExperimentalDma.cxx)
-  build_util_exec(rorc-dma-bench Utilities/ProgramDmaBench.cxx)
+  build_util_exec(rorc-channel-cleanup CommandLineUtilities/ProgramCleanup.cxx)
+  build_util_exec(rorc-cru-blink CommandLineUtilities/ProgramCruBlink.cxx)
+  build_util_exec(rorc-cru-experimental-dma CommandLineUtilities/ProgramCruExperimentalDma.cxx)
+  build_util_exec(rorc-dma-bench CommandLineUtilities/ProgramDmaBench.cxx)
   build_util_exec(rorc-example Example.cxx)
-  build_util_exec(rorc-list-cards Utilities/ProgramListCards.cxx)
-  build_util_exec(rorc-print-fifo Utilities/ProgramPrintFifo.cxx)
-  build_util_exec(rorc-reset Utilities/ProgramReset.cxx)
-  build_util_exec(rorc-reg-read Utilities/ProgramRegisterRead.cxx)
-  build_util_exec(rorc-reg-read-range Utilities/ProgramRegisterReadRange)
-  build_util_exec(rorc-reg-write Utilities/ProgramRegisterWrite.cxx)
-  build_util_exec(rorc-sanity-check Utilities/ProgramSanityCheck.cxx)
+  build_util_exec(rorc-list-cards CommandLineUtilities/ProgramListCards.cxx)
+  build_util_exec(rorc-print-fifo CommandLineUtilities/ProgramPrintFifo.cxx)
+  build_util_exec(rorc-reset CommandLineUtilities/ProgramReset.cxx)
+  build_util_exec(rorc-reg-read CommandLineUtilities/ProgramRegisterRead.cxx)
+  build_util_exec(rorc-reg-read-range CommandLineUtilities/ProgramRegisterReadRange)
+  build_util_exec(rorc-reg-write CommandLineUtilities/ProgramRegisterWrite.cxx)
+  build_util_exec(rorc-sanity-check CommandLineUtilities/ProgramSanityCheck.cxx)
   
   if(DIM_FOUND)
-    build_util_exec(rorc-alf-client Utilities/ProgramAliceLowlevelFrontendClient.cxx ${DIM_LIBRARY})
-    build_util_exec(rorc-alf-server Utilities/ProgramAliceLowlevelFrontendServer.cxx ${DIM_LIBRARY})
+    build_util_exec(rorc-alf-client CommandLineUtilities/ProgramAliceLowlevelFrontendClient.cxx ${DIM_LIBRARY})
+    build_util_exec(rorc-alf-server CommandLineUtilities/ProgramAliceLowlevelFrontendServer.cxx ${DIM_LIBRARY})
   else()
     message(INFO "DIM not found, ALF client & server will not be built")
   endif()
   
   if(PYTHONLIBS_FOUND)
     include_directories(${PYTHON_INCLUDE_DIRS})
-    build_util_exec(rorc-run-script Utilities/ProgramRunScript.cxx ${Boost_PYTHON_LIBRARY} ${PYTHON_LIBRARIES})
+    build_util_exec(rorc-run-script CommandLineUtilities/ProgramRunScript.cxx ${Boost_PYTHON_LIBRARY} ${PYTHON_LIBRARIES})
   else()
     message(INFO "PythonLibs not found, 'rorc-run-script' utility will not be built")
   endif()

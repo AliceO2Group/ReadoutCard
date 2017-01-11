@@ -3,7 +3,7 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "Utilities/Program.h"
+#include "CommandLineUtilities/Program.h"
 #include <chrono>
 #include <iostream>
 #include <functional>
@@ -20,7 +20,7 @@
 #include "Util.h"
 
 namespace {
-using namespace AliceO2::Rorc::Utilities;
+using namespace AliceO2::Rorc::CommandLineUtilities;
 using namespace AliceO2::Rorc;
 using std::cout;
 using std::endl;
@@ -158,7 +158,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
 {
   public:
 
-    virtual UtilsDescription getDescription() override
+    virtual Description getDescription() override
     {
       return {"ALF DIM Server", "ALICE low-level front-end DIM Server", "./rorc-alf-server --serial=12345 --channel=0"};
     }

@@ -10,11 +10,11 @@
 #include "ChannelPaths.h"
 #include "ExceptionInternal.h"
 #include "RorcDevice.h"
-#include "Utilities/Common.h"
-#include "Utilities/Options.h"
-#include "Utilities/Program.h"
+#include "CommandLineUtilities/Common.h"
+#include "CommandLineUtilities/Options.h"
+#include "CommandLineUtilities/Program.h"
 
-using namespace AliceO2::Rorc::Utilities;
+using namespace AliceO2::Rorc::CommandLineUtilities;
 using namespace AliceO2::Rorc;
 using std::cout;
 using std::endl;
@@ -34,7 +34,7 @@ class ProgramCleanup: public Program
 {
   public:
 
-    virtual UtilsDescription getDescription()
+    virtual Description getDescription()
     {
       return {"Cleanup", "Cleans up RORC state", "./rorc-cleanup --id=12345 --channel=0"};
     }

@@ -4,7 +4,7 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "RORC/Parameters.h"
-#include "Utilities/Program.h"
+#include "CommandLineUtilities/Program.h"
 #include <iostream>
 #include <boost/python.hpp>
 #include <python2.7/Python.h>
@@ -12,7 +12,7 @@
 #include "Util.h"
 
 namespace {
-using namespace AliceO2::Rorc::Utilities;
+using namespace AliceO2::Rorc::CommandLineUtilities;
 namespace bpy = boost::python;
 
 /// Simple example script
@@ -89,7 +89,7 @@ class ProgramRunScript : public Program
 {
   public:
 
-    virtual UtilsDescription getDescription()
+    virtual Description getDescription()
     {
       return {"Run script", "Runs a Python script to perform actions on a channel",
           "./rorc-run-script --serial=12345 --channel=0 --script=myscript.py"};

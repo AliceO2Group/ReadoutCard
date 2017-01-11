@@ -1,5 +1,5 @@
-/// \file UtilsDescription.h
-/// \brief Definition of the UtilsDescription class.
+/// \file Description.h
+/// \brief Definition of the Description class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
@@ -7,12 +7,12 @@
 
 namespace AliceO2 {
 namespace Rorc {
-namespace Utilities {
+namespace CommandLineUtilities {
 
 /// Contains some descriptive text about a RORC utility executable
-struct UtilsDescription
+struct Description
 {
-    UtilsDescription(const std::string& name, const std::string& description, const std::string& usage)
+    Description(const std::string& name, const std::string& description, const std::string& usage)
         : name(name), description(description), usage(usage)
     {
     }
@@ -27,6 +27,6 @@ struct UtilsDescription
     const std::string usage;
 };
 
-} // namespace Utilities
+} // namespace CommandLineUtilities
 } // namespace Rorc
 } // namespace AliceO2
