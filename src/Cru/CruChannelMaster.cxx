@@ -9,7 +9,7 @@
 #include "ChannelPaths.h"
 #include "ChannelUtilityImpl.h"
 #include "ExceptionInternal.h"
-#include "Util.h"
+#include "Utilities/SmartPointer.h"
 
 /// Creates a CruException and attaches data using the given message string
 #define CRU_EXCEPTION(_err_message) \
@@ -79,7 +79,7 @@ void CruChannelMaster::deviceStartDma()
 void CruChannelMaster::setBufferReadyGuard()
 {
   if (!mBufferReadyGuard) {
-    Util::resetSmartPtr(mBufferReadyGuard,
+    Utilities::resetSmartPtr(mBufferReadyGuard,
         [&]{ getBar().setDataEmulatorEnabled(true); },
         [&]{ getBar().setDataEmulatorEnabled(false); });
   }
@@ -134,11 +134,11 @@ void CruChannelMaster::initCru()
   }
 
   // Status base address in the bus address space
-  log((Util::getUpper32Bits(uint64_t(getFifoBus())) != 0)
+  log((Utilities::getUpper32Bits(uint64_t(getFifoBus())) != 0)
         ? "Using 64-bit region for status bus address, may be unsupported by PCI/BIOS configuration"
         : "Using 32-bit region for status bus address");
 
-  if (!Util::checkAlignment(getFifoBus(), DMA_ALIGNMENT)) {
+  if (!Utilities::checkAlignment(getFifoBus(), DMA_ALIGNMENT)) {
     BOOST_THROW_EXCEPTION(CruException() << ErrorInfo::Message("FIFO bus address not 32 byte aligned"));
   }
 

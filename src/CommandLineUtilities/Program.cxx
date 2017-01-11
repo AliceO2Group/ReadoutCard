@@ -4,12 +4,12 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "CommandLineUtilities/Program.h"
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 #include <boost/version.hpp>
-#include "RORC/Exception.h"
+#include "ExceptionInternal.h"
 #include "RORC/Version.h"
-#include "Util.h"
+#include "Utilities/System.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -55,7 +55,7 @@ void Program::printHelp (const po::options_description& optionsDescription)
 
 int Program::execute(int argc, char** argv)
 {
-  Util::setSigIntHandler(sigIntHandler);
+  Utilities::setSigIntHandler(sigIntHandler);
 
   auto optionsDescription = Options::createOptionsDescription();
   auto prnHelp = [&](){ printHelp(optionsDescription); };

@@ -8,7 +8,7 @@
 #include <cstddef>
 #include "CruRegisterIndex.h"
 #include "Pda/PdaBar.h"
-#include "Util.h"
+#include "Utilities/Util.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -39,8 +39,8 @@ class CruBarAccessor
 
     void setFifoBusAddress(void* address) const
     {
-      at32(CruRegisterIndex::STATUS_BASE_BUS_HIGH) = Util::getUpper32Bits(uint64_t(address));
-      at32(CruRegisterIndex::STATUS_BASE_BUS_LOW) = Util::getLower32Bits(uint64_t(address));
+      at32(CruRegisterIndex::STATUS_BASE_BUS_HIGH) = Utilities::getUpper32Bits(uint64_t(address));
+      at32(CruRegisterIndex::STATUS_BASE_BUS_LOW) = Utilities::getLower32Bits(uint64_t(address));
     }
 
     [[deprecated]] void setFifoCardAddress() const

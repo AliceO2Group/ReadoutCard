@@ -4,8 +4,7 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "ChannelSlave.h"
-#include <iostream>
-#include "Util.h"
+#include "Utilities/SmartPointer.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -15,14 +14,14 @@ ChannelSlave::ChannelSlave(const Parameters& parameters)
 {
   auto id = parameters.getCardIdRequired();
   if (auto serial = boost::get<int>(&id)) {
-    Util::resetSmartPtr(mRorcDevice, *serial);
+    Utilities::resetSmartPtr(mRorcDevice, *serial);
     mSerialNumber = *serial;
   } else if (auto address = boost::get<PciAddress>(&id)) {
-    Util::resetSmartPtr(mRorcDevice, *address);
+    Utilities::resetSmartPtr(mRorcDevice, *address);
     mSerialNumber = mRorcDevice->getSerialNumber();
   }
 
-  Util::resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), mChannelNumber);
+  Utilities::resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), mChannelNumber);
 }
 
 ChannelSlave::~ChannelSlave()

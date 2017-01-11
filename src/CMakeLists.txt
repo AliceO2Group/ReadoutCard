@@ -42,7 +42,7 @@ set(RORC_LIB_SOURCES
   CommandLineUtilities/Common.cxx
   CommandLineUtilities/Options.cxx
   CommandLineUtilities/Program.cxx
-  Util.cxx
+  Utilities/System.cxx
 )
 
 if(PDA_FOUND)
@@ -59,6 +59,7 @@ if(PDA_FOUND)
     Crorc/CrorcChannelSlave.cxx
     Cru/CruChannelMaster.cxx
     Cru/CruChannelSlave.cxx
+    Pda/Pda.cxx
     Pda/PdaBar.cxx
     Pda/PdaDevice.cxx
     Pda/PdaDmaBuffer.cxx

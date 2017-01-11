@@ -4,20 +4,20 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "RORC/ResetLevel.h"
-#include <map>
-#include "Util.h"
+#include "Utilities/Enum.h"
 
 namespace AliceO2 {
 namespace Rorc {
+namespace {
 
-static const std::map<ResetLevel::type, std::string> resetLevelMap = {
-  { ResetLevel::Nothing, "NOTHING" },
-  { ResetLevel::Rorc, "RORC" },
-  { ResetLevel::RorcDiu, "RORC_DIU" },
+static const auto converter = Utilities::makeEnumConverter<ResetLevel::type>({
+  { ResetLevel::Nothing,    "NOTHING" },
+  { ResetLevel::Rorc,       "RORC" },
+  { ResetLevel::RorcDiu,    "RORC_DIU" },
   { ResetLevel::RorcDiuSiu, "RORC_DIU_SIU" },
-};
+});
 
-static const auto resetLevelMapReverse = Util::reverseMap(resetLevelMap);
+} // Anonymous namespace
 
 bool ResetLevel::includesExternal(const ResetLevel::type& mode)
 {
@@ -26,12 +26,12 @@ bool ResetLevel::includesExternal(const ResetLevel::type& mode)
 
 std::string ResetLevel::toString(const ResetLevel::type& level)
 {
-  return Util::getValueFromMap(resetLevelMap, level);
+  return converter.toString(level);
 }
 
 ResetLevel::type ResetLevel::fromString(const std::string& string)
 {
-  return Util::getValueFromMap(resetLevelMapReverse, string);
+  return converter.fromString(string);
 }
 
 } // namespace Rorc

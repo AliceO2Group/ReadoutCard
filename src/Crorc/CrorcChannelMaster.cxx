@@ -15,7 +15,7 @@
 #include "ChannelPaths.h"
 #include "ChannelUtilityImpl.h"
 #include "RorcStatusCode.h"
-#include "Util.h"
+#include "Utilities/SmartPointer.h"
 
 namespace b = boost;
 namespace bip = boost::interprocess;
@@ -41,7 +41,7 @@ namespace Rorc {
 CrorcChannelMaster::CrorcChannelMaster(const Parameters& parameters)
     : ChannelMasterPdaBase(CARD_TYPE, parameters, allowedChannels(), sizeof(ReadyFifo))
 {
-  using Util::resetSmartPtr;
+  using Utilities::resetSmartPtr;
   auto& params = getChannelParameters();
 
   ChannelPaths paths(CARD_TYPE, getSerialNumber(), getChannelNumber());

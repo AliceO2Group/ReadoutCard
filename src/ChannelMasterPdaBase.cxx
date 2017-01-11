@@ -5,7 +5,7 @@
 
 #include "ChannelMasterPdaBase.h"
 #include "Pda/Pda.h"
-#include "Util.h"
+#include "Utilities/SmartPointer.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -33,11 +33,11 @@ ChannelMasterPdaBase::ChannelMasterPdaBase(CardType::type cardType, const Parame
   auto paths = getPaths();
 
   // Initialize PDA & DMA objects
-  Util::resetSmartPtr(mRorcDevice, getSerialNumber());
-  Util::resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), getChannelNumber());
-  Util::resetSmartPtr(mMappedFilePages, paths.pages().string(),
+  Utilities::resetSmartPtr(mRorcDevice, getSerialNumber());
+  Utilities::resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), getChannelNumber());
+  Utilities::resetSmartPtr(mMappedFilePages, paths.pages().string(),
       getChannelParameters().dma.bufferSize);
-  Util::resetSmartPtr(mBufferPages, mRorcDevice->getPciDevice(), mMappedFilePages->getAddress(),
+  Utilities::resetSmartPtr(mBufferPages, mRorcDevice->getPciDevice(), mMappedFilePages->getAddress(),
       mMappedFilePages->getSize(), getChannelNumber());
   partitionDmaBuffer(fifoSize, getChannelParameters().dma.pageSize);
 }

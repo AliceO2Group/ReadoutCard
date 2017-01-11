@@ -24,7 +24,8 @@
 #include "CommandLineUtilities/Common.h"
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
-#include "Util.h"
+#include "Utilities/SmartPointer.h"
+#include "Utilities/Thread.h"
 
 using namespace AliceO2::Rorc::CommandLineUtilities;
 using namespace AliceO2::Rorc;
@@ -78,7 +79,7 @@ auto READOUT_LOG_FORMAT = "readout_log_%d.txt";
 
 }
 
-class BarHammer : public Util::Thread
+class BarHammer : public Utilities::Thread
 {
   public:
     void start(const std::shared_ptr<ChannelMasterInterface>& channelIn)
@@ -215,7 +216,7 @@ class ProgramDmaBench: public Program
           BOOST_THROW_EXCEPTION(ParameterException()
               << ErrorInfo::Message("BarHammer option currently only supported for CRU\n"));
         }
-        Util::resetSmartPtr(mBarHammer);
+        Utilities::resetSmartPtr(mBarHammer);
         mBarHammer->start(mChannel);
       }
 
@@ -444,8 +445,8 @@ class ProgramDmaBench: public Program
 
           // Schedule next pause
           auto now = std::chrono::high_resolution_clock::now();
-          mRandomPausesSoft.next = now + std::chrono::milliseconds(Util::getRandRange(NEXT_PAUSE_MIN, NEXT_PAUSE_MAX));
-          mRandomPausesSoft.length = std::chrono::milliseconds(Util::getRandRange(PAUSE_LENGTH_MIN, PAUSE_LENGTH_MAX));
+          mRandomPausesSoft.next = now + std::chrono::milliseconds(Utilities::getRandRange(NEXT_PAUSE_MIN, NEXT_PAUSE_MAX));
+          mRandomPausesSoft.length = std::chrono::milliseconds(Utilities::getRandRange(PAUSE_LENGTH_MIN, PAUSE_LENGTH_MAX));
         }
       }
     }

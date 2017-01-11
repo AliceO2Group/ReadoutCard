@@ -4,20 +4,19 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "RORC/LoopbackMode.h"
-#include <map>
-#include "Util.h"
+#include "Utilities/Enum.h"
 
 namespace AliceO2 {
 namespace Rorc {
 namespace {
-static const std::map<LoopbackMode::type, std::string> loopbackModeMap {
+
+static const auto converter = Utilities::makeEnumConverter<LoopbackMode::type>({
   { LoopbackMode::None, "NONE" },
   { LoopbackMode::Rorc, "RORC" },
   { LoopbackMode::Diu, "DIU" },
   { LoopbackMode::Siu, "SIU" },
-};
+});
 
-static const auto loopbackModeMapReverse = Util::reverseMap(loopbackModeMap);
 } // Anonymous namespace
 
 bool LoopbackMode::isExternal(const LoopbackMode::type& mode)
@@ -27,12 +26,12 @@ bool LoopbackMode::isExternal(const LoopbackMode::type& mode)
 
 std::string LoopbackMode::toString(const LoopbackMode::type& mode)
 {
-  return Util::getValueFromMap(loopbackModeMap, mode);
+  return converter.toString(mode);
 }
 
 LoopbackMode::type LoopbackMode::fromString(const std::string& string)
 {
-  return Util::getValueFromMap(loopbackModeMapReverse, string);
+  return converter.fromString(string);
 }
 
 } // namespace Rorc

@@ -1,9 +1,8 @@
-/// \file Util.cxx
+/// \file System.cxx
 /// \brief Implementation of various useful utilities that don't really belong anywhere in particular
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "Util.h"
 #include <signal.h>
 #include <cstring>
 #include <fstream>
@@ -11,10 +10,11 @@
 #include <sstream>
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
+#include "Utilities/System.h"
 
 namespace AliceO2 {
 namespace Rorc {
-namespace Util {
+namespace Utilities {
 
 namespace b = boost;
 namespace bfs = boost::filesystem;
@@ -86,12 +86,6 @@ std::pair<bool, std::string> isFileSystemTypeAnyOf(const boost::filesystem::path
 {
   auto type = getFileSystemType(path);
   return {types.count(type), type};
-}
-
-template <typename T>
-bool checkAlignment(T* address, uint64_t alignment)
-{
-  return (uint64_t(address) % alignment) == 0;
 }
 
 } // namespace Util

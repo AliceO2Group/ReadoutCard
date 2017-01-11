@@ -12,7 +12,9 @@
 #include <boost/exception/errinfo_errno.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/scoped_ptr.hpp>
-#include "Util.h"
+#include "ExceptionInternal.h"
+#include "Utilities/SmartPointer.h"
+#include "Utilities/System.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -31,11 +33,11 @@ class Lock
 
     Lock(const boost::filesystem::path& lockFilePath, const std::string& namedMutexName)
     {
-      Util::touchFile(lockFilePath);
+      Utilities::touchFile(lockFilePath);
 
       // Construct mutexes
       try {
-        Util::resetSmartPtr(mFileMutex, lockFilePath.c_str());
+        Utilities::resetSmartPtr(mFileMutex, lockFilePath.c_str());
       }
       catch (const boost::interprocess::interprocess_exception& e) {
         BOOST_THROW_EXCEPTION(LockException()
@@ -45,7 +47,7 @@ class Lock
             << ErrorInfo::PossibleCauses({"Invalid lock file path"}));
       }
       try {
-        Util::resetSmartPtr(mNamedMutex, boost::interprocess::open_or_create, namedMutexName.c_str());
+        Utilities::resetSmartPtr(mNamedMutex, boost::interprocess::open_or_create, namedMutexName.c_str());
       }
       catch (const boost::interprocess::interprocess_exception& e) {
         BOOST_THROW_EXCEPTION(LockException()

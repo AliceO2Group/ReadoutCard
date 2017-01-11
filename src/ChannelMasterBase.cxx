@@ -4,7 +4,11 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "ChannelMasterBase.h"
-#include "Util.h"
+#include <iostream>
+#include "ChannelPaths.h"
+#include "Pda/Pda.h"
+#include "Utilities/SmartPointer.h"
+#include "Utilities/System.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -24,7 +28,7 @@ void assertFileSystemType(const bfs::path& path, const std::set<std::string>& va
 {
   bool found;
   std::string type;
-  std::tie(found, type) = Util::isFileSystemTypeAnyOf(path, validTypes);
+  std::tie(found, type) = Utilities::isFileSystemTypeAnyOf(path, validTypes);
 
   if (!found) {
     std::ostringstream oss;
@@ -90,7 +94,7 @@ ChannelMasterBase::ChannelMasterBase(CardType::type cardType, const Parameters& 
       mSerialNumber(serialNumber),
       mChannelNumber(parameters.getChannelNumberRequired())
 {
-  using namespace Util;
+  using namespace Utilities;
 
   // Check the channel number is allowed
   checkChannelNumber(allowedChannels);

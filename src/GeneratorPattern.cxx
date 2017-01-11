@@ -4,13 +4,13 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "RORC/GeneratorPattern.h"
-#include <map>
-#include "Util.h"
+#include "Utilities/Enum.h"
 
 namespace AliceO2 {
 namespace Rorc {
 namespace {
-static const std::map<GeneratorPattern::type, std::string> map = {
+
+static const auto converter = Utilities::makeEnumConverter<GeneratorPattern::type>({
   { GeneratorPattern::Alternating,  "ALTERNATING" },
   { GeneratorPattern::Constant,     "CONSTANT" },
   { GeneratorPattern::Decremental,  "DECREMENTAL" },
@@ -19,19 +19,18 @@ static const std::map<GeneratorPattern::type, std::string> map = {
   { GeneratorPattern::Incremental,  "INCREMENTAL" },
   { GeneratorPattern::Random,       "RANDOM" },
   { GeneratorPattern::Unknown,      "UNKNOWN" },
-};
+});
 
-static const auto reverseMap = Util::reverseMap(map);
 } // Anonymous namespace
 
 std::string GeneratorPattern::toString(const GeneratorPattern::type& level)
 {
-  return Util::getValueFromMap(map, level);
+  return converter.toString(level);
 }
 
 GeneratorPattern::type GeneratorPattern::fromString(const std::string& string)
 {
-  return Util::getValueFromMap(reverseMap, string);
+  return converter.fromString(string);
 }
 
 } // namespace Rorc

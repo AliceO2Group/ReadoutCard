@@ -4,10 +4,6 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "ChannelParameters.h"
-#include <vector>
-#include <map>
-#include <tuple>
-#include "Util.h"
 
 namespace AliceO2 {
 namespace Rorc {

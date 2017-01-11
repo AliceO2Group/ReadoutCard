@@ -10,14 +10,15 @@
 #include <thread>
 #include <unordered_map>
 #include <mutex>
-#include <dim/dis.hxx>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
+#include <dim/dis.hxx>
+#include "AliceLowlevelFrontend.h"
+#include "ExceptionInternal.h"
 #include "RORC/Parameters.h"
 #include "RORC/ChannelFactory.h"
-#include "ExceptionInternal.h"
-#include "AliceLowlevelFrontend.h"
-#include "Util.h"
+#include "Utilities/GuardFunction.h"
+#include "Utilities/Thread.h"
 
 namespace {
 using namespace AliceO2::Rorc::CommandLineUtilities;
@@ -96,7 +97,7 @@ class PublisherRegistry
     /// Class that publishes values at an interval.
     /// TODO Use condition variables, so we can wake up the thread and stop it immediately, not having to wait for its
     ///   next iteration
-    class Publisher: public Util::Thread
+    class Publisher: public Utilities::Thread
     {
       public:
 
@@ -114,7 +115,7 @@ class PublisherRegistry
             cout << "Starting publisher '" << mServiceDescription.dnsName << "' with "
             << mServiceDescription.addresses.size() << " addresses at interval "
             << mServiceDescription.interval << "s \n";
-            Util::GuardFunction logGuard([&]{cout << "Stopping publisher '" << mServiceDescription.dnsName << "'\n";});
+            Utilities::GuardFunction logGuard([&]{cout << "Stopping publisher '" << mServiceDescription.dnsName << "'\n";});
 
             // Prepare the service and its variable
             std::vector<uint32_t> registerValues(mServiceDescription.addresses.size());
@@ -183,7 +184,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
       auto channel = AliceO2::Rorc::ChannelFactory().getSlave(params);
 
       // Object that starts the DIM service on construction, and stops it when destroyed
-      Util::GuardFunction dimStartStopper([] {DimServer::start("ALF");}, [] {DimServer::stop();});
+      Utilities::GuardFunction dimStartStopper([] {DimServer::start("ALF");}, [] {DimServer::stop();});
 
       Alf::ServiceNames names(serialNumber, channelNumber);
 

@@ -15,7 +15,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/format.hpp>
-#include "RORC/Exception.h"
+#include "ExceptionInternal.h"
 
 namespace Alf {
 

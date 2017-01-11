@@ -9,7 +9,8 @@
 #include <vector>
 #include "RORC/ChannelFactory.h"
 #include "ChannelPaths.h"
-#include "Util.h"
+#include "Utilities/System.h"
+#include "Utilities/Util.h"
 
 using std::cout;
 using std::endl;

@@ -5,13 +5,8 @@
 
 #pragma once
 
-#include <chrono>
-#include <string>
 #include <cstdint>
 #include <tuple>
-#include <set>
-#include <boost/program_options/variables_map.hpp>
-#include <boost/lexical_cast.hpp>
 #include "RORC/LoopbackMode.h"
 #include "RORC/ResetLevel.h"
 #include "RORC/GeneratorPattern.h"

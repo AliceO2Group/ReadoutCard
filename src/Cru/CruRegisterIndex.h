@@ -7,7 +7,6 @@
 
 #include <cstddef>
 #include "Pda/PdaBar.h"
-#include "Util.h"
 
 namespace AliceO2 {
 namespace Rorc {

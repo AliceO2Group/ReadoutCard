@@ -17,7 +17,7 @@
 #include "Pda/PdaBar.h"
 #include "Pda/PdaDevice.h"
 #include "RORC/Exception.h"
-#include "Util.h"
+#include "Utilities/SmartPointer.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -61,7 +61,7 @@ void RorcDevice::initWithSerial(int serialNumber)
       mPdaDevice = Pda::PdaDevice::getPdaDevice(type.pciId);
       for (auto& pciDevice : mPdaDevice->getPciDevices(mPdaDevice)) {
         if (type.getSerial(pciDevice) == serialNumber) {
-          Util::resetSmartPtr(mPciDevice, pciDevice);
+          Utilities::resetSmartPtr(mPciDevice, pciDevice);
           mDescriptor = CardDescriptor{type.cardType, serialNumber, type.pciId, addressFromDevice(pciDevice)};
           return;
         }
@@ -83,7 +83,7 @@ void RorcDevice::initWithAddress(const PciAddress& address)
       mPdaDevice = Pda::PdaDevice::getPdaDevice(type.pciId);
       for (const auto& pciDevice : mPdaDevice->getPciDevices(mPdaDevice)) {
         if (addressFromDevice(pciDevice) == address) {
-          Util::resetSmartPtr(mPciDevice, pciDevice);
+          Utilities::resetSmartPtr(mPciDevice, pciDevice);
           mDescriptor = CardDescriptor { type.cardType, type.getSerial(pciDevice), type.pciId, address };
           return;
         }

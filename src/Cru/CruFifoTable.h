@@ -7,7 +7,7 @@
 
 #include <cstdint>
 #include <array>
-#include "Util.h"
+#include "Utilities/Util.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -89,16 +89,16 @@ struct CruFifoTable
         /// \param address Page address in device memory space
         void setSourceAddress(volatile void* address)
         {
-          srcHigh = Util::getUpper32Bits(uint64_t(address));
-          srcLow = Util::getLower32Bits(uint64_t(address));
+          srcHigh = Utilities::getUpper32Bits(uint64_t(address));
+          srcLow = Utilities::getLower32Bits(uint64_t(address));
         }
 
         /// Set the source address registers
         /// \param address Page address in user memory space
         void setDestinationAddress(volatile void* address)
         {
-          dstHigh = Util::getUpper32Bits(uint64_t(address));
-          dstLow = Util::getLower32Bits(uint64_t(address));
+          dstHigh = Utilities::getUpper32Bits(uint64_t(address));
+          dstLow = Utilities::getLower32Bits(uint64_t(address));
         }
 
         void setReserved()

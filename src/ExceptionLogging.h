@@ -11,7 +11,7 @@
 
 namespace AliceO2 {
 namespace Rorc {
-namespace Util {
+namespace Utilities {
 
 /// Log an exception to the InfoLogger
 /// Used for macro THROW_LOGGED_EXCEPTION

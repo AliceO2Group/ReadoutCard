@@ -9,7 +9,7 @@
 #include <boost/test/unit_test.hpp>
 #include <string>
 #include <vector>
-#include "Util.h"
+#include "Utilities/ConvertAssign.h"
 
 using namespace ::AliceO2::Rorc;
 
@@ -22,13 +22,13 @@ BOOST_AUTO_TEST_CASE(ChannelFactoryHelperTest)
   std::string x;
   double y;
   int z;
-  BOOST_CHECK_NO_THROW(Util::convertAssign(strings, x, y, z));
+  BOOST_CHECK_NO_THROW(Utilities::convertAssign(strings, x, y, z));
   BOOST_CHECK(x == "hello");
   BOOST_CHECK(y == 1.23);
   BOOST_CHECK(z == 42);
 
   int tooMany;
-  BOOST_CHECK_THROW(Util::convertAssign(strings, x, y, z, tooMany), UtilException);
+  BOOST_CHECK_THROW(Utilities::convertAssign(strings, x, y, z, tooMany), UtilException);
 }
 
 } // Anonymous namespace

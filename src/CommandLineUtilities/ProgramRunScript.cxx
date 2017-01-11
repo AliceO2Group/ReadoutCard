@@ -3,13 +3,14 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "RORC/Parameters.h"
 #include "CommandLineUtilities/Program.h"
 #include <iostream>
 #include <boost/python.hpp>
 #include <python2.7/Python.h>
+#include "ExceptionInternal.h"
 #include "RORC/ChannelFactory.h"
-#include "Util.h"
+#include "RORC/Parameters.h"
+#include "Utilities/GuardFunction.h"
 
 namespace {
 using namespace AliceO2::Rorc::CommandLineUtilities;
@@ -131,7 +132,7 @@ class ProgramRunScript : public Program
         PythonWrapper::putClass(mainNamespace);
 
         // Set channel object for PythonWrapper
-        AliceO2::Rorc::Util::GuardFunction guard = {
+        AliceO2::Rorc::Utilities::GuardFunction guard = {
             [&]{ sChannel = channel; },
             [&]{ sChannel.reset(); }};
 

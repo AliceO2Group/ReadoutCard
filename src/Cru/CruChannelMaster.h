@@ -11,6 +11,7 @@
 #include "CruBarAccessor.h"
 #include "PageManager.h"
 #include "RORC/Parameters.h"
+#include "Utilities/GuardFunction.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -70,7 +71,7 @@ class CruChannelMaster final : public ChannelMasterPdaBase
 
     static constexpr CardType::type CARD_TYPE = CardType::Cru;
 
-    std::unique_ptr<Util::GuardFunction> mBufferReadyGuard;
+    std::unique_ptr<Utilities::GuardFunction> mBufferReadyGuard;
 
     CruFifoTable* getFifoUser()
     {

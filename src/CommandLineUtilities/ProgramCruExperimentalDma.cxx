@@ -36,6 +36,8 @@
 #include "Pda/PdaDmaBuffer.h"
 #include "Pda/Pda.h"
 #include "PageAddress.h"
+#include "Utilities/SmartPointer.h"
+#include "Utilities/Thread.h"
 
 /// Use busy wait instead of condition variable (c.v. impl incomplete, is very slow)
 #define USE_BUSY_INTERRUPT_WAIT
@@ -116,7 +118,7 @@ namespace Stuff
 {
 
 /// Manages a temperature monitor thread
-class TemperatureMonitor : public Util::Thread
+class TemperatureMonitor : public Utilities::Thread
 {
   public:
     bool isValid() const
@@ -168,7 +170,7 @@ class TemperatureMonitor : public Util::Thread
 };
 
 
-class RegisterHammer : public Util::Thread
+class RegisterHammer : public Utilities::Thread
 {
   public:
     /// Start monitoring
@@ -490,7 +492,7 @@ class ProgramCruExperimentalDma: public Program
     void initCard()
     {
       // Status base address in the bus address space
-      if (Util::getUpper32Bits(uint64_t(mFifoAddress.bus)) != 0) {
+      if (Utilities::getUpper32Bits(uint64_t(mFifoAddress.bus)) != 0) {
         cout << "Warning: using 64-bit region for status bus address (" << reinterpret_cast<void*>(mFifoAddress.bus)
             << "), may be unsupported by PCI/BIOS configuration.\n";
       } else {
@@ -522,10 +524,10 @@ class ProgramCruExperimentalDma: public Program
     /// Initializes PDA objects and accompanying shared memory files
     void initPda()
     {
-      Util::resetSmartPtr(mRorcDevice, mOptions.cardId);
-      Util::resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), mChannelNumber);
-      Util::resetSmartPtr(mMappedFilePages, DMA_BUFFER_PAGES_PATH.c_str(), DMA_BUFFER_PAGES_SIZE);
-      Util::resetSmartPtr(mBufferPages, mRorcDevice->getPciDevice(), mMappedFilePages->getAddress(),
+      Utilities::resetSmartPtr(mRorcDevice, mOptions.cardId);
+      Utilities::resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), mChannelNumber);
+      Utilities::resetSmartPtr(mMappedFilePages, DMA_BUFFER_PAGES_PATH.c_str(), DMA_BUFFER_PAGES_SIZE);
+      Utilities::resetSmartPtr(mBufferPages, mRorcDevice->getPciDevice(), mMappedFilePages->getAddress(),
           mMappedFilePages->getSize(), BUFFER_INDEX_PAGES);
     }
 
@@ -776,8 +778,8 @@ class ProgramCruExperimentalDma: public Program
 
           // Schedule next pause
           auto now = std::chrono::high_resolution_clock::now();
-          mRandomPausesSoft.next = now + std::chrono::milliseconds(Util::getRandRange(NEXT_PAUSE_MIN, NEXT_PAUSE_MAX));
-          mRandomPausesSoft.length = std::chrono::milliseconds(Util::getRandRange(PAUSE_LENGTH_MIN, PAUSE_LENGTH_MAX));
+          mRandomPausesSoft.next = now + std::chrono::milliseconds(Utilities::getRandRange(NEXT_PAUSE_MIN, NEXT_PAUSE_MAX));
+          mRandomPausesSoft.length = std::chrono::milliseconds(Utilities::getRandRange(PAUSE_LENGTH_MIN, PAUSE_LENGTH_MAX));
         }
       }
 
@@ -796,8 +798,8 @@ class ProgramCruExperimentalDma: public Program
 
           // Schedule next pause
           auto now = std::chrono::high_resolution_clock::now();
-          mRandomPausesFirm.next = now + std::chrono::milliseconds(Util::getRandRange(NEXT_PAUSE_MIN, NEXT_PAUSE_MAX));
-          mRandomPausesFirm.length = std::chrono::milliseconds(Util::getRandRange(PAUSE_LENGTH_MIN, PAUSE_LENGTH_MAX));
+          mRandomPausesFirm.next = now + std::chrono::milliseconds(Utilities::getRandRange(NEXT_PAUSE_MIN, NEXT_PAUSE_MAX));
+          mRandomPausesFirm.length = std::chrono::milliseconds(Utilities::getRandRange(PAUSE_LENGTH_MIN, PAUSE_LENGTH_MAX));
         }
       }
     }
