@@ -26,6 +26,7 @@ set(RORC_LIB_SOURCES
   CardType.cxx
   Factory/ChannelFactory.cxx
   Factory/ChannelUtilityFactory.cxx
+  ChannelMasterBase.cxx
   ChannelParameters.cxx
   ChannelPaths.cxx
   Dummy/DummyChannelMaster.cxx
@@ -45,12 +46,11 @@ set(RORC_LIB_SOURCES
   Utilities/System.cxx
 )
 
-if(PDA_FOUND)
+if(ALICEO2_RORC_PDA_ENABLED)
   list(APPEND RORC_LIB_SOURCES
     c/rorc/aux.c
     c/rorc/ddl.c
     c/rorc/rorc.c
-    ChannelMasterBase.cxx
     ChannelMasterPdaBase.cxx
     ChannelSlave.cxx
     ChannelUtilityImpl.cxx
@@ -108,18 +108,19 @@ function(build_util_exec execname filename)
   target_link_libraries(${execname} ${RORC_LIB_NAME} ${ARGN})
 endfunction()
 
-if(PDA_FOUND)
+build_util_exec(rorc-dma-bench CommandLineUtilities/ProgramDmaBench.cxx)
+build_util_exec(rorc-reset CommandLineUtilities/ProgramReset.cxx)
+build_util_exec(rorc-reg-read CommandLineUtilities/ProgramRegisterRead.cxx)
+build_util_exec(rorc-reg-read-range CommandLineUtilities/ProgramRegisterReadRange)
+build_util_exec(rorc-reg-write CommandLineUtilities/ProgramRegisterWrite.cxx)
+
+if(ALICEO2_RORC_PDA_ENABLED)
   build_util_exec(rorc-channel-cleanup CommandLineUtilities/ProgramCleanup.cxx)
   build_util_exec(rorc-cru-blink CommandLineUtilities/ProgramCruBlink.cxx)
   build_util_exec(rorc-cru-experimental-dma CommandLineUtilities/ProgramCruExperimentalDma.cxx)
-  build_util_exec(rorc-dma-bench CommandLineUtilities/ProgramDmaBench.cxx)
   build_util_exec(rorc-example Example.cxx)
   build_util_exec(rorc-list-cards CommandLineUtilities/ProgramListCards.cxx)
   build_util_exec(rorc-print-fifo CommandLineUtilities/ProgramPrintFifo.cxx)
-  build_util_exec(rorc-reset CommandLineUtilities/ProgramReset.cxx)
-  build_util_exec(rorc-reg-read CommandLineUtilities/ProgramRegisterRead.cxx)
-  build_util_exec(rorc-reg-read-range CommandLineUtilities/ProgramRegisterReadRange)
-  build_util_exec(rorc-reg-write CommandLineUtilities/ProgramRegisterWrite.cxx)
   build_util_exec(rorc-sanity-check CommandLineUtilities/ProgramSanityCheck.cxx)
   
   if(DIM_FOUND)

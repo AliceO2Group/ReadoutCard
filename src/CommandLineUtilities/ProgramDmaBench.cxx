@@ -15,8 +15,7 @@
 #include <boost/format.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/lexical_cast.hpp>
-#include "Crorc/CrorcChannelMaster.h"
-#include "Cru/CruChannelMaster.h"
+#include "Cru/CruRegisterIndex.h"
 #include "ExceptionLogging.h"
 #include "InfoLogger/InfoLogger.hxx"
 #include "RORC/ChannelFactory.h"
@@ -26,6 +25,7 @@
 #include "CommandLineUtilities/Program.h"
 #include "Utilities/SmartPointer.h"
 #include "Utilities/Thread.h"
+#include "Utilities/Util.h"
 
 using namespace AliceO2::Rorc::CommandLineUtilities;
 using namespace AliceO2::Rorc;

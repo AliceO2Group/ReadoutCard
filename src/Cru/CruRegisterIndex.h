@@ -6,7 +6,6 @@
 #pragma once
 
 #include <cstddef>
-#include "Pda/PdaBar.h"
 
 namespace AliceO2 {
 namespace Rorc {
