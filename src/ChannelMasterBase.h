@@ -17,7 +17,6 @@
 #include "RORC/ChannelMasterInterface.h"
 #include "RORC/Exception.h"
 #include "RORC/Parameters.h"
-#include "RorcDevice.h"
 
 //#define ALICEO2_RORC_CHANNEL_MASTER_DISABLE_LOCKGUARDS
 #ifdef ALICEO2_RORC_CHANNEL_MASTER_DISABLE_LOCKGUARDS
