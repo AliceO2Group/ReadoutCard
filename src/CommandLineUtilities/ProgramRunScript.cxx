@@ -24,10 +24,11 @@ auto sExampleScript = R"(
 
 print 'Hello RORC Python script!'
 
+# Printing function docs
 print rorc_channel.register_read_32.__doc__
 print rorc_channel.register_write_32.__doc__
-print '\\n'
 
+# Reading and writing registers
 rorc_channel.register_read_32(0x40)
 rorc_channel.register_write_32(0x40, 123)
 )";
@@ -93,7 +94,7 @@ class ProgramRunScript : public Program
     virtual Description getDescription()
     {
       return {"Run script", "Runs a Python script to perform actions on a channel",
-          "./rorc-run-script --serial=12345 --channel=0 --script=myscript.py"};
+          "./rorc-run-script --id=12345 --channel=0 --script=myscript.py"};
     }
 
     virtual void addOptions(boost::program_options::options_description& options)
@@ -119,8 +120,6 @@ class ProgramRunScript : public Program
 
       auto cardId = Options::getOptionCardId(map);
       int channelNumber = Options::getOptionChannel(map);
-      auto params = AliceO2::Rorc::Parameters::makeParameters(cardId, channelNumber);
-      auto channel = AliceO2::Rorc::ChannelFactory().getSlave(params);
 
       try {
         // Initialize Python environment
@@ -132,9 +131,9 @@ class ProgramRunScript : public Program
         PythonWrapper::putClass(mainNamespace);
 
         // Set channel object for PythonWrapper
-        AliceO2::Rorc::Utilities::GuardFunction guard = {
-            [&]{ sChannel = channel; },
-            [&]{ sChannel.reset(); }};
+        auto params = AliceO2::Rorc::Parameters::makeParameters(cardId, channelNumber);
+        sChannel = AliceO2::Rorc::ChannelFactory().getSlave(params);
+        AliceO2::Rorc::Utilities::GuardFunction guard = {[&]{ sChannel.reset(); }};
 
         // Execute the script
         exec_file(mScriptFilename.c_str(), mainNamespace);

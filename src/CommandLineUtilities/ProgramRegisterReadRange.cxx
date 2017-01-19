@@ -20,7 +20,7 @@ class ProgramRegisterReadRange: public Program
     virtual Description getDescription()
     {
       return {"Read Register Range", "Read a range of registers",
-          "./rorc-reg-read-range --serial=12345 --channel=0 --address=0x8 --range=10"};
+          "./rorc-reg-read-range --id=12345 --channel=0 --address=0x8 --range=10"};
     }
 
     virtual void addOptions(po::options_description& options)

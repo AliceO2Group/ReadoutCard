@@ -16,7 +16,7 @@ class ProgramRegisterRead: public Program
 
     virtual Description getDescription()
     {
-      return {"Read Register", "Read a single register", "./rorc-reg-read --serial=12345 --channel=0 --address=0x8"};
+      return {"Read Register", "Read a single register", "./rorc-reg-read --id=12345 --channel=0 --address=0x8"};
     }
 
     virtual void addOptions(boost::program_options::options_description& options)
