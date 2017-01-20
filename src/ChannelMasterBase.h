@@ -9,7 +9,7 @@
 #include <vector>
 #include <mutex>
 #include <boost/scoped_ptr.hpp>
-#include <InfoLogger/InfoLogger.hxx>
+#include "ChannelBase.h"
 #include "ChannelParameters.h"
 #include "ChannelPaths.h"
 #include "ChannelUtilityInterface.h"
@@ -31,8 +31,7 @@ namespace Rorc {
 /// Partially implements the ChannelMasterInterface. It provides:
 /// - Interprocess synchronization
 /// - Creation of files and directories related to the channel
-/// - Logging facilities
-class ChannelMasterBase: public ChannelMasterInterface, public ChannelUtilityInterface
+class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, public ChannelUtilityInterface
 {
   public:
     using AllowedChannels = std::set<int>;
@@ -45,9 +44,7 @@ class ChannelMasterBase: public ChannelMasterInterface, public ChannelUtilityInt
     ChannelMasterBase(CardType::type cardType, const Parameters& parameters, int serialNumber,
         const AllowedChannels& allowedChannels);
 
-    ~ChannelMasterBase();
-
-    virtual void setLogLevel(InfoLogger::InfoLogger::Severity severity) final override;
+    virtual ~ChannelMasterBase();
 
   protected:
     using Mutex = std::mutex;
@@ -82,30 +79,14 @@ class ChannelMasterBase: public ChannelMasterInterface, public ChannelUtilityInt
       return mSerialNumber;
     }
 
-    InfoLogger::InfoLogger& getLogger()
+    virtual void setLogLevel(InfoLogger::InfoLogger::Severity severity) final override
     {
-      return mLogger;
-    }
-
-    InfoLogger::InfoLogger::Severity getLogLevel()
-    {
-      return mLogLevel;
+      ChannelBase::setLogLevel(severity);
     }
 
     void log(const std::string& message, boost::optional<InfoLogger::InfoLogger::Severity> severity = boost::none)
     {
-      mLogger << severity.get_value_or(mLogLevel);
-      mLogger << message;
-      mLogger << InfoLogger::InfoLogger::endm;
-    }
-
-    /// Log a message using a callable, which is passed the logger instance
-    template <class Callable>
-    void withLogger(Callable callable, boost::optional<InfoLogger::InfoLogger::Severity> severity = boost::none)
-    {
-        mLogger << severity.get_value_or(mLogLevel);
-        callable(mLogger);
-        mLogger << InfoLogger::InfoLogger::endm;
+      ChannelBase::log(mSerialNumber, mChannelNumber, message, severity);
     }
 
     ChannelPaths getPaths()
@@ -141,12 +122,6 @@ class ChannelMasterBase: public ChannelMasterInterface, public ChannelUtilityInt
 
     /// Parameters of this channel TODO refactor
     ChannelParameters mChannelParameters;
-
-    /// InfoLogger instance
-    InfoLogger::InfoLogger mLogger;
-
-    /// Current log level
-    InfoLogger::InfoLogger::Severity mLogLevel;
 };
 
 } // namespace Rorc

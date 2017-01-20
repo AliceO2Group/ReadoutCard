@@ -22,7 +22,7 @@ class ChannelSlave: public ChannelSlaveInterface
   public:
 
     ChannelSlave(const Parameters& parameters);
-    ~ChannelSlave();
+    virtual ~ChannelSlave();
 
     virtual uint32_t readRegister(int index);
     virtual void writeRegister(int index, uint32_t value);

@@ -26,6 +26,7 @@ set(RORC_LIB_SOURCES
   CardType.cxx
   Factory/ChannelFactory.cxx
   Factory/ChannelUtilityFactory.cxx
+  ChannelBase.cxx
   ChannelMasterBase.cxx
   ChannelParameters.cxx
   ChannelPaths.cxx

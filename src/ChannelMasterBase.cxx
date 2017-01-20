@@ -117,16 +117,13 @@ ChannelMasterBase::ChannelMasterBase(CardType::type cardType, const Parameters& 
   }
 
   // Get lock
+  log("Getting master lock", InfoLogger::InfoLogger::Debug);
   resetSmartPtr(mInterprocessLock, paths.lock(), paths.namedMutex());
+  log("Acquired master lock", InfoLogger::InfoLogger::Debug);
 }
 
 ChannelMasterBase::~ChannelMasterBase()
 {
-}
-
-void ChannelMasterBase::setLogLevel(InfoLogger::InfoLogger::Severity severity)
-{
-  mLogLevel = severity;
 }
 
 } // namespace Rorc

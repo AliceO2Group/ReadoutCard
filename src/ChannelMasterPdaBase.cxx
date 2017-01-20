@@ -34,7 +34,9 @@ ChannelMasterPdaBase::ChannelMasterPdaBase(CardType::type cardType, const Parame
 
   // Initialize PDA & DMA objects
   Utilities::resetSmartPtr(mRorcDevice, getSerialNumber());
+  log("Initializing BAR", InfoLogger::InfoLogger::Debug);
   Utilities::resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), getChannelNumber());
+  log("Initializing memory-mapped DMA buffer", InfoLogger::InfoLogger::Debug);
   Utilities::resetSmartPtr(mMappedFilePages, paths.pages().string(),
       getChannelParameters().dma.bufferSize);
   Utilities::resetSmartPtr(mBufferPages, mRorcDevice->getPciDevice(), mMappedFilePages->getAddress(),
@@ -56,6 +58,7 @@ void ChannelMasterPdaBase::startDma()
   } else if (mDmaState == DmaState::STARTED) {
     log("DMA already started. Ignoring startDma() call");
   } else {
+    log("Starting DMA", InfoLogger::InfoLogger::Debug);
     deviceStartDma();
   }
   mDmaState = DmaState::STARTED;
@@ -71,6 +74,7 @@ void ChannelMasterPdaBase::stopDma()
   } else if (mDmaState == DmaState::STOPPED) {
     log("Warning: DMA already stopped. Ignoring stopDma() call");
   } else {
+    log("Stopping DMA", InfoLogger::InfoLogger::Debug);
     deviceStopDma();
   }
   mDmaState = DmaState::STOPPED;
@@ -87,6 +91,7 @@ void ChannelMasterPdaBase::resetChannel(ResetLevel::type resetLevel)
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Reset channel failed: DMA was not stopped"));
   }
 
+  log("Resetting channel", InfoLogger::InfoLogger::Debug);
   deviceResetChannel(resetLevel);
 }
 
