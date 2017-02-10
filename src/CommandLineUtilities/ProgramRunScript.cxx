@@ -59,12 +59,12 @@ struct PythonWrapper
       }
     }
 
-    static int registerRead(int channelNumber, int address)
+    static int registerRead(int channelNumber, uint32_t address)
     {
       return getChannel(channelNumber)->readRegister(address / 4);
     }
 
-    static void registerWrite(int channelNumber, int address, int value)
+    static void registerWrite(int channelNumber, uint32_t address, uint32_t value)
     {
       return getChannel(channelNumber)->writeRegister(address / 4, value);
     }
