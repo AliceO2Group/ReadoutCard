@@ -47,6 +47,7 @@ DEFINE_ERRINFO(GeneratorSeed, int);
 DEFINE_ERRINFO(Index, size_t);
 DEFINE_ERRINFO(LoopbackMode, ::AliceO2::Rorc::LoopbackMode::type);
 DEFINE_ERRINFO(NamedMutexName, std::string);
+DEFINE_ERRINFO(Offset, size_t);
 DEFINE_ERRINFO(PageIndex, int);
 DEFINE_ERRINFO(Pages, size_t);
 DEFINE_ERRINFO(ParameterKey, std::string);

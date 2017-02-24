@@ -29,7 +29,8 @@ BOOST_AUTO_TEST_CASE(ParametersPutGetTest)
       .setDmaPageSize(DMA_PAGE_SIZE)
       .setGeneratorDataSize(GENERATOR_DATA_SIZE)
       .setGeneratorEnabled(GENERATOR_ENABLED)
-      .setGeneratorLoopback(GENERATOR_LOOPBACK_MODE);
+      .setGeneratorLoopback(GENERATOR_LOOPBACK_MODE)
+      .setBufferParameters(BufferParameters::File{"/my/file.shm", 0, 1, 2, 3, 4});
 
   BOOST_REQUIRE(boost::get<int>(p.getCardId().get()) == SERIAL_NUMBER);
   BOOST_REQUIRE(p.getChannelNumber().get_value_or(0) == CHANNEL_NUMBER);
@@ -46,6 +47,13 @@ BOOST_AUTO_TEST_CASE(ParametersPutGetTest)
   BOOST_REQUIRE(p.getGeneratorDataSizeRequired() == GENERATOR_DATA_SIZE);
   BOOST_REQUIRE(p.getGeneratorEnabledRequired() == GENERATOR_ENABLED);
   BOOST_REQUIRE(p.getGeneratorLoopbackRequired() == GENERATOR_LOOPBACK_MODE);
+
+  BOOST_REQUIRE(boost::get<BufferParameters::File>(p.getBufferParametersRequired()).path == "/my/file.shm");
+  BOOST_REQUIRE(boost::get<BufferParameters::File>(p.getBufferParametersRequired()).size == 0);
+  BOOST_REQUIRE(boost::get<BufferParameters::File>(p.getBufferParametersRequired()).dmaStart == 1);
+  BOOST_REQUIRE(boost::get<BufferParameters::File>(p.getBufferParametersRequired()).dmaSize == 2);
+  BOOST_REQUIRE(boost::get<BufferParameters::File>(p.getBufferParametersRequired()).reservedStart == 3);
+  BOOST_REQUIRE(boost::get<BufferParameters::File>(p.getBufferParametersRequired()).reservedSize == 4);
 }
 
 BOOST_AUTO_TEST_CASE(ParametersThrowTest)

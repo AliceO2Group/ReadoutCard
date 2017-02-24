@@ -65,41 +65,6 @@ void DummyChannelMaster::writeRegister(int index, uint32_t value)
 //  cout << "DummyChannelMaster::writeRegister(index:" << index << ", value:" << value << ")" << endl;
 }
 
-
-int DummyChannelMaster::fillFifo(int maxFill)
-{
-//  cout << "DummyChannelMaster::fillFifo()" << endl;
-  auto isArrived = [&](int) { return true; };
-  auto resetDescriptor = [&](int) {};
-  auto push = [&](int, int) { };
-
-  mPageManager.handleArrivals(isArrived, resetDescriptor);
-  int pushCount = mPageManager.pushPages(maxFill, push);
-
-  mPageCounter += pushCount;
-  return pushCount;
-}
-
-int DummyChannelMaster::getAvailableCount()
-{
-  return mPageManager.getArrivedCount();
-}
-
-auto DummyChannelMaster::popPageInternal(const MasterSharedPtr& channel) -> std::shared_ptr<Page>
-{
-  if (auto page = mPageManager.useArrivedPage()) {
-    int bufferIndex = *page;
-    return std::make_shared<Page>(&mPageBuffer[bufferIndex * mPageSize], mPageSize, bufferIndex, channel);
-  }
-  return nullptr;
-}
-
-void DummyChannelMaster::freePage(const Page& page)
-{
-//  cout << "DummyChannelMaster::freePage()" << endl;
-  mPageManager.freePage(page.getId());
-}
-
 CardType::type DummyChannelMaster::getCardType()
 {
   return CardType::Dummy;

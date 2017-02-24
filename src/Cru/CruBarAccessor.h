@@ -43,18 +43,18 @@ class CruBarAccessor
       at32(CruRegisterIndex::STATUS_BASE_BUS_LOW) = Utilities::getLower32Bits(uint64_t(address));
     }
 
-    [[deprecated]] void setFifoCardAddress() const
+    void setFifoCardAddress() const
     {
       at32(CruRegisterIndex::STATUS_BASE_CARD_HIGH) = 0x0;
       at32(CruRegisterIndex::STATUS_BASE_CARD_LOW) = 0x8000;
     }
 
-    [[deprecated]] void setDescriptorTableSize() const
+    void setDescriptorTableSize() const
     {
       at32(CruRegisterIndex::DESCRIPTOR_TABLE_SIZE) = 127; // NUM_PAGES - 1;
     }
 
-    [[deprecated]] void setDoneControl() const
+    void setDoneControl() const
     {
       at32(CruRegisterIndex::DONE_CONTROL) = 0x1;
     }

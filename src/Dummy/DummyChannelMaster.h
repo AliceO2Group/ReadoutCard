@@ -31,11 +31,6 @@ class DummyChannelMaster final : public ChannelMasterBase
     virtual void writeRegister(int index, uint32_t value) override;
     virtual CardType::type getCardType() override;
 
-    virtual int fillFifo(int maxFill) override;
-    virtual int getAvailableCount() override;
-    virtual std::shared_ptr<Page> popPageInternal(const MasterSharedPtr& channel) override;
-    virtual void freePage(const Page& page) override;
-
     virtual std::vector<uint32_t> utilityCopyFifo() override;
     virtual void utilityPrintFifo(std::ostream& os) override;
     virtual void utilitySetLedState(bool state) override;

@@ -81,6 +81,7 @@ _PARAMETER_FUNCTIONS(DmaPageSize, "dma_page_size")
 _PARAMETER_FUNCTIONS(GeneratorEnabled, "generator_enabled")
 _PARAMETER_FUNCTIONS(GeneratorLoopback, "generator_loopback")
 _PARAMETER_FUNCTIONS(GeneratorDataSize, "generator_data_size")
+_PARAMETER_FUNCTIONS(BufferParameters, "buffer_parameters")
 
 #undef _PARAMETER_FUNCTIONS
 

@@ -5,34 +5,32 @@
 
 #pragma once
 
-#include <boost/interprocess/file_mapping.hpp>
-#include <boost/interprocess/mapped_region.hpp>
+#include <string>
+#include <memory>
 
 namespace AliceO2 {
 namespace Rorc {
+
+struct MemoryMappedFileInternal;
 
 /// Handles the creation and cleanup of a memory mapping of a file
 class MemoryMappedFile
 {
   public:
     MemoryMappedFile();
+
     MemoryMappedFile(const std::string& fileName, size_t fileSize);
 
-    void* getAddress() const
-    {
-      return mMappedRegion.get_address();
-    }
+    ~MemoryMappedFile();
 
-    size_t getSize() const
-    {
-      return mMappedRegion.get_size();
-    }
+    void* getAddress() const;
+
+    size_t getSize() const;
 
   private:
-    boost::interprocess::file_mapping mFileMapping;
-    boost::interprocess::mapped_region mMappedRegion;
-
     void map(const std::string& fileName, size_t fileSize);
+
+    std::unique_ptr<MemoryMappedFileInternal> mInternal;
 };
 
 } // namespace Rorc

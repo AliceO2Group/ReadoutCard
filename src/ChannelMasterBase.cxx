@@ -8,6 +8,7 @@
 #include "ChannelPaths.h"
 #include "Utilities/SmartPointer.h"
 #include "Utilities/System.h"
+#include "Visitor.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -61,7 +62,7 @@ void ChannelMasterBase::checkChannelNumber(const AllowedChannels& allowedChannel
 ChannelParameters ChannelMasterBase::convertParameters(const Parameters& map)
 {
   ChannelParameters cp;
-  cp.dma.bufferSize = map.getDmaBufferSize().get_value_or(4*1024*1024);
+//  cp.dma.bufferSize = map.getDmaBufferSize().get_value_or(4*1024*1024);
   cp.dma.pageSize = map.getDmaPageSize().get_value_or(8*1024);
   cp.generator.useDataGenerator = map.getGeneratorEnabled().get_value_or(true);
   cp.generator.dataSize = map.getGeneratorDataSize().get_value_or(cp.dma.pageSize);
@@ -71,20 +72,22 @@ ChannelParameters ChannelMasterBase::convertParameters(const Parameters& map)
 
 void ChannelMasterBase::validateParameters(const ChannelParameters& cp)
 {
-  if (cp.dma.bufferSize % (2l * 1024l * 1024l) != 0) {
-    BOOST_THROW_EXCEPTION(InvalidParameterException()
-        << ErrorInfo::Message("Parameter 'dma.bufferSize' not a multiple of 2 mebibytes"));
-  }
+  // TODO
+//  if (cp.dma.bufferSize % (2l * 1024l * 1024l) != 0) {
+//    BOOST_THROW_EXCEPTION(InvalidParameterException()
+//        << ErrorInfo::Message("Parameter 'dma.bufferSize' not a multiple of 2 mebibytes"));
+//  }
 
   if (cp.generator.dataSize > cp.dma.pageSize) {
     BOOST_THROW_EXCEPTION(InvalidParameterException()
         << ErrorInfo::Message("Parameter 'generator.dataSize' greater than 'dma.pageSize'"));
   }
 
-  if ((cp.dma.bufferSize % cp.dma.pageSize) != 0) {
-    BOOST_THROW_EXCEPTION(InvalidParameterException()
-        << ErrorInfo::Message("DMA buffer size not a multiple of 'dma.pageSize'"));
-  }
+  // TODO
+//  if ((cp.dma.bufferSize % cp.dma.pageSize) != 0) {
+//    BOOST_THROW_EXCEPTION(InvalidParameterException()
+//        << ErrorInfo::Message("DMA buffer size not a multiple of 'dma.pageSize'"));
+//  }
 }
 
 ChannelMasterBase::ChannelMasterBase(CardType::type cardType, const Parameters& parameters, int serialNumber,
@@ -120,10 +123,20 @@ ChannelMasterBase::ChannelMasterBase(CardType::type cardType, const Parameters& 
   log("Getting master lock", InfoLogger::InfoLogger::Debug);
   resetSmartPtr(mInterprocessLock, paths.lock(), paths.namedMutex());
   log("Acquired master lock", InfoLogger::InfoLogger::Debug);
+
+  if (auto bufferParameters = parameters.getBufferParameters()) {
+    // Create appropriate BufferProvider subclass
+    mBufferProvider = Visitor::apply<std::unique_ptr<BufferProvider>>(*bufferParameters,
+        [&](BufferParameters::Memory parameters){ return std::make_unique<BufferProviderMemory>(parameters); },
+        [&](BufferParameters::File parameters){ return std::make_unique<BufferProviderFile>(parameters); });
+  } else {
+    BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("ChannelMaster requires BufferParameters"));
+  }
 }
 
 ChannelMasterBase::~ChannelMasterBase()
 {
+  log("Releasing master lock", InfoLogger::InfoLogger::Debug);
 }
 
 } // namespace Rorc

@@ -12,6 +12,7 @@
 #include <boost/variant.hpp>
 #include "RORC/LoopbackMode.h"
 #include "RORC/PciAddress.h"
+#include "RORC/BufferParameters.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -26,6 +27,9 @@ class Parameters
 {
   public:
     // Types for parameter values
+
+    /// Type for buffer parameters
+    using BufferParametersType = boost::variant<BufferParameters::Memory, BufferParameters::File>;
 
     /// Type for the CardId parameter. It can hold either a serial number or PciAddress.
     using CardIdType = boost::variant<int, ::AliceO2::Rorc::PciAddress>;
@@ -85,6 +89,11 @@ class Parameters
     /// \return Reference to this object for chaining calls
     auto setGeneratorLoopback(GeneratorLoopbackType value) -> Parameters&;
 
+    /// Sets the BufferParameters parameter
+    /// \param value The value to set
+    /// \return Reference to this object for chaining calls
+    auto setBufferParameters(BufferParametersType value) -> Parameters&;
+
     // Non-throwing getters
 
     /// Gets the CardId parameter
@@ -114,6 +123,10 @@ class Parameters
     /// Gets the GeneratorLoopback parameter
     /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
     auto getGeneratorLoopback() const -> boost::optional<GeneratorLoopbackType>;
+
+    /// Gets the BufferParameters parameter
+    /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+    auto getBufferParameters() const -> boost::optional<BufferParametersType>;
 
     // Throwing getters
 
@@ -152,6 +165,11 @@ class Parameters
     /// \return The value
     auto getGeneratorLoopbackRequired() const -> GeneratorLoopbackType;
 
+    /// Gets the BufferParameters parameter
+    /// \exception ParameterException The parameter was not present
+    /// \return The value
+    auto getBufferParametersRequired() const -> BufferParametersType;
+
     // Helper functions
 
     /// Convenience function to make a Parameters object with card ID and channel number, since these are the most
@@ -163,7 +181,7 @@ class Parameters
 
   private:
     /// Variant used for internal storage of parameters
-    using Variant = boost::variant<size_t, int32_t, bool, LoopbackMode::type, CardIdType>;
+    using Variant = boost::variant<size_t, int32_t, bool, LoopbackMode::type, CardIdType, BufferParametersType>;
 
     /// Map used for internal storage of parameters
     using Map = std::map<std::string, Variant>;

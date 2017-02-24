@@ -65,7 +65,6 @@ static Option<std::string> resetLevel("reset", "Reset level [NOTHING, RORC, RORC
 
 // Options for ChannelParameters
 static Option<size_t> cpDmaPageSize("cp-dma-pagesize", "RORC page size in kibibytes", true, 8);
-static Option<size_t> cpDmaBufSize("cp-dma-bufmb", "DMA buffer size in mebibytes", true, 8);
 static Option<bool> cpGenEnable("cp-gen-enable", "Enable data generator", true, true);
 static Option<std::string> cpGenLoopback("cp-gen-loopb",
     "Loopback mode [NONE, RORC, DIU, SIU]", true, "RORC");
@@ -292,7 +291,6 @@ Parameters::CardIdType getOptionCardId(const po::variables_map& variablesMap)
 void addOptionsChannelParameters(po::options_description& optionsDescription)
 {
   addOption(option::cpDmaPageSize, optionsDescription);
-  addOption(option::cpDmaBufSize, optionsDescription);
   addOption(option::cpGenEnable, optionsDescription);
   addOption(option::cpGenLoopback, optionsDescription);
 }
@@ -303,10 +301,6 @@ ChannelParameters getOptionsChannelParameters(const boost::program_options::vari
 
   if (auto pageSizeKiB = getOptionOptional<size_t>(option::cpDmaPageSize, variablesMap)) {
     cp.dma.pageSize = pageSizeKiB.get() * 1024l;
-  }
-
-  if (auto bufSizeMiB = getOptionOptional<size_t>(option::cpDmaBufSize, variablesMap)) {
-    cp.dma.bufferSize = bufSizeMiB.get() * 1024l * 1024l;
   }
 
   if (auto useGenerator = getOptionOptional<bool>(option::cpGenEnable, variablesMap)) {
@@ -332,7 +326,6 @@ Parameters getOptionsParameterMap(const boost::program_options::variables_map& v
   auto cp = getOptionsChannelParameters(variablesMap);
   return Parameters()
       .setDmaPageSize(cp.dma.pageSize)
-      .setDmaBufferSize(cp.dma.bufferSize)
       .setGeneratorEnabled(cp.generator.useDataGenerator)
       .setGeneratorLoopback(cp.generator.loopbackMode);
 }

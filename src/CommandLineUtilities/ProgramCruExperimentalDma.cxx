@@ -4,13 +4,13 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "CommandLineUtilities/Program.h"
+#include <condition_variable>
+#include <chrono>
+#include <future>
 #include <iostream>
 #include <iomanip>
-#include <condition_variable>
 #include <thread>
 #include <queue>
-#include <future>
-#include <chrono>
 #include <pda.h>
 #include <fstream>
 #include <sstream>
@@ -25,17 +25,17 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/circular_buffer.hpp>
 #include <boost/optional.hpp>
-#include "RORC/Exception.h"
-#include "RorcDevice.h"
-#include "MemoryMappedFile.h"
 #include "Cru/CruBarAccessor.h"
 #include "Cru/CruFifoTable.h"
 #include "Options.h"
+#include "PageAddress.h"
 #include "Pda/PdaDevice.h"
 #include "Pda/PdaBar.h"
 #include "Pda/PdaDmaBuffer.h"
 #include "Pda/Pda.h"
-#include "PageAddress.h"
+#include "RorcDevice.h"
+#include "RORC/Exception.h"
+#include "RORC/MemoryMappedFile.h"
 #include "Utilities/SmartPointer.h"
 #include "Utilities/Thread.h"
 

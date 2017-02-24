@@ -6,11 +6,14 @@
 #pragma once
 
 #include <mutex>
+#include <unordered_map>
+#include <boost/circular_buffer_fwd.hpp>
 #include <boost/scoped_ptr.hpp>
 #include "ChannelMasterPdaBase.h"
 #include "RORC/Parameters.h"
 #include "PageManager.h"
 #include "ReadyFifo.h"
+#include "SuperpageQueue.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -32,11 +35,13 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
     virtual void utilityCleanupState() override;
     virtual int utilityGetFirmwareVersion() override;
 
-    virtual int fillFifo(int maxFill = READYFIFO_ENTRIES) override;
-    virtual int getAvailableCount() override;
-    virtual std::shared_ptr<Page> popPageInternal(const MasterSharedPtr& channel) override;
-    virtual void freePage(const Page& page) override;
-
+    virtual void enqueueSuperpage(size_t offset, size_t size) override;
+    virtual int getSuperpageQueueCount() override;
+    virtual int getSuperpageQueueAvailable() override;
+    virtual int getSuperpageQueueCapacity() override;
+    virtual SuperpageStatus getSuperpageStatus() override;
+    virtual SuperpageStatus popSuperpage() override;
+    virtual void fillSuperpages() override;
 
     AllowedChannels allowedChannels();
 
@@ -53,6 +58,23 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
     }
 
   private:
+
+    static constexpr size_t MAX_SUPERPAGES = 32;
+    static constexpr size_t FIFO_QUEUE_MAX = READYFIFO_ENTRIES; // Firmware FIFO Size
+
+    int mFifoBack = 0; ///< Back index of the firmware FIFO
+    int mFifoSize = 0; ///< Amount of elements in the firmware FIFO
+
+    int getFifoFront()
+    {
+      return (mFifoBack + mFifoSize) % READYFIFO_ENTRIES;
+    };
+
+    using SuperpageQueueType = SuperpageQueue<MAX_SUPERPAGES>;
+    using SuperpageQueueEntry = SuperpageQueueType::SuperpageQueueEntry;
+    SuperpageQueueType mSuperpageQueue;
+
+    volatile void* getNextSuperpageBusAddress(const SuperpageQueueEntry& superpage);
 
     /// Namespace for enum describing the status of a page's arrival
     struct DataArrivalStatus
@@ -134,31 +156,22 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
     /// Set SIU loopback
     void crorcSetSiuLoopback();
 
-    int mFifoIndexWrite; ///< Index of next FIFO page available for writing
-    int mFifoIndexRead; ///< Index of oldest non-free FIFO page
-    int mBufferPageIndex; ///< Index of next DMA buffer page available for writing
     long long int mLoopPerUsec; ///< Some timing parameter used during communications with the card
     double mPciLoopPerUsec; ///< Some timing parameters used during communications with the card
     int mRorcRevision;
     int mSiuVersion;
     int mDiuVersion;
 
-    /// Bus FIFO
-    ReadyFifo* mFifoBus;
-
-    /// Userspace FIFO
-    ReadyFifo* mFifoUser;
-
-    /// Mapping from fifo page index to DMA buffer index
-    std::vector<int> mBufferPageIndexes;
-
-    /// Array to keep track of read pages (false: wasn't read out, true: was read out).
-    std::vector<bool> mPageWasReadOut;
-
     static constexpr CardType::type CARD_TYPE = CardType::Crorc;
 
-    // TODO: refactor into ChannelMaster
-    PageManager<READYFIFO_ENTRIES> mPageManager;
+    /// Indicates deviceStartDma() was called, but DMA was not actually started yet. We do this because we need a
+    /// superpage to actually start.
+    bool mPendingDmaStart = false;
+
+    /// Starts pending DMA with given superpage for the initial pages
+    void startPendingDma(SuperpageQueueEntry& superpage);
+
+    void pushIntoSuperpage(SuperpageQueueEntry& superpage);
 };
 
 } // namespace Rorc

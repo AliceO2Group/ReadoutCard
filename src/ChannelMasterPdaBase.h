@@ -7,15 +7,14 @@
 
 #include <boost/scoped_ptr.hpp>
 #include "ChannelMasterBase.h"
-#include "MemoryMappedFile.h"
 #include "PageAddress.h"
 #include "Pda/PdaBar.h"
 #include "Pda/PdaDmaBuffer.h"
 #include "RORC/ChannelMasterInterface.h"
 #include "RORC/Exception.h"
+#include "RORC/MemoryMappedFile.h"
 #include "RORC/Parameters.h"
 #include "RorcDevice.h"
-#include "TypedMemoryMappedFile.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -69,8 +68,8 @@ class ChannelMasterPdaBase: public ChannelMasterBase
     /// already.
     virtual void deviceResetChannel(ResetLevel::type resetLevel) = 0;
 
-    /// Helper function for partitioning the DMA buffer into FIFO and data pages
-    void partitionDmaBuffer(size_t fifoSize, size_t pageSize);
+    /// Function for getting the bus address that corresponds to the user address + given offset
+    volatile void* getBusOffsetAddress(size_t offset);
 
     /// The size of the shared state data file. It should be over-provisioned, since subclasses may also allocate their
     /// own shared data in this file.
@@ -102,19 +101,9 @@ class ChannelMasterPdaBase: public ChannelMasterBase
       return mPdaBar->getUserspaceAddressU32();
     }
 
-    const Pda::PdaDmaBuffer& getBufferPages() const
+    const Pda::PdaDmaBuffer& getPdaDmaBuffer() const
     {
-      return *(mBufferPages.get());
-    }
-
-    const MemoryMappedFile& getMappedFilePages() const
-    {
-      return *(mMappedFilePages.get());
-    }
-
-    const std::vector<PageAddress>& getPageAddresses() const
-    {
-      return mPageAddresses;
+      return *(mPdaDmaBuffer.get());
     }
 
     Pda::PdaBar& getPdaBar()
@@ -151,14 +140,8 @@ class ChannelMasterPdaBase: public ChannelMasterBase
     /// PDA BAR object
     boost::scoped_ptr<Pda::PdaBar> mPdaBar;
 
-    /// Memory mapped file containing pages used for DMA transfer destination
-    boost::scoped_ptr<MemoryMappedFile> mMappedFilePages;
-
     /// PDA DMABuffer object for the pages
-    boost::scoped_ptr<Pda::PdaDmaBuffer> mBufferPages;
-
-    /// Addresses to pages in the DMA buffer
-    std::vector<PageAddress> mPageAddresses;
+    boost::scoped_ptr<Pda::PdaDmaBuffer> mPdaDmaBuffer;
 
     /// Userspace address of FIFO in DMA buffer
     void* mFifoAddressUser;

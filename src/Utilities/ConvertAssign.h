@@ -48,8 +48,10 @@ struct Conv
 };
 }
 
-/// Takes each string in the container and assigns it to the argument in the corresponding position, converting it to
-/// the appropriate type using boost::lexical_cast()
+/// \brief Takes each string in the container and assigns it to the argument in the corresponding position, converting
+/// it to the appropriate type using boost::lexical_cast().
+///
+/// \snippet test/TestUtil.cxx Example convertAssign
 /// The vector must have a size at least as large as the amount of arguments to convert
 /// Example:
 /// std::vector<std::string> strings { "hello", "1.23", "42" };

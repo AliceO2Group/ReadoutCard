@@ -17,6 +17,8 @@
 #include "RORC/ChannelMasterInterface.h"
 #include "RORC/Exception.h"
 #include "RORC/Parameters.h"
+#include "RORC/MemoryMappedFile.h"
+#include "Utilities/Util.h"
 
 //#define ALICEO2_RORC_CHANNEL_MASTER_DISABLE_LOCKGUARDS
 #ifdef ALICEO2_RORC_CHANNEL_MASTER_DISABLE_LOCKGUARDS
@@ -46,9 +48,102 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, publ
 
     virtual ~ChannelMasterBase();
 
+    virtual void enqueueSuperpage(size_t, size_t) override
+    {
+      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("not yet implemented"));
+    }
+
+    virtual int getSuperpageQueueCount() override
+    {
+      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("not yet implemented"));
+    }
+
+    virtual int getSuperpageQueueAvailable() override
+    {
+      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("not yet implemented"));
+    }
+
+    virtual int getSuperpageQueueCapacity() override
+    {
+      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("not yet implemented"));
+    }
+
+    virtual SuperpageStatus getSuperpageStatus() override
+    {
+      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("not yet implemented"));
+    }
+
+    virtual SuperpageStatus popSuperpage() override
+    {
+      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("not yet implemented"));
+    }
+
+    virtual void fillSuperpages() override
+    {
+      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("not yet implemented"));
+    }
+
   protected:
     using Mutex = std::mutex;
     using LockGuard = std::lock_guard<Mutex>;
+
+    class BufferProvider
+    {
+      public:
+        virtual ~BufferProvider()
+        {
+        }
+
+        void* getBufferStartAddress() const
+        {
+          return reservedStartAddress;
+        }
+
+        size_t getBufferSize() const
+        {
+          return bufferSize;
+        }
+
+        size_t getReservedOffset() const
+        {
+          return reservedOffset;
+        }
+
+        void* getReservedStartAddress() const
+        {
+          return reservedStartAddress;
+        }
+
+        size_t getReservedSize() const
+        {
+          return reservedSize;
+        }
+
+        size_t getDmaOffset() const
+        {
+          return dmaOffset;
+        }
+
+        void* getDmaStartAddress() const
+        {
+          return dmaStartAddress;
+        }
+
+        size_t getDmaSize() const
+        {
+          return dmaSize;
+        }
+
+      protected:
+        void* bufferStartAddress;
+        size_t bufferSize;
+        void* reservedStartAddress;
+        size_t reservedSize;
+        size_t reservedOffset;
+        void* dmaStartAddress;
+        size_t dmaSize;
+        size_t dmaOffset;
+    };
 
     /// Namespace for enum describing the initialization state of the shared data
     struct InitializationState
@@ -94,7 +189,57 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, publ
       return {mCardType, mSerialNumber, mChannelNumber};
     }
 
+    const BufferProvider& getBufferProvider()
+    {
+      return *mBufferProvider;
+    }
+
   private:
+
+    class BufferProviderMemory : public BufferProvider
+    {
+      public:
+        BufferProviderMemory(const BufferParameters::Memory& parameters)
+        {
+          bufferStartAddress = parameters.bufferStart;
+          bufferSize = parameters.bufferSize;
+          reservedOffset = Utilities::pointerDiff(parameters.reservedStart, parameters.bufferStart);
+          reservedStartAddress = parameters.reservedStart;
+          reservedSize = parameters.reservedSize;
+          dmaOffset = Utilities::pointerDiff(parameters.dmaStart, parameters.bufferStart);
+          dmaStartAddress = parameters.dmaStart;
+          dmaSize = parameters.dmaSize;
+        }
+
+        virtual ~BufferProviderMemory()
+        {
+        }
+    };
+
+    class BufferProviderFile : public BufferProvider
+    {
+      public:
+        BufferProviderFile(const BufferParameters::File& parameters)
+        {
+          Utilities::resetSmartPtr(mMappedFilePages, parameters.path, parameters.size);
+          bufferStartAddress = mMappedFilePages->getAddress();
+          bufferSize = parameters.size;
+          reservedOffset = parameters.reservedStart;
+          reservedStartAddress = Utilities::offsetBytes(bufferStartAddress, parameters.reservedStart);
+          reservedSize = parameters.reservedSize;
+          dmaOffset = parameters.dmaStart;
+          dmaStartAddress = Utilities::offsetBytes(bufferStartAddress, parameters.dmaStart);
+          dmaSize = parameters.dmaSize;
+        }
+
+        virtual ~BufferProviderFile()
+        {
+        }
+
+      private:
+        /// Memory mapped file containing pages used for DMA transfer destination
+        boost::scoped_ptr<MemoryMappedFile> mMappedFilePages;
+    };
 
     /// Convert ParameterMap to ChannelParameters
     static ChannelParameters convertParameters(const Parameters& params);
@@ -122,6 +267,9 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, publ
 
     /// Parameters of this channel TODO refactor
     ChannelParameters mChannelParameters;
+
+    /// Contains addresses & size of the buffer
+    std::unique_ptr<BufferProvider> mBufferProvider;
 };
 
 } // namespace Rorc

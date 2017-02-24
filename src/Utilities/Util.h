@@ -36,6 +36,13 @@ T* offsetBytes(T* pointer, size_t bytes)
   return reinterpret_cast<T*>(reinterpret_cast<char*>(pointer) + bytes);
 }
 
+/// Calculate difference in bytes between two pointers
+template <typename T>
+ptrdiff_t pointerDiff(T* a, T* b)
+{
+  return reinterpret_cast<char*>(a) - reinterpret_cast<char*>(b);
+}
+
 /// Get a range from std::rand()
 inline int getRandRange(int min, int max)
 {

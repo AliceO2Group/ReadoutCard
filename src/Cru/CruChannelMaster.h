@@ -7,10 +7,13 @@
 
 #include "ChannelMasterPdaBase.h"
 #include <memory>
+#include <queue>
+#include <boost/circular_buffer_fwd.hpp>
 #include "CruFifoTable.h"
 #include "CruBarAccessor.h"
 #include "PageManager.h"
 #include "RORC/Parameters.h"
+#include "SuperpageQueue.h"
 #include "Utilities/GuardFunction.h"
 
 namespace AliceO2 {
@@ -33,11 +36,13 @@ class CruChannelMaster final : public ChannelMasterPdaBase
     virtual void utilityCleanupState() override;
     virtual int utilityGetFirmwareVersion() override;
 
-    virtual int fillFifo(int maxFill = CRU_DESCRIPTOR_ENTRIES) override;
-    virtual int getAvailableCount() override;
-    virtual std::shared_ptr<Page> popPageInternal(const MasterSharedPtr& channel) override;
-    virtual void freePage(const Page& page) override;
-
+    virtual void enqueueSuperpage(size_t offset, size_t size) override;
+    virtual int getSuperpageQueueCount() override;
+    virtual int getSuperpageQueueAvailable() override;
+    virtual int getSuperpageQueueCapacity() override;
+    virtual SuperpageStatus getSuperpageStatus() override;
+    virtual SuperpageStatus popSuperpage() override;
+    virtual void fillSuperpages() override;
 
     AllowedChannels allowedChannels();
 
@@ -55,14 +60,45 @@ class CruChannelMaster final : public ChannelMasterPdaBase
 
   private:
 
-    // TODO: refactor into ChannelMaster
-    PageManager<CRU_DESCRIPTOR_ENTRIES> mPageManager;
+    static constexpr size_t MAX_SUPERPAGES = 32;
+    static constexpr size_t FIFO_QUEUE_MAX = CRU_DESCRIPTOR_ENTRIES; // Firmware FIFO Size
+
+    int mFifoBack; ///< Back index of the firmware FIFO
+    int mFifoSize; ///< Amount of elements in the firmware FIFO
+    int getFifoFront()
+    {
+      return (mFifoBack + mFifoSize) % FIFO_QUEUE_MAX;
+    };
+
+    using SuperpageQueueType = SuperpageQueue<MAX_SUPERPAGES>;
+    using SuperpageQueueEntry = SuperpageQueueType::SuperpageQueueEntry;
+    SuperpageQueueType mSuperpageQueue;
+
+    /// Acks that "should've" been issued before buffer was ready, but have to be postponed until after that
+    int mPendingAcks = 0;
+
+    /// Namespace for enum describing the status of a page's arrival
+    struct DataArrivalStatus
+    {
+        enum type
+        {
+          NoneArrived,
+          PartArrived,
+          WholeArrived,
+        };
+    };
+
+    /// Buffer readiness state. True means page descriptors have been filled, so the card can start transferring
+    bool mBufferReady = false;
+
+    int mInitialAcks = 0;
 
     void initFifo();
     void initCru();
     void resetCru();
-    void setBufferReadyGuard();
-    int fillFifoNonLocking(int maxFill = CRU_DESCRIPTOR_ENTRIES);
+    void setBufferReady();
+    void setBufferNonReady();
+//    int fillFifoNonLocking(int maxFill = CRU_DESCRIPTOR_ENTRIES);
 
     CruBarAccessor getBar()
     {
@@ -70,8 +106,6 @@ class CruChannelMaster final : public ChannelMasterPdaBase
     }
 
     static constexpr CardType::type CARD_TYPE = CardType::Cru;
-
-    std::unique_ptr<Utilities::GuardFunction> mBufferReadyGuard;
 
     CruFifoTable* getFifoUser()
     {
@@ -82,6 +116,9 @@ class CruChannelMaster final : public ChannelMasterPdaBase
     {
       return reinterpret_cast<CruFifoTable*>(getFifoAddressBus());
     }
+
+    void pushIntoSuperpage(SuperpageQueueEntry& superpage);
+    volatile void* getNextSuperpageBusAddress(const SuperpageQueueEntry& superpage);
 };
 
 } // namespace Rorc

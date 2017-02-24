@@ -9,6 +9,7 @@
 #include <sstream>
 #include <chrono>
 #include <thread>
+#include <boost/circular_buffer.hpp>
 #include <boost/format.hpp>
 #include "c/rorc/rorc.h"
 #include "c/rorc/ddl_def.h"
@@ -41,25 +42,18 @@ namespace Rorc {
 CrorcChannelMaster::CrorcChannelMaster(const Parameters& parameters)
     : ChannelMasterPdaBase(CARD_TYPE, parameters, allowedChannels(), sizeof(ReadyFifo))
 {
-  using Utilities::resetSmartPtr;
-  auto& params = getChannelParameters();
-
-  ChannelPaths paths(CARD_TYPE, getSerialNumber(), getChannelNumber());
+//  auto& params = getChannelParameters();
 
   getFifoUser()->reset();
 
-  mBufferPageIndexes.resize(READYFIFO_ENTRIES, -1);
-  mPageWasReadOut.resize(READYFIFO_ENTRIES, true);
-
-  if (getPageAddresses().size() <= READYFIFO_ENTRIES) {
-    BOOST_THROW_EXCEPTION(CrorcException()
-        << ErrorInfo::Message("Insufficient amount of pages fit in DMA buffer")
-        << ErrorInfo::Pages(getPageAddresses().size())
-        << ErrorInfo::DmaBufferSize(params.dma.bufferSize)
-        << ErrorInfo::DmaPageSize(params.dma.pageSize));
-  }
-
-  mPageManager.setAmountOfPages(getPageAddresses().size());
+  // TODO reimplement check
+//  if (getPageAddresses().size() <= READYFIFO_ENTRIES) {
+//    BOOST_THROW_EXCEPTION(CrorcException()
+//        << ErrorInfo::Message("Insufficient amount of pages fit in DMA buffer")
+//        << ErrorInfo::Pages(getPageAddresses().size())
+//        << ErrorInfo::DmaBufferSize(params.dma.bufferSize)
+//        << ErrorInfo::DmaPageSize(params.dma.pageSize));
+//  }
 }
 
 auto CrorcChannelMaster::allowedChannels() -> AllowedChannels {
@@ -68,10 +62,27 @@ auto CrorcChannelMaster::allowedChannels() -> AllowedChannels {
 
 CrorcChannelMaster::~CrorcChannelMaster()
 {
+  deviceStopDma();
 }
 
 void CrorcChannelMaster::deviceStartDma()
 {
+  log("DMA start deferred until superpage available");
+
+  mFifoBack = 0;
+  mFifoSize = 0;
+  mSuperpageQueue.clear();
+  mPendingDmaStart = true;
+}
+
+void CrorcChannelMaster::startPendingDma(SuperpageQueueEntry& entry)
+{
+  if (!mPendingDmaStart) {
+    return;
+  }
+
+  log("Starting pending DMA");
+
   auto& params = getChannelParameters();
 
   // Find DIU version, required for armDdl()
@@ -84,7 +95,18 @@ void CrorcChannelMaster::deviceStartDma()
   startDataReceiving();
 
   // Initializing the firmware FIFO, pushing (entries) pages
-  initializeFreeFifo();
+  getFifoUser()->reset();
+
+  for(int i = 0; i < READYFIFO_ENTRIES; ++i){
+//    getFifoUser()->entries[i].reset();
+    pushIntoSuperpage(entry);
+  }
+
+  assert(entry.pushedPages <= entry.status.maxPages);
+  if (entry.pushedPages == entry.status.maxPages) {
+    // Remove superpage from pushing queue
+    mSuperpageQueue.removeFromPushingQueue();
+  }
 
   if (params.generator.useDataGenerator) {
     // Starting the data generator
@@ -101,8 +123,24 @@ void CrorcChannelMaster::deviceStartDma()
     }
   }
 
+  /// Fixed wait for initial pages TODO polling wait with timeout
   std::this_thread::sleep_for(10ms);
+  if (dataArrived(READYFIFO_ENTRIES - 1) != DataArrivalStatus::WholeArrived) {
+    log("Initial pages not arrived", InfoLogger::InfoLogger::Warning);
+  }
+
+  entry.status.confirmedPages += READYFIFO_ENTRIES;
+
+  if (entry.status.confirmedPages == entry.status.maxPages) {
+    mSuperpageQueue.moveFromArrivalsToFilledQueue();
+  }
+
   getFifoUser()->reset();
+  mFifoBack = 0;
+  mFifoSize = 0;
+
+  mPendingDmaStart = false;
+  log("DMA started");
 }
 
 int rorcStopDataGenerator(volatile uint32_t* buff)
@@ -113,13 +151,17 @@ int rorcStopDataGenerator(volatile uint32_t* buff)
 
 void CrorcChannelMaster::deviceStopDma()
 {
-  // Stopping receiving data
-  if (getChannelParameters().generator.useDataGenerator) {
+  auto& params = getChannelParameters();
+  if (params.generator.useDataGenerator) {
+    // Starting the data generator
+    startDataGenerator(params.generator);
     rorcStopDataGenerator(getBarUserspace());
     rorcStopDataReceiver(getBarUserspace());
-  } else if (getChannelParameters().noRDYRX) {
-    // Sending EOBTR to FEE.
-    crorcStopTrigger();
+  } else {
+    if (!params.noRDYRX) {
+      // Sending EOBTR to FEE.
+      crorcStopTrigger();
+    }
   }
 }
 
@@ -199,6 +241,7 @@ void CrorcChannelMaster::startDataReceiving()
   }
 
   crorcReset(RORC_RESET_FF);
+  std::this_thread::sleep_for(10ms); /// XXX Give card some time to reset the FreeFIFO
   crorcCheckFreeFifoEmpty();
   crorcStartDataReceiver();
 }
@@ -206,10 +249,142 @@ void CrorcChannelMaster::startDataReceiving()
 void CrorcChannelMaster::initializeFreeFifo()
 {
   // Pushing a given number of pages to the firmware FIFO.
+
+  // TODO Now we switched to user-provided buffer, we must somehow find a place to store the initial pages
+  // Probably should delay this until we get superpages?
+  // For now, we use start of DMA buffer...
+  volatile void* junkAddress = getBusOffsetAddress(getBufferProvider().getDmaOffset());
+
   for(int i = 0; i < READYFIFO_ENTRIES; ++i){
     getFifoUser()->entries[i].reset();
-    pushFreeFifoPage(i, getPageAddresses()[i].bus);
+    pushFreeFifoPage(i, junkAddress);
   }
+}
+
+int CrorcChannelMaster::getSuperpageQueueCount()
+{
+  return mSuperpageQueue.getQueueCount();
+}
+
+int CrorcChannelMaster::getSuperpageQueueAvailable()
+{
+  return mSuperpageQueue.getQueueAvailable();
+}
+
+int CrorcChannelMaster::getSuperpageQueueCapacity()
+{
+  return mSuperpageQueue.getQueueCapacity();
+}
+
+auto CrorcChannelMaster::getSuperpageStatus() -> SuperpageStatus
+{
+  return mSuperpageQueue.getFrontSuperpageStatus();
+}
+
+void CrorcChannelMaster::enqueueSuperpage(size_t offset, size_t size)
+{
+  if (mSuperpageQueue.isFull()) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not enqueue superpage, queue at capacity"));
+  }
+
+  if (size == 0) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not enqueue superpage, size == 0"));
+  }
+
+  if ((size % 1024*1024) != 0) {
+    BOOST_THROW_EXCEPTION(Exception()
+        << ErrorInfo::Message("Could not enqueue superpage, size not a multiple of 1 MiB"));
+  }
+
+  // TODO check if offset is properly aligned
+
+  SuperpageQueueEntry entry;
+  entry.busAddress = getBusOffsetAddress(offset + getBufferProvider().getDmaOffset());
+  entry.pushedPages = 0;
+  entry.status.confirmedPages = 0;
+  entry.status.maxPages = size / getChannelParameters().dma.pageSize;
+  entry.status.offset = offset;
+
+  mSuperpageQueue.addToQueue(entry);
+}
+
+auto CrorcChannelMaster::popSuperpage() -> SuperpageStatus
+{
+  return mSuperpageQueue.removeFromFilledQueue().status;
+}
+
+void CrorcChannelMaster::fillSuperpages()
+{
+  // Push new pages into superpage
+  if (!mSuperpageQueue.getPushing().empty()) {
+    auto offset = mSuperpageQueue.getPushing().front();
+    SuperpageQueueEntry& entry = mSuperpageQueue.getEntry(offset);
+
+    if (mPendingDmaStart) {
+      // Do some special handling of first transfers......
+      startPendingDma(entry);
+    } else {
+      int freeDescriptors = FIFO_QUEUE_MAX - mFifoSize;
+      int freePages = entry.status.maxPages - entry.pushedPages;
+      int possibleToPush = std::min(freeDescriptors, freePages);
+
+      for (int i = 0; i < possibleToPush; ++i) {
+        pushIntoSuperpage(entry);
+      }
+
+      if (entry.pushedPages == entry.status.maxPages) {
+        // Remove superpage from pushing queue
+        mSuperpageQueue.removeFromPushingQueue();
+      }
+    }
+  }
+
+  // Check for arrivals & handle them
+  if (!mSuperpageQueue.getArrivals().empty()) {
+    auto isArrived = [&](int descriptorIndex) {return dataArrived(descriptorIndex) == DataArrivalStatus::WholeArrived;};
+    auto resetDescriptor = [&](int descriptorIndex) {getFifoUser()->entries[descriptorIndex].reset();};
+
+    while (mFifoSize > 0) {
+      auto offset = mSuperpageQueue.getArrivals().front();
+      SuperpageQueueEntry& entry = mSuperpageQueue.getEntry(offset);
+
+      if (isArrived(mFifoBack)) {
+//        printf("        is arrived\n");
+
+        resetDescriptor(mFifoBack);
+        mFifoSize--;
+        mFifoBack = (mFifoBack + 1) % READYFIFO_ENTRIES;
+        entry.status.confirmedPages++;
+
+        if (entry.status.confirmedPages == entry.status.maxPages) {
+          // Move superpage to filled queue
+          mSuperpageQueue.moveFromArrivalsToFilledQueue();
+        }
+      } else {
+        // If the back one hasn't arrived yet, the next ones will certainly not have arrived either...
+        break;
+      }
+    }
+  }
+}
+
+void CrorcChannelMaster::pushIntoSuperpage(SuperpageQueueEntry& superpage)
+{
+  assert(mFifoSize < FIFO_QUEUE_MAX);
+  assert(superpage.pushedPages < superpage.status.maxPages);
+
+  pushFreeFifoPage(getFifoFront(), getNextSuperpageBusAddress(superpage));
+  mFifoSize++;
+  superpage.pushedPages++;
+}
+
+volatile void* CrorcChannelMaster::getNextSuperpageBusAddress(const SuperpageQueueEntry& superpage)
+{
+  auto pageSize = getChannelParameters().dma.pageSize;
+  auto offset = pageSize * superpage.pushedPages;
+  volatile void* pageBusAddress = reinterpret_cast<volatile void*>(
+      reinterpret_cast<volatile char*>(superpage.busAddress) + offset);
+  return pageBusAddress;
 }
 
 void CrorcChannelMaster::pushFreeFifoPage(int readyFifoIndex, volatile void* pageBusAddress)
@@ -251,53 +426,6 @@ CrorcChannelMaster::DataArrivalStatus::type CrorcChannelMaster::dataArrived(int 
 CardType::type CrorcChannelMaster::getCardType()
 {
   return CardType::Crorc;
-}
-
-int CrorcChannelMaster::fillFifo(int maxFill)
-{
-  CHANNELMASTER_LOCKGUARD();
-
-  auto isArrived = [&](int descriptorIndex) {
-    return dataArrived(descriptorIndex) == DataArrivalStatus::WholeArrived;
-  };
-
-  auto resetDescriptor = [&](int descriptorIndex) {
-    getFifoUser()->entries[descriptorIndex].reset();
-  };
-
-  auto push = [&](int bufferIndex, int descriptorIndex) {
-    pushFreeFifoPage(descriptorIndex, getPageAddresses()[bufferIndex].bus);
-  };
-
-  mPageManager.handleArrivals(isArrived, resetDescriptor);
-  int pushCount = mPageManager.pushPages(maxFill, push);
-  return pushCount;
-}
-
-int CrorcChannelMaster::getAvailableCount()
-{
-  CHANNELMASTER_LOCKGUARD();
-
-  return mPageManager.getArrivedCount();
-}
-
-auto CrorcChannelMaster::popPageInternal(const MasterSharedPtr& channel) -> std::shared_ptr<Page>
-{
-  CHANNELMASTER_LOCKGUARD();
-
-  if (auto page = mPageManager.useArrivedPage()) {
-    int bufferIndex = *page;
-    return std::make_shared<Page>(getPageAddresses()[bufferIndex].user, getChannelParameters().dma.pageSize,
-        bufferIndex, channel);
-  }
-  return nullptr;
-}
-
-void CrorcChannelMaster::freePage(const Page& page)
-{
-  CHANNELMASTER_LOCKGUARD();
-
-  mPageManager.freePage(page.getId());
 }
 
 void CrorcChannelMaster::crorcArmDataGenerator()

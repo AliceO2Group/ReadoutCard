@@ -3,9 +3,11 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "MemoryMappedFile.h"
+#include "RORC/MemoryMappedFile.h"
 #include <fstream>
 #include <boost/filesystem.hpp>
+#include <boost/interprocess/file_mapping.hpp>
+#include <boost/interprocess/mapped_region.hpp>
 #include "ExceptionInternal.h"
 
 namespace AliceO2 {
@@ -15,13 +17,34 @@ namespace b = boost;
 namespace bip = boost::interprocess;
 namespace bfs = boost::filesystem;
 
+struct MemoryMappedFileInternal
+{
+    boost::interprocess::file_mapping fileMapping;
+    boost::interprocess::mapped_region mappedRegion;
+};
+
 MemoryMappedFile::MemoryMappedFile()
+{
+  mInternal = std::make_unique<MemoryMappedFileInternal>();
+}
+
+MemoryMappedFile::MemoryMappedFile(const std::string& fileName, size_t fileSize) : MemoryMappedFile()
+{
+  map(fileName, fileSize);
+}
+
+MemoryMappedFile::~MemoryMappedFile()
 {
 }
 
-MemoryMappedFile::MemoryMappedFile(const std::string& fileName, size_t fileSize)
+void* MemoryMappedFile::getAddress() const
 {
-  map(fileName, fileSize);
+  return mInternal->mappedRegion.get_address();
+}
+
+size_t MemoryMappedFile::getSize() const
+{
+  return mInternal->mappedRegion.get_size();
 }
 
 void MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
@@ -59,8 +82,8 @@ void MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
     }
 
     try {
-      mFileMapping = bip::file_mapping(fileName.c_str(), bip::read_write);
-      mMappedRegion = bip::mapped_region(mFileMapping, bip::read_write, 0, fileSize);
+      mInternal->fileMapping = bip::file_mapping(fileName.c_str(), bip::read_write);
+      mInternal->mappedRegion = bip::mapped_region(mInternal->fileMapping, bip::read_write, 0, fileSize);
     } catch (const std::exception& e) {
       BOOST_THROW_EXCEPTION(MemoryMapException()
           << ErrorInfo::Message(std::string("Failed to memory map file: ") + e.what())

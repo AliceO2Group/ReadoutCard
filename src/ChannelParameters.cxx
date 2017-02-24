@@ -11,7 +11,7 @@ namespace Rorc {
 DmaParameters::DmaParameters()
 {
   pageSize = 8 * 1024;
-  bufferSize = 8 * 1024 * 1024;
+//  bufferSize = 8 * 1024 * 1024;
   useSharedMemory = false;
 }
 

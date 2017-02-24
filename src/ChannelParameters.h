@@ -23,7 +23,7 @@ struct DmaParameters
     size_t pageSize;
 
     /// Size in bytes of the host's DMA buffer.
-    size_t bufferSize;
+//    size_t bufferSize;
 
     /// Instead of allocating the DMA buffer in kernel memory, allocate it in userspace shared memory.
     /// Note: at the moment, this option is just for testing, but shared memory will probably become the default, or
@@ -33,7 +33,7 @@ struct DmaParameters
     bool operator==(const DmaParameters& other) const
     {
       auto tie = [](decltype(other) x) {
-        return std::tie(x.bufferSize, x.pageSize, x.useSharedMemory);
+        return std::tie(x.pageSize, x.useSharedMemory);
       };
       return tie(*this) == tie(other);
     }

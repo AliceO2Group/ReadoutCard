@@ -44,14 +44,14 @@ const size_t pageSize = 4*1024;
 const size_t bufferSize = 4*1024*1024;
 
 /// Prints the first 10 integers of a page
-void printPage(Rorc::ChannelMasterInterface::Page& page, int index, std::ostream& ios)
+/*void printPage(Rorc::ChannelMasterInterface::Page& page, int index, std::ostream& ios)
 {
     ios << std::setw(4) << index << " (0x" << std::hex << (uint64_t) page.getAddress() << std::dec << ") -> ";
     for (int j = 0; j < 10; ++j) {
       ios << std::setw(j == 0 ? 4 : 0) << page.getAddressU32()[j] << " ";
     }
     ios << '\n';
-}
+}*/
 
 } // Anonymous namespace
 
@@ -66,6 +66,9 @@ Rorc::Parameters makeParams()
 
 int main(int, char**)
 {
+  // TODO Redo this with new interface. Meanwhile, see CommandLineUtilities/ProgramDmaBench.cxx for another example
+  /*
+
   if (reinsertDriverModule) {
     system("modprobe -r uio_pci_dma");
     system("modprobe uio_pci_dma");
@@ -151,5 +154,6 @@ int main(int, char**)
   catch (const std::exception& e) {
     cout << boost::diagnostic_information(e) << endl;
   }
+  */
   return 0;
 }

@@ -6,6 +6,8 @@
 #include "ChannelMasterPdaBase.h"
 #include "Pda/Pda.h"
 #include "Utilities/SmartPointer.h"
+#include "Utilities/Util.h"
+#include "Visitor.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -34,14 +36,20 @@ ChannelMasterPdaBase::ChannelMasterPdaBase(CardType::type cardType, const Parame
 
   // Initialize PDA & DMA objects
   Utilities::resetSmartPtr(mRorcDevice, getSerialNumber());
+
   log("Initializing BAR", InfoLogger::InfoLogger::Debug);
   Utilities::resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), getChannelNumber());
+
   log("Initializing memory-mapped DMA buffer", InfoLogger::InfoLogger::Debug);
-  Utilities::resetSmartPtr(mMappedFilePages, paths.pages().string(),
-      getChannelParameters().dma.bufferSize);
-  Utilities::resetSmartPtr(mBufferPages, mRorcDevice->getPciDevice(), mMappedFilePages->getAddress(),
-      mMappedFilePages->getSize(), getChannelNumber());
-  partitionDmaBuffer(fifoSize, getChannelParameters().dma.pageSize);
+  if (getBufferProvider().getReservedSize() < fifoSize) {
+    BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("Buffer reserved region too small"));
+  }
+
+  Utilities::resetSmartPtr(mPdaDmaBuffer, mRorcDevice->getPciDevice(), getBufferProvider().getBufferStartAddress(),
+      getBufferProvider().getBufferSize(), getChannelNumber());
+
+  mFifoAddressUser = getBufferProvider().getReservedStartAddress();
+  mFifoAddressBus = const_cast<void*>(getBusOffsetAddress(getBufferProvider().getReservedOffset()));
 }
 
 ChannelMasterPdaBase::~ChannelMasterPdaBase()
@@ -105,16 +113,33 @@ void ChannelMasterPdaBase::writeRegister(int index, uint32_t value)
   mPdaBar->setRegister<uint32_t>(index * sizeof(uint32_t), value);
 }
 
-void ChannelMasterPdaBase::partitionDmaBuffer(size_t fifoSize, size_t pageSize)
+volatile void* ChannelMasterPdaBase::getBusOffsetAddress(size_t offset)
 {
-  /// Amount of space reserved for the FIFO, we use multiples of the page size for uniformity
-  size_t fifoSpace = ((fifoSize / pageSize) + 1) * pageSize;
-  PageAddress fifoAddress;
-  std::tie(fifoAddress, mPageAddresses) = Pda::partitionScatterGatherList(mBufferPages->getScatterGatherList(),
-      fifoSpace, pageSize);
-  mFifoAddressUser = const_cast<void*>(fifoAddress.user);
-  mFifoAddressBus = const_cast<void*>(fifoAddress.bus);
+  const auto& list = getPdaDmaBuffer().getScatterGatherList();
+
+  auto userBase = reinterpret_cast<intptr_t>(list.at(0).addressUser);
+  auto userWithOffset = userBase + offset;
+
+  // First we find the SGL entry that contains our address
+  for (int i = 0; i < list.size(); ++i) {
+    auto entryUserStartAddress = reinterpret_cast<intptr_t>(list[i].addressUser);
+    auto entryUserEndAddress = entryUserStartAddress + list[i].size;
+
+    if ((userWithOffset >= entryUserStartAddress) && (userWithOffset < entryUserEndAddress)) {
+      // This is the entry we need
+      // We now need to calculate the difference from the start of this entry to the given offset. We make use of the
+      // fact that the userspace addresses will be contiguous
+      auto entryOffset = userWithOffset - entryUserStartAddress;
+      auto offsetBusAddress = Utilities::offsetBytes(list[i].addressBus, entryOffset);
+      return offsetBusAddress;
+    }
+  }
+
+  BOOST_THROW_EXCEPTION(Exception()
+      << ErrorInfo::Message("Physical offset address out of range")
+      << ErrorInfo::Offset(offset));
 }
+
 
 
 } // namespace Rorc

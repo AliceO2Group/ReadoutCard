@@ -17,6 +17,7 @@ namespace {
 
 BOOST_AUTO_TEST_CASE(ChannelFactoryHelperTest)
 {
+  //! [Example convertAssign]
   std::vector<std::string> strings { "hello", "1.23", "42" };
 
   std::string x;
@@ -29,6 +30,7 @@ BOOST_AUTO_TEST_CASE(ChannelFactoryHelperTest)
 
   int tooMany;
   BOOST_CHECK_THROW(Utilities::convertAssign(strings, x, y, z, tooMany), UtilException);
+  //! [Example convertAssign]
 }
 
 } // Anonymous namespace

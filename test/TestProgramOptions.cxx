@@ -26,7 +26,6 @@ BOOST_AUTO_TEST_CASE(UtilOptions)
       "--range=200",
       "--value=0x250",
       "--cp-dma-pagesize=300",
-      "--cp-dma-bufmb=400",
       "--cp-gen-enable=true",
       "--cp-gen-loopb=RORC",
       "--serial=500",
@@ -52,7 +51,6 @@ BOOST_AUTO_TEST_CASE(UtilOptions)
   BOOST_CHECK_MESSAGE(getOptionRegisterValue(vm) == 0x250, "register value");
   auto cps = getOptionsChannelParameters(vm);
   BOOST_CHECK_MESSAGE(cps.dma.pageSize == 300l * 1024l, "dma page size");
-  BOOST_CHECK_MESSAGE(cps.dma.bufferSize == (400l * 1024l * 1024l), "dma buffer size");
   BOOST_CHECK_MESSAGE(cps.generator.useDataGenerator == true, "generator enable");
   BOOST_CHECK_MESSAGE(cps.generator.loopbackMode == AliceO2::Rorc::LoopbackMode::Rorc, "generator loopback mode");
   BOOST_CHECK_MESSAGE(getOptionSerialNumber(vm) == 500, "serial number");

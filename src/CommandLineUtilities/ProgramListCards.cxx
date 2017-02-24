@@ -56,7 +56,7 @@ class ProgramListCards: public Program
           auto firmwareVersion = ChannelUtilityFactory().getUtility(params)->utilityGetFirmwareVersion();
           firmware = std::to_string(firmwareVersion);
         }
-        catch (const SharedStateException& e) {
+        catch (const Exception& e) {
           foundUninitialized = true;
           cout << e.what() << '\n';
         }
