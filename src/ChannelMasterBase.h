@@ -48,7 +48,7 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, publ
 
     virtual ~ChannelMasterBase();
 
-    virtual void enqueueSuperpage(size_t, size_t) override
+    virtual void pushSuperpage(size_t, size_t) override
     {
       BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("not yet implemented"));
     }

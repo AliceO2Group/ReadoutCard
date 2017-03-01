@@ -281,7 +281,7 @@ auto CrorcChannelMaster::getSuperpageStatus() -> SuperpageStatus
   return mSuperpageQueue.getFrontSuperpageStatus();
 }
 
-void CrorcChannelMaster::enqueueSuperpage(size_t offset, size_t size)
+void CrorcChannelMaster::pushSuperpage(size_t offset, size_t size)
 {
   if (mSuperpageQueue.isFull()) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not enqueue superpage, queue at capacity"));

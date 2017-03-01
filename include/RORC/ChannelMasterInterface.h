@@ -50,19 +50,14 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
     ///
     /// \param offset Offset from the start of the DMA buffer to the start of the superpage. Must be ???-aligned.
     ///     The offset will also be used as an identifier for the superpage.
-    /// \param size Size of the superpage. Must be a multiple of the page size. Note: due to firmware requirements,
-    ///     a superpage's size must also be a multiple of 1 MB for the CRU.
-    virtual void enqueueSuperpage(size_t offset, size_t size) = 0;
+    /// \param size Size of the superpage. Must be a multiple of the page size AND a multiple of 1 MB.
+    virtual void pushSuperpage(size_t offset, size_t size) = 0;
 
     /// Gets the status of the superpage at the front of the queue (i.e. the oldest superpage)
     virtual SuperpageStatus getSuperpageStatus() = 0;
 
     /// Tells the driver to stop keeping track of the superpage at the front of the queue (i.e. the oldest superpage)
     virtual SuperpageStatus popSuperpage() = 0;
-
-    /// Tells the driver to stop keeping track of the superpage with the given offset
-    /// Is this needed??
-    //virtual SuperpageStatus popSuperpage(ptrdiff_t offset);
 
     /// Call in a loop. Equivalent of old fillFifo(). May be replaced by internal driver thread at some point
     virtual void fillSuperpages() = 0;

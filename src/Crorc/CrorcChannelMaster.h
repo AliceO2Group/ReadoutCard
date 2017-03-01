@@ -35,7 +35,7 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
     virtual void utilityCleanupState() override;
     virtual int utilityGetFirmwareVersion() override;
 
-    virtual void enqueueSuperpage(size_t offset, size_t size) override;
+    virtual void pushSuperpage(size_t offset, size_t size) override;
     virtual int getSuperpageQueueCount() override;
     virtual int getSuperpageQueueAvailable() override;
     virtual int getSuperpageQueueCapacity() override;

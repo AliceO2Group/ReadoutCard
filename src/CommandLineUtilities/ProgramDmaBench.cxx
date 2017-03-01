@@ -315,7 +315,7 @@ class ProgramDmaBench: public Program
             int offset = currentSuperpageIndex * SUPERPAGE_SIZE;
             int size = SUPERPAGE_SIZE;
 //            cout << "### DMABENCH pushing superpage " << currentSuperpageIndex << " offset=" << offset << endl;
-            mChannel->enqueueSuperpage(offset, size);
+            mChannel->pushSuperpage(offset, size);
             currentSuperpageIndex = (currentSuperpageIndex + 1) % maxSuperpages;
             currentSuperpages++;
           }
