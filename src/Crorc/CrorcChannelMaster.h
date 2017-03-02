@@ -34,6 +34,7 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
     virtual void utilitySanityCheck(std::ostream& os) override;
     virtual void utilityCleanupState() override;
     virtual int utilityGetFirmwareVersion() override;
+    virtual std::string utilityGetFirmwareVersionString() override;
 
     virtual void pushSuperpage(Superpage superpage) override;
     virtual int getSuperpageQueueCount() override;

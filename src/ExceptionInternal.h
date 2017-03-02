@@ -26,6 +26,7 @@ namespace ErrorInfo {
 #define DEFINE_ERRINFO(name, type) \
   using name = ::boost::error_info<struct _##name, type>
 
+DEFINE_ERRINFO(Address, uintptr_t);
 DEFINE_ERRINFO(BarIndex, size_t);
 DEFINE_ERRINFO(BarSize, size_t);
 DEFINE_ERRINFO(CardType, ::AliceO2::Rorc::CardType::type);

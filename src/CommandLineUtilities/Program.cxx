@@ -70,11 +70,21 @@ int Program::execute(int argc, char** argv)
 
   try {
     // Parse options and get the resulting map of variables
-    auto variablesMap = Options::getVariablesMap(argc, argv, optionsDescription);
 
-    if (variablesMap.count(HELP_SWITCH)) {
-      prnHelp();
-      return 0;
+    po::variables_map variablesMap;
+    try {
+      po::store(po::parse_command_line(argc, argv, optionsDescription), variablesMap);
+
+      if (variablesMap.count(HELP_SWITCH)) {
+        prnHelp();
+        return 0;
+      }
+
+      po::notify(variablesMap);
+    }
+    catch (const po::unknown_option& e) {
+      BOOST_THROW_EXCEPTION(ProgramOptionException()
+          << ErrorInfo::Message("Unknown option '" + e.get_option_name() + "'"));
     }
 
     if (variablesMap.count(VERSION_SWITCH)) {
@@ -93,12 +103,16 @@ int Program::execute(int argc, char** argv)
     std::cout << "Program options invalid: " << *message << "\n\n";
     prnHelp();
   }
+  catch (const po::error& e) {
+    std::cout << "Program options error: " << e.what() << "\n\n";
+    prnHelp();
+  }
   catch (const std::exception& e) {
 #if (BOOST_VERSION >= 105400)
-    std::cout << "Error: " << e.what() << '\n' << boost::diagnostic_information(e, isVerbose()) << "\n";
+    std::cout << "Error: " << e.what() << '\n' << boost::diagnostic_information(e, isVerbose()) << '\n';
 #else
 #pragma message "BOOST_VERSION < 105400"
-    std::cout << "Error: " << e.what() << '\n' << boost::diagnostic_information(e) << "\n";
+    std::cout << "Error: " << e.what() << '\n' << boost::diagnostic_information(e) << '\n';
 #endif
   }
 

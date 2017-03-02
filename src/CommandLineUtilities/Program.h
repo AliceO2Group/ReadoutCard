@@ -38,6 +38,11 @@ class Program
       return sFlagSigInt.load(memoryOrder);
     }
 
+    static const std::atomic<bool>& getInterruptFlag()
+    {
+      return sFlagSigInt;
+    }
+
   protected:
     /// Should output be verbose
     bool isVerbose() const
