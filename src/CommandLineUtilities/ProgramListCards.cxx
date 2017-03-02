@@ -37,10 +37,10 @@ class ProgramListCards: public Program
 
       std::ostringstream table;
 
-      auto formatHeader = "  %-3s %-12s %-12s %-12s %-12s %-12s %-12s\n";
-      auto formatRow = "  %-3s %-12s %-12s 0x%-10s 0x%-10s %-12s %-12s\n";
+      auto formatHeader = "  %-3s %-6s %-10s %-11s %-11s %-8s %-15s\n";
+      auto formatRow = "  %-3s %-6s %-10s 0x%-9s 0x%-9s %-8s %-15s\n";
       auto header = boost::str(boost::format(formatHeader)
-          % "#" % "Card Type" % "PCI Address" % "Vendor ID" % "Device ID" % "Serial Nr" % "FW Version");
+          % "#" % "Type" % "PCI Addr" % "Vendor ID" % "Device ID" % "Serial" % "FW Version");
       auto lineFat = std::string(header.length(), '=') + '\n';
       auto lineThin = std::string(header.length(), '-') + '\n';
 
@@ -53,8 +53,7 @@ class ProgramListCards: public Program
         std::string firmware = "n/a";
         try {
           Parameters params = Parameters::makeParameters(card.serialNumber, 0);
-          auto firmwareVersion = ChannelUtilityFactory().getUtility(params)->utilityGetFirmwareVersion();
-          firmware = std::to_string(firmwareVersion);
+          firmware = ChannelUtilityFactory().getUtility(params)->utilityGetFirmwareVersionString();
         }
         catch (const SharedStateException& e) {
           foundUninitialized = true;

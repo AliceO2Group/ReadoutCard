@@ -35,6 +35,11 @@ class Program
     /// Has the SIGINT signal been given? (usually Ctrl-C)
     static bool isSigInt()
     {
+      return sFlagSigInt.load();
+    }
+
+    static const std::atomic<bool>& getInterruptFlag()
+    {
       return sFlagSigInt;
     }
 
