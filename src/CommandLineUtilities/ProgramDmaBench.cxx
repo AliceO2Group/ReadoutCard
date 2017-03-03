@@ -136,7 +136,7 @@ class ProgramDmaBench: public Program
     {
       Options::addOptionChannel(options);
       Options::addOptionCardId(options);
-      Options::addOptionsChannelParameters(options);
+//      Options::addOptionsChannelParameters(options);
       options.add_options()
           ("reset",
               po::bool_switch(&mOptions.resetChannel),
@@ -153,9 +153,9 @@ class ProgramDmaBench: public Program
           ("rand-pause-sw",
               po::bool_switch(&mOptions.randomPauseSoft),
               "Randomly pause readout using software method")
-          ("rand-readout",
-              po::bool_switch(&mOptions.randomReadout),
-              "Readout in non-sequential order")
+//          ("rand-readout",
+//              po::bool_switch(&mOptions.randomReadout),
+//              "Readout in non-sequential order")
           ("no-errorcheck",
               po::bool_switch(&mOptions.noErrorCheck),
               "Skip error checking")
@@ -173,34 +173,6 @@ class ProgramDmaBench: public Program
 
     virtual void run(const po::variables_map& map)
     {
-      {
-        boost::circular_buffer<std::string> queue {4};
-
-        auto printQueue = [&]{
-          cout << "Queue\n";
-          for (int i = 0 ; i < queue.size(); ++i) {
-            cout << "  " << i << " - " << queue[i] << '\n';
-          }
-        };
-
-        queue.push_back("a");
-        queue.push_back("b");
-        queue.push_back("c");
-
-        printQueue();
-
-        queue.pop_front();
-        queue.pop_front();
-
-        printQueue();
-
-      }
-
-
-
-
-
-
       if (mOptions.fileOutputAscii && mOptions.fileOutputBin) {
         BOOST_THROW_EXCEPTION(Exception()
             << ErrorInfo::Message("File output can't be both ASCII and binary"));
@@ -401,22 +373,18 @@ class ProgramDmaBench: public Program
     /// Free the pages that were pushed in excess
     void freeExcessPages(std::chrono::milliseconds timeout)
     {
-//      if (mOptions.superPages) {
-        // TODO do something?
-//        int count = mChannel->getSuperpageQueueCount();
-//        for (int i = 0; i < count; ++i) {
-//          mChannel->popSuperpage();
-//        }
-//      } else {
-//        auto start = std::chrono::high_resolution_clock::now();
-//        int popped = 0;
-//        while ((std::chrono::high_resolution_clock::now() - start) < timeout) {
-//          if (auto page = ChannelMasterInterface::popPage(mChannel)) {
-//            popped++;
-//          }
-//        }
-//        cout << "Freed " << popped << " excess pages\n";
-//      }
+      auto start = std::chrono::high_resolution_clock::now();
+      int popped = 0;
+      while ((std::chrono::high_resolution_clock::now() - start) < timeout) {
+        if (mChannel->getSuperpageQueueCount() > 0) {
+          auto status = mChannel->getSuperpageStatus();
+          if (status.isFilled()) {
+            mChannel->popSuperpage();
+            popped += status.confirmedPages;
+          }
+        }
+      }
+      cout << "Popped " << popped << " excess pages\n";
     }
 
     volatile uint32_t* pageData(char* page)
