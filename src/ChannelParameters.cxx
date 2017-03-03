@@ -22,7 +22,7 @@ GeneratorParameters::GeneratorParameters()
   loopbackMode = Rorc::LoopbackMode::Rorc;
   pattern = GeneratorPattern::Incremental;
   seed = 0;
-  useDataGenerator = false;
+  useDataGenerator = true;
   maximumEvents = 0;
   dataSize = 1 * 1024;
 }

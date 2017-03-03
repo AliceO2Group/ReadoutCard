@@ -107,10 +107,13 @@ void CrorcChannelMaster::startPendingDma(SuperpageQueueEntry& entry)
   }
 
   if (params.generator.useDataGenerator) {
+    log("Starting data generator");
     // Starting the data generator
     startDataGenerator(params.generator);
   } else {
     if (!params.noRDYRX) {
+      log("Starting trigger");
+
       // Clearing SIU/DIU status.
       crorcCheckLink();
       crorcSiuCommand(RandCIFST);
@@ -347,8 +350,6 @@ void CrorcChannelMaster::fillSuperpages()
       SuperpageQueueEntry& entry = mSuperpageQueue.getEntry(offset);
 
       if (isArrived(mFifoBack)) {
-//        printf("        is arrived\n");
-
         resetDescriptor(mFifoBack);
         mFifoSize--;
         mFifoBack = (mFifoBack + 1) % READYFIFO_ENTRIES;
