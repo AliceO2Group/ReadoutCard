@@ -95,10 +95,8 @@ void CrorcChannelMaster::startPendingDma(SuperpageQueueEntry& entry)
   startDataReceiving();
 
   // Initializing the firmware FIFO, pushing (entries) pages
-  getFifoUser()->reset();
-
   for(int i = 0; i < READYFIFO_ENTRIES; ++i){
-//    getFifoUser()->entries[i].reset();
+    getFifoUser()->entries[i].reset();
     pushIntoSuperpage(entry);
   }
 
@@ -488,17 +486,8 @@ void CrorcChannelMaster::crorcCheckFreeFifoEmpty()
 {
   int returnCode = rorcCheckRxFreeFifo(getBarUserspace());
   if (returnCode != RORC_FF_EMPTY) {
-    log("FreeFifo was not empty, resetting it", InfoLogger::InfoLogger::Warning);
-    crorcReset(RORC_RESET_FF);
-
-    // See if the reset was successful
-    returnCode = rorcCheckRxFreeFifo(getBarUserspace());
-    if (returnCode != RORC_FF_EMPTY) {
-      log("FreeFifo reset unsuccessful", InfoLogger::InfoLogger::Error);
-      BOOST_THROW_EXCEPTION(CrorcFreeFifoException()
-          ADD_ERRINFO(returnCode, "Free FIFO not empty")
-          << ErrorInfo::PossibleCauses({"Previous DMA did not get/free all received pages"}));
-    }
+    BOOST_THROW_EXCEPTION(
+        CrorcFreeFifoException() ADD_ERRINFO(returnCode, "Free FIFO not empty") << ErrorInfo::PossibleCauses({"Previous DMA did not get/free all received pages"}));
   }
 }
 
