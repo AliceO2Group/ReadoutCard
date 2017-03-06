@@ -40,7 +40,19 @@ namespace Rorc {
     << ErrorInfo::StatusCode(_status_code)
 
 CrorcChannelMaster::CrorcChannelMaster(const Parameters& parameters)
-    : ChannelMasterPdaBase(CARD_TYPE, parameters, allowedChannels(), sizeof(ReadyFifo))
+    : ChannelMasterPdaBase(CARD_TYPE, parameters, allowedChannels(), sizeof(ReadyFifo)), //
+      mPageSize(parameters.getDmaPageSize().get_value_or(8*1024)), // 8 kB default for uniformity with CRU
+      mInitialResetLevel(ResetLevel::Rorc), // It's good to reset at least the card channel in general
+      mNoRDYRX(true), // Not sure
+      mUseFeeAddress(false), // Not sure
+      mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Rorc)), // Internal loopback by default
+      mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)), // Use data generator by default
+      mGeneratorPattern(parameters.getGeneratorPattern().get_value_or(GeneratorPattern::Incremental)), //
+      mGeneratorMaximumEvents(0), // Infinite events
+      mGeneratorInitialValue(0), // Start from 0
+      mGeneratorInitialWord(0), // First word
+      mGeneratorSeed(0), // Presumably for random patterns, incremental doesn't really need it
+      mGeneratorDataSize(parameters.getGeneratorDataSize().get_value_or(mPageSize)) // Can use page size
 {
 //  auto& params = getChannelParameters();
 
@@ -83,13 +95,11 @@ void CrorcChannelMaster::startPendingDma(SuperpageQueueEntry& entry)
 
   log("Starting pending DMA");
 
-  auto& params = getChannelParameters();
-
   // Find DIU version, required for armDdl()
   crorcInitDiuVersion();
 
   // Resetting the card,according to the RESET LEVEL parameter
-  deviceResetChannel(params.initialResetLevel);
+  deviceResetChannel(mInitialResetLevel);
 
   // Setting the card to be able to receive data
   startDataReceiving();
@@ -106,12 +116,12 @@ void CrorcChannelMaster::startPendingDma(SuperpageQueueEntry& entry)
     mSuperpageQueue.removeFromPushingQueue();
   }
 
-  if (params.generator.useDataGenerator) {
+  if (mGeneratorEnabled) {
     log("Starting data generator");
     // Starting the data generator
-    startDataGenerator(params.generator);
+    startDataGenerator();
   } else {
-    if (!params.noRDYRX) {
+    if (!mNoRDYRX) {
       log("Starting trigger");
 
       // Clearing SIU/DIU status.
@@ -152,14 +162,13 @@ int rorcStopDataGenerator(volatile uint32_t* buff)
 
 void CrorcChannelMaster::deviceStopDma()
 {
-  auto& params = getChannelParameters();
-  if (params.generator.useDataGenerator) {
+  if (mGeneratorEnabled) {
     // Starting the data generator
-    startDataGenerator(params.generator);
+    startDataGenerator();
     rorcStopDataGenerator(getBarUserspace());
     rorcStopDataReceiver(getBarUserspace());
   } else {
-    if (!params.noRDYRX) {
+    if (!mNoRDYRX) {
       // Sending EOBTR to FEE.
       crorcStopTrigger();
     }
@@ -172,18 +181,16 @@ void CrorcChannelMaster::deviceResetChannel(ResetLevel::type resetLevel)
     return;
   }
 
-  auto loopbackMode = getChannelParameters().generator.loopbackMode;
-
   try {
     if (resetLevel == ResetLevel::Rorc) {
       crorcReset(RORC_RESET_FF);
       crorcReset(RORC_RESET_RORC);
     }
 
-    if (LoopbackMode::isExternal(loopbackMode)) {
+    if (LoopbackMode::isExternal(mLoopbackMode)) {
       crorcArmDdl(RORC_RESET_DIU);
 
-      if ((resetLevel == ResetLevel::RorcDiuSiu) && (loopbackMode != LoopbackMode::Diu))
+      if ((resetLevel == ResetLevel::RorcDiuSiu) && (mLoopbackMode != LoopbackMode::Diu))
       {
         // Wait a little before SIU reset.
         std::this_thread::sleep_for(100ms); /// XXX Why???
@@ -197,7 +204,7 @@ void CrorcChannelMaster::deviceResetChannel(ResetLevel::type resetLevel)
   }
   catch (Exception& e) {
     e << ErrorInfo::ResetLevel(resetLevel);
-    e << ErrorInfo::LoopbackMode(loopbackMode);
+    e << ErrorInfo::LoopbackMode(mLoopbackMode);
     throw;
   }
 
@@ -205,20 +212,20 @@ void CrorcChannelMaster::deviceResetChannel(ResetLevel::type resetLevel)
   std::this_thread::sleep_for(100ms); /// XXX Why???
 }
 
-void CrorcChannelMaster::startDataGenerator(const GeneratorParameters& gen)
+void CrorcChannelMaster::startDataGenerator()
 {
-  if (LoopbackMode::None == gen.loopbackMode) {
+  if (LoopbackMode::None == mLoopbackMode) {
     crorcStartTrigger();
   }
 
   crorcArmDataGenerator();
 
-  if (LoopbackMode::Rorc == gen.loopbackMode) {
+  if (LoopbackMode::Rorc == mLoopbackMode) {
     rorcParamOn(getBarUserspace(), PRORC_PARAM_LOOPB);
     std::this_thread::sleep_for(100ms); // XXX Why???
   }
 
-  if (LoopbackMode::Siu == gen.loopbackMode) {
+  if (LoopbackMode::Siu == mLoopbackMode) {
     crorcSetSiuLoopback();
     std::this_thread::sleep_for(100ms); // XXX Why???
     crorcCheckLink();
@@ -226,7 +233,7 @@ void CrorcChannelMaster::startDataGenerator(const GeneratorParameters& gen)
     crorcDiuCommand(RandCIFST);
   }
 
-  rorcStartDataGenerator(getBarUserspace(), gen.maximumEvents);
+  rorcStartDataGenerator(getBarUserspace(), mGeneratorMaximumEvents);
 }
 
 void CrorcChannelMaster::startDataReceiving()
@@ -234,7 +241,7 @@ void CrorcChannelMaster::startDataReceiving()
   crorcInitDiuVersion();
 
   // Preparing the card.
-  if (LoopbackMode::Siu == getChannelParameters().generator.loopbackMode) {
+  if (LoopbackMode::Siu == mLoopbackMode) {
     deviceResetChannel(ResetLevel::RorcDiuSiu);
     crorcCheckLink();
     crorcSiuCommand(RandCIFST);
@@ -303,7 +310,7 @@ void CrorcChannelMaster::pushSuperpage(size_t offset, size_t size)
   entry.busAddress = getBusOffsetAddress(offset + getBufferProvider().getDmaOffset());
   entry.pushedPages = 0;
   entry.status.confirmedPages = 0;
-  entry.status.maxPages = size / getChannelParameters().dma.pageSize;
+  entry.status.maxPages = size / mPageSize;
   entry.status.offset = offset;
 
   mSuperpageQueue.addToQueue(entry);
@@ -379,7 +386,7 @@ void CrorcChannelMaster::pushIntoSuperpage(SuperpageQueueEntry& superpage)
 
 volatile void* CrorcChannelMaster::getNextSuperpageBusAddress(const SuperpageQueueEntry& superpage)
 {
-  auto pageSize = getChannelParameters().dma.pageSize;
+  auto pageSize = mPageSize;
   auto offset = pageSize * superpage.pushedPages;
   volatile void* pageBusAddress = reinterpret_cast<volatile void*>(
       reinterpret_cast<volatile char*>(superpage.busAddress) + offset);
@@ -388,7 +395,7 @@ volatile void* CrorcChannelMaster::getNextSuperpageBusAddress(const SuperpageQue
 
 void CrorcChannelMaster::pushFreeFifoPage(int readyFifoIndex, volatile void* pageBusAddress)
 {
-  size_t pageWords = getChannelParameters().dma.pageSize / 4; // Size in 32-bit words
+  size_t pageWords = mPageSize / 4; // Size in 32-bit words
   rorcPushRxFreeFifo(getBarUserspace(), reinterpret_cast<uint64_t>(pageBusAddress), pageWords, readyFifoIndex);
 }
 
@@ -429,14 +436,13 @@ CardType::type CrorcChannelMaster::getCardType()
 
 void CrorcChannelMaster::crorcArmDataGenerator()
 {
-  auto& gen = getChannelParameters().generator;
   int roundedLen;
-  int returnCode = rorcArmDataGenerator(getBarUserspace(), gen.initialValue, gen.initialWord, gen.pattern,
-      gen.dataSize / 4, gen.seed, &roundedLen);
+  int returnCode = rorcArmDataGenerator(getBarUserspace(), mGeneratorInitialValue, mGeneratorInitialWord,
+      mGeneratorPattern, mGeneratorDataSize / 4, mGeneratorSeed, &roundedLen);
   THROW_IF_BAD_STATUS(returnCode, CrorcArmDataGeneratorException()
       ADD_ERRINFO(returnCode, "Failed to arm data generator")
-      << ErrorInfo::GeneratorPattern(gen.pattern)
-      << ErrorInfo::GeneratorEventLength(gen.dataSize / 4));
+      << ErrorInfo::GeneratorPattern(mGeneratorPattern)
+      << ErrorInfo::GeneratorEventLength(mGeneratorDataSize / 4));
 }
 
 void CrorcChannelMaster::crorcArmDdl(int resetMask)

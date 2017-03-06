@@ -59,22 +59,17 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
 
   private:
 
+    /// This card's card type!
+    static constexpr CardType::type CARD_TYPE = CardType::Crorc;
+
+    /// Limits the number of superpages allowed in the queue
     static constexpr size_t MAX_SUPERPAGES = 32;
-    static constexpr size_t FIFO_QUEUE_MAX = READYFIFO_ENTRIES; // Firmware FIFO Size
 
-    int mFifoBack = 0; ///< Back index of the firmware FIFO
-    int mFifoSize = 0; ///< Amount of elements in the firmware FIFO
-
-    int getFifoFront()
-    {
-      return (mFifoBack + mFifoSize) % READYFIFO_ENTRIES;
-    };
+    /// Firmware FIFO Size
+    static constexpr size_t FIFO_QUEUE_MAX = READYFIFO_ENTRIES;
 
     using SuperpageQueueType = SuperpageQueue<MAX_SUPERPAGES>;
     using SuperpageQueueEntry = SuperpageQueueType::SuperpageQueueEntry;
-    SuperpageQueueType mSuperpageQueue;
-
-    volatile void* getNextSuperpageBusAddress(const SuperpageQueueEntry& superpage);
 
     /// Namespace for enum describing the status of a page's arrival
     struct DataArrivalStatus
@@ -86,6 +81,8 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
           WholeArrived,
         };
     };
+
+    volatile void* getNextSuperpageBusAddress(const SuperpageQueueEntry& superpage);
 
     ReadyFifo* getFifoUser()
     {
@@ -102,7 +99,7 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
 
     /// Initializes and starts the data generator with the given parameters
     /// \param generatorParameters The parameters for the data generator.
-    void startDataGenerator(const GeneratorParameters& generatorParameters);
+    void startDataGenerator();
 
     /// Pushes the initial 128 pages to the CRORC's Free FIFO
     void initializeFreeFifo();
@@ -156,22 +153,85 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
     /// Set SIU loopback
     void crorcSetSiuLoopback();
 
-    long long int mLoopPerUsec; ///< Some timing parameter used during communications with the card
-    double mPciLoopPerUsec; ///< Some timing parameters used during communications with the card
-    int mRorcRevision;
-    int mSiuVersion;
-    int mDiuVersion;
+    /// Starts pending DMA with given superpage for the initial pages
+    void startPendingDma(SuperpageQueueEntry& superpage);
 
-    static constexpr CardType::type CARD_TYPE = CardType::Crorc;
+    /// Push a page into a superpage
+    void pushIntoSuperpage(SuperpageQueueEntry& superpage);
+
+    /// Get front index of FIFO
+    int getFifoFront()
+    {
+      return (mFifoBack + mFifoSize) % READYFIFO_ENTRIES;
+    };
+
+    /// Back index of the firmware FIFO
+    int mFifoBack = 0;
+
+    /// Amount of elements in the firmware FIFO
+    int mFifoSize = 0;
+
+    /// Queue for superpages
+    SuperpageQueueType mSuperpageQueue;
 
     /// Indicates deviceStartDma() was called, but DMA was not actually started yet. We do this because we need a
     /// superpage to actually start.
     bool mPendingDmaStart = false;
 
-    /// Starts pending DMA with given superpage for the initial pages
-    void startPendingDma(SuperpageQueueEntry& superpage);
+    // These variables are configuration parameters
 
-    void pushIntoSuperpage(SuperpageQueueEntry& superpage);
+    /// DMA page size
+    const size_t mPageSize;
+
+    /// Reset level on initialization of channel
+    const ResetLevel::type mInitialResetLevel;
+
+    /// Prevents sending the RDYRX and EOBTR commands. TODO This switch is implicitly set when data generator or the
+    /// STBRD command is used (???)
+    const bool mNoRDYRX;
+
+    /// Enforces that the data reading is carried out with the Start Block Read (STBRD) command
+    /// XXX Not sure if this should be a parameter...
+    const bool mUseFeeAddress;
+
+    /// Gives the type of loopback
+    const LoopbackMode::type mLoopbackMode;
+
+    /// Enables the data generator
+    const bool mGeneratorEnabled;
+
+    /// Data pattern for the data generator
+    const GeneratorPattern::type mGeneratorPattern;
+
+    /// Maximum number of events
+    const int mGeneratorMaximumEvents;
+
+    /// Initial value of the first data in a data block
+    const uint32_t mGeneratorInitialValue;
+
+    /// Sets the second word of each fragment when the data generator is used
+    const uint32_t mGeneratorInitialWord;
+
+    /// Random seed parameter in case the data generator is set to produce random data
+    const int mGeneratorSeed;
+
+    /// Length of data written to each page
+    const size_t mGeneratorDataSize; // removed: we just use mPageSize
+
+    /// Some timing parameter used during communications with the card
+    long long int mLoopPerUsec = 0;
+
+    /// Some timing parameters used during communications with the card
+    double mPciLoopPerUsec = 0;
+
+    /// Not sure
+    int mRorcRevision = 0;
+
+    /// Not sure
+    int mSiuVersion = 0;
+
+    /// Not sure
+    int mDiuVersion = 0;
 };
 
 } // namespace Rorc

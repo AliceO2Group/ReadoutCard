@@ -136,7 +136,7 @@ class ProgramDmaBench: public Program
     {
       Options::addOptionChannel(options);
       Options::addOptionCardId(options);
-//      Options::addOptionsChannelParameters(options);
+      Options::addOptionsChannelParameters(options);
       options.add_options()
           ("reset",
               po::bool_switch(&mOptions.resetChannel),

@@ -28,7 +28,6 @@ set(RORC_LIB_SOURCES
   Factory/ChannelUtilityFactory.cxx
   ChannelBase.cxx
   ChannelMasterBase.cxx
-  ChannelParameters.cxx
   ChannelPaths.cxx
   Dummy/DummyChannelMaster.cxx
   Dummy/DummyChannelSlave.cxx

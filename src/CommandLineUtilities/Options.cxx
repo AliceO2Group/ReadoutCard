@@ -66,8 +66,7 @@ static Option<std::string> resetLevel("reset", "Reset level [NOTHING, RORC, RORC
 // Options for ChannelParameters
 static Option<size_t> cpDmaPageSize("cp-dma-pagesize", "RORC page size in kibibytes", true, 8);
 static Option<bool> cpGenEnable("cp-gen-enable", "Enable data generator", true, true);
-static Option<std::string> cpGenLoopback("cp-gen-loopb",
-    "Loopback mode [NONE, RORC, DIU, SIU]", true, "RORC");
+static Option<std::string> cpGenLoopback("cp-gen-loopb", "Loopback mode [NONE, RORC, DIU, SIU]", true, "RORC");
 
 }
 
@@ -295,39 +294,30 @@ void addOptionsChannelParameters(po::options_description& optionsDescription)
   addOption(option::cpGenLoopback, optionsDescription);
 }
 
-ChannelParameters getOptionsChannelParameters(const boost::program_options::variables_map& variablesMap)
+Parameters getOptionsParameterMap(const boost::program_options::variables_map& variablesMap)
 {
-  ChannelParameters cp;
+  Parameters parameters;
 
   if (auto pageSizeKiB = getOptionOptional<size_t>(option::cpDmaPageSize, variablesMap)) {
-    cp.dma.pageSize = pageSizeKiB.get() * 1024l;
+    parameters.setDmaPageSize(pageSizeKiB.get() * 1024l);
   }
 
   if (auto useGenerator = getOptionOptional<bool>(option::cpGenEnable, variablesMap)) {
-    cp.generator.useDataGenerator = useGenerator.get();
+    parameters.setGeneratorEnabled(useGenerator.get());
   }
 
   if (auto loopbackString = getOptionOptional<std::string>(option::cpGenLoopback, variablesMap)) {
     if (!loopbackString.get().empty()) {
       try {
-        auto loopback = LoopbackMode::fromString(loopbackString.get());
-        cp.generator.loopbackMode = loopback;
+        parameters.setGeneratorLoopback(LoopbackMode::fromString(loopbackString.get()));
       } catch (const std::out_of_range& e) {
         BOOST_THROW_EXCEPTION(InvalidOptionValueException()
             << ErrorInfo::Message("Invalid value for option '" + option::cpGenLoopback.swtch + "'"));
       }
     }
   }
-  return cp;
-}
 
-Parameters getOptionsParameterMap(const boost::program_options::variables_map& variablesMap)
-{
-  auto cp = getOptionsChannelParameters(variablesMap);
-  return Parameters()
-      .setDmaPageSize(cp.dma.pageSize)
-      .setGeneratorEnabled(cp.generator.useDataGenerator)
-      .setGeneratorLoopback(cp.generator.loopbackMode);
+  return parameters;
 }
 
 } // namespace Options

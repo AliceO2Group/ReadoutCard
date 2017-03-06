@@ -74,6 +74,7 @@ namespace {
     return getParamRequired<_param_name##Type>(mMap, _key_string);\
   }\
 
+_PARAMETER_FUNCTIONS(BufferParameters, "buffer_parameters")
 _PARAMETER_FUNCTIONS(CardId, "card_id")
 _PARAMETER_FUNCTIONS(ChannelNumber, "channel_number")
 _PARAMETER_FUNCTIONS(DmaBufferSize, "dma_buffer_size")
@@ -81,7 +82,8 @@ _PARAMETER_FUNCTIONS(DmaPageSize, "dma_page_size")
 _PARAMETER_FUNCTIONS(GeneratorEnabled, "generator_enabled")
 _PARAMETER_FUNCTIONS(GeneratorLoopback, "generator_loopback")
 _PARAMETER_FUNCTIONS(GeneratorDataSize, "generator_data_size")
-_PARAMETER_FUNCTIONS(BufferParameters, "buffer_parameters")
+_PARAMETER_FUNCTIONS(GeneratorPattern, "generator_pattern")
+
 
 #undef _PARAMETER_FUNCTIONS
 

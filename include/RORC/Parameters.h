@@ -10,9 +10,10 @@
 #include <string>
 #include <boost/optional.hpp>
 #include <boost/variant.hpp>
+#include "RORC/BufferParameters.h"
+#include "RORC/GeneratorPattern.h"
 #include "RORC/LoopbackMode.h"
 #include "RORC/PciAddress.h"
-#include "RORC/BufferParameters.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -37,20 +38,23 @@ class Parameters
     /// Type for the ChannelNumber parameter
     using ChannelNumberType = int32_t;
 
-    /// Type for the ChannelNumber parameter
+    /// Type for the DMA buffer isze parameter
     using DmaBufferSizeType = size_t;
 
-    /// Type for the ChannelNumber parameter
+    /// Type for the DMA page size parameter
     using DmaPageSizeType = size_t;
 
-    /// Type for the ChannelNumber parameter
+    /// Type for the generator enabled parameter
     using GeneratorEnabledType = bool;
 
-    /// Type for the ChannelNumber parameter
+    /// Type for the generator data size parameter
     using GeneratorDataSizeType = size_t;
 
-    /// Type for the ChannelNumber parameter
+    /// Type for the LoopbackMode parameter
     using GeneratorLoopbackType = LoopbackMode::type;
+
+    /// Type for the generator pattern parameter
+    using GeneratorPatternType = GeneratorPattern::type;
 
     // Setters
 
@@ -89,6 +93,11 @@ class Parameters
     /// \return Reference to this object for chaining calls
     auto setGeneratorLoopback(GeneratorLoopbackType value) -> Parameters&;
 
+    /// Sets the GeneratorPattern parameter
+    /// \param value The value to set
+    /// \return Reference to this object for chaining calls
+    auto setGeneratorPattern(GeneratorPatternType value) -> Parameters&;
+
     /// Sets the BufferParameters parameter
     /// \param value The value to set
     /// \return Reference to this object for chaining calls
@@ -123,6 +132,10 @@ class Parameters
     /// Gets the GeneratorLoopback parameter
     /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
     auto getGeneratorLoopback() const -> boost::optional<GeneratorLoopbackType>;
+
+    /// Gets the GeneratorPattern parameter
+    /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+    auto getGeneratorPattern() const -> boost::optional<GeneratorPatternType>;
 
     /// Gets the BufferParameters parameter
     /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
@@ -165,6 +178,11 @@ class Parameters
     /// \return The value
     auto getGeneratorLoopbackRequired() const -> GeneratorLoopbackType;
 
+    /// Gets the GeneratorPattern parameter
+    /// \exception ParameterException The parameter was not present
+    /// \return The value
+    auto getGeneratorPatternRequired() const -> GeneratorPatternType;
+
     /// Gets the BufferParameters parameter
     /// \exception ParameterException The parameter was not present
     /// \return The value
@@ -181,7 +199,8 @@ class Parameters
 
   private:
     /// Variant used for internal storage of parameters
-    using Variant = boost::variant<size_t, int32_t, bool, LoopbackMode::type, CardIdType, BufferParametersType>;
+    using Variant = boost::variant<size_t, int32_t, bool, BufferParametersType, CardIdType, GeneratorLoopbackType,
+        GeneratorPatternType>;
 
     /// Map used for internal storage of parameters
     using Map = std::map<std::string, Variant>;

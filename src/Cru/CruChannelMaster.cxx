@@ -43,13 +43,33 @@ constexpr uint64_t DMA_ALIGNMENT = 32;
 
 } // Anonymous namespace
 
-CruChannelMaster::CruChannelMaster(const Parameters& params)
-    : ChannelMasterPdaBase(CARD_TYPE, params, allowedChannels(), sizeof(CruFifoTable))
+CruChannelMaster::CruChannelMaster(const Parameters& parameters)
+    : ChannelMasterPdaBase(CARD_TYPE, parameters, allowedChannels(), sizeof(CruFifoTable)), //
+      mInitialResetLevel(ResetLevel::Rorc), // It's good to reset at least the card channel in general
+      mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Rorc)), // Internal loopback by default
+      mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)), // Use data generator by default
+      mGeneratorPattern(parameters.getGeneratorPattern().get_value_or(GeneratorPattern::Incremental)), //
+      mGeneratorMaximumEvents(0), // Infinite events
+      mGeneratorInitialValue(0), // Start from 0
+      mGeneratorInitialWord(0), // First word
+      mGeneratorSeed(0), // Presumably for random patterns, incremental doesn't really need it
+      mGeneratorDataSize(parameters.getGeneratorDataSize().get_value_or(DMA_PAGE_SIZE)) // Can use page size
 {
-  if (getChannelParameters().dma.pageSize != DMA_PAGE_SIZE) {
-    BOOST_THROW_EXCEPTION(CruException()
-        << ErrorInfo::Message("CRU only supports an 8kB page size")
-        << ErrorInfo::DmaPageSize(getChannelParameters().dma.pageSize));
+  /// TODO XXX TODO initialize configuration params
+
+  if (auto pageSize = parameters.getDmaPageSize()) {
+    if (pageSize.get() != DMA_PAGE_SIZE) {
+      BOOST_THROW_EXCEPTION(CruException()
+          << ErrorInfo::Message("CRU only supports an 8kB page size")
+          << ErrorInfo::DmaPageSize(pageSize.get()));
+    }
+  }
+
+  if (auto enabled = parameters.getGeneratorEnabled()) {
+    if (enabled.get() == false) {
+      BOOST_THROW_EXCEPTION(CruException()
+          << ErrorInfo::Message("CRU does not yet support non-datagenerator operation"));
+    }
   }
 
   initFifo();
@@ -138,8 +158,8 @@ void CruChannelMaster::resetCru()
 void CruChannelMaster::initCru()
 {
   // Set data generator pattern
-  if (getChannelParameters().generator.useDataGenerator) {
-    getBar().setDataGeneratorPattern(getChannelParameters().generator.pattern);
+  if (mGeneratorEnabled) {
+    getBar().setDataGeneratorPattern(mGeneratorPattern);
   }
 
   // Status base address in the bus address space
@@ -249,7 +269,7 @@ void CruChannelMaster::pushSuperpage(size_t offset, size_t size)
   entry.busAddress = getBusOffsetAddress(offset + getBufferProvider().getDmaOffset());
   entry.pushedPages = 0;
   entry.status.confirmedPages = 0;
-  entry.status.maxPages = size / getChannelParameters().dma.pageSize;
+  entry.status.maxPages = size / DMA_PAGE_SIZE;
   entry.status.offset = offset;
 
   mSuperpageQueue.addToQueue(entry);
@@ -348,7 +368,7 @@ void CruChannelMaster::pushIntoSuperpage(SuperpageQueueEntry& superpage)
 volatile void* CruChannelMaster::getNextSuperpageBusAddress(const SuperpageQueueEntry& superpage)
 {
   return reinterpret_cast<volatile void*>(reinterpret_cast<volatile char*>(superpage.busAddress)
-      + getChannelParameters().dma.pageSize * superpage.pushedPages);
+      + DMA_PAGE_SIZE * superpage.pushedPages);
 }
 
 } // namespace Rorc

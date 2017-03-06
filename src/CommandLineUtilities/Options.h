@@ -9,9 +9,10 @@
 #include <boost/exception/all.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <iostream>
-#include "RORC/Parameters.h"
 #include "RORC/Exception.h"
-#include "ChannelParameters.h"
+#include "RORC/GeneratorPattern.h"
+#include "RORC/Parameters.h"
+#include "RORC/ResetLevel.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -43,7 +44,6 @@ int getOptionSerialNumber(const boost::program_options::variables_map& variables
 ResetLevel::type getOptionResetLevel(const boost::program_options::variables_map& variablesMap);
 Parameters::CardIdType getOptionCardId(const boost::program_options::variables_map& variablesMap);
 int getOptionRegisterRange(const boost::program_options::variables_map& variablesMap);
-ChannelParameters getOptionsChannelParameters(const boost::program_options::variables_map& variablesMap);
 Parameters getOptionsParameterMap(const boost::program_options::variables_map& variablesMap);
 
 } // namespace Options

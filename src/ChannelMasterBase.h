@@ -10,7 +10,6 @@
 #include <mutex>
 #include <boost/scoped_ptr.hpp>
 #include "ChannelBase.h"
-#include "ChannelParameters.h"
 #include "ChannelPaths.h"
 #include "ChannelUtilityInterface.h"
 #include "InterprocessLock.h"
@@ -159,11 +158,6 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, publ
       return mMutex;
     }
 
-    const ChannelParameters& getChannelParameters() const
-    {
-      return mChannelParameters;
-    }
-
     int getChannelNumber() const
     {
       return mChannelNumber;
@@ -241,11 +235,8 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, publ
         boost::scoped_ptr<MemoryMappedFile> mMappedFilePages;
     };
 
-    /// Convert ParameterMap to ChannelParameters
-    static ChannelParameters convertParameters(const Parameters& params);
-
     /// Validate ChannelParameters
-    static void validateParameters(const ChannelParameters& ps);
+    static void validateParameters(const Parameters& parameters);
 
     /// Check if the channel number is valid
     void checkChannelNumber(const AllowedChannels& allowedChannels);
@@ -264,9 +255,6 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, publ
 
     /// Lock that guards against both inter- and intra-process ownership
     boost::scoped_ptr<Interprocess::Lock> mInterprocessLock;
-
-    /// Parameters of this channel TODO refactor
-    ChannelParameters mChannelParameters;
 
     /// Contains addresses & size of the buffer
     std::unique_ptr<BufferProvider> mBufferProvider;

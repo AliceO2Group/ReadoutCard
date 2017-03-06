@@ -60,22 +60,14 @@ class CruChannelMaster final : public ChannelMasterPdaBase
 
   private:
 
+    /// Limits the number of superpages allowed in the queue
     static constexpr size_t MAX_SUPERPAGES = 32;
-    static constexpr size_t FIFO_QUEUE_MAX = CRU_DESCRIPTOR_ENTRIES; // Firmware FIFO Size
 
-    int mFifoBack; ///< Back index of the firmware FIFO
-    int mFifoSize; ///< Amount of elements in the firmware FIFO
-    int getFifoFront()
-    {
-      return (mFifoBack + mFifoSize) % FIFO_QUEUE_MAX;
-    };
+    /// Firmware FIFO Size
+    static constexpr size_t FIFO_QUEUE_MAX = CRU_DESCRIPTOR_ENTRIES;
 
     using SuperpageQueueType = SuperpageQueue<MAX_SUPERPAGES>;
     using SuperpageQueueEntry = SuperpageQueueType::SuperpageQueueEntry;
-    SuperpageQueueType mSuperpageQueue;
-
-    /// Acks that "should've" been issued before buffer was ready, but have to be postponed until after that
-    int mPendingAcks = 0;
 
     /// Namespace for enum describing the status of a page's arrival
     struct DataArrivalStatus
@@ -88,17 +80,13 @@ class CruChannelMaster final : public ChannelMasterPdaBase
         };
     };
 
-    /// Buffer readiness state. True means page descriptors have been filled, so the card can start transferring
-    bool mBufferReady = false;
-
-    int mInitialAcks = 0;
-
     void initFifo();
     void initCru();
     void resetCru();
     void setBufferReady();
     void setBufferNonReady();
-//    int fillFifoNonLocking(int maxFill = CRU_DESCRIPTOR_ENTRIES);
+    void pushIntoSuperpage(SuperpageQueueEntry& superpage);
+    volatile void* getNextSuperpageBusAddress(const SuperpageQueueEntry& superpage);
 
     CruBarAccessor getBar()
     {
@@ -117,8 +105,56 @@ class CruChannelMaster final : public ChannelMasterPdaBase
       return reinterpret_cast<CruFifoTable*>(getFifoAddressBus());
     }
 
-    void pushIntoSuperpage(SuperpageQueueEntry& superpage);
-    volatile void* getNextSuperpageBusAddress(const SuperpageQueueEntry& superpage);
+    /// Get front index of FIFO
+    int getFifoFront()
+    {
+      return (mFifoBack + mFifoSize) % FIFO_QUEUE_MAX;
+    };
+
+    /// Back index of the firmware FIFO
+    int mFifoBack = 0;
+
+    /// Amount of elements in the firmware FIFO
+    int mFifoSize = 0;
+
+    SuperpageQueueType mSuperpageQueue;
+
+    /// Acks that "should've" been issued before buffer was ready, but have to be postponed until after that
+    int mPendingAcks = 0;
+
+    /// Buffer readiness state. True means page descriptors have been filled, so the card can start transferring
+    bool mBufferReady = false;
+
+    int mInitialAcks = 0;
+
+    // These variables are configuration parameters
+
+    /// Reset level on initialization of channel
+    ResetLevel::type mInitialResetLevel;
+
+    /// Gives the type of loopback
+    LoopbackMode::type mLoopbackMode;
+
+    /// Enables the data generator
+    bool mGeneratorEnabled;
+
+    /// Data pattern for the data generator
+    GeneratorPattern::type mGeneratorPattern;
+
+    /// Maximum number of events
+    int mGeneratorMaximumEvents;
+
+    /// Initial value of the first data in a data block
+    uint32_t mGeneratorInitialValue;
+
+    /// Sets the second word of each fragment when the data generator is used
+    uint32_t mGeneratorInitialWord;
+
+    /// Random seed parameter in case the data generator is set to produce random data
+    int mGeneratorSeed;
+
+    /// Length of data written to each page
+    size_t mGeneratorDataSize;
 };
 
 } // namespace Rorc
