@@ -162,7 +162,7 @@ class ProgramDmaBench: public Program
           ("no-resync",
               po::bool_switch(&mOptions.noResyncCounter),
               "Disable counter resync")
-          ("pagereset",
+          ("page-reset",
               po::bool_switch(&mOptions.pageReset),
               "Reset page to default values after readout (slow)")
           ("bar-hammer",
@@ -259,9 +259,15 @@ class ProgramDmaBench: public Program
 
     void dmaLoop()
     {
+      auto indexToOffset = [&](int i){ return i * SUPERPAGE_SIZE; };
+      auto offsetToIndex = [&](size_t o){ return o / SUPERPAGE_SIZE; };
+
       const int maxSuperpages = mBufferParameters.dmaSize / SUPERPAGE_SIZE;
-      int currentSuperpages = 0;
-      int currentSuperpageIndex = 0;
+
+      boost::circular_buffer<size_t> freeQueue { maxSuperpages };
+      for (int i = 0; i < maxSuperpages; ++i) {
+        freeQueue.push_back(indexToOffset(i));
+      }
 
       struct SuperpageReadoutStatus
       {
@@ -281,40 +287,29 @@ class ProgramDmaBench: public Program
         // Note: these low priority tasks are not run on every cycle, to reduce overhead
         lowPriorityTasks();
 
-        {
-          int superpagesToPush = std::min(maxSuperpages - currentSuperpages, mChannel->getSuperpageQueueAvailable());
-          for (int i = 0; i < superpagesToPush; ++i) {
-            int offset = currentSuperpageIndex * SUPERPAGE_SIZE;
-            int size = SUPERPAGE_SIZE;
-//            cout << "### DMABENCH pushing superpage " << currentSuperpageIndex << " offset=" << offset << endl;
-            mChannel->pushSuperpage(offset, size);
-            currentSuperpageIndex = (currentSuperpageIndex + 1) % maxSuperpages;
-            currentSuperpages++;
-          }
-        }
-
-        // Check for full superpages
-        {
-          auto status = mChannel->getSuperpageStatus();
-          if (status.isFilled()) {
-  //            cout << "Moving superpage to readout queue " << endl;
-            if (!readoutQueue.full()) {
-              readoutQueue.push_back({status, 0});
-              mChannel->popSuperpage();
-              currentSuperpages--;
-            } else {
-  //            cout << "Readout is stalling!\n";
-            }
-          }
-        }
-
         // Keep the readout queue filled
         mChannel->fillSuperpages();
 
-        // Readout superpage TODO do this in a separate thread
+        // Give free superpages to the driver
+        while (!freeQueue.empty() && (mChannel->getSuperpageQueueAvailable() != 0)) {
+          auto offset = freeQueue.front();
+          freeQueue.pop_front();
+          mChannel->pushSuperpage(offset, SUPERPAGE_SIZE);
+        }
+
+        // Check for filled superpages
+        if (mChannel->getSuperpageQueueCount() > 0) {
+          auto status = mChannel->getSuperpageStatus();
+          if (status.isFilled() && !readoutQueue.full()) {
+            // Move full superpage to readout queue
+            readoutQueue.push_back({status, 0});
+            mChannel->popSuperpage();
+          }
+        }
+
+        // Read out filled superpages
         if (!readoutQueue.empty()) {
           auto& superpage = readoutQueue.front();
-//          cout << "Reading out page " << superpage.pagesReadOut << endl;
           constexpr int MAX_PAGES_PER_CYCLE = 1;
           for (int i = 0; i < MAX_PAGES_PER_CYCLE; ++i) {
             if (superpage.pagesReadOut == superpage.superpage.maxPages) {
@@ -326,8 +321,10 @@ class ProgramDmaBench: public Program
           }
 
           if (superpage.pagesReadOut == superpage.superpage.maxPages) {
-//            cout << "Popping superpage from readout queue" << endl;
+            // Move superpage from readout queue back to free queue
             readoutQueue.pop_front();
+            assert(!freeQueue.full());
+            freeQueue.push_back(superpage.superpage.offset);
           }
         }
       }
