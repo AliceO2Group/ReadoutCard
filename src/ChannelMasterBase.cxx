@@ -5,6 +5,8 @@
 
 #include "ChannelMasterBase.h"
 #include <iostream>
+#include "BufferProviderFile.h"
+#include "BufferProviderMemory.h"
 #include "ChannelPaths.h"
 #include "Utilities/SmartPointer.h"
 #include "Utilities/System.h"
@@ -17,11 +19,6 @@ namespace b = boost;
 namespace bfs = boost::filesystem;
 
 namespace {
-
-namespace FilesystemType {
-const char* SHARED_MEMORY = "tmpfs";
-const char* HUGEPAGE = "hugetlbfs";
-}
 
 /// Throws if the file system type of the given file/directory is not one of the given valid types
 void assertFileSystemType(const bfs::path& path, const std::set<std::string>& validTypes, const std::string& name)
@@ -53,22 +50,15 @@ void assertFileSystemType(const bfs::path& path, const std::set<std::string>& va
 void ChannelMasterBase::checkChannelNumber(const AllowedChannels& allowedChannels)
 {
   if (!allowedChannels.count(mChannelNumber)) {
-    BOOST_THROW_EXCEPTION(InvalidParameterException()
-        << ErrorInfo::Message("Channel number not supported")
+    std::ostringstream stream;
+    stream << "Channel number not supported, must be one of: ";
+    for (int c : allowedChannels) {
+      stream << c << ' ';
+    }
+    BOOST_THROW_EXCEPTION(InvalidParameterException() << ErrorInfo::Message(stream.str())
         << ErrorInfo::ChannelNumber(mChannelNumber));
   }
 }
-
-//ChannelParameters ChannelMasterBase::convertParameters(const Parameters& map)
-//{
-//  ChannelParameters cp;
-////  cp.dma.bufferSize = map.getDmaBufferSize().get_value_or(4*1024*1024);
-//  cp.dma.pageSize = map.getDmaPageSize().get_value_or(8*1024);
-//  cp.generator.useDataGenerator = map.getGeneratorEnabled().get_value_or(true);
-//  cp.generator.dataSize = map.getGeneratorDataSize().get_value_or(cp.dma.pageSize);
-//  cp.generator.loopbackMode = map.getGeneratorLoopback().get_value_or(LoopbackMode::Rorc);
-//  return cp;
-//}
 
 void ChannelMasterBase::validateParameters(const Parameters& p)
 {
@@ -103,15 +93,15 @@ ChannelMasterBase::ChannelMasterBase(CardType::type cardType, const Parameters& 
 
   // Create parent directories
   auto paths = getPaths();
-  for (const auto& p : {paths.pages(), paths.state(), paths.fifo(), paths.lock()}) {
+  for (const auto& p : {paths.state(), paths.fifo(), paths.lock()}) {
     makeParentDirectories(p);
   }
 
   // Check file system types
   {
-    using namespace FilesystemType;
+    auto SHARED_MEMORY = "tmpfs";
+    auto HUGEPAGE = "hugetlbfs";
     assertFileSystemType(paths.state().parent_path(), {SHARED_MEMORY, HUGEPAGE}, "shared state");
-    assertFileSystemType(paths.pages().parent_path(), {HUGEPAGE}, "DMA buffer");
   }
 
   // Get lock

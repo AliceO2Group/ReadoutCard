@@ -98,7 +98,6 @@ class ProgramCleanup: public Program
           ChannelPaths channelPaths(rorcDevice.getCardType(), rorcDevice.getSerialNumber(), channelNumber);
           files.push_back(channelPaths.fifo().string());
           files.push_back(channelPaths.lock().string());
-          files.push_back(channelPaths.pages().string());
           files.push_back(channelPaths.state().string());
           namedMutexes.push_back(channelPaths.namedMutex());
         } else {

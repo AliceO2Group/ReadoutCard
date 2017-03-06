@@ -21,11 +21,6 @@ ChannelPaths::ChannelPaths(CardType::type cardType, int serial, int channel)
 {
 }
 
-bfs::path ChannelPaths::pages() const
-{
-  return b::str(b::format(FORMAT) % DIR_HUGEPAGES % CardType::toString(mCardType) % mSerial % mChannel % "pages");
-}
-
 bfs::path ChannelPaths::state() const
 {
   return b::str(b::format(FORMAT) % DIR_SHAREDMEM % CardType::toString(mCardType) % mSerial % mChannel % "state");

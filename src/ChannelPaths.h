@@ -22,10 +22,6 @@ class ChannelPaths
     /// \param channel Channel of the card
     ChannelPaths(CardType::type cardType, int serial, int channel);
 
-    /// Generates a path for the shared memory DMA buffer for the pages to be pushed into
-    /// \return The path
-    boost::filesystem::path pages() const;
-
     /// Generates a path for the channel's shared memory state object
     /// \return The path
     boost::filesystem::path state() const;

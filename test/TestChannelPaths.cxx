@@ -18,6 +18,5 @@ BOOST_AUTO_TEST_CASE(ChannelPathsTest)
   BOOST_CHECK_NO_THROW(paths.fifo());
   BOOST_CHECK_NO_THROW(paths.lock());
   BOOST_CHECK_NO_THROW(paths.namedMutex());
-  BOOST_CHECK_NO_THROW(paths.pages());
   BOOST_CHECK_NO_THROW(paths.state());
 }

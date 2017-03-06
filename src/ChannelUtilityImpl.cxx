@@ -67,7 +67,6 @@ void registerReadWriteCheck(RegisterReadWriteInterface* channel, std::ostream& o
 void rorcCleanupState(const ChannelPaths& paths)
 {
   using boost::filesystem::remove;
-  remove(paths.pages().c_str());
   remove(paths.state().c_str());
   remove(paths.fifo().c_str());
   remove(paths.lock().c_str());
