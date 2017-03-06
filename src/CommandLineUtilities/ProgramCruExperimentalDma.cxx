@@ -527,8 +527,8 @@ class ProgramCruExperimentalDma: public Program
       Utilities::resetSmartPtr(mRorcDevice, mOptions.cardId);
       Utilities::resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), mChannelNumber);
       Utilities::resetSmartPtr(mMappedFilePages, DMA_BUFFER_PAGES_PATH.c_str(), DMA_BUFFER_PAGES_SIZE);
-      Utilities::resetSmartPtr(mBufferPages, mRorcDevice->getPciDevice(), mMappedFilePages->getAddress(),
-          mMappedFilePages->getSize(), BUFFER_INDEX_PAGES);
+      Utilities::resetSmartPtr(mBufferPages, mRorcDevice->getPciDevice(),
+          reinterpret_cast<uintptr_t>(mMappedFilePages->getAddress()), mMappedFilePages->getSize(), BUFFER_INDEX_PAGES);
     }
 
     /// Initializes the FIFO and the page addresses for it
@@ -540,8 +540,8 @@ class ProgramCruExperimentalDma: public Program
       PageAddress fifoAddress;
       std::tie(fifoAddress, mPageAddresses) = Pda::partitionScatterGatherList(mBufferPages->getScatterGatherList(),
           fifoSpace, DMA_PAGE_SIZE);
-      mFifoAddress.user = reinterpret_cast<CruFifoTable*>(const_cast<void*>(fifoAddress.user));
-      mFifoAddress.bus = reinterpret_cast<CruFifoTable*>(const_cast<void*>(fifoAddress.bus));
+      mFifoAddress.user = reinterpret_cast<CruFifoTable*>(fifoAddress.user);
+      mFifoAddress.bus = reinterpret_cast<CruFifoTable*>(fifoAddress.bus);
 
       if (mPageAddresses.size() <= NUM_PAGES) {
         BOOST_THROW_EXCEPTION(CrorcException()
@@ -591,8 +591,8 @@ class ProgramCruExperimentalDma: public Program
 
     void setDescriptor(int pageIndex, int descriptorIndex)
     {
-      auto& pageAddress = mPageAddresses.at(pageIndex);
-      auto sourceAddress = reinterpret_cast<volatile void*>((descriptorIndex % NUM_OF_BUFFERS) * DMA_PAGE_SIZE);
+      auto pageAddress = mPageAddresses.at(pageIndex);
+      uintptr_t sourceAddress = (descriptorIndex % NUM_OF_BUFFERS) * DMA_PAGE_SIZE;
       mFifoAddress.user->setDescriptor(descriptorIndex, DMA_PAGE_SIZE_32, sourceAddress, pageAddress.bus);
     }
 
@@ -984,7 +984,7 @@ class ProgramCruExperimentalDma: public Program
       }
     }
 
-    void resetPage(volatile void* page)
+    void resetPage(uintptr_t page)
     {
       resetPage(reinterpret_cast<volatile uint32_t*>(page));
     }

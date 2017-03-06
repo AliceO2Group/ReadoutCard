@@ -17,14 +17,30 @@ class BufferProviderMemory : public BufferProvider
   public:
     BufferProviderMemory(const BufferParameters::Memory& parameters)
     {
-      bufferStartAddress = parameters.bufferStart;
+      bufferStartAddress = reinterpret_cast<uintptr_t>(parameters.bufferStart);
       bufferSize = parameters.bufferSize;
-      reservedOffset = Utilities::pointerDiff(parameters.reservedStart, parameters.bufferStart);
-      reservedStartAddress = parameters.reservedStart;
+
+      reservedStartAddress = reinterpret_cast<uintptr_t>(parameters.reservedStart);
       reservedSize = parameters.reservedSize;
-      dmaOffset = Utilities::pointerDiff(parameters.dmaStart, parameters.bufferStart);
-      dmaStartAddress = parameters.dmaStart;
+      if (reservedStartAddress < bufferStartAddress) {
+        BOOST_THROW_EXCEPTION(Exception()
+            << ErrorInfo::Message("BufferParameters::Memory reservedStart < bufferStart"));
+      }
+      reservedOffset = reservedStartAddress - bufferStartAddress;
+      if ((reservedStartAddress + reservedSize) > (bufferStartAddress + bufferSize)) {
+        BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Reserved region out of range"));
+      }
+
+      dmaStartAddress = reinterpret_cast<uintptr_t>(parameters.dmaStart);
       dmaSize = parameters.dmaSize;
+      if (dmaStartAddress < bufferStartAddress) {
+        BOOST_THROW_EXCEPTION(Exception()
+            << ErrorInfo::Message("BufferParameters::Memory dmaStart < bufferStart"));
+      }
+      dmaOffset = dmaStartAddress - bufferStartAddress;
+      if ((dmaStartAddress + reservedSize) > (bufferStartAddress + bufferSize)) {
+        BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("DMA region out of range"));
+      }
     }
 
     virtual ~BufferProviderMemory()

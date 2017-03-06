@@ -16,7 +16,7 @@ class BufferProvider
     {
     }
 
-    void* getBufferStartAddress() const
+    uintptr_t getBufferStartAddress() const
     {
       return reservedStartAddress;
     }
@@ -31,7 +31,7 @@ class BufferProvider
       return reservedOffset;
     }
 
-    void* getReservedStartAddress() const
+    uintptr_t getReservedStartAddress() const
     {
       return reservedStartAddress;
     }
@@ -46,7 +46,7 @@ class BufferProvider
       return dmaOffset;
     }
 
-    void* getDmaStartAddress() const
+    uintptr_t getDmaStartAddress() const
     {
       return dmaStartAddress;
     }
@@ -57,12 +57,12 @@ class BufferProvider
     }
 
   protected:
-    void* bufferStartAddress;
+    uintptr_t bufferStartAddress;
     size_t bufferSize;
-    void* reservedStartAddress;
+    uintptr_t reservedStartAddress;
     size_t reservedSize;
     size_t reservedOffset;
-    void* dmaStartAddress;
+    uintptr_t dmaStartAddress;
     size_t dmaSize;
     size_t dmaOffset;
 };

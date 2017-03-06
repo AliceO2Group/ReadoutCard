@@ -23,15 +23,16 @@ class PdaDmaBuffer
     /// \param userBufferAddress Address of the user-allocated buffer
     /// \param userBufferSize Size of the user-allocated buffer
     /// \param dmaBufferId Unique ID to use for registering the buffer (uniqueness must be channel-wide, probably)
-    PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAddress, size_t userBufferSize, int dmaBufferId);
+    PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, uintptr_t userBufferAddress, size_t userBufferSize,
+        int dmaBufferId);
     ~PdaDmaBuffer();
 
     struct ScatterGatherEntry
     {
       size_t size;
-      void* addressUser;
-      void* addressBus;
-      void* addressKernel;
+      uintptr_t addressUser;
+      uintptr_t addressBus;
+      uintptr_t addressKernel;
     };
     using ScatterGatherVector = std::vector<ScatterGatherEntry>;
 

@@ -49,7 +49,7 @@ ChannelMasterPdaBase::ChannelMasterPdaBase(CardType::type cardType, const Parame
       getBufferProvider().getBufferSize(), getChannelNumber());
 
   mFifoAddressUser = getBufferProvider().getReservedStartAddress();
-  mFifoAddressBus = const_cast<void*>(getBusOffsetAddress(getBufferProvider().getReservedOffset()));
+  mFifoAddressBus = getBusOffsetAddress(getBufferProvider().getReservedOffset());
 }
 
 ChannelMasterPdaBase::~ChannelMasterPdaBase()
@@ -113,16 +113,16 @@ void ChannelMasterPdaBase::writeRegister(int index, uint32_t value)
   mPdaBar->setRegister<uint32_t>(index * sizeof(uint32_t), value);
 }
 
-volatile void* ChannelMasterPdaBase::getBusOffsetAddress(size_t offset)
+uintptr_t ChannelMasterPdaBase::getBusOffsetAddress(size_t offset)
 {
   const auto& list = getPdaDmaBuffer().getScatterGatherList();
 
-  auto userBase = reinterpret_cast<intptr_t>(list.at(0).addressUser);
+  auto userBase = list.at(0).addressUser;
   auto userWithOffset = userBase + offset;
 
   // First we find the SGL entry that contains our address
   for (int i = 0; i < list.size(); ++i) {
-    auto entryUserStartAddress = reinterpret_cast<intptr_t>(list[i].addressUser);
+    auto entryUserStartAddress = list[i].addressUser;
     auto entryUserEndAddress = entryUserStartAddress + list[i].size;
 
     if ((userWithOffset >= entryUserStartAddress) && (userWithOffset < entryUserEndAddress)) {
@@ -130,7 +130,7 @@ volatile void* ChannelMasterPdaBase::getBusOffsetAddress(size_t offset)
       // We now need to calculate the difference from the start of this entry to the given offset. We make use of the
       // fact that the userspace addresses will be contiguous
       auto entryOffset = userWithOffset - entryUserStartAddress;
-      auto offsetBusAddress = Utilities::offsetBytes(list[i].addressBus, entryOffset);
+      auto offsetBusAddress = list[i].addressBus + entryOffset;
       return offsetBusAddress;
     }
   }

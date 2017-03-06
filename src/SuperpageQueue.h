@@ -24,7 +24,7 @@ class SuperpageQueue {
     struct SuperpageQueueEntry
     {
         SuperpageStatus status;
-        volatile void* busAddress;
+        uintptr_t busAddress;
         int pushedPages; ///< Amount of pages that have been pushed (not necessarily arrived)
     };
 

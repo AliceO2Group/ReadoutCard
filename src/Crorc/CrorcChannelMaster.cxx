@@ -54,18 +54,7 @@ CrorcChannelMaster::CrorcChannelMaster(const Parameters& parameters)
       mGeneratorSeed(0), // Presumably for random patterns, incremental doesn't really need it
       mGeneratorDataSize(parameters.getGeneratorDataSize().get_value_or(mPageSize)) // Can use page size
 {
-//  auto& params = getChannelParameters();
-
   getFifoUser()->reset();
-
-  // TODO reimplement check
-//  if (getPageAddresses().size() <= READYFIFO_ENTRIES) {
-//    BOOST_THROW_EXCEPTION(CrorcException()
-//        << ErrorInfo::Message("Insufficient amount of pages fit in DMA buffer")
-//        << ErrorInfo::Pages(getPageAddresses().size())
-//        << ErrorInfo::DmaBufferSize(params.dma.bufferSize)
-//        << ErrorInfo::DmaPageSize(params.dma.pageSize));
-//  }
 }
 
 auto CrorcChannelMaster::allowedChannels() -> AllowedChannels {
@@ -154,18 +143,12 @@ void CrorcChannelMaster::startPendingDma(SuperpageQueueEntry& entry)
   log("DMA started");
 }
 
-int rorcStopDataGenerator(volatile uint32_t* buff)
-{
-  rorcWriteReg(buff, C_CSR, DRORC_CMD_STOP_DG);
-  return RORC_STATUS_OK;
-}
-
 void CrorcChannelMaster::deviceStopDma()
 {
   if (mGeneratorEnabled) {
     // Starting the data generator
     startDataGenerator();
-    rorcStopDataGenerator(getBarUserspace());
+    crorcStopDataGenerator();
     rorcStopDataReceiver(getBarUserspace());
   } else {
     if (!mNoRDYRX) {
@@ -252,21 +235,6 @@ void CrorcChannelMaster::startDataReceiving()
   std::this_thread::sleep_for(10ms); /// XXX Give card some time to reset the FreeFIFO
   crorcCheckFreeFifoEmpty();
   crorcStartDataReceiver();
-}
-
-void CrorcChannelMaster::initializeFreeFifo()
-{
-  // Pushing a given number of pages to the firmware FIFO.
-
-  // TODO Now we switched to user-provided buffer, we must somehow find a place to store the initial pages
-  // Probably should delay this until we get superpages?
-  // For now, we use start of DMA buffer...
-  volatile void* junkAddress = getBusOffsetAddress(getBufferProvider().getDmaOffset());
-
-  for(int i = 0; i < READYFIFO_ENTRIES; ++i){
-    getFifoUser()->entries[i].reset();
-    pushFreeFifoPage(i, junkAddress);
-  }
 }
 
 int CrorcChannelMaster::getSuperpageQueueCount()
@@ -384,19 +352,18 @@ void CrorcChannelMaster::pushIntoSuperpage(SuperpageQueueEntry& superpage)
   superpage.pushedPages++;
 }
 
-volatile void* CrorcChannelMaster::getNextSuperpageBusAddress(const SuperpageQueueEntry& superpage)
+uintptr_t CrorcChannelMaster::getNextSuperpageBusAddress(const SuperpageQueueEntry& superpage)
 {
   auto pageSize = mPageSize;
   auto offset = pageSize * superpage.pushedPages;
-  volatile void* pageBusAddress = reinterpret_cast<volatile void*>(
-      reinterpret_cast<volatile char*>(superpage.busAddress) + offset);
+  uintptr_t pageBusAddress = superpage.busAddress + offset;
   return pageBusAddress;
 }
 
-void CrorcChannelMaster::pushFreeFifoPage(int readyFifoIndex, volatile void* pageBusAddress)
+void CrorcChannelMaster::pushFreeFifoPage(int readyFifoIndex, uintptr_t pageBusAddress)
 {
   size_t pageWords = mPageSize / 4; // Size in 32-bit words
-  rorcPushRxFreeFifo(getBarUserspace(), reinterpret_cast<uint64_t>(pageBusAddress), pageWords, readyFifoIndex);
+  rorcPushRxFreeFifo(getBarUserspace(), pageBusAddress, pageWords, readyFifoIndex);
 }
 
 CrorcChannelMaster::DataArrivalStatus::type CrorcChannelMaster::dataArrived(int index)
@@ -443,6 +410,16 @@ void CrorcChannelMaster::crorcArmDataGenerator()
       ADD_ERRINFO(returnCode, "Failed to arm data generator")
       << ErrorInfo::GeneratorPattern(mGeneratorPattern)
       << ErrorInfo::GeneratorEventLength(mGeneratorDataSize / 4));
+}
+
+void CrorcChannelMaster::crorcStopDataGenerator()
+{
+  rorcWriteReg(getBarUserspace(), C_CSR, DRORC_CMD_STOP_DG);
+}
+
+void CrorcChannelMaster::crorcStopDataReceiver()
+{
+  rorcStopDataReceiver(getBarUserspace());
 }
 
 void CrorcChannelMaster::crorcArmDdl(int resetMask)
@@ -500,8 +477,7 @@ void CrorcChannelMaster::crorcCheckFreeFifoEmpty()
 
 void CrorcChannelMaster::crorcStartDataReceiver()
 {
-  auto busAddress = reinterpret_cast<unsigned long>(getFifoBus());
-  rorcStartDataReceiver(getBarUserspace(), busAddress, mRorcRevision);
+  rorcStartDataReceiver(getBarUserspace(), getFifoAddressBus(), mRorcRevision);
 }
 
 void CrorcChannelMaster::crorcSetSiuLoopback()

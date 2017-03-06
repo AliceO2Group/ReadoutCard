@@ -11,13 +11,13 @@ namespace AliceO2 {
 namespace Rorc {
 namespace Pda {
 
-PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAddress, size_t userBufferSize,
+PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, uintptr_t userBufferAddress, size_t userBufferSize,
     int dmaBufferId) : mPciDevice(pciDevice)
 {
   try {
     // Tell PDA we're using our already allocated userspace buffer.
-    if (PciDevice_registerDMABuffer(pciDevice.get(), dmaBufferId, userBufferAddress, userBufferSize, &mDmaBuffer)
-        != PDA_SUCCESS) {
+    if (PciDevice_registerDMABuffer(pciDevice.get(), dmaBufferId, reinterpret_cast<void*>(userBufferAddress),
+        userBufferSize, &mDmaBuffer) != PDA_SUCCESS) {
       // Failed to register it. Usually, this means a DMA buffer wasn't cleaned up properly (such as after a crash).
       // So, try to clean things up.
 
@@ -37,8 +37,8 @@ PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAd
       }
 
       // Retry the registration of our new buffer
-      if (PciDevice_registerDMABuffer(pciDevice.get(), dmaBufferId, userBufferAddress, userBufferSize,
-          &mDmaBuffer) != PDA_SUCCESS) {
+      if (PciDevice_registerDMABuffer(pciDevice.get(), dmaBufferId, reinterpret_cast<void*>(userBufferAddress),
+          userBufferSize, &mDmaBuffer) != PDA_SUCCESS) {
         // Give up
         BOOST_THROW_EXCEPTION(RorcPdaException() << ErrorInfo::Message(
             "Failed to register external DMA buffer; Failed retry after automatic cleanup of previous buffer"));
@@ -60,9 +60,9 @@ PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAd
   while (node != nullptr) {
     ScatterGatherEntry e;
     e.size = node->length;
-    e.addressUser = node->u_pointer;
-    e.addressBus = node->d_pointer;
-    e.addressKernel = node->k_pointer;
+    e.addressUser = reinterpret_cast<uintptr_t>(node->u_pointer);
+    e.addressBus = reinterpret_cast<uintptr_t>(node->d_pointer);
+    e.addressKernel = reinterpret_cast<uintptr_t>(node->k_pointer);
     mScatterGatherVector.push_back(e);
     node = node->next;
   }

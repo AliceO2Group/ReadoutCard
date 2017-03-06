@@ -15,8 +15,10 @@ namespace Rorc {
 namespace Crorc {
 
 // TODO Clean up, C++ificate
-int getSerial(volatile void* barAddress)
+int getSerial(uintptr_t barAddress)
 {
+  auto bar = reinterpret_cast<volatile void*>(barAddress);
+
   // Getting the serial number of the card from the FLASH. See rorcSerial() in rorc_lib.c.
   char data[RORC_SN_LENGTH+1];
   memset(data, 'x', RORC_SN_LENGTH+1);

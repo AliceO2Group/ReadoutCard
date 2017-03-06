@@ -12,8 +12,8 @@ namespace Rorc {
 /// A simple struct that holds the userspace and bus address of a page
 struct PageAddress
 {
-    volatile void* user;
-    volatile void* bus;
+    uintptr_t user;
+    uintptr_t bus;
 };
 
 } // namespace Rorc

@@ -71,28 +71,10 @@ class PdaBar
             << ErrorInfo::BarSize(getBarLength()));
       }
 
-      return *reinterpret_cast<volatile T*>(static_cast<volatile char*>(getUserspaceAddress()) + offset);
+      return *reinterpret_cast<volatile T*>(getUserspaceAddress() + offset);
     }
 
-    /// Get a pointer to a register from the BAR
-    /// \param offset The byte offset of the register
-    template <typename T>
-    volatile T* addressAt(size_t offset) const
-    {
-      if (!isInRange<T>(offset)) {
-        BOOST_THROW_EXCEPTION(Exception()
-            << ErrorInfo::Message("BAR offset out of range")
-            << ErrorInfo::BarIndex(offset)
-            << ErrorInfo::BarSize(getBarLength()));
-      }
-
-      volatile char* baseAddress = static_cast<volatile char*>(mUserspaceAddress);
-      volatile char* offsetAddress = baseAddress + offset;
-      volatile T* typed = reinterpret_cast<volatile T*>(offsetAddress);
-      return typed;
-    }
-
-    volatile void* getUserspaceAddress() const
+    uintptr_t getUserspaceAddress() const
     {
       return mUserspaceAddress;
     }
@@ -113,7 +95,7 @@ class PdaBar
     int mBarNumber;
 
     /// Userspace addresses of the mapped BARs
-    volatile void* mUserspaceAddress;
+    uintptr_t mUserspaceAddress;
 };
 
 } // namespace Pda

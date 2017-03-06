@@ -82,7 +82,7 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
         };
     };
 
-    volatile void* getNextSuperpageBusAddress(const SuperpageQueueEntry& superpage);
+    uintptr_t getNextSuperpageBusAddress(const SuperpageQueueEntry& superpage);
 
     ReadyFifo* getFifoUser()
     {
@@ -101,19 +101,22 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
     /// \param generatorParameters The parameters for the data generator.
     void startDataGenerator();
 
-    /// Pushes the initial 128 pages to the CRORC's Free FIFO
-    void initializeFreeFifo();
-
     /// Pushes a page to the CRORC's Free FIFO
     /// \param readyFifoIndex Index of the Ready FIFO to write the page's transfer status to
     /// \param pageBusAddress Address on the bus to push the page to
-    void pushFreeFifoPage(int readyFifoIndex, volatile void* pageBusAddress);
+    void pushFreeFifoPage(int readyFifoIndex, uintptr_t pageBusAddress);
 
     /// Check if data has arrived
     DataArrivalStatus::type dataArrived(int index);
 
     /// Arms C-RORC data generator
     void crorcArmDataGenerator();
+
+    /// Stops C-RORC data generator
+    void crorcStopDataGenerator();
+
+    /// Stops C-RORC data receiver
+    void crorcStopDataReceiver();
 
     /// Arms DDL
     /// \param resetMask The reset mask. See the RORC_RESET_* macros in rorc.h

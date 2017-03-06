@@ -69,7 +69,7 @@ class ChannelMasterPdaBase: public ChannelMasterBase
     virtual void deviceResetChannel(ResetLevel::type resetLevel) = 0;
 
     /// Function for getting the bus address that corresponds to the user address + given offset
-    volatile void* getBusOffsetAddress(size_t offset);
+    uintptr_t getBusOffsetAddress(size_t offset);
 
     /// The size of the shared state data file. It should be over-provisioned, since subclasses may also allocate their
     /// own shared data in this file.
@@ -86,17 +86,22 @@ class ChannelMasterPdaBase: public ChannelMasterBase
       return "ChannelMasterSharedData";
     }
 
-    void* getFifoAddressBus() const
+    uintptr_t getFifoAddressBus() const
     {
       return mFifoAddressBus;
     }
 
-    void* getFifoAddressUser() const
+    uintptr_t getFifoAddressUser() const
     {
       return mFifoAddressUser;
     }
 
-    volatile uint32_t* getBarUserspace() const
+    uintptr_t getBarUserspace() const
+    {
+      return mPdaBar->getUserspaceAddress();
+    }
+
+    volatile uint32_t* getBarUserspaceU32() const
     {
       return mPdaBar->getUserspaceAddressU32();
     }
@@ -144,10 +149,10 @@ class ChannelMasterPdaBase: public ChannelMasterBase
     boost::scoped_ptr<Pda::PdaDmaBuffer> mPdaDmaBuffer;
 
     /// Userspace address of FIFO in DMA buffer
-    void* mFifoAddressUser;
+    uintptr_t mFifoAddressUser;
 
     /// Bus address of FIFO in DMA buffer
-    void* mFifoAddressBus;
+    uintptr_t mFifoAddressBus;
 };
 
 } // namespace Rorc

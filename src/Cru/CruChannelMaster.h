@@ -86,7 +86,7 @@ class CruChannelMaster final : public ChannelMasterPdaBase
     void setBufferReady();
     void setBufferNonReady();
     void pushIntoSuperpage(SuperpageQueueEntry& superpage);
-    volatile void* getNextSuperpageBusAddress(const SuperpageQueueEntry& superpage);
+    uintptr_t getNextSuperpageBusAddress(const SuperpageQueueEntry& superpage);
 
     CruBarAccessor getBar()
     {

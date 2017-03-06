@@ -15,7 +15,7 @@ namespace AliceO2 {
 namespace Rorc {
 namespace Pda {
 
-PdaBar::PdaBar() : mPdaBar(nullptr), mBarLength(-1), mBarNumber(-1), mUserspaceAddress(nullptr)
+PdaBar::PdaBar() : mPdaBar(nullptr), mBarLength(-1), mBarNumber(-1), mUserspaceAddress(0)
 {
 }
 
@@ -37,11 +37,13 @@ PdaBar::PdaBar(PdaDevice::PdaPciDevice pciDevice, int barNumberInt) : mBarNumber
   }
 
   // Mapping the BAR starting  address
-  if(Bar_getMap(mPdaBar, const_cast<void**>(&mUserspaceAddress), &mBarLength) != PDA_SUCCESS) {
+  void* address = nullptr;
+  if(Bar_getMap(mPdaBar, &address, &mBarLength) != PDA_SUCCESS) {
     BOOST_THROW_EXCEPTION(Exception()
         << ErrorInfo::Message("Failed to map BAR")
         << ErrorInfo::ChannelNumber(barNumber));
   }
+  mUserspaceAddress = reinterpret_cast<uintptr_t>(address);
 }
 
 } // namespace Pda

@@ -53,8 +53,7 @@ std::tuple<PageAddress, std::vector<PageAddress>> partitionScatterGatherList(
         ? fifoSize + j * pageSize// Keep that FIFO in mind...
         : j * pageSize;
 
-      pageAddresses.push_back({Utilities::offsetBytes(entry.addressUser, offset),
-        Utilities::offsetBytes(entry.addressBus, offset)});
+      pageAddresses.push_back({entry.addressUser + offset, entry.addressBus + offset});
     }
   }
 

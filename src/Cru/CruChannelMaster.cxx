@@ -90,9 +90,6 @@ void CruChannelMaster::deviceStartDma()
   resetCru();
   initCru();
   mSuperpageQueue.clear();
-  // Push initial 128 pages
-//  fillFifoNonLocking();
-//  setBufferReadyGuard();
 }
 
 /// Set buffer to ready
@@ -136,14 +133,6 @@ CardType::type CruChannelMaster::getCardType()
 /// Initializes the FIFO and the page addresses for it
 void CruChannelMaster::initFifo()
 {
-//  if (getPageAddresses().size() <= CRU_DESCRIPTOR_ENTRIES) {
-//    BOOST_THROW_EXCEPTION(CruException()
-//        << ErrorInfo::Message("Insufficient amount of pages fit in DMA buffer")
-//        << ErrorInfo::Pages(getPageAddresses().size())
-//        << ErrorInfo::DmaBufferSize(getChannelParameters().dma.bufferSize)
-//        << ErrorInfo::DmaPageSize(getChannelParameters().dma.pageSize));
-//  }
-
   getFifoUser()->resetStatusEntries();
 }
 
@@ -207,9 +196,7 @@ void CruChannelMaster::utilityPrintFifo(std::ostream& os)
 
 void CruChannelMaster::utilitySetLedState(bool state)
 {
-  int on = 0x00; // Yes, a 0 represents the on state
-  int off = 0xff;
-  getBarUserspace()[CruRegisterIndex::LED_STATUS] = state ? on : off;
+  getBar().setLedState(state);
 }
 
 void CruChannelMaster::utilitySanityCheck(std::ostream& os)
@@ -224,7 +211,7 @@ void CruChannelMaster::utilityCleanupState()
 
 int CruChannelMaster::utilityGetFirmwareVersion()
 {
-  return getBarUserspace()[CruRegisterIndex::FIRMWARE_COMPILE_INFO];
+  return getBar().getFirmwareCompileInfo();
 }
 
 int CruChannelMaster::getSuperpageQueueCount()
@@ -317,8 +304,6 @@ void CruChannelMaster::fillSuperpages()
       SuperpageQueueEntry& entry = mSuperpageQueue.getEntry(offset);
 
       if (isArrived(mFifoBack)) {
-//        printf("        is arrived\n");
-
         resetDescriptor(mFifoBack);
         mFifoSize--;
         mFifoBack = (mFifoBack + 1) % READYFIFO_ENTRIES;
@@ -341,34 +326,23 @@ void CruChannelMaster::pushIntoSuperpage(SuperpageQueueEntry& superpage)
   assert(mFifoSize < FIFO_QUEUE_MAX);
   assert(superpage.pushedPages < superpage.status.maxPages);
 
-  auto pageBusAddress = getNextSuperpageBusAddress(superpage);
   auto descriptorIndex = getFifoFront();
-  auto sourceAddress = reinterpret_cast<volatile void*>((descriptorIndex % NUM_OF_FW_BUFFERS) * DMA_PAGE_SIZE);
+  uintptr_t sourceAddress = (descriptorIndex % NUM_OF_FW_BUFFERS) * DMA_PAGE_SIZE;
+  uintptr_t pageBusAddress = getNextSuperpageBusAddress(superpage);
 
   getFifoUser()->setDescriptor(descriptorIndex, DMA_PAGE_SIZE_32, sourceAddress, pageBusAddress);
 
   if (mBufferReady) {
-//    printf("Sending ACK\n");
     getBar().sendAcknowledge();
-  } else {
-//    printf("Skipping ACK\n");
   }
-
-//  if (mBufferReady) {
-//    printf(" - Sent ACK!\n");
-//    getBar().sendAcknowledge();
-//  } else {
-//    mPendingAcks++;
-//  }
 
   mFifoSize++;
   superpage.pushedPages++;
 }
 
-volatile void* CruChannelMaster::getNextSuperpageBusAddress(const SuperpageQueueEntry& superpage)
+uintptr_t CruChannelMaster::getNextSuperpageBusAddress(const SuperpageQueueEntry& superpage)
 {
-  return reinterpret_cast<volatile void*>(reinterpret_cast<volatile char*>(superpage.busAddress)
-      + DMA_PAGE_SIZE * superpage.pushedPages);
+  return superpage.busAddress + DMA_PAGE_SIZE * superpage.pushedPages;
 }
 
 } // namespace Rorc

@@ -7,13 +7,13 @@
 char* receivedOrderedSet[]; /// XXX The usage of this looks like a segfault
 char* remoteStatus[]; /// XXX The usage of this looks like a segfault
 
-int ddlFindDiuVersion(volatile void *buff, int pci_loop_per_usec, int *rorc_revision, int *diu_version) {
+int ddlFindDiuVersion(uintptr_t bar, int pci_loop_per_usec, int *rorc_revision, int *diu_version) {
   stword_t stw[DDL_MAX_REPLY];
   int  n_reply, ret;
   long long longret;
   long long int TimeOut;
   DEBUG_PRINTF(PDADEBUG_ENTER, "");
-  *rorc_revision = 7;//*((uint32_t*)buff + 6*1024);
+  *rorc_revision = 7;//*((uint32_t*)bar + 6*1024);
 
   if (*rorc_revision >= RORC_REVISION_INTEG){
     // ide johetne DIU status lekerdezes
@@ -21,21 +21,21 @@ int ddlFindDiuVersion(volatile void *buff, int pci_loop_per_usec, int *rorc_revi
     return (RORC_STATUS_OK);
   }
 
-  rorcReset(buff, 0, pci_loop_per_usec);   // full reset
+  rorcReset(bar, 0, pci_loop_per_usec);   // full reset
   *diu_version = NO_DIU;
   
   /* read DIU's HW id */
   TimeOut = DDL_RESPONSE_TIME * pci_loop_per_usec;
-  ret = ddlSendCommand(buff, DDL_DEST_DIU, RHWVER, 0, 0, TimeOut);
+  ret = ddlSendCommand(bar, DDL_DEST_DIU, RHWVER, 0, 0, TimeOut);
   if (ret)
     return (ret);
 
   n_reply = 0;
   while (n_reply < DDL_MAX_REPLY){
-    longret = ddlWaitStatus(buff, TimeOut);
+    longret = ddlWaitStatus(bar, TimeOut);
     if (longret >= TimeOut)
       break;
-    stw[n_reply++] = ddlReadStatus(buff);
+    stw[n_reply++] = ddlReadStatus(bar);
   }
 
   if (n_reply == 0){
@@ -52,13 +52,13 @@ int ddlFindDiuVersion(volatile void *buff, int pci_loop_per_usec, int *rorc_revi
   return (RORC_STATUS_OK);
 }
 
-stword_t ddlReadCTSTW(volatile void *buff, int transid, int destination,
+stword_t ddlReadCTSTW(uintptr_t bar, int transid, int destination,
 		      long long int time, int pci_loop_per_usec){
   long long int longi; 
   stword_t stw; 
   DEBUG_PRINTF(PDADEBUG_ENTER, ""); 
   for (longi = 0; longi < time; longi++) { 
-    if (rorcCheckRxStatus(buff)) 
+    if (rorcCheckRxStatus(bar))
       break; 
   } 
   if (time && (longi >= time)){ 
@@ -68,7 +68,7 @@ stword_t ddlReadCTSTW(volatile void *buff, int transid, int destination,
     return(stw); 
   } 
  
-  stw = ddlReadStatus(buff); 
+  stw = ddlReadStatus(bar);
   //  printf("CTSTW = 0x%08lx\n", stw.stw); 
   if ((stw.part.code != CTSTW &&  
        stw.part.code != ILCMD && 
@@ -83,7 +83,7 @@ stword_t ddlReadCTSTW(volatile void *buff, int transid, int destination,
   return(stw); 
 } 
  
-int ddlSendCommand(volatile void *buff,
+int ddlSendCommand(uintptr_t bar,
                    int             dest, 
                    __u32           command, 
                    int             transid, 
@@ -130,27 +130,27 @@ int ddlSendCommand(volatile void *buff,
   //  printf("ddlSendCommand: command to send: 0x%08x\n", com); 
  
   if (destination > DDL_DEST_DIU){
-    if (rorcCheckLink(buff) == RORC_LINK_NOT_ON){ 
+    if (rorcCheckLink(bar) == RORC_LINK_NOT_ON){
       printf("ddlSendCommand: command can not be sent as link is not on\n"); 
       return (RORC_LINK_NOT_ON); 
     } 
   } 
  
   for (i = 0; i < time; i++){ 
-    if (rorcCheckCommandRegister(buff) == 0) 
+    if (rorcCheckCommandRegister(bar) == 0)
       break; 
   } 
  
   if (time && (i == time)) 
     return (RORC_TIMEOUT); 
  
-  rorcPutCommandRegister (buff, com); 
+  rorcPutCommandRegister (bar, com);
  
   return (RORC_STATUS_OK); 
 } 
  
  
-long long int ddlWaitStatus(volatile void *buff, long long int timeout)
+long long int ddlWaitStatus(uintptr_t bar, long long int timeout)
  
 /* Checks whether status mail box or register is not empty in timeout        
  * 
@@ -165,7 +165,7 @@ long long int ddlWaitStatus(volatile void *buff, long long int timeout)
   long long int tries = 0; 
   DEBUG_PRINTF(PDADEBUG_ENTER, ""); 
   do {       
-    if(rorcCheckRxStatus(buff)) 
+    if(rorcCheckRxStatus(bar))
       break; 
     tries++;   
   }while(tries <= timeout); 
@@ -173,19 +173,19 @@ long long int ddlWaitStatus(volatile void *buff, long long int timeout)
   return(tries); 
 } 
  
-stword_t ddlReadStatus(volatile void *buff)
+stword_t ddlReadStatus(uintptr_t bar)
 { 
   stword_t stw; 
   DEBUG_PRINTF(PDADEBUG_ENTER, ""); 
   /* call ddlWaitStatus() before this routine 
      if status timeout is needed */  
-  stw.stw = rorcReadReg (buff, C_DSR); 
+  stw.stw = rorcReadReg (bar, C_DSR);
   //  printf("ddlReadStatus: status = %08lx\n", stw.stw); 
   
   return(stw); 
 } 
  
-long ddlReadDiu(volatile void *buff, int transid,
+long ddlReadDiu(uintptr_t bar, int transid,
 			 long long int time, int pci_loop_per_usec){
   long retval;
   stword_t stw; 
@@ -198,7 +198,7 @@ long ddlReadDiu(volatile void *buff, int transid,
   dest = DDL_DEST_DIU;
   command =  RandCIFST; 
   param = 0; 
-  retval = ddlSendCommand(buff, dest, command, transid, param, time); 
+  retval = ddlSendCommand(bar, dest, command, transid, param, time);
   if (retval == RORC_TIMEOUT){ 
     printf("ddlReadDiu: DIU command can not be sent in timeout %lld", time); 
     retval = -1; 
@@ -207,7 +207,7 @@ long ddlReadDiu(volatile void *buff, int transid,
  
   /* read and check the answer */ 
   for (longi = 0; longi < time; longi++) { 
-    if (rorcCheckRxStatus(buff)) 
+    if (rorcCheckRxStatus(bar))
       break; 
   } 
   if (time && (longi >= time)){ 
@@ -217,7 +217,7 @@ long ddlReadDiu(volatile void *buff, int transid,
     return(retval); 
   } 
  
-  stw = ddlReadStatus (buff); 
+  stw = ddlReadStatus (bar);
   retval = stw.stw; 
   if (stw.part.code != IFSTW || 
       stw.part.trid != transid   || 
@@ -227,12 +227,12 @@ long ddlReadDiu(volatile void *buff, int transid,
     retval = -1; 
   } 
  
-  stw = ddlReadCTSTW(buff, transid, dest, time, pci_loop_per_usec);
+  stw = ddlReadCTSTW(bar, transid, dest, time, pci_loop_per_usec);
  
   return(retval); 
 } 
 
-long ddlReadSiu(volatile void *buff, int transid,
+long ddlReadSiu(uintptr_t bar, int transid,
 			 long long int time, int pci_loop_per_usec){
   long retval;
   stword_t stw;
@@ -245,7 +245,7 @@ long ddlReadSiu(volatile void *buff, int transid,
   dest = DDL_DEST_SIU;
   command = RandCIFST;
   param = 0;
-  retval=ddlSendCommand(buff, dest, command, transid, param, time);
+  retval=ddlSendCommand(bar, dest, command, transid, param, time);
   if (retval == RORC_LINK_NOT_ON){
     printf("ddlReadSiu: SIU command can not be send since link is not on\n");
     retval = -1;
@@ -260,7 +260,7 @@ long ddlReadSiu(volatile void *buff, int transid,
   /* read and check the answer */
 
   for (longi = 0; longi < time; longi++){
-    if (rorcCheckRxStatus(buff))
+    if (rorcCheckRxStatus(bar))
       break;
   }
   if (time && (longi >= time)){
@@ -270,7 +270,7 @@ long ddlReadSiu(volatile void *buff, int transid,
     return(retval);
   }
 
-  stw = ddlReadStatus(buff);
+  stw = ddlReadStatus(bar);
   if (stw.part.code != IFSTW ||
       stw.part.trid != transid   ||
       stw.part.dest != dest){
@@ -280,7 +280,7 @@ long ddlReadSiu(volatile void *buff, int transid,
   }
   retval = stw.stw;
 
-  stw = ddlReadStatus (buff);
+  stw = ddlReadStatus (bar);
   if ((stw.part.code != CTSTW &&
        stw.part.code != ILCMD &&
        stw.part.code != CTSTW_TO) ||
@@ -574,7 +574,7 @@ void ddlInterpret_NEW_IFSTW(__u32 ifstw, char *pref, char *suff)
   } 
 } 
  
-unsigned long ddlResetSiu(volatile void *buff, int print, int cycle,
+unsigned long ddlResetSiu(uintptr_t bar, int print, int cycle,
 			  long long int time, int diu_version, int pci_loop_per_usec)
  
 /* ddlResetSiu tries to reset the SIU. 
@@ -593,7 +593,7 @@ unsigned long ddlResetSiu(volatile void *buff, int print, int cycle,
   char* pref=""; 
   char* suff="\n"; 
   DEBUG_PRINTF(PDADEBUG_ENTER, ""); 
-  retval = ddlSendCommand(buff, DDL_DEST_DIU, SRST, 0,  0, time);
+  retval = ddlSendCommand(bar, DDL_DEST_DIU, SRST, 0,  0, time);
  
   if (retval == RORC_LINK_NOT_ON){ 
     if (print) 
@@ -606,14 +606,14 @@ unsigned long ddlResetSiu(volatile void *buff, int print, int cycle,
     return (-1); 
   } 
   else{ 
-    longret = ddlWaitStatus(buff, time); 
+    longret = ddlWaitStatus(bar, time);
     if (longret >= time){ 
       if (print) 
         printf("SIU reset: No reply arrived in timeout %lld", time); 
       return (-1); 
     } 
     else{ 
-      stw = ddlReadStatus(buff); 
+      stw = ddlReadStatus(bar);
       if (print) 
         printf("SIU reset: reply = 0x%08lx\n", stw.stw); 
     } 
@@ -638,7 +638,7 @@ unsigned long ddlResetSiu(volatile void *buff, int print, int cycle,
     siu_ok = 0; 
  
     transid = incr15(transid); 
-    retlong = ddlReadDiu(buff, transid, time, pci_loop_per_usec);
+    retlong = ddlReadDiu(bar, transid, time, pci_loop_per_usec);
     if (retlong == -1){ 
       if (print) { 
         printf(" ddlReadDiu returns -1: Error in ddlReadDiu "); 
@@ -675,7 +675,7 @@ unsigned long ddlResetSiu(volatile void *buff, int print, int cycle,
       diu_ok = 1; 
  
     transid = incr15(transid); 
-    retlong = ddlReadSiu(buff, transid, time, pci_loop_per_usec);
+    retlong = ddlReadSiu(bar, transid, time, pci_loop_per_usec);
     if (retlong == -1){ 
       if (print){ 
         printf(" ddlReadSiu returns -1: Error in ddlReadSiu "); 
@@ -713,20 +713,20 @@ unsigned long ddlResetSiu(volatile void *buff, int print, int cycle,
   return(retlong);  
 }
 
-unsigned long ddlLinkUp(volatile void *buff, int master, int print, int stop,
+unsigned long ddlLinkUp(uintptr_t bar, int master, int print, int stop,
 			long long int time, int diu_version, int pci_loop_per_usec) {
   unsigned long retlong;
   DEBUG_PRINTF(PDADEBUG_ENTER, "");
   if (diu_version == OLD) {
-    retlong = ddlLinkUp_OLD(buff, master, print, stop, time, diu_version, pci_loop_per_usec);
+    retlong = ddlLinkUp_OLD(bar, master, print, stop, time, diu_version, pci_loop_per_usec);
   } else {
-    retlong = ddlLinkUp_NEW(buff, master, print, stop, time, diu_version, pci_loop_per_usec);
+    retlong = ddlLinkUp_NEW(bar, master, print, stop, time, diu_version, pci_loop_per_usec);
   }
 
   return (retlong);
 }
 
-unsigned long ddlLinkUp_OLD(volatile void *buff, int master, int print,
+unsigned long ddlLinkUp_OLD(uintptr_t bar, int master, int print,
 			    int stop, long long int time, int diu_version, int pci_loop_per_usec)
 
 /* ddlLinkUp tries to reset and initialize (if master) the DDL link.
@@ -760,7 +760,7 @@ unsigned long ddlLinkUp_OLD(volatile void *buff, int master, int print,
   transid = 0xf;
   do{
     transid = incr15(transid);
-    retlong = ddlReadDiu(buff, transid, time, pci_loop_per_usec);
+    retlong = ddlReadDiu(bar, transid, time, pci_loop_per_usec);
     if (retlong == -1){
       if (last_stw != retlong){
         if (print){
@@ -895,7 +895,7 @@ unsigned long ddlLinkUp_OLD(volatile void *buff, int master, int print,
       }
 
       // Send reset command to DIU 
-      retval = ddlSendCommand(buff, DDL_DEST_DIU, LRST, transid ,0, time);
+      retval = ddlSendCommand(bar, DDL_DEST_DIU, LRST, transid ,0, time);
       transid = incr15(transid);
       if (retval == RORC_TIMEOUT)
         if (print){
@@ -910,7 +910,7 @@ unsigned long ddlLinkUp_OLD(volatile void *buff, int master, int print,
         }
       
       // Read status FIFO 
-      stw = ddlReadStatus(buff);
+      stw = ddlReadStatus(bar);
       printf("The LRST returned status: %8lx\n", stw.stw);
     }
     else if ((retlong & DIUSTMASK) == oDIU_ACCED){
@@ -994,7 +994,7 @@ unsigned long ddlLinkUp_OLD(volatile void *buff, int master, int print,
       else if (master){
         last_stw = retlong;
         // Send a command to DIU to initialize 
-        retval=ddlSendCommand(buff, DDL_DEST_DIU, LINIT, transid, 0, time);
+        retval=ddlSendCommand(bar, DDL_DEST_DIU, LINIT, transid, 0, time);
         transid = incr15(transid);
 
         if (retval == RORC_TIMEOUT)
@@ -1010,7 +1010,7 @@ unsigned long ddlLinkUp_OLD(volatile void *buff, int master, int print,
           }
 	
         // Read status FIFO 
-        stw = ddlReadStatus(buff);
+        stw = ddlReadStatus(bar);
         printf("The LINIT returned status: %8lx\n", stw.stw);
         continue;
       }
@@ -1042,7 +1042,7 @@ unsigned long ddlLinkUp_OLD(volatile void *buff, int master, int print,
   return (retlong);
 }
 
-unsigned long ddlLinkUp_NEW(volatile void *buff, int master, int print,
+unsigned long ddlLinkUp_NEW(uintptr_t bar, int master, int print,
 			    int stop, long long int time, int diu_version, int pci_loop_per_usec)
 
 /* ddlLinkUp tries to reset and initialize (if master) the DDL link.
@@ -1097,7 +1097,7 @@ DEBUG_PRINTF(PDADEBUG_ENTER, "");
   transid = 0xf;
   do{
     transid = incr15(transid);
-    retlong = ddlReadDiu(buff, transid, time, pci_loop_per_usec);
+    retlong = ddlReadDiu(bar, transid, time, pci_loop_per_usec);
     if (retlong == -1){
       if (last_stw != retlong){
         if (print){
@@ -1151,11 +1151,11 @@ DEBUG_PRINTF(PDADEBUG_ENTER, "");
 	  if (master)
 	    {
 	      // Send a command to DIU to wake up
-	      /*retval=*/ddlSendCommand(buff, DDL_DEST_DIU, WAKEUP, transid, 0, time);
+	      /*retval=*/ddlSendCommand(bar, DDL_DEST_DIU, WAKEUP, transid, 0, time);
 	      transid = incr15(transid);
 	      
 	      // Read status FIFO 
-	      stw = ddlReadStatus(buff);
+	      stw = ddlReadStatus(bar);
 	      printf("The WAKEUP returned status: %8lx\n", stw.stw);
 	      continue;
 	    }
@@ -1172,33 +1172,33 @@ DEBUG_PRINTF(PDADEBUG_ENTER, "");
     return (retlong);   
 }
 
-int ddlSetSiuLoopBack(volatile void *buff, long long int timeout, int pci_loop_per_usec, stword_t *stw){
+int ddlSetSiuLoopBack(uintptr_t bar, long long int timeout, int pci_loop_per_usec, stword_t *stw){
   int ret;
   long long int longret;
   long retlong;
 
   /* check SIU fw version */
 
-  ret = ddlSendCommand(buff, DDL_DEST_SIU, IFLOOP, 0, 0, timeout);
+  ret = ddlSendCommand(bar, DDL_DEST_SIU, IFLOOP, 0, 0, timeout);
   if (ret == RORC_LINK_NOT_ON)
     return (ret);
   if (ret == RORC_TIMEOUT)
     return RORC_STATUS_ERROR;
 
-  longret = ddlWaitStatus(buff, timeout);
+  longret = ddlWaitStatus(bar, timeout);
   if (longret >= timeout)
     return RORC_NOT_ACCEPTED;
   
-  *stw = ddlReadStatus(buff);
+  *stw = ddlReadStatus(bar);
   if (stw->part.code == ILCMD){
     /* illegal command => old version => send TSTMODE for loopback */
-    ret = ddlSendCommand(buff, DDL_DEST_SIU, TSTMODE, 0, 0, timeout);
+    ret = ddlSendCommand(bar, DDL_DEST_SIU, TSTMODE, 0, 0, timeout);
     if (ret == RORC_LINK_NOT_ON)
       return (ret);
     if (ret == RORC_TIMEOUT)
       return RORC_STATUS_ERROR;
 
-    longret = ddlWaitStatus(buff, timeout);
+    longret = ddlWaitStatus(bar, timeout);
     if (longret >= timeout)
       return RORC_NOT_ACCEPTED;
     else
@@ -1208,7 +1208,7 @@ int ddlSetSiuLoopBack(volatile void *buff, long long int timeout, int pci_loop_p
     return RORC_STATUS_ERROR;
 
   /* SIU loopback command accepted => check SIU loopback status */
-  retlong = ddlReadSiu(buff, 0, timeout, pci_loop_per_usec);
+  retlong = ddlReadSiu(bar, 0, timeout, pci_loop_per_usec);
   if (retlong == -1)
     return RORC_STATUS_ERROR;
 
@@ -1216,35 +1216,35 @@ int ddlSetSiuLoopBack(volatile void *buff, long long int timeout, int pci_loop_p
     return RORC_STATUS_OK; // SIU loopback set 
 
   /* SIU loopback not set => set it */
-  ret = ddlSendCommand(buff, DDL_DEST_SIU, IFLOOP, 0, 0, timeout);
+  ret = ddlSendCommand(bar, DDL_DEST_SIU, IFLOOP, 0, 0, timeout);
   if (ret == RORC_LINK_NOT_ON)
     return (ret);
   if (ret == RORC_TIMEOUT)
     return RORC_STATUS_ERROR;
 
-  longret = ddlWaitStatus(buff, timeout);
+  longret = ddlWaitStatus(bar, timeout);
   if (longret >= timeout)
     return RORC_NOT_ACCEPTED;
   else
-    *stw = ddlReadStatus(buff);
+    *stw = ddlReadStatus(bar);
 
   return RORC_STATUS_OK;
 
 }
 
-int ddlDiuLoopBack(uint32_t *buff, long long int timeout, stword_t *stw){
+int ddlDiuLoopBack(uint32_t *bar, long long int timeout, stword_t *stw){
   int ret;
   long long int longret;
 
-  ret = ddlSendCommand(buff, DDL_DEST_DIU, IFLOOP, 0, 0, timeout);
+  ret = ddlSendCommand(bar, DDL_DEST_DIU, IFLOOP, 0, 0, timeout);
   if (ret == RORC_TIMEOUT)
     return RORC_STATUS_ERROR;
 
-  longret = ddlWaitStatus(buff, timeout);
+  longret = ddlWaitStatus(bar, timeout);
   if (longret >= timeout)
     return RORC_NOT_ACCEPTED;
   else
-    *stw = ddlReadStatus(buff);
+    *stw = ddlReadStatus(bar);
 
   return RORC_STATUS_OK;
 }
