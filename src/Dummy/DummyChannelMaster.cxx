@@ -17,12 +17,17 @@ using std::endl;
 
 namespace AliceO2 {
 namespace Rorc {
+namespace {
+CardDescriptor makeDummyDescriptor()
+{
+  return {CardType::Dummy, ChannelFactory::DUMMY_SERIAL_NUMBER, PciId {"dummy", "dummy"}, PciAddress {0,0,0}};
+}
+}
 
 constexpr auto endm = InfoLogger::InfoLogger::StreamOps::endm;
 
 DummyChannelMaster::DummyChannelMaster(const Parameters& params)
-    : ChannelMasterBase(CardType::Dummy, params, ChannelFactory::DUMMY_SERIAL_NUMBER, { 0, 1, 2, 3, 4, 5, 6, 7 }), mPageCounter(
-        128)
+    : ChannelMasterBase(makeDummyDescriptor(), params, { 0, 1, 2, 3, 4, 5, 6, 7 }), mPageCounter(128)
 {
 //  cout << "DummyChannelMaster::DummyChannelMaster(serial:" << serial << ", channel:" << channel << ", params:...)"
 //      << endl;

@@ -530,7 +530,7 @@ void CrorcChannelMaster::utilitySanityCheck(std::ostream& os)
 
 void CrorcChannelMaster::utilityCleanupState()
 {
-  ChannelUtility::crorcCleanupState(ChannelPaths(CARD_TYPE, getSerialNumber(), getChannelNumber()));
+  ChannelUtility::crorcCleanupState(ChannelPaths(getCardDescriptor().pciAddress, getChannelNumber()));
 }
 
 int CrorcChannelMaster::utilityGetFirmwareVersion()

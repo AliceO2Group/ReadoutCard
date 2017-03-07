@@ -7,38 +7,40 @@
 #include <boost/format.hpp>
 
 static const std::string DIR_SHAREDMEM("/dev/shm/alice_o2");
-static const std::string DIR_HUGEPAGES("/mnt/hugetlbfs/alice_o2");
-static const std::string FORMAT("%s/card_%s/serial_%i/channel_%i/%s");
+static const std::string FORMAT("%s/%s/channel_%i/%s");
+
+namespace b = boost;
 
 namespace AliceO2 {
 namespace Rorc {
 
-namespace b = boost;
-namespace bfs = boost::filesystem;
-
-ChannelPaths::ChannelPaths(CardType::type cardType, int serial, int channel)
-    : mCardType(cardType), mSerial(serial), mChannel(channel)
+ChannelPaths::ChannelPaths(PciAddress pciAddress, int channel) : mPciAddress(pciAddress), mChannel(channel)
 {
 }
 
-bfs::path ChannelPaths::state() const
+std::string ChannelPaths::makePath(std::string fileName) const
 {
-  return b::str(b::format(FORMAT) % DIR_SHAREDMEM % CardType::toString(mCardType) % mSerial % mChannel % "state");
+  return b::str(b::format(FORMAT) % DIR_SHAREDMEM % mPciAddress.toString() % mChannel % fileName);
 }
 
-bfs::path ChannelPaths::lock() const
+std::string ChannelPaths::state() const
 {
-  return b::str(b::format(FORMAT) % DIR_SHAREDMEM % CardType::toString(mCardType) % mSerial % mChannel % ".lock");
+  return makePath("state");
 }
 
-bfs::path ChannelPaths::fifo() const
+std::string ChannelPaths::lock() const
 {
-  return b::str(b::format(FORMAT) % DIR_SHAREDMEM % CardType::toString(mCardType) % mSerial % mChannel % "ready_fifo");
+  return makePath(".lock");
+}
+
+std::string ChannelPaths::fifo() const
+{
+  return makePath("fifo");
 }
 
 std::string ChannelPaths::namedMutex() const
 {
-  return b::str(b::format("card%s_serial_%i_channel_%i_mutex") % mCardType % mSerial % mChannel);
+  return b::str(b::format("alice_o2_rorc_%s_channel_%i.mutex") % mPciAddress.toString() % mChannel);
 }
 
 } // namespace Rorc

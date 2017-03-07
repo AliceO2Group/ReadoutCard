@@ -10,6 +10,7 @@
 #include <memory>
 #include <mutex>
 #include "BufferProvider.h"
+#include "CardDescriptor.h"
 #include "ChannelBase.h"
 #include "ChannelPaths.h"
 #include "ChannelUtilityInterface.h"
@@ -38,11 +39,11 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, publ
     using AllowedChannels = std::set<int>;
 
     /// Constructor for the ChannelMaster object
-    /// \param cardType Type of the card
+    /// \param cardDescriptor Card descriptor
     /// \param parameters Parameters of the channel
     /// \param serialNumber Serial number of the card
     /// \param allowedChannels Channels allowed by this card type
-    ChannelMasterBase(CardType::type cardType, const Parameters& parameters, int serialNumber,
+    ChannelMasterBase(CardDescriptor cardDescriptor, const Parameters& parameters,
         const AllowedChannels& allowedChannels);
 
     virtual ~ChannelMasterBase();
@@ -107,7 +108,12 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, publ
 
     int getSerialNumber() const
     {
-      return mSerialNumber;
+      return mCardDescriptor.serialNumber;
+    }
+
+    const CardDescriptor& getCardDescriptor() const
+    {
+      return mCardDescriptor;
     }
 
     virtual void setLogLevel(InfoLogger::InfoLogger::Severity severity) final override
@@ -117,12 +123,12 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, publ
 
     void log(const std::string& message, boost::optional<InfoLogger::InfoLogger::Severity> severity = boost::none)
     {
-      ChannelBase::log(mSerialNumber, mChannelNumber, message, severity);
+      ChannelBase::log(getSerialNumber(), getChannelNumber(), message, severity);
     }
 
     ChannelPaths getPaths()
     {
-      return {mCardType, mSerialNumber, mChannelNumber};
+      return {getCardDescriptor().pciAddress, getChannelNumber()};
     }
 
     const BufferProvider& getBufferProvider()
@@ -142,10 +148,7 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, publ
     Mutex mMutex;
 
     /// Type of the card
-    CardType::type mCardType;
-
-    /// Serial number of the device
-    int mSerialNumber;
+    const CardDescriptor mCardDescriptor;
 
     /// DMA channel number
     const int mChannelNumber;

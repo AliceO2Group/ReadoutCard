@@ -133,9 +133,6 @@ class ChannelMasterPdaBase: public ChannelMasterBase
 
   private:
 
-    /// Initializes mRorcDevice and returns the serial number of the device
-    int getSerialFromRorcDevice(const Parameters& parameters);
-
     /// Current state of the DMA
     DmaState::type mDmaState;
 

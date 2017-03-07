@@ -49,7 +49,7 @@ PciAddress addressFromDevice(Pda::PdaDevice::PdaPciDevice pciDevice){
   return address;
 }
 
-RorcDevice::CardDescriptor defaultDescriptor() {
+CardDescriptor defaultDescriptor() {
   return {CardType::Unknown, -1, {"unknown", "unknown"}, PciAddress(0,0,0)};
 }
 } // Anonymous namespace
@@ -123,9 +123,9 @@ RorcDevice::~RorcDevice()
 {
 }
 
-std::vector<RorcDevice::CardDescriptor> RorcDevice::findSystemDevices()
+std::vector<CardDescriptor> RorcDevice::findSystemDevices()
 {
-  std::vector<RorcDevice::CardDescriptor> cards;
+  std::vector<CardDescriptor> cards;
   for (const auto& type : deviceTypes) {
     for (const auto& pciDevice : Pda::PdaDevice::getPciDevices(type.pciId)) {
       cards.push_back(CardDescriptor{type.cardType, type.getSerial(pciDevice), type.pciId,
@@ -135,9 +135,9 @@ std::vector<RorcDevice::CardDescriptor> RorcDevice::findSystemDevices()
   return cards;
 }
 
-std::vector<RorcDevice::CardDescriptor> RorcDevice::findSystemDevices(int serialNumber)
+std::vector<CardDescriptor> RorcDevice::findSystemDevices(int serialNumber)
 {
-  std::vector<RorcDevice::CardDescriptor> cards;
+  std::vector<CardDescriptor> cards;
   try {
     for (const auto& type : deviceTypes) {
       for (const auto& pciDevice : Pda::PdaDevice::getPciDevices(type.pciId)) {
@@ -156,9 +156,9 @@ std::vector<RorcDevice::CardDescriptor> RorcDevice::findSystemDevices(int serial
   return cards;
 }
 
-std::vector<RorcDevice::CardDescriptor> RorcDevice::findSystemDevices(const PciAddress& address)
+std::vector<CardDescriptor> RorcDevice::findSystemDevices(const PciAddress& address)
 {
-  std::vector<RorcDevice::CardDescriptor> cards;
+  std::vector<CardDescriptor> cards;
   try {
     for (const auto& type : deviceTypes) {
       for (const auto& pciDevice : Pda::PdaDevice::getPciDevices(type.pciId)) {

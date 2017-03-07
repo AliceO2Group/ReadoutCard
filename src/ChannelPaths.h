@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <boost/filesystem/path.hpp>
-#include "RORC/CardType.h"
+#include <string>
+#include "RORC/PciAddress.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -17,22 +17,21 @@ class ChannelPaths
   public:
 
     /// Constructs the ChannelPaths object with the given parameters
-    /// \param cardType Type of the card
-    /// \param serial Serial number of the card
+    /// \param pciAddress PCI address of the card
     /// \param channel Channel of the card
-    ChannelPaths(CardType::type cardType, int serial, int channel);
+    ChannelPaths(PciAddress pciAddress, int channel);
 
     /// Generates a path for the channel's shared memory state object
     /// \return The path
-    boost::filesystem::path state() const;
+    std::string state() const;
 
     /// Generates a path for the channel file lock
     /// \return The path
-    boost::filesystem::path lock() const;
+    std::string lock() const;
 
     /// Generates a path for the channel's shared memory FIFO object
     /// \return The path
-    boost::filesystem::path fifo() const;
+    std::string fifo() const;
 
     /// Generates a name for the channel's mutex
     /// \return The name
@@ -40,8 +39,9 @@ class ChannelPaths
 
   private:
 
-    const CardType::type mCardType;
-    const int mSerial;
+    std::string makePath(std::string fileName) const;
+
+    const PciAddress mPciAddress;
     const int mChannel;
 };
 

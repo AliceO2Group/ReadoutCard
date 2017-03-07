@@ -11,26 +11,19 @@
 
 namespace AliceO2 {
 namespace Rorc {
+namespace {
 
-int ChannelMasterPdaBase::getSerialFromRorcDevice(const Parameters& parameters)
+CardDescriptor getDescriptor(const Parameters& parameters)
 {
-  auto id = parameters.getCardIdRequired();
-
-  if (auto serial = boost::get<int>(&id)) {
-    RorcDevice device {*serial};
-    return device.getSerialNumber();
-  } else if (auto address = boost::get<PciAddress>(&id)) {
-    RorcDevice device {*address};
-    return device.getSerialNumber();
-  }
-  BOOST_THROW_EXCEPTION(ParameterException()
-      << ErrorInfo::Message("Either SerialNumber or PciAddress parameter required"));
+  return Visitor::apply<CardDescriptor>(parameters.getCardIdRequired(),
+      [&](int serial) {return RorcDevice(serial).getCardDescriptor();},
+      [&](const PciAddress& address) {return RorcDevice(address).getCardDescriptor();});
+}
 }
 
 ChannelMasterPdaBase::ChannelMasterPdaBase(CardType::type cardType, const Parameters& parameters,
     const AllowedChannels& allowedChannels, size_t fifoSize)
-    : ChannelMasterBase(cardType, parameters, getSerialFromRorcDevice(parameters), allowedChannels), mDmaState(
-        DmaState::STOPPED)
+    : ChannelMasterBase(getDescriptor(parameters), parameters, allowedChannels), mDmaState(DmaState::STOPPED)
 {
   auto paths = getPaths();
 

@@ -206,7 +206,7 @@ void CruChannelMaster::utilitySanityCheck(std::ostream& os)
 
 void CruChannelMaster::utilityCleanupState()
 {
-  ChannelUtility::cruCleanupState(ChannelPaths(CARD_TYPE, getSerialNumber(), getChannelNumber()));
+  ChannelUtility::cruCleanupState(ChannelPaths(getCardDescriptor().pciAddress, getChannelNumber()));
 }
 
 int CruChannelMaster::utilityGetFirmwareVersion()

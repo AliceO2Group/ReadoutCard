@@ -5,6 +5,7 @@
 
 #include "ChannelMasterBase.h"
 #include <iostream>
+#include <boost/filesystem/path.hpp>
 #include "BufferProviderFile.h"
 #include "BufferProviderMemory.h"
 #include "ChannelPaths.h"
@@ -77,11 +78,9 @@ void ChannelMasterBase::validateParameters(const Parameters& p)
 //  }
 }
 
-ChannelMasterBase::ChannelMasterBase(CardType::type cardType, const Parameters& parameters, int serialNumber,
+ChannelMasterBase::ChannelMasterBase(CardDescriptor cardDescriptor, const Parameters& parameters,
     const AllowedChannels& allowedChannels)
-    : mCardType(cardType),
-      mSerialNumber(serialNumber),
-      mChannelNumber(parameters.getChannelNumberRequired())
+    : mCardDescriptor(cardDescriptor), mChannelNumber(parameters.getChannelNumberRequired())
 {
   using namespace Utilities;
 
@@ -101,7 +100,8 @@ ChannelMasterBase::ChannelMasterBase(CardType::type cardType, const Parameters& 
   {
     auto SHARED_MEMORY = "tmpfs";
     auto HUGEPAGE = "hugetlbfs";
-    assertFileSystemType(paths.state().parent_path(), {SHARED_MEMORY, HUGEPAGE}, "shared state");
+    assertFileSystemType(boost::filesystem::path(paths.state()).parent_path(), {SHARED_MEMORY, HUGEPAGE},
+        "shared state");
   }
 
   // Get lock

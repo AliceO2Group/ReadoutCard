@@ -5,8 +5,9 @@
 
 #include <map>
 #include <algorithm>
-#include "RORC/CardType.h"
+#include "CardDescriptor.h"
 #include "ExceptionInternal.h"
+#include "RORC/CardType.h"
 #include "RORC/Parameters.h"
 #ifdef ALICEO2_RORC_PDA_ENABLED
 # include "RorcDevice.h"
@@ -18,7 +19,7 @@ namespace Rorc {
 namespace FactoryHelper {
 
 #ifdef ALICEO2_RORC_PDA_ENABLED
-inline RorcDevice::CardDescriptor findCard(int serial)
+inline CardDescriptor findCard(int serial)
 {
   auto cardsFound = RorcDevice::findSystemDevices(serial);
 
@@ -40,7 +41,7 @@ inline RorcDevice::CardDescriptor findCard(int serial)
   return cardsFound.at(0);
 }
 
-inline RorcDevice::CardDescriptor findCard(const PciAddress& address)
+inline CardDescriptor findCard(const PciAddress& address)
 {
   auto cardsFound = RorcDevice::findSystemDevices(address);
 
