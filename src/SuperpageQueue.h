@@ -81,6 +81,10 @@ class SuperpageQueue {
     /// When a superpage is initially added, it is put into the internal pushing and arrivals queues
     void addToQueue(const SuperpageQueueEntry& entry)
     {
+      if (isFull()) {
+        BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not enqueue superpage, queue full"));
+      }
+
       if (!mRegistry.insert(std::make_pair(entry.status.offset, entry)).second) {
         // Key was already present
         BOOST_THROW_EXCEPTION(Exception()

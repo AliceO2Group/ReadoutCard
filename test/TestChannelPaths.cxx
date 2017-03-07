@@ -10,11 +10,12 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 #include <assert.h>
+#include "CardDescriptor.h"
 
 BOOST_AUTO_TEST_CASE(ChannelPathsTest)
 {
   using namespace AliceO2::Rorc;
-  ChannelPaths paths(CardType::Unknown, 0, 0);
+  ChannelPaths paths(PciAddress {0,0,0}, 0);
   BOOST_CHECK_NO_THROW(paths.fifo());
   BOOST_CHECK_NO_THROW(paths.lock());
   BOOST_CHECK_NO_THROW(paths.namedMutex());

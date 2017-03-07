@@ -68,7 +68,15 @@ CruChannelMaster::CruChannelMaster(const Parameters& parameters)
   if (auto enabled = parameters.getGeneratorEnabled()) {
     if (enabled.get() == false) {
       BOOST_THROW_EXCEPTION(CruException()
-          << ErrorInfo::Message("CRU does not yet support non-datagenerator operation"));
+          << ErrorInfo::Message("CRU currently only supports operation with data generator"));
+    }
+  }
+
+  if (auto pattern = parameters.getGeneratorPattern()) {
+    if (pattern != GeneratorPattern::Incremental) {
+      BOOST_THROW_EXCEPTION(CruException()
+          << ErrorInfo::Message("CRU currently only supports 'incremental' data generator pattern")
+          << ErrorInfo::GeneratorPattern(*pattern));
     }
   }
 
@@ -236,10 +244,6 @@ auto CruChannelMaster::getSuperpageStatus() -> SuperpageStatus
 
 void CruChannelMaster::pushSuperpage(size_t offset, size_t size)
 {
-  if (mSuperpageQueue.isFull()) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not enqueue superpage, queue at capacity"));
-  }
-
   if (size == 0) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not enqueue superpage, size == 0"));
   }
@@ -249,8 +253,12 @@ void CruChannelMaster::pushSuperpage(size_t offset, size_t size)
         << ErrorInfo::Message("Could not enqueue superpage, size not a multiple of 1 MiB"));
   }
 
+  if (offset + size > getBufferProvider().getDmaSize()) {
+    BOOST_THROW_EXCEPTION(Exception()
+        << ErrorInfo::Message("Superpage out of range"));
+  }
+
   // TODO check if offset is properly aligned
-  // TODO check if size is multiple of ???
 
   SuperpageQueueEntry entry;
   entry.busAddress = getBusOffsetAddress(offset + getBufferProvider().getDmaOffset());

@@ -219,7 +219,7 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
     const int mGeneratorSeed;
 
     /// Length of data written to each page
-    const size_t mGeneratorDataSize; // removed: we just use mPageSize
+    const size_t mGeneratorDataSize;
 
     /// Some timing parameter used during communications with the card
     long long int mLoopPerUsec = 0;

@@ -159,6 +159,9 @@ class ProgramDmaBench: public Program
           ("no-errorcheck",
               po::bool_switch(&mOptions.noErrorCheck),
               "Skip error checking")
+          ("pattern",
+              po::value<std::string>(&mOptions.generatorPatternString),
+              "Error check with given pattern [INCREMENTAL, ALTERNATING, CONSTANT, RANDOM]")
           ("no-resync",
               po::bool_switch(&mOptions.noResyncCounter),
               "Disable counter resync")
@@ -184,6 +187,10 @@ class ProgramDmaBench: public Program
         mReadoutStream.open("readout_data.bin", std::ios::binary);
       }
 
+      if (!mOptions.generatorPatternString.empty()) {
+        mOptions.generatorPattern = GeneratorPattern::fromString(mOptions.generatorPatternString);
+      }
+
       mInfinitePages = (mOptions.maxPages <= 0);
 
       auto cardId = Options::getOptionCardId(map);
@@ -193,6 +200,7 @@ class ProgramDmaBench: public Program
       params.setCardId(cardId);
       params.setChannelNumber(channelNumber);
       params.setGeneratorDataSize(mPageSize);
+      params.setGeneratorPattern(mOptions.generatorPattern);
 
       mBufferParameters.path = boost::str(boost::format("/mnt/hugetlbfs/rorc-dma-bench_id=%s_chan=%s_pages")
           % map["id"].as<std::string>() % channelNumber);
@@ -410,7 +418,7 @@ class ProgramDmaBench: public Program
           mDataGeneratorCounter = getEventNumber(page);
         }
 
-        bool hasError = checkErrors(getCurrentGeneratorPattern(), page, pageSize, mReadoutCount, mDataGeneratorCounter);
+        bool hasError = checkErrors(page, pageSize, mReadoutCount, mDataGeneratorCounter);
         if (hasError && !mOptions.noResyncCounter) {
           // Resync the counter
 
@@ -436,18 +444,7 @@ class ProgramDmaBench: public Program
       mDataGeneratorCounter++;
     }
 
-    GeneratorPattern::type getCurrentGeneratorPattern()
-    {
-      // Get first 2 bits of DMA configuration register, these contain the generator pattern
-//      uint32_t conf = bar(CruRegisterIndex::DMA_CONFIGURATION) && 0b11;
-      uint32_t conf = 0; // We're just gonna pretend it's always incremental right now
-      return conf == 0 ? GeneratorPattern::Incremental
-           : conf == 1 ? GeneratorPattern::Alternating
-           : conf == 2 ? GeneratorPattern::Constant
-           : GeneratorPattern::Unknown;
-    }
-
-    bool checkErrorsCru(GeneratorPattern::type pattern, const char* _page, size_t pageSize, int64_t eventNumber, uint32_t counter)
+    bool checkErrorsCru(const char* _page, size_t pageSize, int64_t eventNumber, uint32_t counter)
     {
       auto check = [&](auto patternFunction) {
         const volatile uint32_t* page = const_cast<const volatile uint32_t*>(reinterpret_cast<const uint32_t*>(_page));
@@ -469,7 +466,7 @@ class ProgramDmaBench: public Program
         return false;
       };
 
-      switch (pattern) {
+      switch (mOptions.generatorPattern) {
         case GeneratorPattern::Incremental: return check([&](uint32_t i) { return counter * 256 + i / 8; });
         case GeneratorPattern::Alternating: return check([&](uint32_t)   { return 0xa5a5a5a5; });
         case GeneratorPattern::Constant:    return check([&](uint32_t)   { return 0x12345678; });
@@ -477,11 +474,11 @@ class ProgramDmaBench: public Program
       }
 
       BOOST_THROW_EXCEPTION(Exception()
-          << ErrorInfo::Message("Unrecognized generator pattern")
-          << ErrorInfo::GeneratorPattern(pattern));
+          << ErrorInfo::Message("Unsupported pattern for CRU error checking")
+          << ErrorInfo::GeneratorPattern(mOptions.generatorPattern));
     }
 
-    bool checkErrorsCrorc(GeneratorPattern::type pattern, const char* _page, size_t pageSize, int64_t eventNumber, uint32_t counter)
+    bool checkErrorsCrorc(const char* _page, size_t pageSize, int64_t eventNumber, uint32_t counter)
     {
       auto check = [&](auto patternFunction) {
         const volatile uint32_t* page = const_cast<const volatile uint32_t*>(reinterpret_cast<const uint32_t*>(_page));
@@ -503,7 +500,7 @@ class ProgramDmaBench: public Program
         return false;
       };
 
-      switch (pattern) {
+      switch (mOptions.generatorPattern) {
         case GeneratorPattern::Incremental: return check([&](uint32_t i) { return i - 1; });
         case GeneratorPattern::Alternating: return check([&](uint32_t)   { return 0xa5a5a5a5; });
         case GeneratorPattern::Constant:    return check([&](uint32_t)   { return 0x12345678; });
@@ -511,16 +508,16 @@ class ProgramDmaBench: public Program
       }
 
       BOOST_THROW_EXCEPTION(Exception()
-          << ErrorInfo::Message("Unrecognized generator pattern")
-          << ErrorInfo::GeneratorPattern(pattern));
+          << ErrorInfo::Message("Unsupported pattern for C-RORC error checking")
+          << ErrorInfo::GeneratorPattern(mOptions.generatorPattern));
     }
 
     /// Checks and reports errors
-    bool checkErrors(GeneratorPattern::type pattern, const char* _page, size_t pageSize, int64_t eventNumber, uint32_t counter)
+    bool checkErrors(const char* _page, size_t pageSize, int64_t eventNumber, uint32_t counter)
     {
       switch (mCardType) {
-        case CardType::Crorc: return checkErrorsCrorc(pattern, _page, pageSize, eventNumber, counter);
-        case CardType::Cru: return checkErrorsCru(pattern, _page, pageSize, eventNumber, counter);
+        case CardType::Crorc: return checkErrorsCrorc(_page, pageSize, eventNumber, counter);
+        case CardType::Cru: return checkErrorsCru(_page, pageSize, eventNumber, counter);
         default: throw std::runtime_error("Error checking unsupported for this card type");
       }
     }
@@ -716,6 +713,8 @@ class ProgramDmaBench: public Program
         bool noResyncCounter = false;
         bool randomReadout = false;
         bool barHammer = false;
+        std::string generatorPatternString;
+        GeneratorPattern::type generatorPattern = GeneratorPattern::Incremental;
     } mOptions;
 
     BufferParameters::File mBufferParameters;
