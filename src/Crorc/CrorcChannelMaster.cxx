@@ -40,7 +40,7 @@ namespace Rorc {
     << ErrorInfo::StatusCode(_status_code)
 
 CrorcChannelMaster::CrorcChannelMaster(const Parameters& parameters)
-    : ChannelMasterPdaBase(CARD_TYPE, parameters, allowedChannels(), sizeof(ReadyFifo)), //
+    : ChannelMasterPdaBase(parameters, allowedChannels(), sizeof(ReadyFifo)), //
       mPageSize(parameters.getDmaPageSize().get_value_or(8*1024)), // 8 kB default for uniformity with CRU
       mInitialResetLevel(ResetLevel::Rorc), // It's good to reset at least the card channel in general
       mNoRDYRX(true), // Not sure
@@ -268,7 +268,7 @@ void CrorcChannelMaster::pushSuperpage(size_t offset, size_t size)
         << ErrorInfo::Message("Could not enqueue superpage, size not a multiple of 1 MiB"));
   }
 
-  if (offset + size > getBufferProvider().getDmaSize()) {
+  if (offset + size > getBufferProvider().getSize()) {
     BOOST_THROW_EXCEPTION(Exception()
         << ErrorInfo::Message("Superpage out of range"));
   }
@@ -276,7 +276,7 @@ void CrorcChannelMaster::pushSuperpage(size_t offset, size_t size)
   // TODO check if offset is properly aligned
 
   SuperpageQueueEntry entry;
-  entry.busAddress = getBusOffsetAddress(offset + getBufferProvider().getDmaOffset());
+  entry.busAddress = getBusOffsetAddress(offset);
   entry.pushedPages = 0;
   entry.status.confirmedPages = 0;
   entry.status.maxPages = size / mPageSize;
@@ -407,15 +407,8 @@ void CrorcChannelMaster::crorcArmDataGenerator()
   int roundedLen = -1;
 
   RORC_DG_INFINIT_EVENT;
-  printf("\nArming data generator:\n");
-  printf("\n    initial value %d\n", mGeneratorInitialValue);
-  printf("\n    initial word  %d\n", mGeneratorInitialValue);
-  printf("\n    pattern       %s\n", GeneratorPattern::toString(mGeneratorPattern).c_str());
-  printf("\n    size          %d\n", mGeneratorDataSize);
-  printf("\n    seed          %d\n", mGeneratorSeed);
   int returnCode = rorcArmDataGenerator(getBarUserspace(), mGeneratorInitialValue, mGeneratorInitialWord,
       mGeneratorPattern, mGeneratorDataSize / 4, mGeneratorSeed, &roundedLen);
-  printf("\n    rounded len   %d\n", roundedLen);
 
   THROW_IF_BAD_STATUS(returnCode, CrorcArmDataGeneratorException()
       ADD_ERRINFO(returnCode, "Failed to arm data generator")

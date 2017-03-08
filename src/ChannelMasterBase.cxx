@@ -5,7 +5,6 @@
 
 #include "ChannelMasterBase.h"
 #include <iostream>
-#include <boost/filesystem/path.hpp>
 #include "BufferProviderFile.h"
 #include "BufferProviderMemory.h"
 #include "ChannelPaths.h"
@@ -18,35 +17,6 @@ namespace Rorc {
 
 namespace b = boost;
 namespace bfs = boost::filesystem;
-
-namespace {
-
-/// Throws if the file system type of the given file/directory is not one of the given valid types
-void assertFileSystemType(const bfs::path& path, const std::set<std::string>& validTypes, const std::string& name)
-{
-  bool found;
-  std::string type;
-  std::tie(found, type) = Utilities::isFileSystemTypeAnyOf(path, validTypes);
-
-  if (!found) {
-    std::ostringstream oss;
-    oss << "File-backed shared memory for '" << name << "' file system type invalid (supported: ";
-    for (auto i = validTypes.begin(); i != validTypes.end(); i++) {
-      oss << *i;
-      if (i != validTypes.end()) {
-        oss << ",";
-      }
-    }
-    oss << ")";
-
-    BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message(oss.str())
-        << ErrorInfo::FileName(path.c_str())
-        << ErrorInfo::FilesystemType(type));
-  }
-}
-
-} // Anonymous namespace
 
 void ChannelMasterBase::checkChannelNumber(const AllowedChannels& allowedChannels)
 {
@@ -92,16 +62,8 @@ ChannelMasterBase::ChannelMasterBase(CardDescriptor cardDescriptor, const Parame
 
   // Create parent directories
   auto paths = getPaths();
-  for (const auto& p : {paths.state(), paths.fifo(), paths.lock()}) {
+  for (const auto& p : {paths.fifo(), paths.lock()}) {
     makeParentDirectories(p);
-  }
-
-  // Check file system types
-  {
-    auto SHARED_MEMORY = "tmpfs";
-    auto HUGEPAGE = "hugetlbfs";
-    assertFileSystemType(boost::filesystem::path(paths.state()).parent_path(), {SHARED_MEMORY, HUGEPAGE},
-        "shared state");
   }
 
   // Get lock

@@ -21,15 +21,11 @@ class ChannelPaths
     /// \param channel Channel of the card
     ChannelPaths(PciAddress pciAddress, int channel);
 
-    /// Generates a path for the channel's shared memory state object
-    /// \return The path
-    std::string state() const;
-
     /// Generates a path for the channel file lock
     /// \return The path
     std::string lock() const;
 
-    /// Generates a path for the channel's shared memory FIFO object
+    /// Generates a path for the channel's shared memory FIFO object. It will be in hugetlbfs.
     /// \return The path
     std::string fifo() const;
 
@@ -39,7 +35,7 @@ class ChannelPaths
 
   private:
 
-    std::string makePath(std::string fileName) const;
+    std::string makePath(std::string fileName, const char* directory) const;
 
     const PciAddress mPciAddress;
     const int mChannel;

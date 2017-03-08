@@ -20,22 +20,7 @@ class BufferProviderFile : public BufferProvider
     BufferProviderFile(const BufferParameters::File& parameters)
     {
       Utilities::resetSmartPtr(mMappedFilePages, parameters.path, parameters.size);
-      bufferStartAddress = reinterpret_cast<uintptr_t>(mMappedFilePages->getAddress());
-      bufferSize = parameters.size;
-
-      reservedOffset = parameters.reservedStart;
-      reservedSize = parameters.reservedSize;
-      reservedStartAddress = bufferStartAddress + reservedOffset;
-      if ((reservedStartAddress + reservedSize) > (bufferStartAddress + bufferSize)) {
-        BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Reserved region out of range"));
-      }
-
-      dmaOffset = parameters.dmaStart;
-      dmaSize = parameters.dmaSize;
-      dmaStartAddress = bufferStartAddress + dmaOffset;
-      if ((dmaStartAddress + reservedSize) > (bufferStartAddress + bufferSize)) {
-        BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("DMA region out of range"));
-      }
+      initialize(mMappedFilePages->getAddress(), parameters.size);
     }
 
     virtual ~BufferProviderFile()

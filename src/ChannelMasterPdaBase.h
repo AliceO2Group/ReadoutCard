@@ -27,12 +27,10 @@ class ChannelMasterPdaBase: public ChannelMasterBase
     using AllowedChannels = std::set<int>;
 
     /// Constructor for the ChannelMaster object
-    /// \param cardType Type of the card
     /// \param parameters Parameters of the channel
     /// \param allowedChannels Channels allowed by this card type
     /// \param fifoSize Size of the Firmware FIFO in the DMA buffer
-    ChannelMasterPdaBase(CardType::type cardType, const Parameters& parameters, const AllowedChannels& allowedChannels,
-        size_t fifoSize);
+    ChannelMasterPdaBase(const Parameters& parameters, const AllowedChannels& allowedChannels, size_t fifoSize);
 
     ~ChannelMasterPdaBase();
 
@@ -43,6 +41,32 @@ class ChannelMasterPdaBase: public ChannelMasterBase
     virtual void writeRegister(int index, uint32_t value) final override;
 
   protected:
+
+    /// Maximum amount of PDA DMA buffers for channel FIFOs (1 per channel, so this also represents the max amount of
+    /// channels)
+    static constexpr int PDA_DMA_BUFFER_INDEX_FIFO_MAX = 100;
+    /// Start of integer range for PDA DMA buffers for pages
+    static constexpr int DMA_BUFFER_INDEX_PAGES_OFFSET = 1000000000;
+    /// Maximum amount of PDA DMA buffers for pages per channel
+    static constexpr int DMA_BUFFER_INDEX_PAGES_CHANNEL_MAX = 1000;
+
+    static int getPdaDmaBufferIndexFifo(int channel)
+    {
+      assert(channel < PDA_DMA_BUFFER_INDEX_FIFO_MAX);
+      return channel;
+    }
+
+    static int getPdaDmaBufferIndexPages(int channel, int bufferNumber)
+    {
+      assert(bufferNumber < DMA_BUFFER_INDEX_PAGES_CHANNEL_MAX);
+      return DMA_BUFFER_INDEX_PAGES_OFFSET + (channel * DMA_BUFFER_INDEX_PAGES_CHANNEL_MAX) + bufferNumber;
+    }
+
+    static int pdaBufferIndexToChannelBufferIndex(int channel, int pdaIndex)
+    {
+      return (pdaIndex - DMA_BUFFER_INDEX_PAGES_OFFSET) - (channel * DMA_BUFFER_INDEX_PAGES_CHANNEL_MAX);
+    }
+
     /// Namespace for describing the state of the DMA
     struct DmaState
     {
@@ -141,6 +165,11 @@ class ChannelMasterPdaBase: public ChannelMasterBase
 
     /// PDA BAR object
     boost::scoped_ptr<Pda::PdaBar> mPdaBar;
+
+    boost::scoped_ptr<MemoryMappedFile> mBufferFifoFile;
+
+    /// PDA DMABuffer object for the fifo
+    boost::scoped_ptr<Pda::PdaDmaBuffer> mPdaDmaBufferFifo;
 
     /// PDA DMABuffer object for the pages
     boost::scoped_ptr<Pda::PdaDmaBuffer> mPdaDmaBuffer;

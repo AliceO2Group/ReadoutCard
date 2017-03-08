@@ -8,7 +8,7 @@
 namespace AliceO2 {
 namespace Rorc {
 
-/// Base class for objects that provide addresses and offsets for buffers (typically DMA buffers)
+/// Base class for objects that provides addresses and offsets for buffers (typically DMA buffers)
 class BufferProvider
 {
   public:
@@ -16,55 +16,33 @@ class BufferProvider
     {
     }
 
-    uintptr_t getBufferStartAddress() const
+    void* getAddress() const
     {
-      return reservedStartAddress;
+      return mAddress;
     }
 
-    size_t getBufferSize() const
+    size_t getSize() const
     {
-      return bufferSize;
-    }
-
-    size_t getReservedOffset() const
-    {
-      return reservedOffset;
-    }
-
-    uintptr_t getReservedStartAddress() const
-    {
-      return reservedStartAddress;
-    }
-
-    size_t getReservedSize() const
-    {
-      return reservedSize;
-    }
-
-    size_t getDmaOffset() const
-    {
-      return dmaOffset;
-    }
-
-    uintptr_t getDmaStartAddress() const
-    {
-      return dmaStartAddress;
-    }
-
-    size_t getDmaSize() const
-    {
-      return dmaSize;
+      return mSize;
     }
 
   protected:
-    uintptr_t bufferStartAddress;
-    size_t bufferSize;
-    uintptr_t reservedStartAddress;
-    size_t reservedSize;
-    size_t reservedOffset;
-    uintptr_t dmaStartAddress;
-    size_t dmaSize;
-    size_t dmaOffset;
+
+    void initialize(uintptr_t address, size_t size)
+    {
+      initialize(reinterpret_cast<void*>(address), size);
+
+    }
+
+    void initialize(void* address, size_t size)
+    {
+      mAddress = address;
+      mSize = size;
+    }
+
+  private:
+    void* mAddress = 0;
+    size_t mSize = 0;
 };
 
 } // namespace Rorc

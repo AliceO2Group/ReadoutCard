@@ -74,7 +74,7 @@ const std::string PROGRESS_FORMAT("  %02s:%02s:%02s   %-12s  %-12s  %-10.1f");
 
 auto READOUT_ERRORS_PATH = "readout_errors.txt";
 
-constexpr size_t SUPERPAGE_SIZE = 1*1024*1024;
+constexpr size_t SUPERPAGE_SIZE = 2*1024*1024;
 }
 
 class BarHammer : public Utilities::Thread
@@ -138,6 +138,12 @@ class ProgramDmaBench: public Program
       Options::addOptionCardId(options);
       Options::addOptionsChannelParameters(options);
       options.add_options()
+          ("pages",
+              po::value<int64_t>(&mOptions.maxPages)->default_value(1500),
+              "Amount of pages to transfer. Give <= 0 for infinite.")
+          ("buffer-size",
+              po::value<size_t>(&mOptions.bufferSizeMiB)->default_value(20),
+              "Buffer size in mebibytes (rounded down to multiple of 2 MiB)")
           ("reset",
               po::bool_switch(&mOptions.resetChannel),
               "Reset channel during initialization")
@@ -147,15 +153,9 @@ class ProgramDmaBench: public Program
           ("to-file-bin",
               po::bool_switch(&mOptions.fileOutputBin),
               "Read out to file in binary format (only contains raw data from pages)")
-          ("pages",
-              po::value<int64_t>(&mOptions.maxPages)->default_value(1500),
-              "Amount of pages to transfer. Give <= 0 for infinite.")
-          ("rand-pause-sw",
-              po::bool_switch(&mOptions.randomPauseSoft),
-              "Randomly pause readout using software method")
-//          ("rand-readout",
-//              po::bool_switch(&mOptions.randomReadout),
-//              "Readout in non-sequential order")
+//          ("rand-pause-sw",
+//              po::bool_switch(&mOptions.randomPauseSoft),
+//              "Randomly pause readout using software method")
           ("no-errorcheck",
               po::bool_switch(&mOptions.noErrorCheck),
               "Skip error checking")
@@ -191,6 +191,9 @@ class ProgramDmaBench: public Program
         mOptions.generatorPattern = GeneratorPattern::fromString(mOptions.generatorPatternString);
       }
 
+      // Round down to 2 MiB multiple
+      mOptions.bufferSizeMiB = mOptions.bufferSizeMiB - (mOptions.bufferSizeMiB % 2);
+
       mInfinitePages = (mOptions.maxPages <= 0);
 
       auto cardId = Options::getOptionCardId(map);
@@ -202,16 +205,12 @@ class ProgramDmaBench: public Program
       params.setGeneratorDataSize(mPageSize);
       params.setGeneratorPattern(mOptions.generatorPattern);
 
-      mBufferParameters.path = boost::str(boost::format("/mnt/hugetlbfs/rorc-dma-bench_id=%s_chan=%s_pages")
+      mBufferParameters.path = boost::str(boost::format("/dev/hugepages/rorc-dma-bench_id=%s_chan=%s_pages")
           % map["id"].as<std::string>() % channelNumber);
-      mBufferParameters.size = 10 * SUPERPAGE_SIZE;
-      mBufferParameters.reservedStart = 0;
-      mBufferParameters.reservedSize = 1 * SUPERPAGE_SIZE;
-      mBufferParameters.dmaStart = 1 * SUPERPAGE_SIZE;
-      mBufferParameters.dmaSize = 9 * SUPERPAGE_SIZE;
+      mBufferParameters.size = mOptions.bufferSizeMiB * 1024 * 1024;
       params.setBufferParameters(mBufferParameters);
       Utilities::resetSmartPtr(mMemoryMappedFile, mBufferParameters.path, mBufferParameters.size);
-      mBufferBaseAddress = reinterpret_cast<char*>(mMemoryMappedFile->getAddress()) + mBufferParameters.dmaStart;
+      mBufferBaseAddress = reinterpret_cast<char*>(mMemoryMappedFile->getAddress());
 
       // Get master lock on channel
       mChannel = ChannelFactory().getMaster(params);
@@ -270,7 +269,7 @@ class ProgramDmaBench: public Program
       auto indexToOffset = [&](int i){ return i * SUPERPAGE_SIZE; };
       auto offsetToIndex = [&](size_t o){ return o / SUPERPAGE_SIZE; };
 
-      const int maxSuperpages = mBufferParameters.dmaSize / SUPERPAGE_SIZE;
+      const int maxSuperpages = mBufferParameters.size / SUPERPAGE_SIZE;
 
       boost::circular_buffer<size_t> freeQueue { maxSuperpages };
       for (int i = 0; i < maxSuperpages; ++i) {
@@ -714,6 +713,7 @@ class ProgramDmaBench: public Program
         bool randomReadout = false;
         bool barHammer = false;
         std::string generatorPatternString;
+        size_t bufferSizeMiB = 0;
         GeneratorPattern::type generatorPattern = GeneratorPattern::Incremental;
     } mOptions;
 

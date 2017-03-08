@@ -31,6 +31,18 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
     {
     }
 
+    struct Superpage
+    {
+        /// Address of the superpage (userspace virtual address)
+        void* address = nullptr;
+
+        /// Size of the superpage
+        size_t size = 0;
+
+        /// Pointer that users can use for whatever, e.g. to associate data with the superpage
+        void* userData = nullptr;
+    };
+
     /// Starts DMA for the given channel
     /// Call this before pushing pages. May become unneeded in the future.
     virtual void startDma() = 0;

@@ -38,6 +38,7 @@ DEFINE_ERRINFO(DmaBufferSize, size_t);
 DEFINE_ERRINFO(DmaPageSize, size_t);
 DEFINE_ERRINFO(Message, std::string);
 DEFINE_ERRINFO(FifoIndex, int);
+DEFINE_ERRINFO(FifoSize, size_t);
 DEFINE_ERRINFO(FileName, std::string);
 DEFINE_ERRINFO(FileSize, size_t);
 DEFINE_ERRINFO(FilesystemType, std::string);

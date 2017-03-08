@@ -44,7 +44,7 @@ constexpr uint64_t DMA_ALIGNMENT = 32;
 } // Anonymous namespace
 
 CruChannelMaster::CruChannelMaster(const Parameters& parameters)
-    : ChannelMasterPdaBase(CARD_TYPE, parameters, allowedChannels(), sizeof(CruFifoTable)), //
+    : ChannelMasterPdaBase(parameters, allowedChannels(), sizeof(CruFifoTable)), //
       mInitialResetLevel(ResetLevel::Rorc), // It's good to reset at least the card channel in general
       mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Rorc)), // Internal loopback by default
       mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)), // Use data generator by default
@@ -253,7 +253,7 @@ void CruChannelMaster::pushSuperpage(size_t offset, size_t size)
         << ErrorInfo::Message("Could not enqueue superpage, size not a multiple of 1 MiB"));
   }
 
-  if (offset + size > getBufferProvider().getDmaSize()) {
+  if (offset + size > getBufferProvider().getSize()) {
     BOOST_THROW_EXCEPTION(Exception()
         << ErrorInfo::Message("Superpage out of range"));
   }
@@ -261,7 +261,7 @@ void CruChannelMaster::pushSuperpage(size_t offset, size_t size)
   // TODO check if offset is properly aligned
 
   SuperpageQueueEntry entry;
-  entry.busAddress = getBusOffsetAddress(offset + getBufferProvider().getDmaOffset());
+  entry.busAddress = getBusOffsetAddress(offset);
   entry.pushedPages = 0;
   entry.status.confirmedPages = 0;
   entry.status.maxPages = size / DMA_PAGE_SIZE;

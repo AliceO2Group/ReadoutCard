@@ -98,7 +98,6 @@ class ProgramCleanup: public Program
           ChannelPaths channelPaths(rorcDevice.getCardDescriptor().pciAddress, channelNumber);
           files.push_back(channelPaths.fifo());
           files.push_back(channelPaths.lock());
-          files.push_back(channelPaths.state());
           namedMutexes.push_back(channelPaths.namedMutex());
         } else {
           cout << "### Attempting to find files to clean up...\n";
@@ -106,7 +105,6 @@ class ProgramCleanup: public Program
           pushIfPresent<ErrorInfo::SharedLockFile>(e, files);
           pushIfPresent<ErrorInfo::SharedBufferFile>(e, files);
           pushIfPresent<ErrorInfo::SharedFifoFile>(e, files);
-          pushIfPresent<ErrorInfo::SharedStateFile>(e, files);
           pushIfPresent<ErrorInfo::NamedMutexName>(e, namedMutexes);
         }
 

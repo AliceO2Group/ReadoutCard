@@ -527,8 +527,8 @@ class ProgramCruExperimentalDma: public Program
       Utilities::resetSmartPtr(mRorcDevice, mOptions.cardId);
       Utilities::resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), mChannelNumber);
       Utilities::resetSmartPtr(mMappedFilePages, DMA_BUFFER_PAGES_PATH.c_str(), DMA_BUFFER_PAGES_SIZE);
-      Utilities::resetSmartPtr(mBufferPages, mRorcDevice->getPciDevice(),
-          reinterpret_cast<uintptr_t>(mMappedFilePages->getAddress()), mMappedFilePages->getSize(), BUFFER_INDEX_PAGES);
+      Utilities::resetSmartPtr(mBufferPages, mRorcDevice->getPciDevice(), mMappedFilePages->getAddress(),
+          mMappedFilePages->getSize(), BUFFER_INDEX_PAGES);
     }
 
     /// Initializes the FIFO and the page addresses for it
