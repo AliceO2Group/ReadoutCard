@@ -12,7 +12,6 @@
 #include <queue>
 #include <thread>
 #include <random>
-#include <hugetlbfs.h>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/circular_buffer.hpp>
 #include <boost/format.hpp>
@@ -144,8 +143,9 @@ class ProgramDmaBench: public Program
               po::value<int64_t>(&mOptions.maxPages)->default_value(1500),
               "Amount of pages to transfer. Give <= 0 for infinite.")
           ("buffer-size",
-              po::value<double>(&mOptions.bufferSizeGiB)->default_value(1.0),
-              "Buffer size in gibibytes (rounded down to 2 MiB multiple, min 10 MiB)")
+              po::value<std::string>(&mOptions.bufferSizeString)->default_value("10MB"),
+              "Buffer size in GB or MB (MB rounded down to 2 MB multiple, min 10 MB). If MB is given, 2 MB hugepages "
+              "will be used; If GB is given, 1 GB hugepages will be used.")
           ("reset",
               po::bool_switch(&mOptions.resetChannel),
               "Reset channel during initialization")
@@ -174,7 +174,7 @@ class ProgramDmaBench: public Program
               po::bool_switch(&mOptions.barHammer),
               "Stress the BAR with repeated writes and measure performance")
           ("rm-pages-file",
-              po::bool_switch(&mOptions.removePagesFile)->default_value(false),
+              po::bool_switch(&mOptions.removePagesFile)->default_value(true),
               "Remove the file used for pages after benchmark completes")
               ;
       Options::addOptionsChannelParameters(options);
@@ -197,6 +197,32 @@ class ProgramDmaBench: public Program
         mOptions.generatorPattern = GeneratorPattern::fromString(mOptions.generatorPatternString);
       }
 
+      // Parse buffer size
+      {
+        const auto& input = mOptions.bufferSizeString;
+        if (input.size() < 3) {
+          BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Invalid buffer size given"));
+        }
+
+        try {
+          auto unit = input.substr(input.size() - 2); // Get last two characters
+          auto value = boost::lexical_cast<size_t>(input.substr(0, input.size() - 2));
+
+          if (unit == "MB") {
+            mOptions.hugePageSize = HugePageSize::SIZE_2MB;
+            value = std::max(size_t(10), value);
+            mBufferSize = (value - (value % 2)) * 1024 * 1024; // Round down for 2M hugepages
+          } else if (unit == "GB") {
+            mOptions.hugePageSize = HugePageSize::SIZE_1GB;
+            mBufferSize = value * 1024 * 1024 * 1024;
+          } else {
+            BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Invalid buffer size unit given"));
+          }
+        } catch (const boost::bad_lexical_cast& e) {
+          BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Invalid buffer size argument"));
+        }
+      }
+
       mInfinitePages = (mOptions.maxPages <= 0);
 
       auto cardId = Options::getOptionCardId(map);
@@ -205,10 +231,11 @@ class ProgramDmaBench: public Program
 
 
       // Create buffer
-      mBufferFilePath = boost::str(boost::format("/dev/hugepages/rorc-dma-bench_id=%s_chan=%s_pages")
-          % map["id"].as<std::string>() % channelNumber);
-      size_t bufferSizeMiB = std::max(size_t(10), (size_t(mOptions.bufferSizeGiB * 1024)));
-      mBufferSize = (bufferSizeMiB - (bufferSizeMiB % 2)) * 1024 * 1024; // Round down for 2M hugepages
+      mBufferFilePath = boost::str(
+          boost::format("/var/lib/hugetlbfs/global/pagesize-%s/rorc-dma-bench_id=%s_chan=%s_pages")
+              % (mOptions.hugePageSize == HugePageSize::SIZE_2MB ? "2MB" : "1GB") % map["id"].as<std::string>()
+              % channelNumber);
+      cout << "Using buffer file path: " << mBufferFilePath << '\n';
       Utilities::resetSmartPtr(mMemoryMappedFile, mBufferFilePath, mBufferSize, mOptions.removePagesFile);
       mBufferBaseAddress = reinterpret_cast<char*>(mMemoryMappedFile->getAddress());
 
@@ -707,6 +734,11 @@ class ProgramDmaBench: public Program
       }
     }
 
+    enum class HugePageSize
+    {
+       SIZE_2MB, SIZE_1GB
+    };
+
     /// Program options
     struct OptionsStruct {
         int64_t maxPages = 0; ///< Limit of pages to push
@@ -721,7 +753,8 @@ class ProgramDmaBench: public Program
         bool barHammer = false;
         bool removePagesFile = false;
         std::string generatorPatternString;
-        double bufferSizeGiB = 0;
+        std::string bufferSizeString;
+        HugePageSize hugePageSize;
         GeneratorPattern::type generatorPattern = GeneratorPattern::Incremental;
     } mOptions;
 

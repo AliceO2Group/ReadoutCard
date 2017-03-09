@@ -12,7 +12,7 @@ namespace AliceO2 {
 namespace Rorc {
 namespace {
 static const char* DIR_SHAREDMEM = "/dev/shm/alice_o2/rorc";
-static const char* DIR_HUGEPAGE = "/dev/hugepages/alice_o2/rorc";
+static const char* DIR_HUGEPAGE_2M = "/dev/hugepages/alice_o2/rorc";
 static const char* FORMAT = "%s/%s/channel_%i/%s";
 }
 
@@ -32,7 +32,7 @@ std::string ChannelPaths::lock() const
 
 std::string ChannelPaths::fifo() const
 {
-  return makePath("fifo", DIR_HUGEPAGE);
+  return makePath("fifo", DIR_HUGEPAGE_2M);
 }
 
 std::string ChannelPaths::namedMutex() const
