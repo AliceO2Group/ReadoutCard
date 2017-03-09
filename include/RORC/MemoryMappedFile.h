@@ -19,7 +19,7 @@ class MemoryMappedFile
   public:
     MemoryMappedFile();
 
-    MemoryMappedFile(const std::string& fileName, size_t fileSize);
+    MemoryMappedFile(const std::string& fileName, size_t fileSize, bool deleteFileOnDestruction = false);
 
     ~MemoryMappedFile();
 

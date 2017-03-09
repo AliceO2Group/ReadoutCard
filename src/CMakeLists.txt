@@ -87,6 +87,7 @@ target_link_libraries(
   Common
   rt # For shared memory
   pthread
+  hugetlbfs
 )
 
 # Set the build version. It will be used in the name of the lib, with corresponding

@@ -19,8 +19,10 @@ namespace bfs = boost::filesystem;
 
 struct MemoryMappedFileInternal
 {
+    std::string fileName;
     boost::interprocess::file_mapping fileMapping;
     boost::interprocess::mapped_region mappedRegion;
+    bool deleteFileOnDestruction;
 };
 
 MemoryMappedFile::MemoryMappedFile()
@@ -28,13 +30,19 @@ MemoryMappedFile::MemoryMappedFile()
   mInternal = std::make_unique<MemoryMappedFileInternal>();
 }
 
-MemoryMappedFile::MemoryMappedFile(const std::string& fileName, size_t fileSize) : MemoryMappedFile()
+MemoryMappedFile::MemoryMappedFile(const std::string& fileName, size_t fileSize, bool deleteFileOnDestruction)
+    : MemoryMappedFile()
 {
+  mInternal->fileName = fileName;
+  mInternal->deleteFileOnDestruction = deleteFileOnDestruction;
   map(fileName, fileSize);
 }
 
 MemoryMappedFile::~MemoryMappedFile()
 {
+  if (mInternal->deleteFileOnDestruction) {
+    bfs::remove(mInternal->fileName);
+  }
 }
 
 void* MemoryMappedFile::getAddress() const

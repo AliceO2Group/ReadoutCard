@@ -96,6 +96,7 @@ ChannelMasterPdaBase::ChannelMasterPdaBase(const Parameters& parameters,
   log("Initializing memory-mapped DMA buffer", InfoLogger::InfoLogger::Debug);
   Utilities::resetSmartPtr(mPdaDmaBuffer, mRorcDevice->getPciDevice(), getBufferProvider().getAddress(),
       getBufferProvider().getSize(), getPdaDmaBufferIndexPages(getChannelNumber(), 0));
+  log(std::string("Scatter-gather list size: ") + std::to_string(mPdaDmaBuffer->getScatterGatherList().size()));
 }
 
 ChannelMasterPdaBase::~ChannelMasterPdaBase()

@@ -12,6 +12,8 @@
 #include <queue>
 #include <thread>
 #include <random>
+#include <hugetlbfs.h>
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/circular_buffer.hpp>
 #include <boost/format.hpp>
 #include <boost/exception/diagnostic_information.hpp>
@@ -26,6 +28,7 @@
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
 #include "Utilities/SmartPointer.h"
+#include "Utilities/System.h"
 #include "Utilities/Thread.h"
 #include "Utilities/Util.h"
 
@@ -136,14 +139,13 @@ class ProgramDmaBench: public Program
     {
       Options::addOptionChannel(options);
       Options::addOptionCardId(options);
-      Options::addOptionsChannelParameters(options);
       options.add_options()
           ("pages",
               po::value<int64_t>(&mOptions.maxPages)->default_value(1500),
               "Amount of pages to transfer. Give <= 0 for infinite.")
           ("buffer-size",
-              po::value<size_t>(&mOptions.bufferSizeMiB)->default_value(20),
-              "Buffer size in mebibytes (rounded down to multiple of 2 MiB)")
+              po::value<double>(&mOptions.bufferSizeGiB)->default_value(1.0),
+              "Buffer size in gibibytes (rounded down to 2 MiB multiple, min 10 MiB)")
           ("reset",
               po::bool_switch(&mOptions.resetChannel),
               "Reset channel during initialization")
@@ -171,7 +173,11 @@ class ProgramDmaBench: public Program
           ("bar-hammer",
               po::bool_switch(&mOptions.barHammer),
               "Stress the BAR with repeated writes and measure performance")
+          ("rm-pages-file",
+              po::bool_switch(&mOptions.removePagesFile)->default_value(false),
+              "Remove the file used for pages after benchmark completes")
               ;
+      Options::addOptionsChannelParameters(options);
     }
 
     virtual void run(const po::variables_map& map)
@@ -191,26 +197,29 @@ class ProgramDmaBench: public Program
         mOptions.generatorPattern = GeneratorPattern::fromString(mOptions.generatorPatternString);
       }
 
-      // Round down to 2 MiB multiple
-      mOptions.bufferSizeMiB = mOptions.bufferSizeMiB - (mOptions.bufferSizeMiB % 2);
-
       mInfinitePages = (mOptions.maxPages <= 0);
 
       auto cardId = Options::getOptionCardId(map);
       int channelNumber = Options::getOptionChannel(map);
       auto params = Options::getOptionsParameterMap(map);
+
+
+      // Create buffer
+      mBufferFilePath = boost::str(boost::format("/dev/hugepages/rorc-dma-bench_id=%s_chan=%s_pages")
+          % map["id"].as<std::string>() % channelNumber);
+      size_t bufferSizeMiB = std::max(size_t(10), (size_t(mOptions.bufferSizeGiB * 1024)));
+      mBufferSize = (bufferSizeMiB - (bufferSizeMiB % 2)) * 1024 * 1024; // Round down for 2M hugepages
+      Utilities::resetSmartPtr(mMemoryMappedFile, mBufferFilePath, mBufferSize, mOptions.removePagesFile);
+      mBufferBaseAddress = reinterpret_cast<char*>(mMemoryMappedFile->getAddress());
+
+      // Set up channel parameters
       mPageSize = params.getDmaPageSize().get();
       params.setCardId(cardId);
       params.setChannelNumber(channelNumber);
       params.setGeneratorDataSize(mPageSize);
       params.setGeneratorPattern(mOptions.generatorPattern);
-
-      mBufferParameters.path = boost::str(boost::format("/dev/hugepages/rorc-dma-bench_id=%s_chan=%s_pages")
-          % map["id"].as<std::string>() % channelNumber);
-      mBufferParameters.size = mOptions.bufferSizeMiB * 1024 * 1024;
-      params.setBufferParameters(mBufferParameters);
-      Utilities::resetSmartPtr(mMemoryMappedFile, mBufferParameters.path, mBufferParameters.size);
-      mBufferBaseAddress = reinterpret_cast<char*>(mMemoryMappedFile->getAddress());
+      params.setBufferParameters(BufferParameters::Memory { mMemoryMappedFile->getAddress(),
+          mMemoryMappedFile->getSize() });
 
       // Get master lock on channel
       mChannel = ChannelFactory().getMaster(params);
@@ -269,7 +278,7 @@ class ProgramDmaBench: public Program
       auto indexToOffset = [&](int i){ return i * SUPERPAGE_SIZE; };
       auto offsetToIndex = [&](size_t o){ return o / SUPERPAGE_SIZE; };
 
-      const int maxSuperpages = mBufferParameters.size / SUPERPAGE_SIZE;
+      const int maxSuperpages = mBufferSize / SUPERPAGE_SIZE;
 
       boost::circular_buffer<size_t> freeQueue { maxSuperpages };
       for (int i = 0; i < maxSuperpages; ++i) {
@@ -698,10 +707,8 @@ class ProgramDmaBench: public Program
       }
     }
 
-    std::shared_ptr<ChannelMasterInterface> mChannel;
-
     /// Program options
-    struct _OptionsStruct {
+    struct OptionsStruct {
         int64_t maxPages = 0; ///< Limit of pages to push
         bool fileOutputAscii = false;
         bool fileOutputBin = false;
@@ -712,12 +719,13 @@ class ProgramDmaBench: public Program
         bool noResyncCounter = false;
         bool randomReadout = false;
         bool barHammer = false;
+        bool removePagesFile = false;
         std::string generatorPatternString;
-        size_t bufferSizeMiB = 0;
+        double bufferSizeGiB = 0;
         GeneratorPattern::type generatorPattern = GeneratorPattern::Incremental;
     } mOptions;
 
-    BufferParameters::File mBufferParameters;
+//    BufferParameters::File mBufferParameters;
 
     bool mDmaLoopBreak = false;
     bool mInfinitePages = false;
@@ -762,9 +770,15 @@ class ProgramDmaBench: public Program
 
     std::unique_ptr<BarHammer> mBarHammer;
 
+    std::string mBufferFilePath;
+
+    size_t mBufferSize;
+
     char* mBufferBaseAddress;
 
     CardType::type mCardType;
+
+    std::shared_ptr<ChannelMasterInterface> mChannel;
 };
 
 int main(int argc, char** argv)
