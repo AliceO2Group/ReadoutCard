@@ -16,17 +16,21 @@
 namespace AliceO2 {
 namespace Rorc {
 namespace {
-  template <class T>
-  void setParam(Parameters::Map& map, std::string key, const T& value)
+  /// Set a parameter from the map
+  /// \tparam T The parameter type to get
+  /// \tparam Map The map type to extract from
+  template <class T, typename Map>
+  void setParam(Map& map, std::string key, const T& value)
   {
       map[key] = value;
   }
 
   /// Get a parameter from the map
   /// \tparam T The parameter type to get
+  /// \tparam Map The map type to extract from
   /// \return The value wrapped in an optional if it was found, or boost::none if it was not
-  template <typename T>
-  auto getParam(const Parameters::Map& map, std::string key) -> boost::optional<T>
+  template <typename T, typename Map>
+  auto getParam(const Map& map, std::string key) -> boost::optional<T>
   {
     auto iterator = map.find(key);
     if (iterator != map.end()) {
@@ -40,9 +44,10 @@ namespace {
 
   /// Get a parameter from the map, throwing an exception if it is not present
   /// \tparam T The parameter type to get
+  /// \tparam Map The map type to extract from
   /// \return The value
-  template <typename T>
-  auto getParamRequired(const Parameters::Map& map, std::string key) -> T
+  template <typename T, typename Map>
+  auto getParamRequired(const Map& map, std::string key) -> T
   {
     if (auto optional = getParam<T>(map, key)) {
       return *optional;

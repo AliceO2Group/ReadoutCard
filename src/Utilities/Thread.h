@@ -11,6 +11,7 @@
 #include <map>
 #include <set>
 #include <stdexcept>
+#include <system_error>
 #include <string>
 #include <thread>
 #include <boost/throw_exception.hpp>
