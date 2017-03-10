@@ -15,10 +15,12 @@ namespace AliceO2 {
 namespace Rorc {
 
 /// Queue to handle superpages
+/// We keep this header-only to make it inlineable, since these are all very short and simple functions.
 template <size_t MAX_SUPERPAGES>
 class SuperpageQueue {
   public:
-    using Offset = size_t;
+    using Id = uint8_t;
+    using Queue = boost::circular_buffer<Id>;
 
     /// This struct wraps the SuperpageStatus and adds some internally used variables
     struct SuperpageQueueEntry
@@ -28,11 +30,8 @@ class SuperpageQueue {
         int pushedPages; ///< Amount of pages that have been pushed (not necessarily arrived)
     };
 
-    using Queue = boost::circular_buffer<Offset>;
-    using Registry = std::unordered_map<Offset, SuperpageQueueEntry>;
-
-    /// Gets offset of youngest superpage
-    Offset getBackSuperpage()
+    /// Gets ID of youngest superpage
+    Id getBackSuperpageId()
     {
       if (!mPushing.empty()) {
         return mPushing.back();
@@ -49,8 +48,8 @@ class SuperpageQueue {
       BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not get back superpage, queues were empty"));
     }
 
-    /// Gets offset of oldest superpage
-    Offset getFrontSuperpage()
+    /// Gets ID of oldest superpage
+    Id getFrontSuperpageId()
     {
       if (!mFilled.empty()) {
         return mFilled.front();
@@ -70,55 +69,65 @@ class SuperpageQueue {
     /// Gets status of oldest superpage
     SuperpageStatus getFrontSuperpageStatus()
     {
-      if (mRegistry.empty()) {
+      if (getQueueCount() == 0) {
+      //if (mRegistry.empty()) {
         BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not get superpage status, queue was empty"));
       }
 
-      return mRegistry.at(getFrontSuperpage()).status;
+      return getEntry(getFrontSuperpageId()).status;
     }
 
     /// Add a superpage to the queue
     /// When a superpage is initially added, it is put into the internal pushing and arrivals queues
-    void addToQueue(const SuperpageQueueEntry& entry)
+    /// \return ID of the added superpage
+    Id addToQueue(const SuperpageQueueEntry& entry)
     {
       if (isFull()) {
         BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not enqueue superpage, queue full"));
       }
 
-      const auto& offset = entry.status.getOffset();
+      auto id = mNextId;
 
-      if (!mRegistry.insert(std::make_pair(offset, entry)).second) {
-        // Key was already present
-        BOOST_THROW_EXCEPTION(Exception()
-            << ErrorInfo::Message("Could not enqueue superpage, offset already in use")
-            << ErrorInfo::Offset(offset));
+#ifndef NDEBUG
+      if (isValidEntry(mRegistry.at(id))) {
+        BOOST_THROW_EXCEPTION(
+            Exception() << ErrorInfo::Message("Could not enqueue superpage, would overwrite index ID already in use")
+                << ErrorInfo::Index(id) << ErrorInfo::FifoSize(getQueueCount()));
       }
+#endif
 
-      mPushing.push_back(offset);
-      mArrivals.push_back(offset);
+//      printf("Enqueued superpage\n  o=%lu pqs=%lu aqs=%lu fqs=%lu\n", entry.status.getOffset(), mPushing.size(), mArrivals.size(),
+//                mFilled.size());
 
-    //  printf("Enqueued superpage\n  o=%lu pqs=%lu aqs=%lu fqs=%lu\n", entry.status.offset, mPushing.size(), mArrivals.size(),
-    //      mFilled.size());
+      mRegistry[id] = entry; // We don't use getEntry() because it checks for entry validity
+      mNextId = (mNextId + 1) % MAX_SUPERPAGES;
+      mNumberOfEntries++;
+
+      mPushing.push_back(id);
+      mArrivals.push_back(id);
+      return id;
     }
 
     /// Removes a superpage that has been pushed completely from the pushing queue
-    void removeFromPushingQueue()
+    /// \return ID of the removed superpage
+    Id removeFromPushingQueue()
     {
       if (mPushing.empty()) {
         BOOST_THROW_EXCEPTION(Exception()
             << ErrorInfo::Message("Could not remove from pushing queue, pushing queue was empty"));
       }
 
-      auto offset = mPushing.front();
-    //  printf("Removing from pushing queue\n  o=%lu\n", offset);
+      auto id = mPushing.front();
+//      printf("Removing from pushing queue\n  o=%lu\n", id);
 
-      const auto& entry = mRegistry.at(offset);
+      const auto& entry = getEntry(id);
 
       if (entry.pushedPages != entry.status.maxPages) {
         BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not remove from pushing queue"));
       }
 
       mPushing.pop_front();
+      return id;
     }
 
     /// Moves a superpage that has had all pushed pages completely arrived from the internal arrivals queue to filled
@@ -130,16 +139,16 @@ class SuperpageQueue {
             << ErrorInfo::Message("Could not move from arrivals to filled, arrivals was empty"));
       }
 
-      auto offset = mArrivals.front();
-    //  printf("Moving from arrivals to filled\n  o=%lu\n", offset);
+      auto id = mArrivals.front();
+//      printf("Moving from arrivals to filled\n  o=%d\n", int(id));
 
-      const auto& entry = mRegistry.at(offset);
+      const auto& entry = getEntry(id);
       if (entry.status.confirmedPages != entry.status.maxPages) {
         BOOST_THROW_EXCEPTION(Exception()
             << ErrorInfo::Message("Could not move arrivals to filled, superpage was not filled"));
       }
 
-      mFilled.push_back(offset);
+      mFilled.push_back(id);
       mArrivals.pop_front();
     }
 
@@ -151,16 +160,14 @@ class SuperpageQueue {
         BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not pop superpage, filled queue was empty"));
       }
 
-      Offset offset = mFilled.front();
-      SuperpageQueueEntry entry = mRegistry.at(offset);
-      if (mRegistry.erase(offset) == 0) {
-        BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not pop superpage, did not find element"));
-      }
-
+      auto id = mFilled.front();
+      SuperpageQueueEntry entry = getEntry(id);
+      resetEntry(getEntry(id));
+      mNumberOfEntries--;
       mFilled.pop_front();
 
-    //  printf("Popped superpage\n  o=%lu pqs=%lu aqs=%lu fqs=%lu\n", offset, mPushing.size(), mArrivals.size(),
-    //      mFilled.size());
+//      printf("Popped superpage\n  o=%lu pqs=%lu aqs=%lu fqs=%lu\n", id, mPushing.size(), mArrivals.size(),
+//          mFilled.size());
 
       return entry;
     }
@@ -168,12 +175,12 @@ class SuperpageQueue {
 
     int getQueueCount() const
     {
-      return mRegistry.size();
+      return mNumberOfEntries;
     }
 
     int getQueueAvailable() const
     {
-      return MAX_SUPERPAGES - mRegistry.size();
+      return MAX_SUPERPAGES - getQueueCount();
     }
 
     int getQueueCapacity() const
@@ -183,23 +190,19 @@ class SuperpageQueue {
 
     int isEmpty() const
     {
-      return mRegistry.empty();
+      return getQueueCount() == 0;
     }
 
     int isFull() const
     {
-      return mRegistry.size() == MAX_SUPERPAGES;
-    }
-
-    const Registry& getRegistry() const
-    {
-      return mRegistry;
+      return getQueueCount() == MAX_SUPERPAGES;
     }
 
     const Queue& getPushing() const
     {
       return mPushing;
     }
+
     const Queue& getArrivals() const
     {
       return mArrivals;
@@ -210,24 +213,57 @@ class SuperpageQueue {
       return mFilled;
     }
 
-    SuperpageQueueEntry& getEntry(Offset offset)
+    SuperpageQueueEntry& getPushingFrontEntry()
     {
-      return mRegistry.at(offset);
+      return getEntry(getPushing().front());
+    }
+
+    SuperpageQueueEntry& getArrivalsFrontEntry()
+    {
+      return getEntry(getArrivals().front());
+    }
+
+    SuperpageQueueEntry& getEntry(Id id)
+    {
+#ifndef NDEBUG
+      if (!isValidEntry(mRegistry.at(id))) {
+        BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Invalid entry") << ErrorInfo::Index(id));
+      }
+#endif
+      return mRegistry[id];
+    }
+
+    void resetEntry(SuperpageQueueEntry& entry)
+    {
+      entry.pushedPages = PUSHED_PAGES_INVALID;
+    }
+
+    bool isValidEntry(const SuperpageQueueEntry& entry) const
+    {
+      return entry.pushedPages != PUSHED_PAGES_INVALID;
     }
 
     void clear()
     {
-      mRegistry.clear();
+      for (auto& e : mRegistry) {
+        resetEntry(e);
+      }
       mPushing.clear();
       mArrivals.clear();
       mFilled.clear();
+      mNumberOfEntries = 0;
+      mNextId = 0;
     };
 
   private:
 
+    static constexpr int PUSHED_PAGES_INVALID = -1;
+    int mNumberOfEntries = 0;
+    Id mNextId = 0;
+
     /// Registry for superpages
-    /// The queues contain an offset that's used as a key for this registry.
-    Registry mRegistry;
+    /// The queues contain an ID that's used as a key for this registry.
+    std::array<SuperpageQueueEntry, MAX_SUPERPAGES> mRegistry;
 
     /// Queue for superpages that can be pushed into
     Queue mPushing { MAX_SUPERPAGES };
@@ -237,6 +273,9 @@ class SuperpageQueue {
 
     /// Queue for superpages that are filled
     Queue mFilled { MAX_SUPERPAGES };
+
+    static_assert(MAX_SUPERPAGES <= (size_t(std::numeric_limits<Id>::max()) + 1),
+        "Id type can't handle amount of entries");
 };
 
 

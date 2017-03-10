@@ -280,8 +280,7 @@ void CrorcChannelMaster::fillSuperpages()
 {
   // Push new pages into superpage
   if (!mSuperpageQueue.getPushing().empty()) {
-    auto offset = mSuperpageQueue.getPushing().front();
-    SuperpageQueueEntry& entry = mSuperpageQueue.getEntry(offset);
+    SuperpageQueueEntry& entry = mSuperpageQueue.getPushingFrontEntry();
 
     if (mPendingDmaStart) {
       // Do some special handling of first transfers......
@@ -308,8 +307,7 @@ void CrorcChannelMaster::fillSuperpages()
     auto resetDescriptor = [&](int descriptorIndex) {getFifoUser()->entries[descriptorIndex].reset();};
 
     while (mFifoSize > 0) {
-      auto offset = mSuperpageQueue.getArrivals().front();
-      SuperpageQueueEntry& entry = mSuperpageQueue.getEntry(offset);
+      SuperpageQueueEntry& entry = mSuperpageQueue.getArrivalsFrontEntry();
 
       if (isArrived(mFifoBack)) {
         resetDescriptor(mFifoBack);
