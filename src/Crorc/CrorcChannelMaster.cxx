@@ -257,30 +257,16 @@ auto CrorcChannelMaster::getSuperpageStatus() -> SuperpageStatus
   return mSuperpageQueue.getFrontSuperpageStatus();
 }
 
-void CrorcChannelMaster::pushSuperpage(size_t offset, size_t size)
+void CrorcChannelMaster::pushSuperpage(Superpage superpage)
 {
-  if (size == 0) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not enqueue superpage, size == 0"));
-  }
-
-  if ((size % 1024*1024) != 0) {
-    BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message("Could not enqueue superpage, size not a multiple of 1 MiB"));
-  }
-
-  if (offset + size > getBufferProvider().getSize()) {
-    BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message("Superpage out of range"));
-  }
-
-  // TODO check if offset is properly aligned
+  checkSuperpage(superpage);
 
   SuperpageQueueEntry entry;
-  entry.busAddress = getBusOffsetAddress(offset);
+  entry.busAddress = getBusOffsetAddress(superpage.getOffset());
   entry.pushedPages = 0;
+  entry.status.superpage = superpage;
   entry.status.confirmedPages = 0;
-  entry.status.maxPages = size / mPageSize;
-  entry.status.offset = offset;
+  entry.status.maxPages = superpage.getSize() / mPageSize;
 
   mSuperpageQueue.addToQueue(entry);
 }

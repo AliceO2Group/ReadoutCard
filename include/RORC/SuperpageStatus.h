@@ -1,5 +1,5 @@
-/// \file SuperpageStatus.h
-/// \brief Definition of the SuperpageStatus struct
+/// \file Superpage.h
+/// \brief Definition of the Superpage struct
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
@@ -36,10 +36,21 @@ struct SuperpageStatus
     /// The offset of the superpage. It's also its ID.
     size_t getOffset() const
     {
-      return offset;
+      return superpage.getOffset();
     }
 
-    size_t offset;
+    /// The size of the superpage
+    size_t getSize() const
+    {
+      return superpage.getSize();
+    }
+
+    const Superpage& getSuperpage() const
+    {
+      return superpage;
+    }
+
+    Superpage superpage;
     int confirmedPages;
     int maxPages;
 };

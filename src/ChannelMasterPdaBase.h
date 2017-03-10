@@ -77,6 +77,9 @@ class ChannelMasterPdaBase: public ChannelMasterBase
         };
     };
 
+    /// Perform some basic checks on a superpage
+    void checkSuperpage(const Superpage& superpage);
+
     /// Template method called by startDma() to do device-specific (CRORC, RCU...) actions
     /// Note: subclasses should not call getLockGuard() in this function, as the ChannelMaster will have the lock
     /// already.

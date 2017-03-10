@@ -52,8 +52,6 @@ ChannelMasterBase::ChannelMasterBase(CardDescriptor cardDescriptor, const Parame
     const AllowedChannels& allowedChannels)
     : mCardDescriptor(cardDescriptor), mChannelNumber(parameters.getChannelNumberRequired())
 {
-  using namespace Utilities;
-
   // Check the channel number is allowed
   checkChannelNumber(allowedChannels);
 
@@ -63,12 +61,12 @@ ChannelMasterBase::ChannelMasterBase(CardDescriptor cardDescriptor, const Parame
   // Create parent directories
   auto paths = getPaths();
   for (const auto& p : {paths.fifo(), paths.lock()}) {
-    makeParentDirectories(p);
+    Utilities::makeParentDirectories(p);
   }
 
   // Get lock
   log("Getting master lock", InfoLogger::InfoLogger::Debug);
-  resetSmartPtr(mInterprocessLock, paths.lock(), paths.namedMutex());
+  Utilities::resetSmartPtr(mInterprocessLock, paths.lock(), paths.namedMutex());
   log("Acquired master lock", InfoLogger::InfoLogger::Debug);
 
   if (auto bufferParameters = parameters.getBufferParameters()) {

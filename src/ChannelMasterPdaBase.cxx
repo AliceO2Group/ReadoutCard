@@ -187,7 +187,27 @@ uintptr_t ChannelMasterPdaBase::getBusOffsetAddress(size_t offset)
       << ErrorInfo::Offset(offset));
 }
 
+void ChannelMasterPdaBase::checkSuperpage(const Superpage& superpage)
+{
+  if (superpage.getSize() == 0) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not enqueue superpage, size == 0"));
+  }
 
+  if ((superpage.getSize() % 1024*1024) != 0) {
+    BOOST_THROW_EXCEPTION(Exception()
+        << ErrorInfo::Message("Could not enqueue superpage, size not a multiple of 1 MiB"));
+  }
+
+  if ((superpage.getOffset() + superpage.getSize()) > getBufferProvider().getSize()) {
+    BOOST_THROW_EXCEPTION(Exception()
+        << ErrorInfo::Message("Superpage out of range"));
+  }
+
+  if ((superpage.getOffset() % 4) != 0) {
+    BOOST_THROW_EXCEPTION(Exception()
+        << ErrorInfo::Message("Superpage offset not aligned properly"));
+  }
+}
 
 } // namespace Rorc
 } // namespace AliceO2

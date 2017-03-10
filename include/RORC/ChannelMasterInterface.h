@@ -15,6 +15,7 @@
 #include "RORC/CardType.h"
 #include "RORC/ResetLevel.h"
 #include "RORC/RegisterReadWriteInterface.h"
+#include "RORC/Superpage.h"
 #include "RORC/SuperpageStatus.h"
 
 namespace AliceO2 {
@@ -30,18 +31,6 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
     virtual ~ChannelMasterInterface()
     {
     }
-
-    struct Superpage
-    {
-        /// Address of the superpage (userspace virtual address)
-        void* address = nullptr;
-
-        /// Size of the superpage
-        size_t size = 0;
-
-        /// Pointer that users can use for whatever, e.g. to associate data with the superpage
-        void* userData = nullptr;
-    };
 
     /// Starts DMA for the given channel
     /// Call this before pushing pages. May become unneeded in the future.
@@ -60,10 +49,8 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
     /// The user is responsible for making sure enqueued superpages do not overlap - the driver will dutifully overwrite
     /// your data if you tell it to do so.
     ///
-    /// \param offset Offset from the start of the DMA buffer to the start of the superpage. Must be ???-aligned.
-    ///     The offset will also be used as an identifier for the superpage.
-    /// \param size Size of the superpage. Must be a multiple of the page size AND a multiple of 1 MB.
-    virtual void pushSuperpage(size_t offset, size_t size) = 0;
+    /// \param superpage Superpage to push
+    virtual void pushSuperpage(Superpage superpage) = 0;
 
     /// Gets the status of the superpage at the front of the queue (i.e. the oldest superpage)
     virtual SuperpageStatus getSuperpageStatus() = 0;

@@ -303,7 +303,6 @@ class ProgramDmaBench: public Program
     void dmaLoop()
     {
       auto indexToOffset = [&](int i){ return i * SUPERPAGE_SIZE; };
-      auto offsetToIndex = [&](size_t o){ return o / SUPERPAGE_SIZE; };
 
       const int maxSuperpages = mBufferSize / SUPERPAGE_SIZE;
 
@@ -335,9 +334,11 @@ class ProgramDmaBench: public Program
 
         // Give free superpages to the driver
         while (!freeQueue.empty() && (mChannel->getSuperpageQueueAvailable() != 0)) {
-          auto offset = freeQueue.front();
+          Superpage superpage;
+          superpage.offset = freeQueue.front();
+          superpage.size = SUPERPAGE_SIZE;
           freeQueue.pop_front();
-          mChannel->pushSuperpage(offset, SUPERPAGE_SIZE);
+          mChannel->pushSuperpage(superpage);
         }
 
         // Check for filled superpages
@@ -352,22 +353,22 @@ class ProgramDmaBench: public Program
 
         // Read out filled superpages
         if (!readoutQueue.empty()) {
-          auto& superpage = readoutQueue.front();
+          auto& entry = readoutQueue.front();
           constexpr int MAX_PAGES_PER_CYCLE = 1;
           for (int i = 0; i < MAX_PAGES_PER_CYCLE; ++i) {
-            if (superpage.pagesReadOut == superpage.superpage.maxPages) {
+            if (entry.pagesReadOut == entry.superpage.getMaxPageCount()) {
               break;
             }
-            readoutPage(mBufferBaseAddress + superpage.superpage.offset + mPageSize * superpage.pagesReadOut, mPageSize);
-            superpage.pagesReadOut++;
+            readoutPage(mBufferBaseAddress + entry.superpage.getOffset() + mPageSize * entry.pagesReadOut, mPageSize);
+            entry.pagesReadOut++;
             mReadoutCount++;
           }
 
-          if (superpage.pagesReadOut == superpage.superpage.maxPages) {
+          if (entry.pagesReadOut == entry.superpage.getMaxPageCount()) {
             // Move superpage from readout queue back to free queue
             readoutQueue.pop_front();
             assert(!freeQueue.full());
-            freeQueue.push_back(superpage.superpage.offset);
+            freeQueue.push_back(entry.superpage.getOffset());
           }
         }
       }

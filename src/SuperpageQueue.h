@@ -85,15 +85,17 @@ class SuperpageQueue {
         BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not enqueue superpage, queue full"));
       }
 
-      if (!mRegistry.insert(std::make_pair(entry.status.offset, entry)).second) {
+      const auto& offset = entry.status.getOffset();
+
+      if (!mRegistry.insert(std::make_pair(offset, entry)).second) {
         // Key was already present
         BOOST_THROW_EXCEPTION(Exception()
             << ErrorInfo::Message("Could not enqueue superpage, offset already in use")
-            << ErrorInfo::Offset(entry.status.offset));
+            << ErrorInfo::Offset(offset));
       }
 
-      mPushing.push_back(entry.status.offset);
-      mArrivals.push_back(entry.status.offset);
+      mPushing.push_back(offset);
+      mArrivals.push_back(offset);
 
     //  printf("Enqueued superpage\n  o=%lu pqs=%lu aqs=%lu fqs=%lu\n", entry.status.offset, mPushing.size(), mArrivals.size(),
     //      mFilled.size());
