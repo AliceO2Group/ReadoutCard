@@ -76,6 +76,10 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
 
     /// Set the InfoLogger log level for this channel
     virtual void setLogLevel(InfoLogger::InfoLogger::Severity severity) = 0;
+
+    /// Get card temperature in °C if available
+    /// \return Temperature in °C if available, else an empty optional
+    virtual boost::optional<float> getTemperature() = 0;
 };
 
 } // namespace Rorc

@@ -615,8 +615,15 @@ class ProgramDmaBench: public Program
        auto format = b::format(PROGRESS_FORMAT);
        format % hour % minute % second; // Time
        format % mReadoutCount; // Pages
+
        mOptions.noErrorCheck ? format % "n/a" : format % mErrorCount; // Errors
-       format % "n/a"; // TODO Temperature
+
+       if (auto temperature = mChannel->getTemperature()) {
+         format % *temperature;
+       } else {
+         format % "n/a";
+       }
+
        cout << '\r' << format;
 
        // This takes care of adding a "line" to the stdout every so many seconds

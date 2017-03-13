@@ -115,6 +115,7 @@ static constexpr size_t READ_STATUS_COUNT = 148;
 static constexpr size_t LED_STATUS = 152;
 
 /// Board serial number
+/// Must be accessed on BAR 2
 /// Byte address: 0x20002c
 static constexpr size_t SERIAL_NUMBER = 524299;
 
@@ -134,12 +135,10 @@ static constexpr size_t RESET_CONTROL = 164;
 static constexpr size_t DEBUG_READ_WRITE = 196;
 
 /// Temperature control & read register
-/// * Write 0x1 to reset
-/// * Write 0x0 to disable the reset
-/// * Write 0x2 to enable the temperature sampling
-/// * Read to get the temperature value
-/// Byte address: 0x320
-static constexpr size_t TEMPERATURE = 200;
+/// Must be accessed on BAR 2
+/// The lower 10 bits contain the temperature value
+/// Byte address: 0x200028
+static constexpr size_t TEMPERATURE = 524298;
 
 /// Convert an index to a byte address
 constexpr inline size_t toByteAddress(size_t address32)

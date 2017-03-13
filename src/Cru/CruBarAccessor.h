@@ -95,13 +95,20 @@ class CruBarAccessor
     /// Get raw data from the temperature register
     uint32_t getTemperatureRaw() const
     {
-      return at32(CruRegisterIndex::TEMPERATURE);
+      if (mPdaBar->getBarNumber() != 2) {
+        BOOST_THROW_EXCEPTION(Exception()
+            << ErrorInfo::Message("Can only get temperature from BAR 2")
+            << ErrorInfo::BarIndex(mPdaBar->getBarNumber()));
+      }
+
+      // Only use lower 10 bits
+      return at32(CruRegisterIndex::TEMPERATURE) & 0x3ff;
     }
 
     /// Converts a value from the CRU's temperature register and converts it to a °C double value.
     /// \param registerValue Value of the temperature register to convert
     /// \return Temperature value in °C or nothing if the registerValue was invalid
-    boost::optional<double> convertTemperatureRaw(uint32_t registerValue) const
+    boost::optional<float> convertTemperatureRaw(uint32_t registerValue) const
     {
       /// It's a 10 bit register, so: 2^10 - 1
       constexpr int REGISTER_MAX_VALUE = 1023;
@@ -110,16 +117,16 @@ class CruBarAccessor
       if (registerValue == 0 || registerValue > REGISTER_MAX_VALUE) {
         return boost::none;
       } else {
-        double A = 693.0;
-        double B = 265.0;
-        double C = double(registerValue);
-        return ((A * C) / 1024.0) - B;
+        float A = 693.0;
+        float B = 265.0;
+        float C = float(registerValue);
+        return ((A * C) / 1024.0f) - B;
       }
     }
 
     /// Gets the temperature in °C, or nothing if the temperature value was invalid.
     /// \return Temperature value in °C or nothing if the temperature value was invalid
-    boost::optional<double> getTemperatureCelsius() const
+    boost::optional<float> getTemperatureCelsius() const
     {
       return convertTemperatureRaw(getTemperatureRaw());
     }

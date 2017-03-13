@@ -44,6 +44,8 @@ class CruChannelMaster final : public ChannelMasterPdaBase
     virtual SuperpageStatus popSuperpage() override;
     virtual void fillSuperpages() override;
 
+    virtual boost::optional<float> getTemperature() override;
+
     AllowedChannels allowedChannels();
 
   protected:
@@ -93,6 +95,13 @@ class CruChannelMaster final : public ChannelMasterPdaBase
       return CruBarAccessor(getPdaBarPtr());
     }
 
+    Pda::PdaBar* getPdaBar2Ptr();
+
+    CruBarAccessor getBar2()
+    {
+      return CruBarAccessor(getPdaBar2Ptr());
+    }
+
     static constexpr CardType::type CARD_TYPE = CardType::Cru;
 
     CruFifoTable* getFifoUser()
@@ -126,6 +135,10 @@ class CruChannelMaster final : public ChannelMasterPdaBase
     bool mBufferReady = false;
 
     int mInitialAcks = 0;
+
+    /// BAR 2 is needed to read serial number, temperature, etc.
+    /// We initialize it on demand
+    std::unique_ptr<Pda::PdaBar> mPdaBar2;
 
     // These variables are configuration parameters
 

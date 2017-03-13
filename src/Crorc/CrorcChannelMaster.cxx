@@ -389,8 +389,6 @@ CardType::type CrorcChannelMaster::getCardType()
 void CrorcChannelMaster::crorcArmDataGenerator()
 {
   int roundedLen = -1;
-
-  RORC_DG_INFINIT_EVENT;
   int returnCode = rorcArmDataGenerator(getBarUserspace(), mGeneratorInitialValue, mGeneratorInitialWord,
       mGeneratorPattern, mGeneratorDataSize / 4, mGeneratorSeed, &roundedLen);
 

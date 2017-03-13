@@ -337,5 +337,20 @@ uintptr_t CruChannelMaster::getNextSuperpageBusAddress(const SuperpageQueueEntry
   return superpage.busAddress + DMA_PAGE_SIZE * superpage.pushedPages;
 }
 
+boost::optional<float> CruChannelMaster::getTemperature()
+{
+  return {};
+  //return getBar2().getTemperatureCelsius(); // Note: disabled until new FW is in place. Using this may crash the machine
+}
+
+Pda::PdaBar* CruChannelMaster::getPdaBar2Ptr()
+{
+  if (!mPdaBar2) {
+    Utilities::resetSmartPtr(mPdaBar2, getRorcDevice().getPciDevice(), 2);
+  }
+  return mPdaBar2.get();
+}
+
+
 } // namespace Rorc
 } // namespace AliceO2

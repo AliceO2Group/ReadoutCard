@@ -83,6 +83,11 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, publ
       BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("not yet implemented"));
     }
 
+    virtual boost::optional<float> getTemperature() override
+    {
+      return {};
+    }
+
   protected:
     using Mutex = std::mutex;
     using LockGuard = std::lock_guard<Mutex>;
