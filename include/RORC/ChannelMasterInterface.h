@@ -51,7 +51,7 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
     /// \param superpage Superpage to push
     virtual void pushSuperpage(Superpage superpage) = 0;
 
-    /// Gets the superpage at the front of the queue (i.e. the oldest superpage)
+    /// Gets the superpage at the front of the queue (i.e. the oldest superpage). Does not pop it.
     virtual Superpage getSuperpage() = 0;
 
     /// Tells the driver to stop keeping track of the superpage at the front of the queue (i.e. the oldest superpage)

@@ -20,16 +20,19 @@ struct Superpage
       return received == getSize();
     }
 
-    /// The offset of the superpage. It's also its ID.
     size_t getOffset() const
     {
       return offset;
     }
 
-    /// The size of the superpage
     size_t getSize() const
     {
       return size;
+    }
+
+    size_t getReceived() const
+    {
+      return received;
     }
 
     void* getUserData() const
@@ -37,23 +40,16 @@ struct Superpage
       return userData;
     }
 
-    /// The amount of bytes received in the superpage
-    size_t getReceived() const
-    {
-      return received;
-    }
-
     /// Offset from the start of the DMA buffer to the start of the superpage. Must be ???-byte aligned.
-    /// The offset will also be used as an identifier for the superpage.
     size_t offset = 0;
 
-    /// Size of the superpage
+    /// Size of the superpage in bytes
     size_t size = 0;
 
     /// Pointer that users can use for whatever, e.g. to associate data with the superpage
     void* userData = nullptr;
 
-    /// Size of the received data (will be filled in by the driver)
+    /// Size of the received data in bytes (will be filled in by the driver)
     size_t received = 0;
 };
 
