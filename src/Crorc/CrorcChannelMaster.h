@@ -177,6 +177,9 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
     /// Queue for superpages
     SuperpageQueueType mSuperpageQueue;
 
+    /// Address of DMA buffer in userspace
+    uintptr_t mDmaBufferUserspace = 0;
+
     /// Indicates deviceStartDma() was called, but DMA was not actually started yet. We do this because we need a
     /// superpage to actually start.
     bool mPendingDmaStart = false;

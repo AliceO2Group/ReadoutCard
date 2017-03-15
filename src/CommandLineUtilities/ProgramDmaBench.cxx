@@ -237,7 +237,7 @@ class ProgramDmaBench: public Program
               % channelNumber);
       cout << "Using buffer file path: " << mBufferFilePath << '\n';
       Utilities::resetSmartPtr(mMemoryMappedFile, mBufferFilePath, mBufferSize, mOptions.removePagesFile);
-      mBufferBaseAddress = reinterpret_cast<char*>(mMemoryMappedFile->getAddress());
+      mBufferBaseAddress = reinterpret_cast<uintptr_t>(mMemoryMappedFile->getAddress());
 
       // Set up channel parameters
       mPageSize = params.getDmaPageSize().get();
@@ -428,62 +428,58 @@ class ProgramDmaBench: public Program
       cout << "Popped " << popped << " excess pages\n";
     }
 
-    volatile uint32_t* pageData(char* page)
+    uint32_t getEventNumber(uintptr_t pageAddress)
     {
-      return const_cast<volatile uint32_t*>(reinterpret_cast<uint32_t*>(page));
-    }
-
-    uint32_t getEventNumber(const char* page)
-    {
+      auto page = reinterpret_cast<void*>(pageAddress);
       uint32_t eventNumber = 0;
       memcpy(&eventNumber, page, sizeof(eventNumber));
       return eventNumber;
     }
 
-    void readoutPage(char* page, size_t pageSize)
+    void readoutPage(uintptr_t pageAddress, size_t pageSize)
     {
       // Read out to file
       if (mOptions.fileOutputAscii || mOptions.fileOutputBin) {
-        printToFile(page, pageSize, mReadoutCount);
+        printToFile(pageAddress, pageSize, mReadoutCount);
       }
 
       // Data error checking
       if (!mOptions.noErrorCheck) {
         if (mDataGeneratorCounter == -1) {
           // First page initializes the counter
-          mDataGeneratorCounter = getEventNumber(page);
+          mDataGeneratorCounter = getEventNumber(pageAddress);
         }
 
-        bool hasError = checkErrors(page, pageSize, mReadoutCount, mDataGeneratorCounter);
+        bool hasError = checkErrors(pageAddress, pageSize, mReadoutCount, mDataGeneratorCounter);
         if (hasError && !mOptions.noResyncCounter) {
           // Resync the counter
 
           switch (mCardType) {
             case CardType::Crorc:
-              mDataGeneratorCounter = getEventNumber(page);
+              mDataGeneratorCounter = getEventNumber(pageAddress);
               break;
             case CardType::Cru:
-              mDataGeneratorCounter = getEventNumber(page) / 256;
+              mDataGeneratorCounter = getEventNumber(pageAddress) / 256;
               break;
             default: throw std::runtime_error("Error checking unsupported for this card type");
           }
 
-          mDataGeneratorCounter = getEventNumber(page);
+          mDataGeneratorCounter = getEventNumber(pageAddress);
         }
       }
 
       if (mOptions.pageReset) {
         // Set the buffer to the default value after the readout
-        resetPage(page, pageSize);
+        resetPage(pageAddress, pageSize);
       }
 
       mDataGeneratorCounter++;
     }
 
-    bool checkErrorsCru(const char* _page, size_t pageSize, int64_t eventNumber, uint32_t counter)
+    bool checkErrorsCru(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, uint32_t counter)
     {
       auto check = [&](auto patternFunction) {
-        const volatile uint32_t* page = const_cast<const volatile uint32_t*>(reinterpret_cast<const uint32_t*>(_page));
+        auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
         auto pageSize32 = pageSize / sizeof(int32_t);
         for (uint32_t i = 0; i < pageSize32; i += PATTERN_STRIDE)
         {
@@ -514,10 +510,10 @@ class ProgramDmaBench: public Program
           << ErrorInfo::GeneratorPattern(mOptions.generatorPattern));
     }
 
-    bool checkErrorsCrorc(const char* _page, size_t pageSize, int64_t eventNumber, uint32_t counter)
+    bool checkErrorsCrorc(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, uint32_t counter)
     {
       auto check = [&](auto patternFunction) {
-        const volatile uint32_t* page = const_cast<const volatile uint32_t*>(reinterpret_cast<const uint32_t*>(_page));
+        auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
         auto pageSize32 = pageSize / sizeof(int32_t);
 
         for (uint32_t i = 0; i < pageSize32; ++i) {
@@ -549,20 +545,21 @@ class ProgramDmaBench: public Program
     }
 
     /// Checks and reports errors
-    bool checkErrors(const char* _page, size_t pageSize, int64_t eventNumber, uint32_t counter)
+    bool checkErrors(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, uint32_t counter)
     {
       switch (mCardType) {
-        case CardType::Crorc: return checkErrorsCrorc(_page, pageSize, eventNumber, counter);
-        case CardType::Cru: return checkErrorsCru(_page, pageSize, eventNumber, counter);
+        case CardType::Crorc: return checkErrorsCrorc(pageAddress, pageSize, eventNumber, counter);
+        case CardType::Cru: return checkErrorsCru(pageAddress, pageSize, eventNumber, counter);
         default: throw std::runtime_error("Error checking unsupported for this card type");
       }
     }
 
-    void resetPage(char* page, size_t pageSize)
+    void resetPage(uintptr_t pageAddress, size_t pageSize)
     {
-      auto pageSize32 = pageSize / sizeof(int32_t);
+      auto page = reinterpret_cast<volatile uint32_t*>(pageAddress);
+      auto pageSize32 = pageSize / sizeof(uint32_t);
       for (size_t i = 0; i < pageSize32; i++) {
-        pageData(page)[i] = BUFFER_DEFAULT_VALUE;
+        page[i] = BUFFER_DEFAULT_VALUE;
       }
     }
 
@@ -720,9 +717,9 @@ class ProgramDmaBench: public Program
       stream << errorStr;
     }
 
-    void printToFile(const char* _page, size_t pageSize, int64_t pageNumber)
+    void printToFile(uintptr_t pageAddress, size_t pageSize, int64_t pageNumber)
     {
-      auto page = reinterpret_cast<const uint32_t*>(_page);
+      auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
       auto pageSize32 = pageSize / sizeof(int32_t);
 
       if (mOptions.fileOutputAscii) {
@@ -738,7 +735,7 @@ class ProgramDmaBench: public Program
         mReadoutStream << '\n';
       } else if (mOptions.fileOutputBin) {
         // TODO Is there a more elegant way to write from volatile memory?
-        mReadoutStream.write(reinterpret_cast<const char*>(page), pageSize);
+        mReadoutStream.write(reinterpret_cast<const char*>(pageAddress), pageSize);
       }
     }
 
@@ -815,7 +812,7 @@ class ProgramDmaBench: public Program
 
     size_t mBufferSize;
 
-    char* mBufferBaseAddress;
+    uintptr_t mBufferBaseAddress;
 
     CardType::type mCardType;
 

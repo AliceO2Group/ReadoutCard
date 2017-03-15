@@ -55,6 +55,7 @@ CrorcChannelMaster::CrorcChannelMaster(const Parameters& parameters)
       mGeneratorDataSize(parameters.getGeneratorDataSize().get_value_or(mPageSize)) // Can use page size
 {
   getFifoUser()->reset();
+  mDmaBufferUserspace = getPdaDmaBuffer().getScatterGatherList().at(0).addressUser;
 }
 
 auto CrorcChannelMaster::allowedChannels() -> AllowedChannels {
@@ -310,6 +311,24 @@ void CrorcChannelMaster::fillSuperpages()
       SuperpageQueueEntry& entry = mSuperpageQueue.getArrivalsFrontEntry();
 
       if (isArrived(mFifoBack)) {
+        {
+          // XXX Dirty hack for now: write length field into page SDH. In upcoming firmwares, the card will do this
+          // itself
+          auto writeSdhEventSize = [](uintptr_t pageAddress, uint32_t eventSize){
+            constexpr size_t OFFSET_SDH_EVENT_SIZE = 16; // 1 * 128b word
+            auto address = reinterpret_cast<char*>(pageAddress + OFFSET_SDH_EVENT_SIZE);
+            // Clear first 3 32b values of event size word
+            memset(address, 0, sizeof(uint32_t) * 3);
+            // Write to 4th 32b value of event size word
+            memcpy(address + (sizeof(uint32_t) * 3), &eventSize, sizeof(uint32_t));
+          };
+
+          uint32_t length = getFifoUser()->entries[mFifoBack].length;
+          auto pageAddress = mDmaBufferUserspace + entry.status.getOffset() + entry.status.getConfirmedPageCount()
+              * mPageSize;
+          writeSdhEventSize(pageAddress, length);
+        }
+
         resetDescriptor(mFifoBack);
         mFifoSize--;
         mFifoBack = (mFifoBack + 1) % READYFIFO_ENTRIES;
