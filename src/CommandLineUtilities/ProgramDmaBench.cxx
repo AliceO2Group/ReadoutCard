@@ -3,15 +3,17 @@
 /// \brief Utility that tests RORC DMA performance
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <iomanip>
-#include <stdexcept>
+
 #include <chrono>
-#include <queue>
-#include <thread>
+#include <iomanip>
+#include <iostream>
+#include <future>
+#include <fstream>
 #include <random>
+#include <queue>
+#include <sstream>
+#include <stdexcept>
+#include <thread>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/circular_buffer.hpp>
 #include <boost/format.hpp>
@@ -20,6 +22,7 @@
 #include "Cru/CruRegisterIndex.h"
 #include "ExceptionLogging.h"
 #include "InfoLogger/InfoLogger.hxx"
+#include "folly/ProducerConsumerQueue.h"
 #include "RORC/ChannelFactory.h"
 #include "RORC/MemoryMappedFile.h"
 #include "RORC/Parameters.h"
@@ -68,11 +71,11 @@ constexpr uint32_t BUFFER_DEFAULT_VALUE = 0xCcccCccc;
 /// The data emulator writes to every 8th 32-bit word
 constexpr uint32_t PATTERN_STRIDE = 8;
 
-/// Fields: Time(hour:minute:second), Pages, Errors, °C
-const std::string PROGRESS_FORMAT_HEADER("  %-8s   %-12s  %-12s  %-10.1f");
+/// Fields: Time(hour:minute:second), Pages pushed, Pages read, Errors, °C
+const std::string PROGRESS_FORMAT_HEADER("  %-8s   %-12s  %-12s  %-12s  %-5.1f");
 
-/// Fields: Time(hour:minute:second), Errors, °C
-const std::string PROGRESS_FORMAT("  %02s:%02s:%02s   %-12s  %-12s  %-10.1f");
+/// Fields: Time(hour:minute:second), Pages pushed, Pages read, Errors, °C
+const std::string PROGRESS_FORMAT("  %02s:%02s:%02s   %-12s  %-12s  %-12s  %-5.1f");
 
 auto READOUT_ERRORS_PATH = "readout_errors.txt";
 
@@ -262,11 +265,6 @@ class ProgramDmaBench: public Program
 
       mChannel->startDma();
 
-      // Get started
-      if (isVerbose()) {
-        printStatusHeader();
-      }
-
       if (mOptions.barHammer) {
         if (mChannel->getCardType() != CardType::Cru) {
           BOOST_THROW_EXCEPTION(ParameterException()
@@ -303,75 +301,89 @@ class ProgramDmaBench: public Program
     void dmaLoop()
     {
       auto indexToOffset = [&](int i){ return i * SUPERPAGE_SIZE; };
-
       const int maxSuperpages = mBufferSize / SUPERPAGE_SIZE;
+      const int pagesPerSuperpage = SUPERPAGE_SIZE / mPageSize;
 
-      boost::circular_buffer<size_t> freeQueue { maxSuperpages };
+      folly::ProducerConsumerQueue<size_t> freeQueue {maxSuperpages + 1};
       for (int i = 0; i < maxSuperpages; ++i) {
-        freeQueue.push_back(indexToOffset(i));
+        if (!freeQueue.write(indexToOffset(i))) {
+          BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Something went horribly wrong"));
+        }
       }
 
-      struct SuperpageReadoutStatus
-      {
-          Superpage superpage;
-          int pagesReadOut = 0;
-      };
-      boost::circular_buffer<SuperpageReadoutStatus> readoutQueue { maxSuperpages };
+      folly::ProducerConsumerQueue<size_t> readoutQueue {maxSuperpages + 1};
 
-      while (!mDmaLoopBreak) {
-        // Check if we need to stop in the case of a page limit
-        if (!mInfinitePages && mReadoutCount >= mOptions.maxPages) {
-          mDmaLoopBreak = true;
-          cout << "\n\nMaximum amount of pages reached\n";
-          break;
-        }
+      auto isStopDma = [&]{ return mDmaLoopBreak.load(std::memory_order_relaxed); };
 
-        // Note: these low priority tasks are not run on every cycle, to reduce overhead
-        lowPriorityTasks();
-
-        // Keep the readout queue filled
-        mChannel->fillSuperpages();
-
-        // Give free superpages to the driver
-        while (!freeQueue.empty() && (mChannel->getSuperpageQueueAvailable() != 0)) {
-          Superpage superpage;
-          superpage.offset = freeQueue.front();
-          superpage.size = SUPERPAGE_SIZE;
-          freeQueue.pop_front();
-          mChannel->pushSuperpage(superpage);
-        }
-
-        // Check for filled superpages
-        if (mChannel->getSuperpageQueueCount() > 0) {
-          auto superpage = mChannel->getSuperpage();
-          if (superpage.isFilled() && !readoutQueue.full()) {
-            // Move full superpage to readout queue
-            readoutQueue.push_back({superpage, 0});
-            mChannel->popSuperpage();
+      // Readout thread
+      auto readoutFuture = std::async(std::launch::async, [&]{
+        while (!isStopDma()) {
+          if (!mInfinitePages && mReadoutCount.load(std::memory_order_relaxed) >= mOptions.maxPages) {
+            mDmaLoopBreak = true;
+            break;
           }
-        }
 
-        // Read out filled superpages
-        if (!readoutQueue.empty()) {
-          auto& entry = readoutQueue.front();
-          constexpr int MAX_PAGES_PER_CYCLE = 1;
-          for (int i = 0; i < MAX_PAGES_PER_CYCLE; ++i) {
-            if (entry.pagesReadOut * mPageSize == entry.superpage.getSize()) {
-              // Page has been completely read out
-              // Move superpage from readout queue back to free queue
-              readoutQueue.pop_front();
-              assert(!freeQueue.full());
-              freeQueue.push_back(entry.superpage.getOffset());
-              break;
-            } else {
-              // Readout page
-              readoutPage(mBufferBaseAddress + entry.superpage.getOffset() + entry.pagesReadOut * mPageSize, mPageSize);
-              entry.pagesReadOut++;
-              mReadoutCount++;
+          size_t offset;
+          if (readoutQueue.read(offset)) {
+            // Read out pages
+            int pages = SUPERPAGE_SIZE / mPageSize;
+            for (int i = 0; i < pages; ++i) {
+              auto readoutCount = mReadoutCount.fetch_add(1, std::memory_order_relaxed);
+              readoutPage(mBufferBaseAddress + offset + i * mPageSize, mPageSize, readoutCount);
+            }
+
+            // Page has been read out
+            // Add superpage back to free queue
+            if (!freeQueue.write(offset)) {
+              BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Something went horribly wrong"));
             }
           }
         }
+      });
+
+      auto pushFuture = std::async(std::launch::async, [&]{
+        while (!isStopDma()) {
+          // Check if we need to stop in the case of a page limit
+          if (!mInfinitePages && mPushCount.load(std::memory_order_relaxed) >= mOptions.maxPages) {
+            break;
+          }
+
+          // Keep the readout queue filled
+          mChannel->fillSuperpages();
+
+          // Give free superpages to the driver
+          while (mChannel->getSuperpageQueueAvailable() != 0) {
+            Superpage superpage;
+            if (freeQueue.read(superpage.offset)) {
+              superpage.size = SUPERPAGE_SIZE;
+              mChannel->pushSuperpage(superpage);
+            } else {
+              break;
+            }
+          }
+
+          // Check for filled superpages
+          if (mChannel->getSuperpageQueueCount() > 0) {
+            auto superpage = mChannel->getSuperpage();
+            if (superpage.isFilled()) {
+              if (readoutQueue.write(superpage.getOffset())) {
+                // Move full superpage to readout queue
+                mPushCount.fetch_add(pagesPerSuperpage, std::memory_order_relaxed);
+                mChannel->popSuperpage();
+              }
+            }
+          }
+        }
+      });
+
+      // Main thread for low priority tasks
+      while (!isStopDma()) {
+        // Note: these low priority tasks are not run on every cycle, to reduce overhead
+        lowPriorityTasks();
       }
+
+      pushFuture.wait();
+      readoutFuture.wait();
     }
 
     void dmaLoopReadoutRandom()
@@ -436,11 +448,11 @@ class ProgramDmaBench: public Program
       return eventNumber;
     }
 
-    void readoutPage(uintptr_t pageAddress, size_t pageSize)
+    void readoutPage(uintptr_t pageAddress, size_t pageSize, int64_t readoutCount)
     {
       // Read out to file
       if (mOptions.fileOutputAscii || mOptions.fileOutputBin) {
-        printToFile(pageAddress, pageSize, mReadoutCount);
+        printToFile(pageAddress, pageSize, readoutCount);
       }
 
       // Data error checking
@@ -450,7 +462,7 @@ class ProgramDmaBench: public Program
           mDataGeneratorCounter = getEventNumber(pageAddress);
         }
 
-        bool hasError = checkErrors(pageAddress, pageSize, mReadoutCount, mDataGeneratorCounter);
+        bool hasError = checkErrors(pageAddress, pageSize, readoutCount, mDataGeneratorCounter);
         if (hasError && !mOptions.noResyncCounter) {
           // Resync the counter
 
@@ -603,6 +615,11 @@ class ProgramDmaBench: public Program
 
     void updateStatusDisplay()
      {
+      if (!mHeaderPrinted) {
+        printStatusHeader();
+        mHeaderPrinted = true;
+      }
+
        using namespace std::chrono;
        auto diff = high_resolution_clock::now() - mRunTime.start;
        auto second = duration_cast<seconds>(diff).count() % 60;
@@ -611,7 +628,8 @@ class ProgramDmaBench: public Program
 
        auto format = b::format(PROGRESS_FORMAT);
        format % hour % minute % second; // Time
-       format % mReadoutCount; // Pages
+       format % mPushCount.load(std::memory_order_relaxed);
+       format % mReadoutCount.load(std::memory_order_relaxed);
 
        mOptions.noErrorCheck ? format % "n/a" : format % mErrorCount; // Errors
 
@@ -625,7 +643,7 @@ class ProgramDmaBench: public Program
 
        // This takes care of adding a "line" to the stdout every so many seconds
        {
-         int interval = 60;
+         constexpr int interval = 60;
          auto second = duration_cast<seconds>(diff).count() % interval;
          if (mDisplayUpdateNewline && second == 0) {
            cout << '\n';
@@ -639,8 +657,8 @@ class ProgramDmaBench: public Program
 
      void printStatusHeader()
      {
-       auto line1 = b::format(PROGRESS_FORMAT_HEADER) % "Time" % "Pages" % "Errors" % "°C";
-       auto line2 = b::format(PROGRESS_FORMAT) % "00" % "00" % "00" % '-' % '-' % '-';
+       auto line1 = b::format(PROGRESS_FORMAT_HEADER) % "Time" % "Pushed" % "Read" % "Errors" % "°C";
+       auto line2 = b::format(PROGRESS_FORMAT) % "00" % "00" % "00" % '-' % '-' % '-' % '-';
        cout << '\n' << line1;
        cout << '\n' << line2;
      }
@@ -660,27 +678,25 @@ class ProgramDmaBench: public Program
      {
        // Calculating throughput
        double runTime = std::chrono::duration<double>(mRunTime.end - mRunTime.start).count();
-       double bytes = double(mReadoutCount) * mPageSize;
+       double bytes = double(mReadoutCount.load()) * mPageSize;
        double GB = bytes / (1000 * 1000 * 1000);
        double GBs = GB / runTime;
        double Gbs = GBs * 8;
-       double GiB = bytes / (1024 * 1024 * 1024);
-       double GiBs = GiB / runTime;
-       double Gibs = GiBs * 8;
 
        auto put = [&](auto label, auto value) { cout << b::format("  %-10s  %-10s\n") % label % value; };
        cout << '\n';
        put("Seconds", runTime);
-       put("Pages", mReadoutCount);
+       put("Pages", mReadoutCount.load());
        if (bytes > 0.00001) {
          put("Bytes", bytes);
          put("GB", GB);
          put("GB/s", GBs);
          put("Gb/s", Gbs);
-         put("GiB", GiB);
-         put("GiB/s", GiBs);
-         put("Gibit/s", Gibs);
-         put("Errors", mErrorCount);
+         if (mOptions.noErrorCheck) {
+           put("Errors", "n/a");
+         } else {
+           put("Errors", mErrorCount);
+         }
        }
 
        if (mOptions.barHammer) {
@@ -757,6 +773,7 @@ class ProgramDmaBench: public Program
         bool randomReadout = false;
         bool barHammer = false;
         bool removePagesFile = false;
+        bool delayReadout = false;
         std::string generatorPatternString;
         std::string bufferSizeString;
         HugePageSize hugePageSize;
@@ -765,10 +782,10 @@ class ProgramDmaBench: public Program
 
 //    BufferParameters::File mBufferParameters;
 
-    bool mDmaLoopBreak = false;
+    std::atomic<bool> mDmaLoopBreak {false};
     bool mInfinitePages = false;
-    int64_t mPushCount = 0;
-    int64_t mReadoutCount = 0;
+    std::atomic<int64_t> mPushCount { 0 };
+    std::atomic<int64_t> mReadoutCount { 0 };
     int64_t mErrorCount = 0;
     int64_t mDataGeneratorCounter = -1;
     int mLowPriorityCount = 0;
@@ -788,6 +805,9 @@ class ProgramDmaBench: public Program
         TimePoint start; ///< Start of run time
         TimePoint end; ///< End of run time
     } mRunTime;
+
+    /// Was the header printed?
+    bool mHeaderPrinted = false;
 
     /// Time of the last display update
     TimePoint mLastDisplayUpdate;

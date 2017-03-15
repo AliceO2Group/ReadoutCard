@@ -33,9 +33,9 @@ class Program
     int execute(int argc, char** argv);
 
     /// Has the SIGINT signal been given? (usually Ctrl-C)
-    static bool isSigInt()
+    static bool isSigInt(std::memory_order memoryOrder = std::memory_order_relaxed)
     {
-      return sFlagSigInt;
+      return sFlagSigInt.load(memoryOrder);
     }
 
   protected:
