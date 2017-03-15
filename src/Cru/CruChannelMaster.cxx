@@ -237,9 +237,9 @@ int CruChannelMaster::getSuperpageQueueCapacity()
   return mSuperpageQueue.getQueueCapacity();
 }
 
-auto CruChannelMaster::getSuperpageStatus() -> SuperpageStatus
+auto CruChannelMaster::getSuperpage() -> Superpage
 {
-  return mSuperpageQueue.getFrontSuperpageStatus();
+  return mSuperpageQueue.getFrontSuperpage();
 }
 
 void CruChannelMaster::pushSuperpage(Superpage superpage)
@@ -248,17 +248,17 @@ void CruChannelMaster::pushSuperpage(Superpage superpage)
 
   SuperpageQueueEntry entry;
   entry.busAddress = getBusOffsetAddress(superpage.getOffset());
+  entry.maxPages = superpage.getSize() / DMA_PAGE_SIZE;
   entry.pushedPages = 0;
-  entry.status.superpage = superpage;
-  entry.status.confirmedPages = 0;
-  entry.status.maxPages = superpage.getSize() / DMA_PAGE_SIZE;
+  entry.superpage = superpage;
+  entry.superpage.received = 0;
 
   mSuperpageQueue.addToQueue(entry);
 }
 
-auto CruChannelMaster::popSuperpage() -> SuperpageStatus
+auto CruChannelMaster::popSuperpage() -> Superpage
 {
-  return mSuperpageQueue.removeFromFilledQueue().status;
+  return mSuperpageQueue.removeFromFilledQueue().superpage;
 }
 
 void CruChannelMaster::fillSuperpages()
@@ -268,7 +268,7 @@ void CruChannelMaster::fillSuperpages()
     SuperpageQueueEntry& entry = mSuperpageQueue.getPushingFrontEntry();
 
     int freeDescriptors = FIFO_QUEUE_MAX - mFifoSize;
-    int freePages = entry.status.maxPages - entry.pushedPages;
+    int freePages = entry.getUnpushedPages();
     int possibleToPush = std::min(freeDescriptors, freePages);
 
     for (int i = 0; i < possibleToPush; ++i) {
@@ -281,7 +281,7 @@ void CruChannelMaster::fillSuperpages()
       setBufferReady();
     }
 
-    if (entry.pushedPages == entry.status.maxPages) {
+    if (entry.isPushed()) {
       // Remove superpage from pushing queue
       mSuperpageQueue.removeFromPushingQueue();
     }
@@ -299,9 +299,9 @@ void CruChannelMaster::fillSuperpages()
         resetDescriptor(mFifoBack);
         mFifoSize--;
         mFifoBack = (mFifoBack + 1) % READYFIFO_ENTRIES;
-        entry.status.confirmedPages++;
+        entry.superpage.received += DMA_PAGE_SIZE;
 
-        if (entry.status.confirmedPages == entry.status.maxPages) {
+        if (entry.superpage.isFilled()) {
           // Move superpage to filled queue
           mSuperpageQueue.moveFromArrivalsToFilledQueue();
         }

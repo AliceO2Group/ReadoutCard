@@ -68,12 +68,12 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, publ
       BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("not yet implemented"));
     }
 
-    virtual SuperpageStatus getSuperpageStatus() override
+    virtual Superpage getSuperpage() override
     {
       BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("not yet implemented"));
     }
 
-    virtual SuperpageStatus popSuperpage() override
+    virtual Superpage popSuperpage() override
     {
       BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("not yet implemented"));
     }

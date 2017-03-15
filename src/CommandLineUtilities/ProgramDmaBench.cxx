@@ -313,7 +313,7 @@ class ProgramDmaBench: public Program
 
       struct SuperpageReadoutStatus
       {
-          SuperpageStatus superpage;
+          Superpage superpage;
           int pagesReadOut = 0;
       };
       boost::circular_buffer<SuperpageReadoutStatus> readoutQueue { maxSuperpages };
@@ -343,10 +343,10 @@ class ProgramDmaBench: public Program
 
         // Check for filled superpages
         if (mChannel->getSuperpageQueueCount() > 0) {
-          auto status = mChannel->getSuperpageStatus();
-          if (status.isFilled() && !readoutQueue.full()) {
+          auto superpage = mChannel->getSuperpage();
+          if (superpage.isFilled() && !readoutQueue.full()) {
             // Move full superpage to readout queue
-            readoutQueue.push_back({status, 0});
+            readoutQueue.push_back({superpage, 0});
             mChannel->popSuperpage();
           }
         }
@@ -356,19 +356,19 @@ class ProgramDmaBench: public Program
           auto& entry = readoutQueue.front();
           constexpr int MAX_PAGES_PER_CYCLE = 1;
           for (int i = 0; i < MAX_PAGES_PER_CYCLE; ++i) {
-            if (entry.pagesReadOut == entry.superpage.getMaxPageCount()) {
+            if (entry.pagesReadOut * mPageSize == entry.superpage.getSize()) {
+              // Page has been completely read out
+              // Move superpage from readout queue back to free queue
+              readoutQueue.pop_front();
+              assert(!freeQueue.full());
+              freeQueue.push_back(entry.superpage.getOffset());
               break;
+            } else {
+              // Readout page
+              readoutPage(mBufferBaseAddress + entry.superpage.getOffset() + entry.pagesReadOut * mPageSize, mPageSize);
+              entry.pagesReadOut++;
+              mReadoutCount++;
             }
-            readoutPage(mBufferBaseAddress + entry.superpage.getOffset() + mPageSize * entry.pagesReadOut, mPageSize);
-            entry.pagesReadOut++;
-            mReadoutCount++;
-          }
-
-          if (entry.pagesReadOut == entry.superpage.getMaxPageCount()) {
-            // Move superpage from readout queue back to free queue
-            readoutQueue.pop_front();
-            assert(!freeQueue.full());
-            freeQueue.push_back(entry.superpage.getOffset());
           }
         }
       }
@@ -418,10 +418,10 @@ class ProgramDmaBench: public Program
       int popped = 0;
       while ((std::chrono::high_resolution_clock::now() - start) < timeout) {
         if (mChannel->getSuperpageQueueCount() > 0) {
-          auto status = mChannel->getSuperpageStatus();
-          if (status.isFilled()) {
+          auto superpage = mChannel->getSuperpage();
+          if (superpage.isFilled()) {
             mChannel->popSuperpage();
-            popped += status.confirmedPages;
+            popped += superpage.getReceived() / mPageSize;
           }
         }
       }

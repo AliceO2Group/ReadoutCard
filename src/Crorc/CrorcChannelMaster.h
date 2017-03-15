@@ -39,8 +39,8 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
     virtual int getSuperpageQueueCount() override;
     virtual int getSuperpageQueueAvailable() override;
     virtual int getSuperpageQueueCapacity() override;
-    virtual SuperpageStatus getSuperpageStatus() override;
-    virtual SuperpageStatus popSuperpage() override;
+    virtual Superpage getSuperpage() override;
+    virtual Superpage popSuperpage() override;
     virtual void fillSuperpages() override;
 
     AllowedChannels allowedChannels();

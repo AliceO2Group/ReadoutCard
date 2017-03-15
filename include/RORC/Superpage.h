@@ -14,6 +14,12 @@ namespace Rorc {
 /// Simple struct for holding basic info about a superpage
 struct Superpage
 {
+    /// Returns true if the superpage is filled
+    bool isFilled() const
+    {
+      return received == getSize();
+    }
+
     /// The offset of the superpage. It's also its ID.
     size_t getOffset() const
     {
@@ -26,6 +32,17 @@ struct Superpage
       return size;
     }
 
+    void* getUserData() const
+    {
+      return userData;
+    }
+
+    /// The amount of bytes received in the superpage
+    size_t getReceived() const
+    {
+      return received;
+    }
+
     /// Offset from the start of the DMA buffer to the start of the superpage. Must be ???-byte aligned.
     /// The offset will also be used as an identifier for the superpage.
     size_t offset = 0;
@@ -35,6 +52,9 @@ struct Superpage
 
     /// Pointer that users can use for whatever, e.g. to associate data with the superpage
     void* userData = nullptr;
+
+    /// Size of the received data (will be filled in by the driver)
+    size_t received = 0;
 };
 
 } // namespace Rorc

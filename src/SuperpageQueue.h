@@ -25,9 +25,20 @@ class SuperpageQueue {
     /// This struct wraps the SuperpageStatus and adds some internally used variables
     struct SuperpageQueueEntry
     {
-        SuperpageStatus status;
+        bool isPushed() const
+        {
+          return pushedPages == maxPages;
+        }
+
+        int getUnpushedPages() const
+        {
+          return maxPages - pushedPages;
+        }
+
+        Superpage superpage;
         uintptr_t busAddress;
         int pushedPages; ///< Amount of pages that have been pushed (not necessarily arrived)
+        int maxPages; ///< Amount of pages that can be pushed
     };
 
     /// Gets ID of youngest superpage
@@ -67,14 +78,14 @@ class SuperpageQueue {
     }
 
     /// Gets status of oldest superpage
-    SuperpageStatus getFrontSuperpageStatus()
+    Superpage getFrontSuperpage()
     {
       if (getQueueCount() == 0) {
       //if (mRegistry.empty()) {
         BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not get superpage status, queue was empty"));
       }
 
-      return getEntry(getFrontSuperpageId()).status;
+      return getEntry(getFrontSuperpageId()).superpage;
     }
 
     /// Add a superpage to the queue
@@ -122,8 +133,9 @@ class SuperpageQueue {
 
       const auto& entry = getEntry(id);
 
-      if (entry.pushedPages != entry.status.maxPages) {
-        BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not remove from pushing queue"));
+      if (!entry.isPushed()) {
+        BOOST_THROW_EXCEPTION(Exception()
+            << ErrorInfo::Message("Could not remove from pushing queue, entry was not completely pushed"));
       }
 
       mPushing.pop_front();
@@ -143,7 +155,7 @@ class SuperpageQueue {
 //      printf("Moving from arrivals to filled\n  o=%d\n", int(id));
 
       const auto& entry = getEntry(id);
-      if (entry.status.confirmedPages != entry.status.maxPages) {
+      if (!entry.superpage.isFilled()) {
         BOOST_THROW_EXCEPTION(Exception()
             << ErrorInfo::Message("Could not move arrivals to filled, superpage was not filled"));
       }

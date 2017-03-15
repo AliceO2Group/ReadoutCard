@@ -16,7 +16,6 @@
 #include "RORC/ResetLevel.h"
 #include "RORC/RegisterReadWriteInterface.h"
 #include "RORC/Superpage.h"
-#include "RORC/SuperpageStatus.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -52,11 +51,11 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
     /// \param superpage Superpage to push
     virtual void pushSuperpage(Superpage superpage) = 0;
 
-    /// Gets the status of the superpage at the front of the queue (i.e. the oldest superpage)
-    virtual SuperpageStatus getSuperpageStatus() = 0;
+    /// Gets the superpage at the front of the queue (i.e. the oldest superpage)
+    virtual Superpage getSuperpage() = 0;
 
     /// Tells the driver to stop keeping track of the superpage at the front of the queue (i.e. the oldest superpage)
-    virtual SuperpageStatus popSuperpage() = 0;
+    virtual Superpage popSuperpage() = 0;
 
     /// Call in a loop. Equivalent of old fillFifo(). May be replaced by internal driver thread at some point
     virtual void fillSuperpages() = 0;

@@ -100,8 +100,8 @@ void CrorcChannelMaster::startPendingDma(SuperpageQueueEntry& entry)
     pushIntoSuperpage(entry);
   }
 
-  assert(entry.pushedPages <= entry.status.maxPages);
-  if (entry.pushedPages == entry.status.maxPages) {
+  assert(entry.pushedPages <= entry.maxPages);
+  if (entry.pushedPages == entry.maxPages) {
     // Remove superpage from pushing queue
     mSuperpageQueue.removeFromPushingQueue();
   }
@@ -130,9 +130,9 @@ void CrorcChannelMaster::startPendingDma(SuperpageQueueEntry& entry)
     log("Initial pages not arrived", InfoLogger::InfoLogger::Warning);
   }
 
-  entry.status.confirmedPages += READYFIFO_ENTRIES;
+  entry.superpage.received += READYFIFO_ENTRIES * mPageSize;
 
-  if (entry.status.confirmedPages == entry.status.maxPages) {
+  if (entry.superpage.getReceived() == entry.superpage.getSize()) {
     mSuperpageQueue.moveFromArrivalsToFilledQueue();
   }
 
@@ -253,9 +253,9 @@ int CrorcChannelMaster::getSuperpageQueueCapacity()
   return mSuperpageQueue.getQueueCapacity();
 }
 
-auto CrorcChannelMaster::getSuperpageStatus() -> SuperpageStatus
+auto CrorcChannelMaster::getSuperpage() -> Superpage
 {
-  return mSuperpageQueue.getFrontSuperpageStatus();
+  return mSuperpageQueue.getFrontSuperpage();
 }
 
 void CrorcChannelMaster::pushSuperpage(Superpage superpage)
@@ -264,17 +264,17 @@ void CrorcChannelMaster::pushSuperpage(Superpage superpage)
 
   SuperpageQueueEntry entry;
   entry.busAddress = getBusOffsetAddress(superpage.getOffset());
+  entry.maxPages = superpage.getSize() / mPageSize;
   entry.pushedPages = 0;
-  entry.status.superpage = superpage;
-  entry.status.confirmedPages = 0;
-  entry.status.maxPages = superpage.getSize() / mPageSize;
+  entry.superpage = superpage;
+  entry.superpage.received = 0;
 
   mSuperpageQueue.addToQueue(entry);
 }
 
-auto CrorcChannelMaster::popSuperpage() -> SuperpageStatus
+auto CrorcChannelMaster::popSuperpage() -> Superpage
 {
-  return mSuperpageQueue.removeFromFilledQueue().status;
+  return mSuperpageQueue.removeFromFilledQueue().superpage;
 }
 
 void CrorcChannelMaster::fillSuperpages()
@@ -288,14 +288,14 @@ void CrorcChannelMaster::fillSuperpages()
       startPendingDma(entry);
     } else {
       int freeDescriptors = FIFO_QUEUE_MAX - mFifoSize;
-      int freePages = entry.status.maxPages - entry.pushedPages;
+      int freePages = entry.getUnpushedPages();
       int possibleToPush = std::min(freeDescriptors, freePages);
 
       for (int i = 0; i < possibleToPush; ++i) {
         pushIntoSuperpage(entry);
       }
 
-      if (entry.pushedPages == entry.status.maxPages) {
+      if (entry.isPushed()) {
         // Remove superpage from pushing queue
         mSuperpageQueue.removeFromPushingQueue();
       }
@@ -311,7 +311,7 @@ void CrorcChannelMaster::fillSuperpages()
       SuperpageQueueEntry& entry = mSuperpageQueue.getArrivalsFrontEntry();
 
       if (isArrived(mFifoBack)) {
-        {
+        if (false) {
           // XXX Dirty hack for now: write length field into page SDH. In upcoming firmwares, the card will do this
           // itself
           auto writeSdhEventSize = [](uintptr_t pageAddress, uint32_t eventSize){
@@ -324,17 +324,16 @@ void CrorcChannelMaster::fillSuperpages()
           };
 
           uint32_t length = getFifoUser()->entries[mFifoBack].length;
-          auto pageAddress = mDmaBufferUserspace + entry.status.getOffset() + entry.status.getConfirmedPageCount()
-              * mPageSize;
+          auto pageAddress = mDmaBufferUserspace + entry.superpage.getOffset() + entry.superpage.received;
           writeSdhEventSize(pageAddress, length);
         }
 
         resetDescriptor(mFifoBack);
         mFifoSize--;
         mFifoBack = (mFifoBack + 1) % READYFIFO_ENTRIES;
-        entry.status.confirmedPages++;
+        entry.superpage.received += mPageSize;
 
-        if (entry.status.confirmedPages == entry.status.maxPages) {
+        if (entry.superpage.isFilled()) {
           // Move superpage to filled queue
           mSuperpageQueue.moveFromArrivalsToFilledQueue();
         }
