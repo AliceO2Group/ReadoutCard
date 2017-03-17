@@ -108,7 +108,7 @@ function(build_util_exec execname filename)
   target_link_libraries(${execname} ${RORC_LIB_NAME} ${ARGN})
 endfunction()
 
-build_util_exec(rorc-dma-bench CommandLineUtilities/ProgramDmaBench.cxx)
+build_util_exec(rorc-bench-dma CommandLineUtilities/ProgramDmaBench.cxx)
 build_util_exec(rorc-reset CommandLineUtilities/ProgramReset.cxx)
 build_util_exec(rorc-reg-read CommandLineUtilities/ProgramRegisterRead.cxx)
 build_util_exec(rorc-reg-read-range CommandLineUtilities/ProgramRegisterReadRange)

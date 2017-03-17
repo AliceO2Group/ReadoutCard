@@ -23,11 +23,31 @@ constexpr int DATA_STATUS = F_IFDSR;
 constexpr int ADDRESS = F_IADR;
 constexpr int READY = F_LRD;
 
+// TODO figure out what these are/do
+constexpr int MAGIC_VALUE_3  = 0x0100bddf;
+constexpr int MAGIC_VALUE_13 = 0x03000000;
+constexpr int MAGIC_VALUE_5  = 0x03000003;
+constexpr int MAGIC_VALUE_12 = 0x0300001f;
+constexpr int MAGIC_VALUE_8  = 0x03000020;
+constexpr int MAGIC_VALUE_9  = 0x03000040;
+constexpr int MAGIC_VALUE_2  = 0x03000050;
+constexpr int MAGIC_VALUE_4  = 0x03000060;
+constexpr int MAGIC_VALUE_6  = 0x03000070;
+constexpr int MAGIC_VALUE_7  = 0x030000d0;
+constexpr int MAGIC_VALUE_11 = 0x030000e8;
+constexpr int MAGIC_VALUE_10 = 0x030000ff;
+constexpr int MAGIC_VALUE_1  = 0x04000000;
+
+constexpr uint32_t ADDRESS_START = 0x01000000;
+constexpr uint32_t ADDRESS_END = 0x01460000;
+constexpr uint32_t BLOCK_SIZE = 0x010000;
+constexpr size_t MAX_WORDS = 4616222;
+
 unsigned readStatus(RegisterReadWriteInterface& channel, int sleept = 1)
 {
   unsigned stat;
 
-  channel.writeRegister(DATA_STATUS, 0x04000000);
+  channel.writeRegister(DATA_STATUS, MAGIC_VALUE_1);
   usleep(sleept);
   stat = channel.readRegister(ADDRESS);
 
@@ -37,22 +57,22 @@ unsigned readStatus(RegisterReadWriteInterface& channel, int sleept = 1)
 uint32_t init(RegisterReadWriteInterface& channel, int sleept = 10)
 {
   // Clear Status register
-  channel.writeRegister(DATA_STATUS, 0x03000050);
+  channel.writeRegister(DATA_STATUS, MAGIC_VALUE_2);
   usleep(10*sleept);
 
   // Set ASYNCH mode (Configuration Register 0xBDDF)
-  channel.writeRegister(DATA_STATUS, 0x0100bddf);
+  channel.writeRegister(DATA_STATUS, MAGIC_VALUE_3);
   usleep(sleept);
-  channel.writeRegister(DATA_STATUS, 0x03000060);
+  channel.writeRegister(DATA_STATUS, MAGIC_VALUE_4);
   usleep(sleept);
-  channel.writeRegister(DATA_STATUS, 0x03000003);
+  channel.writeRegister(DATA_STATUS, MAGIC_VALUE_5);
   usleep(sleept);
 
   // Read Status register
   uint32_t address = 0x01000000;
   channel.writeRegister(DATA_STATUS, address);
   usleep(sleept);
-  channel.writeRegister(DATA_STATUS, 0x03000070);
+  channel.writeRegister(DATA_STATUS, MAGIC_VALUE_6);
   usleep(sleept);
 
   uint32_t stat = readStatus(channel);
@@ -79,15 +99,15 @@ int checkStatus(RegisterReadWriteInterface& channel, int timeout)
   return (RORC_STATUS_OK);
 }
 
-void unlockBlock(RegisterReadWriteInterface& channel, uint32_t address, int sleept)
+void unlockBlock(RegisterReadWriteInterface& channel, uint32_t address, int sleept = 10)
 {
   channel.writeRegister(DATA_STATUS, address);
   usleep(sleept);
 
-  channel.writeRegister(DATA_STATUS, 0x03000060);
+  channel.writeRegister(DATA_STATUS, MAGIC_VALUE_4);
   usleep(sleept);
 
-  channel.writeRegister(DATA_STATUS, 0x030000d0);
+  channel.writeRegister(DATA_STATUS, MAGIC_VALUE_7);
   usleep(sleept);
 
   int ret = checkStatus(channel, MAX_WAIT);
@@ -98,7 +118,7 @@ void unlockBlock(RegisterReadWriteInterface& channel, uint32_t address, int slee
   }
 }
 
-void eraseBlock(RegisterReadWriteInterface& channel, uint32_t address, int sleept)
+void eraseBlock(RegisterReadWriteInterface& channel, uint32_t address, int sleept = 10)
 {
   channel.writeRegister(DATA_STATUS, address);
   usleep(sleept);
@@ -106,10 +126,10 @@ void eraseBlock(RegisterReadWriteInterface& channel, uint32_t address, int sleep
   channel.writeRegister(DATA_STATUS, address);
   usleep(sleept);
 
-  channel.writeRegister(DATA_STATUS, 0x03000020);
+  channel.writeRegister(DATA_STATUS, MAGIC_VALUE_8);
   usleep(sleept);
 
-  channel.writeRegister(DATA_STATUS, 0x030000d0);
+  channel.writeRegister(DATA_STATUS, MAGIC_VALUE_7);
   usleep(sleept);
 
   int ret = checkStatus(channel, MAX_WAIT);
@@ -126,7 +146,7 @@ int writeWord(RegisterReadWriteInterface& channel, uint32_t address, int value, 
 
   channel.writeRegister(DATA_STATUS, address);
   usleep(sleept);
-  channel.writeRegister(DATA_STATUS, 0x03000040);
+  channel.writeRegister(DATA_STATUS, MAGIC_VALUE_9);
   usleep(sleept);
   channel.writeRegister(DATA_STATUS, value);
   usleep(sleept);
@@ -139,7 +159,7 @@ int readWord(RegisterReadWriteInterface& channel, uint32_t address, uint8_t *dat
 {
   channel.writeRegister(DATA_STATUS, address);
   usleep(sleept);
-  channel.writeRegister(DATA_STATUS, 0x030000ff);
+  channel.writeRegister(DATA_STATUS, MAGIC_VALUE_10);
   usleep(sleept);
   uint32_t stat = readStatus(channel, sleept);
   *data = (stat & 0xFF00) >> 8;
@@ -155,10 +175,10 @@ void readRange(RegisterReadWriteInterface& channel, int addressFlash, int wordNu
     channel.writeRegister(DATA_STATUS, address);
     usleep(50);
 
-    channel.writeRegister(DATA_STATUS, 0x030000ff);
+    channel.writeRegister(DATA_STATUS, MAGIC_VALUE_10);
     usleep(50);
 
-    channel.writeRegister(DATA_STATUS, 0x04000000);
+    channel.writeRegister(DATA_STATUS, MAGIC_VALUE_1);
     usleep(50);
 
     uint32_t status = channel.readRegister(ADDRESS);
@@ -194,7 +214,7 @@ void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath,
 
   auto checkInterrupt = [&]{
     if (interrupt != nullptr) {
-      if (interrupt->load()) {
+      if (interrupt->load(std::memory_order_relaxed)) {
         throw InterruptedException();
       }
     };
@@ -221,35 +241,38 @@ void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath,
     }
 
     // Initiate flash: clear status register, set asynch mode, read status reg.
-    out << "Init flash\n";
+    out << "Initializing flash\n";
     uint64_t status = Flash::init(channel);
-    out << format("Status = 0x%lX\n\n") % status;
+    if (status != 0x80) {
+      // 0x80 seems good, not sure what's bad
+      out << format("    Status    0x%lX\n") % status;
+    }
 
-    uint32_t address = 0x01000000;
+    uint32_t address = Flash::ADDRESS_START;
 
     // (0x460000 is the last BA used by the CRORC firmware)
-    out << "Unlocking and erasing blocks:\n";
-    while (address <= 0x01460000) {
+    out << "Unlocking and erasing blocks\n";
+    while (address <= Flash::ADDRESS_END) {
       checkInterrupt();
 
-      out << format("\r    Block - 0x%X") % address << std::flush;
-      Flash::unlockBlock(channel, address, 10);
-      Flash::eraseBlock(channel, address, 10);
+      out << format("\r  Block     0x%X") % address << std::flush;
+      Flash::unlockBlock(channel, address);
+      Flash::eraseBlock(channel, address);
 
       // increase BA
-      address = address + 0x010000;
+      address = address + Flash::BLOCK_SIZE;
     }
 
     // Write data
-    out << "\nWriting:\n";
+    out << "\nWriting\n";
 
     int numberOfLinesRead = 0;
     int stop = 0;
     int maxCount = 0;
-    address = 0x01000000;
+    address = Flash::ADDRESS_START;
 
     if (addressFlash != 0) {
-      address = 0x01000000 | addressFlash;
+      address = Flash::ADDRESS_START | addressFlash;
     }
 
     while (stop != 1) {
@@ -259,7 +282,7 @@ void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath,
       writeWait(Flash::DATA_STATUS, address);
 
       // SET Buffer Program
-      writeWait(Flash::DATA_STATUS, 0x030000E8);
+      writeWait(Flash::DATA_STATUS, Flash::MAGIC_VALUE_11);
 
       // READ STATUS REGISTER
       if (Flash::checkStatus(channel, Flash::MAX_WAIT)) {
@@ -269,7 +292,7 @@ void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath,
       }
 
       // Write 32 words (31+1) (31 0x1f)
-      writeWait(Flash::DATA_STATUS, 0x0300001F);
+      writeWait(Flash::DATA_STATUS, Flash::MAGIC_VALUE_12);
 
       // Read 32 words from file
       // Every word is on its own 'line' in the file
@@ -284,7 +307,7 @@ void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath,
           break;
         }
 
-        int hexValue = 0x03000000;
+        int hexValue = Flash::MAGIC_VALUE_13;
         int hex = std::atoi(data);
         hexValue += hex;
 
@@ -294,20 +317,20 @@ void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath,
         address++;
         numberOfLinesRead++;
         if (numberOfLinesRead % 1000 == 0) {
-          constexpr float MAX_WORDS = 4616222.0;
+          constexpr float MAX_WORDS { Flash::MAX_WORDS };
           float perc = ((float) numberOfLinesRead / MAX_WORDS) * 100.0;
-          out << format("\r    Progress - %1.1f%%") % perc << std::flush;
+          out << format("\r  Progress  %1.1f%%") % perc << std::flush;
         }
       }
 
-      writeWait(Flash::DATA_STATUS, 0x030000D0);
-      writeWait(Flash::DATA_STATUS, 0x04000000);
+      writeWait(Flash::DATA_STATUS, Flash::MAGIC_VALUE_7);
+      writeWait(Flash::DATA_STATUS, Flash::MAGIC_VALUE_1);
 
       status = channel.readRegister(Flash::ADDRESS);
       while (status != 0x80) {
         checkInterrupt();
 
-        writeWait(Flash::DATA_STATUS, 0x04000000);
+        writeWait(Flash::DATA_STATUS, Flash::MAGIC_VALUE_1);
         status = readWait(Flash::ADDRESS);
 
         maxCount++;
@@ -324,9 +347,9 @@ void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath,
             << ErrorInfo::Address(address));
       }
     }
-    out << format("\nCompleted total %d words programmed\n") % numberOfLinesRead;
+    out << format("\nCompleted programming %d words\n") % numberOfLinesRead;
     // READ STATUS REG
-    channel.writeRegister(Flash::DATA_STATUS, 0x03000070);
+    channel.writeRegister(Flash::DATA_STATUS, Flash::MAGIC_VALUE_6);
     usleep(1);
 
     if (Flash::checkStatus(channel, Flash::MAX_WAIT)) {
