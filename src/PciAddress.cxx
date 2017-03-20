@@ -60,7 +60,7 @@ PciAddress::PciAddress(const std::string& string)
 
 std::string PciAddress::toString() const
 {
-  return boost::str(boost::format("%2x:%2x.%1x") % bus % slot % function);
+  return boost::str(boost::format("%02x:%02x.%1x") % bus % slot % function);
 }
 
 } // namespace Rorc
