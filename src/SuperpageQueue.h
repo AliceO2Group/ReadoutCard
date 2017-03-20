@@ -9,6 +9,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <boost/circular_buffer.hpp>
+#include "RORC/Superpage.h"
 #include "ExceptionInternal.h"
 
 namespace AliceO2 {
@@ -144,7 +145,7 @@ class SuperpageQueue {
 
     /// Moves a superpage that has had all pushed pages completely arrived from the internal arrivals queue to filled
     /// queue
-    void moveFromArrivalsToFilledQueue()
+    Id moveFromArrivalsToFilledQueue()
     {
       if (mArrivals.empty()) {
         BOOST_THROW_EXCEPTION(Exception()
@@ -162,11 +163,12 @@ class SuperpageQueue {
 
       mFilled.push_back(id);
       mArrivals.pop_front();
+      return id;
     }
 
 
     /// Removes a superpage that's completely filled from the filled queue, ending the 'lifecycle' of the superpage
-    auto removeFromFilledQueue() -> SuperpageQueueEntry
+    SuperpageQueueEntry removeFromFilledQueue()
     {
       if (mFilled.empty()) {
         BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not pop superpage, filled queue was empty"));

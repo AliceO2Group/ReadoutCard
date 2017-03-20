@@ -63,7 +63,7 @@ static constexpr size_t DATA_EMULATOR_CONTROL = 128;
 ///   accept new data
 /// * Write 0x2 to inject an error
 /// Byte address: 0x204
-static constexpr size_t DMA_COMMAND = 129;
+//static constexpr size_t DMA_COMMAND = 129;
 
 /// Configuration register for DMA
 /// First two bits determine the data generator pattern

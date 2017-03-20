@@ -25,7 +25,6 @@ namespace Register = CruRegisterIndex;
 
 namespace
 {
-
 /// DMA page length in bytes
 /// Note: the CRU has a firmware defined fixed page size
 constexpr int DMA_PAGE_SIZE = 8 * 1024;
@@ -33,18 +32,12 @@ constexpr int DMA_PAGE_SIZE = 8 * 1024;
 /// DMA page length in 32-bit words
 constexpr int DMA_PAGE_SIZE_32 = DMA_PAGE_SIZE / 4;
 
-constexpr int FIFO_FW_ENTRIES = 4; ///< The firmware works in blocks of 4 pages
-constexpr int NUM_OF_FW_BUFFERS = 32; ///< ... And as such has 32 "buffers" in the FIFO
-constexpr int NUM_PAGES = FIFO_FW_ENTRIES * NUM_OF_FW_BUFFERS; ///<... For a total number of 128 pages
-static_assert(NUM_PAGES == CRU_DESCRIPTOR_ENTRIES, "");
-
 /// DMA addresses must be 32-byte aligned
 constexpr uint64_t DMA_ALIGNMENT = 32;
-
 } // Anonymous namespace
 
 CruChannelMaster::CruChannelMaster(const Parameters& parameters)
-    : ChannelMasterPdaBase(parameters, allowedChannels(), sizeof(CruFifoTable)), //
+    : ChannelMasterPdaBase(parameters, allowedChannels(), sizeof(0)), //
       mInitialResetLevel(ResetLevel::Rorc), // It's good to reset at least the card channel in general
       mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Rorc)), // Internal loopback by default
       mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)), // Use data generator by default
@@ -55,8 +48,6 @@ CruChannelMaster::CruChannelMaster(const Parameters& parameters)
       mGeneratorSeed(0), // Presumably for random patterns, incremental doesn't really need it
       mGeneratorDataSize(parameters.getGeneratorDataSize().get_value_or(DMA_PAGE_SIZE)) // Can use page size
 {
-  /// TODO XXX TODO initialize configuration params
-
   if (auto pageSize = parameters.getDmaPageSize()) {
     if (pageSize.get() != DMA_PAGE_SIZE) {
       BOOST_THROW_EXCEPTION(CruException()
@@ -79,8 +70,6 @@ CruChannelMaster::CruChannelMaster(const Parameters& parameters)
           << ErrorInfo::GeneratorPattern(*pattern));
     }
   }
-
-  initFifo();
 }
 
 auto CruChannelMaster::allowedChannels() -> AllowedChannels {
@@ -98,27 +87,20 @@ void CruChannelMaster::deviceStartDma()
   resetCru();
   initCru();
   mSuperpageQueue.clear();
+  setBufferReady();
 }
 
 /// Set buffer to ready
 void CruChannelMaster::setBufferReady()
 {
-  if (!mBufferReady) {
-//    std::cout << "@   0x200 DATA EMULATOR ENABLE" << std::endl;
-    mBufferReady = true;
-    getBar().setDataEmulatorEnabled(true);
-    std::this_thread::sleep_for(10ms);
-  }
+  getBar().setDataEmulatorEnabled(true);
+  std::this_thread::sleep_for(10ms);
 }
 
 /// Set buffer to non-ready
 void CruChannelMaster::setBufferNonReady()
 {
-  if (mBufferReady) {
-//    std::cout << "@   0x200 DATA EMULATOR DISABLE" << std::endl;
-    mBufferReady = false;
-    getBar().setDataEmulatorEnabled(false);
-  }
+  getBar().setDataEmulatorEnabled(false);
 }
 
 void CruChannelMaster::deviceStopDma()
@@ -140,12 +122,6 @@ CardType::type CruChannelMaster::getCardType()
   return CardType::Cru;
 }
 
-/// Initializes the FIFO and the page addresses for it
-void CruChannelMaster::initFifo()
-{
-//  getFifoUser()->resetStatusEntries();
-}
-
 void CruChannelMaster::resetCru()
 {
   getBar().resetDataGeneratorCounter();
@@ -161,17 +137,6 @@ void CruChannelMaster::initCru()
     getBar().setDataGeneratorPattern(mGeneratorPattern);
   }
 
-  // Status base address in the bus address space
-//  log((Utilities::getUpper32Bits(uint64_t(getFifoBus())) != 0)
-//        ? "Using 64-bit region for status bus address, may be unsupported by PCI/BIOS configuration"
-//        : "Using 32-bit region for status bus address");
-//
-//  if (!Utilities::checkAlignment(getFifoBus(), DMA_ALIGNMENT)) {
-//    BOOST_THROW_EXCEPTION(CruException() << ErrorInfo::Message("FIFO bus address not 32 byte aligned"));
-//  }
-//
-//  getBar().setFifoBusAddress(getFifoBus());
-//
 //  // TODO Note: this stuff will be set by firmware in the future
 //  {
 //    // Status base address in the card's address space
@@ -183,6 +148,121 @@ void CruChannelMaster::initCru()
 //    // Send command to the DMA engine to write to every status entry, not just the final one
 //    getBar().setDoneControl();
 //  }
+}
+
+void CruChannelMaster::pushSuperpage(Superpage superpage)
+{
+  checkSuperpage(superpage);
+
+  SuperpageQueueEntry entry;
+  entry.busAddress = getBusOffsetAddress(superpage.getOffset());
+  entry.maxPages = superpage.getSize() / DMA_PAGE_SIZE;
+  entry.pushedPages = 0;
+  entry.superpage = superpage;
+  entry.superpage.received = 0;
+
+  mSuperpageQueue.addToQueue(entry);
+}
+
+auto CruChannelMaster::popSuperpage() -> Superpage
+{
+  return mSuperpageQueue.removeFromFilledQueue().superpage;
+}
+
+void CruChannelMaster::fillSuperpages()
+{
+  // Push superpages
+  {
+    size_t freeDescriptors = FIFO_QUEUE_MAX - mFifoSize;
+    int possibleToPush = std::min(mSuperpageQueue.getPushing().size(), freeDescriptors);
+
+    for (int i = 0; i < possibleToPush; ++i) {
+      SuperpageQueueEntry& entry = mSuperpageQueue.getPushingFrontEntry();
+      pushSuperpage(entry);
+      //std::cout << "@  entry.pushedPages = " << entry.pushedPages << '\n';
+      //std::cout << "@  entry.maxPages = " << entry.maxPages << '\n';
+      // Remove superpage from pushing queue
+      mSuperpageQueue.removeFromPushingQueue();
+    }
+  }
+
+  // Check for arrivals & handle them
+  if (!mSuperpageQueue.getArrivals().empty()) {
+    while (mFifoSize > 0) {
+      SuperpageQueueEntry& entry = mSuperpageQueue.getArrivalsFrontEntry();
+      auto pagesArrived = getBar().getSuperpagePushedPages(mFifoBack);
+      assert(pagesArrived <= entry.maxPages);
+
+      if (pagesArrived == entry.maxPages) {
+        mFifoSize--;
+        mFifoBack = (mFifoBack + 1) % READYFIFO_ENTRIES;
+        entry.superpage.received = pagesArrived * DMA_PAGE_SIZE;
+
+        if (entry.superpage.isFilled()) {
+          // Move superpage to filled queue
+          mSuperpageQueue.moveFromArrivalsToFilledQueue();
+        }
+      } else {
+        // If the back one hasn't arrived yet, the next ones will certainly not have arrived either...
+        break;
+      }
+    }
+  }
+}
+
+void CruChannelMaster::pushSuperpage(SuperpageQueueEntry& entry)
+{
+  assert(mFifoSize < FIFO_QUEUE_MAX);
+  assert(entry.pushedPages < entry.status.maxPages);
+
+  auto descriptorIndex = getFifoFront();
+
+  uint32_t addressHi = Utilities::getUpper32Bits(entry.busAddress);
+  uint32_t addressLo = Utilities::getLower32Bits(entry.busAddress);
+
+//  std::cout << "@ Pushing superpage\n";
+//  std::cout << "@   0x210 ADDRESS_HI = " << addressHi << '\n';
+//  std::cout << "@   0x214 ADDRESS_LO = " << addressLo << '\n';
+//  std::cout << "@   0x234 PAGES_MAX  = " << superpage.maxPages << std::endl;
+
+  getBar().setSuperpageDescriptor(descriptorIndex, entry.maxPages, entry.busAddress);
+
+  mFifoSize++;
+  entry.pushedPages = entry.maxPages;
+}
+
+int CruChannelMaster::getSuperpageQueueCount()
+{
+  return mSuperpageQueue.getQueueCount();
+}
+
+int CruChannelMaster::getSuperpageQueueAvailable()
+{
+  return mSuperpageQueue.getQueueAvailable();
+}
+
+int CruChannelMaster::getSuperpageQueueCapacity()
+{
+  return mSuperpageQueue.getQueueCapacity();
+}
+
+auto CruChannelMaster::getSuperpage() -> Superpage
+{
+  return mSuperpageQueue.getFrontSuperpage();
+}
+
+boost::optional<float> CruChannelMaster::getTemperature()
+{
+  return {};
+  //return getBar2().getTemperatureCelsius(); // Note: disabled until new FW is in place. Using this may crash the machine
+}
+
+Pda::PdaBar* CruChannelMaster::getPdaBar2Ptr()
+{
+  if (!mPdaBar2) {
+    Utilities::resetSmartPtr(mPdaBar2, getRorcDevice().getPciDevice(), 2);
+  }
+  return mPdaBar2.get();
 }
 
 std::vector<uint32_t> CruChannelMaster::utilityCopyFifo()
@@ -223,156 +303,6 @@ int CruChannelMaster::utilityGetFirmwareVersion()
 {
   return getBar().getFirmwareCompileInfo();
 }
-
-int CruChannelMaster::getSuperpageQueueCount()
-{
-  return mSuperpageQueue.getQueueCount();
-}
-
-int CruChannelMaster::getSuperpageQueueAvailable()
-{
-  return mSuperpageQueue.getQueueAvailable();
-}
-
-int CruChannelMaster::getSuperpageQueueCapacity()
-{
-  return mSuperpageQueue.getQueueCapacity();
-}
-
-auto CruChannelMaster::getSuperpage() -> Superpage
-{
-  return mSuperpageQueue.getFrontSuperpage();
-}
-
-void CruChannelMaster::pushSuperpage(Superpage superpage)
-{
-  checkSuperpage(superpage);
-
-  SuperpageQueueEntry entry;
-  entry.busAddress = getBusOffsetAddress(superpage.getOffset());
-  entry.maxPages = superpage.getSize() / DMA_PAGE_SIZE;
-  entry.pushedPages = 0;
-  entry.superpage = superpage;
-  entry.superpage.received = 0;
-
-  mSuperpageQueue.addToQueue(entry);
-}
-
-auto CruChannelMaster::popSuperpage() -> Superpage
-{
-  return mSuperpageQueue.removeFromFilledQueue().superpage;
-}
-
-void CruChannelMaster::fillSuperpages()
-{
-//  std::cout << "@ fillSuperpages()\n";
-
-  // Push new pages into superpage
-  if (!mSuperpageQueue.getPushing().empty()) {
-//    std::cout << "@ Pushing\n";
-
-    SuperpageQueueEntry& entry = mSuperpageQueue.getPushingFrontEntry();
-
-    int freeDescriptors = FIFO_QUEUE_MAX - mFifoSize;
-//    std::cout << "@  free descriptors = " << freeDescriptors << '\n';
-
-    if (freeDescriptors != 0) {
-      pushSuperpage(entry);
-      // Remove superpage from pushing queue
-//      std::cout << "@  entry.pushedPages = " << entry.pushedPages << '\n';
-//      std::cout << "@  entry.maxPages = " << entry.maxPages << '\n';
-      mSuperpageQueue.removeFromPushingQueue();
-    }
-
-    if (mFifoSize >= FIFO_QUEUE_MAX) {
-      // We should only enable the buffer when all the descriptors are filled, because the card may use them all as soon
-      // as the ready signal is given
-      setBufferReady();
-    }
-  }
-
-  // Check for arrivals & handle them
-  if (!mSuperpageQueue.getArrivals().empty()) {
-    uint32_t pagesMax = readRegister(0x234 / 4);
-    uint32_t pagesArrived = readRegister(0x21c / 4);
-
-//    std::cout << "@ Checking arrivals\n";
-//    std::cout << "@   0x234 PAGES_MAX     = " << pagesMax << '\n';
-//    std::cout << "@   0x21c PAGES_ARRIVED = " << pagesArrived << std::endl;
-//    std::cout << "@   FIFO_SIZE           = " << mFifoSize << '\n';
-
-    auto isArrived = [&](int descriptorIndex) { return pagesArrived == pagesMax; };
-    //auto resetDescriptor = [&](int descriptorIndex) { getFifoUser()->statusEntries[descriptorIndex].reset(); };
-
-    while (mFifoSize > 0) {
-      SuperpageQueueEntry& entry = mSuperpageQueue.getArrivalsFrontEntry();
-
-//      std::cout << "@ Checking arrival\n";
-//      std::cout << "@   Entry = " << entry.superpage.offset << '\n';
-
-      if (isArrived(mFifoBack)) {
-//        std::cout << "@   ARRIVED\n";
-
-        mFifoSize--;
-        mFifoBack = (mFifoBack + 1) % READYFIFO_ENTRIES;
-        entry.superpage.received = pagesArrived * DMA_PAGE_SIZE;
-
-        if (entry.superpage.isFilled()) {
-          // Move superpage to filled queue
-          mSuperpageQueue.moveFromArrivalsToFilledQueue();
-        }
-      } else {
-        // If the back one hasn't arrived yet, the next ones will certainly not have arrived either...
-        break;
-      }
-    }
-  }
-}
-
-void CruChannelMaster::pushSuperpage(SuperpageQueueEntry& superpage)
-{
-  assert(mFifoSize < FIFO_QUEUE_MAX);
-  assert(superpage.pushedPages < superpage.status.maxPages);
-
-  //auto descriptorIndex = getFifoFront();
-
-  uint32_t addressHi = Utilities::getUpper32Bits(superpage.busAddress);
-  uint32_t addressLo = Utilities::getLower32Bits(superpage.busAddress);
-
-//  std::cout << "@ Pushing superpage\n";
-//  std::cout << "@   0x210 ADDRESS_HI = " << addressHi << '\n';
-//  std::cout << "@   0x214 ADDRESS_LO = " << addressLo << '\n';
-//  std::cout << "@   0x234 PAGES_MAX  = " << superpage.maxPages << std::endl;
-
-  writeRegister(0x210 / 4, Utilities::getUpper32Bits(superpage.busAddress));
-  writeRegister(0x214 / 4, Utilities::getLower32Bits(superpage.busAddress));
-  writeRegister(0x234 / 4, superpage.maxPages);
-
-  //getFifoUser()->setDescriptor(descriptorIndex, DMA_PAGE_SIZE_32, sourceAddress, pageBusAddress);
-
-  if (mBufferReady) {
-//    std::cout << "@   0x204 ACK" << std::endl;
-    getBar().sendAcknowledge();
-  }
-
-  mFifoSize++;
-  superpage.pushedPages = superpage.maxPages;
-}
-
-boost::optional<float> CruChannelMaster::getTemperature()
-{
-  return {};
-  //return getBar2().getTemperatureCelsius(); // Note: disabled until new FW is in place. Using this may crash the machine
-}
-
-Pda::PdaBar* CruChannelMaster::getPdaBar2Ptr()
-{
-  if (!mPdaBar2) {
-    Utilities::resetSmartPtr(mPdaBar2, getRorcDevice().getPciDevice(), 2);
-  }
-  return mPdaBar2.get();
-}
-
 
 } // namespace Rorc
 } // namespace AliceO2

@@ -11,7 +11,6 @@
 #include <boost/scoped_ptr.hpp>
 #include "ChannelMasterPdaBase.h"
 #include "RORC/Parameters.h"
-#include "PageManager.h"
 #include "ReadyFifo.h"
 #include "SuperpageQueue.h"
 

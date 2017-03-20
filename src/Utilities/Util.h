@@ -32,8 +32,8 @@ inline uint32_t getUpper32Bits(uint64_t x)
 template <typename T>
 T getBits(T x, int lsb, int msb) {
   assert(lsb < msb);
-  return (x >> lsb) & ~(~0 << (msb-lsb+1));
-};
+  return (x >> lsb) & ~(~T(0) << (msb - lsb + T(1)));
+}
 
 /// Offset a pointer by a given amount of bytes
 template <typename T>

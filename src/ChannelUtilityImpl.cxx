@@ -89,34 +89,34 @@ void printCrorcFifo(ReadyFifo* fifo, std::ostream& os)
 }
 
 /// Prints the CRU status & descriptor table
-void printCruFifo(CruFifoTable* fifo, std::ostream& os)
+void printCruFifo(CruBarAccessor* fifo, std::ostream& os)
 {
-  {
-    auto header = b::str(b::format(" %-4s %-14s %-14s\n")
-        % "#" % "Status (hex)" % "Status (dec)");
-
-    printTable(os, "CRU STATUS TABLE", header, fifo->statusEntries.size(), [&](int i) {
-      // Note that, because the values are volatile, we need to make explicit non-volatile copies
-      auto status = fifo->statusEntries[i].status;
-      os << b::str(b::format(" %-4d %14x %14d\n") % i % status % status);
-    });
-  }
-
-  {
-    auto header = b::str(b::format(" %-4s %-14s %-14s %-14s %-14s %-14s\n")
-        % "#" % "Ctrl (hex)" % "SrcLo (hex)" % "SrcHi (hex)" % "DstLo (hex)" % "DstHi (hex)");
-
-    printTable(os, "CRU DESCRIPTOR TABLE", header, fifo->descriptorEntries.size(), [&](int i) {
-      auto d = fifo->descriptorEntries[i];
-      // Note that, because the values are volatile, we need to make explicit non-volatile copies
-      auto ctrl = d.ctrl;
-      auto sl = d.srcLow;
-      auto sh = d.srcHigh;
-      auto dl = d.dstLow;
-      auto dh = d.dstHigh;
-      os << b::str(b::format(" %-4d %14x %14x %14x %14x %14x\n") % i % ctrl % sl % sh % dl % dh);
-    });
-  }
+//  {
+//    auto header = b::str(b::format(" %-4s %-14s %-14s\n")
+//        % "#" % "Status (hex)" % "Status (dec)");
+//
+//    printTable(os, "CRU STATUS TABLE", header, fifo->statusEntries.size(), [&](int i) {
+//      // Note that, because the values are volatile, we need to make explicit non-volatile copies
+//      auto status = fifo->statusEntries[i].status;
+//      os << b::str(b::format(" %-4d %14x %14d\n") % i % status % status);
+//    });
+//  }
+//
+//  {
+//    auto header = b::str(b::format(" %-4s %-14s %-14s %-14s %-14s %-14s\n")
+//        % "#" % "Ctrl (hex)" % "SrcLo (hex)" % "SrcHi (hex)" % "DstLo (hex)" % "DstHi (hex)");
+//
+//    printTable(os, "CRU DESCRIPTOR TABLE", header, fifo->descriptorEntries.size(), [&](int i) {
+//      auto d = fifo->descriptorEntries[i];
+//      // Note that, because the values are volatile, we need to make explicit non-volatile copies
+//      auto ctrl = d.ctrl;
+//      auto sl = d.srcLow;
+//      auto sh = d.srcHigh;
+//      auto dl = d.dstLow;
+//      auto dh = d.dstHigh;
+//      os << b::str(b::format(" %-4d %14x %14x %14x %14x %14x\n") % i % ctrl % sl % sh % dl % dh);
+//    });
+//  }
 }
 
 void crorcSanityCheck(std::ostream& os, RegisterReadWriteInterface* channel)

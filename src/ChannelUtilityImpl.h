@@ -10,7 +10,7 @@
 #include <vector>
 #include <ostream>
 #include "Crorc/ReadyFifo.h"
-#include "Cru/CruFifoTable.h"
+#include "Cru/CruBarAccessor.h"
 #include "RORC/RegisterReadWriteInterface.h"
 #include "ChannelPaths.h"
 
@@ -19,7 +19,7 @@ namespace Rorc {
 namespace ChannelUtility {
 
 void printCrorcFifo(ReadyFifo* fifo, std::ostream& os);
-void printCruFifo(CruFifoTable* fifo, std::ostream& os);
+void printCruFifo(CruBarAccessor* fifo, std::ostream& os);
 
 void crorcSanityCheck(std::ostream& os, RegisterReadWriteInterface* channel);
 void cruSanityCheck(std::ostream& os, RegisterReadWriteInterface* channel);

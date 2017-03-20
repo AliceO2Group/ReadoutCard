@@ -9,11 +9,11 @@ set(TEST_FILES
     TestEnums.cxx
     TestInterprocessLock.cxx
     TestMemoryMappedFile.cxx
-    TestPageManager.cxx
     TestParameters.cxx
     TestPciAddress.cxx
     TestProgramOptions.cxx
     TestRorcException.cxx
+    TestSuperpageQueue.cxx
     TestUtil.cxx
 )
 

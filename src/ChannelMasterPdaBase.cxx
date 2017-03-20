@@ -71,8 +71,7 @@ ChannelMasterPdaBase::ChannelMasterPdaBase(const Parameters& parameters,
     }
 
     // Check file system type to make sure we're using hugetlbfs
-    assertFileSystemType(boost::filesystem::path(boost::filesystem::path(getPaths().fifo())).parent_path().string(),
-        {"hugetlbfs"}, "fifo");
+    assertFileSystemType(boost::filesystem::path(getPaths().fifo()).parent_path().string(), {"hugetlbfs"}, "fifo");
 
     // Now we can create and register the buffer
     // Note: if resizing the file fails, we might've accidentally put the file in a hugetlbfs mount with 1 GB page size

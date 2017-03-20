@@ -36,7 +36,6 @@ DummyChannelMaster::DummyChannelMaster(const Parameters& params)
 
   mMaxPages = mBufferSize / mPageSize;
   mPageBuffer.resize(mBufferSize, -1);
-  mPageManager.setAmountOfPages(mMaxPages);
 }
 
 DummyChannelMaster::~DummyChannelMaster()

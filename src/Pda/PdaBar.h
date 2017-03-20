@@ -74,6 +74,25 @@ class PdaBar
       return *reinterpret_cast<volatile T*>(getUserspaceAddress() + offset);
     }
 
+    void* getOffsetAddress(uintptr_t byteOffset) const
+    {
+      return reinterpret_cast<void*>(getUserspaceAddress() + byteOffset);
+    }
+
+    template<typename T>
+    void barWrite(uintptr_t byteOffset, const T& value) const
+    {
+      memcpy(getOffsetAddress(byteOffset), &value, sizeof(T));
+    }
+
+    template<typename T>
+    T barRead(uintptr_t byteOffset) const
+    {
+      T value;
+      memcpy(&value, getOffsetAddress(byteOffset), sizeof(T));
+      return value;
+    }
+
     uintptr_t getUserspaceAddress() const
     {
       return mUserspaceAddress;

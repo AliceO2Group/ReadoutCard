@@ -9,9 +9,7 @@
 #include <memory>
 #include <queue>
 #include <boost/circular_buffer_fwd.hpp>
-#include "CruFifoTable.h"
 #include "CruBarAccessor.h"
-#include "PageManager.h"
 #include "RORC/Parameters.h"
 #include "SuperpageQueue.h"
 #include "Utilities/GuardFunction.h"
@@ -66,8 +64,7 @@ class CruChannelMaster final : public ChannelMasterPdaBase
     static constexpr size_t MAX_SUPERPAGES = 32;
 
     /// Firmware FIFO Size
-    ////static constexpr size_t FIFO_QUEUE_MAX = CRU_DESCRIPTOR_ENTRIES;
-    static constexpr size_t FIFO_QUEUE_MAX = 1;
+    static constexpr size_t FIFO_QUEUE_MAX = 4;
 
     using SuperpageQueueType = SuperpageQueue<MAX_SUPERPAGES>;
     using SuperpageQueueEntry = SuperpageQueueType::SuperpageQueueEntry;
@@ -83,7 +80,6 @@ class CruChannelMaster final : public ChannelMasterPdaBase
         };
     };
 
-    void initFifo();
     void initCru();
     void resetCru();
     void setBufferReady();
@@ -104,16 +100,6 @@ class CruChannelMaster final : public ChannelMasterPdaBase
 
     static constexpr CardType::type CARD_TYPE = CardType::Cru;
 
-//    CruFifoTable* getFifoUser()
-//    {
-//      return reinterpret_cast<CruFifoTable*>(getFifoAddressUser());
-//    }
-//
-//    CruFifoTable* getFifoBus()
-//    {
-//      return reinterpret_cast<CruFifoTable*>(getFifoAddressBus());
-//    }
-
     /// Get front index of FIFO
     int getFifoFront()
     {
@@ -127,14 +113,6 @@ class CruChannelMaster final : public ChannelMasterPdaBase
     int mFifoSize = 0;
 
     SuperpageQueueType mSuperpageQueue;
-
-    /// Acks that "should've" been issued before buffer was ready, but have to be postponed until after that
-    int mPendingAcks = 0;
-
-    /// Buffer readiness state. True means page descriptors have been filled, so the card can start transferring
-    bool mBufferReady = false;
-
-    int mInitialAcks = 0;
 
     /// BAR 2 is needed to read serial number, temperature, etc.
     /// We initialize it on demand

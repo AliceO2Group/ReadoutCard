@@ -8,7 +8,6 @@
 #include <array>
 #include <boost/scoped_ptr.hpp>
 #include "ChannelUtilityInterface.h"
-#include "PageManager.h"
 #include "ChannelMasterBase.h"
 
 namespace AliceO2 {
@@ -43,8 +42,6 @@ class DummyChannelMaster final : public ChannelMasterBase
 
     /// Lock that guards against both inter- and intra-process ownership
     boost::scoped_ptr<Interprocess::Lock> mInterprocessLock;
-
-    PageManager<FIFO_CAPACITY> mPageManager;
 
     size_t mBufferSize;
     size_t mPageSize;

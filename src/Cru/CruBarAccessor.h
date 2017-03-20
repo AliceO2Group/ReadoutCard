@@ -6,6 +6,7 @@
 #pragma once
 
 #include <cstddef>
+#include <boost/optional/optional.hpp>
 #include "CruRegisterIndex.h"
 #include "Pda/PdaBar.h"
 #include "Utilities/Util.h"
@@ -20,6 +21,50 @@ class CruBarAccessor
     CruBarAccessor(Pda::PdaBar* pdaBar)
         : mPdaBar(pdaBar)
     {
+    }
+
+    enum class BufferStatus
+    {
+        AVAILABLE,
+        BUSY
+    };
+
+    /// Set the registers of a descriptor entry
+    /// \param index FIFO index
+    /// \param pages Amount of 8 kiB pages in superpage
+    /// \param address Superpage PCI bus address
+    void setSuperpageDescriptor(uint32_t index, uint32_t pages, uintptr_t busAddress)
+    {
+      assert(index < FIFO_INDEXES);
+
+      // Set superpage address
+      mPdaBar->barWrite(SUPERPAGE_ADDRESS_HIGH, busAddress);
+
+      // Set superpage size and FIFO index
+      uint32_t pagesAvailableAndIndex = index & 0xf;
+      pagesAvailableAndIndex |= (pages << 4) & (~0xf);
+      mPdaBar->barWrite(SUPERPAGE_PAGES_AVAILABLE_AND_INDEX, pagesAvailableAndIndex);
+
+      // Set superpage enabled
+      assert(getSuperpageBufferStatus(index) == BufferStatus::AVAILABLE);
+      mPdaBar->barWrite(SUPERPAGE_STATUS, index);
+    }
+
+    uint32_t getSuperpagePushedPages(uint32_t index)
+    {
+      assert(index < FIFO_INDEXES);
+      return mPdaBar->barRead<uint32_t>(SUPERPAGE_PUSHED_PAGES + index);
+    }
+
+    BufferStatus getSuperpageBufferStatus(uint32_t index)
+    {
+      uint32_t status = mPdaBar->barRead<uint32_t>(SUPERPAGE_STATUS);
+      uint32_t bit = status & (0b1 << index);
+      if (bit == 0) {
+        return BufferStatus::BUSY;
+      } else {
+        return BufferStatus::AVAILABLE;
+      }
     }
 
     void setDataEmulatorEnabled(bool enabled) const
@@ -74,11 +119,6 @@ class CruBarAccessor
               << ErrorInfo::GeneratorPattern(pattern)); }};
 
       at32(CruRegisterIndex::DMA_CONFIGURATION) = value();
-    }
-
-    void sendAcknowledge() const
-    {
-      at32(CruRegisterIndex::DMA_COMMAND) = 0x1;
     }
 
     uint32_t getSerialNumber() const
@@ -175,12 +215,22 @@ class CruBarAccessor
 
   private:
 
+    // These are for the new interface prototype. Highly subject to change.
+    // For more info: https://alice.its.cern.ch/jira/browse/CRU-61
+    static constexpr int SUPERPAGE_ADDRESS_HIGH = 0x210;
+    static constexpr int SUPERPAGE_ADDRESS_LOW = 0x214;
+    static constexpr int SUPERPAGE_PAGES_AVAILABLE_AND_INDEX = 0x234;
+    static constexpr int SUPERPAGE_STATUS = 0x23c;
+    static constexpr int SUPERPAGE_PUSHED_PAGES = 0xffffffff;
+    static constexpr int FIFO_INDEXES = 4;
+
     volatile uint32_t& at32(size_t index) const
     {
       return mPdaBar->at<uint32_t>(CruRegisterIndex::toByteAddress(index));
     }
 
     const Pda::PdaBar* mPdaBar;
+//    uintptr_t bar;
 };
 
 } // namespace Rorc
