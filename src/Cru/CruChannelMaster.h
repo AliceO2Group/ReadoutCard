@@ -66,7 +66,8 @@ class CruChannelMaster final : public ChannelMasterPdaBase
     static constexpr size_t MAX_SUPERPAGES = 32;
 
     /// Firmware FIFO Size
-    static constexpr size_t FIFO_QUEUE_MAX = CRU_DESCRIPTOR_ENTRIES;
+    ////static constexpr size_t FIFO_QUEUE_MAX = CRU_DESCRIPTOR_ENTRIES;
+    static constexpr size_t FIFO_QUEUE_MAX = 1;
 
     using SuperpageQueueType = SuperpageQueue<MAX_SUPERPAGES>;
     using SuperpageQueueEntry = SuperpageQueueType::SuperpageQueueEntry;
@@ -87,8 +88,7 @@ class CruChannelMaster final : public ChannelMasterPdaBase
     void resetCru();
     void setBufferReady();
     void setBufferNonReady();
-    void pushIntoSuperpage(SuperpageQueueEntry& superpage);
-    uintptr_t getNextSuperpageBusAddress(const SuperpageQueueEntry& superpage);
+    void pushSuperpage(SuperpageQueueEntry& superpage);
 
     CruBarAccessor getBar()
     {
@@ -104,15 +104,15 @@ class CruChannelMaster final : public ChannelMasterPdaBase
 
     static constexpr CardType::type CARD_TYPE = CardType::Cru;
 
-    CruFifoTable* getFifoUser()
-    {
-      return reinterpret_cast<CruFifoTable*>(getFifoAddressUser());
-    }
-
-    CruFifoTable* getFifoBus()
-    {
-      return reinterpret_cast<CruFifoTable*>(getFifoAddressBus());
-    }
+//    CruFifoTable* getFifoUser()
+//    {
+//      return reinterpret_cast<CruFifoTable*>(getFifoAddressUser());
+//    }
+//
+//    CruFifoTable* getFifoBus()
+//    {
+//      return reinterpret_cast<CruFifoTable*>(getFifoAddressBus());
+//    }
 
     /// Get front index of FIFO
     int getFifoFront()

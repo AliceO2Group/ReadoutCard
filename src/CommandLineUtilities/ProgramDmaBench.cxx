@@ -348,7 +348,7 @@ class ProgramDmaBench: public Program
             break;
           }
 
-          // Keep the readout queue filled
+          // Keep the driver's queue filled
           mChannel->fillSuperpages();
 
           // Give free superpages to the driver
@@ -382,8 +382,8 @@ class ProgramDmaBench: public Program
         lowPriorityTasks();
       }
 
-      pushFuture.wait();
-      readoutFuture.wait();
+      pushFuture.get();
+      readoutFuture.get();
     }
 
     void dmaLoopReadoutRandom()

@@ -25,9 +25,9 @@ BOOST_AUTO_TEST_CASE(UtilOptions)
       "--address=0x100",
       "--range=200",
       "--value=0x250",
-      "--cp-dma-pagesize=300",
-      "--cp-gen-enable=true",
-      "--cp-gen-loopb=RORC",
+      "--page-size=300",
+      "--generator=true",
+      "--loopback=RORC",
       "--serial=500",
   };
 

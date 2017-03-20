@@ -44,6 +44,7 @@ set(RORC_LIB_SOURCES
   CommandLineUtilities/Options.cxx
   CommandLineUtilities/Program.cxx
   Utilities/System.cxx
+  #Utilities/Numa.cxx
 )
 
 if(ALICEO2_RORC_PDA_ENABLED)
@@ -117,7 +118,6 @@ build_util_exec(rorc-reg-write CommandLineUtilities/ProgramRegisterWrite.cxx)
 if(ALICEO2_RORC_PDA_ENABLED)
   build_util_exec(rorc-channel-cleanup CommandLineUtilities/ProgramCleanup.cxx)
   build_util_exec(rorc-cru-blink CommandLineUtilities/ProgramCruBlink.cxx)
-  build_util_exec(rorc-cru-experimental-dma CommandLineUtilities/ProgramCruExperimentalDma.cxx)
   build_util_exec(rorc-example Example.cxx)
   build_util_exec(rorc-flash CommandLineUtilities/ProgramFlash.cxx)
   build_util_exec(rorc-flash-read CommandLineUtilities/ProgramFlashRead.cxx)
