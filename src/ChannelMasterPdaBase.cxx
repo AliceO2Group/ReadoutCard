@@ -21,31 +21,6 @@ CardDescriptor getDescriptor(const Parameters& parameters)
       [&](const PciAddress& address) {return RorcDevice(address).getCardDescriptor();});
 }
 
-
-/// Throws if the file system type of the given file/directory is not one of the given valid types
-void assertFileSystemType(std::string path, const std::set<std::string>& validTypes, std::string name)
-{
-  bool found;
-  std::string type;
-  std::tie(found, type) = Utilities::isFileSystemTypeAnyOf(path, validTypes);
-
-  if (!found) {
-    std::ostringstream oss;
-    oss << "File-backed shared memory for '" << name << "' file system type invalid (supported: ";
-    for (auto i = validTypes.begin(); i != validTypes.end(); i++) {
-      oss << *i;
-      if (i != validTypes.end()) {
-        oss << ",";
-      }
-    }
-    oss << ")";
-
-    BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message(oss.str())
-        << ErrorInfo::FileName(path)
-        << ErrorInfo::FilesystemType(type));
-  }
-}
 }
 
 ChannelMasterPdaBase::ChannelMasterPdaBase(const Parameters& parameters,
@@ -57,39 +32,6 @@ ChannelMasterPdaBase::ChannelMasterPdaBase(const Parameters& parameters,
 
   log("Initializing BAR", InfoLogger::InfoLogger::Debug);
   Utilities::resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), getChannelNumber());
-
-  // Create and register our internal FIFO buffer
-  log("Initializing FIFO DMA buffer", InfoLogger::InfoLogger::Debug);
-  {
-    // Note: since the CRU needs a contiguous FIFO that's bigger than the default memory page size of 4KB, we use a
-    // 2 MB hugepage for the FIFO. Only the actually used size (= fifoSize) will be registered with PDA.
-    constexpr size_t FIFO_ALLOCATION_SIZE = 2 * 1024 * 1024;
-
-    // If for some weird reason a card needs more than 2MB in the future, this will throw...
-    if (fifoSize > FIFO_ALLOCATION_SIZE) {
-      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("FIFO size exceeded 2 MB"));
-    }
-
-    // Check file system type to make sure we're using hugetlbfs
-    assertFileSystemType(boost::filesystem::path(getPaths().fifo()).parent_path().string(), {"hugetlbfs"}, "fifo");
-
-    // Now we can create and register the buffer
-    // Note: if resizing the file fails, we might've accidentally put the file in a hugetlbfs mount with 1 GB page size
-    Utilities::resetSmartPtr(mBufferFifoFile, getPaths().fifo(), FIFO_ALLOCATION_SIZE);
-    Utilities::resetSmartPtr(mPdaDmaBufferFifo, mRorcDevice->getPciDevice(), mBufferFifoFile->getAddress(), fifoSize,
-        getPdaDmaBufferIndexFifo(getChannelNumber()));
-
-    const auto& entry = mPdaDmaBufferFifo->getScatterGatherList().at(0);
-    if (entry.size < fifoSize) {
-      // Something must've failed at some point
-      BOOST_THROW_EXCEPTION(Exception()
-          << ErrorInfo::Message("Scatter gather list entry for internal FIFO was too small")
-          << ErrorInfo::ScatterGatherEntrySize(entry.size)
-          << ErrorInfo::FifoSize(fifoSize));
-    }
-    mFifoAddressUser = entry.addressUser;
-    mFifoAddressBus = entry.addressBus;
-  }
 
   // Register user's page data buffer
   log("Initializing memory-mapped DMA buffer", InfoLogger::InfoLogger::Debug);
@@ -161,29 +103,7 @@ void ChannelMasterPdaBase::writeRegister(int index, uint32_t value)
 
 uintptr_t ChannelMasterPdaBase::getBusOffsetAddress(size_t offset)
 {
-  const auto& list = getPdaDmaBuffer().getScatterGatherList();
-
-  auto userBase = list.at(0).addressUser;
-  auto userWithOffset = userBase + offset;
-
-  // First we find the SGL entry that contains our address
-  for (int i = 0; i < list.size(); ++i) {
-    auto entryUserStartAddress = list[i].addressUser;
-    auto entryUserEndAddress = entryUserStartAddress + list[i].size;
-
-    if ((userWithOffset >= entryUserStartAddress) && (userWithOffset < entryUserEndAddress)) {
-      // This is the entry we need
-      // We now need to calculate the difference from the start of this entry to the given offset. We make use of the
-      // fact that the userspace addresses will be contiguous
-      auto entryOffset = userWithOffset - entryUserStartAddress;
-      auto offsetBusAddress = list[i].addressBus + entryOffset;
-      return offsetBusAddress;
-    }
-  }
-
-  BOOST_THROW_EXCEPTION(Exception()
-      << ErrorInfo::Message("Physical offset address out of range")
-      << ErrorInfo::Offset(offset));
+  return getPdaDmaBuffer().getBusOffsetAddress(offset);
 }
 
 void ChannelMasterPdaBase::checkSuperpage(const Superpage& superpage)

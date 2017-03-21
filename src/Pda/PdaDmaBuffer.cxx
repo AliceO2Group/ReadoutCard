@@ -78,6 +78,35 @@ PdaDmaBuffer::~PdaDmaBuffer()
   PciDevice_deleteDMABuffer(mPciDevice.get(), mDmaBuffer);
 }
 
+uintptr_t PdaDmaBuffer::getBusOffsetAddress(size_t offset) const
+{
+  const auto& list = mScatterGatherVector;
+
+  // TODO shortcut for SGL size 1 (happens with small buffers, or when IOMMU is enabled)
+
+  auto userBase = list.at(0).addressUser;
+  auto userWithOffset = userBase + offset;
+
+  // First we find the SGL entry that contains our address
+  for (int i = 0; i < list.size(); ++i) {
+    auto entryUserStartAddress = list[i].addressUser;
+    auto entryUserEndAddress = entryUserStartAddress + list[i].size;
+
+    if ((userWithOffset >= entryUserStartAddress) && (userWithOffset < entryUserEndAddress)) {
+      // This is the entry we need
+      // We now need to calculate the difference from the start of this entry to the given offset. We make use of the
+      // fact that the userspace addresses will be contiguous
+      auto entryOffset = userWithOffset - entryUserStartAddress;
+      auto offsetBusAddress = list[i].addressBus + entryOffset;
+      return offsetBusAddress;
+    }
+  }
+
+  BOOST_THROW_EXCEPTION(Exception()
+      << ErrorInfo::Message("Physical offset address out of range")
+      << ErrorInfo::Offset(offset));
+}
+
 } // namespace Pda
 } // namespace Rorc
 } // namespace AliceO2

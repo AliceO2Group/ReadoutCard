@@ -56,7 +56,29 @@ CrorcChannelMaster::CrorcChannelMaster(const Parameters& parameters)
     mUseContinuousReadout(parameters.getReadoutMode().is_initialized() ?
             parameters.getReadoutModeRequired() == ReadoutMode::Continuous : false)
 {
-  getFifoUser()->reset();
+  // Create and register our ReadyFIFO buffer
+  log("Initializing ReadyFIFO DMA buffer", InfoLogger::InfoLogger::Debug);
+  {
+    // Create and register the buffer
+    // Note: if resizing the file fails, we might've accidentally put the file in a hugetlbfs mount with 1 GB page size
+    constexpr auto FIFO_SIZE = sizeof(ReadyFifo);
+    Utilities::resetSmartPtr(mBufferFifoFile, getPaths().fifo(), FIFO_SIZE);
+    Utilities::resetSmartPtr(mPdaDmaBufferFifo, getRorcDevice().getPciDevice(), mBufferFifoFile->getAddress(),
+        FIFO_SIZE, getPdaDmaBufferIndexFifo(getChannelNumber()));
+
+    const auto& entry = mPdaDmaBufferFifo->getScatterGatherList().at(0);
+    if (entry.size < FIFO_SIZE) {
+      // Something must've failed at some point
+      BOOST_THROW_EXCEPTION(Exception()
+          << ErrorInfo::Message("Scatter gather list entry for internal FIFO was too small")
+          << ErrorInfo::ScatterGatherEntrySize(entry.size)
+          << ErrorInfo::FifoSize(FIFO_SIZE));
+    }
+    mReadyFifoAddressUser = entry.addressUser;
+    mReadyFifoAddressBus = entry.addressBus;
+  }
+
+  getReadyFifoUser()->reset();
   mDmaBufferUserspace = getPdaDmaBuffer().getScatterGatherList().at(0).addressUser;
 }
 
@@ -103,7 +125,7 @@ void CrorcChannelMaster::startPendingDma(SuperpageQueueEntry& entry)
 
   // Initializing the firmware FIFO, pushing (entries) pages
   for(int i = 0; i < READYFIFO_ENTRIES; ++i){
-    getFifoUser()->entries[i].reset();
+    getReadyFifoUser()->entries[i].reset();
     pushIntoSuperpage(entry);
   }
 
@@ -143,7 +165,7 @@ void CrorcChannelMaster::startPendingDma(SuperpageQueueEntry& entry)
     mSuperpageQueue.moveFromArrivalsToFilledQueue();
   }
 
-  getFifoUser()->reset();
+  getReadyFifoUser()->reset();
   mFifoBack = 0;
   mFifoSize = 0;
 
@@ -317,7 +339,7 @@ void CrorcChannelMaster::fillSuperpages()
   // Check for arrivals & handle them
   if (!mSuperpageQueue.getArrivals().empty()) {
     auto isArrived = [&](int descriptorIndex) {return dataArrived(descriptorIndex) == DataArrivalStatus::WholeArrived;};
-    auto resetDescriptor = [&](int descriptorIndex) {getFifoUser()->entries[descriptorIndex].reset();};
+    auto resetDescriptor = [&](int descriptorIndex) {getReadyFifoUser()->entries[descriptorIndex].reset();};
 
     while (mFifoSize > 0) {
       SuperpageQueueEntry& entry = mSuperpageQueue.getArrivalsFrontEntry();
@@ -335,7 +357,7 @@ void CrorcChannelMaster::fillSuperpages()
             memcpy(address + (sizeof(uint32_t) * 3), &eventSize, sizeof(uint32_t));
           };
 
-          uint32_t length = getFifoUser()->entries[mFifoBack].length;
+          uint32_t length = getReadyFifoUser()->entries[mFifoBack].length;
           auto pageAddress = mDmaBufferUserspace + entry.superpage.getOffset() + entry.superpage.received;
           writeSdhEventSize(pageAddress, length);
         }
@@ -383,8 +405,8 @@ void CrorcChannelMaster::pushFreeFifoPage(int readyFifoIndex, uintptr_t pageBusA
 
 CrorcChannelMaster::DataArrivalStatus::type CrorcChannelMaster::dataArrived(int index)
 {
-  auto length = getFifoUser()->entries[index].length;
-  auto status = getFifoUser()->entries[index].status;
+  auto length = getReadyFifoUser()->entries[index].length;
+  auto status = getReadyFifoUser()->entries[index].status;
 
   if (status == -1) {
     return DataArrivalStatus::NoneArrived;
@@ -487,13 +509,14 @@ void CrorcChannelMaster::crorcCheckFreeFifoEmpty()
   int returnCode = rorcCheckRxFreeFifo(getBarUserspace());
   if (returnCode != RORC_FF_EMPTY) {
     BOOST_THROW_EXCEPTION(
-        CrorcFreeFifoException() ADD_ERRINFO(returnCode, "Free FIFO not empty") << ErrorInfo::PossibleCauses({"Previous DMA did not get/free all received pages"}));
+        CrorcFreeFifoException() ADD_ERRINFO(returnCode, "Free FIFO not empty")
+        << ErrorInfo::PossibleCauses({"Previous DMA did not get/free all received pages"}));
   }
 }
 
 void CrorcChannelMaster::crorcStartDataReceiver()
 {
-  rorcStartDataReceiver(getBarUserspace(), getFifoAddressBus(), mRorcRevision);
+  rorcStartDataReceiver(getBarUserspace(), getReadyFifoAddressBus(), mRorcRevision);
 }
 
 void CrorcChannelMaster::crorcSetSiuLoopback()
@@ -570,14 +593,14 @@ Pda::PdaBar& CrorcChannelMaster::getBar2()
 std::vector<uint32_t> CrorcChannelMaster::utilityCopyFifo()
 {
   std::vector<uint32_t> copy;
-  auto& fifo = getFifoUser()->dataInt32;
+  auto& fifo = getReadyFifoUser()->dataInt32;
   copy.insert(copy.begin(), fifo.begin(), fifo.end());
   return copy;
 }
 
 void CrorcChannelMaster::utilityPrintFifo(std::ostream& os)
 {
-  ChannelUtility::printCrorcFifo(getFifoUser(), os);
+  ChannelUtility::printCrorcFifo(getReadyFifoUser(), os);
 }
 
 void CrorcChannelMaster::utilitySetLedState(bool)

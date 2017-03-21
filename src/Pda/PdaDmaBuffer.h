@@ -42,6 +42,9 @@ class PdaDmaBuffer
       return mScatterGatherVector;
     }
 
+    /// Function for getting the bus address that corresponds to the user address + given offset
+    uintptr_t getBusOffsetAddress(size_t offset) const;
+
   private:
     DMABuffer* mDmaBuffer;
     PdaDevice::PdaPciDevice mPciDevice;

@@ -10,6 +10,7 @@
 #include <sstream>
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
+#include "ExceptionInternal.h"
 #include "Utilities/System.h"
 
 namespace AliceO2 {
@@ -86,6 +87,31 @@ std::pair<bool, std::string> isFileSystemTypeAnyOf(const boost::filesystem::path
 {
   auto type = getFileSystemType(path);
   return {types.count(type), type};
+}
+
+/// Throws if the file system type of the given file/directory is not one of the given valid types
+void assertFileSystemType(std::string path, const std::set<std::string>& validTypes, std::string name)
+{
+  bool found;
+  std::string type;
+  std::tie(found, type) = Utilities::isFileSystemTypeAnyOf(path, validTypes);
+
+  if (!found) {
+    std::ostringstream oss;
+    oss << "File-backed shared memory for '" << name << "' file system type invalid (supported: ";
+    for (auto i = validTypes.begin(); i != validTypes.end(); i++) {
+      oss << *i;
+      if (i != validTypes.end()) {
+        oss << ",";
+      }
+    }
+    oss << ")";
+
+    BOOST_THROW_EXCEPTION(Exception()
+        << ErrorInfo::Message(oss.str())
+        << ErrorInfo::FileName(path)
+        << ErrorInfo::FilesystemType(type));
+  }
 }
 
 } // namespace Util

@@ -98,31 +98,6 @@ class ChannelMasterPdaBase: public ChannelMasterBase
     /// Function for getting the bus address that corresponds to the user address + given offset
     uintptr_t getBusOffsetAddress(size_t offset);
 
-    /// The size of the shared state data file. It should be over-provisioned, since subclasses may also allocate their
-    /// own shared data in this file.
-    static size_t getSharedDataSize()
-    {
-      // 4KiB ought to be enough for anybody, and is also the standard x86 page size.
-      // Since shared memory needs to be a multiple of page size, this should work out.
-      return 4l * 1024l;
-    }
-
-    /// Name for the shared data object in the shared state file
-    static std::string getSharedDataName()
-    {
-      return "ChannelMasterSharedData";
-    }
-
-    uintptr_t getFifoAddressBus() const
-    {
-      return mFifoAddressBus;
-    }
-
-    uintptr_t getFifoAddressUser() const
-    {
-      return mFifoAddressUser;
-    }
-
     uintptr_t getBarUserspace() const
     {
       return mPdaBar->getUserspaceAddress();
@@ -169,19 +144,8 @@ class ChannelMasterPdaBase: public ChannelMasterBase
     /// PDA BAR object
     boost::scoped_ptr<Pda::PdaBar> mPdaBar;
 
-    boost::scoped_ptr<MemoryMappedFile> mBufferFifoFile;
-
-    /// PDA DMABuffer object for the fifo
-    boost::scoped_ptr<Pda::PdaDmaBuffer> mPdaDmaBufferFifo;
-
     /// PDA DMABuffer object for the pages
     boost::scoped_ptr<Pda::PdaDmaBuffer> mPdaDmaBuffer;
-
-    /// Userspace address of FIFO in DMA buffer
-    uintptr_t mFifoAddressUser;
-
-    /// Bus address of FIFO in DMA buffer
-    uintptr_t mFifoAddressBus;
 };
 
 } // namespace Rorc

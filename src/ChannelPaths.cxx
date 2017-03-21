@@ -32,7 +32,7 @@ std::string ChannelPaths::lock() const
 
 std::string ChannelPaths::fifo() const
 {
-  return makePath("fifo", DIR_HUGEPAGE_2M);
+  return makePath("fifo", DIR_SHAREDMEM);
 }
 
 std::string ChannelPaths::namedMutex() const

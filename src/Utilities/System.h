@@ -38,6 +38,9 @@ std::string getFileSystemType(const boost::filesystem::path& path);
 std::pair<bool, std::string> isFileSystemTypeAnyOf(const boost::filesystem::path& path,
     const std::set<std::string>& types);
 
+/// Throws if the file system type of the given file/directory is not one of the given valid types
+void assertFileSystemType(std::string path, const std::set<std::string>& validTypes, std::string name);
+
 } // namespace Util
 } // namespace Rorc
 } // namespace AliceO2

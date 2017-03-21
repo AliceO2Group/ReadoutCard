@@ -84,14 +84,14 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
 
     uintptr_t getNextSuperpageBusAddress(const SuperpageQueueEntry& superpage);
 
-    ReadyFifo* getFifoUser()
+    ReadyFifo* getReadyFifoUser()
     {
-      return reinterpret_cast<ReadyFifo*>(getFifoAddressUser());
+      return reinterpret_cast<ReadyFifo*>(mReadyFifoAddressUser);
     }
 
-    ReadyFifo* getFifoBus()
+    ReadyFifo* getReadyFifoBus()
     {
-      return reinterpret_cast<ReadyFifo*>(getFifoAddressBus());
+      return reinterpret_cast<ReadyFifo*>(mReadyFifoAddressBus);
     }
 
     /// Enables data receiving in the RORC
@@ -171,13 +171,35 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
     /// Push a page into a superpage
     void pushIntoSuperpage(SuperpageQueueEntry& superpage);
 
+    uintptr_t getReadyFifoAddressBus() const
+    {
+      return mReadyFifoAddressBus;
+    }
+
+    uintptr_t getReadyFifoAddressUser() const
+    {
+      return mReadyFifoAddressUser;
+    }
+
     /// Get front index of FIFO
-    int getFifoFront()
+    int getFifoFront() const
     {
       return (mFifoBack + mFifoSize) % READYFIFO_ENTRIES;
     };
 
     Pda::PdaBar& getBar2();
+
+    /// Memory mapped file for the ReadyFIFO
+    boost::scoped_ptr<MemoryMappedFile> mBufferFifoFile;
+
+    /// PDA DMABuffer object for the ReadyFIFO
+    boost::scoped_ptr<Pda::PdaDmaBuffer> mPdaDmaBufferFifo;
+
+    /// Userspace address of FIFO in DMA buffer
+    uintptr_t mReadyFifoAddressUser;
+
+    /// Bus address of FIFO in DMA buffer
+    uintptr_t mReadyFifoAddressBus;
 
     /// Back index of the firmware FIFO
     int mFifoBack = 0;
