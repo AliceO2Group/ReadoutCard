@@ -10,8 +10,6 @@
 #include <boost/optional.hpp>
 #include <boost/variant.hpp>
 #include "ExceptionInternal.h"
-#include "RORC/LoopbackMode.h"
-#include "RORC/PciAddress.h"
 
 namespace AliceO2 {
 namespace Rorc {

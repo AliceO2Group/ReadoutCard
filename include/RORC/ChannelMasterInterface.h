@@ -7,13 +7,11 @@
 #define ALICEO2_INCLUDE_RORC_CHANNELMASTERINTERFACE_H_
 
 #include <cstdint>
-#include <memory>
 #include <boost/optional.hpp>
-#include <boost/exception/all.hpp>
 #include <InfoLogger/InfoLogger.hxx>
 #include "RORC/Parameters.h"
 #include "RORC/CardType.h"
-#include "RORC/ResetLevel.h"
+#include "RORC/ParameterTypes/ResetLevel.h"
 #include "RORC/RegisterReadWriteInterface.h"
 #include "RORC/Superpage.h"
 

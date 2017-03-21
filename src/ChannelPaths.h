@@ -6,7 +6,7 @@
 #pragma once
 
 #include <string>
-#include "RORC/PciAddress.h"
+#include "RORC/ParameterTypes/PciAddress.h"
 
 namespace AliceO2 {
 namespace Rorc {

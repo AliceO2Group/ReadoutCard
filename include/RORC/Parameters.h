@@ -10,11 +10,11 @@
 #include <string>
 #include <boost/optional.hpp>
 #include <boost/variant.hpp>
-#include "RORC/BufferParameters.h"
-#include "RORC/GeneratorPattern.h"
-#include "RORC/LoopbackMode.h"
-#include "RORC/PciAddress.h"
-#include "RORC/ReadoutMode.h"
+#include "RORC/ParameterTypes/BufferParameters.h"
+#include "RORC/ParameterTypes/GeneratorPattern.h"
+#include "RORC/ParameterTypes/LoopbackMode.h"
+#include "RORC/ParameterTypes/PciAddress.h"
+#include "RORC/ParameterTypes/ReadoutMode.h"
 
 namespace AliceO2 {
 namespace Rorc {

@@ -12,13 +12,15 @@ set(RORC_LIB_HEADERS
   ../include/RORC/ChannelMasterInterface.h
   ../include/RORC/ChannelSlaveInterface.h
   ../include/RORC/Exception.h
-  ../include/RORC/GeneratorPattern.h
-  ../include/RORC/LoopbackMode.h
   ../include/RORC/Parameters.h
-  ../include/RORC/PciAddress.h
+  ../include/RORC/ParameterTypes/BufferParameters.h
+  ../include/RORC/ParameterTypes/GeneratorPattern.h
+  ../include/RORC/ParameterTypes/LoopbackMode.h
+  ../include/RORC/ParameterTypes/PciAddress.h
+  ../include/RORC/ParameterTypes/ReadoutMode.h
+  ../include/RORC/ParameterTypes/ResetLevel.h
   ../include/RORC/PciId.h
   ../include/RORC/RegisterReadWriteInterface.h
-  ../include/RORC/ResetLevel.h
   ../include/RORC/RORC.h
 )
 
@@ -33,14 +35,14 @@ set(RORC_LIB_SOURCES
   Dummy/DummyChannelSlave.cxx
   Exception.cxx
   ExceptionInternal.cxx
-  GeneratorPattern.cxx
-  LoopbackMode.cxx
   MemoryMappedFile.cxx
   Parameters.cxx
-  PciAddress.cxx
-  ResetLevel.cxx
+  ParameterTypes/GeneratorPattern.cxx
+  ParameterTypes/LoopbackMode.cxx
+  ParameterTypes/PciAddress.cxx
+  ParameterTypes/ReadoutMode.cxx
+  ParameterTypes/ResetLevel.cxx
   RorcStatusCode.cxx
-  ReadoutMode.cxx
   CommandLineUtilities/Common.cxx
   CommandLineUtilities/Options.cxx
   CommandLineUtilities/Program.cxx

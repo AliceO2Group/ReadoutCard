@@ -11,7 +11,7 @@
 #include "Pda/PdaDevice.h"
 #include "RORC/CardType.h"
 #include "RORC/Parameters.h"
-#include "RORC/PciAddress.h"
+#include "RORC/ParameterTypes/PciAddress.h"
 #include "RORC/PciId.h"
 
 namespace AliceO2 {

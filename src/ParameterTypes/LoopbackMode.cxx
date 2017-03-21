@@ -3,7 +3,7 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "RORC/LoopbackMode.h"
+#include "RORC/ParameterTypes/LoopbackMode.h"
 #include "Utilities/Enum.h"
 
 namespace AliceO2 {

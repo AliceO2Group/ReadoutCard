@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 #include "RORC/Exception.h"
-#include "RORC/PciAddress.h"
+#include "RORC/ParameterTypes/PciAddress.h"
 
 using namespace ::AliceO2::Rorc;
 

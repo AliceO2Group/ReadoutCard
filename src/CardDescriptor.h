@@ -6,7 +6,7 @@
 #pragma once
 
 #include "RORC/CardType.h"
-#include "RORC/PciAddress.h"
+#include "RORC/ParameterTypes/PciAddress.h"
 #include "RORC/PciId.h"
 
 namespace AliceO2 {

@@ -11,12 +11,12 @@
 #include <boost/exception/all.hpp>
 #include <cstdint>
 #include "RORC/Exception.h"
-#include "RORC/PciAddress.h"
 #include "RORC/PciId.h"
 #include "RORC/CardType.h"
-#include "RORC/ResetLevel.h"
-#include "RORC/GeneratorPattern.h"
-#include "RORC/LoopbackMode.h"
+#include "RORC/ParameterTypes/PciAddress.h"
+#include "RORC/ParameterTypes/ResetLevel.h"
+#include "RORC/ParameterTypes/GeneratorPattern.h"
+#include "RORC/ParameterTypes/LoopbackMode.h"
 
 namespace AliceO2 {
 namespace Rorc {

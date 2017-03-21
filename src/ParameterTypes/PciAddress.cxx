@@ -3,7 +3,7 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "RORC/PciAddress.h"
+#include "RORC/ParameterTypes/PciAddress.h"
 #include <iomanip>
 #include <sstream>
 #include <boost/format.hpp>

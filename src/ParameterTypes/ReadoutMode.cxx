@@ -3,7 +3,7 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "RORC/ReadoutMode.h"
+#include "RORC/ParameterTypes/ReadoutMode.h"
 #include "Utilities/Enum.h"
 
 namespace AliceO2 {

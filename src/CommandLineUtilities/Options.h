@@ -10,9 +10,9 @@
 #include <boost/exception/diagnostic_information.hpp>
 #include <iostream>
 #include "RORC/Exception.h"
-#include "RORC/GeneratorPattern.h"
 #include "RORC/Parameters.h"
-#include "RORC/ResetLevel.h"
+#include "RORC/ParameterTypes/GeneratorPattern.h"
+#include "RORC/ParameterTypes/ResetLevel.h"
 
 namespace AliceO2 {
 namespace Rorc {
