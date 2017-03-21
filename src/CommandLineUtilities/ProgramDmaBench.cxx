@@ -167,6 +167,9 @@ class ProgramDmaBench: public Program
           ("pattern",
               po::value<std::string>(&mOptions.generatorPatternString),
               "Error check with given pattern [INCREMENTAL, ALTERNATING, CONSTANT, RANDOM]")
+          ("readout-mode",
+              po::value<std::string>(&mOptions.readoutModeString),
+              "Set readout mode [CONTINUOUS]")
           ("no-resync",
               po::bool_switch(&mOptions.noResyncCounter),
               "Disable counter resync")
@@ -198,6 +201,10 @@ class ProgramDmaBench: public Program
 
       if (!mOptions.generatorPatternString.empty()) {
         mOptions.generatorPattern = GeneratorPattern::fromString(mOptions.generatorPatternString);
+      }
+
+      if (!mOptions.readoutModeString.empty()) {
+        mOptions.readoutMode = ReadoutMode::fromString(mOptions.readoutModeString);
       }
 
       // Parse buffer size
@@ -232,7 +239,6 @@ class ProgramDmaBench: public Program
       int channelNumber = Options::getOptionChannel(map);
       auto params = Options::getOptionsParameterMap(map);
 
-
       // Create buffer
       mBufferFilePath = boost::str(
           boost::format("/var/lib/hugetlbfs/global/pagesize-%s/rorc-dma-bench_id=%s_chan=%s_pages")
@@ -250,6 +256,9 @@ class ProgramDmaBench: public Program
       params.setGeneratorPattern(mOptions.generatorPattern);
       params.setBufferParameters(BufferParameters::Memory { mMemoryMappedFile->getAddress(),
           mMemoryMappedFile->getSize() });
+      if (mOptions.readoutMode) {
+        params.setReadoutMode(*mOptions.readoutMode);
+      }
 
       // Get master lock on channel
       mChannel = ChannelFactory().getMaster(params);
@@ -775,9 +784,11 @@ class ProgramDmaBench: public Program
         bool removePagesFile = false;
         bool delayReadout = false;
         std::string generatorPatternString;
+        std::string readoutModeString;
         std::string bufferSizeString;
         HugePageSize hugePageSize;
         GeneratorPattern::type generatorPattern = GeneratorPattern::Incremental;
+        boost::optional<ReadoutMode::type> readoutMode;
     } mOptions;
 
 //    BufferParameters::File mBufferParameters;

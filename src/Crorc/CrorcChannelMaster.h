@@ -125,6 +125,15 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
     /// Find and store DIU version
     void crorcInitDiuVersion();
 
+    /// Set C-RORC for continuous readout
+    void crorcInitReadoutContinuous();
+
+    /// Enable (or re-enable) continuous readout
+    void crorcStartReadoutContinuous();
+
+    /// Set C-RORC for triggered readout
+    void crorcInitReadoutTriggered();
+
     /// Checks if link is up
     void crorcCheckLink();
 
@@ -168,6 +177,8 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
       return (mFifoBack + mFifoSize) % READYFIFO_ENTRIES;
     };
 
+    Pda::PdaBar& getBar2();
+
     /// Back index of the firmware FIFO
     int mFifoBack = 0;
 
@@ -184,10 +195,15 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
     /// superpage to actually start.
     bool mPendingDmaStart = false;
 
+    /// BAR 2 is needed for configuration
+    std::unique_ptr<Pda::PdaBar> mPdaBar2;
+
     // These variables are configuration parameters
 
     /// DMA page size
     const size_t mPageSize;
+
+    const bool mUseContinuousReadout;
 
     /// Reset level on initialization of channel
     const ResetLevel::type mInitialResetLevel;

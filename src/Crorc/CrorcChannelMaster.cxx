@@ -41,18 +41,20 @@ namespace Rorc {
 
 CrorcChannelMaster::CrorcChannelMaster(const Parameters& parameters)
     : ChannelMasterPdaBase(parameters, allowedChannels(), sizeof(ReadyFifo)), //
-      mPageSize(parameters.getDmaPageSize().get_value_or(8*1024)), // 8 kB default for uniformity with CRU
-      mInitialResetLevel(ResetLevel::Rorc), // It's good to reset at least the card channel in general
-      mNoRDYRX(true), // Not sure
-      mUseFeeAddress(false), // Not sure
-      mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Rorc)), // Internal loopback by default
-      mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)), // Use data generator by default
-      mGeneratorPattern(parameters.getGeneratorPattern().get_value_or(GeneratorPattern::Incremental)), //
-      mGeneratorMaximumEvents(0), // Infinite events
-      mGeneratorInitialValue(0), // Start from 0
-      mGeneratorInitialWord(0), // First word
-      mGeneratorSeed(mGeneratorPattern == GeneratorPattern::Random ? 1 : 0), // We use a seed for random only
-      mGeneratorDataSize(parameters.getGeneratorDataSize().get_value_or(mPageSize)) // Can use page size
+    mPageSize(parameters.getDmaPageSize().get_value_or(8*1024)), // 8 kB default for uniformity with CRU
+    mInitialResetLevel(ResetLevel::Rorc), // It's good to reset at least the card channel in general
+    mNoRDYRX(true), // Not sure
+    mUseFeeAddress(false), // Not sure
+    mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Rorc)), // Internal loopback by default
+    mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)), // Use data generator by default
+    mGeneratorPattern(parameters.getGeneratorPattern().get_value_or(GeneratorPattern::Incremental)), //
+    mGeneratorMaximumEvents(0), // Infinite events
+    mGeneratorInitialValue(0), // Start from 0
+    mGeneratorInitialWord(0), // First word
+    mGeneratorSeed(mGeneratorPattern == GeneratorPattern::Random ? 1 : 0), // We use a seed for random only
+    mGeneratorDataSize(parameters.getGeneratorDataSize().get_value_or(mPageSize)), // Can use page size
+    mUseContinuousReadout(parameters.getReadoutMode().is_initialized() ?
+            parameters.getReadoutModeRequired() == ReadoutMode::Continuous : false)
 {
   getFifoUser()->reset();
   mDmaBufferUserspace = getPdaDmaBuffer().getScatterGatherList().at(0).addressUser;
@@ -84,6 +86,11 @@ void CrorcChannelMaster::startPendingDma(SuperpageQueueEntry& entry)
   }
 
   log("Starting pending DMA");
+
+  if (mUseContinuousReadout) {
+    log("Initializing continuous readout");
+    crorcInitReadoutContinuous();
+  }
 
   // Find DIU version, required for armDdl()
   crorcInitDiuVersion();
@@ -142,6 +149,11 @@ void CrorcChannelMaster::startPendingDma(SuperpageQueueEntry& entry)
 
   mPendingDmaStart = false;
   log("DMA started");
+
+  if (mUseContinuousReadout) {
+    log("Starting continuous readout");
+    crorcStartReadoutContinuous();
+  }
 }
 
 void CrorcChannelMaster::deviceStopDma()
@@ -507,6 +519,52 @@ void CrorcChannelMaster::crorcStopTrigger()
   int returnCode = rorcStopTrigger(getBarUserspace(), timeout, &stw);
   THROW_IF_BAD_STATUS(returnCode, CrorcStopTriggerException()
       ADD_ERRINFO(returnCode, "Failed to stop trigger"));
+}
+
+void CrorcChannelMaster::crorcInitReadoutContinuous()
+{
+  // Based on:
+  // https://gitlab.cern.ch/costaf/grorc_sw/blob/master/script/grorc_cont_readout.sh
+
+  // this script works with the G-RORC firmware 3.16
+  // SET the card in CONT MODE
+  getBar2().setRegister(0x190, 0x02000000);
+  // s_send_wide            <= s_reg(0);
+  // s_gbt_tx_pol           <= s_reg(1);
+  // s_gbt_tx_sel           <= s_reg(3 downto 2);
+  // s_gbt_reset            <= s_reg(4);
+  // s_rx_encoding          <= s_reg(8);
+  // s_tx_encoding          <= s_reg(9);
+  // s_read_gate            <= s_reg(12);
+  // s_disable_bank         <= s_reg(17 downto 16);
+  // s_bar_rd_ch(2).reg_194 <= s_reg;
+  // Choose only BANK0
+  getBar2().setRegister(0x194, 0x21005);
+  // number of GBT words per event
+  getBar2().setRegister(0x18c, 0x1f);
+}
+
+void CrorcChannelMaster::crorcStartReadoutContinuous()
+{
+  // Based on:
+  // https://gitlab.cern.ch/costaf/grorc_sw/blob/master/script/grorc_send_IDLE_SYNC.sh
+
+  // SET IT AS CUSTOM PATTERN FOR 1 CC and open the GATE READOUT
+  getBar2().setRegister(0x198, 0x60000001);
+  getBar2().setRegister(0x198, 0x0);
+}
+
+void CrorcChannelMaster::crorcInitReadoutTriggered()
+{
+  throw std::runtime_error("not implemented");
+}
+
+Pda::PdaBar& CrorcChannelMaster::getBar2()
+{
+  if (!mPdaBar2) {
+    Utilities::resetSmartPtr(mPdaBar2, getRorcDevice().getPciDevice(), 2);
+  }
+  return *(mPdaBar2.get());
 }
 
 std::vector<uint32_t> CrorcChannelMaster::utilityCopyFifo()

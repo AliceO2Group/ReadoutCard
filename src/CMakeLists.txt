@@ -40,6 +40,7 @@ set(RORC_LIB_SOURCES
   PciAddress.cxx
   ResetLevel.cxx
   RorcStatusCode.cxx
+  ReadoutMode.cxx
   CommandLineUtilities/Common.cxx
   CommandLineUtilities/Options.cxx
   CommandLineUtilities/Program.cxx

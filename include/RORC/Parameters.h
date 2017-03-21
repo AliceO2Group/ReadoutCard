@@ -14,6 +14,7 @@
 #include "RORC/GeneratorPattern.h"
 #include "RORC/LoopbackMode.h"
 #include "RORC/PciAddress.h"
+#include "RORC/ReadoutMode.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -27,6 +28,14 @@ namespace Rorc {
 class Parameters
 {
   public:
+    /// Macro for defining functions to get/set a parameter
+    #define DEFINE_ALICEO2_RORC_PARAMETER_FUNCTIONS(_name, _type)\
+      using _name##Type = _type;\
+      auto set##_name(_type value) -> Parameters&;\
+      auto get##_name() const -> boost::optional<_type>;\
+      auto get##_name##Required() const -> _type;
+    #undef DEFINE_ALICEO2_RORC_PARAMETER_FUNCTIONS
+
     // Types for parameter values
 
     /// Type for buffer parameters
@@ -55,6 +64,9 @@ class Parameters
 
     /// Type for the generator pattern parameter
     using GeneratorPatternType = GeneratorPattern::type;
+
+    /// Type for the readout mode parameter
+    using ReadoutModeType = ReadoutMode::type;
 
     // Setters
 
@@ -103,6 +115,11 @@ class Parameters
     /// \return Reference to this object for chaining calls
     auto setBufferParameters(BufferParametersType value) -> Parameters&;
 
+    /// Sets the ReadoutMode parameter
+    /// \param value The value to set
+    /// \return Reference to this object for chaining calls
+    auto setReadoutMode(ReadoutModeType value) -> Parameters&;
+
     // Non-throwing getters
 
     /// Gets the CardId parameter
@@ -140,6 +157,10 @@ class Parameters
     /// Gets the BufferParameters parameter
     /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
     auto getBufferParameters() const -> boost::optional<BufferParametersType>;
+
+    /// Gets the ReadoutMode parameter
+    /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+    auto getReadoutMode() const -> boost::optional<ReadoutModeType>;
 
     // Throwing getters
 
@@ -188,6 +209,11 @@ class Parameters
     /// \return The value
     auto getBufferParametersRequired() const -> BufferParametersType;
 
+    /// Gets the ReadoutMode parameter
+    /// \exception ParameterException The parameter was not present
+    /// \return The value
+    auto getReadoutModeRequired() const -> ReadoutModeType;
+
     // Helper functions
 
     /// Convenience function to make a Parameters object with card ID and channel number, since these are the most
@@ -200,7 +226,7 @@ class Parameters
   private:
     /// Variant used for internal storage of parameters
     using Variant = boost::variant<size_t, int32_t, bool, BufferParametersType, CardIdType, GeneratorLoopbackType,
-        GeneratorPatternType>;
+        GeneratorPatternType, ReadoutModeType>;
 
     /// Map used for internal storage of parameters
     using Map = std::map<std::string, Variant>;
