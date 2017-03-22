@@ -217,9 +217,6 @@ void CruChannelMaster::pushSuperpage(SuperpageQueueEntry& entry)
 
   auto descriptorIndex = getFifoFront();
 
-  uint32_t addressHi = Utilities::getUpper32Bits(entry.busAddress);
-  uint32_t addressLo = Utilities::getLower32Bits(entry.busAddress);
-
 //  std::cout << "@ Pushing superpage\n";
 //  std::cout << "@   0x210 ADDRESS_HI = " << addressHi << '\n';
 //  std::cout << "@   0x214 ADDRESS_LO = " << addressLo << '\n';

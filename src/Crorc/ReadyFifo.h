@@ -23,13 +23,18 @@ union ReadyFifo
 {
     struct Entry
     {
-        volatile int32_t length;
-        volatile int32_t status;
+        volatile int32_t length; ///< Length of the received page in 32-bit words
+        volatile int32_t status; ///< Status of the received page
 
         void reset()
         {
           length = -1;
           status = -1;
+        }
+
+        uint32_t getSize()
+        {
+          return length * 4;
         }
     };
 

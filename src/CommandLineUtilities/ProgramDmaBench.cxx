@@ -180,7 +180,7 @@ class ProgramDmaBench: public Program
               po::bool_switch(&mOptions.barHammer),
               "Stress the BAR with repeated writes and measure performance")
           ("rm-pages-file",
-              po::bool_switch(&mOptions.removePagesFile)->default_value(true),
+              po::value<bool>(&mOptions.removePagesFile)->default_value(false),
               "Remove the file used for pages after benchmark completes")
               ;
       Options::addOptionsChannelParameters(options);

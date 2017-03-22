@@ -349,14 +349,19 @@ void CrorcChannelMaster::fillSuperpages()
         // itself
         auto writeSdhEventSize = [](uintptr_t pageAddress, uint32_t eventSize){
           constexpr size_t OFFSET_SDH_EVENT_SIZE = 16; // 1 * 128b word
-          auto address = reinterpret_cast<char*>(pageAddress + OFFSET_SDH_EVENT_SIZE);
-          // Clear first 3 32b values of event size word
-          memset(address, 0, sizeof(uint32_t) * 3);
-          // Write to 4th 32b value of event size word
-          memcpy(address + (sizeof(uint32_t) * 3), &eventSize, sizeof(uint32_t));
+//          auto address = reinterpret_cast<char*>(pageAddress + OFFSET_SDH_EVENT_SIZE);
+//          // Clear first 3 32b values of event size word
+//          memset(address, 0, sizeof(uint32_t) * 3);
+//          // Write to 4th 32b value of event size word
+//          memcpy(address + (sizeof(uint32_t) * 3), &eventSize, sizeof(uint32_t));
+          auto address = reinterpret_cast<volatile uint32_t*>(pageAddress + OFFSET_SDH_EVENT_SIZE);
+          address[0] = 0;
+          address[1] = 0;
+          address[2] = 0;
+          address[3] = eventSize;
         };
 
-        uint32_t length = getReadyFifoUser()->entries[mFifoBack].length;
+        uint32_t length = getReadyFifoUser()->entries[mFifoBack].getSize();
         auto pageAddress = mDmaBufferUserspace + entry.superpage.getOffset() + entry.superpage.received;
         writeSdhEventSize(pageAddress, length);
 

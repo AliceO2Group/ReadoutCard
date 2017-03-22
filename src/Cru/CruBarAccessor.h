@@ -37,8 +37,11 @@ class CruBarAccessor
     {
       assert(index < FIFO_INDEXES);
 
+      printf("Setting superpage descriptor i=%u pages=%u address=0x%lx\n", index, pages, busAddress);
+
       // Set superpage address
-      mPdaBar->barWrite(SUPERPAGE_ADDRESS_HIGH, busAddress);
+      mPdaBar->barWrite(SUPERPAGE_ADDRESS_HIGH, Utilities::getUpper32Bits(busAddress));
+      mPdaBar->barWrite(SUPERPAGE_ADDRESS_LOW, Utilities::getLower32Bits(busAddress));
 
       // Set superpage size and FIFO index
       uint32_t pagesAvailableAndIndex = index & 0xf;
@@ -46,14 +49,13 @@ class CruBarAccessor
       mPdaBar->barWrite(SUPERPAGE_PAGES_AVAILABLE_AND_INDEX, pagesAvailableAndIndex);
 
       // Set superpage enabled
-      assert(getSuperpageBufferStatus(index) == BufferStatus::AVAILABLE);
       mPdaBar->barWrite(SUPERPAGE_STATUS, index);
     }
 
     uint32_t getSuperpagePushedPages(uint32_t index)
     {
       assert(index < FIFO_INDEXES);
-      return mPdaBar->barRead<uint32_t>(SUPERPAGE_PUSHED_PAGES + index);
+      return mPdaBar->barRead<uint32_t>(SUPERPAGE_PUSHED_PAGES + index*4);
     }
 
     BufferStatus getSuperpageBufferStatus(uint32_t index)
@@ -221,7 +223,7 @@ class CruBarAccessor
     static constexpr int SUPERPAGE_ADDRESS_LOW = 0x214;
     static constexpr int SUPERPAGE_PAGES_AVAILABLE_AND_INDEX = 0x234;
     static constexpr int SUPERPAGE_STATUS = 0x23c;
-    static constexpr int SUPERPAGE_PUSHED_PAGES = 0xffffffff;
+    static constexpr int SUPERPAGE_PUSHED_PAGES = 0x240;
     static constexpr int FIFO_INDEXES = 4;
 
     volatile uint32_t& at32(size_t index) const

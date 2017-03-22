@@ -1,4 +1,13 @@
+/// \file Rorc.h
+/// \brief Definitions of RORC related constants
+///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+
 #pragma once
+
+namespace AliceO2 {
+namespace Rorc {
+namespace Crorc {
 
 constexpr int RCSR =      0;     ///< RORC Control and Status register
 constexpr int RERR =      1;     ///< RORC Error register
@@ -173,3 +182,7 @@ constexpr int RORC_REVISION_DRORC2 = 4;
 constexpr int RORC_REVISION_PCIEXP = 5;
 constexpr int RORC_REVISION_CHAN4  = 6;
 constexpr int RORC_REVISION_CRORC  = 7;
+
+} // namespace Crorc
+} // namespace Rorc
+} // namespace AliceO2
