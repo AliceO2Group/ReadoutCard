@@ -580,10 +580,8 @@ stword_t Crorc::ddlReadSiu(int transid, long long int time)
   return stw;
 }
 
-/*
- * Interpret DIU or SIU IFSTW
- */
-inline void ddlInterpretIFSTW(uint32_t ifstw, const char *pref, const char *suff)
+/// Interpret DIU or SIU IFSTW
+void ddlInterpretIFSTW(uint32_t ifstw, const char *pref, const char *suff)
 {
   int destination;
   unsigned long status;
