@@ -10,10 +10,9 @@
 #include <memory>
 #include <stdexcept>
 #include <boost/format.hpp>
+#include "Crorc/Constants.h"
 #include "c/rorc/aux.h"
 #include "c/rorc/rorc_macros.h"
-#include "Rorc.h"
-#include "DdlDef.h"
 #include "ExceptionInternal.h"
 #include "RORC/RegisterReadWriteInterface.h"
 
@@ -616,8 +615,8 @@ inline void ddlInterpret_NEW_IFSTW(uint32_t ifstw, const char *pref, const char 
   destination = ST_DEST(ifstw);
 
   using namespace Ddl;
-  using namespace Ddl::Diu;
-  using namespace Ddl::Siu;
+  using namespace Diu;
+  using namespace Siu;
 
   status = ifstw & Ddl::STMASK;
   if (destination == Ddl::DEST_DIU) {
@@ -740,7 +739,7 @@ inline void ddlInterpret_NEW_IFSTW(uint32_t ifstw, const char *pref, const char 
 
 void ddlInterpretIFSTW(uint32_t ifstw, const char* pref,
            const char* suff, int diu_version){
-  if (diu_version == Ddl::Diu::OLD) {
+  if (diu_version == Diu::Version::OLD) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Old DIU version not supprted"));
   } else {
     ddlInterpret_NEW_IFSTW(ifstw, pref, suff);
@@ -760,7 +759,7 @@ void Crorc::ddlResetSiu(int print, int cycle, long long int time, const DiuConfi
   ddlWaitStatus(time);
   ddlReadStatus();
 
-  if ((diuConfig.diuVersion != Ddl::Diu::NEW) && (diuConfig.diuVersion != Ddl::Diu::EMBEDDED)) {
+  if ((diuConfig.diuVersion != Diu::Version::NEW) && (diuConfig.diuVersion != Diu::Version::EMBEDDED)) {
     return;
   }
 
@@ -776,12 +775,12 @@ void Crorc::ddlResetSiu(int print, int cycle, long long int time, const DiuConfi
       stword_t stword = ddlReadDiu(transid, time);
       stword.stw &= Ddl::STMASK;
 
-      if (stword.stw & Ddl::Diu::ERROR_BIT){
+      if (stword.stw & Diu::ERROR_BIT){
         // TODO log error
         // ddlInterpretIFSTW(retlong, pref, suff, diuConfig.diuVersion);
         continue;
       }
-      else if (mask(stword.stw, Ddl::Siu::S_OPTRAN)){
+      else if (mask(stword.stw, Siu::S_OPTRAN)){
         // TODO log error
         // ddlInterpretIFSTW(retlong, pref, suff, diuConfig.diuVersion);
         continue;
@@ -791,7 +790,7 @@ void Crorc::ddlResetSiu(int print, int cycle, long long int time, const DiuConfi
       stword = ddlReadSiu(transid, time);
       stword.stw &= Ddl::STMASK;
 
-      if (stword.stw & Ddl::Diu::ERROR_BIT){
+      if (stword.stw & Diu::ERROR_BIT){
         // TODO log error
         // ddlInterpretIFSTW(retlong, pref, suff, diuConfig.diuVersion);
         continue;
@@ -846,32 +845,32 @@ void Crorc::ddlLinkUp_NEW(int master, int print, int stop, long long int time, c
 
     int siuStatus = (stword.stw & Ddl::REMMASK) >> 15;
 
-    if (stword.stw & Ddl::Diu::ERROR_BIT) {
+    if (stword.stw & Diu::ERROR_BIT) {
       // TODO log error
       // ddlInterpretIFSTW(retlong, pref, suff, diuConfig.diuVersion);
       continue;
     }
 
     switch (stword.stw & Ddl::DIUSTMASK) {
-      case Ddl::Diu::DIU_WAIT:
+      case Diu::DIU_WAIT:
         PRINT_IF_NEW(" DIU port in Waiting for Power Off state")
         break;
-      case Ddl::Diu::DIU_LOS:
+      case Diu::DIU_LOS:
         PRINT_IF_NEW(" DIU port in Offline Loss of Synchr. state")
         break;
-      case Ddl::Diu::DIU_NOSIG:
+      case Diu::DIU_NOSIG:
         PRINT_IF_NEW(" DIU port in Offline No Signal state")
         break;
-      case Ddl::Diu::DIU_TSTM:
+      case Diu::DIU_TSTM:
         PRINT_IF_NEW(" DIU in PRBS Test Mode state")
         break;
-      case Ddl::Diu::DIU_OFFL:
+      case Diu::DIU_OFFL:
         PRINT_IF_NEW(" DIU port in Offline state")
         break;
-      case Ddl::Diu::DIU_POR:
+      case Diu::DIU_POR:
         PRINT_IF_NEW(" DIU port in Power On Reset state")
         break;
-      case Ddl::Diu::DIU_POFF:
+      case Diu::DIU_POFF:
         PRINT_IF_NEW(" DIU port in Power Off state")
         if (master) {
           // Send a command to DIU to wake up
@@ -886,7 +885,7 @@ void Crorc::ddlLinkUp_NEW(int master, int print, int stop, long long int time, c
         // not master
         // if (stop) return (retlong);
         break;
-      case Ddl::Diu::DIU_ONL:
+      case Diu::DIU_ONL:
         PRINT_IF_NEW(" DIU port in Online state")
         if (stop) {
           return;
@@ -902,7 +901,7 @@ void Crorc::ddlLinkUp_NEW(int master, int print, int stop, long long int time, c
 
 void Crorc::ddlLinkUp(int master, int print, int stop, long long int time, const DiuConfig& diuConfig)
 {
-  if (diuConfig.diuVersion == Ddl::Diu::OLD) {
+  if (diuConfig.diuVersion == Diu::Version::OLD) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Old DIU version not supprted"));
   } else {
     ddlLinkUp_NEW(master, print, stop, time, diuConfig);
@@ -987,7 +986,7 @@ void Crorc::armDdl(int resetMask, const DiuConfig& diuConfig)
       ddlResetSiu(0, 3, TimeOut, diuConfig);
     }
     if (resetMask & Rorc::Reset::LINK_UP){
-      if (diuConfig.diuVersion <= Ddl::Diu::NEW){
+      if (diuConfig.diuVersion <= Diu::Version::NEW){
         ddlLinkUp(1, print, stop, TimeOut, diuConfig);
       }
       else{
@@ -1024,7 +1023,7 @@ void Crorc::armDdl(int resetMask, const DiuConfig& diuConfig)
 }
 
 void Crorc::ddlFindDiuVersion(DiuConfig& diuConfig) {
-  diuConfig.diuVersion = Ddl::Diu::NEW;
+  diuConfig.diuVersion = Diu::Version::NEW;
   diuConfig.rorcRevision = 7;
 
 //  stword_t stw[Ddl::MAX_REPLY];
@@ -1034,12 +1033,12 @@ void Crorc::ddlFindDiuVersion(DiuConfig& diuConfig) {
 //  diuConfig.rorcRevision = 7;//*((uint32_t*)bar + 6*1024);
 //
 //  if (diuConfig.rorcRevision >= RORC_REVISION_INTEG) {
-//    diuConfig.diuVersion = Ddl::Diu::EMBEDDED;
+//    diuConfig.diuVersion = Diu::Version::EMBEDDED;
 //    return;
 //  }
 //
 //  rorcReset(bar, 0, diuConfig.pciLoopPerUsec);   // full reset
-//  diuConfig.diuVersion = Ddl::Diu::NO_DIU;
+//  diuConfig.diuVersion = Diu::NO_DIU;
 //
 //  /* read DIU's HW id */
 //  TimeOut = Ddl::RESPONSE_TIME * diuConfig.pciLoopPerUsec;
@@ -1199,7 +1198,7 @@ stword_t Crorc::ddlSetSiuLoopBack(const DiuConfig& diuConfig){
 
   /* SIU loopback command accepted => check SIU loopback status */
   stword = ddlReadSiu(0, timeout);
-  if (stword.stw & Ddl::Siu::S_LBMOD) {
+  if (stword.stw & Siu::S_LBMOD) {
     return stword; // SIU loopback set
   }
 

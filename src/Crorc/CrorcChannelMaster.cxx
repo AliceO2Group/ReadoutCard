@@ -13,8 +13,7 @@
 #include <boost/format.hpp>
 #include "ChannelPaths.h"
 #include "ChannelUtilityImpl.h"
-#include "DdlDef.h"
-#include "Rorc.h"
+#include "Crorc/Constants.h"
 #include "RorcStatusCode.h"
 #include "Utilities/SmartPointer.h"
 
