@@ -10,6 +10,7 @@
 #include <boost/circular_buffer_fwd.hpp>
 #include <boost/scoped_ptr.hpp>
 #include "ChannelMasterPdaBase.h"
+#include "Crorc.h"
 #include "RORC/Parameters.h"
 #include "ReadyFifo.h"
 #include "SuperpageQueue.h"
@@ -18,6 +19,7 @@ namespace AliceO2 {
 namespace Rorc {
 
 /// Extends ChannelMaster object, and provides device-specific functionality
+/// Note: the functions prefixed with "crorc" are translated from the functions of the C interface (src/c/rorc/...")
 class CrorcChannelMaster final : public ChannelMasterPdaBase
 {
   public:
@@ -84,6 +86,12 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
 
     uintptr_t getNextSuperpageBusAddress(const SuperpageQueueEntry& superpage);
 
+    /// C-RORC function helper
+    Crorc::Crorc getCrorc()
+    {
+      return {*this};
+    }
+
     ReadyFifo* getReadyFifoUser()
     {
       return reinterpret_cast<ReadyFifo*>(mReadyFifoAddressUser);
@@ -108,62 +116,6 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
 
     /// Check if data has arrived
     DataArrivalStatus::type dataArrived(int index);
-
-    /// Arms C-RORC data generator
-    void crorcArmDataGenerator();
-
-    /// Stops C-RORC data generator
-    void crorcStopDataGenerator();
-
-    /// Stops C-RORC data receiver
-    void crorcStopDataReceiver();
-
-    /// Arms DDL
-    /// \param resetMask The reset mask. See the RORC_RESET_* macros in rorc.h
-    void crorcArmDdl(int resetMask);
-
-    /// Find and store DIU version
-    void crorcInitDiuVersion();
-
-    /// Set C-RORC for continuous readout
-    void crorcInitReadoutContinuous();
-
-    /// Enable (or re-enable) continuous readout
-    void crorcStartReadoutContinuous();
-
-    /// Set C-RORC for triggered readout
-    void crorcInitReadoutTriggered();
-
-    /// Checks if link is up
-    void crorcCheckLink();
-
-    /// Send a command to the SIU
-    /// \param command The command to send to the SIU. These are probably the macros under 'interface commands' in
-    ///   the header ddl_def.h
-    void crorcSiuCommand(int command);
-
-    /// Send a command to the DIU
-    /// \param command The command to send to the SIU. These are probably the macros under 'interface commands' in
-    ///   the header ddl_def.h
-    void crorcDiuCommand(int command);
-
-    /// Reset the C-RORC
-    void crorcReset(int command);
-
-    /// Checks if the C-RORC's Free FIFO is empty
-    void crorcCheckFreeFifoEmpty();
-
-    /// Starts data receiving
-    void crorcStartDataReceiver();
-
-    /// Starts the trigger
-    void crorcStartTrigger();
-
-    /// Stops the trigger
-    void crorcStopTrigger();
-
-    /// Set SIU loopback
-    void crorcSetSiuLoopback();
 
     /// Starts pending DMA with given superpage for the initial pages
     void startPendingDma(SuperpageQueueEntry& superpage);
@@ -273,6 +225,8 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
 
     /// Not sure
     int mSiuVersion = 0;
+
+    Crorc::Crorc::DiuConfig mDiuConfig;
 
     /// Not sure
     int mDiuVersion = 0;

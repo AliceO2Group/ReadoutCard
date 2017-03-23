@@ -8,7 +8,9 @@
 #include <atomic>
 #include <iostream>
 #include <string>
+#include "RORC/ParameterTypes/GeneratorPattern.h"
 #include "RORC/RegisterReadWriteInterface.h"
+#include "c/rorc/stword.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -24,6 +26,149 @@ void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath,
 
 /// Read flash range
 void readFlashRange(RegisterReadWriteInterface& channel, int addressFlash, int wordNumber, std::ostream& out);
+
+class Crorc
+{
+  public:
+    Crorc(RegisterReadWriteInterface& bar)
+        : bar(bar)
+    {
+    }
+
+    struct DiuConfig
+    {
+        int rorcRevision = 0;
+        long long int loopPerUsec = 0;
+        double pciLoopPerUsec = 0;
+        int diuVersion = 0;
+    };
+
+    /// Arms DDL
+    /// \param resetMask The reset mask. See the RORC_RESET_* macros in rorc.h
+    void armDdl(int resetMask, const DiuConfig& diuConfig);
+
+    /// Arms C-RORC data generator
+    int armDataGenerator(uint32_t initEventNumber, uint32_t initDataWord, GeneratorPattern::type dataPattern,
+        int dataSize, int seed);
+
+    void startDataGenerator(uint32_t maxLoop);
+
+    /// Stops C-RORC data generator
+    void stopDataGenerator();
+
+    /// Starts data receiving
+    void startDataReceiver(uintptr_t readyFifoBusAddress, int rorcRevision);
+
+    /// Stops C-RORC data receiver
+    void stopDataReceiver();
+
+    /// Find and store DIU version
+    DiuConfig initDiuVersion();
+
+    /// Checks if link is up
+    bool isLinkUp();
+
+    /// Checks if link is up
+    void assertLinkUp();
+
+    /// Send a command to the SIU
+    /// \param command The command to send to the SIU. These are probably the macros under 'interface commands' in
+    ///   the header ddl_def.h
+    void siuCommand(int command, const DiuConfig& diuConfig);
+
+    /// Send a command to the DIU
+    /// \param command The command to send to the SIU. These are probably the macros under 'interface commands' in
+    ///   the header ddl_def.h
+    void diuCommand(int command, const DiuConfig& diuConfig);
+
+    /// Checks if the C-RORC's Free FIFO is empty
+    bool isFreeFifoEmpty();
+
+    /// Checks if the C-RORC's Free FIFO is empty
+    void assertFreeFifoEmpty();
+
+    /// Starts the trigger
+    void startTrigger(const DiuConfig& diuConfig);
+
+    /// Stops the trigger
+    void stopTrigger(const DiuConfig& diuConfig);
+
+    /// Set SIU loopback
+    void setSiuLoopback(const DiuConfig& diuConfig);
+
+    /// Not sure
+    int setParameterOn(int param);
+
+    /// Not sure
+    int setParameterOff();
+
+    /// Not sure
+    bool isLoopbackOn();
+
+    /// Not sure
+    void toggleLoopback();
+
+    /// Not sure
+    uint32_t checkCommandRegister();
+
+    /// Not sure
+    void putCommandRegister(uint32_t command);
+
+    /// Not sure
+    uint32_t checkRxStatus();
+
+    /// Not sure
+    uint32_t checkRxData();
+
+    void pushRxFreeFifo(uintptr_t blockAddress, uint32_t blockLength, uint32_t readyFifoIndex);
+
+    void hasData(uintptr_t fifo, uint32_t index);
+
+    void pushTxFreeFifo(uintptr_t blockAddress, uint32_t blockLength, uint32_t readyFifoIndex);
+
+    void resetCommand(int option, const DiuConfig& diuConfig);
+
+    int getRxFreeFifoState();
+
+    void ddlFindDiuVersion(DiuConfig& diuConfig);
+
+    /// Set C-RORC for continuous readout
+    static void initReadoutContinuous(RegisterReadWriteInterface& bar2);
+
+    /// Enable (or re-enable) continuous readout
+    static void startReadoutContinuous(RegisterReadWriteInterface& bar2);
+
+    /// Set C-RORC for triggered readout
+    static void initReadoutTriggered(RegisterReadWriteInterface& bar2);
+
+  private:
+    RegisterReadWriteInterface& bar;
+
+    bool arch64()
+    {
+      return (sizeof(void *) > 4);
+    }
+
+    uint32_t read(uint32_t index) {
+      return bar.readRegister(index);
+    }
+
+    void write(uint32_t index, uint32_t value) {
+      bar.writeRegister(index, value);
+    }
+
+    void ddlResetSiu(int print, int cycle, long long int time, const DiuConfig& diuConfig);
+    void ddlSendCommand(int dest, uint32_t command, int transid, uint32_t param, long long int time);
+    void ddlWaitStatus(long long int timeout);
+    stword_t ddlReadStatus();
+    stword_t ddlReadDiu(int transid, long long int time);
+    stword_t ddlReadSiu(int transid, long long int time);
+    stword_t ddlReadCTSTW(int transid, int destination, long long int time);
+    void ddlLinkUp(int master, int print, int stop, long long int time, const DiuConfig& diuConfig);
+    void ddlLinkUp_NEW(int master, int print, int stop, long long int time, const DiuConfig& diuConfig);
+    void emptyDataFifos(int empty_time);
+    stword_t ddlSetSiuLoopBack(const DiuConfig& diuConfig);
+};
 
 } // namespace Crorc
 } // namespace Rorc

@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "RORC/RegisterReadWriteInterface.h"
 #include <pda.h>
 #include "PdaDevice.h"
 #include "ExceptionInternal.h"
@@ -14,11 +15,21 @@ namespace Rorc {
 namespace Pda {
 
 /// A simple wrapper around the PDA BAR object, providing some convenience functions
-class PdaBar
+class PdaBar : public RegisterReadWriteInterface
 {
   public:
     PdaBar();
     PdaBar(PdaDevice::PdaPciDevice pciDevice, int barNumber);
+
+    virtual uint32_t readRegister(int index)
+    {
+      return getRegister<uint32_t>(index * sizeof(uint32_t));
+    }
+
+    virtual void writeRegister(int index, uint32_t value)
+    {
+      setRegister<uint32_t>(index * sizeof(uint32_t), value);
+    }
 
     int getBarNumber() const
     {

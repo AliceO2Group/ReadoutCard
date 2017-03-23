@@ -11,10 +11,10 @@
 #include <thread>
 #include <boost/circular_buffer.hpp>
 #include <boost/format.hpp>
-#include "c/rorc/rorc.h"
-#include "c/rorc/ddl_def.h"
 #include "ChannelPaths.h"
 #include "ChannelUtilityImpl.h"
+#include "DdlDef.h"
+#include "Rorc.h"
 #include "RorcStatusCode.h"
 #include "Utilities/SmartPointer.h"
 
@@ -30,7 +30,7 @@ namespace Rorc {
 
 /// Throws the given exception if the given status code is not equal to RORC_STATUS_OK
 #define THROW_IF_BAD_STATUS(_status_code, _exception) \
-  if (_status_code != RORC_STATUS_OK) { \
+  if (_status_code != Rorc::RORC_STATUS_OK) { \
     BOOST_THROW_EXCEPTION((_exception)); \
   }
 
@@ -111,11 +111,11 @@ void CrorcChannelMaster::startPendingDma(SuperpageQueueEntry& entry)
 
   if (mUseContinuousReadout) {
     log("Initializing continuous readout");
-    crorcInitReadoutContinuous();
+    Crorc::Crorc::initReadoutContinuous(getBar2());
   }
 
   // Find DIU version, required for armDdl()
-  crorcInitDiuVersion();
+  mDiuConfig = getCrorc().initDiuVersion();
 
   // Resetting the card,according to the RESET LEVEL parameter
   deviceResetChannel(mInitialResetLevel);
@@ -144,12 +144,12 @@ void CrorcChannelMaster::startPendingDma(SuperpageQueueEntry& entry)
       log("Starting trigger");
 
       // Clearing SIU/DIU status.
-      crorcCheckLink();
-      crorcSiuCommand(RandCIFST);
-      crorcDiuCommand(RandCIFST);
+      getCrorc().assertLinkUp();
+      getCrorc().siuCommand(Ddl::RandCIFST, mDiuConfig);
+      getCrorc().diuCommand(Ddl::RandCIFST, mDiuConfig);
 
       // RDYRX command to FEE
-      crorcStartTrigger();
+      getCrorc().startTrigger(mDiuConfig);
     }
   }
 
@@ -174,7 +174,7 @@ void CrorcChannelMaster::startPendingDma(SuperpageQueueEntry& entry)
 
   if (mUseContinuousReadout) {
     log("Starting continuous readout");
-    crorcStartReadoutContinuous();
+    Crorc::Crorc::startReadoutContinuous(getBar2());
   }
 }
 
@@ -183,12 +183,12 @@ void CrorcChannelMaster::deviceStopDma()
   if (mGeneratorEnabled) {
     // Starting the data generator
     startDataGenerator();
-    crorcStopDataGenerator();
-    rorcStopDataReceiver(getBarUserspace());
+    getCrorc().stopDataGenerator();
+    getCrorc().stopDataReceiver();
   } else {
     if (!mNoRDYRX) {
       // Sending EOBTR to FEE.
-      crorcStopTrigger();
+      getCrorc().stopTrigger(mDiuConfig);
     }
   }
 }
@@ -201,23 +201,23 @@ void CrorcChannelMaster::deviceResetChannel(ResetLevel::type resetLevel)
 
   try {
     if (resetLevel == ResetLevel::Rorc) {
-      crorcReset(RORC_RESET_FF);
-      crorcReset(RORC_RESET_RORC);
+      getCrorc().resetCommand(Rorc::Reset::FF, mDiuConfig);
+      getCrorc().resetCommand(Rorc::Reset::RORC, mDiuConfig);
     }
 
     if (LoopbackMode::isExternal(mLoopbackMode)) {
-      crorcArmDdl(RORC_RESET_DIU);
+      getCrorc().armDdl(Rorc::Reset::DIU, mDiuConfig);
 
       if ((resetLevel == ResetLevel::RorcDiuSiu) && (mLoopbackMode != LoopbackMode::Diu))
       {
         // Wait a little before SIU reset.
         std::this_thread::sleep_for(100ms); /// XXX Why???
         // Reset SIU.
-        crorcArmDdl(RORC_RESET_SIU);
-        crorcArmDdl(RORC_RESET_DIU);
+        getCrorc().armDdl(Rorc::Reset::SIU, mDiuConfig);
+        getCrorc().armDdl(Rorc::Reset::DIU, mDiuConfig);
       }
 
-      crorcArmDdl(RORC_RESET_RORC);
+      getCrorc().armDdl(Rorc::Reset::RORC, mDiuConfig);
     }
   }
   catch (Exception& e) {
@@ -233,43 +233,44 @@ void CrorcChannelMaster::deviceResetChannel(ResetLevel::type resetLevel)
 void CrorcChannelMaster::startDataGenerator()
 {
   if (LoopbackMode::None == mLoopbackMode) {
-    crorcStartTrigger();
+    getCrorc().startTrigger(mDiuConfig);
   }
 
-  crorcArmDataGenerator();
+  getCrorc().armDataGenerator(mGeneratorInitialValue, mGeneratorInitialWord, mGeneratorPattern, mGeneratorDataSize,
+      mGeneratorSeed);
 
   if (LoopbackMode::Rorc == mLoopbackMode) {
-    rorcParamOn(getBarUserspace(), PRORC_PARAM_LOOPB);
+    getCrorc().setParameterOn(Rorc::PRORC_PARAM_LOOPB);
     std::this_thread::sleep_for(100ms); // XXX Why???
   }
 
   if (LoopbackMode::Siu == mLoopbackMode) {
-    crorcSetSiuLoopback();
+    getCrorc().setSiuLoopback(mDiuConfig);
     std::this_thread::sleep_for(100ms); // XXX Why???
-    crorcCheckLink();
-    crorcSiuCommand(RandCIFST);
-    crorcDiuCommand(RandCIFST);
+    getCrorc().assertLinkUp();
+    getCrorc().siuCommand(Ddl::RandCIFST, mDiuConfig);
+    getCrorc().diuCommand(Ddl::RandCIFST, mDiuConfig);
   }
 
-  rorcStartDataGenerator(getBarUserspace(), mGeneratorMaximumEvents);
+  getCrorc().startDataGenerator(mGeneratorMaximumEvents);
 }
 
 void CrorcChannelMaster::startDataReceiving()
 {
-  crorcInitDiuVersion();
+  getCrorc().initDiuVersion();
 
   // Preparing the card.
   if (LoopbackMode::Siu == mLoopbackMode) {
     deviceResetChannel(ResetLevel::RorcDiuSiu);
-    crorcCheckLink();
-    crorcSiuCommand(RandCIFST);
-    crorcDiuCommand(RandCIFST);
+    getCrorc().assertLinkUp();
+    getCrorc().siuCommand(Ddl::RandCIFST, mDiuConfig);
+    getCrorc().diuCommand(Ddl::RandCIFST, mDiuConfig);
   }
 
-  crorcReset(RORC_RESET_FF);
+  getCrorc().resetCommand(Rorc::Reset::FF, mDiuConfig);
   std::this_thread::sleep_for(10ms); /// XXX Give card some time to reset the FreeFIFO
-  crorcCheckFreeFifoEmpty();
-  crorcStartDataReceiver();
+  getCrorc().assertFreeFifoEmpty();
+  getCrorc().startDataReceiver(mReadyFifoAddressBus, mRorcRevision);
 }
 
 int CrorcChannelMaster::getSuperpageQueueCount()
@@ -403,7 +404,7 @@ uintptr_t CrorcChannelMaster::getNextSuperpageBusAddress(const SuperpageQueueEnt
 void CrorcChannelMaster::pushFreeFifoPage(int readyFifoIndex, uintptr_t pageBusAddress)
 {
   size_t pageWords = mPageSize / 4; // Size in 32-bit words
-  rorcPushRxFreeFifo(getBarUserspace(), pageBusAddress, pageWords, readyFifoIndex);
+  getCrorc().pushRxFreeFifo(pageBusAddress, pageWords, readyFifoIndex);
 }
 
 CrorcChannelMaster::DataArrivalStatus::type CrorcChannelMaster::dataArrived(int index)
@@ -415,7 +416,7 @@ CrorcChannelMaster::DataArrivalStatus::type CrorcChannelMaster::dataArrived(int 
     return DataArrivalStatus::NoneArrived;
   } else if (status == 0) {
     return DataArrivalStatus::PartArrived;
-  } else if ((status & 0xff) == DTSW) {
+  } else if ((status & 0xff) == Ddl::DTSW) {
     // Note: when internal loopback is used, the length of the event in words is also stored in the status word.
     // For example, the status word could be 0x400082 for events of size 4 kiB
     if ((status & (1 << 31)) != 0) {
@@ -439,150 +440,6 @@ CrorcChannelMaster::DataArrivalStatus::type CrorcChannelMaster::dataArrived(int 
 CardType::type CrorcChannelMaster::getCardType()
 {
   return CardType::Crorc;
-}
-
-void CrorcChannelMaster::crorcArmDataGenerator()
-{
-  int roundedLen = -1;
-  int returnCode = rorcArmDataGenerator(getBarUserspace(), mGeneratorInitialValue, mGeneratorInitialWord,
-      mGeneratorPattern, mGeneratorDataSize / 4, mGeneratorSeed, &roundedLen);
-
-  THROW_IF_BAD_STATUS(returnCode, CrorcArmDataGeneratorException()
-      ADD_ERRINFO(returnCode, "Failed to arm data generator")
-      << ErrorInfo::GeneratorPattern(mGeneratorPattern)
-      << ErrorInfo::GeneratorEventLength(mGeneratorDataSize / 4));
-}
-
-void CrorcChannelMaster::crorcStopDataGenerator()
-{
-  rorcWriteReg(getBarUserspace(), C_CSR, DRORC_CMD_STOP_DG);
-}
-
-void CrorcChannelMaster::crorcStopDataReceiver()
-{
-  rorcStopDataReceiver(getBarUserspace());
-}
-
-void CrorcChannelMaster::crorcArmDdl(int resetMask)
-{
-  int returnCode = rorcArmDDL(getBarUserspace(), resetMask, mDiuVersion, mPciLoopPerUsec);
-  THROW_IF_BAD_STATUS(returnCode, CrorcArmDdlException()
-      ADD_ERRINFO(returnCode, "Failed to arm DDL")
-      << ErrorInfo::DdlResetMask(b::str(b::format("0x%x") % resetMask)));
-}
-
-void CrorcChannelMaster::crorcInitDiuVersion()
-{
-  setLoopPerSec(&mLoopPerUsec, &mPciLoopPerUsec, getBarUserspace());
-  int returnCode = ddlFindDiuVersion(getBarUserspace(), mPciLoopPerUsec, &mRorcRevision, &mDiuVersion);
-  THROW_IF_BAD_STATUS(returnCode, CrorcInitDiuException()
-      ADD_ERRINFO(returnCode, "Failed to initialize DIU version"));
-}
-
-void CrorcChannelMaster::crorcCheckLink()
-{
-  int returnCode = rorcCheckLink(getBarUserspace());
-  THROW_IF_BAD_STATUS(returnCode, CrorcCheckLinkException()
-      ADD_ERRINFO(returnCode, "Bad link status"));
-}
-
-void CrorcChannelMaster::crorcSiuCommand(int command)
-{
-  int returnCode = ddlReadSiu(getBarUserspace(), command, DDL_RESPONSE_TIME, mPciLoopPerUsec);
-  THROW_IF_BAD_STATUS(returnCode, CrorcSiuCommandException()
-      ADD_ERRINFO(returnCode, "Failed to send SIU command")
-      << ErrorInfo::SiuCommand(command));
-}
-
-void CrorcChannelMaster::crorcDiuCommand(int command)
-{
-  int returnCode = ddlReadDiu(getBarUserspace(), command, DDL_RESPONSE_TIME, mPciLoopPerUsec);
-  THROW_IF_BAD_STATUS(returnCode, CrorcSiuCommandException()
-      ADD_ERRINFO(returnCode, "Failed to send DIU command")
-      << ErrorInfo::DiuCommand(command));
-}
-
-void CrorcChannelMaster::crorcReset(int command)
-{
-  rorcReset(getBarUserspace(), command, mPciLoopPerUsec);
-}
-
-void CrorcChannelMaster::crorcCheckFreeFifoEmpty()
-{
-  int returnCode = rorcCheckRxFreeFifo(getBarUserspace());
-  if (returnCode != RORC_FF_EMPTY) {
-    BOOST_THROW_EXCEPTION(
-        CrorcFreeFifoException() ADD_ERRINFO(returnCode, "Free FIFO not empty")
-        << ErrorInfo::PossibleCauses({"Previous DMA did not get/free all received pages"}));
-  }
-}
-
-void CrorcChannelMaster::crorcStartDataReceiver()
-{
-  rorcStartDataReceiver(getBarUserspace(), getReadyFifoAddressBus(), mRorcRevision);
-}
-
-void CrorcChannelMaster::crorcSetSiuLoopback()
-{
-  stword_t stw;
-  int returnCode = ddlSetSiuLoopBack(getBarUserspace(), DDL_RESPONSE_TIME * mPciLoopPerUsec, mPciLoopPerUsec, &stw);
-  THROW_IF_BAD_STATUS(returnCode, CrorcSiuLoopbackException()
-        ADD_ERRINFO(returnCode, "Failed to set SIU loopback"));
-}
-
-void CrorcChannelMaster::crorcStartTrigger()
-{
-  stword_t stw;
-  int returnCode = rorcStartTrigger(getBarUserspace(), DDL_RESPONSE_TIME * mPciLoopPerUsec, &stw);
-  THROW_IF_BAD_STATUS(returnCode, CrorcStartTriggerException()
-      ADD_ERRINFO(returnCode, "Failed to start trigger"));
-}
-
-void CrorcChannelMaster::crorcStopTrigger()
-{
-  stword_t stw;
-  uint64_t timeout = mPciLoopPerUsec * DDL_RESPONSE_TIME;
-  int returnCode = rorcStopTrigger(getBarUserspace(), timeout, &stw);
-  THROW_IF_BAD_STATUS(returnCode, CrorcStopTriggerException()
-      ADD_ERRINFO(returnCode, "Failed to stop trigger"));
-}
-
-void CrorcChannelMaster::crorcInitReadoutContinuous()
-{
-  // Based on:
-  // https://gitlab.cern.ch/costaf/grorc_sw/blob/master/script/grorc_cont_readout.sh
-
-  // this script works with the G-RORC firmware 3.16
-  // SET the card in CONT MODE
-  getBar2().setRegister(0x190, 0x02000000);
-  // s_send_wide            <= s_reg(0);
-  // s_gbt_tx_pol           <= s_reg(1);
-  // s_gbt_tx_sel           <= s_reg(3 downto 2);
-  // s_gbt_reset            <= s_reg(4);
-  // s_rx_encoding          <= s_reg(8);
-  // s_tx_encoding          <= s_reg(9);
-  // s_read_gate            <= s_reg(12);
-  // s_disable_bank         <= s_reg(17 downto 16);
-  // s_bar_rd_ch(2).reg_194 <= s_reg;
-  // Choose only BANK0
-  getBar2().setRegister(0x194, 0x21005);
-  // number of GBT words per event
-  getBar2().setRegister(0x18c, 0x1f);
-}
-
-void CrorcChannelMaster::crorcStartReadoutContinuous()
-{
-  // Based on:
-  // https://gitlab.cern.ch/costaf/grorc_sw/blob/master/script/grorc_send_IDLE_SYNC.sh
-
-  // SET IT AS CUSTOM PATTERN FOR 1 CC and open the GATE READOUT
-  getBar2().setRegister(0x198, 0x60000001);
-  getBar2().setRegister(0x198, 0x0);
-}
-
-void CrorcChannelMaster::crorcInitReadoutTriggered()
-{
-  throw std::runtime_error("not implemented");
 }
 
 Pda::PdaBar& CrorcChannelMaster::getBar2()
@@ -623,13 +480,9 @@ void CrorcChannelMaster::utilityCleanupState()
 
 int CrorcChannelMaster::utilityGetFirmwareVersion()
 {
-  int pciLoopPerUsec = 0;
-  int rorcRevision = 0;
-  int diuVersion = 0;
-  int returnCode = ddlFindDiuVersion(getBarUserspace(), pciLoopPerUsec, &rorcRevision, &diuVersion);
-  THROW_IF_BAD_STATUS(returnCode, CrorcInitDiuException()
-      ADD_ERRINFO(returnCode, "Failed to get C-RORC revision"));
-  return rorcRevision;
+  Crorc::Crorc::DiuConfig diuConfig;
+  getCrorc().ddlFindDiuVersion(diuConfig);
+  return diuConfig.rorcRevision;
 }
 
 std::string CrorcChannelMaster::utilityGetFirmwareVersionString()

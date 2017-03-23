@@ -7,7 +7,7 @@
 
 namespace AliceO2 {
 namespace Rorc {
-namespace Crorc {
+namespace Rorc {
 
 constexpr int RCSR =      0;     ///< RORC Control and Status register
 constexpr int RERR =      1;     ///< RORC Error register
@@ -129,10 +129,10 @@ constexpr int DRORC_CMD_LOOPB_ON_OFF   = 0x00001000;   //bit 12
 constexpr int PRORC_CMD_RESET_SIU     = 0x00F1;
 constexpr int PRORC_PARAM_LOOPB       = 0x1;
 
+// Software interface status codes
 constexpr int RORC_STATUS_OK                =    0;
 constexpr int RORC_STATUS_ERROR             =   -1;
 constexpr int RORC_INVALID_PARAM            =   -2;
-
 constexpr int RORC_LINK_NOT_ON              =   -4;
 constexpr int RORC_CMD_NOT_ALLOWED          =   -8;
 constexpr int RORC_NOT_ACCEPTED             =  -16;
@@ -141,18 +141,19 @@ constexpr int RORC_TIMEOUT                  =  -64;
 constexpr int RORC_FF_FULL                  = -128;
 constexpr int RORC_FF_EMPTY                 = -256;
 
+namespace Reset {
 // RORC initialization and reset options
-constexpr int RORC_RESET_FF       =   1;   ///< reset Free FIFOs
-constexpr int RORC_RESET_RORC     =   2;   ///< reset RORC
-constexpr int RORC_RESET_DIU      =   4;   ///< reset DIU
-constexpr int RORC_RESET_SIU      =   8;   ///< reset SIU
-constexpr int RORC_LINK_UP        =  16;   ///< init link
-constexpr int RORC_RESET_FEE      =  32;   ///< reset Front-End
-constexpr int RORC_RESET_FIFOS    =  64;   ///< reset RORC's FIFOS (not Free FIFO)
-constexpr int RORC_RESET_ERROR    = 128;   ///< reset RORC's error register
-constexpr int RORC_RESET_COUNTERS = 256;   ///< reset RORC's event number counters
-
-constexpr int RORC_RESET_ALL      = 0x000001FF;   //bits 8-0
+constexpr int FF       =   1;   ///< reset Free FIFOs
+constexpr int RORC     =   2;   ///< reset RORC
+constexpr int DIU      =   4;   ///< reset DIU
+constexpr int SIU      =   8;   ///< reset SIU
+constexpr int LINK_UP  =  16;   ///< init link
+constexpr int FEE      =  32;   ///< reset Front-End
+constexpr int FIFOS    =  64;   ///< reset RORC's FIFOS (not Free FIFO)
+constexpr int ERROR    = 128;   ///< reset RORC's error register
+constexpr int COUNTERS = 256;   ///< reset RORC's event number counters
+constexpr int ALL      = 0x000001FF; ///< bits 8-0
+} // namespace Reset
 
 constexpr int RORC_DG_INFINIT_EVENT = 0;
 
