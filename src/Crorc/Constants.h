@@ -212,22 +212,14 @@ constexpr int HEADER_SIZE_WORD = 8;
 constexpr int MAX_TX_WORD = 0xFFFFFF;
 
 //  destination field
-constexpr int DEST_RORC = 0;
-constexpr int DEST_DIU  = 1;
-constexpr int DEST_SIU  = 2;
-constexpr int DEST_DSI  = 3;
-constexpr int DEST_FEE  = 4;
-
-/// FEE commands
-namespace Fee
+namespace Destination
 {
-constexpr int RDYRX  = 1;  // Ready to Receive
-constexpr int EOBTR  = 11; // End of Block Transfer
-constexpr int STBWR  = 13; // Start of Block Write
-constexpr int STBRD  = 5;  // Start of Block Read
-constexpr int FECTRL = 12; // Front-end control
-constexpr int FESTRD = 4;  // Front-end status readout
-} // namespace Fee
+constexpr int RORC = 0;
+constexpr int DIU  = 1;
+constexpr int SIU  = 2;
+constexpr int DSI  = 3;
+constexpr int FEE  = 4;
+} // namespace Destination
 
 // interface commands
 constexpr int LRST      = 10; // Link Reset
@@ -278,16 +270,27 @@ constexpr int SIUSTMASK = 0x00007000; // SIU port states
 constexpr int DIUERMASK = 0xBFFC0000; // DIU error states
 } // namespace Ddl
 
+/// FEE commands
+namespace Fee
+{
+constexpr int RDYRX  = 1;  // Ready to Receive
+constexpr int EOBTR  = 11; // End of Block Transfer
+constexpr int STBWR  = 13; // Start of Block Write
+constexpr int STBRD  = 5;  // Start of Block Read
+constexpr int FECTRL = 12; // Front-end control
+constexpr int FESTRD = 4;  // Front-end status readout
+} // namespace Fee
+
 namespace Diu
 {
 // DIU version
 namespace Version
 {
-constexpr int NOT_DEF  = -1;
-constexpr int NO_DIU   = 0;
-constexpr int OLD      = 1;
-constexpr int NEW      = 2;
-constexpr int EMBEDDED = 3; ///< Note that this is the only supported DIU version by O2
+//constexpr int NOT_DEF  = -1;
+//constexpr int NO_DIU   = 0;
+//constexpr int OLD      = 1;
+//constexpr int NEW      = 2;
+//constexpr int EMBEDDED = 3; ///< Note that this is the only supported DIU version by O2
 } // namespace Version
 
 // status/error bits for NEW (CMC connector) link cards

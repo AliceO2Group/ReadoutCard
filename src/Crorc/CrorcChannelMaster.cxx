@@ -239,7 +239,7 @@ void CrorcChannelMaster::startDataGenerator()
       mGeneratorSeed);
 
   if (LoopbackMode::Rorc == mLoopbackMode) {
-    getCrorc().setParameterOn(Rorc::PRORC_PARAM_LOOPB);
+    getCrorc().setLoopbackOn();
     std::this_thread::sleep_for(100ms); // XXX Why???
   }
 
@@ -479,14 +479,12 @@ void CrorcChannelMaster::utilityCleanupState()
 
 int CrorcChannelMaster::utilityGetFirmwareVersion()
 {
-  Crorc::Crorc::DiuConfig diuConfig;
-  getCrorc().ddlFindDiuVersion(diuConfig);
-  return diuConfig.rorcRevision;
+  return readRegister(Rorc::RFID);
 }
 
 std::string CrorcChannelMaster::utilityGetFirmwareVersionString()
 {
-  uint32_t version = readRegister(2);
+  uint32_t version = readRegister(Rorc::RFID);
   auto bits = [&](int lsb, int msb) { return Utilities::getBits(version, lsb, msb); };
 
   uint32_t reserved = bits(24, 31);

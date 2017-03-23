@@ -29,17 +29,23 @@ namespace b = boost;
     << ErrorInfo::Message(_err_message) \
     << ErrorInfo::StatusCode(_status_code)
 
-namespace AliceO2 {
-namespace Rorc {
-namespace Crorc {
-namespace Flash {
-
+namespace AliceO2
+{
+namespace Rorc
+{
+namespace Crorc
+{
+namespace Flash
+{
+namespace
+{
 constexpr int MAX_WAIT = 1000000;
 constexpr int DATA_STATUS = Rorc::F_IFDSR;
 constexpr int ADDRESS = Rorc::F_IADR;
 constexpr int READY = Rorc::F_LRD;
 
 // TODO figure out what these are/do
+constexpr int MAGIC_VALUE_0  = 0x80;
 constexpr int MAGIC_VALUE_3  = 0x0100bddf;
 constexpr int MAGIC_VALUE_13 = 0x03000000;
 constexpr int MAGIC_VALUE_5  = 0x03000003;
@@ -95,7 +101,7 @@ uint32_t init(RegisterReadWriteInterface& channel, int sleept = 10)
   return stat;
 }
 
-int checkStatus(RegisterReadWriteInterface& channel, int timeout)
+void checkStatus(RegisterReadWriteInterface& channel, int timeout = MAX_WAIT)
 {
   unsigned stat;
   int i = 0;
@@ -103,16 +109,14 @@ int checkStatus(RegisterReadWriteInterface& channel, int timeout)
   while (1)
   {
     stat = readStatus(channel);
-    if (stat == 0x80) {
+    if (stat == MAGIC_VALUE_0) {
       break;
     }
     if (timeout && (++i >= timeout)) {
-      return (Rorc::RORC_TIMEOUT);
+      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Bad flash status"));
     }
     usleep(100);
   }
-
-  return (Rorc::RORC_STATUS_OK);
 }
 
 void unlockBlock(RegisterReadWriteInterface& channel, uint32_t address, int sleept = 10)
@@ -126,12 +130,7 @@ void unlockBlock(RegisterReadWriteInterface& channel, uint32_t address, int slee
   channel.writeRegister(DATA_STATUS, MAGIC_VALUE_7);
   usleep(sleept);
 
-  int ret = checkStatus(channel, MAX_WAIT);
-  if (ret) {
-    BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message("Couldn't unlock flash block")
-        << ErrorInfo::Address(address));
-  }
+  checkStatus(channel);
 }
 
 void eraseBlock(RegisterReadWriteInterface& channel, uint32_t address, int sleept = 10)
@@ -148,30 +147,21 @@ void eraseBlock(RegisterReadWriteInterface& channel, uint32_t address, int sleep
   channel.writeRegister(DATA_STATUS, MAGIC_VALUE_7);
   usleep(sleept);
 
-  int ret = checkStatus(channel, MAX_WAIT);
-  if (ret) {
-    BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message("Couldn't erase flash block")
-        << ErrorInfo::Address(address));
-  }
+  checkStatus(channel);
 }
 
-int writeWord(RegisterReadWriteInterface& channel, uint32_t address, int value, int sleept)
+void writeWord(RegisterReadWriteInterface& channel, uint32_t address, int value, int sleept)
 {
-  int ret;
-
   channel.writeRegister(DATA_STATUS, address);
   usleep(sleept);
   channel.writeRegister(DATA_STATUS, MAGIC_VALUE_9);
   usleep(sleept);
   channel.writeRegister(DATA_STATUS, value);
   usleep(sleept);
-  ret = checkStatus(channel, MAX_WAIT);
-
-  return (ret);
+  checkStatus(channel);
 }
 
-int readWord(RegisterReadWriteInterface& channel, uint32_t address, uint8_t *data, int sleept)
+void readWord(RegisterReadWriteInterface& channel, uint32_t address, uint8_t *data, int sleept)
 {
   channel.writeRegister(DATA_STATUS, address);
   usleep(sleept);
@@ -180,7 +170,6 @@ int readWord(RegisterReadWriteInterface& channel, uint32_t address, uint8_t *dat
   uint32_t stat = readStatus(channel, sleept);
   *data = (stat & 0xFF00) >> 8;
   *(data+1) = stat & 0xFF;
-  return (Rorc::RORC_STATUS_OK);
 }
 
 void readRange(RegisterReadWriteInterface& channel, int addressFlash, int wordNumber, std::ostream& out) {
@@ -211,8 +200,8 @@ void wait(RegisterReadWriteInterface& channel) {
   }
   usleep(1);
 }
-
-} // namepsace Flash
+} // Anonymous namespace
+} // namespace Flash
 
 void readFlashRange(RegisterReadWriteInterface& channel, int addressFlash, int wordNumber, std::ostream& out)
 {
@@ -301,11 +290,7 @@ void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath,
       writeWait(Flash::DATA_STATUS, Flash::MAGIC_VALUE_11);
 
       // READ STATUS REGISTER
-      if (Flash::checkStatus(channel, Flash::MAX_WAIT)) {
-        BOOST_THROW_EXCEPTION(Exception()
-            << ErrorInfo::Message("Couldn't set flash buffer mode")
-            << ErrorInfo::Address(address));
-      }
+      Flash::checkStatus(channel);
 
       // Write 32 words (31+1) (31 0x1f)
       writeWait(Flash::DATA_STATUS, Flash::MAGIC_VALUE_12);
@@ -356,23 +341,13 @@ void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath,
               << ErrorInfo::Address(address));
         }
       }
-
-      if (Flash::checkStatus(channel, Flash::MAX_WAIT)) {
-        BOOST_THROW_EXCEPTION(Exception()
-            << ErrorInfo::Message("Flash status was not correct after writing address")
-            << ErrorInfo::Address(address));
-      }
+      Flash::checkStatus(channel);
     }
     out << format("\nCompleted programming %d words\n") % numberOfLinesRead;
     // READ STATUS REG
     channel.writeRegister(Flash::DATA_STATUS, Flash::MAGIC_VALUE_6);
     usleep(1);
-
-    if (Flash::checkStatus(channel, Flash::MAX_WAIT)) {
-      BOOST_THROW_EXCEPTION(Exception()
-          << ErrorInfo::Message("Couldn't read flash status")
-          << ErrorInfo::Address(address));
-    }
+    Flash::checkStatus(channel);
   } catch (const InterruptedException& e) {
     out << "Flash programming interrupted\n";
   }
@@ -488,7 +463,7 @@ void Crorc::ddlSendCommand(
       ((transid & 0xf)<<8) + ((param & 0x7ffff)<<12);
   }
 
-  if (destination > Ddl::DEST_DIU){
+  if (destination > Ddl::Destination::DIU){
     assertLinkUp();
   }
 
@@ -540,7 +515,7 @@ stword_t Crorc::ddlReadStatus()
 stword_t Crorc::ddlReadDiu(int transid, long long int time)
 {
   /* prepare and send DDL command */
-  int destination = Ddl::DEST_DIU;
+  int destination = Ddl::Destination::DIU;
   ddlSendCommand(destination, Rorc::RandCIFST, transid, 0, time);
   ddlWaitStatus(time);
   stword_t stw = ddlReadStatus();
@@ -576,7 +551,7 @@ stword_t Crorc::ddlReadCTSTW(int transid, int destination, long long int time){
 stword_t Crorc::ddlReadSiu(int transid, long long int time)
 {
   /* prepare and send DDL command */
-  int destination = Ddl::DEST_SIU;
+  int destination = Ddl::Destination::SIU;
   ddlSendCommand(destination, Rorc::RandCIFST, transid, 0, time);
 
   /* read and check the answer */
@@ -608,7 +583,7 @@ stword_t Crorc::ddlReadSiu(int transid, long long int time)
 /*
  * Interpret DIU or SIU IFSTW
  */
-inline void ddlInterpret_NEW_IFSTW(uint32_t ifstw, const char *pref, const char *suff)
+inline void ddlInterpretIFSTW(uint32_t ifstw, const char *pref, const char *suff)
 {
   int destination;
   unsigned long status;
@@ -619,7 +594,7 @@ inline void ddlInterpret_NEW_IFSTW(uint32_t ifstw, const char *pref, const char 
   using namespace Siu;
 
   status = ifstw & Ddl::STMASK;
-  if (destination == Ddl::DEST_DIU) {
+  if (destination == Ddl::Destination::DIU) {
     if (mask(status, DIU_LOOP))
       printf("%sDIU is set in loop-back mode%s", pref, suff);
     if (mask(status, ERROR_BIT)){
@@ -736,16 +711,6 @@ inline void ddlInterpret_NEW_IFSTW(uint32_t ifstw, const char *pref, const char 
   }
 }
 
-
-void ddlInterpretIFSTW(uint32_t ifstw, const char* pref,
-           const char* suff, int diu_version){
-  if (diu_version == Diu::Version::OLD) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Old DIU version not supprted"));
-  } else {
-    ddlInterpret_NEW_IFSTW(ifstw, pref, suff);
-  }
-}
-
 void Crorc::ddlResetSiu(int print, int cycle, long long int time, const DiuConfig& diuConfig)
 /* ddlResetSiu tries to reset the SIU.
  *             print  # if != 0 then print link status
@@ -754,14 +719,9 @@ void Crorc::ddlResetSiu(int print, int cycle, long long int time, const DiuConfi
  * Returns:    SIU status word or -1 if no status word can be read
  */
 {
-
-  ddlSendCommand(Ddl::DEST_DIU, Ddl::SRST, 0,  0, time);
+  ddlSendCommand(Ddl::Destination::DIU, Ddl::SRST, 0,  0, time);
   ddlWaitStatus(time);
   ddlReadStatus();
-
-  if ((diuConfig.diuVersion != Diu::Version::NEW) && (diuConfig.diuVersion != Diu::Version::EMBEDDED)) {
-    return;
-  }
 
   int trial = cycle + 1;
   int transid = 0xf;
@@ -803,109 +763,6 @@ void Crorc::ddlResetSiu(int print, int cycle, long long int time, const DiuConfi
   }
 
   BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Failed to reset SIU"));
-}
-
-void Crorc::ddlLinkUp_NEW(int master, int print, int stop, long long int time, const DiuConfig& diuConfig)
-
-/* ddlLinkUp tries to reset and initialize (if master) the DDL link.
- * Parameter:  master   if !=0 then tries to initialize the link,
- *                      otherwise only reset the link
- *             print  # of link status prints (-1 means: no limit)
- *             stop if !=0 returns when active state or print limit
- *                      (if print > 0) is reached
- *             time # of cycles to wait for command sending and replies
- * Returns:    DIU status word or -1 if no status word can be read
- *             The DIU status word reflects the status of the link after
- *             resetting it.
- *             Important bits of the status word are
- *             bit 31 must be 0, otherwise one of the error bits is set
- *             if bits 17,16,15 are 1 1 0 the remote SIU or DIU  does not see us
- *             if bits 14,13,12 are 1 1 0 it means DIU is in power off state,
- *                                  1 0 0 means DIU receives no signal,
- *                            or    0 1 0 which means the link is active.
- */
-
-{
-#define PRINTEND }
-
-#define PRINT_IF_NEW(a)
-
-  //  printf ("ddlLinkUp called");
-  stword_t lastStword;
-  lastStword.stw = 0xf00; // Not possible value
-  int transid = 0xf;
-  do {
-    transid = incr15(transid);
-    stword_t stword = ddlReadDiu(transid, time);
-
-    stword.stw &= Ddl::STMASK;
-    if (stword.stw == lastStword.stw) {
-      continue;
-    }
-
-    int siuStatus = (stword.stw & Ddl::REMMASK) >> 15;
-
-    if (stword.stw & Diu::ERROR_BIT) {
-      // TODO log error
-      // ddlInterpretIFSTW(retlong, pref, suff, diuConfig.diuVersion);
-      continue;
-    }
-
-    switch (stword.stw & Ddl::DIUSTMASK) {
-      case Diu::DIU_WAIT:
-        PRINT_IF_NEW(" DIU port in Waiting for Power Off state")
-        break;
-      case Diu::DIU_LOS:
-        PRINT_IF_NEW(" DIU port in Offline Loss of Synchr. state")
-        break;
-      case Diu::DIU_NOSIG:
-        PRINT_IF_NEW(" DIU port in Offline No Signal state")
-        break;
-      case Diu::DIU_TSTM:
-        PRINT_IF_NEW(" DIU in PRBS Test Mode state")
-        break;
-      case Diu::DIU_OFFL:
-        PRINT_IF_NEW(" DIU port in Offline state")
-        break;
-      case Diu::DIU_POR:
-        PRINT_IF_NEW(" DIU port in Power On Reset state")
-        break;
-      case Diu::DIU_POFF:
-        PRINT_IF_NEW(" DIU port in Power Off state")
-        if (master) {
-          // Send a command to DIU to wake up
-          /*retval=*/ddlSendCommand(Ddl::DEST_DIU, Ddl::WAKEUP, transid, 0, time);
-          transid = incr15(transid);
-
-          // Read status FIFO
-          stword = ddlReadStatus();
-          printf("The WAKEUP returned status: %8lx\n", stword.stw);
-          continue;
-        }
-        // not master
-        // if (stop) return (retlong);
-        break;
-      case Diu::DIU_ONL:
-        PRINT_IF_NEW(" DIU port in Online state")
-        if (stop) {
-          return;
-        }
-        break;
-    }
-  } while (1);
-
-#undef PRINTEND
-#undef PRINT_IF_NEW
-}
-
-
-void Crorc::ddlLinkUp(int master, int print, int stop, long long int time, const DiuConfig& diuConfig)
-{
-  if (diuConfig.diuVersion == Diu::Version::OLD) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Old DIU version not supprted"));
-  } else {
-    ddlLinkUp_NEW(master, print, stop, time, diuConfig);
-  }
 }
 
 void Crorc::resetCommand(int option, const DiuConfig& diuConfig){
@@ -977,95 +834,35 @@ void Crorc::armDdl(int resetMask, const DiuConfig& diuConfig)
 
   TimeOut = Ddl::RESPONSE_TIME * diuConfig.pciLoopPerUsec;
 
-  if (diuConfig.diuVersion){
-    if (resetMask & Rorc::Reset::FEE){
-      /* not implemented */
-      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Command not allowed"));
-    }
-    if (resetMask & Rorc::Reset::SIU){
-      ddlResetSiu(0, 3, TimeOut, diuConfig);
-    }
-    if (resetMask & Rorc::Reset::LINK_UP){
-      if (diuConfig.diuVersion <= Diu::Version::NEW){
-        ddlLinkUp(1, print, stop, TimeOut, diuConfig);
-      }
-      else{
-        reset(Rorc::Reset::RORC);
-        reset(Rorc::Reset::DIU);
-        reset(Rorc::Reset::SIU);
-        usleep(100000);
-
-        assertLinkUp();
-        emptyDataFifos(100000);
-
-        reset(Rorc::Reset::SIU);
-        reset(Rorc::Reset::DIU);
-        reset(Rorc::Reset::RORC);
-        usleep(100000);
-
-        assertLinkUp();
-      }
-    }
-    if (resetMask & Rorc::Reset::DIU) {
-      reset(Rorc::Reset::DIU);
-    }
+  if (resetMask & Rorc::Reset::FEE){
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Command not allowed"));
   }
-  else {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("No DIU plugged into the RORC"));
+  if (resetMask & Rorc::Reset::SIU){
+    ddlResetSiu(0, 3, TimeOut, diuConfig);
   }
+  if (resetMask & Rorc::Reset::LINK_UP){
+    reset(Rorc::Reset::RORC);
+    reset(Rorc::Reset::DIU);
+    reset(Rorc::Reset::SIU);
+    usleep(100000);
+    assertLinkUp();
+    emptyDataFifos(100000);
 
+    reset(Rorc::Reset::SIU);
+    reset(Rorc::Reset::DIU);
+    reset(Rorc::Reset::RORC);
+    usleep(100000);
+    assertLinkUp();
+  }
+  if (resetMask & Rorc::Reset::DIU) {
+    reset(Rorc::Reset::DIU);
+  }
   if (resetMask & Rorc::Reset::FF) {
     reset(Rorc::Reset::FF);
   }
   if (resetMask & Rorc::Reset::RORC) {
     reset(Rorc::Reset::RORC);
   }
-}
-
-void Crorc::ddlFindDiuVersion(DiuConfig& diuConfig) {
-  diuConfig.diuVersion = Diu::Version::NEW;
-  diuConfig.rorcRevision = 7;
-
-//  stword_t stw[Ddl::MAX_REPLY];
-//  int  n_reply, ret;
-//  long long longret;
-//  long long int TimeOut;
-//  diuConfig.rorcRevision = 7;//*((uint32_t*)bar + 6*1024);
-//
-//  if (diuConfig.rorcRevision >= RORC_REVISION_INTEG) {
-//    diuConfig.diuVersion = Diu::Version::EMBEDDED;
-//    return;
-//  }
-//
-//  rorcReset(bar, 0, diuConfig.pciLoopPerUsec);   // full reset
-//  diuConfig.diuVersion = Diu::NO_DIU;
-//
-//  /* read DIU's HW id */
-//  TimeOut = Ddl::RESPONSE_TIME * diuConfig.pciLoopPerUsec;
-//  ret = ddlSendCommand(Ddl::DEST_DIU, Ddl::RHWVER, 0, 0, TimeOut);
-//  if (ret)
-//    return (ret);
-//
-//  n_reply = 0;
-//  while (n_reply < DDL_MAX_REPLY){
-//    longret = ddlWaitStatus(bar, TimeOut);
-//    if (longret >= TimeOut)
-//      break;
-//    stw[n_reply++] = ddlReadStatus(bar);
-//  }
-//
-//  if (n_reply == 0){
-//    printf("No reply arrived for HW status request\n");
-//    return (RORC_STATUS_OK);
-//  }
-//  printf("HW status word = 0x%08lx.\n", stw[0].stw);
-//
-//  *diu_version = NEW;
-//  if (n_reply != 2){
-//    *diu_version = OLD;
-//  }
-//
-//  return (RORC_STATUS_OK);
 }
 
 auto Crorc::initDiuVersion() -> DiuConfig
@@ -1103,7 +900,6 @@ auto Crorc::initDiuVersion() -> DiuConfig
   elapsed(&tv2, &tv1, &dsec, &dusec);
   dtime = (double)dsec * 1000000 + (double)dusec;
   diuConfig.pciLoopPerUsec = (double)max_loop/dtime;
-  ddlFindDiuVersion(diuConfig);
   return diuConfig;
 }
 
@@ -1182,13 +978,13 @@ stword_t Crorc::ddlSetSiuLoopBack(const DiuConfig& diuConfig){
   long long int timeout = diuConfig.pciLoopPerUsec * Ddl::RESPONSE_TIME;
 
   /* check SIU fw version */
-  ddlSendCommand(Ddl::DEST_SIU, Ddl::IFLOOP, 0, 0, timeout);
+  ddlSendCommand(Ddl::Destination::SIU, Ddl::IFLOOP, 0, 0, timeout);
   ddlWaitStatus(timeout);
 
   stword_t stword = ddlReadStatus();
   if (stword.part.code == Rorc::ILCMD){
     /* illegal command => old version => send TSTMODE for loopback */
-    ddlSendCommand(Ddl::DEST_SIU, Ddl::TSTMODE, 0, 0, timeout);
+    ddlSendCommand(Ddl::Destination::SIU, Ddl::TSTMODE, 0, 0, timeout);
     ddlWaitStatus(timeout);
   }
 
@@ -1203,7 +999,7 @@ stword_t Crorc::ddlSetSiuLoopBack(const DiuConfig& diuConfig){
   }
 
   /* SIU loopback not set => set it */
-  ddlSendCommand(Ddl::DEST_SIU, Ddl::IFLOOP, 0, 0, timeout);
+  ddlSendCommand(Ddl::Destination::SIU, Ddl::IFLOOP, 0, 0, timeout);
 
   ddlWaitStatus(timeout);
   return ddlReadStatus();
@@ -1217,7 +1013,7 @@ void Crorc::setSiuLoopback(const DiuConfig& diuConfig)
 void Crorc::startTrigger(const DiuConfig& diuConfig)
 {
   uint64_t timeout = Ddl::RESPONSE_TIME * diuConfig.pciLoopPerUsec;
-  ddlSendCommand(Ddl::DEST_FEE, Ddl::Fee::RDYRX, 0, 0, timeout);
+  ddlSendCommand(Ddl::Destination::FEE, Fee::RDYRX, 0, 0, timeout);
   ddlWaitStatus(timeout);
   stword_t stw = ddlReadStatus();
 }
@@ -1227,7 +1023,7 @@ void Crorc::stopTrigger(const DiuConfig& diuConfig)
   uint64_t timeout = Ddl::RESPONSE_TIME * diuConfig.pciLoopPerUsec;
 
   auto rorcStopTrigger = [&] {
-    ddlSendCommand(Ddl::DEST_FEE, Ddl::Fee::EOBTR, 0, 0, timeout);
+    ddlSendCommand(Ddl::Destination::FEE, Fee::EOBTR, 0, 0, timeout);
     ddlWaitStatus(timeout);
     stword_t stw = ddlReadStatus();
   };
@@ -1240,28 +1036,18 @@ void Crorc::stopTrigger(const DiuConfig& diuConfig)
   rorcStopTrigger();
 }
 
-#define rorcCheckLoopBack(buff) (rorcReadReg(buff, C_CSR) & \
-         DRORC_CMD_LOOPB_ON_OFF)
-#define rorcChangeLoopBack(buff) rorcWriteReg(buff, C_CSR, \
-                DRORC_CMD_LOOPB_ON_OFF)
-
-int Crorc::setParameterOn(int param){
-  if (param != Rorc::PRORC_PARAM_LOOPB) {
-    return Rorc::RORC_INVALID_PARAM;
-  }
+void Crorc::setLoopbackOn(){
   if (!isLoopbackOn()) {
     toggleLoopback();
   }
-  return Rorc::RORC_STATUS_OK;
 }
 
-int Crorc::setParameterOff()
+void Crorc::setLoopbackOff()
 {
   // switches off both loopback and stop_on_error
   if (isLoopbackOn()) {
     toggleLoopback();
   }
-  return Rorc::RORC_STATUS_OK;
 }
 
 /// Not sure
@@ -1301,21 +1087,6 @@ void Crorc::pushRxFreeFifo(uintptr_t blockAddress, uint32_t blockLength, uint32_
   write(Rorc::C_RAFX, arch64() ? (blockAddress >> 32) : 0x0);
   write(Rorc::C_RAFH, blockAddress & 0xffffffff);
   write(Rorc::C_RAFL, (blockLength << 8) | readyFifoIndex);
-}
-
-void Crorc::hasData(uintptr_t fifo, uint32_t index)
-{
-  throw std::runtime_error("don't use this");
-  ((*((uint32_t*)fifo + 2*index + 1) == -1) ? Rorc::RORC_DATA_BLOCK_NOT_ARRIVED :
-   ((*((uint32_t*)fifo + 2*index + 1) == 0)  ? Rorc::RORC_NOT_END_OF_EVENT_ARRIVED :
-       Rorc::RORC_LAST_BLOCK_OF_EVENT_ARRIVED));
-}
-
-void Crorc::pushTxFreeFifo(uintptr_t blockAddress, uint32_t blockLength, uint32_t readyFifoIndex)
-{
-  write(Rorc::C_TAFX, arch64() ? (blockAddress >> 32) : 0x0);
-  write(Rorc::C_TAFH, blockAddress & 0xffffffff);
-  write(Rorc::C_TAFL, (blockLength << 8) | readyFifoIndex);
 }
 
 void Crorc::initReadoutContinuous(RegisterReadWriteInterface& bar2)

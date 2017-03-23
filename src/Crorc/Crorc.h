@@ -37,11 +37,12 @@ class Crorc
 
     struct DiuConfig
     {
-        int rorcRevision = 0;
         long long int loopPerUsec = 0;
         double pciLoopPerUsec = 0;
-        int diuVersion = 0;
     };
+
+    /// Sends reset command
+    void resetCommand(int option, const DiuConfig& diuConfig);
 
     /// Arms DDL
     /// \param resetMask The reset mask. See the RORC_RESET_* macros in rorc.h
@@ -97,10 +98,10 @@ class Crorc
     void setSiuLoopback(const DiuConfig& diuConfig);
 
     /// Not sure
-    int setParameterOn(int param);
+    void setLoopbackOn();
 
     /// Not sure
-    int setParameterOff();
+    void setLoopbackOff();
 
     /// Not sure
     bool isLoopbackOn();
@@ -122,15 +123,7 @@ class Crorc
 
     void pushRxFreeFifo(uintptr_t blockAddress, uint32_t blockLength, uint32_t readyFifoIndex);
 
-    void hasData(uintptr_t fifo, uint32_t index);
-
-    void pushTxFreeFifo(uintptr_t blockAddress, uint32_t blockLength, uint32_t readyFifoIndex);
-
-    void resetCommand(int option, const DiuConfig& diuConfig);
-
     int getRxFreeFifoState();
-
-    void ddlFindDiuVersion(DiuConfig& diuConfig);
 
     /// Set C-RORC for continuous readout
     static void initReadoutContinuous(RegisterReadWriteInterface& bar2);
@@ -164,8 +157,8 @@ class Crorc
     stword_t ddlReadDiu(int transid, long long int time);
     stword_t ddlReadSiu(int transid, long long int time);
     stword_t ddlReadCTSTW(int transid, int destination, long long int time);
-    void ddlLinkUp(int master, int print, int stop, long long int time, const DiuConfig& diuConfig);
-    void ddlLinkUp_NEW(int master, int print, int stop, long long int time, const DiuConfig& diuConfig);
+//    void ddlLinkUp(int master, int print, int stop, long long int time, const DiuConfig& diuConfig);
+//    void ddlLinkUp_NEW(int master, int print, int stop, long long int time, const DiuConfig& diuConfig);
     void emptyDataFifos(int empty_time);
     stword_t ddlSetSiuLoopBack(const DiuConfig& diuConfig);
 };
