@@ -135,18 +135,6 @@ constexpr int DRORC_CMD_LOOPB_ON_OFF   = 0x00001000;   //bit 12
 constexpr int PRORC_CMD_RESET_SIU     = 0x00F1;
 constexpr int PRORC_PARAM_LOOPB       = 0x1;
 
-// Software interface status codes
-//constexpr int RORC_STATUS_OK                =    0;
-//constexpr int RORC_STATUS_ERROR             =   -1;
-//constexpr int RORC_INVALID_PARAM            =   -2;
-//constexpr int RORC_LINK_NOT_ON              =   -4;
-//constexpr int RORC_CMD_NOT_ALLOWED          =   -8;
-//constexpr int RORC_NOT_ACCEPTED             =  -16;
-//constexpr int RORC_NOT_ABLE                 =  -32;
-//constexpr int RORC_TIMEOUT                  =  -64;
-//constexpr int RORC_FF_FULL                  = -128;
-//constexpr int RORC_FF_EMPTY                 = -256;
-
 namespace Reset
 {
 // RORC initialization and reset options
@@ -182,14 +170,6 @@ constexpr int DRORC_STAT_RXDAT_NOT_EMPTY   = 0x02000000;   ///< bit 25
 constexpr int RORC_DATA_BLOCK_NOT_ARRIVED      = 0;
 constexpr int RORC_NOT_END_OF_EVENT_ARRIVED    = 1;
 constexpr int RORC_LAST_BLOCK_OF_EVENT_ARRIVED = 2;
-
-//constexpr int RORC_REVISION_PRORC  = 1;
-//constexpr int RORC_REVISION_DRORC  = 2;
-//constexpr int RORC_REVISION_INTEG  = 3;
-//constexpr int RORC_REVISION_DRORC2 = 4;
-//constexpr int RORC_REVISION_PCIEXP = 5;
-//constexpr int RORC_REVISION_CHAN4  = 6;
-//constexpr int RORC_REVISION_CRORC  = 7;
 } // namespace Rorc
 
 /// DDL definitions
@@ -283,16 +263,6 @@ constexpr int FESTRD = 4;  // Front-end status readout
 
 namespace Diu
 {
-// DIU version
-namespace Version
-{
-//constexpr int NOT_DEF  = -1;
-//constexpr int NO_DIU   = 0;
-//constexpr int OLD      = 1;
-//constexpr int NEW      = 2;
-//constexpr int EMBEDDED = 3; ///< Note that this is the only supported DIU version by O2
-} // namespace Version
-
 // status/error bits for NEW (CMC connector) link cards
 // DIU status/error bits
 constexpr int ERROR_BIT = 0x80000000; // error bit

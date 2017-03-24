@@ -160,7 +160,7 @@ class Crorc
     stword_t ddlReadCTSTW(int transid, int destination, long long int time);
 //    void ddlLinkUp(int master, int print, int stop, long long int time, const DiuConfig& diuConfig);
 //    void ddlLinkUp_NEW(int master, int print, int stop, long long int time, const DiuConfig& diuConfig);
-    void emptyDataFifos(int empty_time);
+    void emptyDataFifos(int timeoutMicroseconds);
     stword_t ddlSetSiuLoopBack(const DiuConfig& diuConfig);
 
     void ddlInterpretIFSTW(uint32_t ifstw, const char *pref, const char *suff);

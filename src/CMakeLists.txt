@@ -52,9 +52,6 @@ set(RORC_LIB_SOURCES
 
 if(ALICEO2_RORC_PDA_ENABLED)
   list(APPEND RORC_LIB_SOURCES
-    c/rorc/aux.c
-    c/rorc/ddl.c
-    c/rorc/rorc.c
     ChannelMasterPdaBase.cxx
     ChannelSlave.cxx
     ChannelUtilityImpl.cxx

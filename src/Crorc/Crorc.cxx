@@ -6,18 +6,22 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "Crorc.h"
+#include <chrono>
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
-#include <boost/lexical_cast.hpp>
+#include <sys/time.h>
+#include <thread>
+#include <unistd.h>
 #include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
 #include "Crorc/Constants.h"
-#include "c/rorc/aux.h"
-#include "c/rorc/rorc_macros.h"
 #include "ExceptionInternal.h"
 #include "RORC/RegisterReadWriteInterface.h"
 
+using namespace std::chrono_literals;
 namespace b = boost;
+namespace chrono = std::chrono;
 
 /// Throws the given exception if the given status code is not equal to RORC_STATUS_OK
 #define THROW_IF_BAD_STATUS(_status_code, _exception) \
@@ -29,6 +33,44 @@ namespace b = boost;
 #define ADD_ERRINFO(_status_code, _err_message) \
     << ErrorInfo::Message(_err_message) \
     << ErrorInfo::StatusCode(_status_code)
+
+namespace
+{
+// TODO Get rid of this
+void elapsed(struct timeval *tv2, struct timeval *tv1,
+             int *dsec, int *dusec){
+  *dsec = tv2->tv_sec - tv1->tv_sec;
+  *dusec = tv2->tv_usec - tv1->tv_usec;
+  if (*dusec < 0){
+    (*dsec)--;
+    *dusec += 1000000;
+  }
+}
+
+int logi2(unsigned int number){
+  int i;
+  unsigned int mask = 0x80000000;
+
+  for (i = 0; i < 32; i++){
+    if (number & mask)
+      break;
+    mask = mask >> 1;
+  }
+
+  return (31 - i);
+}
+
+int roundPowerOf2(int number){
+  int logNum;
+  logNum = logi2(number);
+  return (1 << logNum);
+}
+
+// Translations of old macros
+auto ST_DEST = [](auto fw) { return ((unsigned short)((fw) & 0xf)); };
+auto mask = [](auto a, auto b) { return a & b; };
+auto incr15 = [](auto a) { return (((a) + 1) & 0xf); };
+} // Anonymous namespace
 
 namespace AliceO2
 {
@@ -424,13 +466,6 @@ void Crorc::stopDataReceiver()
 }
 
 
-void Crorc::ddlSendCommand(
-                   int             dest,
-                   uint32_t           command,
-                   int             transid,
-                   uint32_t           param,
-                   long long int   time)
-
 /* ddlSendCommand sends one command to the given link.
  * Parameters: dev      pointer to Rorc device. It defines the link
  *                      where the command will be sent
@@ -449,7 +484,7 @@ void Crorc::ddlSendCommand(
  *    RORC_TIMEOUT     (-64)   if the command can not be sent in timeout.
  *    RORC_LINK_NOT_ON (-4)    if destination > 1 and the link is not on
  */
-
+void Crorc::ddlSendCommand(int dest, uint32_t command, int transid, uint32_t param, long long int time)
 {
   uint32_t com;
   int destination;
@@ -476,7 +511,7 @@ void Crorc::ddlSendCommand(
   }
 
   if (time && (i == time)) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Timed out sending DDL command"));
+    BOOST_THROW_EXCEPTION(TimeoutException() << ErrorInfo::Message("Timed out sending DDL command"));
   }
 
   putCommandRegister(com);
@@ -499,7 +534,7 @@ void Crorc::ddlWaitStatus(long long int timeout)
       return;
     }
   }
-  BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Timed out waiting on DDL"));
+  BOOST_THROW_EXCEPTION(TimeoutException() << ErrorInfo::Message("Timed out waiting on DDL"));
 }
 
 stword_t Crorc::ddlReadStatus()
@@ -728,7 +763,7 @@ void Crorc::ddlResetSiu(int print, int cycle, long long int time, const DiuConfi
   while (trial > 0){
     trial--;
     try {
-      usleep(10000);   // sleep 10 msec
+      std::this_thread::sleep_for(10ms);
 
       transid = incr15(transid);
       stword_t stword = ddlReadDiu(transid, time);
@@ -797,26 +832,19 @@ void Crorc::resetCommand(int option, const DiuConfig& diuConfig){
 /* try to empty D-RORC's data FIFOs
                empty_time:  time-out value in usecs
  */
-void Crorc::emptyDataFifos(int empty_time)
+void Crorc::emptyDataFifos(int timeoutMicroseconds)
 {
-  struct timeval start_tv, now_tv;
-  int dsec, dusec;
-  double dtime;
-  gettimeofday(&start_tv, NULL);
-  dtime = 0;
-  while (dtime < empty_time){
+  auto endTime = chrono::steady_clock::now() + chrono::microseconds(timeoutMicroseconds);
+
+  while (chrono::steady_clock::now() < endTime){
     if (!checkRxData()) {
       return;
     }
-
     write(Rorc::C_CSR, (uint32_t) Rorc::DRORC_CMD_CLEAR_FIFOS);
-    gettimeofday(&now_tv, NULL);
-    elapsed(&now_tv, &start_tv, &dsec, &dusec);
-    dtime = (double)dsec * 1000000 + (double)dusec;
   }
 
   if (checkRxData()) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Timed out emptying data FIFOs"));
+    BOOST_THROW_EXCEPTION(TimeoutException() << ErrorInfo::Message("Timed out emptying data FIFOs"));
   }
 }
 
@@ -843,14 +871,14 @@ void Crorc::armDdl(int resetMask, const DiuConfig& diuConfig)
     reset(Rorc::Reset::RORC);
     reset(Rorc::Reset::DIU);
     reset(Rorc::Reset::SIU);
-    usleep(100000);
+    std::this_thread::sleep_for(100ms);
     assertLinkUp();
     emptyDataFifos(100000);
 
     reset(Rorc::Reset::SIU);
     reset(Rorc::Reset::DIU);
     reset(Rorc::Reset::RORC);
-    usleep(100000);
+    std::this_thread::sleep_for(100ms);
     assertLinkUp();
   }
   if (resetMask & Rorc::Reset::DIU) {
@@ -868,17 +896,18 @@ auto Crorc::initDiuVersion() -> DiuConfig
 {
   DiuConfig diuConfig;
 
+  // TODO Clean up timing stuff (replace with chrono)
   struct timeval tv1, tv2;
   int dsec, dusec;
   double dtime, max_loop;
   int i;
 
   max_loop = 1000000;
-  gettimeofday(&tv1, NULL);
+  gettimeofday(&tv1, nullptr);
 
   for (i = 0; i < max_loop; i++){};
 
-  gettimeofday(&tv2, NULL);
+  gettimeofday(&tv2, nullptr);
   elapsed(&tv2, &tv1, &dsec, &dusec);
   dtime = (double)dsec * 1000000 + (double)dusec;
   diuConfig.loopPerUsec = (double)max_loop/dtime;
@@ -889,13 +918,13 @@ auto Crorc::initDiuVersion() -> DiuConfig
 
   /* calibrate PCI loop time for time-outs */
   max_loop = 1000;
-  gettimeofday(&tv1, NULL);
+  gettimeofday(&tv1, nullptr);
 
   for (i = 0; i < max_loop; i++) {
     (void) checkRxStatus(); // XXX Cast to void to explicitly discard returned value
   }
 
-  gettimeofday(&tv2, NULL);
+  gettimeofday(&tv2, nullptr);
   elapsed(&tv2, &tv1, &dsec, &dusec);
   dtime = (double)dsec * 1000000 + (double)dusec;
   diuConfig.pciLoopPerUsec = (double)max_loop/dtime;

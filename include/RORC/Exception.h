@@ -32,6 +32,7 @@ struct NamedMutexLockException : virtual LockException {};
 struct DeviceFinderException : virtual Exception {};
 struct SharedStateException : virtual Exception {};
 struct SharedObjectNotFoundException : virtual Exception {};
+struct TimeoutException : virtual Exception {};
 
 // C-RORC exception definitions
 struct CrorcException : virtual Exception {};
