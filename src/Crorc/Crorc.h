@@ -11,7 +11,7 @@
 #include "RORC/ParameterTypes/GeneratorPattern.h"
 #include "RORC/RegisterReadWriteInterface.h"
 #include "RxFreeFifoState.h"
-#include "c/rorc/stword.h"
+#include "StWord.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -76,12 +76,12 @@ class Crorc
     /// Send a command to the SIU
     /// \param command The command to send to the SIU. These are probably the macros under 'interface commands' in
     ///   the header ddl_def.h
-    void siuCommand(int command, const DiuConfig& diuConfig);
+    void siuCommand(int command);
 
     /// Send a command to the DIU
     /// \param command The command to send to the SIU. These are probably the macros under 'interface commands' in
     ///   the header ddl_def.h
-    void diuCommand(int command, const DiuConfig& diuConfig);
+    void diuCommand(int command);
 
     /// Checks if the C-RORC's Free FIFO is empty
     bool isFreeFifoEmpty();
@@ -151,17 +151,17 @@ class Crorc
       bar.writeRegister(index, value);
     }
 
-    void ddlResetSiu(int print, int cycle, long long int time, const DiuConfig& diuConfig);
+    void ddlResetSiu(int print, int cycle, long long int time);
     void ddlSendCommand(int dest, uint32_t command, int transid, uint32_t param, long long int time);
     void ddlWaitStatus(long long int timeout);
-    stword_t ddlReadStatus();
-    stword_t ddlReadDiu(int transid, long long int time);
-    stword_t ddlReadSiu(int transid, long long int time);
-    stword_t ddlReadCTSTW(int transid, int destination, long long int time);
+    StWord ddlReadStatus();
+    StWord ddlReadDiu(int transid, long long int time);
+    StWord ddlReadSiu(int transid, long long int time);
+    StWord ddlReadCTSTW(int transid, int destination, long long int time);
 //    void ddlLinkUp(int master, int print, int stop, long long int time, const DiuConfig& diuConfig);
 //    void ddlLinkUp_NEW(int master, int print, int stop, long long int time, const DiuConfig& diuConfig);
     void emptyDataFifos(int timeoutMicroseconds);
-    stword_t ddlSetSiuLoopBack(const DiuConfig& diuConfig);
+    StWord ddlSetSiuLoopBack(const DiuConfig& diuConfig);
 
     void ddlInterpretIFSTW(uint32_t ifstw, const char *pref, const char *suff);
 };

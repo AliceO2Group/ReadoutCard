@@ -27,17 +27,6 @@ using namespace std::literals;
 namespace AliceO2 {
 namespace Rorc {
 
-/// Throws the given exception if the given status code is not equal to RORC_STATUS_OK
-#define THROW_IF_BAD_STATUS(_status_code, _exception) \
-  if (_status_code != Rorc::RORC_STATUS_OK) { \
-    BOOST_THROW_EXCEPTION((_exception)); \
-  }
-
-/// Adds errinfo using the given status code and error message
-#define ADD_ERRINFO(_status_code, _err_message) \
-    << ErrorInfo::Message(_err_message) \
-    << ErrorInfo::StatusCode(_status_code)
-
 CrorcChannelMaster::CrorcChannelMaster(const Parameters& parameters)
     : ChannelMasterPdaBase(parameters, allowedChannels(), sizeof(ReadyFifo)), //
     mPageSize(parameters.getDmaPageSize().get_value_or(8*1024)), // 8 kB default for uniformity with CRU
@@ -144,8 +133,8 @@ void CrorcChannelMaster::startPendingDma(SuperpageQueueEntry& entry)
 
       // Clearing SIU/DIU status.
       getCrorc().assertLinkUp();
-      getCrorc().siuCommand(Ddl::RandCIFST, mDiuConfig);
-      getCrorc().diuCommand(Ddl::RandCIFST, mDiuConfig);
+      getCrorc().siuCommand(Ddl::RandCIFST);
+      getCrorc().diuCommand(Ddl::RandCIFST);
 
       // RDYRX command to FEE
       getCrorc().startTrigger(mDiuConfig);
@@ -247,8 +236,8 @@ void CrorcChannelMaster::startDataGenerator()
     getCrorc().setSiuLoopback(mDiuConfig);
     std::this_thread::sleep_for(100ms); // XXX Why???
     getCrorc().assertLinkUp();
-    getCrorc().siuCommand(Ddl::RandCIFST, mDiuConfig);
-    getCrorc().diuCommand(Ddl::RandCIFST, mDiuConfig);
+    getCrorc().siuCommand(Ddl::RandCIFST);
+    getCrorc().diuCommand(Ddl::RandCIFST);
   }
 
   getCrorc().startDataGenerator(mGeneratorMaximumEvents);
@@ -262,8 +251,8 @@ void CrorcChannelMaster::startDataReceiving()
   if (LoopbackMode::Siu == mLoopbackMode) {
     deviceResetChannel(ResetLevel::RorcDiuSiu);
     getCrorc().assertLinkUp();
-    getCrorc().siuCommand(Ddl::RandCIFST, mDiuConfig);
-    getCrorc().diuCommand(Ddl::RandCIFST, mDiuConfig);
+    getCrorc().siuCommand(Ddl::RandCIFST);
+    getCrorc().diuCommand(Ddl::RandCIFST);
   }
 
   getCrorc().resetCommand(Rorc::Reset::FF, mDiuConfig);

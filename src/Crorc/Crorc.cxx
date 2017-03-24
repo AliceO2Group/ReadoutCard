@@ -8,10 +8,12 @@
 #include "Crorc.h"
 #include <chrono>
 #include <cstdint>
+#include <fstream>
 #include <memory>
 #include <stdexcept>
 #include <sys/time.h>
 #include <thread>
+#include <vector>
 #include <unistd.h>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
@@ -20,6 +22,7 @@
 #include "RORC/RegisterReadWriteInterface.h"
 
 using namespace std::chrono_literals;
+using std::this_thread::sleep_for;
 namespace b = boost;
 namespace chrono = std::chrono;
 
@@ -37,39 +40,40 @@ namespace chrono = std::chrono;
 namespace
 {
 // TODO Get rid of this
-void elapsed(struct timeval *tv2, struct timeval *tv1,
-             int *dsec, int *dusec){
+void elapsed(struct timeval *tv2, struct timeval *tv1, int *dsec, int *dusec)
+{
   *dsec = tv2->tv_sec - tv1->tv_sec;
   *dusec = tv2->tv_usec - tv1->tv_usec;
-  if (*dusec < 0){
+  if (*dusec < 0) {
     (*dsec)--;
     *dusec += 1000000;
   }
 }
 
-int logi2(unsigned int number){
+int logi2(unsigned int number)
+{
   int i;
   unsigned int mask = 0x80000000;
 
-  for (i = 0; i < 32; i++){
-    if (number & mask)
+  for (i = 0; i < 32; i++) {
+    if (number & mask) {
       break;
+    }
     mask = mask >> 1;
   }
 
   return (31 - i);
 }
 
-int roundPowerOf2(int number){
-  int logNum;
-  logNum = logi2(number);
-  return (1 << logNum);
+int roundPowerOf2(int number)
+{
+  return (1 << logi2(number));
 }
 
 // Translations of old macros
-auto ST_DEST = [](auto fw) { return ((unsigned short)((fw) & 0xf)); };
-auto mask = [](auto a, auto b) { return a & b; };
-auto incr15 = [](auto a) { return (((a) + 1) & 0xf); };
+auto ST_DEST = [](auto fw) {return ((unsigned short)((fw) & 0xf));};
+auto mask = [](auto a, auto b) {return a & b;};
+auto incr15 = [](auto a) {return (((a) + 1) & 0xf);};
 } // Anonymous namespace
 
 namespace AliceO2
@@ -108,129 +112,101 @@ constexpr uint32_t ADDRESS_END = 0x01460000;
 constexpr uint32_t BLOCK_SIZE = 0x010000;
 constexpr size_t MAX_WORDS = 4616222;
 
-unsigned readStatus(RegisterReadWriteInterface& channel, int sleept = 1)
+/// Writes and sleeps
+template <typename SleepTime>
+void writeSleep(RegisterReadWriteInterface& bar0, int index, int value, SleepTime sleepTime)
 {
-  unsigned stat;
-
-  channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_1);
-  usleep(sleept);
-  stat = channel.readRegister(REGISTER_ADDRESS);
-
-  return (stat);
+  bar0.writeRegister(index, value);
+  sleep_for(sleepTime);
 }
 
-uint32_t init(RegisterReadWriteInterface& channel, uint32_t address, int sleept = 10)
+/// Writes to F_IFDSR and sleeps
+template <typename SleepTime = std::chrono::microseconds>
+void writeStatusSleep(RegisterReadWriteInterface& bar0, int value, SleepTime sleepTime = 10us)
+{
+  writeSleep(bar0, Rorc::F_IFDSR, value, sleepTime);
+}
+
+unsigned readStatus(RegisterReadWriteInterface& bar0)
+{
+  writeStatusSleep(bar0, MAGIC_VALUE_1, 1us);
+  return bar0.readRegister(REGISTER_ADDRESS);
+}
+
+uint32_t init(RegisterReadWriteInterface& bar0, uint32_t address)
 {
   // Clear Status register
-  channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_2);
-  usleep(10*sleept);
-
+  writeStatusSleep(bar0, MAGIC_VALUE_2, 100us);
   // Set ASYNCH mode (Configuration Register 0xBDDF)
-  channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_3);
-  usleep(sleept);
-  channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_4);
-  usleep(sleept);
-  channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_5);
-  usleep(sleept);
-
+  writeStatusSleep(bar0, MAGIC_VALUE_3);
+  writeStatusSleep(bar0, MAGIC_VALUE_4);
+  writeStatusSleep(bar0, MAGIC_VALUE_5);
   // Read Status register
-  channel.writeRegister(REGISTER_DATA_STATUS, address);
-  usleep(sleept);
-  channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_6);
-  usleep(sleept);
-
-  uint32_t stat = readStatus(channel);
-  return stat;
+  writeStatusSleep(bar0, address, 10us);
+  writeStatusSleep(bar0, MAGIC_VALUE_6);
+  return readStatus(bar0);
 }
 
-void checkStatus(RegisterReadWriteInterface& channel, int timeout = MAX_WAIT)
+void checkStatus(RegisterReadWriteInterface& channel)
 {
-  unsigned stat;
-  int i = 0;
-
-  while (1)
-  {
-    stat = readStatus(channel);
-    if (stat == MAGIC_VALUE_0) {
-      break;
+  for (int i = 0; i < MAX_WAIT; ++i) {
+    if (readStatus(channel) == MAGIC_VALUE_0) {
+      return;
     }
-    if (timeout && (++i >= timeout)) {
-      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Bad flash status"));
-    }
-    usleep(100);
+    sleep_for(100us);
   }
+  BOOST_THROW_EXCEPTION(TimeoutException() << ErrorInfo::Message("Bad flash status"));
 }
 
-void unlockBlock(RegisterReadWriteInterface& channel, uint32_t address, int sleept = 10)
+void unlockBlock(RegisterReadWriteInterface& bar0, uint32_t address)
 {
-  channel.writeRegister(REGISTER_DATA_STATUS, address);
-  usleep(sleept);
-
-  channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_4);
-  usleep(sleept);
-
-  channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_7);
-  usleep(sleept);
-
-  checkStatus(channel);
+//  writeStatusSequence(bar0, 10us, {MAGIC_VALUE_3, address, MAGIC_VALUE_4, MAGIC_VALUE_7});
+  writeStatusSleep(bar0, MAGIC_VALUE_3);
+  writeStatusSleep(bar0, address);
+  writeStatusSleep(bar0, MAGIC_VALUE_4);
+  writeStatusSleep(bar0, MAGIC_VALUE_7);
+  checkStatus(bar0);
 }
 
-void eraseBlock(RegisterReadWriteInterface& channel, uint32_t address, int sleept = 10)
+void eraseBlock(RegisterReadWriteInterface& bar0, uint32_t address)
 {
-  channel.writeRegister(REGISTER_DATA_STATUS, address);
-  usleep(sleept);
-
-  channel.writeRegister(REGISTER_DATA_STATUS, address);
-  usleep(sleept);
-
-  channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_8);
-  usleep(sleept);
-
-  channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_7);
-  usleep(sleept);
-
-  checkStatus(channel);
+  writeStatusSleep(bar0, address);
+  writeStatusSleep(bar0, address);
+  writeStatusSleep(bar0, MAGIC_VALUE_8);
+  writeStatusSleep(bar0, MAGIC_VALUE_7);
+  checkStatus(bar0);
 }
 
-void writeWord(RegisterReadWriteInterface& channel, uint32_t address, int value, int sleept)
+void writeWord(RegisterReadWriteInterface& bar0, uint32_t address, int value)
 {
-  channel.writeRegister(REGISTER_DATA_STATUS, address);
-  usleep(sleept);
-  channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_9);
-  usleep(sleept);
-  channel.writeRegister(REGISTER_DATA_STATUS, value);
-  usleep(sleept);
-  checkStatus(channel);
+  writeStatusSleep(bar0, address);
+  writeStatusSleep(bar0, MAGIC_VALUE_9);
+  writeStatusSleep(bar0, value);
+  checkStatus(bar0);
 }
 
 /// Reads a 16-bit flash word and writes it into the given buffer
-void readWord(RegisterReadWriteInterface& channel, uint32_t address, char *data, int sleept = 10)
+void readWord(RegisterReadWriteInterface& bar0, uint32_t address, char *data)
 {
-  channel.writeRegister(REGISTER_DATA_STATUS, address);
-  usleep(sleept);
-  channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_10);
-  usleep(sleept);
-  uint32_t stat = readStatus(channel, sleept);
-  *data = (stat & 0xFF00) >> 8;
-  *(data+1) = stat & 0xFF;
+  writeStatusSleep(bar0, address);
+  writeStatusSleep(bar0, MAGIC_VALUE_10);
+
+  uint32_t stat = readStatus(bar0);
+  data[0] = (stat & 0xFF00) >> 8;
+  data[1] = stat & 0xFF;
 }
 
-void readRange(RegisterReadWriteInterface& channel, int addressFlash, int wordNumber, std::ostream& out) {
+void readRange(RegisterReadWriteInterface& bar0, int addressFlash, int wordNumber, std::ostream& out) {
   for (int i = addressFlash; i < (addressFlash + wordNumber); ++i) {
     uint32_t address = i;
     address = 0x01000000 | address;
 
-    channel.writeRegister(REGISTER_DATA_STATUS, address);
-    usleep(50);
+    writeStatusSleep(bar0, address, 50us);
+    writeStatusSleep(bar0, MAGIC_VALUE_10, 50us);
+    writeStatusSleep(bar0, MAGIC_VALUE_1, 50us);
 
-    channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_10);
-    usleep(50);
-
-    channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_1);
-    usleep(50);
-
-    uint32_t status = channel.readRegister(REGISTER_ADDRESS);
-    uint32_t status2 = channel.readRegister(REGISTER_READY);
+    uint32_t status = bar0.readRegister(REGISTER_ADDRESS);
+    uint32_t status2 = bar0.readRegister(REGISTER_READY);
 
     out << b::format("%5u  %d\n") % status % status2;
   }
@@ -241,7 +217,7 @@ void wait(RegisterReadWriteInterface& channel) {
   while (status == 0) {
     status = channel.readRegister(REGISTER_READY);
   }
-  usleep(1);
+  sleep_for(1us);
 }
 } // Anonymous namespace
 } // namespace Flash
@@ -257,19 +233,16 @@ void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath,
     const std::atomic<bool>* interrupt)
 {
   using boost::format;
-
   struct InterruptedException : public std::exception {};
 
   auto checkInterrupt = [&]{
-    if (interrupt != nullptr) {
-      if (interrupt->load(std::memory_order_relaxed)) {
-        throw InterruptedException();
-      }
-    };
+    if (interrupt != nullptr && interrupt->load(std::memory_order_relaxed)) {
+      throw InterruptedException();
+    }
   };
 
-  auto writeWait = [&](int index, int value) {
-    channel.writeRegister(index, value);
+  auto writeStatusWait = [&](int value) {
+    channel.writeRegister(Flash::REGISTER_DATA_STATUS, value);
     Flash::wait(channel);
   };
 
@@ -279,15 +252,14 @@ void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath,
     return value;
   };
 
-  try {
-    // Open file
-    std::unique_ptr<FILE, void (*)(FILE*)> file(fopen(dataFilePath.c_str(), "r"), [](FILE* f) {fclose(f);});
-    if (file.get() == nullptr) {
-      BOOST_THROW_EXCEPTION(Exception()
-          << ErrorInfo::Message("Failed to open file")
-          << ErrorInfo::FileName(dataFilePath));
-    }
+  // Open file
+  std::ifstream ifstream { dataFilePath };
+  if (!ifstream.is_open()) {
+    BOOST_THROW_EXCEPTION(
+        Exception() << ErrorInfo::Message("Failed to open file") << ErrorInfo::FileName(dataFilePath));
+  }
 
+  try {
     // Initiate flash: clear status register, set asynch mode, read status reg.
     out << "Initializing flash\n";
     uint64_t status = Flash::init(channel, Flash::ADDRESS_START);
@@ -325,56 +297,43 @@ void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath,
 
     while (stop != 1) {
       checkInterrupt();
-
-      // set address WRITE IN THE FLASH
-      writeWait(Flash::REGISTER_DATA_STATUS, address);
-
-      // SET Buffer Program
-      writeWait(Flash::REGISTER_DATA_STATUS, Flash::MAGIC_VALUE_11);
-
-      // READ STATUS REGISTER
+      writeStatusWait(address);
+      // Set buffer program
+      writeStatusWait(Flash::MAGIC_VALUE_11);
       Flash::checkStatus(channel);
-
       // Write 32 words (31+1) (31 0x1f)
-      writeWait(Flash::REGISTER_DATA_STATUS, Flash::MAGIC_VALUE_12);
+      writeStatusWait(Flash::MAGIC_VALUE_12);
 
       // Read 32 words from file
       // Every word is on its own 'line' in the file
       for (int j = 0; j < 32; j++) {
         checkInterrupt();
 
-        constexpr int BYTES = 10;
-        char data[BYTES];
-
-        if (fgets(data, BYTES, file.get()) == NULL) {
+        int hex;
+        if (!(ifstream >> hex)) {
           stop = 1;
           break;
         }
 
-        int hexValue = Flash::MAGIC_VALUE_13;
-        int hex = std::atoi(data);
-        hexValue += hex;
-
-        writeWait(Flash::REGISTER_DATA_STATUS, address);
-        writeWait(Flash::REGISTER_DATA_STATUS, hexValue);
+        writeStatusWait(address);
+        writeStatusWait(Flash::MAGIC_VALUE_13 + hex);
 
         address++;
         numberOfLinesRead++;
         if (numberOfLinesRead % 1000 == 0) {
-          constexpr float MAX_WORDS { Flash::MAX_WORDS };
-          float perc = ((float) numberOfLinesRead / MAX_WORDS) * 100.0;
+          float perc = ((float) numberOfLinesRead / Flash::MAX_WORDS) * 100.0;
           out << format("\r  Progress  %1.1f%%") % perc << std::flush;
         }
       }
 
-      writeWait(Flash::REGISTER_DATA_STATUS, Flash::MAGIC_VALUE_7);
-      writeWait(Flash::REGISTER_DATA_STATUS, Flash::MAGIC_VALUE_1);
+      writeStatusWait(Flash::MAGIC_VALUE_7);
+      writeStatusWait(Flash::MAGIC_VALUE_1);
 
       status = channel.readRegister(Flash::REGISTER_ADDRESS);
       while (status != 0x80) {
         checkInterrupt();
 
-        writeWait(Flash::REGISTER_DATA_STATUS, Flash::MAGIC_VALUE_1);
+        writeStatusWait(Flash::MAGIC_VALUE_1);
         status = readWait(Flash::REGISTER_ADDRESS);
 
         maxCount++;
@@ -389,7 +348,7 @@ void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath,
     out << format("\nCompleted programming %d words\n") % numberOfLinesRead;
     // READ STATUS REG
     channel.writeRegister(Flash::REGISTER_DATA_STATUS, Flash::MAGIC_VALUE_6);
-    usleep(1);
+    sleep_for(1us);
     Flash::checkStatus(channel);
   } catch (const InterruptedException& e) {
     out << "Flash programming interrupted\n";
@@ -399,42 +358,29 @@ void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath,
 int Crorc::armDataGenerator(uint32_t initEventNumber, uint32_t initDataWord, GeneratorPattern::type dataPattern,
     int dataSize, int seed)
 {
-  int roundedLen = -1;
   int eventLen = dataSize / 4;
 
-  {
-//    uint32_t           initEventNumber
-//    uint32_t           initDataWord,
-//    int             dataPattern,
-//    int             eventLen,
-//    int             seed,
-//    int             *rounded_len
-
-    unsigned long blockLen = 0;
-
-    if ((eventLen < 1) || (eventLen >= 0x00080000)) {
-      BOOST_THROW_EXCEPTION(CrorcArmDataGeneratorException()
-          << ErrorInfo::Message("Failed to arm data generator; invalid event length")
-          << ErrorInfo::GeneratorEventLength(eventLen));
-    }
-
-    roundedLen = eventLen;
-
-    if (seed) {
-      /* round to the nearest lower power of two */
-      roundedLen = roundPowerOf2(eventLen);
-      blockLen = ((roundedLen - 1) << 4) | dataPattern;
-      blockLen |= 0x80000000;
-      write(Rorc::C_DG2, seed);
-    }
-    else{
-      blockLen = ((eventLen - 1) << 4) | dataPattern;
-      write(Rorc::C_DG2, initDataWord);
-    }
-
-    write(Rorc::C_DG1, blockLen);
-    write(Rorc::C_DG3, initEventNumber);
+  if ((eventLen < 1) || (eventLen >= 0x00080000)) {
+    BOOST_THROW_EXCEPTION(CrorcArmDataGeneratorException()
+        << ErrorInfo::Message("Failed to arm data generator; invalid event length")
+        << ErrorInfo::GeneratorEventLength(eventLen));
   }
+
+  int roundedLen = eventLen;
+  unsigned long blockLen = 0;
+  if (seed) {
+    /* round to the nearest lower power of two */
+    roundedLen = roundPowerOf2(eventLen);
+    blockLen = ((roundedLen - 1) << 4) | dataPattern;
+    blockLen |= 0x80000000;
+    write(Rorc::C_DG2, seed);
+  } else {
+    blockLen = ((eventLen - 1) << 4) | dataPattern;
+    write(Rorc::C_DG2, initDataWord);
+  }
+
+  write(Rorc::C_DG1, blockLen);
+  write(Rorc::C_DG3, initEventNumber);
 
   return roundedLen;
 }
@@ -465,7 +411,6 @@ void Crorc::stopDataReceiver()
   }
 }
 
-
 /* ddlSendCommand sends one command to the given link.
  * Parameters: dev      pointer to Rorc device. It defines the link
  *                      where the command will be sent
@@ -492,14 +437,12 @@ void Crorc::ddlSendCommand(int dest, uint32_t command, int transid, uint32_t par
   if (dest == -1) {
     com = command;
     destination = com & 0xf;
-  }
-  else {
+  } else {
     destination = dest & 0xf;
-    com = destination + ((command & 0xf)<<4) +
-      ((transid & 0xf)<<8) + ((param & 0x7ffff)<<12);
+    com = destination + ((command & 0xf) << 4) + ((transid & 0xf) << 8) + ((param & 0x7ffff) << 12);
   }
 
-  if (destination > Ddl::Destination::DIU){
+  if (destination > Ddl::Destination::DIU) {
     assertLinkUp();
   }
 
@@ -537,54 +480,48 @@ void Crorc::ddlWaitStatus(long long int timeout)
   BOOST_THROW_EXCEPTION(TimeoutException() << ErrorInfo::Message("Timed out waiting on DDL"));
 }
 
-stword_t Crorc::ddlReadStatus()
+StWord Crorc::ddlReadStatus()
 {
-  stword_t stw;
   /* call ddlWaitStatus() before this routine
      if status timeout is needed */
+  StWord stw;
   stw.stw = read(Rorc::C_DSR);
   //  printf("ddlReadStatus: status = %08lx\n", stw.stw);
-
   return stw;
 }
 
-stword_t Crorc::ddlReadDiu(int transid, long long int time)
+StWord Crorc::ddlReadDiu(int transid, long long int time)
 {
   /* prepare and send DDL command */
   int destination = Ddl::Destination::DIU;
   ddlSendCommand(destination, Rorc::RandCIFST, transid, 0, time);
   ddlWaitStatus(time);
-  stword_t stw = ddlReadStatus();
-  if (stw.part.code != Rorc::IFSTW ||
-      stw.part.trid != transid   ||
-      stw.part.dest != destination){
-    BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message("Unexpected DIU STW (not IFSTW)")
-        << ErrorInfo::StwExpected(b::str(b::format("0x00000%x%x%x") % transid % Rorc::IFSTW % destination))
-        << ErrorInfo::StwReceived(b::str(b::format("0x%08lx") % stw.stw)));
+  StWord stw = ddlReadStatus();
+  if (stw.part.code != Rorc::IFSTW || stw.part.trid != transid || stw.part.dest != destination) {
+    BOOST_THROW_EXCEPTION(
+        Exception() << ErrorInfo::Message("Unexpected DIU STW (not IFSTW)")
+            << ErrorInfo::StwExpected(b::str(b::format("0x00000%x%x%x") % transid % Rorc::IFSTW % destination))
+            << ErrorInfo::StwReceived(b::str(b::format("0x%08lx") % stw.stw)));
   }
 
   stw = ddlReadCTSTW(transid, destination, time); // XXX Not sure why we do this...
   return stw;
 }
 
-stword_t Crorc::ddlReadCTSTW(int transid, int destination, long long int time){
+StWord Crorc::ddlReadCTSTW(int transid, int destination, long long int time){
   ddlWaitStatus(time);
-  stword_t stw = ddlReadStatus();
-  if ((stw.part.code != Rorc::CTSTW &&
-       stw.part.code != Rorc::ILCMD &&
-       stw.part.code != Rorc::CTSTW_TO) ||
-       stw.part.trid != transid   ||
-      stw.part.dest != destination){
-    BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message("Unexpected STW (not CTSTW)")
+  StWord stw = ddlReadStatus();
+  if ((stw.part.code != Rorc::CTSTW && stw.part.code != Rorc::ILCMD && stw.part.code != Rorc::CTSTW_TO)
+      || stw.part.trid != transid || stw.part.dest != destination) {
+    BOOST_THROW_EXCEPTION(
+        Exception() << ErrorInfo::Message("Unexpected STW (not CTSTW)")
         << ErrorInfo::StwExpected(b::str(b::format("0x00000%x%x%x") % transid % Rorc::CTSTW % destination))
         << ErrorInfo::StwReceived(b::str(b::format("0x%08lx") % stw.stw)));
   }
   return stw;
 }
 
-stword_t Crorc::ddlReadSiu(int transid, long long int time)
+StWord Crorc::ddlReadSiu(int transid, long long int time)
 {
   /* prepare and send DDL command */
   int destination = Ddl::Destination::SIU;
@@ -592,26 +529,21 @@ stword_t Crorc::ddlReadSiu(int transid, long long int time)
 
   /* read and check the answer */
   ddlWaitStatus(time);
-  stword_t stw = ddlReadStatus();
-  if (stw.part.code != Rorc::IFSTW ||
-      stw.part.trid != transid   ||
-      stw.part.dest != destination){
-    BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message("Unexpected SIU STW (not IFSTW)")
-        << ErrorInfo::StwExpected(b::str(b::format("0x00000%x%x%x") % transid % Rorc::IFSTW % destination))
-        << ErrorInfo::StwReceived(b::str(b::format("0x%08lx") % stw.stw)));
+  StWord stw = ddlReadStatus();
+  if (stw.part.code != Rorc::IFSTW || stw.part.trid != transid || stw.part.dest != destination) {
+    BOOST_THROW_EXCEPTION(
+        Exception() << ErrorInfo::Message("Unexpected SIU STW (not IFSTW)")
+            << ErrorInfo::StwExpected(b::str(b::format("0x00000%x%x%x") % transid % Rorc::IFSTW % destination))
+            << ErrorInfo::StwReceived(b::str(b::format("0x%08lx") % stw.stw)));
   }
 
   stw = ddlReadStatus();
-  if ((stw.part.code != Rorc::CTSTW &&
-       stw.part.code != Rorc::ILCMD &&
-       stw.part.code != Rorc::CTSTW_TO) ||
-       stw.part.trid != transid   ||
-       stw.part.dest != destination){
-    BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message("Unexpected SIU STW (not CTSTW)")
-        << ErrorInfo::StwExpected(b::str(b::format("0x00000%x%x%x") % transid % Rorc::CTSTW % destination))
-        << ErrorInfo::StwReceived(b::str(b::format("0x%08lx") % stw.stw)));
+  if ((stw.part.code != Rorc::CTSTW && stw.part.code != Rorc::ILCMD && stw.part.code != Rorc::CTSTW_TO)
+      || stw.part.trid != transid || stw.part.dest != destination) {
+    BOOST_THROW_EXCEPTION(
+        Exception() << ErrorInfo::Message("Unexpected SIU STW (not CTSTW)")
+            << ErrorInfo::StwExpected(b::str(b::format("0x00000%x%x%x") % transid % Rorc::CTSTW % destination))
+            << ErrorInfo::StwReceived(b::str(b::format("0x%08lx") % stw.stw)));
   }
   return stw;
 }
@@ -679,7 +611,7 @@ void ddlInterpretIFSTW(uint32_t ifstw, const char *pref, const char *suff)
         printf("%sDIU port in Power On Reset state%s", pref, suff); break;
     }
 
-    int siuStatus = (status & Ddl::REMMASK) >> 15;
+    //int siuStatus = (status & Ddl::REMMASK) >> 15;
     // XXX investigate remoteStatus variable
     //printf("%sremote SIU/DIU port in %s state%s", pref, remoteStatus[siuStatus], suff);
   }
@@ -745,7 +677,7 @@ void ddlInterpretIFSTW(uint32_t ifstw, const char *pref, const char *suff)
   }
 }
 
-void Crorc::ddlResetSiu(int print, int cycle, long long int time, const DiuConfig& diuConfig)
+void Crorc::ddlResetSiu(int print, int cycle, long long int time)
 /* ddlResetSiu tries to reset the SIU.
  *             print  # if != 0 then print link status
  *             cycle  # of status checks
@@ -763,10 +695,10 @@ void Crorc::ddlResetSiu(int print, int cycle, long long int time, const DiuConfi
   while (trial > 0){
     trial--;
     try {
-      std::this_thread::sleep_for(10ms);
+      sleep_for(10ms);
 
       transid = incr15(transid);
-      stword_t stword = ddlReadDiu(transid, time);
+      StWord stword = ddlReadDiu(transid, time);
       stword.stw &= Ddl::STMASK;
 
       if (stword.stw & Diu::ERROR_BIT){
@@ -857,28 +789,26 @@ void Crorc::armDdl(int resetMask, const DiuConfig& diuConfig)
 
   auto reset = [&](uint32_t command){ resetCommand(command, diuConfig); };
 
-  auto pciLoopPerUsec = diuConfig.pciLoopPerUsec;
-
   TimeOut = Ddl::RESPONSE_TIME * diuConfig.pciLoopPerUsec;
 
   if (resetMask & Rorc::Reset::FEE){
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Command not allowed"));
   }
   if (resetMask & Rorc::Reset::SIU){
-    ddlResetSiu(0, 3, TimeOut, diuConfig);
+    ddlResetSiu(0, 3, TimeOut);
   }
   if (resetMask & Rorc::Reset::LINK_UP){
     reset(Rorc::Reset::RORC);
     reset(Rorc::Reset::DIU);
     reset(Rorc::Reset::SIU);
-    std::this_thread::sleep_for(100ms);
+    sleep_for(100ms);
     assertLinkUp();
     emptyDataFifos(100000);
 
     reset(Rorc::Reset::SIU);
     reset(Rorc::Reset::DIU);
     reset(Rorc::Reset::RORC);
-    std::this_thread::sleep_for(100ms);
+    sleep_for(100ms);
     assertLinkUp();
   }
   if (resetMask & Rorc::Reset::DIU) {
@@ -943,12 +873,12 @@ void Crorc::assertLinkUp()
   }
 }
 
-void Crorc::siuCommand(int command, const DiuConfig& diuConfig)
+void Crorc::siuCommand(int command)
 {
   ddlReadSiu(command, Ddl::RESPONSE_TIME);
 }
 
-void Crorc::diuCommand(int command, const DiuConfig& diuConfig)
+void Crorc::diuCommand(int command)
 {
   ddlReadDiu(command, Ddl::RESPONSE_TIME);
 }
@@ -991,14 +921,14 @@ void Crorc::startDataReceiver(uintptr_t readyFifoBusAddress)
   }
 }
 
-stword_t Crorc::ddlSetSiuLoopBack(const DiuConfig& diuConfig){
+StWord Crorc::ddlSetSiuLoopBack(const DiuConfig& diuConfig){
   long long int timeout = diuConfig.pciLoopPerUsec * Ddl::RESPONSE_TIME;
 
   /* check SIU fw version */
   ddlSendCommand(Ddl::Destination::SIU, Ddl::IFLOOP, 0, 0, timeout);
   ddlWaitStatus(timeout);
 
-  stword_t stword = ddlReadStatus();
+  StWord stword = ddlReadStatus();
   if (stword.part.code == Rorc::ILCMD){
     /* illegal command => old version => send TSTMODE for loopback */
     ddlSendCommand(Ddl::Destination::SIU, Ddl::TSTMODE, 0, 0, timeout);
@@ -1032,7 +962,7 @@ void Crorc::startTrigger(const DiuConfig& diuConfig)
   uint64_t timeout = Ddl::RESPONSE_TIME * diuConfig.pciLoopPerUsec;
   ddlSendCommand(Ddl::Destination::FEE, Fee::RDYRX, 0, 0, timeout);
   ddlWaitStatus(timeout);
-  stword_t stw = ddlReadStatus();
+  ddlReadStatus();
 }
 
 void Crorc::stopTrigger(const DiuConfig& diuConfig)
@@ -1042,7 +972,7 @@ void Crorc::stopTrigger(const DiuConfig& diuConfig)
   auto rorcStopTrigger = [&] {
     ddlSendCommand(Ddl::Destination::FEE, Fee::EOBTR, 0, 0, timeout);
     ddlWaitStatus(timeout);
-    stword_t stw = ddlReadStatus();
+    ddlReadStatus();
   };
 
   // Try stopping twice
@@ -1139,7 +1069,7 @@ void Crorc::startReadoutContinuous(RegisterReadWriteInterface& bar2)
   bar2.writeRegister(0x198/4, 0x0);
 }
 
-void Crorc::initReadoutTriggered(RegisterReadWriteInterface& bar2)
+void Crorc::initReadoutTriggered(RegisterReadWriteInterface&)
 {
   BOOST_THROW_EXCEPTION(std::runtime_error("not implemented"));
 }

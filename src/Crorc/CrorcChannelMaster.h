@@ -177,8 +177,6 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
     /// DMA page size
     const size_t mPageSize;
 
-    const bool mUseContinuousReadout;
-
     /// Reset level on initialization of channel
     const ResetLevel::type mInitialResetLevel;
 
@@ -214,11 +212,8 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
     /// Length of data written to each page
     const size_t mGeneratorDataSize;
 
-    /// Some timing parameter used during communications with the card
-    long long int mLoopPerUsec = 0;
-
-    /// Some timing parameters used during communications with the card
-    double mPciLoopPerUsec = 0;
+    /// Use continuous readout mode
+    const bool mUseContinuousReadout;
 
     Crorc::Crorc::DiuConfig mDiuConfig;
 };
