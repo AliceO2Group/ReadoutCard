@@ -18,14 +18,14 @@ namespace Crorc {
 
 /// Retrieve the serial number from the C-RORC's flash memory.
 /// Note that the BAR must be from channel 0, other channels do not have access to the flash.
-int getSerial(uintptr_t barAddress);
+int getSerial(RegisterReadWriteInterface& bar0);
 
 /// Program flash using given data file
-void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath, int addressFlash, std::ostream& out,
+void programFlash(RegisterReadWriteInterface& bar0, std::string dataFilePath, int addressFlash, std::ostream& out,
     const std::atomic<bool>* interrupt = nullptr);
 
 /// Read flash range
-void readFlashRange(RegisterReadWriteInterface& channel, int addressFlash, int wordNumber, std::ostream& out);
+void readFlashRange(RegisterReadWriteInterface& bar0, int addressFlash, int wordNumber, std::ostream& out);
 
 class Crorc
 {
@@ -58,7 +58,7 @@ class Crorc
     void stopDataGenerator();
 
     /// Starts data receiving
-    void startDataReceiver(uintptr_t readyFifoBusAddress, int rorcRevision);
+    void startDataReceiver(uintptr_t readyFifoBusAddress);
 
     /// Stops C-RORC data receiver
     void stopDataReceiver();

@@ -269,7 +269,7 @@ void CrorcChannelMaster::startDataReceiving()
   getCrorc().resetCommand(Rorc::Reset::FF, mDiuConfig);
   std::this_thread::sleep_for(10ms); /// XXX Give card some time to reset the FreeFIFO
   getCrorc().assertFreeFifoEmpty();
-  getCrorc().startDataReceiver(mReadyFifoAddressBus, mRorcRevision);
+  getCrorc().startDataReceiver(mReadyFifoAddressBus);
 }
 
 int CrorcChannelMaster::getSuperpageQueueCount()

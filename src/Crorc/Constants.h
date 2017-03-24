@@ -183,13 +183,13 @@ constexpr int RORC_DATA_BLOCK_NOT_ARRIVED      = 0;
 constexpr int RORC_NOT_END_OF_EVENT_ARRIVED    = 1;
 constexpr int RORC_LAST_BLOCK_OF_EVENT_ARRIVED = 2;
 
-constexpr int RORC_REVISION_PRORC  = 1;
-constexpr int RORC_REVISION_DRORC  = 2;
-constexpr int RORC_REVISION_INTEG  = 3;
-constexpr int RORC_REVISION_DRORC2 = 4;
-constexpr int RORC_REVISION_PCIEXP = 5;
-constexpr int RORC_REVISION_CHAN4  = 6;
-constexpr int RORC_REVISION_CRORC  = 7;
+//constexpr int RORC_REVISION_PRORC  = 1;
+//constexpr int RORC_REVISION_DRORC  = 2;
+//constexpr int RORC_REVISION_INTEG  = 3;
+//constexpr int RORC_REVISION_DRORC2 = 4;
+//constexpr int RORC_REVISION_PCIEXP = 5;
+//constexpr int RORC_REVISION_CHAN4  = 6;
+//constexpr int RORC_REVISION_CRORC  = 7;
 } // namespace Rorc
 
 /// DDL definitions

@@ -57,7 +57,7 @@ class ProgramListCards: public Program
         }
         catch (const Exception& e) {
           foundUninitialized = true;
-          cout << e.what() << '\n';
+          cout << "Could not get firmware version string: " << e.what() << '\n';
         }
 
         table << boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciAddress.toString()

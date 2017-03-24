@@ -220,16 +220,7 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
     /// Some timing parameters used during communications with the card
     double mPciLoopPerUsec = 0;
 
-    /// Not sure
-    int mRorcRevision = 0;
-
-    /// Not sure
-    int mSiuVersion = 0;
-
     Crorc::Crorc::DiuConfig mDiuConfig;
-
-    /// Not sure
-    int mDiuVersion = 0;
 };
 
 } // namespace Rorc

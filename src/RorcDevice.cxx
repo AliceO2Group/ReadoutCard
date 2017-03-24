@@ -218,7 +218,7 @@ int32_t crorcGetSerial(Pda::PdaDevice::PdaPciDevice pciDevice)
 {
   int channel = 0; // Must use BAR 0 to access flash
   Pda::PdaBar pdaBar(pciDevice, channel);
-  uint32_t serial = Crorc::getSerial(pdaBar.getUserspaceAddress());
+  uint32_t serial = Crorc::getSerial(pdaBar);
   return serial;
 }
 

@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
+#include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
 #include "Crorc/Constants.h"
 #include "c/rorc/aux.h"
@@ -40,9 +41,9 @@ namespace Flash
 namespace
 {
 constexpr int MAX_WAIT = 1000000;
-constexpr int DATA_STATUS = Rorc::F_IFDSR;
-constexpr int ADDRESS = Rorc::F_IADR;
-constexpr int READY = Rorc::F_LRD;
+constexpr int REGISTER_DATA_STATUS = Rorc::F_IFDSR;
+constexpr int REGISTER_ADDRESS = Rorc::F_IADR;
+constexpr int REGISTER_READY = Rorc::F_LRD;
 
 // TODO figure out what these are/do
 constexpr int MAGIC_VALUE_0  = 0x80;
@@ -69,32 +70,31 @@ unsigned readStatus(RegisterReadWriteInterface& channel, int sleept = 1)
 {
   unsigned stat;
 
-  channel.writeRegister(DATA_STATUS, MAGIC_VALUE_1);
+  channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_1);
   usleep(sleept);
-  stat = channel.readRegister(ADDRESS);
+  stat = channel.readRegister(REGISTER_ADDRESS);
 
   return (stat);
 }
 
-uint32_t init(RegisterReadWriteInterface& channel, int sleept = 10)
+uint32_t init(RegisterReadWriteInterface& channel, uint32_t address, int sleept = 10)
 {
   // Clear Status register
-  channel.writeRegister(DATA_STATUS, MAGIC_VALUE_2);
+  channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_2);
   usleep(10*sleept);
 
   // Set ASYNCH mode (Configuration Register 0xBDDF)
-  channel.writeRegister(DATA_STATUS, MAGIC_VALUE_3);
+  channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_3);
   usleep(sleept);
-  channel.writeRegister(DATA_STATUS, MAGIC_VALUE_4);
+  channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_4);
   usleep(sleept);
-  channel.writeRegister(DATA_STATUS, MAGIC_VALUE_5);
+  channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_5);
   usleep(sleept);
 
   // Read Status register
-  uint32_t address = 0x01000000;
-  channel.writeRegister(DATA_STATUS, address);
+  channel.writeRegister(REGISTER_DATA_STATUS, address);
   usleep(sleept);
-  channel.writeRegister(DATA_STATUS, MAGIC_VALUE_6);
+  channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_6);
   usleep(sleept);
 
   uint32_t stat = readStatus(channel);
@@ -121,13 +121,13 @@ void checkStatus(RegisterReadWriteInterface& channel, int timeout = MAX_WAIT)
 
 void unlockBlock(RegisterReadWriteInterface& channel, uint32_t address, int sleept = 10)
 {
-  channel.writeRegister(DATA_STATUS, address);
+  channel.writeRegister(REGISTER_DATA_STATUS, address);
   usleep(sleept);
 
-  channel.writeRegister(DATA_STATUS, MAGIC_VALUE_4);
+  channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_4);
   usleep(sleept);
 
-  channel.writeRegister(DATA_STATUS, MAGIC_VALUE_7);
+  channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_7);
   usleep(sleept);
 
   checkStatus(channel);
@@ -135,16 +135,16 @@ void unlockBlock(RegisterReadWriteInterface& channel, uint32_t address, int slee
 
 void eraseBlock(RegisterReadWriteInterface& channel, uint32_t address, int sleept = 10)
 {
-  channel.writeRegister(DATA_STATUS, address);
+  channel.writeRegister(REGISTER_DATA_STATUS, address);
   usleep(sleept);
 
-  channel.writeRegister(DATA_STATUS, address);
+  channel.writeRegister(REGISTER_DATA_STATUS, address);
   usleep(sleept);
 
-  channel.writeRegister(DATA_STATUS, MAGIC_VALUE_8);
+  channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_8);
   usleep(sleept);
 
-  channel.writeRegister(DATA_STATUS, MAGIC_VALUE_7);
+  channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_7);
   usleep(sleept);
 
   checkStatus(channel);
@@ -152,20 +152,21 @@ void eraseBlock(RegisterReadWriteInterface& channel, uint32_t address, int sleep
 
 void writeWord(RegisterReadWriteInterface& channel, uint32_t address, int value, int sleept)
 {
-  channel.writeRegister(DATA_STATUS, address);
+  channel.writeRegister(REGISTER_DATA_STATUS, address);
   usleep(sleept);
-  channel.writeRegister(DATA_STATUS, MAGIC_VALUE_9);
+  channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_9);
   usleep(sleept);
-  channel.writeRegister(DATA_STATUS, value);
+  channel.writeRegister(REGISTER_DATA_STATUS, value);
   usleep(sleept);
   checkStatus(channel);
 }
 
-void readWord(RegisterReadWriteInterface& channel, uint32_t address, uint8_t *data, int sleept)
+/// Reads a 16-bit flash word and writes it into the given buffer
+void readWord(RegisterReadWriteInterface& channel, uint32_t address, char *data, int sleept = 10)
 {
-  channel.writeRegister(DATA_STATUS, address);
+  channel.writeRegister(REGISTER_DATA_STATUS, address);
   usleep(sleept);
-  channel.writeRegister(DATA_STATUS, MAGIC_VALUE_10);
+  channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_10);
   usleep(sleept);
   uint32_t stat = readStatus(channel, sleept);
   *data = (stat & 0xFF00) >> 8;
@@ -177,17 +178,17 @@ void readRange(RegisterReadWriteInterface& channel, int addressFlash, int wordNu
     uint32_t address = i;
     address = 0x01000000 | address;
 
-    channel.writeRegister(DATA_STATUS, address);
+    channel.writeRegister(REGISTER_DATA_STATUS, address);
     usleep(50);
 
-    channel.writeRegister(DATA_STATUS, MAGIC_VALUE_10);
+    channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_10);
     usleep(50);
 
-    channel.writeRegister(DATA_STATUS, MAGIC_VALUE_1);
+    channel.writeRegister(REGISTER_DATA_STATUS, MAGIC_VALUE_1);
     usleep(50);
 
-    uint32_t status = channel.readRegister(ADDRESS);
-    uint32_t status2 = channel.readRegister(READY);
+    uint32_t status = channel.readRegister(REGISTER_ADDRESS);
+    uint32_t status2 = channel.readRegister(REGISTER_READY);
 
     out << b::format("%5u  %d\n") % status % status2;
   }
@@ -196,7 +197,7 @@ void readRange(RegisterReadWriteInterface& channel, int addressFlash, int wordNu
 void wait(RegisterReadWriteInterface& channel) {
   int status = 0;
   while (status == 0) {
-    status = channel.readRegister(READY);
+    status = channel.readRegister(REGISTER_READY);
   }
   usleep(1);
 }
@@ -247,7 +248,7 @@ void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath,
 
     // Initiate flash: clear status register, set asynch mode, read status reg.
     out << "Initializing flash\n";
-    uint64_t status = Flash::init(channel);
+    uint64_t status = Flash::init(channel, Flash::ADDRESS_START);
     if (status != 0x80) {
       // 0x80 seems good, not sure what's bad
       out << format("    Status    0x%lX\n") % status;
@@ -284,16 +285,16 @@ void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath,
       checkInterrupt();
 
       // set address WRITE IN THE FLASH
-      writeWait(Flash::DATA_STATUS, address);
+      writeWait(Flash::REGISTER_DATA_STATUS, address);
 
       // SET Buffer Program
-      writeWait(Flash::DATA_STATUS, Flash::MAGIC_VALUE_11);
+      writeWait(Flash::REGISTER_DATA_STATUS, Flash::MAGIC_VALUE_11);
 
       // READ STATUS REGISTER
       Flash::checkStatus(channel);
 
       // Write 32 words (31+1) (31 0x1f)
-      writeWait(Flash::DATA_STATUS, Flash::MAGIC_VALUE_12);
+      writeWait(Flash::REGISTER_DATA_STATUS, Flash::MAGIC_VALUE_12);
 
       // Read 32 words from file
       // Every word is on its own 'line' in the file
@@ -312,8 +313,8 @@ void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath,
         int hex = std::atoi(data);
         hexValue += hex;
 
-        writeWait(Flash::DATA_STATUS, address);
-        writeWait(Flash::DATA_STATUS, hexValue);
+        writeWait(Flash::REGISTER_DATA_STATUS, address);
+        writeWait(Flash::REGISTER_DATA_STATUS, hexValue);
 
         address++;
         numberOfLinesRead++;
@@ -324,15 +325,15 @@ void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath,
         }
       }
 
-      writeWait(Flash::DATA_STATUS, Flash::MAGIC_VALUE_7);
-      writeWait(Flash::DATA_STATUS, Flash::MAGIC_VALUE_1);
+      writeWait(Flash::REGISTER_DATA_STATUS, Flash::MAGIC_VALUE_7);
+      writeWait(Flash::REGISTER_DATA_STATUS, Flash::MAGIC_VALUE_1);
 
-      status = channel.readRegister(Flash::ADDRESS);
+      status = channel.readRegister(Flash::REGISTER_ADDRESS);
       while (status != 0x80) {
         checkInterrupt();
 
-        writeWait(Flash::DATA_STATUS, Flash::MAGIC_VALUE_1);
-        status = readWait(Flash::ADDRESS);
+        writeWait(Flash::REGISTER_DATA_STATUS, Flash::MAGIC_VALUE_1);
+        status = readWait(Flash::REGISTER_ADDRESS);
 
         maxCount++;
         if (maxCount == 5000000) {
@@ -345,7 +346,7 @@ void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath,
     }
     out << format("\nCompleted programming %d words\n") % numberOfLinesRead;
     // READ STATUS REG
-    channel.writeRegister(Flash::DATA_STATUS, Flash::MAGIC_VALUE_6);
+    channel.writeRegister(Flash::REGISTER_DATA_STATUS, Flash::MAGIC_VALUE_6);
     usleep(1);
     Flash::checkStatus(channel);
   } catch (const InterruptedException& e) {
@@ -949,24 +950,14 @@ void Crorc::assertFreeFifoEmpty()
   }
 }
 
-void Crorc::startDataReceiver(uintptr_t readyFifoBusAddress, int rorcRevision)
+void Crorc::startDataReceiver(uintptr_t readyFifoBusAddress)
 {
-  int fw_major, fw_minor;
-  unsigned long fw;
   write(Rorc::C_RRBAR, (readyFifoBusAddress & 0xffffffff));
-  if (rorcRevision >= Rorc::RORC_REVISION_DRORC2){
-    fw = read(Rorc::RFID);
-    fw_major = rorcFWVersMajor(fw);
-    fw_minor = rorcFWVersMinor(fw);
-    if ((rorcRevision >= Rorc::RORC_REVISION_PCIEXP) ||
-        (fw_major > 2) || ((fw_major == 2) && (fw_minor >= 16))){
 #if __WORDSIZE > 32
-      write(Rorc::C_RRBX, (readyFifoBusAddress >> 32));
+  write(Rorc::C_RRBX, (readyFifoBusAddress >> 32));
 #else
-      write(Rorc::C_RRBX, 0x0);
+  write(Rorc::C_RRBX, 0x0);
 #endif
-    }
-  }
   if (!(read(Rorc::C_CSR) & Rorc::DRORC_CMD_DATA_RX_ON_OFF)) {
     write(Rorc::C_CSR, Rorc::DRORC_CMD_DATA_RX_ON_OFF);
   }
@@ -1125,39 +1116,26 @@ void Crorc::initReadoutTriggered(RegisterReadWriteInterface& bar2)
   BOOST_THROW_EXCEPTION(std::runtime_error("not implemented"));
 }
 
-// We include this C header that only getSerial() needs down here to avoid polluting the namespace for the rest
-#include "c/rorc/rorc.h"
-
-// TODO Clean up, C++ificate
-int getSerial(uintptr_t barAddress)
+int getSerial(RegisterReadWriteInterface& bar0)
 {
-  // Getting the serial number of the card from the flash. See rorcSerial() in rorc_lib.c.
-  char data[RORC_SN_LENGTH + 1];
-  memset(data, 'x', RORC_SN_LENGTH + 1);
-
   // Reading the FLASH.
-  uint32_t flashAddr = FLASH_SN_ADDRESS;
-  initFlash(barAddress, flashAddr, 10); // TODO check returned status code
+  uint32_t address = Rorc::FLASH_SN_ADDRESS;
+  Flash::init(bar0, address);
 
   // Setting the address to the serial number's (SN) position. (Actually it's the position
   // one before the SN's, because we need even position and the SN is at odd position.
-  flashAddr += (RORC_SN_POSITION - 1) / 2;
-  data[RORC_SN_LENGTH] = '\0';
-  // Retrieving information character by caracter from the HW ID string.
-  for (int i = 0; i < RORC_SN_LENGTH; i += 2, flashAddr++) {
-    readFlashWord(barAddress, flashAddr, &data[i], 10);
+  std::array<char, Rorc::RORC_SN_LENGTH + 1> data { '\0' };
+  address += (Rorc::RORC_SN_POSITION - 1) / 2;
+  for (int i = 0; i < Rorc::RORC_SN_LENGTH; i += 2, address++) {
+    Flash::readWord(bar0, address, &data[i]);
     if ((data[i] == '\0') || (data[i + 1] == '\0')) {
       break;
     }
   }
 
-  // We started reading the serial number one position before, so we don't need
-  // the first character.
-  memmove(data, data+1, strlen(data));
-  int serial = 0;
-  serial = atoi(data);
-
-  return serial;
+  // We don't use the first character for the conversion, since we started reading one byte before the serial number
+  // location in the flash
+  return boost::lexical_cast<int>(data.data() + 1, Rorc::RORC_SN_LENGTH);
 }
 
 } // namespace Crorc
