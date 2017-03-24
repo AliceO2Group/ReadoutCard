@@ -11,10 +11,8 @@
 #include <fstream>
 #include <memory>
 #include <stdexcept>
-#include <sys/time.h>
 #include <thread>
 #include <vector>
-#include <unistd.h>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Crorc/Constants.h"
@@ -39,17 +37,6 @@ namespace chrono = std::chrono;
 
 namespace
 {
-// TODO Get rid of this
-void elapsed(struct timeval *tv2, struct timeval *tv1, int *dsec, int *dusec)
-{
-  *dsec = tv2->tv_sec - tv1->tv_sec;
-  *dusec = tv2->tv_usec - tv1->tv_usec;
-  if (*dusec < 0) {
-    (*dsec)--;
-    *dusec += 1000000;
-  }
-}
-
 int logi2(unsigned int number)
 {
   int i;
@@ -87,9 +74,9 @@ namespace Flash
 namespace
 {
 constexpr int MAX_WAIT = 1000000;
-constexpr int REGISTER_DATA_STATUS = Rorc::Flash::F_IFDSR;
-constexpr int REGISTER_ADDRESS = Rorc::Flash::F_IADR;
-constexpr int REGISTER_READY = Rorc::Flash::F_LRD;
+constexpr int REGISTER_DATA_STATUS = Rorc::Flash::IFDSR;
+constexpr int REGISTER_ADDRESS = Rorc::Flash::IADR;
+constexpr int REGISTER_READY = Rorc::Flash::LRD;
 
 // TODO figure out what these are/do
 constexpr int MAGIC_VALUE_0  = 0x80;
@@ -551,133 +538,104 @@ StWord Crorc::ddlReadSiu(int transid, long long int time)
 /// Interpret DIU or SIU IFSTW
 void ddlInterpretIFSTW(uint32_t ifstw, const char *pref, const char *suff)
 {
-  int destination;
-  unsigned long status;
-  destination = ST_DEST(ifstw);
-
   using namespace Ddl;
-  using namespace Diu;
-  using namespace Siu;
+  using Table = std::vector<std::pair<uint32_t, const char*>>;
 
-  status = ifstw & Ddl::STMASK;
-  if (destination == Ddl::Destination::DIU) {
-    if (mask(status, DIU_LOOP))
-      printf("%sDIU is set in loop-back mode%s", pref, suff);
+  const int destination = ST_DEST(ifstw);
+  const uint32_t status = ifstw & STMASK;
+  std::vector<std::string> messages;
+
+  auto add = [&](const char* message){ messages.push_back(message); };
+
+  auto checkTable = [&](uint32_t status, const Table& table) {
+    for(const auto& pair : table) {
+      if (mask(pair.first, status)) {
+        add(pair.second);
+      }
+    }
+  };
+
+  auto checkTableExclusive = [&](uint32_t status, const Table& table) {
+    for(const auto& pair : table) {
+      if (mask(pair.first, status)) {
+        add(pair.second);
+        break;
+      }
+    }
+  };
+
+  if (destination == Destination::DIU) {
+    using namespace Diu;
+    const Table errorTable {
+        {LOSS_SYNC, "Loss of synchronization"},
+        {TXOF, "Transmit data/status overflow"},
+        {RES1, "Undefined DIU error"},
+        {OSINFR, "Ordered set in frame"},
+        {INVRX, "Invalid receive character in frame"},
+        {CERR, "CRC error"},
+        {RES2, "Undefined DIU error"},
+        {DOUT, "Data out of frame"},
+        {IFDL, "Illegal frame delimiter"},
+        {LONG, "Too long frame"},
+        {RXOF, "Received data/status overflow"},
+        {FRERR, "Error in receive frame"}};
+    const Table portTable {
+        {PortState::TSTM, "DIU port in PRBS Test Mode state"},
+        {PortState::POFF, "DIU port in Power Off state"},
+        {PortState::LOS, "DIU port in Offline Loss of Synchr. state"},
+        {PortState::NOSIG, "DIU port in Offline No Signal state"},
+        {PortState::WAIT, "DIU port in Waiting for Power Off state"},
+        {PortState::ONL, "DIU port in Online state"},
+        {PortState::OFFL, "DIU port in Offline state"},
+        {PortState::POR, "DIU port in Power On Reset state"}};
+
+    if (mask(status, DIU_LOOP)) {
+      add("DIU is set in loop-back mode");
+    }
     if (mask(status, ERROR_BIT)){
-      if (strlen(pref) == 0)
-        printf("%sDIU error bit(s) set:%s", pref, suff);
-      if (mask(status, LOSS_SYNC))
-        printf("%s Loss of synchronization%s", pref, suff);
-      if (mask(status, D_TXOF))
-        printf("%s Transmit data/status overflow%s", pref, suff);
-      if (mask(status, D_RES1))
-        printf("%s Undefined DIU error%s", pref, suff);
-      if (mask(status, D_OSINFR))
-        printf("%s Ordered set in frame%s", pref, suff);
-      if (mask(status, D_INVRX))
-        printf("%s Invalid receive character in frame%s", pref, suff);
-      if (mask(status, D_CERR))
-        printf("%s CRC error%s", pref, suff);
-      if (mask(status, D_RES2))
-        printf("%s Undefined DIU error%s", pref, suff);
-      if (mask(status, D_DOUT))
-        printf("%s Data out of frame%s", pref, suff);
-      if (mask(status, D_IFDL))
-        printf("%s Illegal frame delimiter%s", pref, suff);
-      if (mask(status, D_LONG))
-        printf("%s Too long frame%s", pref, suff);
-      if (mask(status, D_RXOF))
-        printf("%s Received data/status overflow%s", pref, suff);
-      if (mask(status, D_FRERR))
-        printf("%s Error in receive frame%s", pref, suff);
+      checkTable(mask(status, DIUSTMASK), errorTable);
     }
+    checkTableExclusive(status, portTable);
+  } else {
+    using namespace Siu;
+    const Table okTable {
+        {LBMOD, "SIU in Loopback Mode"},
+        {OPTRAN, "One FEE transaction is open"}};
+    const Table errorTable {
+        {LONGE, "Too long event or read data block"},
+        {IFEDS, "Illegal FEE data/status"},
+        {TXOF, "Transmit FIFO overflow"},
+        {IWDAT, "Illegal write data word"},
+        {OSINFR, "Ordered set in frame"},
+        {INVRX, "Invalid character in receive frame"},
+        {CERR, "CRC error"},
+        {DJLERR, "DTCC or JTCC error"},
+        {DOUT, "Data out of receive frame"},
+        {IFDL, "Illegal frame delimiter"},
+        {LONG, "Too long receive frame"},
+        {RXOF, "Receive FIFO overflow"},
+        {FRERR, "Error in receive frame"},
+        {LPERR, "Link protocol error"}};
+    const Table portTable {
+        {PortState::RESERV ,"SIU port in undefined state"},
+        {PortState::POFF, "SIU port in Power Off state"},
+        {PortState::LOS, "SIU port in Offline Loss of Synchr. state"},
+        {PortState::NOSIG, "SIU port in Offline No Signal state"},
+        {PortState::WAIT, "SIU port in Waiting for Power Off state"},
+        {PortState::ONL, "SIU port in Online state"},
+        {PortState::OFFL, "SIU port in Offline state"},
+        {PortState::POR, "SIU port in Power On Reset state"}};
 
-    switch (mask(status, Ddl::DIUSTMASK)){
-      case DIU_TSTM:
-        printf("%sDIU port in PRBS Test Mode state%s", pref, suff); break;
-      case DIU_POFF:
-        printf("%sDIU port in Power Off state%s", pref, suff); break;
-      case DIU_LOS:
-        printf("%sDIU port in Offline Loss of Synchr. state%s", pref, suff); break;
-      case DIU_NOSIG:
-        printf("%sDIU port in Offline No Signal state%s", pref, suff); break;
-      case DIU_WAIT:
-        printf("%sDIU port in Waiting for Power Off state%s", pref, suff); break;
-      case DIU_ONL:
-        printf("%sDIU port in Online state%s", pref, suff); break;
-      case DIU_OFFL:
-        printf("%sDIU port in Offline state%s", pref, suff); break;
-      case DIU_POR:
-        printf("%sDIU port in Power On Reset state%s", pref, suff); break;
-    }
-
-    //int siuStatus = (status & Ddl::REMMASK) >> 15;
-    // XXX investigate remoteStatus variable
-    //printf("%sremote SIU/DIU port in %s state%s", pref, remoteStatus[siuStatus], suff);
-  }
-  else  /* SIU */
-  {
     if (mask(status, ERROR_BIT)){
-      if (strlen(pref) == 0)
-        printf("%sSIU error bit(s) set:%s", pref, suff);
-      if (mask(status, S_LONGE))
-        printf("%s Too long event or read data block%s", pref, suff);
-      if (mask(status, S_IFEDS))
-        printf("%s Illegal FEE data/status%s", pref, suff);
-      if (mask(status, S_TXOF))
-        printf("%s Transmit FIFO overflow%s", pref, suff);
-      if (mask(status, S_IWDAT))
-        printf("%s Illegal write data word%s", pref, suff);
-      if (mask(status, S_OSINFR))
-        printf("%s Ordered set in frame%s", pref, suff);
-      if (mask(status, S_INVRX))
-        printf("%s Invalid character in receive frame%s", pref, suff);
-      if (mask(status, S_CERR))
-        printf("%s CRC error%s", pref, suff);
-      if (mask(status, S_DJLERR))
-        printf("%s DTCC or JTCC error%s", pref, suff);
-      if (mask(status, S_DOUT))
-        printf("%s Data out of receive frame%s", pref, suff);
-      if (mask(status, S_IFDL))
-        printf("%s Illegal frame delimiter%s", pref, suff);
-      if (mask(status, S_LONG))
-        printf("%s Too long receive frame%s", pref, suff);
-      if (mask(status, S_RXOF))
-        printf("%s Receive FIFO overflow%s", pref, suff);
-      if (mask(status, S_FRERR))
-        printf("%s Error in receive frame%s", pref, suff);
-      if (mask(status, S_LPERR))
-        printf("%s Link protocol error%s", pref, suff);
+      checkTable(status, errorTable);
+    } else {
+      checkTable(status, okTable);
     }
-    else
-      printf("%sSIU error bit not set%s", pref, suff);
-
-    if (mask(status, S_LBMOD))
-      printf("%sSIU in Loopback Mode%s", pref, suff);
-    if (mask(status, S_OPTRAN))
-      printf("%sOne FEE transaction is open%s", pref, suff);
-
-    if      (mask(status, SIUSTMASK) == SIU_RESERV) {
-      printf("%sSIU port in undefined state%s", pref, suff);
-    } else if (mask(status, SIUSTMASK) == SIU_POFF) {
-      printf("%sSIU port in Power Off state%s", pref, suff);
-    } else if (mask(status, SIUSTMASK) == SIU_LOS) {
-      printf("%sSIU port in Offline Loss of Synchr. state%s", pref, suff);
-    } else if (mask(status, SIUSTMASK) == SIU_NOSIG) {
-      printf("%sSIU port in Offline No Signal state%s", pref, suff);
-    } else if (mask(status, SIUSTMASK) == SIU_WAIT ) {
-      printf("%sSIU port in Waiting for Power Off state%s", pref, suff);
-    } else if (mask(status, SIUSTMASK) == SIU_ONL ) {
-      printf("%sSIU port in Online state%s", pref, suff);
-    } else if (mask(status, SIUSTMASK) == SIU_OFFL) {
-      printf("%sSIU port in Offline state%s", pref, suff);
-    } else if (mask(status, SIUSTMASK) == SIU_POR) {
-      printf("%sSIU port in Power On Reset state%s", pref, suff);
-    }
+    checkTableExclusive(mask(status, SIUSTMASK), portTable);
   }
 }
 
-void Crorc::ddlResetSiu(int print, int cycle, long long int time)
+void Crorc::ddlResetSiu(int cycle, long long int time)
 /* ddlResetSiu tries to reset the SIU.
  *             print  # if != 0 then print link status
  *             cycle  # of status checks
@@ -689,11 +647,9 @@ void Crorc::ddlResetSiu(int print, int cycle, long long int time)
   ddlWaitStatus(time);
   ddlReadStatus();
 
-  int trial = cycle + 1;
   int transid = 0xf;
 
-  while (trial > 0){
-    trial--;
+  for (int i = 0; i < cycle; ++i) {
     try {
       sleep_for(10ms);
 
@@ -706,7 +662,7 @@ void Crorc::ddlResetSiu(int print, int cycle, long long int time)
         // ddlInterpretIFSTW(retlong, pref, suff, diuConfig.diuVersion);
         continue;
       }
-      else if (mask(stword.stw, Siu::S_OPTRAN)){
+      else if (mask(stword.stw, Siu::OPTRAN)){
         // TODO log error
         // ddlInterpretIFSTW(retlong, pref, suff, diuConfig.diuVersion);
         continue;
@@ -724,7 +680,6 @@ void Crorc::ddlResetSiu(int print, int cycle, long long int time)
 
       return;
     } catch (const Exception& e) {
-      continue;
     }
   }
 
@@ -784,19 +739,13 @@ void Crorc::emptyDataFifos(int timeoutMicroseconds)
 
 void Crorc::armDdl(int resetMask, const DiuConfig& diuConfig)
 {
-  int print = 0; // -1;
-  int stop = 1;
-  long long int TimeOut;
-
   auto reset = [&](uint32_t command){ resetCommand(command, diuConfig); };
-
-  TimeOut = Ddl::RESPONSE_TIME * diuConfig.pciLoopPerUsec;
 
   if (resetMask & Rorc::Reset::FEE){
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Command not allowed"));
   }
   if (resetMask & Rorc::Reset::SIU){
-    ddlResetSiu(0, 3, TimeOut);
+    ddlResetSiu(3, Ddl::RESPONSE_TIME * diuConfig.pciLoopPerUsec);
   }
   if (resetMask & Rorc::Reset::LINK_UP){
     reset(Rorc::Reset::RORC);
@@ -887,11 +836,11 @@ void Crorc::assertFreeFifoEmpty()
 void Crorc::startDataReceiver(uintptr_t readyFifoBusAddress)
 {
   write(Rorc::C_RRBAR, (readyFifoBusAddress & 0xffffffff));
-#if __WORDSIZE > 32
-  write(Rorc::C_RRBX, (readyFifoBusAddress >> 32));
-#else
-  write(Rorc::C_RRBX, 0x0);
-#endif
+  if (sizeof(uintptr_t) > 4) {
+    write(Rorc::C_RRBX, (readyFifoBusAddress >> 32));
+  } else {
+    write(Rorc::C_RRBX, 0x0);
+  }
   if (!(read(Rorc::C_CSR) & Rorc::CcsrCommand::DATA_RX_ON_OFF)) {
     write(Rorc::C_CSR, Rorc::CcsrCommand::DATA_RX_ON_OFF);
   }
@@ -917,7 +866,7 @@ StWord Crorc::ddlSetSiuLoopBack(const DiuConfig& diuConfig){
 
   /* SIU loopback command accepted => check SIU loopback status */
   stword = ddlReadSiu(0, timeout);
-  if (stword.stw & Siu::S_LBMOD) {
+  if (stword.stw & Siu::LBMOD) {
     return stword; // SIU loopback set
   }
 

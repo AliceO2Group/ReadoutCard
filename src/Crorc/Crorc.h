@@ -150,7 +150,7 @@ class Crorc
       bar.writeRegister(index, value);
     }
 
-    void ddlResetSiu(int print, int cycle, long long int time);
+    void ddlResetSiu(int cycle, long long int time);
     void ddlSendCommand(int dest, uint32_t command, int transid, uint32_t param, long long int time);
     void ddlWaitStatus(long long int timeout);
     StWord ddlReadStatus();
