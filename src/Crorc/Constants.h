@@ -84,34 +84,22 @@ constexpr int C_RES0xE8 = 58;     ///< reserved (0x0E8) register
 constexpr int C_RES0xEC = 59;     ///< reserved (0x0EC) register
 }
 
-// flash interface registers
+/// Flash interface registers
+namespace Flash
+{
 constexpr int F_IFDSR   = 60;     ///< Flash interface data and status reg
 constexpr int F_IADR    = 61;     ///< Flash address register
 constexpr int F_LRD     = 62;     ///< FLASH READY register
 constexpr int F_RES0xFC = 63;     ///< reserved (0x0FC) register
+}
 
-// M-RORC function registers
-constexpr int M_CSR     = 64;     ///< M-RORC control& status register
-constexpr int M_IDR     = 65;     ///< M-RORC ID register
-constexpr int M_RESx108 = 66;     ///< reserved (0x108) register
-constexpr int M_RESx10C = 67;     ///< reserved (0x10C) register
-constexpr int M_RXCSR   = 68;     ///< Receiver control and status register
-constexpr int M_RXERR   = 69;     ///< Receiver error register
-constexpr int M_RXDCR   = 70;     ///< Receiver data counter register
-constexpr int M_RXDR    = 71;     ///< Receiver data register
-constexpr int M_TXCSR   = 72;     ///< Transmitter control and status register
-constexpr int M_TXDL    = 73;     ///< Transmitter data register, low
-constexpr int M_TXDH    = 74;     ///< Transmitter data register, high
-constexpr int M_TXDCR   = 75;     ///< Transmitter data counter register
-constexpr int M_EIDFS   = 76;     ///< Event ID FIFO status register
-constexpr int M_EIDFDL  = 77;     ///< Event ID FIFO data register, low
-constexpr int M_EIDFDH  = 78;     ///< Event ID FIFO data register, high
-constexpr int M_RESx13C = 79;     ///< reserved (0x13C) register
-
-// FLASH bits (C-RORC FIDS and FIAD registers)
-constexpr int FLASH_SN_ADDRESS = 0x01470000;
-constexpr int RORC_SN_POSITION = 33;
-constexpr int RORC_SN_LENGTH   = 5;
+/// Serial number related constants
+namespace Serial
+{
+constexpr int FLASH_ADDRESS = 0x01470000;
+constexpr int POSITION = 33;
+constexpr int LENGTH   = 5;
+}
 
 /// RCSR commands
 namespace RcsrCommand
@@ -137,7 +125,17 @@ constexpr int STOP_DG        = 0x00000800;   //bit 11
 constexpr int LOOPB_ON_OFF   = 0x00001000;   //bit 12
 }
 
-//------------------- pRORC ----------------------------------
+/// C_CSR status bits
+namespace CcsrStatus
+{
+constexpr int LINK_DOWN         = 0x00002000;   ///< bit 13
+constexpr int CMD_NOT_EMPTY     = 0x00010000;   ///< bit 16
+constexpr int RXAFF_EMPTY       = 0x00040000;   ///< bit 18
+constexpr int RXAFF_FULL        = 0x00080000;   ///< bit 19
+constexpr int RXSTAT_NOT_EMPTY  = 0x00800000;   ///< bit 23
+constexpr int RXDAT_ALMOST_FULL = 0x01000000;   ///< bit 24
+constexpr int RXDAT_NOT_EMPTY   = 0x02000000;   ///< bit 25
+}
 
 /// DCR commands
 namespace DcrCommand
@@ -170,14 +168,6 @@ constexpr int CTSTW     =  0;     ///< CTSTW
 constexpr int CTSTW_TO  =  1;     ///< CTSTW for Front-End TimeOut
 constexpr int ILCMD     =  2;     ///< CTSTW for illegal command
 constexpr int IFSTW     = 12;     ///< IFSTW
-
-constexpr int DRORC_STAT_LINK_DOWN         = 0x00002000;   ///< bit 13
-constexpr int DRORC_STAT_CMD_NOT_EMPTY     = 0x00010000;   ///< bit 16
-constexpr int DRORC_STAT_RXAFF_EMPTY       = 0x00040000;   ///< bit 18
-constexpr int DRORC_STAT_RXAFF_FULL        = 0x00080000;   ///< bit 19
-constexpr int DRORC_STAT_RXSTAT_NOT_EMPTY  = 0x00800000;   ///< bit 23
-constexpr int DRORC_STAT_RXDAT_ALMOST_FULL = 0x01000000;   ///< bit 24
-constexpr int DRORC_STAT_RXDAT_NOT_EMPTY   = 0x02000000;   ///< bit 25
 
 constexpr int RORC_DATA_BLOCK_NOT_ARRIVED      = 0;
 constexpr int RORC_NOT_END_OF_EVENT_ARRIVED    = 1;

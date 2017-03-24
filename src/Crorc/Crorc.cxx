@@ -87,9 +87,9 @@ namespace Flash
 namespace
 {
 constexpr int MAX_WAIT = 1000000;
-constexpr int REGISTER_DATA_STATUS = Rorc::F_IFDSR;
-constexpr int REGISTER_ADDRESS = Rorc::F_IADR;
-constexpr int REGISTER_READY = Rorc::F_LRD;
+constexpr int REGISTER_DATA_STATUS = Rorc::Flash::F_IFDSR;
+constexpr int REGISTER_ADDRESS = Rorc::Flash::F_IADR;
+constexpr int REGISTER_READY = Rorc::Flash::F_LRD;
 
 // TODO figure out what these are/do
 constexpr int MAGIC_VALUE_0  = 0x80;
@@ -124,7 +124,7 @@ void writeSleep(RegisterReadWriteInterface& bar0, int index, int value, SleepTim
 template <typename SleepTime = std::chrono::microseconds>
 void writeStatusSleep(RegisterReadWriteInterface& bar0, int value, SleepTime sleepTime = 10us)
 {
-  writeSleep(bar0, Rorc::F_IFDSR, value, sleepTime);
+  writeSleep(bar0, REGISTER_DATA_STATUS, value, sleepTime);
 }
 
 unsigned readStatus(RegisterReadWriteInterface& bar0)
@@ -839,7 +839,7 @@ auto Crorc::initDiuVersion() -> DiuConfig
 
 bool Crorc::isLinkUp()
 {
-  return !((read(Rorc::C_CSR) & Rorc::DRORC_STAT_LINK_DOWN));
+  return !((read(Rorc::C_CSR) & Rorc::CcsrStatus::LINK_DOWN));
 }
 
 void Crorc::assertLinkUp()
@@ -862,9 +862,9 @@ void Crorc::diuCommand(int command)
 RxFreeFifoState Crorc::getRxFreeFifoState()
 {
   uint32_t st = read(Rorc::C_CSR);
-  if (st & Rorc::DRORC_STAT_RXAFF_FULL) {
+  if (st & Rorc::CcsrStatus::RXAFF_FULL) {
     return (RxFreeFifoState::FULL);
-  } else if (st & Rorc::DRORC_STAT_RXAFF_EMPTY) {
+  } else if (st & Rorc::CcsrStatus::RXAFF_EMPTY) {
     return (RxFreeFifoState::EMPTY);
   } else {
     return (RxFreeFifoState::NOT_EMPTY);
@@ -987,7 +987,7 @@ void Crorc::toggleLoopback()
 
 uint32_t Crorc::checkCommandRegister()
 {
-  return read(Rorc::C_CSR) & Rorc::DRORC_STAT_CMD_NOT_EMPTY;
+  return read(Rorc::C_CSR) & Rorc::CcsrStatus::CMD_NOT_EMPTY;
 }
 
 void Crorc::putCommandRegister(uint32_t command)
@@ -997,12 +997,12 @@ void Crorc::putCommandRegister(uint32_t command)
 
 uint32_t Crorc::checkRxStatus()
 {
-  return read(Rorc::C_CSR) & Rorc::DRORC_STAT_RXSTAT_NOT_EMPTY;
+  return read(Rorc::C_CSR) & Rorc::CcsrStatus::RXSTAT_NOT_EMPTY;
 }
 
 uint32_t Crorc::checkRxData()
 {
-  return read(Rorc::C_CSR) & Rorc::DRORC_STAT_RXDAT_NOT_EMPTY;
+  return read(Rorc::C_CSR) & Rorc::CcsrStatus::RXDAT_NOT_EMPTY;
 }
 
 void Crorc::pushRxFreeFifo(uintptr_t blockAddress, uint32_t blockLength, uint32_t readyFifoIndex)
@@ -1053,14 +1053,14 @@ void Crorc::initReadoutTriggered(RegisterReadWriteInterface&)
 int getSerial(RegisterReadWriteInterface& bar0)
 {
   // Reading the FLASH.
-  uint32_t address = Rorc::FLASH_SN_ADDRESS;
+  uint32_t address = Rorc::Serial::FLASH_ADDRESS;
   Flash::init(bar0, address);
 
   // Setting the address to the serial number's (SN) position. (Actually it's the position
   // one before the SN's, because we need even position and the SN is at odd position.
-  std::array<char, Rorc::RORC_SN_LENGTH + 1> data { '\0' };
-  address += (Rorc::RORC_SN_POSITION - 1) / 2;
-  for (int i = 0; i < Rorc::RORC_SN_LENGTH; i += 2, address++) {
+  std::array<char, Rorc::Serial::LENGTH + 1> data { '\0' };
+  address += (Rorc::Serial::POSITION - 1) / 2;
+  for (int i = 0; i < Rorc::Serial::LENGTH; i += 2, address++) {
     Flash::readWord(bar0, address, &data[i]);
     if ((data[i] == '\0') || (data[i + 1] == '\0')) {
       break;
@@ -1069,7 +1069,7 @@ int getSerial(RegisterReadWriteInterface& bar0)
 
   // We don't use the first character for the conversion, since we started reading one byte before the serial number
   // location in the flash
-  return boost::lexical_cast<int>(data.data() + 1, Rorc::RORC_SN_LENGTH);
+  return boost::lexical_cast<int>(data.data() + 1, Rorc::Serial::LENGTH);
 }
 
 } // namespace Crorc
