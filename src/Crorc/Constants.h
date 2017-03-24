@@ -136,16 +136,16 @@ constexpr int PRORC_CMD_RESET_SIU     = 0x00F1;
 constexpr int PRORC_PARAM_LOOPB       = 0x1;
 
 // Software interface status codes
-constexpr int RORC_STATUS_OK                =    0;
-constexpr int RORC_STATUS_ERROR             =   -1;
-constexpr int RORC_INVALID_PARAM            =   -2;
-constexpr int RORC_LINK_NOT_ON              =   -4;
-constexpr int RORC_CMD_NOT_ALLOWED          =   -8;
-constexpr int RORC_NOT_ACCEPTED             =  -16;
-constexpr int RORC_NOT_ABLE                 =  -32;
-constexpr int RORC_TIMEOUT                  =  -64;
-constexpr int RORC_FF_FULL                  = -128;
-constexpr int RORC_FF_EMPTY                 = -256;
+//constexpr int RORC_STATUS_OK                =    0;
+//constexpr int RORC_STATUS_ERROR             =   -1;
+//constexpr int RORC_INVALID_PARAM            =   -2;
+//constexpr int RORC_LINK_NOT_ON              =   -4;
+//constexpr int RORC_CMD_NOT_ALLOWED          =   -8;
+//constexpr int RORC_NOT_ACCEPTED             =  -16;
+//constexpr int RORC_NOT_ABLE                 =  -32;
+//constexpr int RORC_TIMEOUT                  =  -64;
+//constexpr int RORC_FF_FULL                  = -128;
+//constexpr int RORC_FF_EMPTY                 = -256;
 
 namespace Reset
 {

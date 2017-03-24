@@ -924,28 +924,27 @@ void Crorc::diuCommand(int command, const DiuConfig& diuConfig)
   ddlReadDiu(command, Ddl::RESPONSE_TIME);
 }
 
-int Crorc::getRxFreeFifoState()
+RxFreeFifoState Crorc::getRxFreeFifoState()
 {
   uint32_t st = read(Rorc::C_CSR);
-  if (st & Rorc::DRORC_STAT_RXAFF_FULL)
-    return (Rorc::RORC_FF_FULL);
-  else if (st & Rorc::DRORC_STAT_RXAFF_EMPTY)
-    return (Rorc::RORC_FF_EMPTY);
-  else
-    return (Rorc::RORC_STATUS_OK);  //Not Empty
+  if (st & Rorc::DRORC_STAT_RXAFF_FULL) {
+    return (RxFreeFifoState::FULL);
+  } else if (st & Rorc::DRORC_STAT_RXAFF_EMPTY) {
+    return (RxFreeFifoState::EMPTY);
+  } else {
+    return (RxFreeFifoState::NOT_EMPTY);
+  }
 }
 
 bool Crorc::isFreeFifoEmpty()
 {
-  return getRxFreeFifoState() == Rorc::RORC_FF_EMPTY;
+  return getRxFreeFifoState() == RxFreeFifoState::EMPTY;
 }
 
 void Crorc::assertFreeFifoEmpty()
 {
-  int returnCode = getRxFreeFifoState();
-  if (returnCode != Rorc::RORC_FF_EMPTY) {
-    BOOST_THROW_EXCEPTION(
-        CrorcFreeFifoException() ADD_ERRINFO(returnCode, "Free FIFO not empty")
+  if (!isFreeFifoEmpty()) {
+    BOOST_THROW_EXCEPTION(CrorcFreeFifoException() << ErrorInfo::Message("Free FIFO not empty")
         << ErrorInfo::PossibleCauses({"Previous DMA did not get/free all received pages"}));
   }
 }

@@ -10,6 +10,7 @@
 #include <string>
 #include "RORC/ParameterTypes/GeneratorPattern.h"
 #include "RORC/RegisterReadWriteInterface.h"
+#include "RxFreeFifoState.h"
 #include "c/rorc/stword.h"
 
 namespace AliceO2 {
@@ -123,7 +124,7 @@ class Crorc
 
     void pushRxFreeFifo(uintptr_t blockAddress, uint32_t blockLength, uint32_t readyFifoIndex);
 
-    int getRxFreeFifoState();
+    RxFreeFifoState getRxFreeFifoState();
 
     /// Set C-RORC for continuous readout
     static void initReadoutContinuous(RegisterReadWriteInterface& bar2);
