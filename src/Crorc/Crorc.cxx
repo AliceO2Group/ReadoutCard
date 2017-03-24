@@ -396,18 +396,18 @@ void Crorc::startDataGenerator(uint32_t maxLoop)
   }
 
   write(Rorc::C_DG4, cycle);
-  write(Rorc::C_CSR, Rorc::DRORC_CMD_START_DG);
+  write(Rorc::C_CSR, Rorc::CcsrCommand::START_DG);
 }
 
 void Crorc::stopDataGenerator()
 {
-  write(Rorc::C_CSR, Rorc::DRORC_CMD_STOP_DG);
+  write(Rorc::C_CSR, Rorc::CcsrCommand::STOP_DG);
 }
 
 void Crorc::stopDataReceiver()
 {
-  if (read(Rorc::C_CSR) & Rorc::DRORC_CMD_DATA_RX_ON_OFF) {
-    write(Rorc::C_CSR, Rorc::DRORC_CMD_DATA_RX_ON_OFF);
+  if (read(Rorc::C_CSR) & Rorc::CcsrCommand::DATA_RX_ON_OFF) {
+    write(Rorc::C_CSR, Rorc::CcsrCommand::DATA_RX_ON_OFF);
   }
 }
 
@@ -731,35 +731,36 @@ void Crorc::ddlResetSiu(int print, int cycle, long long int time)
   BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Failed to reset SIU"));
 }
 
-void Crorc::resetCommand(int option, const DiuConfig& diuConfig){
-  int prorc_cmd;
-  uint64_t timeout = Ddl::RESPONSE_TIME * diuConfig.pciLoopPerUsec;
-  prorc_cmd = 0;
-  if (option & Rorc::Reset::DIU)
-    prorc_cmd |= Rorc::DRORC_CMD_RESET_DIU;
-  if (option & Rorc::Reset::FF)
-    prorc_cmd |= Rorc::DRORC_CMD_CLEAR_RXFF | Rorc::DRORC_CMD_CLEAR_TXFF;
-  if (option & Rorc::Reset::FIFOS)
-    prorc_cmd |= Rorc::DRORC_CMD_CLEAR_FIFOS;
-  if (option & Rorc::Reset::ERROR)
-    prorc_cmd |= Rorc::DRORC_CMD_CLEAR_ERROR;
-  if (option & Rorc::Reset::COUNTERS)
-    prorc_cmd |= Rorc::DRORC_CMD_CLEAR_COUNTERS;
-  if (prorc_cmd)   // any reset
-    {
-      write(Rorc::C_CSR, (uint32_t) prorc_cmd);
-    }
-    if (option & Rorc::Reset::SIU)
-    {
-      putCommandRegister(Rorc::PRORC_CMD_RESET_SIU);
-      ddlWaitStatus(timeout);
-      ddlReadStatus();
-    }
-    if (!option || (option & Rorc::Reset::RORC))
-    {
-      write(Rorc::RCSR, Rorc::DRORC_CMD_RESET_CHAN);  //channel reset
-    }
+void Crorc::resetCommand(int option, const DiuConfig& diuConfig)
+{
+  uint32_t command = 0;
+  if (option & Rorc::Reset::DIU) {
+    command |= Rorc::CcsrCommand::RESET_DIU;
   }
+  if (option & Rorc::Reset::FF) {
+    command |= Rorc::CcsrCommand::CLEAR_RXFF | Rorc::CcsrCommand::CLEAR_TXFF;
+  }
+  if (option & Rorc::Reset::FIFOS) {
+    command |= Rorc::CcsrCommand::CLEAR_FIFOS;
+  }
+  if (option & Rorc::Reset::ERROR) {
+    command |= Rorc::CcsrCommand::CLEAR_ERROR;
+  }
+  if (option & Rorc::Reset::COUNTERS) {
+    command |= Rorc::CcsrCommand::CLEAR_COUNTERS;
+  }
+  if (command) {
+    write(Rorc::C_CSR, (uint32_t) command);
+  }
+  if (option & Rorc::Reset::SIU) {
+    putCommandRegister(Rorc::DcrCommand::RESET_SIU);
+    ddlWaitStatus(Ddl::RESPONSE_TIME * diuConfig.pciLoopPerUsec);
+    ddlReadStatus();
+  }
+  if (!option || (option & Rorc::Reset::RORC)) {
+    write(Rorc::RCSR, Rorc::RcsrCommand::RESET_CHAN);  //channel reset
+  }
+}
 
 /* try to empty D-RORC's data FIFOs
                empty_time:  time-out value in usecs
@@ -772,7 +773,7 @@ void Crorc::emptyDataFifos(int timeoutMicroseconds)
     if (!checkRxData()) {
       return;
     }
-    write(Rorc::C_CSR, (uint32_t) Rorc::DRORC_CMD_CLEAR_FIFOS);
+    write(Rorc::C_CSR, (uint32_t) Rorc::CcsrCommand::CLEAR_FIFOS);
   }
 
   if (checkRxData()) {
@@ -824,40 +825,15 @@ void Crorc::armDdl(int resetMask, const DiuConfig& diuConfig)
 
 auto Crorc::initDiuVersion() -> DiuConfig
 {
+  int maxLoop = 1000;
+  auto start = chrono::steady_clock::now();
+  for (int i = 0; i < maxLoop; i++) {
+    (void) checkRxStatus();
+  };
+  auto end = chrono::steady_clock::now();
+
   DiuConfig diuConfig;
-
-  // TODO Clean up timing stuff (replace with chrono)
-  struct timeval tv1, tv2;
-  int dsec, dusec;
-  double dtime, max_loop;
-  int i;
-
-  max_loop = 1000000;
-  gettimeofday(&tv1, nullptr);
-
-  for (i = 0; i < max_loop; i++){};
-
-  gettimeofday(&tv2, nullptr);
-  elapsed(&tv2, &tv1, &dsec, &dusec);
-  dtime = (double)dsec * 1000000 + (double)dusec;
-  diuConfig.loopPerUsec = (double)max_loop/dtime;
-  if (diuConfig.loopPerUsec < 1) {
-    diuConfig.loopPerUsec = 1;
-  }
-  // printf("memory loop_per_usec: %lld\n", prorc_dev->loop_per_usec);
-
-  /* calibrate PCI loop time for time-outs */
-  max_loop = 1000;
-  gettimeofday(&tv1, nullptr);
-
-  for (i = 0; i < max_loop; i++) {
-    (void) checkRxStatus(); // XXX Cast to void to explicitly discard returned value
-  }
-
-  gettimeofday(&tv2, nullptr);
-  elapsed(&tv2, &tv1, &dsec, &dusec);
-  dtime = (double)dsec * 1000000 + (double)dusec;
-  diuConfig.pciLoopPerUsec = (double)max_loop/dtime;
+  diuConfig.pciLoopPerUsec = double(maxLoop) / chrono::duration<double, std::micro>(end-start).count();
   return diuConfig;
 }
 
@@ -916,8 +892,8 @@ void Crorc::startDataReceiver(uintptr_t readyFifoBusAddress)
 #else
   write(Rorc::C_RRBX, 0x0);
 #endif
-  if (!(read(Rorc::C_CSR) & Rorc::DRORC_CMD_DATA_RX_ON_OFF)) {
-    write(Rorc::C_CSR, Rorc::DRORC_CMD_DATA_RX_ON_OFF);
+  if (!(read(Rorc::C_CSR) & Rorc::CcsrCommand::DATA_RX_ON_OFF)) {
+    write(Rorc::C_CSR, Rorc::CcsrCommand::DATA_RX_ON_OFF);
   }
 }
 
@@ -1000,13 +976,13 @@ void Crorc::setLoopbackOff()
 /// Not sure
 bool Crorc::isLoopbackOn()
 {
-  return (read(Rorc::C_CSR) & Rorc::DRORC_CMD_LOOPB_ON_OFF) == 0 ? false : true;
+  return (read(Rorc::C_CSR) & Rorc::CcsrCommand::LOOPB_ON_OFF) == 0 ? false : true;
 }
 
 /// Not sure
 void Crorc::toggleLoopback()
 {
-  write(Rorc::C_CSR, Rorc::DRORC_CMD_LOOPB_ON_OFF);
+  write(Rorc::C_CSR, Rorc::CcsrCommand::LOOPB_ON_OFF);
 }
 
 uint32_t Crorc::checkCommandRegister()

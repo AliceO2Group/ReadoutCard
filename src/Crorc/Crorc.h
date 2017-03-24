@@ -38,7 +38,6 @@ class Crorc
 
     struct DiuConfig
     {
-        long long int loopPerUsec = 0;
         double pciLoopPerUsec = 0;
     };
 

@@ -113,26 +113,38 @@ constexpr int FLASH_SN_ADDRESS = 0x01470000;
 constexpr int RORC_SN_POSITION = 33;
 constexpr int RORC_SN_LENGTH   = 5;
 
-constexpr int DRORC_CMD_RESET_RORC       = 0x00000001;   //bit  0
-constexpr int DRORC_CMD_RESET_CHAN       = 0x00000002;   //bit  1
-constexpr int DRORC_CMD_CLEAR_RORC_ERROR = 0x00000008;   //bit  3
+/// RCSR commands
+namespace RcsrCommand
+{
+constexpr int RESET_RORC       = 0x00000001;   //bit  0
+constexpr int RESET_CHAN       = 0x00000002;   //bit  1
+constexpr int CLEAR_RORC_ERROR = 0x00000008;   //bit  3
+}
 
-// CCSR commands
-constexpr int DRORC_CMD_RESET_DIU      = 0x00000001;   //bit  0
-constexpr int DRORC_CMD_CLEAR_FIFOS    = 0x00000002;   //bit  1
-constexpr int DRORC_CMD_CLEAR_RXFF     = 0x00000004;   //bit  2
-constexpr int DRORC_CMD_CLEAR_TXFF     = 0x00000008;   //bit  3
-constexpr int DRORC_CMD_CLEAR_ERROR    = 0x00000010;   //bit  4
-constexpr int DRORC_CMD_CLEAR_COUNTERS = 0x00000020;   //bit  5
+/// C_CSR commands
+namespace CcsrCommand
+{
+constexpr int RESET_DIU      = 0x00000001;   //bit  0
+constexpr int CLEAR_FIFOS    = 0x00000002;   //bit  1
+constexpr int CLEAR_RXFF     = 0x00000004;   //bit  2
+constexpr int CLEAR_TXFF     = 0x00000008;   //bit  3
+constexpr int CLEAR_ERROR    = 0x00000010;   //bit  4
+constexpr int CLEAR_COUNTERS = 0x00000020;   //bit  5
+constexpr int DATA_TX_ON_OFF = 0x00000100;   //bit  8
+constexpr int DATA_RX_ON_OFF = 0x00000200;   //bit  9
+constexpr int START_DG       = 0x00000400;   //bit 10
+constexpr int STOP_DG        = 0x00000800;   //bit 11
+constexpr int LOOPB_ON_OFF   = 0x00001000;   //bit 12
+}
 
-constexpr int DRORC_CMD_DATA_TX_ON_OFF = 0x00000100;   //bit  8
-constexpr int DRORC_CMD_DATA_RX_ON_OFF = 0x00000200;   //bit  9
-constexpr int DRORC_CMD_START_DG       = 0x00000400;   //bit 10
-constexpr int DRORC_CMD_STOP_DG        = 0x00000800;   //bit 11
-constexpr int DRORC_CMD_LOOPB_ON_OFF   = 0x00001000;   //bit 12
 //------------------- pRORC ----------------------------------
 
-constexpr int PRORC_CMD_RESET_SIU     = 0x00F1;
+/// DCR commands
+namespace DcrCommand
+{
+constexpr int RESET_SIU = 0x00F1;
+}
+
 constexpr int PRORC_PARAM_LOOPB       = 0x1;
 
 namespace Reset
