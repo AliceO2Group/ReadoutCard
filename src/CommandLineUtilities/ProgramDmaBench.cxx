@@ -147,7 +147,7 @@ class ProgramDmaBench: public Program
               "Amount of pages to transfer. Give <= 0 for infinite.")
           ("buffer-size",
               po::value<std::string>(&mOptions.bufferSizeString)->default_value("10MB"),
-              "Buffer size in GB or MB (MB rounded down to 2 MB multiple, min 10 MB). If MB is given, 2 MB hugepages "
+              "Buffer size in GB or MB (MB rounded down to 2 MB multiple, min 2 MB). If MB is given, 2 MB hugepages "
               "will be used; If GB is given, 1 GB hugepages will be used.")
           ("reset",
               po::bool_switch(&mOptions.resetChannel),
@@ -219,7 +219,7 @@ class ProgramDmaBench: public Program
 
           if (unit == "MB") {
             mOptions.hugePageSize = HugePageSize::SIZE_2MB;
-            value = std::max(size_t(10), value);
+            value = std::max(size_t(2), value);
             mBufferSize = (value - (value % 2)) * 1024 * 1024; // Round down for 2M hugepages
           } else if (unit == "GB") {
             mOptions.hugePageSize = HugePageSize::SIZE_1GB;
@@ -307,6 +307,10 @@ class ProgramDmaBench: public Program
       const int maxSuperpages = mBufferSize / SUPERPAGE_SIZE;
       const int pagesPerSuperpage = SUPERPAGE_SIZE / mPageSize;
 
+      std::cout << b::format("Max superpages       %d\n") % maxSuperpages;
+      std::cout << b::format("Pages per superpage  %d\n") % pagesPerSuperpage;
+      std::cout << b::format("Buffer base address  %p\n") % mBufferBaseAddress;
+
       folly::ProducerConsumerQueue<size_t> freeQueue {maxSuperpages + 1};
       for (int i = 0; i < maxSuperpages; ++i) {
         if (!freeQueue.write(indexToOffset(i))) {
@@ -328,32 +332,23 @@ class ProgramDmaBench: public Program
 
           size_t offset;
           if (readoutQueue.read(offset)) {
+//            std::cout << b::format("Reading offset %x\n") % offset;
+
             // Read out pages
             int pages = SUPERPAGE_SIZE / mPageSize;
             for (int i = 0; i < pages; ++i) {
               auto readoutCount = mReadoutCount.fetch_add(1, std::memory_order_relaxed);
+              auto address = mBufferBaseAddress + offset + i * mPageSize;
+//              std::cout << b::format("  address %lx\n") % address;
+
               readoutPage(mBufferBaseAddress + offset + i * mPageSize, mPageSize, readoutCount);
+//              std::this_thread::sleep_for(1ms);
             }
 
             // Page has been read out
             // Add superpage back to free queue
             if (!freeQueue.write(offset)) {
               BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Something went horribly wrong"));
-            }
-          }
-
-          // Random pauses in software: a thread sleep
-          if (mOptions.randomPause) {
-            auto now = std::chrono::high_resolution_clock::now();
-            if (now >= mRandomPauses.next) {
-//              cout << b::format("sw pause %-4d ms\n") % mRandomPauses.length.count() << std::flush;
-              std::this_thread::sleep_for(mRandomPauses.length);
-              // Schedule next pause
-              auto now = std::chrono::high_resolution_clock::now();
-              mRandomPauses.next = now + std::chrono::milliseconds(
-                  Utilities::getRandRange(RandomPauses::NEXT_PAUSE_MIN, RandomPauses::NEXT_PAUSE_MAX));
-              mRandomPauses.length = std::chrono::milliseconds(
-                  Utilities::getRandRange(RandomPauses::PAUSE_LENGTH_MIN, RandomPauses::PAUSE_LENGTH_MAX));
             }
           }
         }
@@ -374,6 +369,7 @@ class ProgramDmaBench: public Program
             Superpage superpage;
             if (freeQueue.read(superpage.offset)) {
               superpage.size = SUPERPAGE_SIZE;
+//              std::cout << b::format("Pushing offset %x\n") % superpage.offset;
               mChannel->pushSuperpage(superpage);
             } else {
               break;
@@ -389,6 +385,21 @@ class ProgramDmaBench: public Program
                 mPushCount.fetch_add(pagesPerSuperpage, std::memory_order_relaxed);
                 mChannel->popSuperpage();
               }
+            }
+          }
+
+          // Random pauses in software: a thread sleep
+          if (mOptions.randomPause) {
+            auto now = std::chrono::high_resolution_clock::now();
+            if (now >= mRandomPauses.next) {
+//              cout << b::format("sw pause %-4d ms\n") % mRandomPauses.length.count() << std::flush;
+              std::this_thread::sleep_for(mRandomPauses.length);
+              // Schedule next pause
+              auto now = std::chrono::high_resolution_clock::now();
+              mRandomPauses.next = now + std::chrono::milliseconds(
+                  Utilities::getRandRange(RandomPauses::NEXT_PAUSE_MIN, RandomPauses::NEXT_PAUSE_MAX));
+              mRandomPauses.length = std::chrono::milliseconds(
+                  Utilities::getRandRange(RandomPauses::PAUSE_LENGTH_MIN, RandomPauses::PAUSE_LENGTH_MAX));
             }
           }
         }
@@ -436,28 +447,29 @@ class ProgramDmaBench: public Program
         printToFile(pageAddress, pageSize, readoutCount);
       }
 
+      auto getDataGeneratorCounterFromPage = [&]{
+        switch (mCardType) {
+          case CardType::Crorc:
+            return getEventNumber(pageAddress);
+            break;
+          case CardType::Cru:
+            return getEventNumber(pageAddress) / 256;
+            break;
+          default: throw std::runtime_error("Error checking unsupported for this card type");
+        }
+      };
+
       // Data error checking
       if (!mOptions.noErrorCheck) {
         if (mDataGeneratorCounter == -1) {
           // First page initializes the counter
-          mDataGeneratorCounter = getEventNumber(pageAddress);
+          mDataGeneratorCounter = getDataGeneratorCounterFromPage();
         }
 
         bool hasError = checkErrors(pageAddress, pageSize, readoutCount, mDataGeneratorCounter);
         if (hasError && !mOptions.noResyncCounter) {
           // Resync the counter
-
-          switch (mCardType) {
-            case CardType::Crorc:
-              mDataGeneratorCounter = getEventNumber(pageAddress);
-              break;
-            case CardType::Cru:
-              mDataGeneratorCounter = getEventNumber(pageAddress) / 256;
-              break;
-            default: throw std::runtime_error("Error checking unsupported for this card type");
-          }
-
-          mDataGeneratorCounter = getEventNumber(pageAddress);
+          mDataGeneratorCounter = mDataGeneratorCounter = getDataGeneratorCounterFromPage();
         }
       }
 
