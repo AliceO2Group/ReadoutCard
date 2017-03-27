@@ -62,14 +62,6 @@ CruChannelMaster::CruChannelMaster(const Parameters& parameters)
           << ErrorInfo::Message("CRU currently only supports operation with data generator"));
     }
   }
-
-  if (auto pattern = parameters.getGeneratorPattern()) {
-    if (pattern != GeneratorPattern::Incremental) {
-      BOOST_THROW_EXCEPTION(CruException()
-          << ErrorInfo::Message("CRU currently only supports 'incremental' data generator pattern")
-          << ErrorInfo::GeneratorPattern(*pattern));
-    }
-  }
 }
 
 auto CruChannelMaster::allowedChannels() -> AllowedChannels {
