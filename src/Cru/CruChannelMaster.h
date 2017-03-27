@@ -106,6 +106,22 @@ class CruChannelMaster final : public ChannelMasterPdaBase
       return (mFifoBack + mFifoSize) % FIFO_QUEUE_MAX;
     };
 
+    int getFifoBack()
+    {
+      return mFifoBack;
+    }
+
+    void incrementFifoFront()
+    {
+      mFifoSize++;
+    }
+
+    void incrementFifoBack()
+    {
+      mFifoSize--;
+      mFifoBack = (mFifoBack + 1) % FIFO_QUEUE_MAX;
+    }
+
     /// Back index of the firmware FIFO
     int mFifoBack = 0;
 

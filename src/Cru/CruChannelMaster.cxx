@@ -136,18 +136,6 @@ void CruChannelMaster::initCru()
   if (mGeneratorEnabled) {
     getBar().setDataGeneratorPattern(mGeneratorPattern);
   }
-
-//  // TODO Note: this stuff will be set by firmware in the future
-//  {
-//    // Status base address in the card's address space
-//    getBar().setFifoCardAddress();
-//
-//    // Set descriptor table size (must be size - 1)
-//    getBar().setDescriptorTableSize();
-//
-//    // Send command to the DMA engine to write to every status entry, not just the final one
-//    getBar().setDoneControl();
-//  }
 }
 
 void CruChannelMaster::pushSuperpage(Superpage superpage)
@@ -179,8 +167,6 @@ void CruChannelMaster::fillSuperpages()
     for (int i = 0; i < possibleToPush; ++i) {
       SuperpageQueueEntry& entry = mSuperpageQueue.getPushingFrontEntry();
       pushSuperpage(entry);
-      //std::cout << "@  entry.pushedPages = " << entry.pushedPages << '\n';
-      //std::cout << "@  entry.maxPages = " << entry.maxPages << '\n';
       // Remove superpage from pushing queue
       mSuperpageQueue.removeFromPushingQueue();
     }
@@ -190,18 +176,13 @@ void CruChannelMaster::fillSuperpages()
   if (!mSuperpageQueue.getArrivals().empty()) {
     while (mFifoSize > 0) {
       SuperpageQueueEntry& entry = mSuperpageQueue.getArrivalsFrontEntry();
-      auto pagesArrived = getBar().getSuperpagePushedPages(mFifoBack);
+      auto pagesArrived = getBar().getSuperpagePushedPages(getFifoBack());
       assert(pagesArrived <= entry.maxPages);
 
       if (pagesArrived == entry.maxPages) {
-        mFifoSize--;
-        mFifoBack = (mFifoBack + 1) % READYFIFO_ENTRIES;
+        incrementFifoBack();
         entry.superpage.received = pagesArrived * DMA_PAGE_SIZE;
-
-        if (entry.superpage.isFilled()) {
-          // Move superpage to filled queue
-          mSuperpageQueue.moveFromArrivalsToFilledQueue();
-        }
+        mSuperpageQueue.moveFromArrivalsToFilledQueue();
       } else {
         // If the back one hasn't arrived yet, the next ones will certainly not have arrived either...
         break;
@@ -213,18 +194,13 @@ void CruChannelMaster::fillSuperpages()
 void CruChannelMaster::pushSuperpage(SuperpageQueueEntry& entry)
 {
   assert(mFifoSize < FIFO_QUEUE_MAX);
-  assert(entry.pushedPages < entry.status.maxPages);
+  assert(entry.pushedPages < entry.maxPages);
 
   auto descriptorIndex = getFifoFront();
 
-//  std::cout << "@ Pushing superpage\n";
-//  std::cout << "@   0x210 ADDRESS_HI = " << addressHi << '\n';
-//  std::cout << "@   0x214 ADDRESS_LO = " << addressLo << '\n';
-//  std::cout << "@   0x234 PAGES_MAX  = " << superpage.maxPages << std::endl;
-
   getBar().setSuperpageDescriptor(descriptorIndex, entry.maxPages, entry.busAddress);
 
-  mFifoSize++;
+  incrementFifoFront();
   entry.pushedPages = entry.maxPages;
 }
 
@@ -274,6 +250,7 @@ std::vector<uint32_t> CruChannelMaster::utilityCopyFifo()
 //  auto* copyData = reinterpret_cast<char*>(copy.data());
 //  std::copy(fifoData, fifoData + size, copyData);
 //  return copy;
+  return {};
 }
 
 void CruChannelMaster::utilityPrintFifo(std::ostream& os)

@@ -158,9 +158,6 @@ class ProgramDmaBench: public Program
           ("to-file-bin",
               po::bool_switch(&mOptions.fileOutputBin),
               "Read out to file in binary format (only contains raw data from pages)")
-//          ("rand-pause-sw",
-//              po::bool_switch(&mOptions.randomPauseSoft),
-//              "Randomly pause readout using software method")
           ("no-errorcheck",
               po::bool_switch(&mOptions.noErrorCheck),
               "Skip error checking")
@@ -179,10 +176,12 @@ class ProgramDmaBench: public Program
           ("bar-hammer",
               po::bool_switch(&mOptions.barHammer),
               "Stress the BAR with repeated writes and measure performance")
+          ("random-pause",
+              po::bool_switch(&mOptions.randomPause),
+              "Randomly pause readout")
           ("rm-pages-file",
               po::value<bool>(&mOptions.removePagesFile)->default_value(false),
-              "Remove the file used for pages after benchmark completes")
-              ;
+              "Remove the file used for pages after benchmark completes");
       Options::addOptionsChannelParameters(options);
     }
 
@@ -284,12 +283,7 @@ class ProgramDmaBench: public Program
       }
 
       mRunTime.start = std::chrono::high_resolution_clock::now();
-
-      if (mOptions.randomReadout) {
-        dmaLoopReadoutRandom();
-      } else {
-        dmaLoop();
-      }
+      dmaLoop();
       mRunTime.end = std::chrono::high_resolution_clock::now();
 
       if (mBarHammer) {
@@ -347,6 +341,21 @@ class ProgramDmaBench: public Program
               BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Something went horribly wrong"));
             }
           }
+
+          // Random pauses in software: a thread sleep
+          if (mOptions.randomPause) {
+            auto now = std::chrono::high_resolution_clock::now();
+            if (now >= mRandomPauses.next) {
+//              cout << b::format("sw pause %-4d ms\n") % mRandomPauses.length.count() << std::flush;
+              std::this_thread::sleep_for(mRandomPauses.length);
+              // Schedule next pause
+              auto now = std::chrono::high_resolution_clock::now();
+              mRandomPauses.next = now + std::chrono::milliseconds(
+                  Utilities::getRandRange(RandomPauses::NEXT_PAUSE_MIN, RandomPauses::NEXT_PAUSE_MAX));
+              mRandomPauses.length = std::chrono::milliseconds(
+                  Utilities::getRandRange(RandomPauses::PAUSE_LENGTH_MIN, RandomPauses::PAUSE_LENGTH_MAX));
+            }
+          }
         }
       });
 
@@ -393,43 +402,6 @@ class ProgramDmaBench: public Program
 
       pushFuture.get();
       readoutFuture.get();
-    }
-
-    void dmaLoopReadoutRandom()
-    {
-//      constexpr int READOUT_THRESHOLD = 200; ///< Amount of pages to "cache" before reading out randomly
-//      std::default_random_engine generator;
-//      std::vector<PageSharedPtr> pages;
-//
-//      while (!mDmaLoopBreak) {
-//        // Check if we need to stop in the case of a page limit
-//        if (!mInfinitePages && mReadoutCount >= mOptions.maxPages) {
-//          mDmaLoopBreak = true;
-//          cout << "\n\nMaximum amount of pages reached\n";
-//          break;
-//        }
-//
-//        // Note: these low priority tasks are not run on every cycle, to reduce overhead
-//        lowPriorityTasks();
-//
-//        // Keep the readout queue filled
-//        mPushCount += mChannel->fillFifo();
-//
-//        // Read out a page if available
-//        if (auto sharedPage = ChannelMasterInterface::popPage(mChannel)) {
-//          pages.push_back(sharedPage);
-//        }
-//
-//        if (pages.size() > READOUT_THRESHOLD) {
-//          std::uniform_int_distribution<size_t> distribution(0, pages.size() - 1);
-//          size_t index = distribution(generator);
-//
-//          readoutPage(pages[index]);
-//
-//          pages.erase(pages.begin() + index);
-//          mReadoutCount++;
-//        }
-//      }
     }
 
     /// Free the pages that were pushed in excess
@@ -606,20 +578,6 @@ class ProgramDmaBench: public Program
       if (isVerbose() && isStatusDisplayInterval()) {
         updateStatusDisplay();
       }
-
-      // Random pauses in software: a thread sleep
-      if (mOptions.randomPauseSoft) {
-        auto now = std::chrono::high_resolution_clock::now();
-        if (now >= mRandomPausesSoft.next) {
-          cout << b::format("sw pause %-4d ms\n") % mRandomPausesSoft.length.count() << std::flush;
-          std::this_thread::sleep_for(mRandomPausesSoft.length);
-
-          // Schedule next pause
-          auto now = std::chrono::high_resolution_clock::now();
-          mRandomPausesSoft.next = now + std::chrono::milliseconds(Utilities::getRandRange(NEXT_PAUSE_MIN, NEXT_PAUSE_MAX));
-          mRandomPausesSoft.length = std::chrono::milliseconds(Utilities::getRandRange(PAUSE_LENGTH_MIN, PAUSE_LENGTH_MAX));
-        }
-      }
     }
 
     void updateStatusDisplay()
@@ -775,11 +733,10 @@ class ProgramDmaBench: public Program
         bool fileOutputAscii = false;
         bool fileOutputBin = false;
         bool resetChannel = false;
-        bool randomPauseSoft = false;
+        bool randomPause = false;
         bool noErrorCheck = false;
         bool pageReset = false;
         bool noResyncCounter = false;
-        bool randomReadout = false;
         bool barHammer = false;
         bool removePagesFile = false;
         bool delayReadout = false;
@@ -829,11 +786,15 @@ class ProgramDmaBench: public Program
     /// Enables / disables the pushing loop
     bool mPushEnabled = true;
 
-    struct RandomPausesSoft
+    struct RandomPauses
     {
+        static constexpr int NEXT_PAUSE_MIN = 10; ///< Minimum random pause interval in milliseconds
+        static constexpr int NEXT_PAUSE_MAX = 2000; ///< Maximum random pause interval in milliseconds
+        static constexpr int PAUSE_LENGTH_MIN = 1; ///< Minimum random pause in milliseconds
+        static constexpr int PAUSE_LENGTH_MAX = 500; ///< Maximum random pause in milliseconds
         TimePoint next; ///< Next pause at this time
         std::chrono::milliseconds length; ///< Next pause has this length
-    } mRandomPausesSoft;
+    } mRandomPauses;
 
     size_t mPageSize;
 

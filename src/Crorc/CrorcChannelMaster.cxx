@@ -371,21 +371,21 @@ void CrorcChannelMaster::fillSuperpages()
   }
 }
 
-void CrorcChannelMaster::pushIntoSuperpage(SuperpageQueueEntry& superpage)
+void CrorcChannelMaster::pushIntoSuperpage(SuperpageQueueEntry& entry)
 {
   assert(mFifoSize < FIFO_QUEUE_MAX);
-  assert(superpage.pushedPages < superpage.status.maxPages);
+  assert(entry.pushedPages < entry.maxPages);
 
-  pushFreeFifoPage(getFifoFront(), getNextSuperpageBusAddress(superpage));
+  pushFreeFifoPage(getFifoFront(), getNextSuperpageBusAddress(entry));
   mFifoSize++;
-  superpage.pushedPages++;
+  entry.pushedPages++;
 }
 
-uintptr_t CrorcChannelMaster::getNextSuperpageBusAddress(const SuperpageQueueEntry& superpage)
+uintptr_t CrorcChannelMaster::getNextSuperpageBusAddress(const SuperpageQueueEntry& entry)
 {
   auto pageSize = mPageSize;
-  auto offset = pageSize * superpage.pushedPages;
-  uintptr_t pageBusAddress = superpage.busAddress + offset;
+  auto offset = pageSize * entry.pushedPages;
+  uintptr_t pageBusAddress = entry.busAddress + offset;
   return pageBusAddress;
 }
 

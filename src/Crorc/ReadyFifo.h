@@ -57,3 +57,4 @@ static_assert(sizeof(ReadyFifo) == (READYFIFO_ENTRIES * sizeof(ReadyFifo::Entry)
 
 } // namespace Rorc
 } // namespace AliceO2
+

@@ -11,6 +11,10 @@
 #include "Pda/PdaBar.h"
 #include "Utilities/Util.h"
 
+//// TEMP
+#include <thread>
+#include <chrono>
+
 namespace AliceO2 {
 namespace Rorc {
 
@@ -36,8 +40,6 @@ class CruBarAccessor
     void setSuperpageDescriptor(uint32_t index, uint32_t pages, uintptr_t busAddress)
     {
       assert(index < FIFO_INDEXES);
-
-      printf("Setting superpage descriptor i=%u pages=%u address=0x%lx\n", index, pages, busAddress);
 
       // Set superpage address
       mPdaBar->barWrite(SUPERPAGE_ADDRESS_HIGH, Utilities::getUpper32Bits(busAddress));
