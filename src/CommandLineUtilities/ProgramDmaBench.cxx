@@ -180,7 +180,7 @@ class ProgramDmaBench: public Program
               po::bool_switch(&mOptions.randomPause),
               "Randomly pause readout")
           ("rm-pages-file",
-              po::value<bool>(&mOptions.removePagesFile)->default_value(false),
+              po::bool_switch(&mOptions.removePagesFile),
               "Remove the file used for pages after benchmark completes");
       Options::addOptionsChannelParameters(options);
     }
@@ -303,13 +303,17 @@ class ProgramDmaBench: public Program
 
     void dmaLoop()
     {
-      auto indexToOffset = [&](int i){ return i * SUPERPAGE_SIZE; };
-      const int maxSuperpages = mBufferSize / SUPERPAGE_SIZE;
+      auto indexToOffset = [&](int i){ return (i + 1) * SUPERPAGE_SIZE; };
+      const int maxSuperpages = (mBufferSize / SUPERPAGE_SIZE) - 1;
       const int pagesPerSuperpage = SUPERPAGE_SIZE / mPageSize;
 
       std::cout << b::format("Max superpages       %d\n") % maxSuperpages;
       std::cout << b::format("Pages per superpage  %d\n") % pagesPerSuperpage;
       std::cout << b::format("Buffer base address  %p\n") % mBufferBaseAddress;
+
+      if (maxSuperpages < 1) {
+        throw std::runtime_error("Buffer too small");
+      }
 
       folly::ProducerConsumerQueue<size_t> freeQueue {maxSuperpages + 1};
       for (int i = 0; i < maxSuperpages; ++i) {
@@ -324,6 +328,8 @@ class ProgramDmaBench: public Program
 
       // Readout thread
       auto readoutFuture = std::async(std::launch::async, [&]{
+        RandomPauses pauses;
+
         while (!isStopDma()) {
           if (!mInfinitePages && mReadoutCount.load(std::memory_order_relaxed) >= mOptions.maxPages) {
             mDmaLoopBreak = true;
@@ -338,9 +344,6 @@ class ProgramDmaBench: public Program
             int pages = SUPERPAGE_SIZE / mPageSize;
             for (int i = 0; i < pages; ++i) {
               auto readoutCount = mReadoutCount.fetch_add(1, std::memory_order_relaxed);
-              auto address = mBufferBaseAddress + offset + i * mPageSize;
-//              std::cout << b::format("  address %lx\n") % address;
-
               readoutPage(mBufferBaseAddress + offset + i * mPageSize, mPageSize, readoutCount);
 //              std::this_thread::sleep_for(1ms);
             }
@@ -351,10 +354,16 @@ class ProgramDmaBench: public Program
               BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Something went horribly wrong"));
             }
           }
+
+          if (mOptions.randomPause) {
+            pauses.pauseIfNeeded();
+          }
         }
       });
 
       auto pushFuture = std::async(std::launch::async, [&]{
+        RandomPauses pauses;
+
         while (!isStopDma()) {
           // Check if we need to stop in the case of a page limit
           if (!mInfinitePages && mPushCount.load(std::memory_order_relaxed) >= mOptions.maxPages) {
@@ -388,19 +397,8 @@ class ProgramDmaBench: public Program
             }
           }
 
-          // Random pauses in software: a thread sleep
           if (mOptions.randomPause) {
-            auto now = std::chrono::high_resolution_clock::now();
-            if (now >= mRandomPauses.next) {
-//              cout << b::format("sw pause %-4d ms\n") % mRandomPauses.length.count() << std::flush;
-              std::this_thread::sleep_for(mRandomPauses.length);
-              // Schedule next pause
-              auto now = std::chrono::high_resolution_clock::now();
-              mRandomPauses.next = now + std::chrono::milliseconds(
-                  Utilities::getRandRange(RandomPauses::NEXT_PAUSE_MIN, RandomPauses::NEXT_PAUSE_MAX));
-              mRandomPauses.length = std::chrono::milliseconds(
-                  Utilities::getRandRange(RandomPauses::PAUSE_LENGTH_MIN, RandomPauses::PAUSE_LENGTH_MAX));
-            }
+            pauses.pauseIfNeeded();
           }
         }
       });
@@ -515,22 +513,32 @@ class ProgramDmaBench: public Program
           << ErrorInfo::GeneratorPattern(mOptions.generatorPattern));
     }
 
+    void addError(int64_t eventNumber, int index, uint32_t generatorCounter, uint32_t expectedValue,
+        uint32_t actualValue)
+    {
+      mErrorCount++;
+       if (isVerbose() && mErrorCount < MAX_RECORDED_ERRORS) {
+         mErrorStream << boost::format("event:%d i:%d cnt:%d exp:0x%x val:0x%x\n")
+             % eventNumber % index % generatorCounter % expectedValue % actualValue;
+       }
+    }
+
     bool checkErrorsCrorc(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, uint32_t counter)
     {
       auto check = [&](auto patternFunction) {
         auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
         auto pageSize32 = pageSize / sizeof(int32_t);
 
-        for (uint32_t i = 0; i < pageSize32; ++i) {
-          uint32_t expectedValue = (i == 0) ? counter : patternFunction(i);
+        if (page[0] != counter) {
+          addError(eventNumber, 0, counter, counter, page[0]);
+        }
+
+        // We skip the SDH
+        for (uint32_t i = 8; i < pageSize32; ++i) {
+          uint32_t expectedValue = patternFunction(i);
           uint32_t actualValue = page[i];
           if (actualValue != expectedValue) {
-            // Report error
-            mErrorCount++;
-            if (isVerbose() && mErrorCount < MAX_RECORDED_ERRORS) {
-              mErrorStream << boost::format("event:%d i:%d cnt:%d exp:0x%x val:0x%x\n")
-                  % eventNumber % i % counter % expectedValue % actualValue;
-            }
+            addError(eventNumber, i, counter, expectedValue, actualValue);
             return true;
           }
         }
@@ -734,6 +742,31 @@ class ProgramDmaBench: public Program
       }
     }
 
+    using TimePoint = std::chrono::high_resolution_clock::time_point;
+
+    struct RandomPauses
+    {
+        static constexpr int NEXT_PAUSE_MIN = 10; ///< Minimum random pause interval in milliseconds
+        static constexpr int NEXT_PAUSE_MAX = 2000; ///< Maximum random pause interval in milliseconds
+        static constexpr int PAUSE_LENGTH_MIN = 1; ///< Minimum random pause in milliseconds
+        static constexpr int PAUSE_LENGTH_MAX = 500; ///< Maximum random pause in milliseconds
+        TimePoint next; ///< Next pause at this time
+        std::chrono::milliseconds length; ///< Next pause has this length
+
+        void pauseIfNeeded()
+        {
+          auto now = std::chrono::high_resolution_clock::now();
+          if (now >= next) {
+  //              cout << b::format("sw pause %-4d ms\n") % mRandomPauses.length.count() << std::flush;
+            std::this_thread::sleep_for(length);
+            // Schedule next pause
+            auto now = std::chrono::high_resolution_clock::now();
+            next = now + std::chrono::milliseconds(Utilities::getRandRange(NEXT_PAUSE_MIN, NEXT_PAUSE_MAX));
+            length = std::chrono::milliseconds(Utilities::getRandRange(PAUSE_LENGTH_MIN, PAUSE_LENGTH_MAX));
+          }
+        }
+    };
+
     enum class HugePageSize
     {
        SIZE_2MB, SIZE_1GB
@@ -778,8 +811,6 @@ class ProgramDmaBench: public Program
     /// Stream for error output
     std::ostringstream mErrorStream;
 
-    using TimePoint = std::chrono::high_resolution_clock::time_point;
-
     struct RunTime
     {
         TimePoint start; ///< Start of run time
@@ -797,16 +828,6 @@ class ProgramDmaBench: public Program
 
     /// Enables / disables the pushing loop
     bool mPushEnabled = true;
-
-    struct RandomPauses
-    {
-        static constexpr int NEXT_PAUSE_MIN = 10; ///< Minimum random pause interval in milliseconds
-        static constexpr int NEXT_PAUSE_MAX = 2000; ///< Maximum random pause interval in milliseconds
-        static constexpr int PAUSE_LENGTH_MIN = 1; ///< Minimum random pause in milliseconds
-        static constexpr int PAUSE_LENGTH_MAX = 500; ///< Maximum random pause in milliseconds
-        TimePoint next; ///< Next pause at this time
-        std::chrono::milliseconds length; ///< Next pause has this length
-    } mRandomPauses;
 
     size_t mPageSize;
 
