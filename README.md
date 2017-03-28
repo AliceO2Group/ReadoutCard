@@ -54,7 +54,10 @@ functions. If PDA is not available (see 'Dependencies') the factory will **alway
 Utility programs
 -------------------
 The RORC module contains some utility programs to assist with RORC debugging and administration.
-Currently, only utilities for reading and writing registers are available, but more are planned.
+rorc-bench-dma uses files in these directories for DMA buffers: 
+* `/var/lib/hugetlbfs/global/pagesize-2MB`
+* `/var/lib/hugetlbfs/global/pagesize-1GB`
+They can be inspected manually if needed, e.g. with hexdump: `hexdump -e '"%07_ax" " | " 4/8 "%08x " "\n"' <filename>`
 
 Exceptions
 -------------------
@@ -125,9 +128,9 @@ If PDA is not detected on the system, only a dummy implementation of the interfa
 PDA installation
 -------------------
 
-1. Install libpci dependency
+1. Install dependency packages
   ```
-  yum install pciutils-devel kmod-devel
+  yum install kernel-devel pciutils-devel kmod-devel libtool libhugetlbfs
   ```
 
 2. Download & extract PDA 11.0.7
@@ -148,6 +151,11 @@ PDA installation
 4. Optionally, insert kernel module. If the utilities are run as root, PDA will do this automatically.
   ```
   modprobe uio\_pci\_dma
+  ```
+
+5. When using rorc-bench-dma, create hugetlbfs mounts
+  ```
+  hugeadm --create-global-mounts
   ```
 
 
