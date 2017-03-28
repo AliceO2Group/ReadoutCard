@@ -189,8 +189,7 @@ class ProgramDmaBench: public Program
     virtual void run(const po::variables_map& map)
     {
       if (mOptions.fileOutputAscii && mOptions.fileOutputBin) {
-        BOOST_THROW_EXCEPTION(Exception()
-            << ErrorInfo::Message("File output can't be both ASCII and binary"));
+        throw ParameterException() << ErrorInfo::Message("File output can't be both ASCII and binary");
       }
       if (mOptions.fileOutputAscii) {
         mReadoutStream.open("readout_data.txt");
@@ -213,7 +212,7 @@ class ProgramDmaBench: public Program
       {
         const auto& input = mOptions.bufferSizeString;
         if (input.size() < 3) {
-          BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Invalid buffer size given"));
+          throw ParameterException() << ErrorInfo::Message("Invalid buffer size given");
         }
 
         try {
@@ -231,12 +230,12 @@ class ProgramDmaBench: public Program
             BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("Invalid buffer size unit given"));
           }
         } catch (const boost::bad_lexical_cast& e) {
-          BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("Invalid buffer size argument"));
+          throw ParameterException() << ErrorInfo::Message("Invalid buffer size argument");
         }
       }
 
       if (mBufferSize < mSuperpageSize) {
-        BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("Buffer size smaller than superpage size"));
+        throw ParameterException() << ErrorInfo::Message("Buffer size smaller than superpage size");
       }
 
       mInfinitePages = (mOptions.maxPages <= 0);
@@ -475,7 +474,7 @@ class ProgramDmaBench: public Program
         bool hasError = checkErrors(pageAddress, pageSize, readoutCount, mDataGeneratorCounter);
         if (hasError && !mOptions.noResyncCounter) {
           // Resync the counter
-          mDataGeneratorCounter = mDataGeneratorCounter = getDataGeneratorCounterFromPage();
+          mDataGeneratorCounter = getDataGeneratorCounterFromPage();
         }
       }
 
