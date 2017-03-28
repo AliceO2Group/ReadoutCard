@@ -163,7 +163,7 @@ class ProgramDmaBench: public Program
               po::bool_switch(&mOptions.noErrorCheck),
               "Skip error checking")
           ("pattern",
-              po::value<std::string>(&mOptions.generatorPatternString),
+              po::value<std::string>(&mOptions.generatorPatternString)->default_value("INCREMENTAL"),
               "Error check with given pattern [INCREMENTAL, ALTERNATING, CONSTANT, RANDOM]")
           ("readout-mode",
               po::value<std::string>(&mOptions.readoutModeString),
@@ -309,9 +309,9 @@ class ProgramDmaBench: public Program
 
     void dmaLoop()
     {
-      auto indexToOffset = [&](int i){ return i * mSuperpageSize; };
       const int maxSuperpages = mBufferSize / mSuperpageSize;
       const int pagesPerSuperpage = mSuperpageSize / mPageSize;
+      auto indexToOffset = [&](int i) -> size_t { return i * mSuperpageSize; };
 
       std::cout << b::format("Max superpages       %d\n") % maxSuperpages;
       std::cout << b::format("Pages per superpage  %d\n") % pagesPerSuperpage;
@@ -746,7 +746,7 @@ class ProgramDmaBench: public Program
         {
           auto now = std::chrono::steady_clock::now();
           if (now >= next) {
-            cout << b::format("sw pause %-4d ms \n") % length.count() << std::flush;
+//            cout << b::format("sw pause %-4d ms \n") % length.count() << std::flush;
             std::this_thread::sleep_for(length);
             // Schedule next pause
             auto now = std::chrono::steady_clock::now();
