@@ -49,9 +49,6 @@ using MasterSharedPtr = ChannelMasterInterface::MasterSharedPtr;
 namespace {
 constexpr auto endm = InfoLogger::StreamOps::endm;
 
-/// Determines how often the status display refreshes
-constexpr auto DISPLAY_INTERVAL = 10ms;
-
 /// Max amount of errors that are recorded into the error stream
 constexpr int64_t MAX_RECORDED_ERRORS = 1000;
 
@@ -63,9 +60,10 @@ constexpr int NEXT_PAUSE_MAX = 2000;
 constexpr int PAUSE_LENGTH_MIN = 1;
 /// Maximum random pause in milliseconds
 constexpr int PAUSE_LENGTH_MAX = 500;
-// Low priority counter interval
-constexpr int LOW_PRIORITY_INTERVAL = 10000;
+/// Interval for low priority thread (display updates, etc)
+constexpr auto LOW_PRIORITY_INTERVAL = std::chrono::milliseconds(10);
 
+/// Buffer value to reset to
 constexpr uint32_t BUFFER_DEFAULT_VALUE = 0xCcccCccc;
 
 /// The data emulator writes to every 8th 32-bit word
@@ -79,7 +77,7 @@ const std::string PROGRESS_FORMAT("  %02s:%02s:%02s   %-12s  %-12s  %-12s  %-5.1
 
 auto READOUT_ERRORS_PATH = "readout_errors.txt";
 
-constexpr size_t SUPERPAGE_SIZE = 2*1024*1024;
+//constexpr size_t SUPERPAGE_SIZE = 1*1024*1024*1024;
 }
 
 class BarHammer : public Utilities::Thread
@@ -149,6 +147,9 @@ class ProgramDmaBench: public Program
               po::value<std::string>(&mOptions.bufferSizeString)->default_value("10MB"),
               "Buffer size in GB or MB (MB rounded down to 2 MB multiple, min 2 MB). If MB is given, 2 MB hugepages "
               "will be used; If GB is given, 1 GB hugepages will be used.")
+          ("superpage-size",
+              po::value<size_t>(&mOptions.superpageSizeMiB)->default_value(1),
+              "Superpage size in MB. Note that it can't be larger than the buffer")
           ("reset",
               po::bool_switch(&mOptions.resetChannel),
               "Reset channel during initialization")
@@ -206,6 +207,8 @@ class ProgramDmaBench: public Program
         mOptions.readoutMode = ReadoutMode::fromString(mOptions.readoutModeString);
       }
 
+      mSuperpageSize = mOptions.superpageSizeMiB * 1024 * 1024;
+
       // Parse buffer size
       {
         const auto& input = mOptions.bufferSizeString;
@@ -225,11 +228,15 @@ class ProgramDmaBench: public Program
             mOptions.hugePageSize = HugePageSize::SIZE_1GB;
             mBufferSize = value * 1024 * 1024 * 1024;
           } else {
-            BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Invalid buffer size unit given"));
+            BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("Invalid buffer size unit given"));
           }
         } catch (const boost::bad_lexical_cast& e) {
-          BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Invalid buffer size argument"));
+          BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("Invalid buffer size argument"));
         }
+      }
+
+      if (mBufferSize < mSuperpageSize) {
+        BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("Buffer size smaller than superpage size"));
       }
 
       mInfinitePages = (mOptions.maxPages <= 0);
@@ -282,9 +289,9 @@ class ProgramDmaBench: public Program
         mBarHammer->start(mChannel);
       }
 
-      mRunTime.start = std::chrono::high_resolution_clock::now();
+      mRunTime.start = std::chrono::steady_clock::now();
       dmaLoop();
-      mRunTime.end = std::chrono::high_resolution_clock::now();
+      mRunTime.end = std::chrono::steady_clock::now();
 
       if (mBarHammer) {
         mBarHammer->join();
@@ -303,9 +310,9 @@ class ProgramDmaBench: public Program
 
     void dmaLoop()
     {
-      auto indexToOffset = [&](int i){ return (i + 1) * SUPERPAGE_SIZE; };
-      const int maxSuperpages = (mBufferSize / SUPERPAGE_SIZE) - 1;
-      const int pagesPerSuperpage = SUPERPAGE_SIZE / mPageSize;
+      auto indexToOffset = [&](int i){ return i * mSuperpageSize; };
+      const int maxSuperpages = mBufferSize / mSuperpageSize;
+      const int pagesPerSuperpage = mSuperpageSize / mPageSize;
 
       std::cout << b::format("Max superpages       %d\n") % maxSuperpages;
       std::cout << b::format("Pages per superpage  %d\n") % pagesPerSuperpage;
@@ -326,41 +333,17 @@ class ProgramDmaBench: public Program
 
       auto isStopDma = [&]{ return mDmaLoopBreak.load(std::memory_order_relaxed); };
 
-      // Readout thread
-      auto readoutFuture = std::async(std::launch::async, [&]{
-        RandomPauses pauses;
-
+      // Thread for low priority tasks
+      auto lowPriorityFuture = std::async(std::launch::async, [&]{
+        auto next = std::chrono::steady_clock::now();
         while (!isStopDma()) {
-          if (!mInfinitePages && mReadoutCount.load(std::memory_order_relaxed) >= mOptions.maxPages) {
-            mDmaLoopBreak = true;
-            break;
-          }
-
-          size_t offset;
-          if (readoutQueue.read(offset)) {
-//            std::cout << b::format("Reading offset %x\n") % offset;
-
-            // Read out pages
-            int pages = SUPERPAGE_SIZE / mPageSize;
-            for (int i = 0; i < pages; ++i) {
-              auto readoutCount = mReadoutCount.fetch_add(1, std::memory_order_relaxed);
-              readoutPage(mBufferBaseAddress + offset + i * mPageSize, mPageSize, readoutCount);
-//              std::this_thread::sleep_for(1ms);
-            }
-
-            // Page has been read out
-            // Add superpage back to free queue
-            if (!freeQueue.write(offset)) {
-              BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Something went horribly wrong"));
-            }
-          }
-
-          if (mOptions.randomPause) {
-            pauses.pauseIfNeeded();
-          }
+          lowPriorityTasks();
+          next += LOW_PRIORITY_INTERVAL;
+          std::this_thread::sleep_until(next);
         }
       });
 
+      // Thread for pushing & checking arrivals
       auto pushFuture = std::async(std::launch::async, [&]{
         RandomPauses pauses;
 
@@ -368,6 +351,9 @@ class ProgramDmaBench: public Program
           // Check if we need to stop in the case of a page limit
           if (!mInfinitePages && mPushCount.load(std::memory_order_relaxed) >= mOptions.maxPages) {
             break;
+          }
+          if (mOptions.randomPause) {
+            pauses.pauseIfNeeded();
           }
 
           // Keep the driver's queue filled
@@ -377,8 +363,7 @@ class ProgramDmaBench: public Program
           while (mChannel->getSuperpageQueueAvailable() != 0) {
             Superpage superpage;
             if (freeQueue.read(superpage.offset)) {
-              superpage.size = SUPERPAGE_SIZE;
-//              std::cout << b::format("Pushing offset %x\n") % superpage.offset;
+              superpage.size = mSuperpageSize;
               mChannel->pushSuperpage(superpage);
             } else {
               break;
@@ -396,29 +381,52 @@ class ProgramDmaBench: public Program
               }
             }
           }
-
-          if (mOptions.randomPause) {
-            pauses.pauseIfNeeded();
-          }
         }
       });
 
-      // Main thread for low priority tasks
-      while (!isStopDma()) {
-        // Note: these low priority tasks are not run on every cycle, to reduce overhead
-        lowPriorityTasks();
+      // Readout thread (main thread)
+      {
+        RandomPauses pauses;
+
+        while (!isStopDma()) {
+          if (!mInfinitePages && mReadoutCount.load(std::memory_order_relaxed) >= mOptions.maxPages) {
+            mDmaLoopBreak = true;
+            break;
+          }
+          if (mOptions.randomPause) {
+            pauses.pauseIfNeeded();
+          }
+
+          size_t offset;
+          if (readoutQueue.read(offset)) {
+            // Read out pages
+            int pages = mSuperpageSize / mPageSize;
+            for (int i = 0; i < pages; ++i) {
+              auto readoutCount = mReadoutCount.fetch_add(1, std::memory_order_relaxed);
+              readoutPage(mBufferBaseAddress + offset + i * mPageSize, mPageSize, readoutCount);
+//              std::this_thread::sleep_for(1ms);
+
+            }
+
+            // Page has been read out
+            // Add superpage back to free queue
+            if (!freeQueue.write(offset)) {
+              BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Something went horribly wrong"));
+            }
+          }
+        }
       }
 
       pushFuture.get();
-      readoutFuture.get();
+      lowPriorityFuture.get();
     }
 
     /// Free the pages that were pushed in excess
     void freeExcessPages(std::chrono::milliseconds timeout)
     {
-      auto start = std::chrono::high_resolution_clock::now();
+      auto start = std::chrono::steady_clock::now();
       int popped = 0;
-      while ((std::chrono::high_resolution_clock::now() - start) < timeout) {
+      while ((std::chrono::steady_clock::now() - start) < timeout) {
         if (mChannel->getSuperpageQueueCount() > 0) {
           auto superpage = mChannel->getSuperpage();
           if (superpage.isFilled()) {
@@ -578,13 +586,6 @@ class ProgramDmaBench: public Program
 
     void lowPriorityTasks()
     {
-      // This stuff doesn't need to be run every cycle, so we reduce the overhead.
-      if (mLowPriorityCount < LOW_PRIORITY_INTERVAL) {
-        mLowPriorityCount++;
-        return;
-      }
-      mLowPriorityCount = 0;
-
       // Handle a SIGINT abort
       if (isSigInt()) {
         // We want to finish the readout cleanly if possible, so we stop pushing and try to wait a bit until the
@@ -595,20 +596,20 @@ class ProgramDmaBench: public Program
       }
 
       // Status display updates
-      if (isVerbose() && isStatusDisplayInterval()) {
+      if (isVerbose()) {
         updateStatusDisplay();
       }
     }
 
     void updateStatusDisplay()
-     {
+    {
       if (!mHeaderPrinted) {
         printStatusHeader();
         mHeaderPrinted = true;
       }
 
        using namespace std::chrono;
-       auto diff = high_resolution_clock::now() - mRunTime.start;
+       auto diff = steady_clock::now() - mRunTime.start;
        auto second = duration_cast<seconds>(diff).count() % 60;
        auto minute = duration_cast<minutes>(diff).count() % 60;
        auto hour = duration_cast<hours>(diff).count();
@@ -648,17 +649,6 @@ class ProgramDmaBench: public Program
        auto line2 = b::format(PROGRESS_FORMAT) % "00" % "00" % "00" % '-' % '-' % '-' % '-';
        cout << '\n' << line1;
        cout << '\n' << line2;
-     }
-
-     bool isStatusDisplayInterval()
-     {
-       auto now = std::chrono::high_resolution_clock::now();
-       if (std::chrono::duration_cast<std::chrono::milliseconds, int64_t>(now - mLastDisplayUpdate)
-           > DISPLAY_INTERVAL) {
-         mLastDisplayUpdate = now;
-         return true;
-       }
-       return false;
      }
 
      void outputStats()
@@ -742,7 +732,7 @@ class ProgramDmaBench: public Program
       }
     }
 
-    using TimePoint = std::chrono::high_resolution_clock::time_point;
+    using TimePoint = std::chrono::steady_clock::time_point;
 
     struct RandomPauses
     {
@@ -755,12 +745,12 @@ class ProgramDmaBench: public Program
 
         void pauseIfNeeded()
         {
-          auto now = std::chrono::high_resolution_clock::now();
+          auto now = std::chrono::steady_clock::now();
           if (now >= next) {
-  //              cout << b::format("sw pause %-4d ms\n") % mRandomPauses.length.count() << std::flush;
+            cout << b::format("sw pause %-4d ms \n") % length.count() << std::flush;
             std::this_thread::sleep_for(length);
             // Schedule next pause
-            auto now = std::chrono::high_resolution_clock::now();
+            auto now = std::chrono::steady_clock::now();
             next = now + std::chrono::milliseconds(Utilities::getRandRange(NEXT_PAUSE_MIN, NEXT_PAUSE_MAX));
             length = std::chrono::milliseconds(Utilities::getRandRange(PAUSE_LENGTH_MIN, PAUSE_LENGTH_MAX));
           }
@@ -788,6 +778,7 @@ class ProgramDmaBench: public Program
         std::string generatorPatternString;
         std::string readoutModeString;
         std::string bufferSizeString;
+        size_t superpageSizeMiB;
         HugePageSize hugePageSize;
         GeneratorPattern::type generatorPattern = GeneratorPattern::Incremental;
         boost::optional<ReadoutMode::type> readoutMode;
@@ -801,7 +792,7 @@ class ProgramDmaBench: public Program
     std::atomic<int64_t> mReadoutCount { 0 };
     int64_t mErrorCount = 0;
     int64_t mDataGeneratorCounter = -1;
-    int mLowPriorityCount = 0;
+    size_t mSuperpageSize = 0;
 
     std::unique_ptr<MemoryMappedFile> mMemoryMappedFile;
 
