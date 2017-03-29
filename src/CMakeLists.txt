@@ -46,6 +46,7 @@ set(RORC_LIB_SOURCES
   CommandLineUtilities/Common.cxx
   CommandLineUtilities/Options.cxx
   CommandLineUtilities/Program.cxx
+  CommandLineUtilities/SuffixOption.cxx
   Utilities/System.cxx
   #Utilities/Numa.cxx
 )
