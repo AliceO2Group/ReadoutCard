@@ -47,8 +47,9 @@ set(RORC_LIB_SOURCES
   CommandLineUtilities/Options.cxx
   CommandLineUtilities/Program.cxx
   CommandLineUtilities/SuffixOption.cxx
+  Utilities/Iommu.cxx
   Utilities/System.cxx
-  #Utilities/Numa.cxx
+  Utilities/Numa.cxx
 )
 
 if(ALICEO2_RORC_PDA_ENABLED)

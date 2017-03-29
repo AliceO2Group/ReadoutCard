@@ -1,18 +1,19 @@
-/// \file Numa.h
-/// \brief Implementation of functions for NUMA
+/// \file Iommu.cxx
+/// \brief Definition of functions related to the IOMMU
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #pragma once
 
-#include "RORC/ParameterTypes/PciAddress.h"
-
 namespace AliceO2 {
 namespace Rorc {
 namespace Utilities {
+namespace Iommu {
 
-int getNumaNode(const PciAddress& pciAddress);
+/// Checks if the IOMMU is enabled
+bool isEnabled();
 
+} // namespace Iommu
 } // namespace Util
 } // namespace Rorc
 } // namespace AliceO2
