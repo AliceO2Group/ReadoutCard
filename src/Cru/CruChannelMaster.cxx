@@ -170,10 +170,10 @@ void CruChannelMaster::fillSuperpages()
       SuperpageQueueEntry& entry = mSuperpageQueue.getArrivalsFrontEntry();
       auto pagesArrived = getBar().getSuperpagePushedPages(getFifoBack());
       assert(pagesArrived <= entry.maxPages);
+      entry.superpage.received = pagesArrived * DMA_PAGE_SIZE;
 
       if (pagesArrived == entry.maxPages) {
         incrementFifoBack();
-        entry.superpage.received = pagesArrived * DMA_PAGE_SIZE;
         mSuperpageQueue.moveFromArrivalsToFilledQueue();
       } else {
         // If the back one hasn't arrived yet, the next ones will certainly not have arrived either...
