@@ -33,7 +33,6 @@ set(RORC_LIB_SOURCES
   ChannelPaths.cxx
   Dummy/DummyChannelMaster.cxx
   Dummy/DummyChannelSlave.cxx
-  Exception.cxx
   ExceptionInternal.cxx
   MemoryMappedFile.cxx
   Parameters.cxx
@@ -48,7 +47,6 @@ set(RORC_LIB_SOURCES
   CommandLineUtilities/Program.cxx
   Utilities/Iommu.cxx
   Utilities/System.cxx
-  Utilities/SuffixNumber.cxx
   Utilities/Numa.cxx
 )
 

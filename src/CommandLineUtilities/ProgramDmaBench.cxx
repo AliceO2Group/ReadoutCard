@@ -29,7 +29,7 @@
 #include "CommandLineUtilities/Common.h"
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
-#include "CommandLineUtilities/SuffixOption.h"
+#include "Common/SuffixOption.h"
 #include "Utilities/Iommu.h"
 #include "Utilities/SmartPointer.h"
 #include "Utilities/System.h"
@@ -39,6 +39,7 @@
 using namespace AliceO2::Rorc::CommandLineUtilities;
 using namespace AliceO2::Rorc;
 using namespace AliceO2::InfoLogger;
+using AliceO2::Common::SuffixOption;
 using std::cout;
 using std::endl;
 using namespace std::literals;
@@ -124,14 +125,14 @@ class ProgramDmaBench: public Program
       Options::addOptionCardId(options);
       options.add_options()
           ("pages",
-              Options::SuffixOption<uint64_t>::make(&mOptions.maxPages)->default_value("10k"),
+              SuffixOption<uint64_t>::make(&mOptions.maxPages)->default_value("10k"),
               "Amount of pages to transfer. Give 0 for infinite.")
           ("buffer-size",
-              Options::SuffixOption<size_t>::make(&mBufferSize)->default_value("10Mi"),
+              SuffixOption<size_t>::make(&mBufferSize)->default_value("10Mi"),
               "Buffer size in bytes. Rounded down to 2 MiB multiple. Minimum of 2 MiB. Use 2 MiB hugepage by default; |"
               "if buffer size is a multiple of 1 GiB, will try to use GiB hugepages")
           ("superpage-size",
-              Options::SuffixOption<size_t>::make(&mSuperpageSize)->default_value("1Mi"),
+              SuffixOption<size_t>::make(&mSuperpageSize)->default_value("1Mi"),
               "Superpage size in bytes. Note that it can't be larger than the buffer. If the IOMMU is not enabled, the "
               "hugepage size must be a multiple of the superpage size")
           ("reset",
