@@ -157,12 +157,9 @@ class Crorc
     StWord ddlReadDiu(int transid, long long int time);
     StWord ddlReadSiu(int transid, long long int time);
     StWord ddlReadCTSTW(int transid, int destination, long long int time);
-//    void ddlLinkUp(int master, int print, int stop, long long int time, const DiuConfig& diuConfig);
-//    void ddlLinkUp_NEW(int master, int print, int stop, long long int time, const DiuConfig& diuConfig);
     void emptyDataFifos(int timeoutMicroseconds);
     StWord ddlSetSiuLoopBack(const DiuConfig& diuConfig);
-
-    void ddlInterpretIFSTW(uint32_t ifstw, const char *pref, const char *suff);
+    void ddlInterpretIFSTW(uint32_t ifstw);
 };
 
 } // namespace Crorc

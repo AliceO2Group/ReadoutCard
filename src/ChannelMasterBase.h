@@ -142,10 +142,6 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, publ
     }
 
   private:
-
-    /// Validate ChannelParameters
-    static void validateParameters(const Parameters& parameters);
-
     /// Check if the channel number is valid
     void checkChannelNumber(const AllowedChannels& allowedChannels);
 

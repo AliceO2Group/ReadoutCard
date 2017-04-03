@@ -36,7 +36,7 @@ constexpr uint64_t DMA_ALIGNMENT = 32;
 } // Anonymous namespace
 
 CruChannelMaster::CruChannelMaster(const Parameters& parameters)
-    : ChannelMasterPdaBase(parameters, allowedChannels(), sizeof(0)), //
+    : ChannelMasterPdaBase(parameters, allowedChannels()), //
       mInitialResetLevel(ResetLevel::Rorc), // It's good to reset at least the card channel in general
       mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Rorc)), // Internal loopback by default
       mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)), // Use data generator by default

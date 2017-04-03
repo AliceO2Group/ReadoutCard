@@ -536,7 +536,7 @@ StWord Crorc::ddlReadSiu(int transid, long long int time)
 }
 
 /// Interpret DIU or SIU IFSTW
-void ddlInterpretIFSTW(uint32_t ifstw, const char *pref, const char *suff)
+void ddlInterpretIFSTW(uint32_t ifstw)
 {
   using namespace Ddl;
   using Table = std::vector<std::pair<uint32_t, const char*>>;

@@ -24,7 +24,7 @@ CardDescriptor getDescriptor(const Parameters& parameters)
 }
 
 ChannelMasterPdaBase::ChannelMasterPdaBase(const Parameters& parameters,
-    const AllowedChannels& allowedChannels, size_t fifoSize)
+    const AllowedChannels& allowedChannels)
     : ChannelMasterBase(getDescriptor(parameters), parameters, allowedChannels), mDmaState(DmaState::STOPPED)
 {
   // Initialize PDA & DMA objects

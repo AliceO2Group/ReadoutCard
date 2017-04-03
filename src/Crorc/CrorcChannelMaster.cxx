@@ -28,7 +28,7 @@ namespace AliceO2 {
 namespace Rorc {
 
 CrorcChannelMaster::CrorcChannelMaster(const Parameters& parameters)
-    : ChannelMasterPdaBase(parameters, allowedChannels(), sizeof(ReadyFifo)), //
+    : ChannelMasterPdaBase(parameters, allowedChannels()), //
     mPageSize(parameters.getDmaPageSize().get_value_or(8*1024)), // 8 kB default for uniformity with CRU
     mInitialResetLevel(ResetLevel::Rorc), // It's good to reset at least the card channel in general
     mNoRDYRX(true), // Not sure

@@ -3,8 +3,6 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
-
 #include "Iommu.h"
 #include <boost/filesystem/operations.hpp>
 

@@ -12,7 +12,6 @@ namespace AliceO2 {
 namespace Rorc {
 namespace {
 static const char* DIR_SHAREDMEM = "/dev/shm/alice_o2/rorc";
-static const char* DIR_HUGEPAGE_2M = "/dev/hugepages/alice_o2/rorc";
 static const char* FORMAT = "%s/%s/channel_%i/%s";
 }
 

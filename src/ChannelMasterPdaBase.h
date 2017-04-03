@@ -29,8 +29,7 @@ class ChannelMasterPdaBase: public ChannelMasterBase
     /// Constructor for the ChannelMaster object
     /// \param parameters Parameters of the channel
     /// \param allowedChannels Channels allowed by this card type
-    /// \param fifoSize Size of the Firmware FIFO in the DMA buffer
-    ChannelMasterPdaBase(const Parameters& parameters, const AllowedChannels& allowedChannels, size_t fifoSize);
+    ChannelMasterPdaBase(const Parameters& parameters, const AllowedChannels& allowedChannels);
 
     ~ChannelMasterPdaBase();
 

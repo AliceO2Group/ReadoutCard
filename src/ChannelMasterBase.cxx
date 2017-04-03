@@ -31,32 +31,12 @@ void ChannelMasterBase::checkChannelNumber(const AllowedChannels& allowedChannel
   }
 }
 
-void ChannelMasterBase::validateParameters(const Parameters& p)
-{
-  // TODO Implement some basic checks, but nothing device-specific
-//  if (cp.dma.bufferSize % (2l * 1024l * 1024l) != 0) {
-//    BOOST_THROW_EXCEPTION(InvalidParameterException()
-//        << ErrorInfo::Message("Parameter 'dma.bufferSize' not a multiple of 2 mebibytes"));
-//  }
-//  if (cp.generator.dataSize > cp.dma.pageSize) {
-//    BOOST_THROW_EXCEPTION(InvalidParameterException()
-//        << ErrorInfo::Message("Parameter 'generator.dataSize' greater than 'dma.pageSize'"));
-//  }
-//  if ((cp.dma.bufferSize % cp.dma.pageSize) != 0) {
-//    BOOST_THROW_EXCEPTION(InvalidParameterException()
-//        << ErrorInfo::Message("DMA buffer size not a multiple of 'dma.pageSize'"));
-//  }
-}
-
 ChannelMasterBase::ChannelMasterBase(CardDescriptor cardDescriptor, const Parameters& parameters,
     const AllowedChannels& allowedChannels)
     : mCardDescriptor(cardDescriptor), mChannelNumber(parameters.getChannelNumberRequired())
 {
   // Check the channel number is allowed
   checkChannelNumber(allowedChannels);
-
-  // Check parameters for basic validity
-  validateParameters(parameters);
 
   // Create parent directories
   auto paths = getPaths();

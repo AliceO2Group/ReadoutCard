@@ -104,6 +104,12 @@ std::istream& operator>>(std::istream &stream, AliceO2::Rorc::Utilities::SuffixN
   return stream;
 }
 
+template <typename T>
+std::ostream& operator<<(std::ostream& stream, const SuffixNumber<T>& suffixNumber)
+{
+  return stream << suffixNumber.getNumber();
+}
+
 } // namespace Utilities
 } // namespace Rorc
 } // namespace AliceO2
