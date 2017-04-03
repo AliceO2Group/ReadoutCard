@@ -1,5 +1,6 @@
 #include <string>
 #include <boost/program_options/value_semantic.hpp>
+#include "Utilities/SuffixNumber.h"
 
 #ifndef SRC_COMMANDLINEUTILITIES_SUFFIXOPTION_H_
 #define SRC_COMMANDLINEUTILITIES_SUFFIXOPTION_H_
@@ -17,23 +18,39 @@ template <typename Number>
 class SuffixOption final : public boost::program_options::value_semantic
 {
   public:
-    using This = SuffixOption<Number>;
+    using ThisType = SuffixOption<Number>;
+    using SuffixNumberType = Utilities::SuffixNumber<Number>;
 
-    SuffixOption(Number* storeTo = nullptr) : mStoreTo(storeTo)
+    SuffixOption(SuffixNumberType* storeTo = nullptr) : mStoreToSuffixNumber(storeTo)
     {
     }
 
-    This* required()
+    SuffixOption(Number* storeTo = nullptr) : mStoreToNumber(storeTo)
+    {
+    }
+
+    ThisType* required()
     {
       mRequired = true;
       return this;
     }
 
-    This* default_value(std::string defaultValue)
+    ThisType* default_value(std::string defaultValue)
     {
-      mDefaultValue = defaultValue;
+      mHasDefault = true;
+      mName = std::string("(=" + defaultValue + ")");
+      mDefaultValue.setNumber(defaultValue);
       return this;
     }
+
+    ThisType* default_value(Number defaultValue)
+    {
+      mHasDefault = true;
+      mName = std::string("(=" + std::to_string(defaultValue) + ")");
+      mDefaultValue.setNumber(defaultValue);
+      return this;
+    }
+
 
     virtual ~SuffixOption()
     {
@@ -41,7 +58,7 @@ class SuffixOption final : public boost::program_options::value_semantic
 
     virtual std::string name() const override
     {
-      return "SuffixOption";
+      return mName;
     }
 
     virtual unsigned min_tokens() const override
@@ -71,50 +88,46 @@ class SuffixOption final : public boost::program_options::value_semantic
 
     virtual void parse(boost::any& valueStore, const std::vector<std::string>& newTokens, bool utf8) const override
     {
-      const auto& token = newTokens.at(0);
-      // Find the non-numeric suffix
-      auto pos = token.find_first_not_of("0123456789");
-
-      if (pos == std::string::npos) {
-        // We have a plain number
-        valueStore = boost::lexical_cast<Number>(token);
-        return;
-      }
-
-      auto numString = token.substr(0, pos);
-      auto unitString = token.substr(pos);
-
-      for (const auto& unit : _SuffixOptionTable::get()) {
-        if (unitString == unit.first) {
-          auto num = boost::lexical_cast<Number>(numString);
-          valueStore = num * Number(unit.second);
-          return;
-        }
-      }
+      valueStore = SuffixNumberType(newTokens.at(0));
     }
 
     virtual bool apply_default(boost::any& value) const override
     {
-      if (mDefaultValue.empty()) {
+      if (!mHasDefault) {
         return false;
       }
-
       value = mDefaultValue;
       return true;
     }
 
     virtual void notify(const boost::any& value) const override
     {
-      if (mStoreTo) {
-        *mStoreTo = boost::any_cast<Number>(value);
+      if (mStoreToSuffixNumber) {
+        *mStoreToSuffixNumber = boost::any_cast<SuffixNumberType>(value);
+      }
+
+      if (mStoreToNumber) {
+        *mStoreToNumber = boost::any_cast<SuffixNumberType>(value).getNumber();
       }
     }
 
-  private:
+    static ThisType* make(SuffixNumberType* number)
+    {
+      return new ThisType(number);
+    }
 
-    Number* mStoreTo = nullptr;
+    static ThisType* make(Number* number)
+    {
+      return new ThisType(number);
+    }
+
+  private:
+    Number* mStoreToNumber = nullptr;
+    SuffixNumberType* mStoreToSuffixNumber = nullptr;
     bool mRequired = false;
-    std::string mDefaultValue;
+    bool mHasDefault = false;
+    SuffixNumberType mDefaultValue;
+    std::string mName;
 };
 
 } // namespace Options

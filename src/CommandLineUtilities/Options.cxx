@@ -64,7 +64,7 @@ static Option<std::string> cardId("id", "Card ID: either serial number or PCI ad
 static Option<std::string> resetLevel("reset", "Reset level [NOTHING, RORC, RORC_DIU, RORC_DIU_SIU]", false);
 
 // Options for ChannelParameters
-static Option<size_t> cpDmaPageSize("page-size", "Card page size in kibibytes", true, 8);
+static Option<size_t> cpDmaPageSize("page-size", "Card page size in KiB", true, 8);
 static Option<bool> cpGenEnable("generator", "Enable data generator", true, true);
 static Option<std::string> cpGenLoopback("loopback", "Generator loopback mode [NONE, RORC, DIU, SIU]", true, "RORC");
 

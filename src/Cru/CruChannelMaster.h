@@ -9,7 +9,7 @@
 #include <memory>
 #include <queue>
 #include <boost/circular_buffer_fwd.hpp>
-#include "CruBarAccessor.h"
+#include "Cru/BarAccessor.h"
 #include "RORC/Parameters.h"
 #include "SuperpageQueue.h"
 #include "Utilities/GuardFunction.h"
@@ -86,16 +86,16 @@ class CruChannelMaster final : public ChannelMasterPdaBase
     void setBufferNonReady();
     void pushSuperpage(SuperpageQueueEntry& superpage);
 
-    CruBarAccessor getBar()
+    Cru::BarAccessor getBar()
     {
-      return CruBarAccessor(getPdaBarPtr());
+      return Cru::BarAccessor(getPdaBarPtr());
     }
 
     Pda::PdaBar* getPdaBar2Ptr();
 
-    CruBarAccessor getBar2()
+    Cru::BarAccessor getBar2()
     {
-      return CruBarAccessor(getPdaBar2Ptr());
+      return Cru::BarAccessor(getPdaBar2Ptr());
     }
 
     static constexpr CardType::type CARD_TYPE = CardType::Cru;

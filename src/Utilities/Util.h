@@ -13,6 +13,13 @@ namespace AliceO2 {
 namespace Rorc {
 namespace Utilities {
 
+/// Is x a multiple of y
+template <typename T1, typename T2>
+bool isMultiple(const T1& x, const T2& y)
+{
+  return (x >= y) && ((x % y) == 0);
+}
+
 template <typename T1, typename T2>
 void lexicalCast(const T1& from, T2& to)
 {

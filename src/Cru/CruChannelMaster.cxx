@@ -18,11 +18,10 @@
 
 using namespace std::literals;
 
-namespace AliceO2 {
-namespace Rorc {
-
-namespace Register = CruRegisterIndex;
-
+namespace AliceO2
+{
+namespace Rorc
+{
 namespace
 {
 /// DMA page length in bytes

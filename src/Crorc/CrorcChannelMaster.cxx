@@ -284,6 +284,12 @@ auto CrorcChannelMaster::getSuperpage() -> Superpage
 void CrorcChannelMaster::pushSuperpage(Superpage superpage)
 {
   checkSuperpage(superpage);
+  constexpr size_t MIN_SIZE = 1*1024*1024;
+
+  if (!Utilities::isMultiple(superpage.getSize(), MIN_SIZE)) {
+    BOOST_THROW_EXCEPTION(CrorcException()
+        << ErrorInfo::Message("Could not enqueue superpage, C-RORC backend requires superpage size multiple of 1 MiB"));
+  }
 
   SuperpageQueueEntry entry;
   entry.busAddress = getBusOffsetAddress(superpage.getOffset());
@@ -383,8 +389,7 @@ void CrorcChannelMaster::pushIntoSuperpage(SuperpageQueueEntry& entry)
 
 uintptr_t CrorcChannelMaster::getNextSuperpageBusAddress(const SuperpageQueueEntry& entry)
 {
-  auto pageSize = mPageSize;
-  auto offset = pageSize * entry.pushedPages;
+  auto offset = mPageSize * entry.pushedPages;
   uintptr_t pageBusAddress = entry.busAddress + offset;
   return pageBusAddress;
 }

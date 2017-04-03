@@ -10,7 +10,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/interprocess/sync/named_mutex.hpp>
 #include "ChannelPaths.h"
-#include "Cru/CruRegisterIndex.h"
+#include "Cru/Constants.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -89,7 +89,7 @@ void printCrorcFifo(ReadyFifo* fifo, std::ostream& os)
 }
 
 /// Prints the CRU status & descriptor table
-void printCruFifo(CruBarAccessor* fifo, std::ostream& os)
+void printCruFifo(Cru::BarAccessor* fifo, std::ostream& os)
 {
 //  {
 //    auto header = b::str(b::format(" %-4s %-14s %-14s\n")
@@ -149,7 +149,7 @@ void cruSanityCheck(std::ostream& os, RegisterReadWriteInterface* channel)
     // Writing to the LED register has been known to crash and reboot the machine if the CRU is in a bad state.
     // That makes it a good part of this sanity test..?
 
-    int ledAddress = CruRegisterIndex::LED_STATUS;
+    int ledAddress = Cru::Registers::LED_STATUS;
     int valueOn = 0xff;
     int valueOff = 0x00;
 

@@ -46,9 +46,9 @@ set(RORC_LIB_SOURCES
   CommandLineUtilities/Common.cxx
   CommandLineUtilities/Options.cxx
   CommandLineUtilities/Program.cxx
-  CommandLineUtilities/SuffixOption.cxx
   Utilities/Iommu.cxx
   Utilities/System.cxx
+  Utilities/SuffixNumber.cxx
   Utilities/Numa.cxx
 )
 

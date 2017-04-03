@@ -75,8 +75,10 @@ DEFINE_ERRINFO(SharedObjectName, std::string);
 DEFINE_ERRINFO(SharedStateFile, std::string);
 DEFINE_ERRINFO(SiuCommand, int);
 DEFINE_ERRINFO(StatusCode, int);
+DEFINE_ERRINFO(String, std::string);
 DEFINE_ERRINFO(StwExpected, std::string);
 DEFINE_ERRINFO(StwReceived, std::string);
+DEFINE_ERRINFO(Suffix, std::string);
 
 // Undefine macro for header safety (we don't want to pollute the global namespace with collision-prone names)
 #undef DEFINE_ERRINFO

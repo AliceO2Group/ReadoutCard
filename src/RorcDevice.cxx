@@ -13,7 +13,7 @@
 #include <functional>
 #include <iostream>
 #include "Crorc/Crorc.h"
-#include "Cru/CruBarAccessor.h"
+#include "Cru/BarAccessor.h"
 #include "Pda/PdaBar.h"
 #include "Pda/PdaDevice.h"
 #include "RORC/Exception.h"
@@ -208,7 +208,7 @@ int32_t cruGetSerial(Pda::PdaDevice::PdaPciDevice pciDevice)
 {
   int channel = 2; // Must use BAR 2 to access serial number
   Pda::PdaBar pdaBar(pciDevice, channel);
-  return CruBarAccessor(&pdaBar).getSerialNumber();
+  return Cru::BarAccessor(&pdaBar).getSerialNumber();
 }
 
 // The RORC headers have a lot of macros that cause problems with the rest of this file, so we include it down here.

@@ -112,9 +112,9 @@ void ChannelMasterPdaBase::checkSuperpage(const Superpage& superpage)
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not enqueue superpage, size == 0"));
   }
 
-  if ((superpage.getSize() % 1024*1024) != 0) {
+  if (!Utilities::isMultiple(superpage.getSize(), 32*1024)) {
     BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message("Could not enqueue superpage, size not a multiple of 1 MiB"));
+        << ErrorInfo::Message("Could not enqueue superpage, size not a multiple of 32 KiB"));
   }
 
   if ((superpage.getOffset() + superpage.getSize()) > getBufferProvider().getSize()) {
@@ -124,7 +124,7 @@ void ChannelMasterPdaBase::checkSuperpage(const Superpage& superpage)
 
   if ((superpage.getOffset() % 4) != 0) {
     BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message("Superpage offset not aligned properly"));
+        << ErrorInfo::Message("Superpage offset not 32-bit aligned"));
   }
 }
 

@@ -1,5 +1,5 @@
-/// \file CruBarAccessor.h
-/// \brief Definition of the CruRegisterAccessor class.
+/// \file BarAccessor.h
+/// \brief Definition of the CruBarAccessor class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
@@ -7,22 +7,19 @@
 
 #include <cstddef>
 #include <boost/optional/optional.hpp>
-#include "CruRegisterIndex.h"
+#include "Cru/Constants.h"
 #include "Pda/PdaBar.h"
 #include "Utilities/Util.h"
 
-//// TEMP
-#include <thread>
-#include <chrono>
-
 namespace AliceO2 {
 namespace Rorc {
+namespace Cru {
 
 /// A simple wrapper object for accessing the CRU BAR
-class CruBarAccessor
+class BarAccessor
 {
   public:
-    CruBarAccessor(Pda::PdaBar* pdaBar)
+    BarAccessor(Pda::PdaBar* pdaBar)
         : mPdaBar(pdaBar)
     {
     }
@@ -39,30 +36,32 @@ class CruBarAccessor
     /// \param address Superpage PCI bus address
     void setSuperpageDescriptor(uint32_t index, uint32_t pages, uintptr_t busAddress)
     {
-      assert(index < FIFO_INDEXES);
+      assert(index < SUPERPAGE_DESCRIPTORS);
 
       // Set superpage address
-      mPdaBar->barWrite(SUPERPAGE_ADDRESS_HIGH, Utilities::getUpper32Bits(busAddress));
-      mPdaBar->barWrite(SUPERPAGE_ADDRESS_LOW, Utilities::getLower32Bits(busAddress));
+      mPdaBar->writeRegister(Registers::SUPERPAGE_ADDRESS_HIGH, Utilities::getUpper32Bits(busAddress));
+      mPdaBar->writeRegister(Registers::SUPERPAGE_ADDRESS_LOW, Utilities::getLower32Bits(busAddress));
 
       // Set superpage size and FIFO index
-      uint32_t pagesAvailableAndIndex = index & 0xf;
-      pagesAvailableAndIndex |= (pages << 4) & (~0xf);
-      mPdaBar->barWrite(SUPERPAGE_PAGES_AVAILABLE_AND_INDEX, pagesAvailableAndIndex);
+      const uint32_t addressShift = 5;
+      const uint32_t indexMask = 0b11111;
+      uint32_t pagesAvailableAndIndex = index & indexMask;
+      pagesAvailableAndIndex |= (pages << addressShift) & (~indexMask);
+      mPdaBar->writeRegister(Registers::SUPERPAGE_PAGES_AVAILABLE_AND_INDEX, pagesAvailableAndIndex);
 
       // Set superpage enabled
-      mPdaBar->barWrite(SUPERPAGE_STATUS, index);
+      mPdaBar->writeRegister(Registers::SUPERPAGE_STATUS, index);
     }
 
     uint32_t getSuperpagePushedPages(uint32_t index)
     {
-      assert(index < FIFO_INDEXES);
-      return mPdaBar->barRead<uint32_t>(SUPERPAGE_PUSHED_PAGES + index*4);
+      assert(index < SUPERPAGE_DESCRIPTORS);
+      return mPdaBar->readRegister(Registers::SUPERPAGE_PUSHED_PAGES + index);
     }
 
     BufferStatus getSuperpageBufferStatus(uint32_t index)
     {
-      uint32_t status = mPdaBar->barRead<uint32_t>(SUPERPAGE_STATUS);
+      uint32_t status = mPdaBar->readRegister(Registers::SUPERPAGE_STATUS);
       uint32_t bit = status & (0b1 << index);
       if (bit == 0) {
         return BufferStatus::BUSY;
@@ -73,39 +72,17 @@ class CruBarAccessor
 
     void setDataEmulatorEnabled(bool enabled) const
     {
-      at32(CruRegisterIndex::DATA_EMULATOR_CONTROL) = enabled ? 0x3 : 0x0;
+      mPdaBar->writeRegister(Registers::DATA_EMULATOR_CONTROL, enabled ? 0x3 : 0x0);
     }
 
     void resetDataGeneratorCounter() const
     {
-      at32(CruRegisterIndex::RESET_CONTROL) = 0x2;
+      mPdaBar->writeRegister(Registers::RESET_CONTROL, 0x2);
     }
 
     void resetCard() const
     {
-      at32(CruRegisterIndex::RESET_CONTROL) = 0x1;
-    }
-
-    void setFifoBusAddress(void* address) const
-    {
-      at32(CruRegisterIndex::STATUS_BASE_BUS_HIGH) = Utilities::getUpper32Bits(uint64_t(address));
-      at32(CruRegisterIndex::STATUS_BASE_BUS_LOW) = Utilities::getLower32Bits(uint64_t(address));
-    }
-
-    void setFifoCardAddress() const
-    {
-      at32(CruRegisterIndex::STATUS_BASE_CARD_HIGH) = 0x0;
-      at32(CruRegisterIndex::STATUS_BASE_CARD_LOW) = 0x8000;
-    }
-
-    void setDescriptorTableSize() const
-    {
-      at32(CruRegisterIndex::DESCRIPTOR_TABLE_SIZE) = 127; // NUM_PAGES - 1;
-    }
-
-    void setDoneControl() const
-    {
-      at32(CruRegisterIndex::DONE_CONTROL) = 0x1;
+      mPdaBar->writeRegister(Registers::RESET_CONTROL, 0x1);
     }
 
     void setDataGeneratorPattern(GeneratorPattern::type pattern)
@@ -114,15 +91,16 @@ class CruBarAccessor
       constexpr uint32_t ALTERNATING = 0b10;
       constexpr uint32_t CONSTANT = 0b11;
 
-      auto value = [&pattern]{ switch (pattern) {
+      auto value = [&pattern]() -> uint32_t { switch (pattern) {
           case GeneratorPattern::Incremental: return INCREMENTAL;
           case GeneratorPattern::Alternating: return ALTERNATING;
           case GeneratorPattern::Constant:    return CONSTANT;
           default: BOOST_THROW_EXCEPTION(Exception()
               << ErrorInfo::Message("Unsupported generator pattern for CRU")
-              << ErrorInfo::GeneratorPattern(pattern)); }};
+              << ErrorInfo::GeneratorPattern(pattern)); }
+      };
 
-      at32(CruRegisterIndex::DMA_CONFIGURATION) = value();
+      mPdaBar->writeRegister(Registers::DMA_CONFIGURATION, value());
     }
 
     uint32_t getSerialNumber() const
@@ -133,7 +111,7 @@ class CruBarAccessor
             << ErrorInfo::BarIndex(mPdaBar->getBarNumber()));
       }
 
-      return at32(CruRegisterIndex::SERIAL_NUMBER);
+      return mPdaBar->readRegister(Registers::SERIAL_NUMBER);
     }
 
     /// Get raw data from the temperature register
@@ -146,7 +124,7 @@ class CruBarAccessor
       }
 
       // Only use lower 10 bits
-      return at32(CruRegisterIndex::TEMPERATURE) & 0x3ff;
+      return mPdaBar->readRegister(Registers::TEMPERATURE) & 0x3ff;
     }
 
     /// Converts a value from the CRU's temperature register and converts it to a °C double value.
@@ -177,12 +155,12 @@ class CruBarAccessor
 
     uint32_t getIdleCounterLower()
     {
-      return at32(CruRegisterIndex::IDLE_COUNTER_LOWER);
+      return mPdaBar->readRegister(Registers::IDLE_COUNTER_LOWER);
     }
 
     uint32_t getIdleCounterUpper()
     {
-      return at32(CruRegisterIndex::IDLE_COUNTER_UPPER);
+      return mPdaBar->readRegister(Registers::IDLE_COUNTER_UPPER);
     }
 
     uint64_t getIdleCounter()
@@ -192,50 +170,42 @@ class CruBarAccessor
 
     uint32_t getIdleMaxValue()
     {
-      return at32(CruRegisterIndex::MAX_IDLE_VALUE);
+      return mPdaBar->readRegister(Registers::MAX_IDLE_VALUE);
     }
 
     uint32_t getFirmwareCompileInfo()
     {
-      return at32(CruRegisterIndex::FIRMWARE_COMPILE_INFO);
+      return mPdaBar->readRegister(Registers::FIRMWARE_COMPILE_INFO);
     }
 
     uint8_t getDebugReadWriteRegister()
     {
-      return mPdaBar->getRegister<uint8_t>(CruRegisterIndex::toByteAddress(CruRegisterIndex::DEBUG_READ_WRITE));
+      return mPdaBar->getRegister<uint8_t>(toByteAddress(Registers::DEBUG_READ_WRITE));
     }
 
     void setDebugReadWriteRegister(uint8_t value)
     {
-      return mPdaBar->setRegister<uint8_t>(CruRegisterIndex::toByteAddress(CruRegisterIndex::DEBUG_READ_WRITE), value);
+      return mPdaBar->setRegister<uint8_t>(toByteAddress(Registers::DEBUG_READ_WRITE), value);
     }
 
     void setLedState(bool onOrOff)
     {
       int on = 0x00; // Yes, a 0 represents the on state
       int off = 0xff;
-      at32(CruRegisterIndex::LED_STATUS) = onOrOff ? on : off;
+      mPdaBar->writeRegister(Registers::LED_STATUS, onOrOff ? on : off);
     }
 
   private:
-
-    // These are for the new interface prototype. Highly subject to change.
-    // For more info: https://alice.its.cern.ch/jira/browse/CRU-61
-    static constexpr int SUPERPAGE_ADDRESS_HIGH = 0x210;
-    static constexpr int SUPERPAGE_ADDRESS_LOW = 0x214;
-    static constexpr int SUPERPAGE_PAGES_AVAILABLE_AND_INDEX = 0x234;
-    static constexpr int SUPERPAGE_STATUS = 0x23c;
-    static constexpr int SUPERPAGE_PUSHED_PAGES = 0x240;
-    static constexpr int FIFO_INDEXES = 4;
-
-    volatile uint32_t& at32(size_t index) const
+    /// Convert an index to a byte address
+    size_t toByteAddress(size_t address32)
     {
-      return mPdaBar->at<uint32_t>(CruRegisterIndex::toByteAddress(index));
+      return address32 * 4;
     }
 
-    const Pda::PdaBar* mPdaBar;
+    Pda::PdaBar* mPdaBar;
 //    uintptr_t bar;
 };
 
+} // namespace Cru
 } // namespace Rorc
 } // namespace AliceO2

@@ -19,7 +19,7 @@
 #include <boost/format.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/lexical_cast.hpp>
-#include "Cru/CruRegisterIndex.h"
+#include "Cru/Constants.h"
 #include "ExceptionLogging.h"
 #include "InfoLogger/InfoLogger.hxx"
 #include "folly/ProducerConsumerQueue.h"
@@ -29,12 +29,12 @@
 #include "CommandLineUtilities/Common.h"
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
+#include "CommandLineUtilities/SuffixOption.h"
 #include "Utilities/Iommu.h"
 #include "Utilities/SmartPointer.h"
 #include "Utilities/System.h"
 #include "Utilities/Thread.h"
 #include "Utilities/Util.h"
-
 
 using namespace AliceO2::Rorc::CommandLineUtilities;
 using namespace AliceO2::Rorc;
@@ -88,7 +88,7 @@ class BarHammer : public Utilities::Thread
         uint32_t writeCounter = 0;
         while (!stopFlag->load() && !Program::isSigInt()) {
           for (int i = 0; i < MULTIPLIER; ++i) {
-            channel->writeRegister(CruRegisterIndex::DEBUG_READ_WRITE, writeCounter);
+            channel->writeRegister(Cru::Registers::DEBUG_READ_WRITE, writeCounter);
             writeCounter++;
           }
           hammerCount++;
@@ -114,7 +114,8 @@ class ProgramDmaBench: public Program
 
     virtual Description getDescription()
     {
-      return {"DMA Benchmark", "Test RORC DMA performance", "./rorc-dma-bench --id=12345 --channel=0"};
+      return {"DMA Benchmark", "Test RORC DMA performance", "rorc-bench-dma --id=2:0.0 --channel=0 --reset --pages=1M "
+        "--buffer-size=1Gi --verbose --superpage-size=128Ki"};
     }
 
     virtual void addOptions(po::options_description& options)
@@ -123,15 +124,15 @@ class ProgramDmaBench: public Program
       Options::addOptionCardId(options);
       options.add_options()
           ("pages",
-              po::value<int64_t>(&mOptions.maxPages)->default_value(1500),
-              "Amount of pages to transfer. Give <= 0 for infinite.")
+              Options::SuffixOption<uint64_t>::make(&mOptions.maxPages)->default_value("10k"),
+              "Amount of pages to transfer. Give 0 for infinite.")
           ("buffer-size",
-              po::value<std::string>(&mOptions.bufferSizeString)->default_value("10MB"),
-              "Buffer size in GB or MB (MB rounded down to 2 MB multiple, min 2 MB). If MB is given, 2 MB hugepages "
-              "will be used; If GB is given, 1 GB hugepages will be used")
+              Options::SuffixOption<size_t>::make(&mBufferSize)->default_value("10Mi"),
+              "Buffer size in bytes. Rounded down to 2 MiB multiple. Minimum of 2 MiB. Use 2 MiB hugepage by default; |"
+              "if buffer size is a multiple of 1 GiB, will try to use GiB hugepages")
           ("superpage-size",
-              po::value<size_t>(&mOptions.superpageSizeMiB)->default_value(1),
-              "Superpage size in MB. Note that it can't be larger than the buffer. If the IOMMU is not enabled, the "
+              Options::SuffixOption<size_t>::make(&mSuperpageSize)->default_value("1Mi"),
+              "Superpage size in bytes. Note that it can't be larger than the buffer. If the IOMMU is not enabled, the "
               "hugepage size must be a multiple of the superpage size")
           ("reset",
               po::bool_switch(&mOptions.resetChannel),
@@ -171,6 +172,10 @@ class ProgramDmaBench: public Program
 
     virtual void run(const po::variables_map& map)
     {
+      auto cardId = Options::getOptionCardId(map);
+      int channelNumber = Options::getOptionChannel(map);
+      auto params = Options::getOptionsParameterMap(map);
+
       // Handle file output options
       if (mOptions.fileOutputAscii && mOptions.fileOutputBin) {
         throw ParameterException() << ErrorInfo::Message("File output can't be both ASCII and binary");
@@ -193,64 +198,64 @@ class ProgramDmaBench: public Program
         mOptions.readoutMode = ReadoutMode::fromString(mOptions.readoutModeString);
       }
 
-      mSuperpageSize = mOptions.superpageSizeMiB * 1024 * 1024;
-
-      // Parse buffer size
+      // Create buffer
       {
-        const auto& input = mOptions.bufferSizeString;
-        if (input.size() < 3) {
-          throw ParameterException() << ErrorInfo::Message("Invalid buffer size given");
+        constexpr size_t SIZE_2MiB = 2*1024*1024;
+        constexpr size_t SIZE_1GiB = 1*1024*1024*1024;
+        HugePageType hugePageType;
+        size_t hugePageSize;
+
+        if (!Utilities::isMultiple(mBufferSize, SIZE_2MiB)) {
+          throw ParameterException() << ErrorInfo::Message("Buffer size not a multiple of 2 MiB");
         }
 
-        try {
-          auto unit = input.substr(input.size() - 2); // Get last two characters
-          auto value = b::lexical_cast<size_t>(input.substr(0, input.size() - 2));
+        if (Utilities::isMultiple(mBufferSize, SIZE_1GiB)) {
+          hugePageType = HugePageType::SIZE_1GB;
+          hugePageSize = SIZE_1GiB;
+        } else {
+          hugePageType = HugePageType::SIZE_2MB;
+          hugePageSize = SIZE_2MiB;
+        }
 
-          if (unit == "MB") {
-            mOptions.hugePageType = HugePageType::SIZE_2MB;
-            mOptions.hugePageSize = 2*1024*1024;
-            value = std::max(size_t(2), value);
-            mBufferSize = (value - (value % 2)) * 1024 * 1024; // Round down for 2M hugepages
-          } else if (unit == "GB") {
-            mOptions.hugePageType = HugePageType::SIZE_1GB;
-            mOptions.hugePageSize = 1024 * 1024 * 1024;
-            mBufferSize = value * 1024 * 1024 * 1024;
-          } else {
-            BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("Invalid buffer size unit given"));
+        if (!Utilities::Iommu::isEnabled()) {
+          if (!Utilities::isMultiple(hugePageSize, mSuperpageSize)) {
+            throw ParameterException() << ErrorInfo::Message("IOMMU not enabled & hugepage size is not a multiple of "
+                "superpage size. Superpages may cross hugepage boundaries and cause invalid PCIe memory accesses");
           }
-        } catch (const b::bad_lexical_cast& e) {
-          throw ParameterException() << ErrorInfo::Message("Invalid buffer size argument");
+          mLogger << "IOMMU not enabled" << endm;
+        } else {
+          mLogger << "IOMMU enabled" << endm;
         }
-      }
 
-      if (!Utilities::Iommu::isEnabled()) {
-        if ((mOptions.hugePageSize % mSuperpageSize) != 0) {
-          throw ParameterException() << ErrorInfo::Message("IOMMU not enabled & hugepage size is not a multiple of "
-              "superpage size. Superpages may cross hugepage boundaries and cause invalid PCIe memory accesses");
+        if (mBufferSize < mSuperpageSize) {
+          throw ParameterException() << ErrorInfo::Message("Buffer size smaller than superpage size");
         }
-        mLogger << "IOMMU not enabled" << endm;
-      } else {
-        mLogger << "IOMMU enabled" << endm;
-      }
 
-      if (mBufferSize < mSuperpageSize) {
-        throw ParameterException() << ErrorInfo::Message("Buffer size smaller than superpage size");
+        auto createBuffer = [&](HugePageType hugePageType) {
+          // Create buffer file
+          std::string bufferFilePath = b::str(
+              b::format("/var/lib/hugetlbfs/global/pagesize-%s/rorc-dma-bench_id=%s_chan=%s_pages")
+                  % (hugePageType == HugePageType::SIZE_2MB ? "2MB" : "1GB") % map["id"].as<std::string>()
+                  % channelNumber);
+          Utilities::resetSmartPtr(mMemoryMappedFile, bufferFilePath, mBufferSize, mOptions.removePagesFile);
+          mBufferBaseAddress = reinterpret_cast<uintptr_t>(mMemoryMappedFile->getAddress());
+          mLogger << "Using buffer file path: " << bufferFilePath << endm;
+        };
+
+        if (hugePageType == HugePageType::SIZE_1GB) {
+          try {
+            createBuffer(HugePageType::SIZE_1GB);
+          }
+          catch (const MemoryMapException&) {
+            mLogger << "Failed to allocate buffer with 1GiB hugepages, falling back to 2MiB hugepages" << endm;
+          }
+        }
+        if (!mMemoryMappedFile) {
+          createBuffer(HugePageType::SIZE_2MB);
+        }
       }
 
       mInfinitePages = (mOptions.maxPages <= 0);
-
-      auto cardId = Options::getOptionCardId(map);
-      int channelNumber = Options::getOptionChannel(map);
-      auto params = Options::getOptionsParameterMap(map);
-
-      // Create buffer
-      std::string bufferFilePath = b::str(
-          b::format("/var/lib/hugetlbfs/global/pagesize-%s/rorc-dma-bench_id=%s_chan=%s_pages")
-              % (mOptions.hugePageType == HugePageType::SIZE_2MB ? "2MB" : "1GB") % map["id"].as<std::string>()
-              % channelNumber);
-      mLogger << "Using buffer file path: " << bufferFilePath << endm;
-      Utilities::resetSmartPtr(mMemoryMappedFile, bufferFilePath, mBufferSize, mOptions.removePagesFile);
-      mBufferBaseAddress = reinterpret_cast<uintptr_t>(mMemoryMappedFile->getAddress());
 
       // Set up channel parameters
       mPageSize = params.getDmaPageSize().get();
@@ -264,8 +269,15 @@ class ProgramDmaBench: public Program
         params.setReadoutMode(*mOptions.readoutMode);
       }
 
+      if (!Utilities::isMultiple(mSuperpageSize, mPageSize)) {
+        throw ParameterException() << ErrorInfo::Message("Superpage size not a multiple of page size");
+      }
+
       mMaxSuperpages = mBufferSize / mSuperpageSize;
       mPagesPerSuperpage = mSuperpageSize / mPageSize;
+      mLogger << "Buffer size: " << mBufferSize << endm;
+      mLogger << "Superpage size: " << mSuperpageSize << endm;
+      mLogger << "Page size: " << mPageSize << endm;
       mLogger << "Max superpages: " << mMaxSuperpages << endm;
       mLogger << "Pages per superpage: " << mPagesPerSuperpage << endm;
 
@@ -331,65 +343,77 @@ class ProgramDmaBench: public Program
 
       // Thread for low priority tasks
       auto lowPriorityFuture = std::async(std::launch::async, [&]{
-        auto next = std::chrono::steady_clock::now();
-        while (!isStopDma()) {
-          lowPriorityTasks();
-          next += LOW_PRIORITY_INTERVAL;
-          std::this_thread::sleep_until(next);
+        try {
+          auto next = std::chrono::steady_clock::now();
+          while (!isStopDma()) {
+            lowPriorityTasks();
+            next += LOW_PRIORITY_INTERVAL;
+            std::this_thread::sleep_until(next);
+          }
+        }
+        catch (std::exception& e) {
+          mDmaLoopBreak = true;
+          throw;
         }
       });
 
       // Thread for pushing & checking arrivals
       auto pushFuture = std::async(std::launch::async, [&]{
-        RandomPauses pauses;
-        int currentSuperpagePagesCounted = 0;
-        auto rest = [&]{ std::this_thread::sleep_for(RESTING_TIME_PUSH_THREAD); };
+        try {
+          RandomPauses pauses;
+          int currentSuperpagePagesCounted = 0;
+          auto rest = [&]{ std::this_thread::sleep_for(RESTING_TIME_PUSH_THREAD); };
 
-        while (!isStopDma()) {
-          // Check if we need to stop in the case of a page limit
-          if (!mInfinitePages && mPushCount.load(std::memory_order_relaxed) >= mOptions.maxPages
-              && (currentSuperpagePagesCounted == 0)) {
-            break;
-          }
-          if (mOptions.randomPause) {
-            pauses.pauseIfNeeded();
-          }
-
-          // Keep the driver's queue filled
-          mChannel->fillSuperpages();
-
-          // Give free superpages to the driver
-          while (mChannel->getSuperpageQueueAvailable() != 0) {
-            Superpage superpage;
-            if (freeQueue.read(superpage.offset)) {
-              superpage.size = mSuperpageSize;
-              mChannel->pushSuperpage(superpage);
-            } else {
-              // No free pages available, so take a little break
-              rest();
+          while (!isStopDma()) {
+            // Check if we need to stop in the case of a page limit
+            if (!mInfinitePages && mPushCount.load(std::memory_order_relaxed) >= mOptions.maxPages
+                && (currentSuperpagePagesCounted == 0)) {
               break;
             }
-          }
+            if (mOptions.randomPause) {
+              pauses.pauseIfNeeded();
+            }
 
-          // Check for filled superpages
-          if (mChannel->getSuperpageQueueCount() > 0) {
-            auto superpage = mChannel->getSuperpage();
-            // We do partial updates of the mPushCount because we can have very large superpages, which would otherwise
-            // cause hiccups in the display
-            int pages = superpage.received / mPageSize;
-            int pagesToCount = pages - currentSuperpagePagesCounted;
-            mPushCount.fetch_add(pagesToCount, std::memory_order_relaxed);
-            currentSuperpagePagesCounted += pagesToCount;
+            // Keep the driver's queue filled
+            mChannel->fillSuperpages();
 
-            if (superpage.isFilled() && readoutQueue.write(superpage.getOffset())) {
-              // Move full superpage to readout queue
-              currentSuperpagePagesCounted = 0;
-              mChannel->popSuperpage();
-            } else {
-              // Readout is backed up, so rest a while
-              rest();
+            // Give free superpages to the driver
+            while (mChannel->getSuperpageQueueAvailable() != 0) {
+              Superpage superpage;
+              if (freeQueue.read(superpage.offset)) {
+                superpage.size = mSuperpageSize;
+                mChannel->pushSuperpage(superpage);
+              } else {
+                // No free pages available, so take a little break
+                rest();
+                break;
+              }
+            }
+
+            // Check for filled superpages
+            if (mChannel->getSuperpageQueueCount() > 0) {
+              auto superpage = mChannel->getSuperpage();
+              // We do partial updates of the mPushCount because we can have very large superpages, which would otherwise
+              // cause hiccups in the display
+              int pages = superpage.received / mPageSize;
+              int pagesToCount = pages - currentSuperpagePagesCounted;
+              mPushCount.fetch_add(pagesToCount, std::memory_order_relaxed);
+              currentSuperpagePagesCounted += pagesToCount;
+
+              if (superpage.isFilled() && readoutQueue.write(superpage.getOffset())) {
+                // Move full superpage to readout queue
+                currentSuperpagePagesCounted = 0;
+                mChannel->popSuperpage();
+              } else {
+                // Readout is backed up, so rest a while
+                rest();
+              }
             }
           }
+        }
+        catch (std::exception& e) {
+          mDmaLoopBreak = true;
+          throw;
         }
       });
 
@@ -567,9 +591,12 @@ class ProgramDmaBench: public Program
       };
 
       switch (mOptions.generatorPattern) {
-        case GeneratorPattern::Incremental: return check([&](uint32_t i) { return i - 1; });
-        case GeneratorPattern::Alternating: return check([&](uint32_t)   { return 0xa5a5a5a5; });
-        case GeneratorPattern::Constant:    return check([&](uint32_t)   { return 0x12345678; });
+        case GeneratorPattern::Incremental:
+          return check([&](uint32_t i) {return i - 1;});
+        case GeneratorPattern::Alternating:
+          return check([&](uint32_t) {return 0xa5a5a5a5;});
+        case GeneratorPattern::Constant:
+          return check([&](uint32_t) {return 0x12345678;});
         default: ;
       }
 
@@ -582,9 +609,12 @@ class ProgramDmaBench: public Program
     bool checkErrors(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, uint32_t counter)
     {
       switch (mCardType) {
-        case CardType::Crorc: return checkErrorsCrorc(pageAddress, pageSize, eventNumber, counter);
-        case CardType::Cru: return checkErrorsCru(pageAddress, pageSize, eventNumber, counter);
-        default: throw std::runtime_error("Error checking unsupported for this card type");
+        case CardType::Crorc:
+          return checkErrorsCrorc(pageAddress, pageSize, eventNumber, counter);
+        case CardType::Cru:
+          return checkErrorsCru(pageAddress, pageSize, eventNumber, counter);
+        default:
+          throw std::runtime_error("Error checking unsupported for this card type");
       }
     }
 
@@ -777,7 +807,7 @@ class ProgramDmaBench: public Program
 
     /// Program options
     struct OptionsStruct {
-        int64_t maxPages = 0; ///< Limit of pages to push
+        uint64_t maxPages = 0; ///< Limit of pages to push
         bool fileOutputAscii = false;
         bool fileOutputBin = false;
         bool resetChannel = false;
@@ -790,10 +820,7 @@ class ProgramDmaBench: public Program
         bool delayReadout = false;
         std::string generatorPatternString;
         std::string readoutModeString;
-        std::string bufferSizeString;
         size_t superpageSizeMiB;
-        HugePageType hugePageType;
-        size_t hugePageSize;
         GeneratorPattern::type generatorPattern = GeneratorPattern::Incremental;
         b::optional<ReadoutMode::type> readoutMode;
     } mOptions;
