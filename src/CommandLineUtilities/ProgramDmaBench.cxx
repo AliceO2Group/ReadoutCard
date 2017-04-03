@@ -790,7 +790,6 @@ class ProgramDmaBench: public Program
         {
           auto now = std::chrono::steady_clock::now();
           if (now >= next) {
-//            cout << b::format("sw pause %-4d ms \n") % length.count() << std::flush;
             std::this_thread::sleep_for(length);
             // Schedule next pause
             auto now = std::chrono::steady_clock::now();
