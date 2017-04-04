@@ -16,6 +16,7 @@
 #include <thread>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/circular_buffer.hpp>
+#include <boost/interprocess/sync/named_mutex.hpp>
 #include <boost/format.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/lexical_cast.hpp>
@@ -283,7 +284,18 @@ class ProgramDmaBench: public Program
       mLogger << "Pages per superpage: " << mPagesPerSuperpage << endm;
 
       // Get master lock on channel
+      try {
       mChannel = ChannelFactory().getMaster(params);
+      }
+      catch (const NamedMutexLockException& exception) {
+        mLogger << InfoLogger::Warning << "Failed to acquire channel lock, attempting cleanup and retry" << endm;
+        // Note that we can do this because we know for sure this process is not holding the lock. If we did not know
+        // this, it would be very dangerous to manually remove the lock.
+        if (auto mutexName = boost::get_error_info<ErrorInfo::NamedMutexName>(exception)) {
+          boost::interprocess::named_mutex::remove(mutexName->c_str());
+        }
+        mChannel = ChannelFactory().getMaster(params);
+      }
       mCardType = mChannel->getCardType();
 
       if (mOptions.resetChannel) {
