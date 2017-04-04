@@ -33,7 +33,7 @@ class Lock
 
     Lock(const boost::filesystem::path& lockFilePath, const std::string& namedMutexName)
     {
-      Common::System::touchFile(lockFilePath);
+      Common::System::touchFile(lockFilePath.string());
 
       // Construct mutexes
       try {
