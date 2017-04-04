@@ -32,7 +32,6 @@
 #include "Common/SuffixOption.h"
 #include "Utilities/Iommu.h"
 #include "Utilities/SmartPointer.h"
-#include "Utilities/System.h"
 #include "Utilities/Thread.h"
 #include "Utilities/Util.h"
 

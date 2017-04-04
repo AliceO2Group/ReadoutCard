@@ -12,9 +12,9 @@
 #include <boost/exception/errinfo_errno.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/scoped_ptr.hpp>
+#include "Common/System.h"
 #include "ExceptionInternal.h"
 #include "Utilities/SmartPointer.h"
-#include "Utilities/System.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -33,7 +33,7 @@ class Lock
 
     Lock(const boost::filesystem::path& lockFilePath, const std::string& namedMutexName)
     {
-      Utilities::touchFile(lockFilePath);
+      Common::System::touchFile(lockFilePath);
 
       // Construct mutexes
       try {

@@ -26,8 +26,8 @@ class ProgramSanityCheck: public Program
 
     virtual Description getDescription()
     {
-      return Description("Sanity Check", "Does some basic sanity checks on the card",
-          "./rorc-sanity-check --id=12345 --channel=0");
+      return {"Sanity Check", "Does some basic sanity checks on the card",
+          "./rorc-sanity-check --id=12345 --channel=0"};
     }
 
     virtual void addOptions(boost::program_options::options_description& options)

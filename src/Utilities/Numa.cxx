@@ -7,7 +7,7 @@
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 #include "ExceptionInternal.h"
-#include "Utilities/System.h"
+#include "Common/System.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -25,7 +25,7 @@ std::string getPciSysfsDirectory(const PciAddress& pciAddress)
 
 int getNumaNode(const PciAddress& pciAddress)
 {
-  auto string = executeCommand(b::str(b::format("cat %s/numa_node") % getPciSysfsDirectory(pciAddress)));
+  auto string = Common::System::executeCommand(b::str(b::format("cat %s/numa_node") % getPciSysfsDirectory(pciAddress)));
   int result = 0;
   if (!b::conversion::try_lexical_convert<int>(string, result)) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Failed to get numa node")

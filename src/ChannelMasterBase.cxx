@@ -8,8 +8,8 @@
 #include "BufferProviderFile.h"
 #include "BufferProviderMemory.h"
 #include "ChannelPaths.h"
+#include "Common/System.h"
 #include "Utilities/SmartPointer.h"
-#include "Utilities/System.h"
 #include "Visitor.h"
 
 namespace AliceO2 {
@@ -41,7 +41,7 @@ ChannelMasterBase::ChannelMasterBase(CardDescriptor cardDescriptor, const Parame
   // Create parent directories
   auto paths = getPaths();
   for (const auto& p : {paths.fifo(), paths.lock()}) {
-    Utilities::makeParentDirectories(p);
+    Common::System::makeParentDirectories(p);
   }
 
   // Get lock

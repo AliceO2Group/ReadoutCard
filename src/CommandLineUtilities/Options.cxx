@@ -114,36 +114,6 @@ b::optional<T> getOptionOptional(const Option<T>& option, const po::variables_ma
   }
 }
 
-po::options_description createOptionsDescription()
-{
-  // Get size of the terminal, the amount of columns is used for formatting the options
-  struct winsize w;
-  ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-
-  po::options_description optionsDescription("Allowed options", w.ws_col, w.ws_col/2);
-  addOptionHelp(optionsDescription);
-  return optionsDescription;
-}
-
-po::variables_map getVariablesMap(int argc, char** argv, const po::options_description& optionsDescription)
-{
-  po::variables_map variablesMap;
-  try {
-    po::store(po::parse_command_line(argc, argv, optionsDescription), variablesMap);
-    po::notify(variablesMap);
-  }
-  catch (const po::unknown_option& e) {
-    BOOST_THROW_EXCEPTION(ProgramOptionException()
-        << ErrorInfo::Message("Unknown option '" + e.get_option_name() + "'"));
-  }
-  return variablesMap;
-}
-
-void addOptionHelp(po::options_description& optionsDescription)
-{
-  optionsDescription.add_options()("help", "Produce help message");
-}
-
 void addOptionChannel(po::options_description& optionsDescription)
 {
   addOption(option::channel, optionsDescription);
