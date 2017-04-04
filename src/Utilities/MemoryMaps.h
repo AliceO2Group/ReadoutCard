@@ -18,6 +18,7 @@ struct MemoryMap
     size_t kernelPageSize; ///< Size of the
 };
 
+/// TODO Work in progress
 std::vector<MemoryMap> getMemoryMaps();
 
 } // namespace Util

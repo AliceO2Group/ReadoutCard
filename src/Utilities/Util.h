@@ -5,9 +5,7 @@
 
 #pragma once
 
-#include <chrono>
 #include <cstdint>
-#include <boost/lexical_cast.hpp>
 
 namespace AliceO2 {
 namespace Rorc {
@@ -18,12 +16,6 @@ template <typename T1, typename T2>
 bool isMultiple(const T1& x, const T2& y)
 {
   return (x >= y) && ((x % y) == 0);
-}
-
-template <typename T1, typename T2>
-void lexicalCast(const T1& from, T2& to)
-{
-  to = boost::lexical_cast<T2>(from);
 }
 
 inline uint32_t getLower32Bits(uint64_t x)
@@ -60,21 +52,6 @@ ptrdiff_t pointerDiff(T* a, T* b)
 inline int getRandRange(int min, int max)
 {
   return (std::rand() % max - min) + min;
-}
-
-/// Wait on a given condition to become true, with a timeout. Uses a busy wait
-/// \return false on timeout, true if the condition was satisfied before a timeout occurred
-template <typename Predicate, typename Duration>
-bool waitOnPredicateWithTimeout(Duration duration, Predicate predicate)
-{
-  auto start = std::chrono::high_resolution_clock::now();
-  while (predicate() == false) {
-    auto now = std::chrono::high_resolution_clock::now();
-    if ((now - start) > duration) {
-      return false;
-    }
-  }
-  return true;
 }
 
 inline bool checkAlignment(void* address, uint64_t alignment)

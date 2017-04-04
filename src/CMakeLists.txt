@@ -44,7 +44,6 @@ set(RORC_LIB_SOURCES
   RorcStatusCode.cxx
   CommandLineUtilities/Common.cxx
   CommandLineUtilities/Options.cxx
-  Utilities/Iommu.cxx
   Utilities/Numa.cxx
 )
 

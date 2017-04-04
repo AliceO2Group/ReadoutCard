@@ -20,6 +20,7 @@
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Cru/Constants.h"
+#include "ExceptionInternal.h"
 #include "ExceptionLogging.h"
 #include "InfoLogger/InfoLogger.hxx"
 #include "folly/ProducerConsumerQueue.h"
@@ -29,10 +30,10 @@
 #include "CommandLineUtilities/Common.h"
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
+#include "Common/BasicThread.h"
+#include "Common/Iommu.h"
 #include "Common/SuffixOption.h"
-#include "Utilities/Iommu.h"
 #include "Utilities/SmartPointer.h"
-#include "Utilities/Thread.h"
 #include "Utilities/Util.h"
 
 using namespace AliceO2::Rorc::CommandLineUtilities;
@@ -66,13 +67,13 @@ constexpr int64_t MAX_RECORDED_ERRORS = 1000;
 constexpr auto endm = InfoLogger::endm;
 }
 
-class BarHammer : public Utilities::Thread
+class BarHammer : public AliceO2::Common::BasicThread
 {
   public:
     void start(const std::shared_ptr<ChannelMasterInterface>& channelIn)
     {
       mChannel = channelIn;
-      Thread::start([&](std::atomic<bool>* stopFlag) {
+      BasicThread::start([&](std::atomic<bool>* stopFlag) {
         auto channel = mChannel;
 
         if (channel->getCardType() != CardType::Cru) {
@@ -86,7 +87,7 @@ class BarHammer : public Utilities::Thread
 
         int64_t hammerCount = 0;
         uint32_t writeCounter = 0;
-        while (!stopFlag->load() && !Program::isSigInt()) {
+        while (!stopFlag->load(std::memory_order_relaxed) && !Program::isSigInt()) {
           for (int i = 0; i < MULTIPLIER; ++i) {
             channel->writeRegister(Cru::Registers::DEBUG_READ_WRITE, writeCounter);
             writeCounter++;
@@ -217,7 +218,7 @@ class ProgramDmaBench: public Program
           hugePageSize = SIZE_2MiB;
         }
 
-        if (!Utilities::Iommu::isEnabled()) {
+        if (!AliceO2::Common::Iommu::isEnabled()) {
           if (!Utilities::isMultiple(hugePageSize, mSuperpageSize)) {
             throw ParameterException() << ErrorInfo::Message("IOMMU not enabled & hugepage size is not a multiple of "
                 "superpage size. Superpages may cross hugepage boundaries and cause invalid PCIe memory accesses");

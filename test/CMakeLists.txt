@@ -14,7 +14,6 @@ set(TEST_FILES
     TestProgramOptions.cxx
     TestRorcException.cxx
     TestSuperpageQueue.cxx
-    TestUtil.cxx
 )
 
 # Iterate over all tests found. For each, declare an executable and add it to the tests list.

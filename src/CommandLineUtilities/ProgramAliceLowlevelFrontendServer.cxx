@@ -14,11 +14,11 @@
 #include <boost/lexical_cast.hpp>
 #include <dim/dis.hxx>
 #include "AliceLowlevelFrontend.h"
+#include "Common/BasicThread.h"
+#include "Common/GuardFunction.h"
 #include "ExceptionInternal.h"
 #include "RORC/Parameters.h"
 #include "RORC/ChannelFactory.h"
-#include "Utilities/GuardFunction.h"
-#include "Utilities/Thread.h"
 
 namespace {
 using namespace AliceO2::Rorc::CommandLineUtilities;
@@ -97,25 +97,26 @@ class PublisherRegistry
     /// Class that publishes values at an interval.
     /// TODO Use condition variables, so we can wake up the thread and stop it immediately, not having to wait for its
     ///   next iteration
-    class Publisher: public Utilities::Thread
+    class Publisher: public AliceO2::Common::BasicThread
     {
       public:
 
         Publisher(ChannelSharedPtr channel, ServiceDescription serviceDescription)
-            : mChannel(channel), mServiceDescription(serviceDescription)
+            : mServiceDescription(serviceDescription), mChannel(channel)
         {
         }
 
         void start()
         {
-          Thread::start([&](std::atomic<bool>* stopFlag) {
+          BasicThread::start([&](std::atomic<bool>* stopFlag) {
             auto startTime = std::chrono::high_resolution_clock::now();
             int iteration = 0;
 
             cout << "Starting publisher '" << mServiceDescription.dnsName << "' with "
             << mServiceDescription.addresses.size() << " addresses at interval "
             << mServiceDescription.interval << "s \n";
-            Utilities::GuardFunction logGuard([&]{cout << "Stopping publisher '" << mServiceDescription.dnsName << "'\n";});
+            AliceO2::Common::GuardFunction logGuard([&]{
+              cout << "Stopping publisher '" << mServiceDescription.dnsName << "'\n";});
 
             // Prepare the service and its variable
             std::vector<uint32_t> registerValues(mServiceDescription.addresses.size());
@@ -124,7 +125,7 @@ class PublisherRegistry
             auto format = boost::str(boost::format("I:%d") % registerCount);
             DimService service(mServiceDescription.dnsName.c_str(), format.c_str(), registerValues.data(), size);
 
-            while(!stopFlag->load()) {
+            while(!stopFlag->load(std::memory_order_relaxed)) {
 
               std::ostringstream stream;
               stream << "Publisher '" << mServiceDescription.dnsName << "' publishing:\n";
@@ -183,8 +184,9 @@ class ProgramAliceLowlevelFrontendServer: public Program
       auto params = AliceO2::Rorc::Parameters::makeParameters(serialNumber, channelNumber);
       auto channel = AliceO2::Rorc::ChannelFactory().getSlave(params);
 
-      // Object that starts the DIM service on construction, and stops it when destroyed
-      Utilities::GuardFunction dimStartStopper([] {DimServer::start("ALF");}, [] {DimServer::stop();});
+      DimServer::start("ALF");
+      // Object that stops the DIM service when destroyed
+      AliceO2::Common::GuardFunction dimStopper([]{DimServer::stop();});
 
       Alf::ServiceNames names(serialNumber, channelNumber);
 

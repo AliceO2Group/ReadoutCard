@@ -12,7 +12,6 @@
 #include "Cru/BarAccessor.h"
 #include "RORC/Parameters.h"
 #include "SuperpageQueue.h"
-#include "Utilities/GuardFunction.h"
 
 namespace AliceO2 {
 namespace Rorc {
