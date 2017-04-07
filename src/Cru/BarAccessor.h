@@ -72,7 +72,15 @@ class BarAccessor
 
     void setDataEmulatorEnabled(bool enabled) const
     {
-      mPdaBar->writeRegister(Registers::DATA_EMULATOR_CONTROL, enabled ? 0x3 : 0x0);
+      mPdaBar->writeRegister(Registers::DMA_CONTROL, enabled ? 0x1 : 0x0);
+
+      uint32_t bits = mPdaBar->readRegister(Registers::DATA_GENERATOR_CONTROL);
+      if (enabled) {
+        bits |= uint32_t(1);
+      } else {
+        bits ^= ~uint32_t(1);
+      }
+      mPdaBar->writeRegister(Registers::DATA_GENERATOR_CONTROL, bits);
     }
 
     void resetDataGeneratorCounter() const
@@ -91,16 +99,27 @@ class BarAccessor
       constexpr uint32_t ALTERNATING = 0b10;
       constexpr uint32_t CONSTANT = 0b11;
 
-      auto value = [&pattern]() -> uint32_t { switch (pattern) {
-          case GeneratorPattern::Incremental: return INCREMENTAL;
-          case GeneratorPattern::Alternating: return ALTERNATING;
-          case GeneratorPattern::Constant:    return CONSTANT;
-          default: BOOST_THROW_EXCEPTION(Exception()
-              << ErrorInfo::Message("Unsupported generator pattern for CRU")
-              << ErrorInfo::GeneratorPattern(pattern)); }
-      };
+      uint32_t bits = mPdaBar->readRegister(Registers::DATA_GENERATOR_CONTROL);
 
-      mPdaBar->writeRegister(Registers::DMA_CONFIGURATION, value());
+      switch (pattern) {
+        case GeneratorPattern::Incremental:
+          setBit(bits, 1, true);
+          setBit(bits, 2, false);
+          break;
+        case GeneratorPattern::Alternating:
+          setBit(bits, 1, false);
+          setBit(bits, 2, true);
+          break;
+        case GeneratorPattern::Constant:
+          setBit(bits, 1, true);
+          setBit(bits, 2, true);
+          break;
+        default:
+          BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Unsupported generator pattern for CRU")
+                  << ErrorInfo::GeneratorPattern(pattern));
+      }
+
+      mPdaBar->writeRegister(Registers::DATA_GENERATOR_CONTROL, bits);
     }
 
     uint32_t getSerialNumber() const
@@ -153,26 +172,6 @@ class BarAccessor
       return convertTemperatureRaw(getTemperatureRaw());
     }
 
-    uint32_t getIdleCounterLower()
-    {
-      return mPdaBar->readRegister(Registers::IDLE_COUNTER_LOWER);
-    }
-
-    uint32_t getIdleCounterUpper()
-    {
-      return mPdaBar->readRegister(Registers::IDLE_COUNTER_UPPER);
-    }
-
-    uint64_t getIdleCounter()
-    {
-      return (uint64_t(getIdleCounterUpper()) << 32) + uint64_t(getIdleCounterLower());
-    }
-
-    uint32_t getIdleMaxValue()
-    {
-      return mPdaBar->readRegister(Registers::MAX_IDLE_VALUE);
-    }
-
     uint32_t getFirmwareCompileInfo()
     {
       return mPdaBar->readRegister(Registers::FIRMWARE_COMPILE_INFO);
@@ -197,9 +196,18 @@ class BarAccessor
 
   private:
     /// Convert an index to a byte address
-    size_t toByteAddress(size_t address32)
+    size_t toByteAddress(size_t address32) const
     {
       return address32 * 4;
+    }
+
+    void setBit(uint32_t& bits, int index, bool value) const
+    {
+      if (value) {
+        bits |= uint32_t(1) << index;
+      } else {
+        bits &= ~(uint32_t(1) << index);
+      }
     }
 
     Pda::PdaBar* mPdaBar;

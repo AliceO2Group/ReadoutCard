@@ -20,7 +20,13 @@
 #include <boost/format.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/lexical_cast.hpp>
+#include "BarHammer.h"
 #include "Cru/Constants.h"
+#include "CommandLineUtilities/Common.h"
+#include "CommandLineUtilities/Options.h"
+#include "CommandLineUtilities/Program.h"
+#include "Common/Iommu.h"
+#include "Common/SuffixOption.h"
 #include "ExceptionInternal.h"
 #include "ExceptionLogging.h"
 #include "InfoLogger/InfoLogger.hxx"
@@ -28,12 +34,6 @@
 #include "RORC/ChannelFactory.h"
 #include "RORC/MemoryMappedFile.h"
 #include "RORC/Parameters.h"
-#include "CommandLineUtilities/Common.h"
-#include "CommandLineUtilities/Options.h"
-#include "CommandLineUtilities/Program.h"
-#include "Common/BasicThread.h"
-#include "Common/Iommu.h"
-#include "Common/SuffixOption.h"
 #include "Utilities/SmartPointer.h"
 #include "Utilities/Util.h"
 
@@ -67,48 +67,6 @@ constexpr int64_t MAX_RECORDED_ERRORS = 1000;
 /// End InfoLogger message alias
 constexpr auto endm = InfoLogger::endm;
 }
-
-class BarHammer : public AliceO2::Common::BasicThread
-{
-  public:
-    void start(const std::shared_ptr<ChannelMasterInterface>& channelIn)
-    {
-      mChannel = channelIn;
-      BasicThread::start([&](std::atomic<bool>* stopFlag) {
-        auto channel = mChannel;
-
-        if (channel->getCardType() != CardType::Cru) {
-          cout << "BarHammer only supported for CRU\n";
-          return;
-        }
-
-        if (!channel) {
-          return;
-        }
-
-        int64_t hammerCount = 0;
-        uint32_t writeCounter = 0;
-        while (!stopFlag->load(std::memory_order_relaxed) && !Program::isSigInt()) {
-          for (int i = 0; i < MULTIPLIER; ++i) {
-            channel->writeRegister(Cru::Registers::DEBUG_READ_WRITE, writeCounter);
-            writeCounter++;
-          }
-          hammerCount++;
-        }
-        mHammerCount.store(hammerCount, std::memory_order_relaxed);
-      });
-    }
-
-    double getCount()
-    {
-      return double(mHammerCount.load(std::memory_order_relaxed)) * double(MULTIPLIER);
-    }
-
-  private:
-    std::shared_ptr<ChannelMasterInterface> mChannel;
-    std::atomic<int64_t> mHammerCount;
-    static constexpr int64_t MULTIPLIER {10000};
-};
 
 class ProgramDmaBench: public Program
 {
@@ -836,8 +794,6 @@ class ProgramDmaBench: public Program
         GeneratorPattern::type generatorPattern = GeneratorPattern::Incremental;
         b::optional<ReadoutMode::type> readoutMode;
     } mOptions;
-
-//    BufferParameters::File mBufferParameters;
 
     std::atomic<bool> mDmaLoopBreak {false};
     bool mInfinitePages = false;
