@@ -84,7 +84,7 @@ target_link_libraries(
   ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
-  InfoLogger-shared
+  InfoLogger
   Common
   rt # For shared memory
   pthread
