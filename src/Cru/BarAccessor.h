@@ -95,10 +95,6 @@ class BarAccessor
 
     void setDataGeneratorPattern(GeneratorPattern::type pattern)
     {
-      constexpr uint32_t INCREMENTAL = 0b01;
-      constexpr uint32_t ALTERNATING = 0b10;
-      constexpr uint32_t CONSTANT = 0b11;
-
       uint32_t bits = mPdaBar->readRegister(Registers::DATA_GENERATOR_CONTROL);
 
       switch (pattern) {
