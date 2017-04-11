@@ -168,7 +168,7 @@ if(ALICEO2_RORC_PDA_ENABLED)
         BUCKET_NAME o2_rorc_dim
    )
    O2_GENERATE_EXECUTABLE(
-        EXE_NAME rorc-run-script
+        EXE_NAME rorc-alf-server
         SOURCES src/CommandLineUtilities/ProgramAliceLowlevelFrontendServer.cxx
         MODULE_LIBRARY_NAME ${LIBRARY_NAME}
         BUCKET_NAME o2_rorc_dim
