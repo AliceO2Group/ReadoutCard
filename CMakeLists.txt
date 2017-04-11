@@ -127,8 +127,8 @@ if(ALICEO2_RORC_PDA_ENABLED)
     src/Pda/PdaDevice.cxx
     src/Pda/PdaDmaBuffer.cxx
     src/RorcDevice.cxx
-    set(BUCKET_NAME o2_rorc_with_pda)
   )
+  set(BUCKET_NAME o2_rorc_with_pda)
 endif()
 
 O2_GENERATE_LIBRARY()
