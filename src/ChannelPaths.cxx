@@ -6,44 +6,37 @@
 #include "ChannelPaths.h"
 #include <boost/format.hpp>
 
-static const std::string DIR_SHAREDMEM("/dev/shm/alice_o2");
-static const std::string DIR_HUGEPAGES("/mnt/hugetlbfs/alice_o2");
-static const std::string FORMAT("%s/card_%s/serial_%i/channel_%i/%s");
+namespace b = boost;
 
 namespace AliceO2 {
 namespace Rorc {
+namespace {
+static const char* DIR_SHAREDMEM = "/dev/shm/alice_o2/rorc";
+static const char* FORMAT = "%s/%s/channel_%i/%s";
+}
 
-namespace b = boost;
-namespace bfs = boost::filesystem;
-
-ChannelPaths::ChannelPaths(CardType::type cardType, int serial, int channel)
-    : mCardType(cardType), mSerial(serial), mChannel(channel)
+ChannelPaths::ChannelPaths(PciAddress pciAddress, int channel) : mPciAddress(pciAddress), mChannel(channel)
 {
 }
 
-bfs::path ChannelPaths::pages() const
+std::string ChannelPaths::makePath(std::string fileName, const char* directory) const
 {
-  return b::str(b::format(FORMAT) % DIR_HUGEPAGES % CardType::toString(mCardType) % mSerial % mChannel % "pages");
+  return b::str(b::format(FORMAT) % directory % mPciAddress.toString() % mChannel % fileName);
 }
 
-bfs::path ChannelPaths::state() const
+std::string ChannelPaths::lock() const
 {
-  return b::str(b::format(FORMAT) % DIR_SHAREDMEM % CardType::toString(mCardType) % mSerial % mChannel % "state");
+  return makePath(".lock", DIR_SHAREDMEM);
 }
 
-bfs::path ChannelPaths::lock() const
+std::string ChannelPaths::fifo() const
 {
-  return b::str(b::format(FORMAT) % DIR_SHAREDMEM % CardType::toString(mCardType) % mSerial % mChannel % ".lock");
-}
-
-bfs::path ChannelPaths::fifo() const
-{
-  return b::str(b::format(FORMAT) % DIR_SHAREDMEM % CardType::toString(mCardType) % mSerial % mChannel % "ready_fifo");
+  return makePath("fifo", DIR_SHAREDMEM);
 }
 
 std::string ChannelPaths::namedMutex() const
 {
-  return b::str(b::format("card%s_serial_%i_channel_%i_mutex") % mCardType % mSerial % mChannel);
+  return b::str(b::format("alice_o2_rorc_%s_channel_%i.mutex") % mPciAddress.toString() % mChannel);
 }
 
 } // namespace Rorc

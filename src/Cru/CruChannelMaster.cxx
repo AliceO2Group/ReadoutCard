@@ -18,14 +18,12 @@
 
 using namespace std::literals;
 
-namespace AliceO2 {
-namespace Rorc {
-
-namespace Register = CruRegisterIndex;
-
+namespace AliceO2
+{
+namespace Rorc
+{
 namespace
 {
-
 /// DMA page length in bytes
 /// Note: the CRU has a firmware defined fixed page size
 constexpr int DMA_PAGE_SIZE = 8 * 1024;
@@ -33,27 +31,36 @@ constexpr int DMA_PAGE_SIZE = 8 * 1024;
 /// DMA page length in 32-bit words
 constexpr int DMA_PAGE_SIZE_32 = DMA_PAGE_SIZE / 4;
 
-constexpr int FIFO_FW_ENTRIES = 4; ///< The firmware works in blocks of 4 pages
-constexpr int NUM_OF_FW_BUFFERS = 32; ///< ... And as such has 32 "buffers" in the FIFO
-constexpr int NUM_PAGES = FIFO_FW_ENTRIES * NUM_OF_FW_BUFFERS; ///<... For a total number of 128 pages
-static_assert(NUM_PAGES == CRU_DESCRIPTOR_ENTRIES, "");
-
 /// DMA addresses must be 32-byte aligned
 constexpr uint64_t DMA_ALIGNMENT = 32;
-
 } // Anonymous namespace
 
-CruChannelMaster::CruChannelMaster(const Parameters& params)
-    : ChannelMasterPdaBase(CARD_TYPE, params, allowedChannels(), sizeof(CruFifoTable))
+CruChannelMaster::CruChannelMaster(const Parameters& parameters)
+    : ChannelMasterPdaBase(parameters, allowedChannels()), //
+      mInitialResetLevel(ResetLevel::Rorc), // It's good to reset at least the card channel in general
+      mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Rorc)), // Internal loopback by default
+      mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)), // Use data generator by default
+      mGeneratorPattern(parameters.getGeneratorPattern().get_value_or(GeneratorPattern::Incremental)), //
+      mGeneratorMaximumEvents(0), // Infinite events
+      mGeneratorInitialValue(0), // Start from 0
+      mGeneratorInitialWord(0), // First word
+      mGeneratorSeed(0), // Presumably for random patterns, incremental doesn't really need it
+      mGeneratorDataSize(parameters.getGeneratorDataSize().get_value_or(DMA_PAGE_SIZE)) // Can use page size
 {
-  if (getChannelParameters().dma.pageSize != DMA_PAGE_SIZE) {
-    BOOST_THROW_EXCEPTION(CruException()
-        << ErrorInfo::Message("CRU only supports an 8kB page size")
-        << ErrorInfo::DmaPageSize(getChannelParameters().dma.pageSize));
+  if (auto pageSize = parameters.getDmaPageSize()) {
+    if (pageSize.get() != DMA_PAGE_SIZE) {
+      BOOST_THROW_EXCEPTION(CruException()
+          << ErrorInfo::Message("CRU only supports an 8kB page size")
+          << ErrorInfo::DmaPageSize(pageSize.get()));
+    }
   }
 
-  initFifo();
-  mPageManager.setAmountOfPages(getPageAddresses().size());
+  if (auto enabled = parameters.getGeneratorEnabled()) {
+    if (enabled.get() == false) {
+      BOOST_THROW_EXCEPTION(CruException()
+          << ErrorInfo::Message("CRU currently only supports operation with data generator"));
+    }
+  }
 }
 
 auto CruChannelMaster::allowedChannels() -> AllowedChannels {
@@ -63,31 +70,33 @@ auto CruChannelMaster::allowedChannels() -> AllowedChannels {
 
 CruChannelMaster::~CruChannelMaster()
 {
+  setBufferNonReady();
 }
 
 void CruChannelMaster::deviceStartDma()
 {
   resetCru();
   initCru();
-  // Push initial 128 pages
-  fillFifoNonLocking();
-  setBufferReadyGuard();
+  mSuperpageQueue.clear();
+  setBufferReady();
 }
 
-/// Set up a guard object for the buffer readiness, which will set it to true when constructed (immediately), and false
-/// when destructed, either explicitly in deviceStopDma(), or when CruChannelMaster is deleted.
-void CruChannelMaster::setBufferReadyGuard()
+/// Set buffer to ready
+void CruChannelMaster::setBufferReady()
 {
-  if (!mBufferReadyGuard) {
-    Utilities::resetSmartPtr(mBufferReadyGuard,
-        [&]{ getBar().setDataEmulatorEnabled(true); },
-        [&]{ getBar().setDataEmulatorEnabled(false); });
-  }
+  getBar().setDataEmulatorEnabled(true);
+  std::this_thread::sleep_for(10ms);
+}
+
+/// Set buffer to non-ready
+void CruChannelMaster::setBufferNonReady()
+{
+  getBar().setDataEmulatorEnabled(false);
 }
 
 void CruChannelMaster::deviceStopDma()
 {
-  mBufferReadyGuard.reset(); // see setBufferReadyGuard()
+  setBufferNonReady();
 }
 
 void CruChannelMaster::deviceResetChannel(ResetLevel::type resetLevel)
@@ -104,20 +113,6 @@ CardType::type CruChannelMaster::getCardType()
   return CardType::Cru;
 }
 
-/// Initializes the FIFO and the page addresses for it
-void CruChannelMaster::initFifo()
-{
-  if (getPageAddresses().size() <= CRU_DESCRIPTOR_ENTRIES) {
-    BOOST_THROW_EXCEPTION(CruException()
-        << ErrorInfo::Message("Insufficient amount of pages fit in DMA buffer")
-        << ErrorInfo::Pages(getPageAddresses().size())
-        << ErrorInfo::DmaBufferSize(getChannelParameters().dma.bufferSize)
-        << ErrorInfo::DmaPageSize(getChannelParameters().dma.pageSize));
-  }
-
-  getFifoUser()->resetStatusEntries();
-}
-
 void CruChannelMaster::resetCru()
 {
   getBar().resetDataGeneratorCounter();
@@ -129,112 +124,134 @@ void CruChannelMaster::resetCru()
 void CruChannelMaster::initCru()
 {
   // Set data generator pattern
-  if (getChannelParameters().generator.useDataGenerator) {
-    getBar().setDataGeneratorPattern(getChannelParameters().generator.pattern);
+  if (mGeneratorEnabled) {
+    getBar().setDataGeneratorPattern(mGeneratorPattern);
   }
+}
 
-  // Status base address in the bus address space
-  log((Utilities::getUpper32Bits(uint64_t(getFifoBus())) != 0)
-        ? "Using 64-bit region for status bus address, may be unsupported by PCI/BIOS configuration"
-        : "Using 32-bit region for status bus address");
+void CruChannelMaster::pushSuperpage(Superpage superpage)
+{
+  checkSuperpage(superpage);
 
-  if (!Utilities::checkAlignment(getFifoBus(), DMA_ALIGNMENT)) {
-    BOOST_THROW_EXCEPTION(CruException() << ErrorInfo::Message("FIFO bus address not 32 byte aligned"));
-  }
+  SuperpageQueueEntry entry;
+  entry.busAddress = getBusOffsetAddress(superpage.getOffset());
+  entry.maxPages = superpage.getSize() / DMA_PAGE_SIZE;
+  entry.pushedPages = 0;
+  entry.superpage = superpage;
+  entry.superpage.received = 0;
 
-  getBar().setFifoBusAddress(getFifoBus());
+  mSuperpageQueue.addToQueue(entry);
+}
 
-  // TODO Note: this stuff will be set by firmware in the future
+auto CruChannelMaster::popSuperpage() -> Superpage
+{
+  return mSuperpageQueue.removeFromFilledQueue().superpage;
+}
+
+void CruChannelMaster::fillSuperpages()
+{
+  // Push superpages
   {
-    // Status base address in the card's address space
-    getBar().setFifoCardAddress();
+    size_t freeDescriptors = FIFO_QUEUE_MAX - mFifoSize;
+    int possibleToPush = std::min(mSuperpageQueue.getPushing().size(), freeDescriptors);
 
-    // Set descriptor table size (must be size - 1)
-    getBar().setDescriptorTableSize();
+    for (int i = 0; i < possibleToPush; ++i) {
+      SuperpageQueueEntry& entry = mSuperpageQueue.getPushingFrontEntry();
+      pushSuperpage(entry);
+      // Remove superpage from pushing queue
+      mSuperpageQueue.removeFromPushingQueue();
+    }
+  }
 
-    // Send command to the DMA engine to write to every status entry, not just the final one
-    getBar().setDoneControl();
+  // Check for arrivals & handle them
+  if (!mSuperpageQueue.getArrivals().empty()) {
+    while (mFifoSize > 0) {
+      SuperpageQueueEntry& entry = mSuperpageQueue.getArrivalsFrontEntry();
+      auto pagesArrived = getBar().getSuperpagePushedPages(getFifoBack());
+      assert(pagesArrived <= entry.maxPages);
+      entry.superpage.received = pagesArrived * DMA_PAGE_SIZE;
+
+      if (pagesArrived == entry.maxPages) {
+        incrementFifoBack();
+        mSuperpageQueue.moveFromArrivalsToFilledQueue();
+      } else {
+        // If the back one hasn't arrived yet, the next ones will certainly not have arrived either...
+        break;
+      }
+    }
   }
 }
 
-int CruChannelMaster::fillFifo(int maxFill)
+void CruChannelMaster::pushSuperpage(SuperpageQueueEntry& entry)
 {
-  CHANNELMASTER_LOCKGUARD();
-  return fillFifoNonLocking(maxFill);
+  assert(mFifoSize < FIFO_QUEUE_MAX);
+  assert(entry.pushedPages < entry.maxPages);
+
+  auto descriptorIndex = getFifoFront();
+
+  getBar().setSuperpageDescriptor(descriptorIndex, entry.maxPages, entry.busAddress);
+
+  incrementFifoFront();
+  entry.pushedPages = entry.maxPages;
 }
 
-/// We need this because deviceStartDma() needs fillFifo() functionality, but is already a synchronized function itself.
-int CruChannelMaster::fillFifoNonLocking(int maxFill)
+int CruChannelMaster::getSuperpageQueueCount()
 {
-  auto isArrived = [&](int descriptorIndex) {
-    return getFifoUser()->statusEntries[descriptorIndex].isPageArrived();
-  };
-
-  auto resetDescriptor = [&](int descriptorIndex) {
-    getFifoUser()->statusEntries[descriptorIndex].reset();
-  };
-
-  auto push = [&](int bufferIndex, int descriptorIndex) {
-    auto& pageAddress = getPageAddresses()[bufferIndex];
-    auto sourceAddress = reinterpret_cast<volatile void*>((descriptorIndex % NUM_OF_FW_BUFFERS) * DMA_PAGE_SIZE);
-    getFifoUser()->setDescriptor(descriptorIndex, DMA_PAGE_SIZE_32, sourceAddress, pageAddress.bus);
-    getBar().sendAcknowledge(); // Is this the right location..? Or should it be in the freeing?
-  };
-
-  mPageManager.handleArrivals(isArrived, resetDescriptor);
-  int pushCount = mPageManager.pushPages(maxFill, push);
-  return pushCount;
+  return mSuperpageQueue.getQueueCount();
 }
 
-int CruChannelMaster::getAvailableCount()
+int CruChannelMaster::getSuperpageQueueAvailable()
 {
-  CHANNELMASTER_LOCKGUARD();
-
-  return mPageManager.getArrivedCount();
+  return mSuperpageQueue.getQueueAvailable();
 }
 
-auto CruChannelMaster::popPageInternal(const MasterSharedPtr& channel) -> std::shared_ptr<Page>
+int CruChannelMaster::getSuperpageQueueCapacity()
 {
-  CHANNELMASTER_LOCKGUARD();
+  return mSuperpageQueue.getQueueCapacity();
+}
 
-  if (auto page = mPageManager.useArrivedPage()) {
-    int bufferIndex = *page;
-    return std::make_shared<Page>(getPageAddresses()[bufferIndex].user, DMA_PAGE_SIZE, bufferIndex, channel);
+auto CruChannelMaster::getSuperpage() -> Superpage
+{
+  return mSuperpageQueue.getFrontSuperpage();
+}
+
+boost::optional<float> CruChannelMaster::getTemperature()
+{
+  return {};
+  //return getBar2().getTemperatureCelsius(); // Note: disabled until new FW is in place. Using this may crash the machine
+}
+
+Pda::PdaBar* CruChannelMaster::getPdaBar2Ptr()
+{
+  if (!mPdaBar2) {
+    Utilities::resetSmartPtr(mPdaBar2, getRorcDevice().getPciDevice(), 2);
   }
-  return nullptr;
-}
-
-void CruChannelMaster::freePage(const Page& page)
-{
-  CHANNELMASTER_LOCKGUARD();
-
-  mPageManager.freePage(page.getId());
+  return mPdaBar2.get();
 }
 
 std::vector<uint32_t> CruChannelMaster::utilityCopyFifo()
 {
-  std::vector<uint32_t> copy;
-  auto* fifo = getFifoUser();
-  size_t size = sizeof(std::decay<decltype(fifo)>::type);
-  size_t elements = size / sizeof(decltype(copy)::value_type);
-  copy.reserve(elements);
-
-  auto* fifoData = reinterpret_cast<char*>(fifo);
-  auto* copyData = reinterpret_cast<char*>(copy.data());
-  std::copy(fifoData, fifoData + size, copyData);
-  return copy;
+//  std::vector<uint32_t> copy;
+//  auto* fifo = getFifoUser();
+//  size_t size = sizeof(std::decay<decltype(fifo)>::type);
+//  size_t elements = size / sizeof(decltype(copy)::value_type);
+//  copy.reserve(elements);
+//
+//  auto* fifoData = reinterpret_cast<char*>(fifo);
+//  auto* copyData = reinterpret_cast<char*>(copy.data());
+//  std::copy(fifoData, fifoData + size, copyData);
+//  return copy;
+  return {};
 }
 
 void CruChannelMaster::utilityPrintFifo(std::ostream& os)
 {
-  ChannelUtility::printCruFifo(getFifoUser(), os);
+//  ChannelUtility::printCruFifo(getFifoUser(), os);
 }
 
 void CruChannelMaster::utilitySetLedState(bool state)
 {
-  int on = 0x00; // Yes, a 0 represents the on state
-  int off = 0xff;
-  getBarUserspace()[CruRegisterIndex::LED_STATUS] = state ? on : off;
+  getBar().setLedState(state);
 }
 
 void CruChannelMaster::utilitySanityCheck(std::ostream& os)
@@ -244,12 +261,12 @@ void CruChannelMaster::utilitySanityCheck(std::ostream& os)
 
 void CruChannelMaster::utilityCleanupState()
 {
-  ChannelUtility::cruCleanupState(ChannelPaths(CARD_TYPE, getSerialNumber(), getChannelNumber()));
+  ChannelUtility::cruCleanupState(ChannelPaths(getCardDescriptor().pciAddress, getChannelNumber()));
 }
 
 int CruChannelMaster::utilityGetFirmwareVersion()
 {
-  return getBarUserspace()[CruRegisterIndex::FIRMWARE_COMPILE_INFO];
+  return getBar().getFirmwareCompileInfo();
 }
 
 } // namespace Rorc

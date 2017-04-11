@@ -64,11 +64,9 @@ static Option<std::string> cardId("id", "Card ID: either serial number or PCI ad
 static Option<std::string> resetLevel("reset", "Reset level [NOTHING, RORC, RORC_DIU, RORC_DIU_SIU]", false);
 
 // Options for ChannelParameters
-static Option<size_t> cpDmaPageSize("cp-dma-pagesize", "RORC page size in kibibytes", true, 8);
-static Option<size_t> cpDmaBufSize("cp-dma-bufmb", "DMA buffer size in mebibytes", true, 8);
-static Option<bool> cpGenEnable("cp-gen-enable", "Enable data generator", true, true);
-static Option<std::string> cpGenLoopback("cp-gen-loopb",
-    "Loopback mode [NONE, RORC, DIU, SIU]", true, "RORC");
+static Option<size_t> cpDmaPageSize("page-size", "Card page size in KiB", true, 8);
+static Option<bool> cpGenEnable("generator", "Enable data generator", true, true);
+static Option<std::string> cpGenLoopback("loopback", "Generator loopback mode [NONE, RORC, DIU, SIU]", true, "RORC");
 
 }
 
@@ -114,36 +112,6 @@ b::optional<T> getOptionOptional(const Option<T>& option, const po::variables_ma
   } else {
     return b::none;
   }
-}
-
-po::options_description createOptionsDescription()
-{
-  // Get size of the terminal, the amount of columns is used for formatting the options
-  struct winsize w;
-  ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-
-  po::options_description optionsDescription("Allowed options", w.ws_col, w.ws_col/2);
-  addOptionHelp(optionsDescription);
-  return optionsDescription;
-}
-
-po::variables_map getVariablesMap(int argc, char** argv, const po::options_description& optionsDescription)
-{
-  po::variables_map variablesMap;
-  try {
-    po::store(po::parse_command_line(argc, argv, optionsDescription), variablesMap);
-    po::notify(variablesMap);
-  }
-  catch (const po::unknown_option& e) {
-    BOOST_THROW_EXCEPTION(ProgramOptionException()
-        << ErrorInfo::Message("Unknown option '" + e.get_option_name() + "'"));
-  }
-  return variablesMap;
-}
-
-void addOptionHelp(po::options_description& optionsDescription)
-{
-  optionsDescription.add_options()("help", "Produce help message");
 }
 
 void addOptionChannel(po::options_description& optionsDescription)
@@ -292,49 +260,34 @@ Parameters::CardIdType getOptionCardId(const po::variables_map& variablesMap)
 void addOptionsChannelParameters(po::options_description& optionsDescription)
 {
   addOption(option::cpDmaPageSize, optionsDescription);
-  addOption(option::cpDmaBufSize, optionsDescription);
   addOption(option::cpGenEnable, optionsDescription);
   addOption(option::cpGenLoopback, optionsDescription);
 }
 
-ChannelParameters getOptionsChannelParameters(const boost::program_options::variables_map& variablesMap)
+Parameters getOptionsParameterMap(const boost::program_options::variables_map& variablesMap)
 {
-  ChannelParameters cp;
+  Parameters parameters;
 
   if (auto pageSizeKiB = getOptionOptional<size_t>(option::cpDmaPageSize, variablesMap)) {
-    cp.dma.pageSize = pageSizeKiB.get() * 1024l;
-  }
-
-  if (auto bufSizeMiB = getOptionOptional<size_t>(option::cpDmaBufSize, variablesMap)) {
-    cp.dma.bufferSize = bufSizeMiB.get() * 1024l * 1024l;
+    parameters.setDmaPageSize(pageSizeKiB.get() * 1024l);
   }
 
   if (auto useGenerator = getOptionOptional<bool>(option::cpGenEnable, variablesMap)) {
-    cp.generator.useDataGenerator = useGenerator.get();
+    parameters.setGeneratorEnabled(useGenerator.get());
   }
 
   if (auto loopbackString = getOptionOptional<std::string>(option::cpGenLoopback, variablesMap)) {
     if (!loopbackString.get().empty()) {
       try {
-        auto loopback = LoopbackMode::fromString(loopbackString.get());
-        cp.generator.loopbackMode = loopback;
+        parameters.setGeneratorLoopback(LoopbackMode::fromString(loopbackString.get()));
       } catch (const std::out_of_range& e) {
         BOOST_THROW_EXCEPTION(InvalidOptionValueException()
             << ErrorInfo::Message("Invalid value for option '" + option::cpGenLoopback.swtch + "'"));
       }
     }
   }
-  return cp;
-}
 
-Parameters getOptionsParameterMap(const boost::program_options::variables_map& variablesMap)
-{
-  auto cp = getOptionsChannelParameters(variablesMap);
-  return Parameters()
-      .setDmaPageSize(cp.dma.pageSize)
-      .setDmaBufferSize(cp.dma.bufferSize)
-      .setGeneratorEnabled(cp.generator.useDataGenerator)
-      .setGeneratorLoopback(cp.generator.loopbackMode);
+  return parameters;
 }
 
 } // namespace Options

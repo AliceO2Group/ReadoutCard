@@ -9,10 +9,10 @@
 #include <vector>
 #include <boost/python.hpp>
 #include <python2.7/Python.h>
+#include "Common/GuardFunction.h"
 #include "ExceptionInternal.h"
 #include "RORC/ChannelFactory.h"
 #include "RORC/Parameters.h"
-#include "Utilities/GuardFunction.h"
 
 namespace {
 using namespace AliceO2::Rorc::CommandLineUtilities;
@@ -139,7 +139,7 @@ class ProgramRunScript : public Program
         PythonWrapper::putClass(mainNamespace);
 
         // Close channels on scope exit
-//        AliceO2::Rorc::Utilities::GuardFunction guard = {[&]{ sChannelMap.clear(); }};
+        AliceO2::Common::GuardFunction guard = {[&]{ sChannelMap.clear(); }};
 
         // Execute the script
         exec_file(mScriptFilename.c_str(), mainNamespace);

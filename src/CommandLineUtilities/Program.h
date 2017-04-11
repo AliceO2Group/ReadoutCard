@@ -8,48 +8,23 @@
 #include <atomic>
 #include <boost/program_options.hpp>
 #include <InfoLogger/InfoLogger.hxx>
+#include "Common/Program.h"
 #include "CommandLineUtilities/Common.h"
 #include "CommandLineUtilities/Options.h"
-#include "CommandLineUtilities/Description.h"
 #include "RORC/Exception.h"
 
 namespace AliceO2 {
 namespace Rorc {
 namespace CommandLineUtilities {
 
-/// Helper class for making a RORC utility program. It handles:
-/// - Creation of the options_descripotion object
-/// - Creation of the variables_map object
-/// - Help message
-/// - Exceptions & error messages
+/// Helper class for making a RORC utility program. It adds logging facilities to the Common::Program
 /// - SIGINT signals
-class Program
+class Program : public AliceO2::Common::Program
 {
   public:
-    Program();
-    virtual ~Program();
-
-    /// Execute the program using the given arguments
-    int execute(int argc, char** argv);
-
-    /// Has the SIGINT signal been given? (usually Ctrl-C)
-    static bool isSigInt()
-    {
-      return sFlagSigInt.load();
-    }
-
-    static const std::atomic<bool>& getInterruptFlag()
-    {
-      return sFlagSigInt;
-    }
+    virtual ~Program() = default;
 
   protected:
-    /// Should output be verbose
-    bool isVerbose() const
-    {
-      return mVerbose;
-    }
-
     /// Get Program's InfoLogger instance
     InfoLogger::InfoLogger& getLogger()
     {
@@ -67,23 +42,6 @@ class Program
     }
 
   private:
-    /// Get the description of the program
-    virtual Description getDescription() = 0;
-
-    /// Add the program's options
-    virtual void addOptions(boost::program_options::options_description& optionsDescription) = 0;
-
-    /// The main function of the program
-    virtual void run(const boost::program_options::variables_map& variablesMap) = 0;
-
-    static void sigIntHandler(int);
-
-    void printHelp(const boost::program_options::options_description& optionsDescription);
-
-    static std::atomic<bool> sFlagSigInt;
-
-    bool mVerbose;
-
     InfoLogger::InfoLogger mLogger;
     InfoLogger::InfoLogger::Severity mLogLevel = InfoLogger::InfoLogger::Severity::Info;
 };

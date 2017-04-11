@@ -24,18 +24,15 @@ The ChannelMaster class provides PDA-based functionality common to the C-RORC an
 of PDA wrapper classes and shared memory handling.
 The CrorcChannelMaster and CruChannelMaster provide the device-specific functionality and use the RORC C API layer.
 
-The ChannelMaster will acquire a file lock to prevent simultaneous interprocess access to a channel.
-Some of the state is kept in shared memory files so that the state is persistent and that the lock can be handed over
-to other processes.
-Pages are also stored in shared memory. Functionality for clients to supply their own buffer is planned for a future 
-release.
+The ChannelMaster will acquire a lock to prevent simultaneous access to a channel.
 
-The shared files are located in the directories:
-* `/dev/shm/alice_o2/card_[card type]/serial_[serial number]/channel_[channel number]/`
-* `/mnt/hugetlbfs/alice_o2/card_[card type]/serial_[serial number]/channel_[channel number]/`
+The driver uses some files in shared memory:
+* `/dev/shm/alice_o2/rorc/[PCI geographical address]/channel_[channel number]/.lock` For locking channels
+* `/dev/shm/sem.alice_o2_rorc_[PCI geographical address]_channel_[channel number].mutex` For locking channels
+* `/dev/hugepages/alice_o2/rorc/[PCI geographical address]/channel_[channel number]/fifo` For card FIFOs
 
-If things crash and the state can not be recovered, these files should be deleted.
-They should also be deleted with new releases of the RORC module, since their internal memory arrangement might change.
+If the process crashes badly, it may be necessary to clean up the mutex manually, either by deleting with `rm` or by 
+using the `rorc-channel-cleanup` utility.
 
 Once a ChannelMaster has acquired the lock, clients can:
 * Read and write registers
@@ -57,7 +54,10 @@ functions. If PDA is not available (see 'Dependencies') the factory will **alway
 Utility programs
 -------------------
 The RORC module contains some utility programs to assist with RORC debugging and administration.
-Currently, only utilities for reading and writing registers are available, but more are planned.
+rorc-bench-dma uses files in these directories for DMA buffers: 
+* `/var/lib/hugetlbfs/global/pagesize-2MB`
+* `/var/lib/hugetlbfs/global/pagesize-1GB`
+They can be inspected manually if needed, e.g. with hexdump: `hexdump -e '"%07_ax" " | " 4/8 "%08x " "\n"' <filename>`
 
 Exceptions
 -------------------
@@ -96,7 +96,8 @@ Scatter-gather lists
 -------------------
 Scatter-gather lists (SGLs) contain a sequence of memory regions that the card's DMA engine can use.
 The granularity of the regions is in pages. Without an SGL, the DMA buffer would have to be a contiguous piece of 
-physical memory, which may be very difficult to allocate. With an SGL, we can use pages scattered over physical memory. The regions can also presented in userspace as contiguous memory, thanks to the magic of the MMU.   
+physical memory, which may be very difficult to allocate. With an SGL, we can use pages scattered over physical memory.
+The regions can also presented in userspace as contiguous memory, thanks to the magic of the MMU.   
 
 
 Known issues
@@ -112,7 +113,7 @@ The Example.cxx uses a microsecond wait, which is probably overkill.
 
 Permissions
 -------------------
-The library must be run by either root users, or users part of the group 'pda'. In case of 'pda' group users, make sure
+The library must be run either by root users, or users part of the group 'pda'. In case of 'pda' group users, make sure
 the `/dev/shm/alice_o2` and `/mnt/hugetlbfs/alice_o2` directories have sufficient permissions that allow those 
 users to create/read/write files.
 Also, the PDA kernel module must be inserted as root in any case.
@@ -127,9 +128,9 @@ If PDA is not detected on the system, only a dummy implementation of the interfa
 PDA installation
 -------------------
 
-1. Install libpci dependency
+1. Install dependency packages
   ```
-  yum install pciutils-devel kmod-devel
+  yum install kernel-devel pciutils-devel kmod-devel libtool libhugetlbfs
   ```
 
 2. Download & extract PDA 11.0.7
@@ -150,6 +151,11 @@ PDA installation
 4. Optionally, insert kernel module. If the utilities are run as root, PDA will do this automatically.
   ```
   modprobe uio\_pci\_dma
+  ```
+
+5. When using rorc-bench-dma, create hugetlbfs mounts
+  ```
+  hugeadm --create-global-mounts
   ```
 
 

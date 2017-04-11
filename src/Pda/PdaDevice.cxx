@@ -63,15 +63,11 @@ PdaDevice::~PdaDevice()
 {
   if (mDeviceOperator != nullptr) {
     if (DeviceOperator_delete(mDeviceOperator, PDA_DELETE) != PDA_SUCCESS) {
-      std::cerr << "Failed to delete DeviceOperator" << std::endl;
+      std::cerr << "Failed to delete DeviceOperator; "
+          "An associated DMA buffer's memory may have been unmapped by the user" << std::endl;
     }
   }
 }
-
-//DeviceOperator* PdaDevice::getDeviceOperator()
-//{
-//  return mDeviceOperator;
-//}
 
 PciDevice* PdaDevice::getPciDevice(int index)
 {

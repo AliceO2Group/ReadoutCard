@@ -8,21 +8,23 @@
 #include <string>
 #include <vector>
 #include "RORC/ChannelFactory.h"
-#include "ChannelPaths.h"
-#include "Utilities/System.h"
-#include "Utilities/Util.h"
 
 using std::cout;
 using std::endl;
 
 namespace AliceO2 {
 namespace Rorc {
+namespace {
+CardDescriptor makeDummyDescriptor()
+{
+  return {CardType::Dummy, ChannelFactory::DUMMY_SERIAL_NUMBER, PciId {"dummy", "dummy"}, PciAddress {0,0,0}};
+}
+}
 
 constexpr auto endm = InfoLogger::InfoLogger::StreamOps::endm;
 
 DummyChannelMaster::DummyChannelMaster(const Parameters& params)
-    : ChannelMasterBase(CardType::Dummy, params, ChannelFactory::DUMMY_SERIAL_NUMBER, { 0, 1, 2, 3, 4, 5, 6, 7 }), mPageCounter(
-        128)
+    : ChannelMasterBase(makeDummyDescriptor(), params, { 0, 1, 2, 3, 4, 5, 6, 7 }), mPageCounter(128)
 {
 //  cout << "DummyChannelMaster::DummyChannelMaster(serial:" << serial << ", channel:" << channel << ", params:...)"
 //      << endl;
@@ -31,7 +33,6 @@ DummyChannelMaster::DummyChannelMaster(const Parameters& params)
 
   mMaxPages = mBufferSize / mPageSize;
   mPageBuffer.resize(mBufferSize, -1);
-  mPageManager.setAmountOfPages(mMaxPages);
 }
 
 DummyChannelMaster::~DummyChannelMaster()
@@ -63,41 +64,6 @@ uint32_t DummyChannelMaster::readRegister(int index)
 void DummyChannelMaster::writeRegister(int index, uint32_t value)
 {
 //  cout << "DummyChannelMaster::writeRegister(index:" << index << ", value:" << value << ")" << endl;
-}
-
-
-int DummyChannelMaster::fillFifo(int maxFill)
-{
-//  cout << "DummyChannelMaster::fillFifo()" << endl;
-  auto isArrived = [&](int) { return true; };
-  auto resetDescriptor = [&](int) {};
-  auto push = [&](int, int) { };
-
-  mPageManager.handleArrivals(isArrived, resetDescriptor);
-  int pushCount = mPageManager.pushPages(maxFill, push);
-
-  mPageCounter += pushCount;
-  return pushCount;
-}
-
-int DummyChannelMaster::getAvailableCount()
-{
-  return mPageManager.getArrivedCount();
-}
-
-auto DummyChannelMaster::popPageInternal(const MasterSharedPtr& channel) -> std::shared_ptr<Page>
-{
-  if (auto page = mPageManager.useArrivedPage()) {
-    int bufferIndex = *page;
-    return std::make_shared<Page>(&mPageBuffer[bufferIndex * mPageSize], mPageSize, bufferIndex, channel);
-  }
-  return nullptr;
-}
-
-void DummyChannelMaster::freePage(const Page& page)
-{
-//  cout << "DummyChannelMaster::freePage()" << endl;
-  mPageManager.freePage(page.getId());
 }
 
 CardType::type DummyChannelMaster::getCardType()

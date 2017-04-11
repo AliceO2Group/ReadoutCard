@@ -3,9 +3,10 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "RORC/PciAddress.h"
+#include "RORC/ParameterTypes/PciAddress.h"
 #include <iomanip>
 #include <sstream>
+#include <boost/format.hpp>
 #include <boost/spirit/include/qi.hpp>
 #include "ExceptionInternal.h"
 
@@ -59,9 +60,7 @@ PciAddress::PciAddress(const std::string& string)
 
 std::string PciAddress::toString() const
 {
-  std::ostringstream oss;
-  oss << std::hex << bus << ':' << slot << '.' << function;
-  return oss.str();
+  return boost::str(boost::format("%02x:%02x.%1x") % bus % slot % function);
 }
 
 } // namespace Rorc

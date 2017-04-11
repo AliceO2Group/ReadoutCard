@@ -8,9 +8,5 @@
 #include <RORC/ChannelMasterInterface.h>
 #include <RORC/ChannelSlaveInterface.h>
 #include <RORC/Exception.h>
-#include <RORC/GeneratorPattern.h>
-#include <RORC/LoopbackMode.h>
 #include <RORC/Parameters.h>
-#include <RORC/PciId.h>
 #include <RORC/RegisterReadWriteInterface.h>
-#include <RORC/ResetLevel.h>

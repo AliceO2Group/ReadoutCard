@@ -22,16 +22,18 @@ class PdaDmaBuffer
     /// \param pciDevice
     /// \param userBufferAddress Address of the user-allocated buffer
     /// \param userBufferSize Size of the user-allocated buffer
-    /// \param dmaBufferId Unique ID to use for registering the buffer (uniqueness must be channel-wide, probably)
-    PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAddress, size_t userBufferSize, int dmaBufferId);
+    /// \param dmaBufferId Unique ID to use for registering the buffer (uniqueness must be card-wide)
+    PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAddress, size_t userBufferSize,
+        int dmaBufferId);
+
     ~PdaDmaBuffer();
 
     struct ScatterGatherEntry
     {
       size_t size;
-      void* addressUser;
-      void* addressBus;
-      void* addressKernel;
+      uintptr_t addressUser;
+      uintptr_t addressBus;
+      uintptr_t addressKernel;
     };
     using ScatterGatherVector = std::vector<ScatterGatherEntry>;
 
@@ -39,6 +41,9 @@ class PdaDmaBuffer
     {
       return mScatterGatherVector;
     }
+
+    /// Function for getting the bus address that corresponds to the user address + given offset
+    uintptr_t getBusOffsetAddress(size_t offset) const;
 
   private:
     DMABuffer* mDmaBuffer;

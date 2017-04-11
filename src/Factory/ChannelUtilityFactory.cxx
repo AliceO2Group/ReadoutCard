@@ -31,11 +31,15 @@ ChannelUtilityFactory::~ChannelUtilityFactory()
 
 auto ChannelUtilityFactory::getUtility(const Parameters& params) -> UtilitySharedPtr
 {
+  // XXX temporary (hopefully) workaround, because ChannelMaster requires a buffer when initializing
+  Parameters params2 = params;
+  params2.setBufferParameters(BufferParameters::File{"/tmp/rorc_channel_utility_dummy_buffer", 4*1024});
+
   return makeChannel<ChannelUtilityInterface>(params, DUMMY_SERIAL_NUMBER
-    , DummyTag, [&]{ return std::make_shared<DummyChannelMaster>(params); }
+    , DummyTag, [&]{ return std::make_shared<DummyChannelMaster>(params2); }
 #ifdef ALICEO2_RORC_PDA_ENABLED
-    , CrorcTag, [&]{ return std::make_shared<CrorcChannelMaster>(params); }
-    , CruTag,   [&]{ return std::make_shared<CruChannelMaster>(params); }
+    , CrorcTag, [&]{ return std::make_shared<CrorcChannelMaster>(params2); }
+    , CruTag,   [&]{ return std::make_shared<CruChannelMaster>(params2); }
 #endif
     );
 }

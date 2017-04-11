@@ -9,22 +9,15 @@
 #include <boost/exception/all.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <iostream>
-#include "RORC/Parameters.h"
 #include "RORC/Exception.h"
-#include "ChannelParameters.h"
+#include "RORC/Parameters.h"
+#include "RORC/ParameterTypes/GeneratorPattern.h"
+#include "RORC/ParameterTypes/ResetLevel.h"
 
 namespace AliceO2 {
 namespace Rorc {
 namespace CommandLineUtilities {
 namespace Options {
-
-/// Create an options_description object, with the help switch already added
-boost::program_options::options_description createOptionsDescription();
-
-/// Get the variables_map object from the program arguments.
-/// Will throw an exception if the program arguments given are invalid or the help switch is given.
-boost::program_options::variables_map getVariablesMap(int argc, char** argv,
-    const boost::program_options::options_description& optionsDescription);
 
 // Helper functions to add & get certain options in a standardized way
 void addOptionHelp(boost::program_options::options_description& optionsDescription);
@@ -43,7 +36,6 @@ int getOptionSerialNumber(const boost::program_options::variables_map& variables
 ResetLevel::type getOptionResetLevel(const boost::program_options::variables_map& variablesMap);
 Parameters::CardIdType getOptionCardId(const boost::program_options::variables_map& variablesMap);
 int getOptionRegisterRange(const boost::program_options::variables_map& variablesMap);
-ChannelParameters getOptionsChannelParameters(const boost::program_options::variables_map& variablesMap);
 Parameters getOptionsParameterMap(const boost::program_options::variables_map& variablesMap);
 
 } // namespace Options

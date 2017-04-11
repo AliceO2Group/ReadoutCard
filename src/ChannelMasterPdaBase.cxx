@@ -4,44 +4,40 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "ChannelMasterPdaBase.h"
+#include <boost/filesystem/path.hpp>
 #include "Pda/Pda.h"
 #include "Utilities/SmartPointer.h"
+#include "Utilities/Util.h"
+#include "Visitor.h"
 
 namespace AliceO2 {
 namespace Rorc {
+namespace {
 
-int ChannelMasterPdaBase::getSerialFromRorcDevice(const Parameters& parameters)
+CardDescriptor getDescriptor(const Parameters& parameters)
 {
-  auto id = parameters.getCardIdRequired();
-
-  if (auto serial = boost::get<int>(&id)) {
-    RorcDevice device {*serial};
-    return device.getSerialNumber();
-  } else if (auto address = boost::get<PciAddress>(&id)) {
-    RorcDevice device {*address};
-    return device.getSerialNumber();
-  }
-  BOOST_THROW_EXCEPTION(ParameterException()
-      << ErrorInfo::Message("Either SerialNumber or PciAddress parameter required"));
+  return Visitor::apply<CardDescriptor>(parameters.getCardIdRequired(),
+      [&](int serial) {return RorcDevice(serial).getCardDescriptor();},
+      [&](const PciAddress& address) {return RorcDevice(address).getCardDescriptor();});
 }
 
-ChannelMasterPdaBase::ChannelMasterPdaBase(CardType::type cardType, const Parameters& parameters,
-    const AllowedChannels& allowedChannels, size_t fifoSize)
-    : ChannelMasterBase(cardType, parameters, getSerialFromRorcDevice(parameters), allowedChannels), mDmaState(
-        DmaState::STOPPED)
-{
-  auto paths = getPaths();
+}
 
+ChannelMasterPdaBase::ChannelMasterPdaBase(const Parameters& parameters,
+    const AllowedChannels& allowedChannels)
+    : ChannelMasterBase(getDescriptor(parameters), parameters, allowedChannels), mDmaState(DmaState::STOPPED)
+{
   // Initialize PDA & DMA objects
   Utilities::resetSmartPtr(mRorcDevice, getSerialNumber());
+
   log("Initializing BAR", InfoLogger::InfoLogger::Debug);
   Utilities::resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), getChannelNumber());
+
+  // Register user's page data buffer
   log("Initializing memory-mapped DMA buffer", InfoLogger::InfoLogger::Debug);
-  Utilities::resetSmartPtr(mMappedFilePages, paths.pages().string(),
-      getChannelParameters().dma.bufferSize);
-  Utilities::resetSmartPtr(mBufferPages, mRorcDevice->getPciDevice(), mMappedFilePages->getAddress(),
-      mMappedFilePages->getSize(), getChannelNumber());
-  partitionDmaBuffer(fifoSize, getChannelParameters().dma.pageSize);
+  Utilities::resetSmartPtr(mPdaDmaBuffer, mRorcDevice->getPciDevice(), getBufferProvider().getAddress(),
+      getBufferProvider().getSize(), getPdaDmaBufferIndexPages(getChannelNumber(), 0));
+  log(std::string("Scatter-gather list size: ") + std::to_string(mPdaDmaBuffer->getScatterGatherList().size()));
 }
 
 ChannelMasterPdaBase::~ChannelMasterPdaBase()
@@ -105,17 +101,32 @@ void ChannelMasterPdaBase::writeRegister(int index, uint32_t value)
   mPdaBar->setRegister<uint32_t>(index * sizeof(uint32_t), value);
 }
 
-void ChannelMasterPdaBase::partitionDmaBuffer(size_t fifoSize, size_t pageSize)
+uintptr_t ChannelMasterPdaBase::getBusOffsetAddress(size_t offset)
 {
-  /// Amount of space reserved for the FIFO, we use multiples of the page size for uniformity
-  size_t fifoSpace = ((fifoSize / pageSize) + 1) * pageSize;
-  PageAddress fifoAddress;
-  std::tie(fifoAddress, mPageAddresses) = Pda::partitionScatterGatherList(mBufferPages->getScatterGatherList(),
-      fifoSpace, pageSize);
-  mFifoAddressUser = const_cast<void*>(fifoAddress.user);
-  mFifoAddressBus = const_cast<void*>(fifoAddress.bus);
+  return getPdaDmaBuffer().getBusOffsetAddress(offset);
 }
 
+void ChannelMasterPdaBase::checkSuperpage(const Superpage& superpage)
+{
+  if (superpage.getSize() == 0) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not enqueue superpage, size == 0"));
+  }
+
+  if (!Utilities::isMultiple(superpage.getSize(), 32*1024)) {
+    BOOST_THROW_EXCEPTION(Exception()
+        << ErrorInfo::Message("Could not enqueue superpage, size not a multiple of 32 KiB"));
+  }
+
+  if ((superpage.getOffset() + superpage.getSize()) > getBufferProvider().getSize()) {
+    BOOST_THROW_EXCEPTION(Exception()
+        << ErrorInfo::Message("Superpage out of range"));
+  }
+
+  if ((superpage.getOffset() % 4) != 0) {
+    BOOST_THROW_EXCEPTION(Exception()
+        << ErrorInfo::Message("Superpage offset not 32-bit aligned"));
+  }
+}
 
 } // namespace Rorc
 } // namespace AliceO2

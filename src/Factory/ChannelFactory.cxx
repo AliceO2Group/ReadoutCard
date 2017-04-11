@@ -3,15 +3,10 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "RORC/Parameters.h"
 #include "RORC/ChannelFactory.h"
-#include "RORC/CardType.h"
-#include "RORC/ResetLevel.h"
-#include "RORC/GeneratorPattern.h"
-#include "RORC/LoopbackMode.h"
+#include "RORC/Parameters.h"
 #include "Dummy/DummyChannelMaster.h"
 #include "Dummy/DummyChannelSlave.h"
-#include "ExceptionInternal.h"
 #include "Factory/ChannelFactoryUtils.h"
 #ifdef ALICEO2_RORC_PDA_ENABLED
 #  include <pda.h>

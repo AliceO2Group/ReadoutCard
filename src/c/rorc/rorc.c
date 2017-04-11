@@ -7,7 +7,7 @@
 #define MAX_STAT 4096
 #define MAX_WAIT 1000000
 
-void rorcReset (volatile void *buff, int option, int pci_loop_per_usec){
+void rorcReset (uintptr_t bar, int option, int pci_loop_per_usec){
   DEBUG_PRINTF(PDADEBUG_ENTER, "");
   int prorc_cmd;
   long long int longret, timeout;
@@ -26,22 +26,22 @@ void rorcReset (volatile void *buff, int option, int pci_loop_per_usec){
     prorc_cmd |= DRORC_CMD_CLEAR_COUNTERS;
   if (prorc_cmd)   // any reset
     {
-      rorcWriteReg(buff, C_CSR, (__u32) prorc_cmd); 
+      rorcWriteReg(bar, C_CSR, (__u32) prorc_cmd);
     }
     if (option & RORC_RESET_SIU)
     {
-      rorcPutCommandRegister(buff, PRORC_CMD_RESET_SIU);
-      longret = ddlWaitStatus(buff, timeout);
+      rorcPutCommandRegister(bar, PRORC_CMD_RESET_SIU);
+      longret = ddlWaitStatus(bar, timeout);
       if (longret < timeout)
-        ddlReadStatus(buff);
+        ddlReadStatus(bar);
     }
     if (!option || (option & RORC_RESET_RORC))
     {
-      rorcWriteReg(buff, RCSR, DRORC_CMD_RESET_CHAN);  //channel reset
+      rorcWriteReg(bar, RCSR, DRORC_CMD_RESET_CHAN);  //channel reset
     }
   }
 
-int rorcEmptyDataFifos(volatile void *buff, int empty_time)
+int rorcEmptyDataFifos(uintptr_t bar, int empty_time)
 
 /* try to empty D-RORC's data FIFOs                            
                empty_time:  time-out value in usecs
@@ -56,22 +56,22 @@ int rorcEmptyDataFifos(volatile void *buff, int empty_time)
   gettimeofday(&start_tv, NULL);
   dtime = 0;
   while (dtime < empty_time){
-    if (!rorcCheckRxData(buff))
+    if (!rorcCheckRxData(bar))
       return (RORC_STATUS_OK);
 
-    rorcWriteReg(buff, C_CSR, (__u32) DRORC_CMD_CLEAR_FIFOS);
+    rorcWriteReg(bar, C_CSR, (__u32) DRORC_CMD_CLEAR_FIFOS);
     gettimeofday(&now_tv, NULL);
     elapsed(&now_tv, &start_tv, &dsec, &dusec);
     dtime = (double)dsec * 1000000 + (double)dusec;
   }
 
-  if (rorcCheckRxData(buff))        // last check
+  if (rorcCheckRxData(bar))        // last check
     return (RORC_TIMEOUT);
   else
     return (RORC_STATUS_OK);
 }
 
-int rorcArmDDL(volatile void *buff, int option, int diu_version, int pci_loop_per_usec){
+int rorcArmDDL(uintptr_t bar, int option, int diu_version, int pci_loop_per_usec){
   DEBUG_PRINTF(PDADEBUG_ENTER, "");
   int print = 0; // -1;
   int stop = 1;
@@ -85,7 +85,7 @@ int rorcArmDDL(volatile void *buff, int option, int diu_version, int pci_loop_pe
       return RORC_CMD_NOT_ALLOWED;
     }
     if (option & RORC_RESET_SIU){
-      long ret = ddlResetSiu(buff, 0, 3, TimeOut, diu_version, pci_loop_per_usec);
+      long ret = ddlResetSiu(bar, 0, 3, TimeOut, diu_version, pci_loop_per_usec);
       if (ret == -1){
         printf(" Unsuccessful SIU reset\n");
         return RORC_NOT_ACCEPTED;
@@ -93,52 +93,52 @@ int rorcArmDDL(volatile void *buff, int option, int diu_version, int pci_loop_pe
     }
     if (option & RORC_LINK_UP){
       if (diu_version <= NEW){
-        long ret = ddlLinkUp(buff, 1, print, stop, TimeOut, diu_version, pci_loop_per_usec);
+        long ret = ddlLinkUp(bar, 1, print, stop, TimeOut, diu_version, pci_loop_per_usec);
         if (ret == -1){
           printf(" Can not read DIU status");
           return RORC_LINK_NOT_ON;
         }
       }
       else{
-        rorcReset(buff, RORC_RESET_RORC, pci_loop_per_usec);
-        rorcReset(buff, RORC_RESET_DIU, pci_loop_per_usec);
-        rorcReset(buff, RORC_RESET_SIU, pci_loop_per_usec);
+        rorcReset(bar, RORC_RESET_RORC, pci_loop_per_usec);
+        rorcReset(bar, RORC_RESET_DIU, pci_loop_per_usec);
+        rorcReset(bar, RORC_RESET_SIU, pci_loop_per_usec);
         usleep(100000); 
 
-        if (rorcCheckLink(buff))
+        if (rorcCheckLink(bar))
           return (RORC_LINK_NOT_ON);
-        if (rorcEmptyDataFifos(buff, 100000))
+        if (rorcEmptyDataFifos(bar, 100000))
           return (RORC_TIMEOUT);
 
-        rorcReset(buff, RORC_RESET_SIU, pci_loop_per_usec);
-        rorcReset(buff, RORC_RESET_DIU, pci_loop_per_usec);
-        rorcReset(buff, RORC_RESET_RORC, pci_loop_per_usec);
+        rorcReset(bar, RORC_RESET_SIU, pci_loop_per_usec);
+        rorcReset(bar, RORC_RESET_DIU, pci_loop_per_usec);
+        rorcReset(bar, RORC_RESET_RORC, pci_loop_per_usec);
         usleep(100000);
 
-        if (rorcCheckLink(buff))
+        if (rorcCheckLink(bar))
           return (RORC_LINK_NOT_ON);
       }
     }
     if (option & RORC_RESET_DIU)
-       rorcReset(buff, RORC_RESET_DIU, pci_loop_per_usec);
+       rorcReset(bar, RORC_RESET_DIU, pci_loop_per_usec);
   }
   else{
     printf(" No DIU plugged into the RORC\n");
     return (RORC_LINK_NOT_ON);
   }
   if (option & RORC_RESET_FF)
-    rorcReset(buff, RORC_RESET_FF, pci_loop_per_usec);
+    rorcReset(bar, RORC_RESET_FF, pci_loop_per_usec);
   if (option & RORC_RESET_RORC)
-    rorcReset(buff, RORC_RESET_RORC, pci_loop_per_usec);
+    rorcReset(bar, RORC_RESET_RORC, pci_loop_per_usec);
   
   return RORC_STATUS_OK;
 }
  
-int rorcCheckRxFreeFifo(volatile void *buff)  //RX Address FIFO
+int rorcCheckRxFreeFifo(uintptr_t bar)  //RX Address FIFO
 {
    __u32 st;
 DEBUG_PRINTF(PDADEBUG_ENTER, "");
-  st = rorcReadReg(buff, C_CSR);
+  st = rorcReadReg(bar, C_CSR);
   if (st & DRORC_STAT_RXAFF_FULL)  
     return (RORC_FF_FULL);
   else if (st & DRORC_STAT_RXAFF_EMPTY)
@@ -148,10 +148,10 @@ DEBUG_PRINTF(PDADEBUG_ENTER, "");
   
 }
 
-__u32 rorcReadFw(volatile void *buff){
+__u32 rorcReadFw(uintptr_t bar){
   __u32 fw;
 
-  fw = rorcReadReg (buff, RFID);
+  fw = rorcReadReg (bar, RFID);
 
   return (fw);
 }
@@ -175,72 +175,72 @@ void rorcInterpretVersion(__u32 x){
 
 }
 
-int rorcStartDataReceiver(volatile void *buff,
+int rorcStartDataReceiver(uintptr_t bar,
                           unsigned long   readyFifoBaseAddress, int rorc_revision){
   int fw_major, fw_minor;
   unsigned long fw;
   DEBUG_PRINTF(PDADEBUG_ENTER, "");
-  rorcWriteReg(buff, C_RRBAR, (readyFifoBaseAddress & 0xffffffff));
+  rorcWriteReg(bar, C_RRBAR, (readyFifoBaseAddress & 0xffffffff));
   if (rorc_revision >= RORC_REVISION_DRORC2){
-    fw = rorcReadFw(buff);
+    fw = rorcReadFw(bar);
     fw_major = rorcFWVersMajor(fw);
     fw_minor = rorcFWVersMinor(fw);
     if ((rorc_revision >= RORC_REVISION_PCIEXP) ||
         (fw_major > 2) || ((fw_major == 2) && (fw_minor >= 16))){
 #if __WORDSIZE > 32
-      rorcWriteReg(buff, C_RRBX, (readyFifoBaseAddress >> 32));
+      rorcWriteReg(bar, C_RRBX, (readyFifoBaseAddress >> 32));
 #else
-      rorcWriteReg(buff, C_RRBX, 0x0);
+      rorcWriteReg(bar, C_RRBX, 0x0);
 #endif
     }  
   }
-  if (!(rorcReadReg(buff, C_CSR) & DRORC_CMD_DATA_RX_ON_OFF))
-    rorcWriteReg(buff, C_CSR, DRORC_CMD_DATA_RX_ON_OFF);
+  if (!(rorcReadReg(bar, C_CSR) & DRORC_CMD_DATA_RX_ON_OFF))
+    rorcWriteReg(bar, C_CSR, DRORC_CMD_DATA_RX_ON_OFF);
 
   return (RORC_STATUS_OK);
 }
 
-int rorcStopDataReceiver(volatile void *buff){
+int rorcStopDataReceiver(uintptr_t bar){
   DEBUG_PRINTF(PDADEBUG_ENTER, "");
-  if (rorcReadReg(buff, C_CSR) & DRORC_CMD_DATA_RX_ON_OFF)
-    rorcWriteReg(buff, C_CSR, DRORC_CMD_DATA_RX_ON_OFF);
+  if (rorcReadReg(bar, C_CSR) & DRORC_CMD_DATA_RX_ON_OFF)
+    rorcWriteReg(bar, C_CSR, DRORC_CMD_DATA_RX_ON_OFF);
 
   return (RORC_STATUS_OK);
 }
 
-int rorcStartTrigger(volatile void *buff, long long int timeout, stword_t *stw){
+int rorcStartTrigger(uintptr_t bar, long long int timeout, stword_t *stw){
   int ret;
   long long int longret;
   DEBUG_PRINTF(PDADEBUG_ENTER, "");
-  ret = ddlSendCommand(buff, DDL_DEST_FEE, RDYRX, 0, 0, timeout);
+  ret = ddlSendCommand(bar, DDL_DEST_FEE, RDYRX, 0, 0, timeout);
   if (ret == RORC_LINK_NOT_ON)
     return (ret);
   if (ret == RORC_TIMEOUT)
     return RORC_STATUS_ERROR;
 
-  longret = ddlWaitStatus(buff, timeout);
+  longret = ddlWaitStatus(bar, timeout);
   if (longret >= timeout)
     return RORC_NOT_ACCEPTED;
   else
-    *stw = ddlReadStatus(buff);
+    *stw = ddlReadStatus(bar);
 
   return RORC_STATUS_OK;
 }
 
-int rorcStopTrigger(volatile void *buff, long long int timeout, stword_t *stw)
+int rorcStopTrigger(uintptr_t bar, long long int timeout, stword_t *stw)
 {
   int ret;
   long long int longret;
   int once = 0;
 
  repeat:
-  ret = ddlSendCommand(buff, DDL_DEST_FEE, EOBTR, 0, 0, timeout);
+  ret = ddlSendCommand(bar, DDL_DEST_FEE, EOBTR, 0, 0, timeout);
   if (ret == RORC_LINK_NOT_ON)
     return (ret);
   if (ret == RORC_TIMEOUT)
     return RORC_STATUS_ERROR;
 
-  longret = ddlWaitStatus(buff, timeout);
+  longret = ddlWaitStatus(bar, timeout);
   if (longret >= timeout)
   {
     if (once == 0)
@@ -251,12 +251,12 @@ int rorcStopTrigger(volatile void *buff, long long int timeout, stword_t *stw)
     return RORC_NOT_ACCEPTED;
   }
   else
-    *stw = ddlReadStatus(buff);
+    *stw = ddlReadStatus(bar);
 
   return RORC_STATUS_OK;
 }
 
-int rorcArmDataGenerator(volatile void *buff,
+int rorcArmDataGenerator(uintptr_t bar,
                          __u32           initEventNumber,
                          __u32           initDataWord,
                          int             dataPattern,
@@ -275,38 +275,38 @@ int rorcArmDataGenerator(volatile void *buff,
     *rounded_len = roundPowerOf2(eventLen);
     blockLen = ((*rounded_len - 1) << 4) | dataPattern;
     blockLen |= 0x80000000;
-    rorcWriteReg(buff, C_DG2, seed);
+    rorcWriteReg(bar, C_DG2, seed);
   }
   else{
     blockLen = ((eventLen - 1) << 4) | dataPattern;
-    rorcWriteReg(buff, C_DG2, initDataWord);
+    rorcWriteReg(bar, C_DG2, initDataWord);
   }
 
-  rorcWriteReg(buff, C_DG1, blockLen);
-  rorcWriteReg(buff, C_DG3, initEventNumber);
+  rorcWriteReg(bar, C_DG1, blockLen);
+  rorcWriteReg(bar, C_DG3, initEventNumber);
 
   return (RORC_STATUS_OK);
 }
 
-int rorcParamOn(volatile void *buff, int param){
+int rorcParamOn(uintptr_t bar, int param){
   if (param != PRORC_PARAM_LOOPB)
     return (RORC_INVALID_PARAM);
-  if (!rorcCheckLoopBack(buff))
-    rorcChangeLoopBack(buff);
+  if (!rorcCheckLoopBack(bar))
+    rorcChangeLoopBack(bar);
 
   return (RORC_STATUS_OK);
 }
 
-int rorcParamOff(volatile void *buff)
+int rorcParamOff(uintptr_t bar)
 // switches off both loopback and stop_on_error
 {
-  if (rorcCheckLoopBack(buff))
-    rorcChangeLoopBack(buff);
+  if (rorcCheckLoopBack(bar))
+    rorcChangeLoopBack(bar);
   
   return (RORC_STATUS_OK);
 }
 
-int rorcStartDataGenerator(volatile void *buff, __u32 maxLoop){
+int rorcStartDataGenerator(uintptr_t bar, __u32 maxLoop){
   __u32 cycle;
 
   if (maxLoop) {
@@ -315,15 +315,15 @@ int rorcStartDataGenerator(volatile void *buff, __u32 maxLoop){
     cycle = 0x80000000;
   }
 
-  rorcWriteReg(buff, C_DG4, cycle);
-  rorcWriteReg(buff, C_CSR, DRORC_CMD_START_DG);
+  rorcWriteReg(bar, C_DG4, cycle);
+  rorcWriteReg(bar, C_CSR, DRORC_CMD_START_DG);
 
   return (RORC_STATUS_OK);
 }
 
-int rorcStopDataGenerator(uint32_t *buff)
+int rorcStopDataGenerator(uint32_t *bar)
 {
-  rorcWriteReg(buff, C_CSR, DRORC_CMD_STOP_DG);
+  rorcWriteReg(bar, C_CSR, DRORC_CMD_STOP_DG);
   
   return (RORC_STATUS_OK);
 }
@@ -384,7 +384,7 @@ void rorcBuildHwSerial(char data[], unsigned int rorcRevisionNumber, int version
 }
 
 
-const char* rorcSerial(uint32_t* buff, int rorc_revision){
+const char* rorcSerial(uint32_t* bar, int rorc_revision){
 //  unsigned txtlen;
 //  __u8 address;
   static char data[DDL_MAX_HW_ID];
@@ -404,12 +404,12 @@ const char* rorcSerial(uint32_t* buff, int rorc_revision){
   {
     // Read FLASH memory
     unsigned int flashAddress  = FLASH_SN_ADDRESS;
-    initFlash(buff, flashAddress, 10); // TODO check return code
+    initFlash(bar, flashAddress, 10); // TODO check return code
 
     data[DDL_MAX_HW_ID - 1] = '\0';
     for (int i = 0; i < DDL_MAX_HW_ID - 1; i+=2, flashAddress++)
     {
-      readFlashWord(buff, flashAddress, &data[i], 10); // TODO check return code
+      readFlashWord(bar, flashAddress, &data[i], 10); // TODO check return code
       if ((data[i] == '\0') || (data[i+1] == '\0'))
         break;
     }
@@ -418,7 +418,7 @@ const char* rorcSerial(uint32_t* buff, int rorc_revision){
   return data;
 }
 
-void setLoopPerSec(long long int *loop_per_usec, double *pci_loop_per_usec, volatile void *buff){
+void setLoopPerSec(long long int *loop_per_usec, double *pci_loop_per_usec, uintptr_t bar){
   DEBUG_PRINTF(PDADEBUG_ENTER, "");
   struct timeval tv1, tv2;
   int dsec, dusec;
@@ -443,7 +443,7 @@ void setLoopPerSec(long long int *loop_per_usec, double *pci_loop_per_usec, vola
   gettimeofday(&tv1, NULL);
 
   for (i = 0; i < max_loop; i++) {
-    (void) rorcCheckRxStatus(buff); // XXX Cast to void to explicitly discard returned value
+    (void) rorcCheckRxStatus(bar); // XXX Cast to void to explicitly discard returned value
   }
 
   gettimeofday(&tv2, NULL);
@@ -452,51 +452,51 @@ void setLoopPerSec(long long int *loop_per_usec, double *pci_loop_per_usec, vola
   *pci_loop_per_usec = (double)max_loop/dtime;
 }
 
-unsigned initFlash(volatile void *buff, unsigned address, int sleept)
+unsigned initFlash(uintptr_t bar, unsigned address, int sleept)
 {
   unsigned stat;
 
   // Clear Status register
-  rorcWriteReg(buff, F_IFDSR, 0x03000050);
+  rorcWriteReg(bar, F_IFDSR, 0x03000050);
   usleep(10*sleept);
 
   // Set ASYNCH mode (Configuration Register 0xBDDF)
-  rorcWriteReg(buff, F_IFDSR, 0x0100bddf);
+  rorcWriteReg(bar, F_IFDSR, 0x0100bddf);
   usleep(sleept);
-  rorcWriteReg(buff, F_IFDSR, 0x03000060);
+  rorcWriteReg(bar, F_IFDSR, 0x03000060);
   usleep(sleept);
-  rorcWriteReg(buff, F_IFDSR, 0x03000003);
+  rorcWriteReg(bar, F_IFDSR, 0x03000003);
   usleep(sleept);
 
   // Read Status register
-  rorcWriteReg(buff, F_IFDSR, address);
+  rorcWriteReg(bar, F_IFDSR, address);
   usleep(sleept);
-  rorcWriteReg(buff, F_IFDSR, 0x03000070);
+  rorcWriteReg(bar, F_IFDSR, 0x03000070);
   usleep(sleept);
-  stat = readFlashStatus(buff, 1);
+  stat = readFlashStatus(bar, 1);
 
   return (stat);
 }
 
-unsigned readFlashStatus(volatile void *buff, int sleept)
+unsigned readFlashStatus(uintptr_t bar, int sleept)
 {
   unsigned stat;
 
-  rorcWriteReg(buff, F_IFDSR, 0x04000000);
+  rorcWriteReg(bar, F_IFDSR, 0x04000000);
   usleep(sleept);
-  stat = rorcReadReg(buff, F_IADR);
+  stat = rorcReadReg(bar, F_IADR);
 
   return (stat);
 }
 
-int checkFlashStatus(volatile void *buff, int timeout)
+int checkFlashStatus(uintptr_t bar, int timeout)
 {
   unsigned stat;
   int i = 0;
 
   while (1)
   {
-    stat = readFlashStatus(buff, 1);
+    stat = readFlashStatus(bar, 1);
     if (stat == 0x80)
       break;
     if (timeout && (++i >= timeout))
@@ -508,62 +508,62 @@ int checkFlashStatus(volatile void *buff, int timeout)
 
 }
 
-int unlockFlashBlock(volatile void *buff, unsigned address, int sleept)
+int unlockFlashBlock(uintptr_t bar, unsigned address, int sleept)
 {
   int ret;
 
-  rorcWriteReg(buff, F_IFDSR, address);
+  rorcWriteReg(bar, F_IFDSR, address);
   usleep(sleept);
-  rorcWriteReg(buff, F_IFDSR, 0x03000060);
+  rorcWriteReg(bar, F_IFDSR, 0x03000060);
   usleep(sleept);
-  rorcWriteReg(buff, F_IFDSR, 0x030000d0);
+  rorcWriteReg(bar, F_IFDSR, 0x030000d0);
   usleep(sleept);
-  ret = checkFlashStatus(buff, MAX_WAIT);
+  ret = checkFlashStatus(bar, MAX_WAIT);
 
   return (ret);
 }
 
-int eraseFlashBlock(volatile void *buff, unsigned address, int sleept)
+int eraseFlashBlock(uintptr_t bar, unsigned address, int sleept)
 {
   int ret;
 
-  rorcWriteReg(buff, F_IFDSR, address);
+  rorcWriteReg(bar, F_IFDSR, address);
   usleep(sleept);
-  rorcWriteReg(buff, F_IFDSR, address);
+  rorcWriteReg(bar, F_IFDSR, address);
   usleep(sleept);
-  rorcWriteReg(buff, F_IFDSR, 0x03000020);
+  rorcWriteReg(bar, F_IFDSR, 0x03000020);
   usleep(sleept);
-  rorcWriteReg(buff, F_IFDSR, 0x030000d0);
+  rorcWriteReg(bar, F_IFDSR, 0x030000d0);
   usleep(sleept);
-  ret = checkFlashStatus(buff, MAX_WAIT);
+  ret = checkFlashStatus(bar, MAX_WAIT);
 
   return (ret);
 }
 
-int writeFlashWord(volatile void *buff, unsigned address, int value, int sleept)
+int writeFlashWord(uintptr_t bar, unsigned address, int value, int sleept)
 {
   int ret;
 
-  rorcWriteReg(buff, F_IFDSR, address);
+  rorcWriteReg(bar, F_IFDSR, address);
   usleep(sleept);
-  rorcWriteReg(buff, F_IFDSR, 0x03000040);
+  rorcWriteReg(bar, F_IFDSR, 0x03000040);
   usleep(sleept);
-  rorcWriteReg(buff, F_IFDSR, value);
+  rorcWriteReg(bar, F_IFDSR, value);
   usleep(sleept);
-  ret = checkFlashStatus(buff, MAX_WAIT);
+  ret = checkFlashStatus(bar, MAX_WAIT);
 
   return (ret);
 }
 
-int readFlashWord(volatile void *buff, unsigned address, char *data, int sleept)
+int readFlashWord(uintptr_t bar, unsigned address, char *data, int sleept)
 {
   unsigned stat;
 
-  rorcWriteReg(buff, F_IFDSR, address);
+  rorcWriteReg(bar, F_IFDSR, address);
   usleep(sleept);
-  rorcWriteReg(buff, F_IFDSR, 0x030000ff);
+  rorcWriteReg(bar, F_IFDSR, 0x030000ff);
   usleep(sleept);
-  stat = readFlashStatus(buff, sleept);
+  stat = readFlashStatus(bar, sleept);
   *data = (stat & 0xFF00) >> 8;
   *(data+1) = stat & 0xFF;
   return (RORC_STATUS_OK);

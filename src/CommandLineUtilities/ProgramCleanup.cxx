@@ -95,11 +95,9 @@ class ProgramCleanup: public Program
           cout << "### Attempting forced cleanup...\n";
           // Try to get paths of the shared state files the internal way
           RorcDevice rorcDevice(cardId);
-          ChannelPaths channelPaths(rorcDevice.getCardType(), rorcDevice.getSerialNumber(), channelNumber);
-          files.push_back(channelPaths.fifo().string());
-          files.push_back(channelPaths.lock().string());
-          files.push_back(channelPaths.pages().string());
-          files.push_back(channelPaths.state().string());
+          ChannelPaths channelPaths(rorcDevice.getCardDescriptor().pciAddress, channelNumber);
+          files.push_back(channelPaths.fifo());
+          files.push_back(channelPaths.lock());
           namedMutexes.push_back(channelPaths.namedMutex());
         } else {
           cout << "### Attempting to find files to clean up...\n";
@@ -107,7 +105,6 @@ class ProgramCleanup: public Program
           pushIfPresent<ErrorInfo::SharedLockFile>(e, files);
           pushIfPresent<ErrorInfo::SharedBufferFile>(e, files);
           pushIfPresent<ErrorInfo::SharedFifoFile>(e, files);
-          pushIfPresent<ErrorInfo::SharedStateFile>(e, files);
           pushIfPresent<ErrorInfo::NamedMutexName>(e, namedMutexes);
         }
 

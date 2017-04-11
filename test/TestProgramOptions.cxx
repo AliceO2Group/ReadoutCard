@@ -25,10 +25,9 @@ BOOST_AUTO_TEST_CASE(UtilOptions)
       "--address=0x100",
       "--range=200",
       "--value=0x250",
-      "--cp-dma-pagesize=300",
-      "--cp-dma-bufmb=400",
-      "--cp-gen-enable=true",
-      "--cp-gen-loopb=RORC",
+      "--page-size=300",
+      "--generator=true",
+      "--loopback=RORC",
       "--serial=500",
   };
 
@@ -50,11 +49,10 @@ BOOST_AUTO_TEST_CASE(UtilOptions)
   BOOST_CHECK_MESSAGE(getOptionRegisterAddress(vm) == 0x100, "register address");
   BOOST_CHECK_MESSAGE(getOptionRegisterRange(vm) == 200, "register range");
   BOOST_CHECK_MESSAGE(getOptionRegisterValue(vm) == 0x250, "register value");
-  auto cps = getOptionsChannelParameters(vm);
-  BOOST_CHECK_MESSAGE(cps.dma.pageSize == 300l * 1024l, "dma page size");
-  BOOST_CHECK_MESSAGE(cps.dma.bufferSize == (400l * 1024l * 1024l), "dma buffer size");
-  BOOST_CHECK_MESSAGE(cps.generator.useDataGenerator == true, "generator enable");
-  BOOST_CHECK_MESSAGE(cps.generator.loopbackMode == AliceO2::Rorc::LoopbackMode::Rorc, "generator loopback mode");
+  auto map = getOptionsParameterMap(vm);
+  BOOST_CHECK_MESSAGE(map.getDmaPageSizeRequired() == 300l * 1024l, "dma page size");
+  BOOST_CHECK_MESSAGE(map.getGeneratorEnabledRequired() == true, "generator enable");
+  BOOST_CHECK_MESSAGE(map.getGeneratorLoopbackRequired() == AliceO2::Rorc::LoopbackMode::Rorc, "generator loopback mode");
   BOOST_CHECK_MESSAGE(getOptionSerialNumber(vm) == 500, "serial number");
 }
 

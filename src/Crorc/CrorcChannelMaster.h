@@ -6,16 +6,20 @@
 #pragma once
 
 #include <mutex>
+#include <unordered_map>
+#include <boost/circular_buffer_fwd.hpp>
 #include <boost/scoped_ptr.hpp>
 #include "ChannelMasterPdaBase.h"
+#include "Crorc.h"
 #include "RORC/Parameters.h"
-#include "PageManager.h"
 #include "ReadyFifo.h"
+#include "SuperpageQueue.h"
 
 namespace AliceO2 {
 namespace Rorc {
 
 /// Extends ChannelMaster object, and provides device-specific functionality
+/// Note: the functions prefixed with "crorc" are translated from the functions of the C interface (src/c/rorc/...")
 class CrorcChannelMaster final : public ChannelMasterPdaBase
 {
   public:
@@ -33,11 +37,13 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
     virtual int utilityGetFirmwareVersion() override;
     virtual std::string utilityGetFirmwareVersionString() override;
 
-    virtual int fillFifo(int maxFill = READYFIFO_ENTRIES) override;
-    virtual int getAvailableCount() override;
-    virtual std::shared_ptr<Page> popPageInternal(const MasterSharedPtr& channel) override;
-    virtual void freePage(const Page& page) override;
-
+    virtual void pushSuperpage(Superpage superpage) override;
+    virtual int getSuperpageQueueCount() override;
+    virtual int getSuperpageQueueAvailable() override;
+    virtual int getSuperpageQueueCapacity() override;
+    virtual Superpage getSuperpage() override;
+    virtual Superpage popSuperpage() override;
+    virtual void fillSuperpages() override;
 
     AllowedChannels allowedChannels();
 
@@ -55,6 +61,18 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
 
   private:
 
+    /// This card's card type!
+    static constexpr CardType::type CARD_TYPE = CardType::Crorc;
+
+    /// Limits the number of superpages allowed in the queue
+    static constexpr size_t MAX_SUPERPAGES = 32;
+
+    /// Firmware FIFO Size
+    static constexpr size_t FIFO_QUEUE_MAX = READYFIFO_ENTRIES;
+
+    using SuperpageQueueType = SuperpageQueue<MAX_SUPERPAGES>;
+    using SuperpageQueueEntry = SuperpageQueueType::SuperpageQueueEntry;
+
     /// Namespace for enum describing the status of a page's arrival
     struct DataArrivalStatus
     {
@@ -66,14 +84,22 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
         };
     };
 
-    ReadyFifo* getFifoUser()
+    uintptr_t getNextSuperpageBusAddress(const SuperpageQueueEntry& superpage);
+
+    /// C-RORC function helper
+    Crorc::Crorc getCrorc()
     {
-      return reinterpret_cast<ReadyFifo*>(getFifoAddressUser());
+      return {*this};
     }
 
-    ReadyFifo* getFifoBus()
+    ReadyFifo* getReadyFifoUser()
     {
-      return reinterpret_cast<ReadyFifo*>(getFifoAddressBus());
+      return reinterpret_cast<ReadyFifo*>(mReadyFifoAddressUser);
+    }
+
+    ReadyFifo* getReadyFifoBus()
+    {
+      return reinterpret_cast<ReadyFifo*>(mReadyFifoAddressBus);
     }
 
     /// Enables data receiving in the RORC
@@ -81,85 +107,115 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
 
     /// Initializes and starts the data generator with the given parameters
     /// \param generatorParameters The parameters for the data generator.
-    void startDataGenerator(const GeneratorParameters& generatorParameters);
-
-    /// Pushes the initial 128 pages to the CRORC's Free FIFO
-    void initializeFreeFifo();
+    void startDataGenerator();
 
     /// Pushes a page to the CRORC's Free FIFO
     /// \param readyFifoIndex Index of the Ready FIFO to write the page's transfer status to
     /// \param pageBusAddress Address on the bus to push the page to
-    void pushFreeFifoPage(int readyFifoIndex, volatile void* pageBusAddress);
+    void pushFreeFifoPage(int readyFifoIndex, uintptr_t pageBusAddress);
 
     /// Check if data has arrived
     DataArrivalStatus::type dataArrived(int index);
 
-    /// Arms C-RORC data generator
-    void crorcArmDataGenerator();
+    /// Starts pending DMA with given superpage for the initial pages
+    void startPendingDma(SuperpageQueueEntry& superpage);
 
-    /// Arms DDL
-    /// \param resetMask The reset mask. See the RORC_RESET_* macros in rorc.h
-    void crorcArmDdl(int resetMask);
+    /// Push a page into a superpage
+    void pushIntoSuperpage(SuperpageQueueEntry& superpage);
 
-    /// Find and store DIU version
-    void crorcInitDiuVersion();
+    uintptr_t getReadyFifoAddressBus() const
+    {
+      return mReadyFifoAddressBus;
+    }
 
-    /// Checks if link is up
-    void crorcCheckLink();
+    uintptr_t getReadyFifoAddressUser() const
+    {
+      return mReadyFifoAddressUser;
+    }
 
-    /// Send a command to the SIU
-    /// \param command The command to send to the SIU. These are probably the macros under 'interface commands' in
-    ///   the header ddl_def.h
-    void crorcSiuCommand(int command);
+    /// Get front index of FIFO
+    int getFifoFront() const
+    {
+      return (mFifoBack + mFifoSize) % READYFIFO_ENTRIES;
+    };
 
-    /// Send a command to the DIU
-    /// \param command The command to send to the SIU. These are probably the macros under 'interface commands' in
-    ///   the header ddl_def.h
-    void crorcDiuCommand(int command);
+    Pda::PdaBar& getBar2();
 
-    /// Reset the C-RORC
-    void crorcReset(int command);
+    /// Memory mapped file for the ReadyFIFO
+    boost::scoped_ptr<MemoryMappedFile> mBufferFifoFile;
 
-    /// Checks if the C-RORC's Free FIFO is empty
-    void crorcCheckFreeFifoEmpty();
+    /// PDA DMABuffer object for the ReadyFIFO
+    boost::scoped_ptr<Pda::PdaDmaBuffer> mPdaDmaBufferFifo;
 
-    /// Starts data receiving
-    void crorcStartDataReceiver();
+    /// Userspace address of FIFO in DMA buffer
+    uintptr_t mReadyFifoAddressUser;
 
-    /// Starts the trigger
-    void crorcStartTrigger();
+    /// Bus address of FIFO in DMA buffer
+    uintptr_t mReadyFifoAddressBus;
 
-    /// Stops the trigger
-    void crorcStopTrigger();
+    /// Back index of the firmware FIFO
+    int mFifoBack = 0;
 
-    /// Set SIU loopback
-    void crorcSetSiuLoopback();
+    /// Amount of elements in the firmware FIFO
+    int mFifoSize = 0;
 
-    int mFifoIndexWrite; ///< Index of next FIFO page available for writing
-    int mFifoIndexRead; ///< Index of oldest non-free FIFO page
-    int mBufferPageIndex; ///< Index of next DMA buffer page available for writing
-    long long int mLoopPerUsec; ///< Some timing parameter used during communications with the card
-    double mPciLoopPerUsec; ///< Some timing parameters used during communications with the card
-    int mRorcRevision;
-    int mSiuVersion;
-    int mDiuVersion;
+    /// Queue for superpages
+    SuperpageQueueType mSuperpageQueue;
 
-    /// Bus FIFO
-    ReadyFifo* mFifoBus;
+    /// Address of DMA buffer in userspace
+    uintptr_t mDmaBufferUserspace = 0;
 
-    /// Userspace FIFO
-    ReadyFifo* mFifoUser;
+    /// Indicates deviceStartDma() was called, but DMA was not actually started yet. We do this because we need a
+    /// superpage to actually start.
+    bool mPendingDmaStart = false;
 
-    /// Mapping from fifo page index to DMA buffer index
-    std::vector<int> mBufferPageIndexes;
+    /// BAR 2 is needed for configuration
+    std::unique_ptr<Pda::PdaBar> mPdaBar2;
 
-    /// Array to keep track of read pages (false: wasn't read out, true: was read out).
-    std::vector<bool> mPageWasReadOut;
+    // These variables are configuration parameters
 
-    static constexpr CardType::type CARD_TYPE = CardType::Crorc;
+    /// DMA page size
+    const size_t mPageSize;
 
-    // TODO: refactor into ChannelMaster
-    PageManager<READYFIFO_ENTRIES> mPageManager;
+    /// Reset level on initialization of channel
+    const ResetLevel::type mInitialResetLevel;
+
+    /// Prevents sending the RDYRX and EOBTR commands. TODO This switch is implicitly set when data generator or the
+    /// STBRD command is used (???)
+    const bool mNoRDYRX;
+
+    /// Enforces that the data reading is carried out with the Start Block Read (STBRD) command
+    /// XXX Not sure if this should be a parameter...
+    const bool mUseFeeAddress;
+
+    /// Gives the type of loopback
+    const LoopbackMode::type mLoopbackMode;
+
+    /// Enables the data generator
+    const bool mGeneratorEnabled;
+
+    /// Data pattern for the data generator
+    const GeneratorPattern::type mGeneratorPattern;
+
+    /// Maximum number of events
+    const int mGeneratorMaximumEvents;
+
+    /// Initial value of the first data in a data block
+    const uint32_t mGeneratorInitialValue;
+
+    /// Sets the second word of each fragment when the data generator is used
+    const uint32_t mGeneratorInitialWord;
+
+    /// Random seed parameter in case the data generator is set to produce random data
+    const int mGeneratorSeed;
+
+    /// Length of data written to each page
+    const size_t mGeneratorDataSize;
+
+    /// Use continuous readout mode
+    const bool mUseContinuousReadout;
+
+    Crorc::Crorc::DiuConfig mDiuConfig;
 };
 
 } // namespace Rorc

@@ -6,18 +6,15 @@
 #ifndef ALICEO2_INCLUDE_RORC_EXCEPTION_H_
 #define ALICEO2_INCLUDE_RORC_EXCEPTION_H_
 
+#include <Common/Exceptions.h>
 #include <stdexcept>
 #include <boost/exception/exception.hpp>
 
 namespace AliceO2 {
 namespace Rorc {
 
-// RORC exception definitions
-struct Exception : virtual boost::exception, virtual std::exception
-{
-    /// The what() function is overridden to use the 'errinfo_rorc_generic_message' when available
-    virtual const char* what() const noexcept override;
-};
+//// RORC exception definitions
+struct Exception : Common::Exception {};
 
 // General exception definitions
 struct RorcPdaException : virtual Exception {};
@@ -32,6 +29,7 @@ struct NamedMutexLockException : virtual LockException {};
 struct DeviceFinderException : virtual Exception {};
 struct SharedStateException : virtual Exception {};
 struct SharedObjectNotFoundException : virtual Exception {};
+struct TimeoutException : virtual Exception {};
 
 // C-RORC exception definitions
 struct CrorcException : virtual Exception {};

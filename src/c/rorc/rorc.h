@@ -232,33 +232,33 @@ extern "C" {
   rorcWriteReg (buff, C_TAFL, (((blockLength) << 8) | (readyFifoIndex)))
 
 /** RORC functions, for definitions see rorc.c */
-void rorcReset (volatile void *buff, int option, int pci_loop_per_usec);
-int rorcEmptyDataFifos(volatile void *buff, int empty_time);
-int rorcArmDDL(volatile void *buff, int option, int diu_version, int pci_loop_per_usec);
-int rorcCheckRxFreeFifo(volatile void *buff);
-int rorcStartDataReceiver(volatile void *buff,
+void rorcReset (uintptr_t bar, int option, int pci_loop_per_usec);
+int rorcEmptyDataFifos(uintptr_t bar, int empty_time);
+int rorcArmDDL(uintptr_t bar, int option, int diu_version, int pci_loop_per_usec);
+int rorcCheckRxFreeFifo(uintptr_t bar);
+int rorcStartDataReceiver(uintptr_t bar,
                           unsigned long readyFifoBaseAddress,
                           int rorc_revision);
-int rorcStopDataReceiver(volatile void *buff);
-int rorcStartTrigger(volatile void *buff, long long int timeout, stword_t *stw);
-int rorcStopTrigger(volatile void *buff, long long int timeout, stword_t *stw);
+int rorcStopDataReceiver(uintptr_t bar);
+int rorcStartTrigger(uintptr_t bar, long long int timeout, stword_t *stw);
+int rorcStopTrigger(uintptr_t bar, long long int timeout, stword_t *stw);
 
-__u32 rorcReadFw(volatile void *buff);
+__u32 rorcReadFw(uintptr_t bar);
 void rorcInterpretVersion(__u32 x);
-int rorcArmDataGenerator(volatile void *buff, __u32 initEventNumber, __u32 initDataWord,
+int rorcArmDataGenerator(uintptr_t bar, __u32 initEventNumber, __u32 initDataWord,
 			 int dataPattern, int eventLen, int seed, int *rounded_len);
-int rorcStartDataGenerator(volatile void *buff, __u32 maxLoop);
-int rorcParamOn(volatile void *buff, int param);
-int rorcParamOff(volatile void *buff);
+int rorcStartDataGenerator(uintptr_t bar, __u32 maxLoop);
+int rorcParamOn(uintptr_t bar, int param);
+int rorcParamOff(uintptr_t bar);
 
-void setLoopPerSec(long long int *loop_per_usec, double *pci_loop_per_usec, volatile void *buff);
-unsigned initFlash(volatile void *buff, unsigned address, int sleept);
-unsigned readFlashStatus(volatile void *buff, int sleept);
-int checkFlashStatus(volatile void *buff, int timeout);
-int unlockFlashBlock(volatile void *buff, unsigned address, int sleept);
-int eraseFlashBlock(volatile void *buff, unsigned address, int sleept);
-int writeFlashWord(volatile void *buff, unsigned address, int value, int sleept);
-int readFlashWord(volatile void *buff, unsigned address, char *data, int sleept);
+void setLoopPerSec(long long int *loop_per_usec, double *pci_loop_per_usec, uintptr_t bar);
+unsigned initFlash(uintptr_t bar, unsigned address, int sleept);
+unsigned readFlashStatus(uintptr_t bar, int sleept);
+int checkFlashStatus(uintptr_t bar, int timeout);
+int unlockFlashBlock(uintptr_t bar, unsigned address, int sleept);
+int eraseFlashBlock(uintptr_t bar, unsigned address, int sleept);
+int writeFlashWord(uintptr_t bar, unsigned address, int value, int sleept);
+int readFlashWord(uintptr_t bar, unsigned address, char *data, int sleept);
 
 #ifdef __cplusplus
 } /* extern "C" */

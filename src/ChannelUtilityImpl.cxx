@@ -10,7 +10,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/interprocess/sync/named_mutex.hpp>
 #include "ChannelPaths.h"
-#include "Cru/CruRegisterIndex.h"
+#include "Cru/Constants.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -67,8 +67,6 @@ void registerReadWriteCheck(RegisterReadWriteInterface* channel, std::ostream& o
 void rorcCleanupState(const ChannelPaths& paths)
 {
   using boost::filesystem::remove;
-  remove(paths.pages().c_str());
-  remove(paths.state().c_str());
   remove(paths.fifo().c_str());
   remove(paths.lock().c_str());
   boost::interprocess::named_mutex::remove(paths.namedMutex().c_str());
@@ -91,34 +89,34 @@ void printCrorcFifo(ReadyFifo* fifo, std::ostream& os)
 }
 
 /// Prints the CRU status & descriptor table
-void printCruFifo(CruFifoTable* fifo, std::ostream& os)
+void printCruFifo(Cru::BarAccessor* fifo, std::ostream& os)
 {
-  {
-    auto header = b::str(b::format(" %-4s %-14s %-14s\n")
-        % "#" % "Status (hex)" % "Status (dec)");
-
-    printTable(os, "CRU STATUS TABLE", header, fifo->statusEntries.size(), [&](int i) {
-      // Note that, because the values are volatile, we need to make explicit non-volatile copies
-      auto status = fifo->statusEntries[i].status;
-      os << b::str(b::format(" %-4d %14x %14d\n") % i % status % status);
-    });
-  }
-
-  {
-    auto header = b::str(b::format(" %-4s %-14s %-14s %-14s %-14s %-14s\n")
-        % "#" % "Ctrl (hex)" % "SrcLo (hex)" % "SrcHi (hex)" % "DstLo (hex)" % "DstHi (hex)");
-
-    printTable(os, "CRU DESCRIPTOR TABLE", header, fifo->descriptorEntries.size(), [&](int i) {
-      auto d = fifo->descriptorEntries[i];
-      // Note that, because the values are volatile, we need to make explicit non-volatile copies
-      auto ctrl = d.ctrl;
-      auto sl = d.srcLow;
-      auto sh = d.srcHigh;
-      auto dl = d.dstLow;
-      auto dh = d.dstHigh;
-      os << b::str(b::format(" %-4d %14x %14x %14x %14x %14x\n") % i % ctrl % sl % sh % dl % dh);
-    });
-  }
+//  {
+//    auto header = b::str(b::format(" %-4s %-14s %-14s\n")
+//        % "#" % "Status (hex)" % "Status (dec)");
+//
+//    printTable(os, "CRU STATUS TABLE", header, fifo->statusEntries.size(), [&](int i) {
+//      // Note that, because the values are volatile, we need to make explicit non-volatile copies
+//      auto status = fifo->statusEntries[i].status;
+//      os << b::str(b::format(" %-4d %14x %14d\n") % i % status % status);
+//    });
+//  }
+//
+//  {
+//    auto header = b::str(b::format(" %-4s %-14s %-14s %-14s %-14s %-14s\n")
+//        % "#" % "Ctrl (hex)" % "SrcLo (hex)" % "SrcHi (hex)" % "DstLo (hex)" % "DstHi (hex)");
+//
+//    printTable(os, "CRU DESCRIPTOR TABLE", header, fifo->descriptorEntries.size(), [&](int i) {
+//      auto d = fifo->descriptorEntries[i];
+//      // Note that, because the values are volatile, we need to make explicit non-volatile copies
+//      auto ctrl = d.ctrl;
+//      auto sl = d.srcLow;
+//      auto sh = d.srcHigh;
+//      auto dl = d.dstLow;
+//      auto dh = d.dstHigh;
+//      os << b::str(b::format(" %-4d %14x %14x %14x %14x %14x\n") % i % ctrl % sl % sh % dl % dh);
+//    });
+//  }
 }
 
 void crorcSanityCheck(std::ostream& os, RegisterReadWriteInterface* channel)
@@ -151,7 +149,7 @@ void cruSanityCheck(std::ostream& os, RegisterReadWriteInterface* channel)
     // Writing to the LED register has been known to crash and reboot the machine if the CRU is in a bad state.
     // That makes it a good part of this sanity test..?
 
-    int ledAddress = CruRegisterIndex::LED_STATUS;
+    int ledAddress = Cru::Registers::LED_STATUS;
     int valueOn = 0xff;
     int valueOff = 0x00;
 

@@ -3,7 +3,7 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "MemoryMappedFile.h"
+#include "RORC/MemoryMappedFile.h"
 
 #define BOOST_TEST_MODULE RORC_TestMemoryMappedFile
 #define BOOST_TEST_MAIN

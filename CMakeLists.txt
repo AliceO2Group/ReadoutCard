@@ -63,6 +63,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra -fPIC")
 
 set(MODULE_NAME "RORC")
 
+link_o2_subproject(Common)
 link_o2_subproject(InfoLogger)
 
 O2_SETUP(NAME ${MODULE_NAME})
@@ -73,23 +74,19 @@ set(SRCS
   src/Factory/ChannelUtilityFactory.cxx
   src/ChannelBase.cxx
   src/ChannelMasterBase.cxx
-  src/ChannelParameters.cxx
   src/ChannelPaths.cxx
   src/Dummy/DummyChannelMaster.cxx
   src/Dummy/DummyChannelSlave.cxx
-  src/Exception.cxx
   src/ExceptionInternal.cxx
-  src/GeneratorPattern.cxx
-  src/LoopbackMode.cxx
   src/MemoryMappedFile.cxx
   src/Parameters.cxx
-  src/PciAddress.cxx
-  src/ResetLevel.cxx
+  src/ParameterTypes/GeneratorPattern.cxx
+  src/ParameterTypes/LoopbackMode.cxx
+  src/ParameterTypes/PciAddress.cxx
+  src/ParameterTypes/ResetLevel.cxx
   src/RorcStatusCode.cxx
   src/CommandLineUtilities/Common.cxx
   src/CommandLineUtilities/Options.cxx
-  src/CommandLineUtilities/Program.cxx
-  src/Utilities/System.cxx
 )
 
 # Produce the final Version.h using template Version.h.in and substituting variables.
@@ -152,7 +149,6 @@ build_util_exec(rorc-reg-write CommandLineUtilities/ProgramRegisterWrite.cxx)
 if(ALICEO2_RORC_PDA_ENABLED)
   build_util_exec(rorc-channel-cleanup CommandLineUtilities/ProgramCleanup.cxx)
   build_util_exec(rorc-cru-blink CommandLineUtilities/ProgramCruBlink.cxx)
-  build_util_exec(rorc-cru-experimental-dma CommandLineUtilities/ProgramCruExperimentalDma.cxx)
   build_util_exec(rorc-example Example.cxx)
   build_util_exec(rorc-flash CommandLineUtilities/ProgramFlash.cxx)
   build_util_exec(rorc-flash-read CommandLineUtilities/ProgramFlashRead.cxx)
@@ -198,7 +194,6 @@ set(CTEST_TESTING_TIMEOUT 15)
 set(TEST_SRCS
   test/TestChannelPaths.cxx
   test/TestInterprocessLock.cxx
-  test/TestPageManager.cxx
   test/TestPciAddress.cxx
   test/TestRorcException.cxx
   test/TestChannelFactoryUtils.cxx
@@ -206,7 +201,6 @@ set(TEST_SRCS
   test/TestMemoryMappedFile.cxx
   test/TestParameters.cxx
   test/TestProgramOptions.cxx
-  test/TestUtil.cxx
 )
 
 O2_GENERATE_TESTS(

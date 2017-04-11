@@ -4,8 +4,9 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "RORC/CardType.h"
-#include "RORC/LoopbackMode.h"
-#include "RORC/ResetLevel.h"
+#include "RORC/ParameterTypes/LoopbackMode.h"
+#include "RORC/ParameterTypes/ReadoutMode.h"
+#include "RORC/ParameterTypes/ResetLevel.h"
 
 #define BOOST_TEST_MODULE RORC_TestEnums
 #define BOOST_TEST_MAIN
@@ -13,6 +14,8 @@
 #include <boost/test/unit_test.hpp>
 #include <assert.h>
 #include <string>
+
+using namespace AliceO2::Rorc;
 
 /// Helper method for checking enum to/from string conversions
 template <typename E>
@@ -25,20 +28,21 @@ void checkEnumConversion(const std::vector<typename E::type>& items)
 
 BOOST_AUTO_TEST_CASE(EnumCardTypeConversion)
 {
-  using namespace AliceO2::Rorc;
   checkEnumConversion<CardType>({CardType::Crorc, CardType::Cru, CardType::Dummy, CardType::Unknown});
 }
 
 BOOST_AUTO_TEST_CASE(EnumLoopbackModeConversion)
 {
-  using namespace AliceO2::Rorc;
   checkEnumConversion<LoopbackMode>({LoopbackMode::Diu, LoopbackMode::None, LoopbackMode::Rorc, LoopbackMode::Siu});
 }
 
 BOOST_AUTO_TEST_CASE(EnumResetLevelConversion)
 {
-  using namespace AliceO2::Rorc;
   checkEnumConversion<ResetLevel>({ResetLevel::Nothing, ResetLevel::Rorc, ResetLevel::RorcDiu,
       ResetLevel::RorcDiuSiu});
 }
 
+BOOST_AUTO_TEST_CASE(EnumReadoutModeConversion)
+{
+  checkEnumConversion<ReadoutMode>({ReadoutMode::Continuous});
+}

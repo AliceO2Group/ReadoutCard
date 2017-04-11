@@ -55,9 +55,9 @@ class ProgramListCards: public Program
           Parameters params = Parameters::makeParameters(card.serialNumber, 0);
           firmware = ChannelUtilityFactory().getUtility(params)->utilityGetFirmwareVersionString();
         }
-        catch (const SharedStateException& e) {
+        catch (const Exception& e) {
           foundUninitialized = true;
-          cout << e.what() << '\n';
+          cout << "Could not get firmware version string: " << e.what() << '\n';
         }
 
         table << boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciAddress.toString()

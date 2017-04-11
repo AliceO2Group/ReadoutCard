@@ -7,14 +7,13 @@
 #define ALICEO2_INCLUDE_RORC_CHANNELMASTERINTERFACE_H_
 
 #include <cstdint>
-#include <memory>
 #include <boost/optional.hpp>
-#include <boost/exception/all.hpp>
 #include <InfoLogger/InfoLogger.hxx>
 #include "RORC/Parameters.h"
 #include "RORC/CardType.h"
-#include "RORC/ResetLevel.h"
+#include "RORC/ParameterTypes/ResetLevel.h"
 #include "RORC/RegisterReadWriteInterface.h"
+#include "RORC/Superpage.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -26,97 +25,58 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
   public:
     using MasterSharedPtr = std::shared_ptr<ChannelMasterInterface>;
 
-    /// A class that represents a page
-    class Page
-    {
-      public:
-        Page(volatile void* address, int size, int id, const MasterSharedPtr& channel)
-            : mAddress(address), mSize(size), mId(id), mChannel(channel)
-        {
-        }
-
-        volatile void* getAddress() const
-        {
-          return mAddress;
-        }
-
-        volatile uint32_t* getAddressU32() const
-        {
-          return reinterpret_cast<volatile uint32_t*>(getAddress());
-        }
-
-        /// Get the size of the page
-        int getSize() const
-        {
-          return mSize;
-        }
-
-        /// Get the page's ID. Used internally.
-        int getId() const
-        {
-          return mId;
-        }
-
-        ~Page()
-        {
-          mChannel->freePage(*this);
-        }
-
-      private:
-        volatile void* mAddress; ///< Userspace address of the page's memory
-        int mSize; ///< Size of the page
-        int mId; ///< ID used for internal bookkeeping
-        MasterSharedPtr mChannel;
-    };
-
-    using PageSharedPtr = std::shared_ptr<Page>;
-
     virtual ~ChannelMasterInterface()
     {
     }
 
     /// Starts DMA for the given channel
-    /// This must be called before pushing pages
+    /// Call this before pushing pages. May become unneeded in the future.
     virtual void startDma() = 0;
 
     /// Stops DMA for the given channel
+    /// Called automatically on channel closure.
     virtual void stopDma() = 0;
 
     /// Resets the channel. Requires the DMA to be stopped.
     /// \param resetLevel The depth of the reset
     virtual void resetChannel(ResetLevel::type resetLevel) = 0;
 
+    /// Adds superpage to queue. A superpage represents a physically contiguous buffer that will be filled with multiple
+    /// pages from the card.
+    /// The user is responsible for making sure enqueued superpages do not overlap - the driver will dutifully overwrite
+    /// your data if you tell it to do so.
+    ///
+    /// \param superpage Superpage to push
+    virtual void pushSuperpage(Superpage superpage) = 0;
+
+    /// Gets the superpage at the front of the queue (i.e. the oldest superpage). Does not pop it.
+    virtual Superpage getSuperpage() = 0;
+
+    /// Tells the driver to stop keeping track of the superpage at the front of the queue (i.e. the oldest superpage)
+    virtual Superpage popSuperpage() = 0;
+
+    /// Call in a loop. Equivalent of old fillFifo(). May be replaced by internal driver thread at some point
+    virtual void fillSuperpages() = 0;
+
+    /// Gets the amount of superpages currently in the queue
+    virtual int getSuperpageQueueCount() = 0;
+
+    /// Gets the amount of superpages that can still be enqueued
+    virtual int getSuperpageQueueAvailable() = 0;
+
+    /// Gets the maximum amount of superpages allowed in the queue
+    virtual int getSuperpageQueueCapacity() = 0;
+
     /// Returns the type of the RORC card this ChannelMaster is controlling
     /// \return The card type
     virtual CardType::type getCardType() = 0;
 
-    /// Fills the card's FIFO
-    /// Will block if the buffer is full: does not allow you to push new data into a page that was not acknowledged with
-    /// acknowledgePage()
-    /// \param maxFill Maximum amount of pages to push. If <= 0, will push as many as possible
-    /// \return Amount of pages pushed
-    virtual int fillFifo(int maxFill = -1) = 0;
-
-    /// Returns the amount of pages that are currently available (may be popped) in the DMA buffer
-    virtual int getAvailableCount() = 0;
-
-    /// Pops a page from the channel's DMA buffer and returns it wrapped in a shared_ptr
-    /// Note that the Page object keeps a reference to the channel, so it can free itself automatically on destruction
-    static PageSharedPtr popPage(const MasterSharedPtr& channel)
-    {
-      return channel->popPageInternal(channel);
-    }
-
-    /// Indicates the client is no longer using the page. Called by the Page class's destructor.
-    virtual void freePage(const Page& page) = 0;
-
     /// Set the InfoLogger log level for this channel
     virtual void setLogLevel(InfoLogger::InfoLogger::Severity severity) = 0;
 
-  private:
-    /// Pops and gets a page from the DMA buffer.
-    /// If a page is not available, returns an empty optional.
-    virtual PageSharedPtr popPageInternal(const MasterSharedPtr& channel) = 0;
+    /// Get card temperature in °C if available
+    /// \return Temperature in °C if available, else an empty optional
+    virtual boost::optional<float> getTemperature() = 0;
 };
 
 } // namespace Rorc

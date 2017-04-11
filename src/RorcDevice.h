@@ -5,12 +5,13 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
-#include <boost/scoped_ptr.hpp>
+#include "CardDescriptor.h"
 #include "Pda/PdaDevice.h"
 #include "RORC/CardType.h"
 #include "RORC/Parameters.h"
-#include "RORC/PciAddress.h"
+#include "RORC/ParameterTypes/PciAddress.h"
 #include "RORC/PciId.h"
 
 namespace AliceO2 {
@@ -28,7 +29,12 @@ class RorcDevice
 
     ~RorcDevice();
 
-    const PciId& getPciId() const
+    CardDescriptor getCardDescriptor() const
+    {
+      return mDescriptor;
+    }
+
+    PciId getPciId() const
     {
       return mDescriptor.pciId;
     }
@@ -43,20 +49,17 @@ class RorcDevice
       return mDescriptor.serialNumber;
     }
 
+    PciAddress getPciAddress() const
+    {
+      return mDescriptor.pciAddress;
+    }
+
     Pda::PdaDevice::PdaPciDevice getPciDevice() const
     {
       return *mPciDevice.get();
     }
 
     void printDeviceInfo(std::ostream& ostream);
-
-    struct CardDescriptor
-    {
-        CardType::type cardType;
-        int serialNumber;
-        PciId pciId;
-        PciAddress pciAddress;
-    };
 
     // Finds RORC devices on the system
     static std::vector<CardDescriptor> findSystemDevices();

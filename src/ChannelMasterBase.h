@@ -7,16 +7,18 @@
 
 #include <set>
 #include <vector>
+#include <memory>
 #include <mutex>
-#include <boost/scoped_ptr.hpp>
+#include "BufferProvider.h"
+#include "CardDescriptor.h"
 #include "ChannelBase.h"
-#include "ChannelParameters.h"
 #include "ChannelPaths.h"
 #include "ChannelUtilityInterface.h"
 #include "InterprocessLock.h"
 #include "RORC/ChannelMasterInterface.h"
 #include "RORC/Exception.h"
 #include "RORC/Parameters.h"
+#include "Utilities/Util.h"
 
 //#define ALICEO2_RORC_CHANNEL_MASTER_DISABLE_LOCKGUARDS
 #ifdef ALICEO2_RORC_CHANNEL_MASTER_DISABLE_LOCKGUARDS
@@ -37,14 +39,54 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, publ
     using AllowedChannels = std::set<int>;
 
     /// Constructor for the ChannelMaster object
-    /// \param cardType Type of the card
+    /// \param cardDescriptor Card descriptor
     /// \param parameters Parameters of the channel
     /// \param serialNumber Serial number of the card
     /// \param allowedChannels Channels allowed by this card type
-    ChannelMasterBase(CardType::type cardType, const Parameters& parameters, int serialNumber,
+    ChannelMasterBase(CardDescriptor cardDescriptor, const Parameters& parameters,
         const AllowedChannels& allowedChannels);
 
     virtual ~ChannelMasterBase();
+
+    virtual void pushSuperpage(Superpage) override
+    {
+      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("not yet implemented"));
+    }
+
+    virtual int getSuperpageQueueCount() override
+    {
+      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("not yet implemented"));
+    }
+
+    virtual int getSuperpageQueueAvailable() override
+    {
+      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("not yet implemented"));
+    }
+
+    virtual int getSuperpageQueueCapacity() override
+    {
+      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("not yet implemented"));
+    }
+
+    virtual Superpage getSuperpage() override
+    {
+      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("not yet implemented"));
+    }
+
+    virtual Superpage popSuperpage() override
+    {
+      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("not yet implemented"));
+    }
+
+    virtual void fillSuperpages() override
+    {
+      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("not yet implemented"));
+    }
+
+    virtual boost::optional<float> getTemperature() override
+    {
+      return {};
+    }
 
   protected:
     using Mutex = std::mutex;
@@ -64,11 +106,6 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, publ
       return mMutex;
     }
 
-    const ChannelParameters& getChannelParameters() const
-    {
-      return mChannelParameters;
-    }
-
     int getChannelNumber() const
     {
       return mChannelNumber;
@@ -76,7 +113,12 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, publ
 
     int getSerialNumber() const
     {
-      return mSerialNumber;
+      return mCardDescriptor.serialNumber;
+    }
+
+    const CardDescriptor& getCardDescriptor() const
+    {
+      return mCardDescriptor;
     }
 
     virtual void setLogLevel(InfoLogger::InfoLogger::Severity severity) final override
@@ -86,22 +128,20 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, publ
 
     void log(const std::string& message, boost::optional<InfoLogger::InfoLogger::Severity> severity = boost::none)
     {
-      ChannelBase::log(mSerialNumber, mChannelNumber, message, severity);
+      ChannelBase::log(getSerialNumber(), getChannelNumber(), message, severity);
     }
 
     ChannelPaths getPaths()
     {
-      return {mCardType, mSerialNumber, mChannelNumber};
+      return {getCardDescriptor().pciAddress, getChannelNumber()};
+    }
+
+    const BufferProvider& getBufferProvider()
+    {
+      return *mBufferProvider;
     }
 
   private:
-
-    /// Convert ParameterMap to ChannelParameters
-    static ChannelParameters convertParameters(const Parameters& params);
-
-    /// Validate ChannelParameters
-    static void validateParameters(const ChannelParameters& ps);
-
     /// Check if the channel number is valid
     void checkChannelNumber(const AllowedChannels& allowedChannels);
 
@@ -109,19 +149,16 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, publ
     Mutex mMutex;
 
     /// Type of the card
-    CardType::type mCardType;
-
-    /// Serial number of the device
-    int mSerialNumber;
+    const CardDescriptor mCardDescriptor;
 
     /// DMA channel number
     const int mChannelNumber;
 
     /// Lock that guards against both inter- and intra-process ownership
-    boost::scoped_ptr<Interprocess::Lock> mInterprocessLock;
+    std::unique_ptr<Interprocess::Lock> mInterprocessLock;
 
-    /// Parameters of this channel TODO refactor
-    ChannelParameters mChannelParameters;
+    /// Contains addresses & size of the buffer
+    std::unique_ptr<BufferProvider> mBufferProvider;
 };
 
 } // namespace Rorc

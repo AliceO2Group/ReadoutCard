@@ -3,7 +3,7 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "RORC/GeneratorPattern.h"
+#include "RORC/ParameterTypes/GeneratorPattern.h"
 #include "Utilities/Enum.h"
 
 namespace AliceO2 {

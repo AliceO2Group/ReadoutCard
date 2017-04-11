@@ -10,17 +10,22 @@
 #include <vector>
 #include <boost/exception/all.hpp>
 #include <cstdint>
+#include "Common/Exception.h"
 #include "RORC/Exception.h"
-#include "RORC/PciAddress.h"
 #include "RORC/PciId.h"
 #include "RORC/CardType.h"
-#include "RORC/ResetLevel.h"
-#include "RORC/GeneratorPattern.h"
-#include "RORC/LoopbackMode.h"
+#include "RORC/ParameterTypes/PciAddress.h"
+#include "RORC/ParameterTypes/ResetLevel.h"
+#include "RORC/ParameterTypes/GeneratorPattern.h"
+#include "RORC/ParameterTypes/LoopbackMode.h"
 
 namespace AliceO2 {
 namespace Rorc {
 namespace ErrorInfo {
+
+using Message = AliceO2::Common::ErrorInfo::Message;
+using FileName = AliceO2::Common::ErrorInfo::FileName;
+using FilesystemType = AliceO2::Common::ErrorInfo::FilesystemType;
 
 /// Helper macro for defining errinfo types for Boost exceptions
 #define DEFINE_ERRINFO(name, type) \
@@ -37,17 +42,16 @@ DEFINE_ERRINFO(DiuCommand, int);
 DEFINE_ERRINFO(DmaBufferPages, size_t);
 DEFINE_ERRINFO(DmaBufferSize, size_t);
 DEFINE_ERRINFO(DmaPageSize, size_t);
-DEFINE_ERRINFO(Message, std::string);
 DEFINE_ERRINFO(FifoIndex, int);
-DEFINE_ERRINFO(FileName, std::string);
+DEFINE_ERRINFO(FifoSize, size_t);
 DEFINE_ERRINFO(FileSize, size_t);
-DEFINE_ERRINFO(FilesystemType, std::string);
 DEFINE_ERRINFO(GeneratorEventLength, size_t);
 DEFINE_ERRINFO(GeneratorPattern, int);
 DEFINE_ERRINFO(GeneratorSeed, int);
 DEFINE_ERRINFO(Index, size_t);
 DEFINE_ERRINFO(LoopbackMode, ::AliceO2::Rorc::LoopbackMode::type);
 DEFINE_ERRINFO(NamedMutexName, std::string);
+DEFINE_ERRINFO(Offset, size_t);
 DEFINE_ERRINFO(PageIndex, int);
 DEFINE_ERRINFO(Pages, size_t);
 DEFINE_ERRINFO(ParameterKey, std::string);
@@ -73,6 +77,9 @@ DEFINE_ERRINFO(SharedObjectName, std::string);
 DEFINE_ERRINFO(SharedStateFile, std::string);
 DEFINE_ERRINFO(SiuCommand, int);
 DEFINE_ERRINFO(StatusCode, int);
+DEFINE_ERRINFO(String, std::string);
+DEFINE_ERRINFO(StwExpected, std::string);
+DEFINE_ERRINFO(StwReceived, std::string);
 
 // Undefine macro for header safety (we don't want to pollute the global namespace with collision-prone names)
 #undef DEFINE_ERRINFO

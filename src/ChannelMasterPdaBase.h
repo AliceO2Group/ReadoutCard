@@ -7,15 +7,14 @@
 
 #include <boost/scoped_ptr.hpp>
 #include "ChannelMasterBase.h"
-#include "MemoryMappedFile.h"
 #include "PageAddress.h"
 #include "Pda/PdaBar.h"
 #include "Pda/PdaDmaBuffer.h"
 #include "RORC/ChannelMasterInterface.h"
 #include "RORC/Exception.h"
+#include "RORC/MemoryMappedFile.h"
 #include "RORC/Parameters.h"
 #include "RorcDevice.h"
-#include "TypedMemoryMappedFile.h"
 
 namespace AliceO2 {
 namespace Rorc {
@@ -28,12 +27,9 @@ class ChannelMasterPdaBase: public ChannelMasterBase
     using AllowedChannels = std::set<int>;
 
     /// Constructor for the ChannelMaster object
-    /// \param cardType Type of the card
     /// \param parameters Parameters of the channel
     /// \param allowedChannels Channels allowed by this card type
-    /// \param fifoSize Size of the Firmware FIFO in the DMA buffer
-    ChannelMasterPdaBase(CardType::type cardType, const Parameters& parameters, const AllowedChannels& allowedChannels,
-        size_t fifoSize);
+    ChannelMasterPdaBase(const Parameters& parameters, const AllowedChannels& allowedChannels);
 
     ~ChannelMasterPdaBase();
 
@@ -44,6 +40,32 @@ class ChannelMasterPdaBase: public ChannelMasterBase
     virtual void writeRegister(int index, uint32_t value) final override;
 
   protected:
+
+    /// Maximum amount of PDA DMA buffers for channel FIFOs (1 per channel, so this also represents the max amount of
+    /// channels)
+    static constexpr int PDA_DMA_BUFFER_INDEX_FIFO_MAX = 100;
+    /// Start of integer range for PDA DMA buffers for pages
+    static constexpr int DMA_BUFFER_INDEX_PAGES_OFFSET = 1000000000;
+    /// Maximum amount of PDA DMA buffers for pages per channel
+    static constexpr int DMA_BUFFER_INDEX_PAGES_CHANNEL_MAX = 1000;
+
+    static int getPdaDmaBufferIndexFifo(int channel)
+    {
+      assert(channel < PDA_DMA_BUFFER_INDEX_FIFO_MAX);
+      return channel;
+    }
+
+    static int getPdaDmaBufferIndexPages(int channel, int bufferNumber)
+    {
+      assert(bufferNumber < DMA_BUFFER_INDEX_PAGES_CHANNEL_MAX);
+      return DMA_BUFFER_INDEX_PAGES_OFFSET + (channel * DMA_BUFFER_INDEX_PAGES_CHANNEL_MAX) + bufferNumber;
+    }
+
+    static int pdaBufferIndexToChannelBufferIndex(int channel, int pdaIndex)
+    {
+      return (pdaIndex - DMA_BUFFER_INDEX_PAGES_OFFSET) - (channel * DMA_BUFFER_INDEX_PAGES_CHANNEL_MAX);
+    }
+
     /// Namespace for describing the state of the DMA
     struct DmaState
     {
@@ -53,6 +75,9 @@ class ChannelMasterPdaBase: public ChannelMasterBase
           UNKNOWN = 0, STOPPED = 1, STARTED = 2
         };
     };
+
+    /// Perform some basic checks on a superpage
+    void checkSuperpage(const Superpage& superpage);
 
     /// Template method called by startDma() to do device-specific (CRORC, RCU...) actions
     /// Note: subclasses should not call getLockGuard() in this function, as the ChannelMaster will have the lock
@@ -69,52 +94,22 @@ class ChannelMasterPdaBase: public ChannelMasterBase
     /// already.
     virtual void deviceResetChannel(ResetLevel::type resetLevel) = 0;
 
-    /// Helper function for partitioning the DMA buffer into FIFO and data pages
-    void partitionDmaBuffer(size_t fifoSize, size_t pageSize);
+    /// Function for getting the bus address that corresponds to the user address + given offset
+    uintptr_t getBusOffsetAddress(size_t offset);
 
-    /// The size of the shared state data file. It should be over-provisioned, since subclasses may also allocate their
-    /// own shared data in this file.
-    static size_t getSharedDataSize()
+    uintptr_t getBarUserspace() const
     {
-      // 4KiB ought to be enough for anybody, and is also the standard x86 page size.
-      // Since shared memory needs to be a multiple of page size, this should work out.
-      return 4l * 1024l;
+      return mPdaBar->getUserspaceAddress();
     }
 
-    /// Name for the shared data object in the shared state file
-    static std::string getSharedDataName()
-    {
-      return "ChannelMasterSharedData";
-    }
-
-    void* getFifoAddressBus() const
-    {
-      return mFifoAddressBus;
-    }
-
-    void* getFifoAddressUser() const
-    {
-      return mFifoAddressUser;
-    }
-
-    volatile uint32_t* getBarUserspace() const
+    volatile uint32_t* getBarUserspaceU32() const
     {
       return mPdaBar->getUserspaceAddressU32();
     }
 
-    const Pda::PdaDmaBuffer& getBufferPages() const
+    const Pda::PdaDmaBuffer& getPdaDmaBuffer() const
     {
-      return *(mBufferPages.get());
-    }
-
-    const MemoryMappedFile& getMappedFilePages() const
-    {
-      return *(mMappedFilePages.get());
-    }
-
-    const std::vector<PageAddress>& getPageAddresses() const
-    {
-      return mPageAddresses;
+      return *(mPdaDmaBuffer.get());
     }
 
     Pda::PdaBar& getPdaBar()
@@ -139,9 +134,6 @@ class ChannelMasterPdaBase: public ChannelMasterBase
 
   private:
 
-    /// Initializes mRorcDevice and returns the serial number of the device
-    int getSerialFromRorcDevice(const Parameters& parameters);
-
     /// Current state of the DMA
     DmaState::type mDmaState;
 
@@ -151,20 +143,8 @@ class ChannelMasterPdaBase: public ChannelMasterBase
     /// PDA BAR object
     boost::scoped_ptr<Pda::PdaBar> mPdaBar;
 
-    /// Memory mapped file containing pages used for DMA transfer destination
-    boost::scoped_ptr<MemoryMappedFile> mMappedFilePages;
-
     /// PDA DMABuffer object for the pages
-    boost::scoped_ptr<Pda::PdaDmaBuffer> mBufferPages;
-
-    /// Addresses to pages in the DMA buffer
-    std::vector<PageAddress> mPageAddresses;
-
-    /// Userspace address of FIFO in DMA buffer
-    void* mFifoAddressUser;
-
-    /// Bus address of FIFO in DMA buffer
-    void* mFifoAddressBus;
+    boost::scoped_ptr<Pda::PdaDmaBuffer> mPdaDmaBuffer;
 };
 
 } // namespace Rorc

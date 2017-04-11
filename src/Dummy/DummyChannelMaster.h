@@ -8,7 +8,6 @@
 #include <array>
 #include <boost/scoped_ptr.hpp>
 #include "ChannelUtilityInterface.h"
-#include "PageManager.h"
 #include "ChannelMasterBase.h"
 
 namespace AliceO2 {
@@ -31,11 +30,6 @@ class DummyChannelMaster final : public ChannelMasterBase
     virtual void writeRegister(int index, uint32_t value) override;
     virtual CardType::type getCardType() override;
 
-    virtual int fillFifo(int maxFill) override;
-    virtual int getAvailableCount() override;
-    virtual std::shared_ptr<Page> popPageInternal(const MasterSharedPtr& channel) override;
-    virtual void freePage(const Page& page) override;
-
     virtual std::vector<uint32_t> utilityCopyFifo() override;
     virtual void utilityPrintFifo(std::ostream& os) override;
     virtual void utilitySetLedState(bool state) override;
@@ -48,8 +42,6 @@ class DummyChannelMaster final : public ChannelMasterBase
 
     /// Lock that guards against both inter- and intra-process ownership
     boost::scoped_ptr<Interprocess::Lock> mInterprocessLock;
-
-    PageManager<FIFO_CAPACITY> mPageManager;
 
     size_t mBufferSize;
     size_t mPageSize;
