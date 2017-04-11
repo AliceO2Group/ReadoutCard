@@ -1,116 +1,225 @@
-# REFERENCE PROJECT CMAKELISTS.TXT
-#
-# @author Barthélémy von Haller
+####################################
+# General project definition
+####################################
 
-cmake_minimum_required(VERSION 2.8)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/../cmake) # main (top) cmake dir
+CMAKE_MINIMUM_REQUIRED(VERSION 3.5.2 FATAL_ERROR)
+
+### CMP0025   Compiler id for Apple Clang is now AppleClang.
+### CMP0042   MACOSX_RPATH is enabled by default.
+
+FOREACH (p
+        CMP0025 # CMake 3.0
+        CMP0042 # CMake 3.0
+        )
+    IF (POLICY ${p})
+        cmake_policy(SET ${p} NEW)
+    ENDIF ()
+endforeach ()
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake) # project specific cmake dir
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 
-# CMake useful variables
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib") 
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+project(RORC)
 
-# Set the name of your project here
-project("RORC")
+# Load some basic macros which are needed later on
+include(O2Utils)
+include(RORCDependencies)
+include(O2)
+
+# Set the default build type to "RelWithDebInfo"
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "RelWithDebInfo"
+            CACHE
+            STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel Coverage."
+            FORCE)
+endif(NOT CMAKE_BUILD_TYPE)
 
 # Set the version number of your project here (format is MAJOR.MINOR.PATCHLEVEL - e.g. 1.0.0)
 set(VERSION_MAJOR "0")
-set(VERSION_MINOR "1")
+set(VERSION_MINOR "0")
 set(VERSION_PATCH "0")
 set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
-# Macros and variables for all O2 subprojects
-include(O2)
+# C++14
+IF (CMAKE_VERSION VERSION_LESS 3.1)
+    include(CheckCXXCompilerFlag)
+    CHECK_CXX_COMPILER_FLAG(-std=c++14 COMPILER_SUPPORTS_CXX14)
+    if (COMPILER_SUPPORTS_CXX14)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+    else ()
+        message(ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++14 support. Please use a different C++ compiler.")
+    endif ()
+ELSE ()
+    set(CMAKE_CXX_STANDARD 14)  # proper way in CMake >= 3.1
+ENDIF ()
 
-## Git (and its revision)
-find_package(Git QUIET) # if we don't find git or FindGit.cmake is not on the system we ignore it.
-## GetGitRevisionDescription module to retreive branch and revision information from Git
-## Starting with Git 1.9 the module will be part of official cMake distribution, until then it has to be
-## part of the application
-## The Git module will trigger a reconfiguration for each pull that will bring a new revision on the local repository
-set (VCS_REVISION "-1")
-if(GIT_FOUND)
-    include(GetGitRevisionDescription)
-    get_git_head_revision(GIT_REFSPEC GIT_SHA1)
-    message(STATUS "GIT branch ${GIT_REFSPEC}")
-    message(STATUS "GIT revision ${GIT_SHA1}")
-    set (VCS_REVISION ${GIT_SHA1})
-endif()
+# Add compiler flags for warnings and (more importantly) fPIC and debug symbols
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra -fPIC")
 
-# This line finds the boost lib and headers.
-set(Boost_NO_BOOST_CMAKE ON) #  Don't do a find_package in config mode before searching for a regular boost install.
-find_package(Boost 1.56 
-  COMPONENTS 
-  unit_test_framework 
-  filesystem 
-  system 
-  program_options 
-  python
-  REQUIRED
-  )
-  
-# for Boost Python, used in Python scripting interface
-find_package(PythonLibs 2.7) 
-  
-# Other sub-projects
+
+####################################
+# Module, library and executable definition
+####################################
+
+set(MODULE_NAME "RORC")
+
 link_o2_subproject(InfoLogger)
- 
 
-# PDA (Portable Driver Architecture)
-find_package(PDA)
-if(PDA_FOUND)
-    message(STATUS "PDA found")
-    # Add definition to enable the PDA implementation in the code
-    set(ALICEO2_RORC_PDA_ENABLED TRUE)
-    add_definitions(-DALICEO2_RORC_PDA_ENABLED) 
-    include_directories(SYSTEM ${PDA_INCLUDE_DIRS})
-else()
-    message(WARNING "PDA not found, RORC module will have a dummy implementation only (skip, no error)")
-endif(PDA_FOUND)
+O2_SETUP(NAME ${MODULE_NAME})
 
-# DIM
-find_package(DIM)
-if(DIM_FOUND)
-    include_directories(${DIM_INCLUDE_DIRS})
-else()
-    message(WARNING "DIM not found, RORC module's ALF utilities will not be compiled")
-endif(DIM_FOUND)
-
-# This sets the include directory for the reference project. This is the -I flag in gcc.
-# All the includes should be in this variable To add new directories to the include path,
-# just add them in this list (after a space), or add an include_directories statement in a
-# subdirectory's CMakeLists.
-include_directories(
-    ${PROJECT_SOURCE_DIR}/include
-    ${PROJECT_BINARY_DIR}/include   # add the binary tree to the search path so that we will find Version.h
-    ${PROJECT_SOURCE_DIR}/src
+set(SRCS
+  src/CardType.cxx
+  src/Factory/ChannelFactory.cxx
+  src/Factory/ChannelUtilityFactory.cxx
+  src/ChannelBase.cxx
+  src/ChannelMasterBase.cxx
+  src/ChannelParameters.cxx
+  src/ChannelPaths.cxx
+  src/Dummy/DummyChannelMaster.cxx
+  src/Dummy/DummyChannelSlave.cxx
+  src/Exception.cxx
+  src/ExceptionInternal.cxx
+  src/GeneratorPattern.cxx
+  src/LoopbackMode.cxx
+  src/MemoryMappedFile.cxx
+  src/Parameters.cxx
+  src/PciAddress.cxx
+  src/ResetLevel.cxx
+  src/RorcStatusCode.cxx
+  src/CommandLineUtilities/Common.cxx
+  src/CommandLineUtilities/Options.cxx
+  src/CommandLineUtilities/Program.cxx
+  src/Utilities/System.cxx
 )
 
-include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
+# Produce the final Version.h using template Version.h.in and substituting variables.
+# We don't want to polute our source tree with it, thus putting it in binary tree.
+configure_file("include/${MODULE_NAME}/Version.h.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/include/${MODULE_NAME}/Version.h"
+        @ONLY
+        )
 
-# Mac needed variables (adapt according to your needs)
-set(CMAKE_MACOSX_RPATH ON)
-#set(CMAKE_SKIP_BUILD_RPATH FALSE)
-#set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-#set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-#set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+include_directories(
+  ${CMAKE_CURRENT_BINARY_DIR}/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+message("CMAKE INCLUE: ${CMAKE_CURRENT_SOURCE_DIR}/src")
+
+set(LIBRARY_NAME ${MODULE_NAME})
+set(BUCKET_NAME o2_rorc_bucket)
+
+
+if(ALICEO2_RORC_PDA_ENABLED)
+  list(APPEND SRCS
+    src/c/rorc/aux.c
+    src/c/rorc/ddl.c
+    src/c/rorc/rorc.c
+    src/ChannelMasterPdaBase.cxx
+    src/ChannelSlave.cxx
+    src/ChannelUtilityImpl.cxx
+    src/Crorc/Crorc.cxx
+    src/Crorc/CrorcChannelMaster.cxx
+    src/Crorc/CrorcChannelSlave.cxx
+    src/Cru/CruChannelMaster.cxx
+    src/Cru/CruChannelSlave.cxx
+    src/Pda/Pda.cxx
+    src/Pda/PdaBar.cxx
+    src/Pda/PdaDevice.cxx
+    src/Pda/PdaDmaBuffer.cxx
+    src/RorcDevice.cxx
+    set(BUCKET_NAME o2_rorc_with_pda)
+  )
+endif()
+
+O2_GENERATE_LIBRARY()
+
+# Helper function to build the utility executables
+function(build_util_exec execname filename)
+  O2_GENERATE_EXECUTABLE(
+        EXE_NAME ${execname}
+        SOURCES src/${filename}
+        MODULE_LIBRARY_NAME ${LIBRARY_NAME}
+        BUCKET_NAME ${BUCKET_NAME}
+  )
+endfunction()
+
+build_util_exec(rorc-dma-bench CommandLineUtilities/ProgramDmaBench.cxx)
+build_util_exec(rorc-reset CommandLineUtilities/ProgramReset.cxx)
+build_util_exec(rorc-reg-read CommandLineUtilities/ProgramRegisterRead.cxx)
+build_util_exec(rorc-reg-read-range CommandLineUtilities/ProgramRegisterReadRange)
+build_util_exec(rorc-reg-write CommandLineUtilities/ProgramRegisterWrite.cxx)
+
+if(ALICEO2_RORC_PDA_ENABLED)
+  build_util_exec(rorc-channel-cleanup CommandLineUtilities/ProgramCleanup.cxx)
+  build_util_exec(rorc-cru-blink CommandLineUtilities/ProgramCruBlink.cxx)
+  build_util_exec(rorc-cru-experimental-dma CommandLineUtilities/ProgramCruExperimentalDma.cxx)
+  build_util_exec(rorc-example Example.cxx)
+  build_util_exec(rorc-flash CommandLineUtilities/ProgramFlash.cxx)
+  build_util_exec(rorc-flash-read CommandLineUtilities/ProgramFlashRead.cxx)
+  build_util_exec(rorc-list-cards CommandLineUtilities/ProgramListCards.cxx)
+  build_util_exec(rorc-print-fifo CommandLineUtilities/ProgramPrintFifo.cxx)
+  build_util_exec(rorc-sanity-check CommandLineUtilities/ProgramSanityCheck.cxx)
+
+  if(DIM_FOUND)
+    O2_GENERATE_EXECUTABLE(
+        EXE_NAME rorc-alf-client
+        SOURCES src/CommandLineUtilities/ProgramAliceLowlevelFrontendClient.cxx
+        MODULE_LIBRARY_NAME ${LIBRARY_NAME}
+        BUCKET_NAME o2_rorc_dim
+   )
+   O2_GENERATE_EXECUTABLE(
+        EXE_NAME rorc-run-script
+        SOURCES src/CommandLineUtilities/ProgramAliceLowlevelFrontendServer.cxx
+        MODULE_LIBRARY_NAME ${LIBRARY_NAME}
+        BUCKET_NAME o2_rorc_dim
+   )
+
+  else()
+    message(INFO "DIM not found, ALF client & server will not be built")
+  endif()
+
+  if(PYTHONLIBS_FOUND)
+    O2_GENERATE_EXECUTABLE(
+        EXE_NAME rorc-run-script
+        SOURCES src/CommandLineUtilities/ProgramRunScript.cxx
+        MODULE_LIBRARY_NAME ${LIBRARY_NAME}
+        BUCKET_NAME o2_rorc_pyton
+   )
+  else()
+    message(INFO "PythonLibs not found, 'rorc-run-script' utility will not be built")
+  endif()
+endif()
+
 
 add_subdirectory(doc)
 
-enable_testing()
-add_subdirectory(include)
-add_subdirectory(src)
-add_subdirectory(test)
+set(CTEST_TESTING_TIMEOUT 15)
 
-#
-# SYSTEM PACKAGING (RPM, TGZ, ...)
-# _____________________________________________________________________________
+set(TEST_SRCS
+  test/TestChannelPaths.cxx
+  test/TestInterprocessLock.cxx
+  test/TestPageManager.cxx
+  test/TestPciAddress.cxx
+  test/TestRorcException.cxx
+  test/TestChannelFactoryUtils.cxx
+  test/TestEnums.cxx
+  test/TestMemoryMappedFile.cxx
+  test/TestParameters.cxx
+  test/TestProgramOptions.cxx
+  test/TestUtil.cxx
+)
 
-include(CPackConfig)
+O2_GENERATE_TESTS(
+ MODULE_LIBRARY_NAME ${LIBRARY_NAME}
+ BUCKET_NAME ${BUCKET_NAME}
+ TIMEOUT 30
+ TEST_SRCS ${TEST_SRCS}
+)
 
-#
-# CMAKE PACKAGING (for other CMake projects to use this one easily)
-# _____________________________________________________________________________
-
+# TODO RECONSIDER THE THINGS BELOW AFTER EXTRACTION TO ITS OWN REPO
+# Make sure we tell the topdir CMakeLists that we exist (if build from topdir)
+get_directory_property(hasParent PARENT_DIRECTORY)
+if(hasParent)
+    set(PROJECT_${PROJECT_NAME} true PARENT_SCOPE)
+endif()
 include(PackageConfigurator)
