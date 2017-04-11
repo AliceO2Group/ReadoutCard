@@ -55,7 +55,7 @@ find_package(PythonLibs 2.7)
   
 # Other sub-projects
 link_o2_subproject(InfoLogger)
- 
+link_o2_subproject(Common)
 
 # PDA (Portable Driver Architecture)
 find_package(PDA)
