@@ -108,9 +108,6 @@ set(BUCKET_NAME o2_rorc_bucket)
 
 if(ALICEO2_RORC_PDA_ENABLED)
   list(APPEND SRCS
-    src/c/rorc/aux.c
-    src/c/rorc/ddl.c
-    src/c/rorc/rorc.c
     src/ChannelMasterPdaBase.cxx
     src/ChannelSlave.cxx
     src/ChannelUtilityImpl.cxx
@@ -140,7 +137,7 @@ function(build_util_exec execname filename)
   )
 endfunction()
 
-build_util_exec(rorc-dma-bench CommandLineUtilities/ProgramDmaBench.cxx)
+build_util_exec(rorc-bench-dma CommandLineUtilities/ProgramDmaBench.cxx)
 build_util_exec(rorc-reset CommandLineUtilities/ProgramReset.cxx)
 build_util_exec(rorc-reg-read CommandLineUtilities/ProgramRegisterRead.cxx)
 build_util_exec(rorc-reg-read-range CommandLineUtilities/ProgramRegisterReadRange)
@@ -192,15 +189,16 @@ add_subdirectory(doc)
 set(CTEST_TESTING_TIMEOUT 15)
 
 set(TEST_SRCS
-  test/TestChannelPaths.cxx
-  test/TestInterprocessLock.cxx
-  test/TestPciAddress.cxx
-  test/TestRorcException.cxx
   test/TestChannelFactoryUtils.cxx
+  test/TestChannelPaths.cxx
   test/TestEnums.cxx
+  test/TestInterprocessLock.cxx
   test/TestMemoryMappedFile.cxx
   test/TestParameters.cxx
+  test/TestPciAddress.cxx
   test/TestProgramOptions.cxx
+  test/TestRorcException.cxx
+  test/TestSuperpageQueue.cxx
 )
 
 O2_GENERATE_TESTS(
