@@ -84,6 +84,7 @@ set(SRCS
   src/ParameterTypes/LoopbackMode.cxx
   src/ParameterTypes/PciAddress.cxx
   src/ParameterTypes/ResetLevel.cxx
+  src/ParameterTypes/ReadoutMode.cxx
   src/RorcStatusCode.cxx
   src/CommandLineUtilities/Common.cxx
   src/CommandLineUtilities/Options.cxx
