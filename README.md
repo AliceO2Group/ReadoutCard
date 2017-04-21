@@ -103,13 +103,11 @@ The regions can also presented in userspace as contiguous memory, thanks to the 
 Known issues
 ===================
 
-C-RORC page arrival
+C-RORC concurrent channels
 -------------------
-It appears that with the C-RORC, the page arrival detection does not work properly and returns 'arrived' too early.
-It is suspected to be a firmware bug, where the page status in the Ready FIFO is marked as fully transferred while the
-actual DMA transfer has not yet been completed.
-The investigation is ongoing, but for the time being we can work around the issue with a manual delay.
-The Example.cxx uses a microsecond wait, which is probably overkill.
+On certain machines, initializing multiple C-RORC channels concurrently has led to hard lockups.
+The cause is unknown, but adding acpi=off to the Linux boot options fixed the issue.
+The issue has occurred on Dell R720 servers.
 
 Permissions
 -------------------
@@ -179,7 +177,7 @@ until then, we must initialize and allocate manually.
 
 1. Install hugetlbfs (will already be installed on most systems)
   ```
-  yum install libhugetlbfs
+  yum install libhugetlbfs libhugetlbfs-utils
   ```
 
 2. Allocate hugepages
