@@ -98,11 +98,11 @@ class ProgramDmaBench: public Program
               po::bool_switch(&mOptions.resetChannel),
               "Reset channel during initialization")
           ("to-file-ascii",
-              po::bool_switch(&mOptions.fileOutputAscii),
-              "Read out to file in ASCII format")
+              po::value<std::string>(&mOptions.fileOutputPathAscii),
+              "Read out to given file in ASCII format")
           ("to-file-bin",
-              po::bool_switch(&mOptions.fileOutputBin),
-              "Read out to file in binary format (only contains raw data from pages)")
+              po::value<std::string>(&mOptions.fileOutputPathBin),
+              "Read out to given file in binary format (only contains raw data from pages)")
           ("no-errorcheck",
               po::bool_switch(&mOptions.noErrorCheck),
               "Skip error checking")
@@ -137,14 +137,19 @@ class ProgramDmaBench: public Program
       auto params = Options::getOptionsParameterMap(map);
 
       // Handle file output options
-      if (mOptions.fileOutputAscii && mOptions.fileOutputBin) {
-        throw ParameterException() << ErrorInfo::Message("File output can't be both ASCII and binary");
-      } else {
-        if (mOptions.fileOutputAscii) {
-          mReadoutStream.open("readout_data.txt");
-        }
-        if (mOptions.fileOutputBin) {
-          mReadoutStream.open("readout_data.bin", std::ios::binary);
+      {
+        mOptions.fileOutputAscii = !mOptions.fileOutputPathAscii.empty();
+        mOptions.fileOutputBin = !mOptions.fileOutputPathBin.empty();
+
+        if (mOptions.fileOutputAscii && mOptions.fileOutputBin) {
+          throw ParameterException() << ErrorInfo::Message("File output can't be both ASCII and binary");
+        } else {
+          if (mOptions.fileOutputAscii) {
+            mReadoutStream.open(mOptions.fileOutputPathAscii);
+          }
+          if (mOptions.fileOutputBin) {
+            mReadoutStream.open(mOptions.fileOutputPathBin, std::ios::binary);
+          }
         }
       }
 
@@ -243,7 +248,7 @@ class ProgramDmaBench: public Program
 
       // Get master lock on channel
       try {
-      mChannel = ChannelFactory().getMaster(params);
+        mChannel = ChannelFactory().getMaster(params);
       }
       catch (const NamedMutexLockException& exception) {
         mLogger << InfoLogger::Warning << "Failed to acquire channel lock, attempting cleanup and retry" << endm;
@@ -793,6 +798,8 @@ class ProgramDmaBench: public Program
         bool delayReadout = false;
         std::string generatorPatternString;
         std::string readoutModeString;
+        std::string fileOutputPathBin;
+        std::string fileOutputPathAscii;
         size_t superpageSizeMiB;
         GeneratorPattern::type generatorPattern = GeneratorPattern::Incremental;
         b::optional<ReadoutMode::type> readoutMode;
