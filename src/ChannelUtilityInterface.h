@@ -32,11 +32,6 @@ class ChannelUtilityInterface
     virtual void utilitySetLedState(bool state) = 0;
     virtual void utilitySanityCheck(std::ostream& os) = 0;
     virtual void utilityCleanupState() = 0;
-    virtual int utilityGetFirmwareVersion() = 0;
-    virtual std::string utilityGetFirmwareVersionString()
-    {
-      return std::to_string(utilityGetFirmwareVersion());
-    }
 };
 
 } // namespace Rorc

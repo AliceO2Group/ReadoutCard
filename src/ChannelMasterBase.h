@@ -88,6 +88,11 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, publ
       return {};
     }
 
+    virtual boost::optional<std::string> getFirmwareInfo() override
+    {
+      return {};
+    }
+
   protected:
     using Mutex = std::mutex;
     using LockGuard = std::lock_guard<Mutex>;

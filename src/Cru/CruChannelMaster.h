@@ -31,7 +31,6 @@ class CruChannelMaster final : public ChannelMasterPdaBase
     virtual void utilitySetLedState(bool state) override;
     virtual void utilitySanityCheck(std::ostream& os) override;
     virtual void utilityCleanupState() override;
-    virtual int utilityGetFirmwareVersion() override;
 
     virtual void pushSuperpage(Superpage) override;
     virtual int getSuperpageQueueCount() override;
@@ -42,6 +41,7 @@ class CruChannelMaster final : public ChannelMasterPdaBase
     virtual void fillSuperpages() override;
 
     virtual boost::optional<float> getTemperature() override;
+    virtual boost::optional<std::string> getFirmwareInfo() override;
 
     AllowedChannels allowedChannels();
 

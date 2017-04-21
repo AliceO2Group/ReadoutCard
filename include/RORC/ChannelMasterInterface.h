@@ -71,12 +71,16 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
     /// \return The card type
     virtual CardType::type getCardType() = 0;
 
-    /// Set the InfoLogger log level for this channel
+    /// Sets the InfoLogger log level for this channel
     virtual void setLogLevel(InfoLogger::InfoLogger::Severity severity) = 0;
 
-    /// Get card temperature in °C if available
+    /// Gets card temperature in °C if available
     /// \return Temperature in °C if available, else an empty optional
     virtual boost::optional<float> getTemperature() = 0;
+
+    /// Gets firmware version information
+    /// \return A string containing firmware version information if available, else an empty optional
+    virtual boost::optional<std::string> getFirmwareInfo() = 0;
 };
 
 } // namespace Rorc

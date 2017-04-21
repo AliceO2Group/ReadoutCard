@@ -256,6 +256,9 @@ class ProgramDmaBench: public Program
       }
       mCardType = mChannel->getCardType();
 
+      mLogger << "Card type: " << CardType::toString(mChannel->getCardType()) << endm;
+      mLogger << "Firmware info: " << mChannel->getFirmwareInfo().value_or("unknown") << endm;
+
       if (mOptions.resetChannel) {
         mLogger << "Resetting channel" << endm;
         mChannel->resetChannel(ResetLevel::Rorc);
@@ -371,7 +374,7 @@ class ProgramDmaBench: public Program
               mPushCount.fetch_add(pagesToCount, std::memory_order_relaxed);
               currentSuperpagePagesCounted += pagesToCount;
 
-              if (superpage.isFilled() && readoutQueue.write(superpage.getOffset())) {
+              if (superpage.isReady() && readoutQueue.write(superpage.getOffset())) {
                 // Move full superpage to readout queue
                 currentSuperpagePagesCounted = 0;
                 mChannel->popSuperpage();

@@ -95,9 +95,9 @@ void DummyChannelMaster::utilityCleanupState()
 {
 }
 
-int DummyChannelMaster::utilityGetFirmwareVersion()
+boost::optional<std::string> DummyChannelMaster::getFirmwareInfo()
 {
-  return 0;
+  return std::string("Dummy");
 }
 
 } // namespace Rorc

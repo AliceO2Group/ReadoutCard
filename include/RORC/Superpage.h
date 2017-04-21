@@ -17,12 +17,12 @@ struct Superpage
     /// TODO
     /// Returns true if the superpage is ready, meaning the transfer is complete. This does not necessarily mean the
     /// superpage is filled.
-//    bool isReady() const
-//    {
-//      return ready;
-//    }
+    bool isReady() const
+    {
+      return ready;
+    }
 
-    /// Returns true if the superpage is filled
+    /// Returns true if the superpage is completely filled
     bool isFilled() const
     {
       return received == getSize();
@@ -56,7 +56,7 @@ struct Superpage
     size_t size = 0; ///< Size of the superpage in bytes
     void* userData = nullptr; ///< Pointer that users can use for whatever, e.g. to associate data with the superpage
     size_t received = 0; ///< Size of the received data in bytes
-//    bool ready = false; ///< Indicates this superpage is ready
+    bool ready = false; ///< Indicates this superpage is ready
 };
 
 } // namespace Rorc

@@ -6,6 +6,7 @@
 #include "CruChannelMaster.h"
 #include <boost/dynamic_bitset.hpp>
 #include <thread>
+#include <sstream>
 #include "ChannelPaths.h"
 #include "ChannelUtilityImpl.h"
 #include "ExceptionInternal.h"
@@ -173,6 +174,7 @@ void CruChannelMaster::fillSuperpages()
 
       if (pagesArrived == entry.maxPages) {
         incrementFifoBack();
+        entry.superpage.ready = true;
         mSuperpageQueue.moveFromArrivalsToFilledQueue();
       } else {
         // If the back one hasn't arrived yet, the next ones will certainly not have arrived either...
@@ -217,8 +219,7 @@ auto CruChannelMaster::getSuperpage() -> Superpage
 
 boost::optional<float> CruChannelMaster::getTemperature()
 {
-  return {};
-  //return getBar2().getTemperatureCelsius(); // Note: disabled until new FW is in place. Using this may crash the machine
+  return getBar2().getTemperatureCelsius();
 }
 
 Pda::PdaBar* CruChannelMaster::getPdaBar2Ptr()
@@ -264,9 +265,12 @@ void CruChannelMaster::utilityCleanupState()
   ChannelUtility::cruCleanupState(ChannelPaths(getCardDescriptor().pciAddress, getChannelNumber()));
 }
 
-int CruChannelMaster::utilityGetFirmwareVersion()
+boost::optional<std::string> CruChannelMaster::getFirmwareInfo()
 {
-  return getBar().getFirmwareCompileInfo();
+  std::ostringstream stream;
+  stream << std::hex << getBar2().getFirmwareGitHash() << '-' << getBar2().getFirmwareDate() << '-'
+      << getBar2().getFirmwareTime();
+  return stream.str();
 }
 
 } // namespace Rorc

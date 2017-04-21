@@ -23,6 +23,11 @@ class SuperpageQueue {
     using Id = uint8_t;
     using Queue = boost::circular_buffer<Id>;
 
+    SuperpageQueue()
+    {
+      clear();
+    }
+
     /// This struct wraps the SuperpageStatus and adds some internally used variables
     struct SuperpageQueueEntry
     {
@@ -108,9 +113,6 @@ class SuperpageQueue {
       }
 #endif
 
-//      printf("Enqueued superpage\n  o=%lu pqs=%lu aqs=%lu fqs=%lu\n", entry.status.getOffset(), mPushing.size(), mArrivals.size(),
-//                mFilled.size());
-
       mRegistry[id] = entry; // We don't use getEntry() because it checks for entry validity
       mNextId = (mNextId + 1) % MAX_SUPERPAGES;
       mNumberOfEntries++;
@@ -130,8 +132,6 @@ class SuperpageQueue {
       }
 
       auto id = mPushing.front();
-//      printf("Removing from pushing queue\n  o=%lu\n", id);
-
       const auto& entry = getEntry(id);
 
       if (!entry.isPushed()) {
@@ -153,10 +153,9 @@ class SuperpageQueue {
       }
 
       auto id = mArrivals.front();
-//      printf("Moving from arrivals to filled\n  o=%d\n", int(id));
 
       const auto& entry = getEntry(id);
-      if (!entry.superpage.isFilled()) {
+      if (!entry.superpage.isReady()) {
         BOOST_THROW_EXCEPTION(Exception()
             << ErrorInfo::Message("Could not move arrivals to filled, superpage was not filled"));
       }
@@ -179,9 +178,6 @@ class SuperpageQueue {
       resetEntry(getEntry(id));
       mNumberOfEntries--;
       mFilled.pop_front();
-
-//      printf("Popped superpage\n  o=%lu pqs=%lu aqs=%lu fqs=%lu\n", id, mPushing.size(), mArrivals.size(),
-//          mFilled.size());
 
       return entry;
     }

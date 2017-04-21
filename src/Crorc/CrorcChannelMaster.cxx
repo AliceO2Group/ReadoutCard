@@ -150,6 +150,7 @@ void CrorcChannelMaster::startPendingDma(SuperpageQueueEntry& entry)
   entry.superpage.received += READYFIFO_ENTRIES * mPageSize;
 
   if (entry.superpage.getReceived() == entry.superpage.getSize()) {
+    entry.superpage.ready = true;
     mSuperpageQueue.moveFromArrivalsToFilledQueue();
   }
 
@@ -367,6 +368,7 @@ void CrorcChannelMaster::fillSuperpages()
 
         if (entry.superpage.isFilled()) {
           // Move superpage to filled queue
+          entry.superpage.ready = true;
           mSuperpageQueue.moveFromArrivalsToFilledQueue();
         }
       } else {
@@ -471,12 +473,7 @@ void CrorcChannelMaster::utilityCleanupState()
   ChannelUtility::crorcCleanupState(ChannelPaths(getCardDescriptor().pciAddress, getChannelNumber()));
 }
 
-int CrorcChannelMaster::utilityGetFirmwareVersion()
-{
-  return readRegister(Rorc::RFID);
-}
-
-std::string CrorcChannelMaster::utilityGetFirmwareVersionString()
+boost::optional<std::string> CrorcChannelMaster::getFirmwareInfo()
 {
   uint32_t version = readRegister(Rorc::RFID);
   auto bits = [&](int lsb, int msb) { return Utilities::getBits(version, lsb, msb); };

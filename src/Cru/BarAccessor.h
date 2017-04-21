@@ -173,6 +173,46 @@ class BarAccessor
       return mPdaBar->readRegister(Registers::FIRMWARE_COMPILE_INFO);
     }
 
+    uint32_t getFirmwareGitHash()
+    {
+      if (mPdaBar->getBarNumber() != 2) {
+        BOOST_THROW_EXCEPTION(Exception()
+            << ErrorInfo::Message("Can only get git hash from BAR 2")
+            << ErrorInfo::BarIndex(mPdaBar->getBarNumber()));
+      }
+      return mPdaBar->readRegister(Registers::FIRMWARE_GIT_HASH);
+    }
+
+    uint32_t getFirmwareDateEpoch()
+    {
+      if (mPdaBar->getBarNumber() != 2) {
+        BOOST_THROW_EXCEPTION(Exception()
+            << ErrorInfo::Message("Can only get firmware epoch from BAR 2")
+            << ErrorInfo::BarIndex(mPdaBar->getBarNumber()));
+      }
+      return mPdaBar->readRegister(Registers::FIRMWARE_EPOCH);
+    }
+
+    uint32_t getFirmwareDate()
+    {
+      if (mPdaBar->getBarNumber() != 2) {
+        BOOST_THROW_EXCEPTION(Exception()
+            << ErrorInfo::Message("Can only get firmware date from BAR 2")
+            << ErrorInfo::BarIndex(mPdaBar->getBarNumber()));
+      }
+      return mPdaBar->readRegister(Registers::FIRMWARE_DATE);
+    }
+
+    uint32_t getFirmwareTime()
+    {
+      if (mPdaBar->getBarNumber() != 2) {
+        BOOST_THROW_EXCEPTION(Exception()
+            << ErrorInfo::Message("Can only get firmware time from BAR 2")
+            << ErrorInfo::BarIndex(mPdaBar->getBarNumber()));
+      }
+      return mPdaBar->readRegister(Registers::FIRMWARE_TIME);
+    }
+
     uint8_t getDebugReadWriteRegister()
     {
       return mPdaBar->getRegister<uint8_t>(toByteAddress(Registers::DEBUG_READ_WRITE));

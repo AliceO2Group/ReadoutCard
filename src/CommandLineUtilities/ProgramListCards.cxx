@@ -9,7 +9,7 @@
 #include "CommandLineUtilities/Program.h"
 #include "CommandLineUtilities/Common.h"
 #include "RorcDevice.h"
-#include "Factory/ChannelUtilityFactory.h"
+#include "RORC/ChannelFactory.h"
 #include <boost/format.hpp>
 
 using namespace AliceO2::Rorc::CommandLineUtilities;
@@ -53,7 +53,10 @@ class ProgramListCards: public Program
         std::string firmware = "n/a";
         try {
           Parameters params = Parameters::makeParameters(card.serialNumber, 0);
-          firmware = ChannelUtilityFactory().getUtility(params)->utilityGetFirmwareVersionString();
+          // Temporary (hopefully) workaround, because ChannelMaster requires a buffer when initializing
+          params.setBufferParameters(BufferParameters::File{"/dev/shm/rorc_channel_utility_dummy_buffer", 4*1024});
+
+          firmware = ChannelFactory().getMaster(params)->getFirmwareInfo().value_or("n/a");
         }
         catch (const Exception& e) {
           foundUninitialized = true;

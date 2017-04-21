@@ -35,7 +35,8 @@ class DummyChannelMaster final : public ChannelMasterBase
     virtual void utilitySetLedState(bool state) override;
     virtual void utilitySanityCheck(std::ostream& os) override;
     virtual void utilityCleanupState() override;
-    virtual int utilityGetFirmwareVersion() override;
+
+    virtual boost::optional<std::string> getFirmwareInfo() override;
 
   private:
     static constexpr size_t FIFO_CAPACITY = 128;

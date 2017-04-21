@@ -89,6 +89,26 @@ static constexpr size_t DEBUG_READ_WRITE = 0x310/4;
 /// Byte address: 0x200028
 static constexpr size_t TEMPERATURE = 524298;
 
+/// Register containing the firmware Git hash
+/// Must be accessed on BAR 2
+/// Byte address: 0x4
+static constexpr size_t FIRMWARE_GIT_HASH = 1;
+
+/// Register containing the compilation date/time in seconds since Unix epoch
+/// Must be accessed on BAR 2
+/// Byte address: 0x1c
+static constexpr size_t FIRMWARE_EPOCH = 7;
+
+/// Register containing the compilation date/time in seconds since Unix epoch
+/// Must be accessed on BAR 2
+/// Byte address: 0x20
+static constexpr size_t FIRMWARE_DATE = 8;
+
+/// Register containing the compilation date/time in seconds since Unix epoch
+/// Must be accessed on BAR 2
+/// Byte address: 0x24
+static constexpr size_t FIRMWARE_TIME = 9;
+
 } // namespace Cru
 } // namespace Registers
 } // namespace Rorc
