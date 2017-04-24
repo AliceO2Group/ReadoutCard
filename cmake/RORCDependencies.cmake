@@ -55,7 +55,7 @@ o2_define_bucket(
 
 o2_define_bucket(
   NAME
-  o2_rorc_with_pda
+  o2_rorc_pda
 
   DEPENDENCIES
   o2_rorc_bucket
@@ -78,11 +78,25 @@ o2_define_bucket(
 
 o2_define_bucket(
   NAME
-  o2_rorc_pyton
+  o2_rorc_python
 
   DEPENDENCIES
   ${Boost_PYTHON_LIBRARY}
   ${PYTHON_LIBRARIES}
+
+  SYSTEMINCLUDE_DIRECTORIES
+  ${Boost_INCLUDE_DIR}
+)
+
+o2_define_bucket(
+  NAME
+  o2_rorc_pda_python
+
+  DEPENDENCIES
+  o2_rorc_bucket
+  o2_rorc_pda
+  o2_rorc_python
+  ${PDA_LIBRARIES}
 
   SYSTEMINCLUDE_DIRECTORIES
   ${Boost_INCLUDE_DIR}

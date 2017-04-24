@@ -66,6 +66,29 @@ They are defined in the header 'RORC/Exception.h'. These exceptions may contain 
 of the issue in the form of `boost::error_info` structs which can aid in debugging. 
 To generate a diagnostic report, you may use `boost::diagnostic_information(exception)`.      
 
+Python interface
+-------------------
+If the library is compiled with Boost Python available, the shared object will be usable as a Python library.
+Example usage:
+```
+# Note: depending on your environment, you may have to be in the same directory as the libRORC.so file to import it 
+import libRORC
+# To open a channel, we can use the card's PCI address or serial number
+# Here we open channel number 0
+channel = libRORC.Channel("42:0.0", 0) # PCI address
+channel = libRORC.Channel("12345", 0) # Serial number
+channel = libRORC.Channel("-1", 0) # Dummy channel
+
+# Read register at index 0
+channel.register_read(0)
+# Write 123 to register at index 0
+channel.register_write(0, 123)
+
+# Print doc strings for more information
+print channel.__init__.__doc__
+print channel.register_read.__doc__
+print channel.register_write.__doc__
+```
 
 Design notes
 ===================

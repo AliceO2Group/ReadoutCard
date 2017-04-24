@@ -117,6 +117,9 @@ class ProgramRunScript : public Program
 
     virtual void run(const boost::program_options::variables_map& map)
     {
+      std::cout << "NOTE: this utility is deprecated now that the library itself can be used as a Python module.\n"
+          "See the README.md for more details\n";
+
       if (mPrintExample) {
         std::cout << sExampleScript << '\n';
         return;

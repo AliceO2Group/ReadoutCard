@@ -123,7 +123,14 @@ if(ALICEO2_RORC_PDA_ENABLED)
     src/Pda/PdaDmaBuffer.cxx
     src/RorcDevice.cxx
   )
-  set(BUCKET_NAME o2_rorc_with_pda)
+  if(PYTHONLIBS_FOUND)
+    list(APPEND SRCS
+      src/PythonInterface.cxx
+    )
+    set(BUCKET_NAME o2_rorc_pda_python)
+  else()
+    set(BUCKET_NAME o2_rorc_pda)
+  endif()
 endif()
 
 O2_GENERATE_LIBRARY()
@@ -177,7 +184,7 @@ if(ALICEO2_RORC_PDA_ENABLED)
         EXE_NAME rorc-run-script
         SOURCES src/CommandLineUtilities/ProgramRunScript.cxx
         MODULE_LIBRARY_NAME ${LIBRARY_NAME}
-        BUCKET_NAME o2_rorc_pyton
+        BUCKET_NAME o2_rorc_python
    )
   else()
     message(INFO "PythonLibs not found, 'rorc-run-script' utility will not be built")
