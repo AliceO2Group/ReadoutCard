@@ -80,7 +80,6 @@ namespace {
 _PARAMETER_FUNCTIONS(BufferParameters, "buffer_parameters")
 _PARAMETER_FUNCTIONS(CardId, "card_id")
 _PARAMETER_FUNCTIONS(ChannelNumber, "channel_number")
-_PARAMETER_FUNCTIONS(DmaBufferSize, "dma_buffer_size")
 _PARAMETER_FUNCTIONS(DmaPageSize, "dma_page_size")
 _PARAMETER_FUNCTIONS(GeneratorEnabled, "generator_enabled")
 _PARAMETER_FUNCTIONS(GeneratorLoopback, "generator_loopback")

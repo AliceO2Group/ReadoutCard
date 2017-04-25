@@ -47,9 +47,6 @@ class Parameters
     /// Type for the ChannelNumber parameter
     using ChannelNumberType = int32_t;
 
-    /// Type for the DMA buffer isze parameter
-    using DmaBufferSizeType = size_t;
-
     /// Type for the DMA page size parameter
     using DmaPageSizeType = size_t;
 
@@ -79,11 +76,6 @@ class Parameters
     /// \param value The value to set
     /// \return Reference to this object for chaining calls
     auto setChannelNumber(ChannelNumberType value) -> Parameters&;
-
-    /// Sets the DmaBufferSize parameter
-    /// \param value The value to set
-    /// \return Reference to this object for chaining calls
-    auto setDmaBufferSize(DmaBufferSizeType value) -> Parameters&;
 
     /// Sets the DmaPageSize parameter
     /// \param value The value to set
@@ -130,10 +122,6 @@ class Parameters
     /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
     auto getChannelNumber() const -> boost::optional<ChannelNumberType>;
 
-    /// Gets the DmaBufferSize parameter
-    /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
-    auto getDmaBufferSize() const -> boost::optional<DmaBufferSizeType>;
-
     /// Gets the DmaPageSize parameter
     /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
     auto getDmaPageSize() const -> boost::optional<DmaPageSizeType>;
@@ -173,11 +161,6 @@ class Parameters
     /// \exception ParameterException The parameter was not present
     /// \return The value
     auto getChannelNumberRequired() const -> ChannelNumberType;
-
-    /// Gets the DmaBufferSize parameter
-    /// \exception ParameterException The parameter was not present
-    /// \return The value
-    auto getDmaBufferSizeRequired() const -> DmaBufferSizeType;
 
     /// Gets the DmaPageSize parameter
     /// \exception ParameterException The parameter was not present

@@ -24,15 +24,10 @@ CardDescriptor makeDummyDescriptor()
 constexpr auto endm = InfoLogger::InfoLogger::StreamOps::endm;
 
 DummyChannelMaster::DummyChannelMaster(const Parameters& params)
-    : ChannelMasterBase(makeDummyDescriptor(), params, { 0, 1, 2, 3, 4, 5, 6, 7 }), mPageCounter(128)
+    : ChannelMasterBase(makeDummyDescriptor(), params, { 0, 1, 2, 3, 4, 5, 6, 7 })
 {
 //  cout << "DummyChannelMaster::DummyChannelMaster(serial:" << serial << ", channel:" << channel << ", params:...)"
 //      << endl;
-  mBufferSize = params.getDmaBufferSize().get_value_or(8*1024);
-  mPageSize = params.getDmaPageSize().get_value_or(8*1024);
-
-  mMaxPages = mBufferSize / mPageSize;
-  mPageBuffer.resize(mBufferSize, -1);
 }
 
 DummyChannelMaster::~DummyChannelMaster()

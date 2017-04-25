@@ -25,7 +25,6 @@ constexpr auto GENERATOR_LOOPBACK_MODE = LoopbackMode::Rorc;
 BOOST_AUTO_TEST_CASE(ParametersPutGetTest)
 {
   Parameters p = Parameters::makeParameters(SERIAL_NUMBER, CHANNEL_NUMBER)
-      .setDmaBufferSize(DMA_BUFFER_SIZE)
       .setDmaPageSize(DMA_PAGE_SIZE)
       .setGeneratorDataSize(GENERATOR_DATA_SIZE)
       .setGeneratorEnabled(GENERATOR_ENABLED)
@@ -34,7 +33,6 @@ BOOST_AUTO_TEST_CASE(ParametersPutGetTest)
 
   BOOST_REQUIRE(boost::get<int>(p.getCardId().get()) == SERIAL_NUMBER);
   BOOST_REQUIRE(p.getChannelNumber().get_value_or(0) == CHANNEL_NUMBER);
-  BOOST_REQUIRE(p.getDmaBufferSize().get_value_or(0) == DMA_BUFFER_SIZE);
   BOOST_REQUIRE(p.getDmaPageSize().get_value_or(0) == DMA_PAGE_SIZE);
   BOOST_REQUIRE(p.getGeneratorDataSize().get_value_or(0) == GENERATOR_DATA_SIZE);
   BOOST_REQUIRE(p.getGeneratorEnabled().get_value_or(false) == GENERATOR_ENABLED);
@@ -42,7 +40,6 @@ BOOST_AUTO_TEST_CASE(ParametersPutGetTest)
 
   BOOST_REQUIRE(boost::get<int>(p.getCardIdRequired()) == SERIAL_NUMBER);
   BOOST_REQUIRE(p.getChannelNumberRequired() == CHANNEL_NUMBER);
-  BOOST_REQUIRE(p.getDmaBufferSizeRequired() == DMA_BUFFER_SIZE);
   BOOST_REQUIRE(p.getDmaPageSizeRequired() == DMA_PAGE_SIZE);
   BOOST_REQUIRE(p.getGeneratorDataSizeRequired() == GENERATOR_DATA_SIZE);
   BOOST_REQUIRE(p.getGeneratorEnabledRequired() == GENERATOR_ENABLED);

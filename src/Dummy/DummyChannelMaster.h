@@ -37,18 +37,6 @@ class DummyChannelMaster final : public ChannelMasterBase
     virtual void utilityCleanupState() override;
 
     virtual boost::optional<std::string> getFirmwareInfo() override;
-
-  private:
-    static constexpr size_t FIFO_CAPACITY = 128;
-
-    /// Lock that guards against both inter- and intra-process ownership
-    boost::scoped_ptr<Interprocess::Lock> mInterprocessLock;
-
-    size_t mBufferSize;
-    size_t mPageSize;
-    size_t mMaxPages;
-    int mPageCounter;
-    std::vector<char> mPageBuffer;
 };
 
 } // namespace Rorc
