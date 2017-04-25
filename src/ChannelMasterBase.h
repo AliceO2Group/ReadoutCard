@@ -20,13 +20,6 @@
 #include "RORC/Parameters.h"
 #include "Utilities/Util.h"
 
-//#define ALICEO2_RORC_CHANNEL_MASTER_DISABLE_LOCKGUARDS
-#ifdef ALICEO2_RORC_CHANNEL_MASTER_DISABLE_LOCKGUARDS
-#define CHANNELMASTER_LOCKGUARD()
-#else
-#define CHANNELMASTER_LOCKGUARD() LockGuard _lockGuard(getMutex());
-#endif
-
 namespace AliceO2 {
 namespace Rorc {
 
@@ -93,9 +86,6 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, publ
     }
 
   protected:
-    using Mutex = std::mutex;
-    using LockGuard = std::lock_guard<Mutex>;
-
     /// Namespace for enum describing the initialization state of the shared data
     struct InitializationState
     {
@@ -104,11 +94,6 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, publ
           UNKNOWN = 0, UNINITIALIZED = 1, INITIALIZED = 2
         };
     };
-
-    Mutex& getMutex()
-    {
-      return mMutex;
-    }
 
     int getChannelNumber() const
     {
@@ -148,9 +133,6 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, publ
   private:
     /// Check if the channel number is valid
     void checkChannelNumber(const AllowedChannels& allowedChannels);
-
-    /// Mutex to lock thread-unsafe operations
-    Mutex mMutex;
 
     /// Type of the card
     const CardDescriptor mCardDescriptor;

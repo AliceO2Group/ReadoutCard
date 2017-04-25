@@ -47,8 +47,6 @@ ChannelMasterPdaBase::~ChannelMasterPdaBase()
 // Checks DMA state and forwards call to subclass if necessary
 void ChannelMasterPdaBase::startDma()
 {
-  CHANNELMASTER_LOCKGUARD();
-
   if (mDmaState == DmaState::UNKNOWN) {
     log("Unknown DMA state");
   } else if (mDmaState == DmaState::STARTED) {
@@ -63,8 +61,6 @@ void ChannelMasterPdaBase::startDma()
 // Checks DMA state and forwards call to subclass if necessary
 void ChannelMasterPdaBase::stopDma()
 {
-  CHANNELMASTER_LOCKGUARD();
-
   if (mDmaState == DmaState::UNKNOWN) {
     log("Unknown DMA state");
   } else if (mDmaState == DmaState::STOPPED) {
@@ -78,8 +74,6 @@ void ChannelMasterPdaBase::stopDma()
 
 void ChannelMasterPdaBase::resetChannel(ResetLevel::type resetLevel)
 {
-  CHANNELMASTER_LOCKGUARD();
-
   if (mDmaState == DmaState::UNKNOWN) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Reset channel failed: DMA in unknown state"));
   }

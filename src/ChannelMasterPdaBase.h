@@ -80,18 +80,12 @@ class ChannelMasterPdaBase: public ChannelMasterBase
     void checkSuperpage(const Superpage& superpage);
 
     /// Template method called by startDma() to do device-specific (CRORC, RCU...) actions
-    /// Note: subclasses should not call getLockGuard() in this function, as the ChannelMaster will have the lock
-    /// already.
     virtual void deviceStartDma() = 0;
 
     /// Template method called by stopDma() to do device-specific (CRORC, RCU...) actions
-    /// Note: subclasses should not call getLockGuard() in this function, as the ChannelMaster will have the lock
-    /// already.
     virtual void deviceStopDma() = 0;
 
     /// Template method called by resetChannel() to do device-specific (CRORC, RCU...) actions
-    /// Note: subclasses should not call getLockGuard() in this function, as the ChannelMaster will have the lock
-    /// already.
     virtual void deviceResetChannel(ResetLevel::type resetLevel) = 0;
 
     /// Function for getting the bus address that corresponds to the user address + given offset
