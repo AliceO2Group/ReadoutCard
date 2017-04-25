@@ -41,7 +41,6 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, publ
     /// Constructor for the ChannelMaster object
     /// \param cardDescriptor Card descriptor
     /// \param parameters Parameters of the channel
-    /// \param serialNumber Serial number of the card
     /// \param allowedChannels Channels allowed by this card type
     ChannelMasterBase(CardDescriptor cardDescriptor, const Parameters& parameters,
         const AllowedChannels& allowedChannels);

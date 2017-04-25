@@ -14,6 +14,13 @@ namespace Rorc {
 /// Simple struct for holding basic info about a superpage
 struct Superpage
 {
+    Superpage() = default;
+
+    Superpage(size_t offset, size_t size, void* userData = nullptr)
+        : offset(offset), size(size), userData(userData)
+    {
+    }
+
     /// TODO
     /// Returns true if the superpage is ready, meaning the transfer is complete. This does not necessarily mean the
     /// superpage is filled.

@@ -1,5 +1,5 @@
 /// \file BarAccessor.h
-/// \brief Definition of the CruBarAccessor class.
+/// \brief Definition of the BarAccessor class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
@@ -33,7 +33,7 @@ class BarAccessor
     /// Set the registers of a descriptor entry
     /// \param index FIFO index
     /// \param pages Amount of 8 kiB pages in superpage
-    /// \param address Superpage PCI bus address
+    /// \param busAddress Superpage PCI bus address
     void setSuperpageDescriptor(uint32_t index, uint32_t pages, uintptr_t busAddress)
     {
       assert(index < SUPERPAGE_DESCRIPTORS);

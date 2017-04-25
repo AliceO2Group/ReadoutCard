@@ -1,4 +1,4 @@
-/// \file Constants.h
+/// \file Cru/Constants.h
 /// \brief Definitions of CRU related constants
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)

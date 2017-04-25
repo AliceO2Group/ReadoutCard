@@ -104,8 +104,7 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
     /// Enables data receiving in the RORC
     void startDataReceiving();
 
-    /// Initializes and starts the data generator with the given parameters
-    /// \param generatorParameters The parameters for the data generator.
+    /// Initializes and starts the data generator
     void startDataGenerator();
 
     /// Pushes a page to the CRORC's Free FIFO

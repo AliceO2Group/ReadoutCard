@@ -20,16 +20,11 @@ Channel ownership lock
 Clients can acquire a master lock on a channel by instantiating a ChannelMasterInterface implementation through the
 ChannelFactory class. 
 
-The ChannelMaster class provides PDA-based functionality common to the C-RORC and CRU, and it is mostly an aggregation 
-of PDA wrapper classes and shared memory handling.
-The CrorcChannelMaster and CruChannelMaster provide the device-specific functionality and use the RORC C API layer.
-
-The ChannelMaster will acquire a lock to prevent simultaneous access to a channel.
-
 The driver uses some files in shared memory:
-* `/dev/shm/alice_o2/rorc/[PCI geographical address]/channel_[channel number]/.lock` For locking channels
-* `/dev/shm/sem.alice_o2_rorc_[PCI geographical address]_channel_[channel number].mutex` For locking channels
-* `/dev/hugepages/alice_o2/rorc/[PCI geographical address]/channel_[channel number]/fifo` For card FIFOs
+* `/dev/shm/alice_o2/rorc/[PCI address]/channel_[channel number]/fifo` - For card FIFOs
+* `/dev/shm/alice_o2/rorc/[PCI address]/channel_[channel number]/.lock` - For locking channels
+* `/dev/shm/sem.alice_o2_rorc_[PCI address]_channel_[channel number].mutex` - For locking channels
+* `/var/lib/hugetlbfs/global/pagesize-[page size]/rorc-dma-bench_id=[PCI address]_chan_[channel number]` - For card benchmark DMA buffers
 
 If the process crashes badly, it may be necessary to clean up the mutex manually, either by deleting with `rm` or by 
 using the `rorc-channel-cleanup` utility.
@@ -39,12 +34,15 @@ Once a ChannelMaster has acquired the lock, clients can:
 * Start and stop DMA
 * Push and read pages
 
-For a usage example, see the program in RORC/src/Example.cxx
+For a usage example, see the program in `RORC/src/Example.cxx`. NOTE: due to recent extensive changes to the library,
+this example is slightly out of date. `RORC/src/CommandLineUtilities/ProgramDmaBench.cxx` might be more helpful.
 
 Limited-access interface
 -------------------
 Users can also get a limited-access object (implementing ChannelSlaveInterface) from the
-factory.
+factory. It is restricted to reading and writing registers. 
+Currently, there are no limits imposed on which registers are allowed to be read from and written to, so it is still a
+"dangerous" interface. But in the future, protections may be added.
 
 Dummy objects
 -------------------
@@ -57,7 +55,7 @@ The RORC module contains some utility programs to assist with RORC debugging and
 rorc-bench-dma uses files in these directories for DMA buffers: 
 * `/var/lib/hugetlbfs/global/pagesize-2MB`
 * `/var/lib/hugetlbfs/global/pagesize-1GB`
-They can be inspected manually if needed, e.g. with hexdump: `hexdump -e '"%07_ax" " | " 4/8 "%08x " "\n"' <filename>`
+They can be inspected manually if needed, e.g. with hexdump: `hexdump -e '"%07_ax" " | " 4/8 "%08x " "\n"' [filename]`
 
 Exceptions
 -------------------
@@ -69,8 +67,9 @@ To generate a diagnostic report, you may use `boost::diagnostic_information(exce
 Python interface
 -------------------
 If the library is compiled with Boost Python available, the shared object will be usable as a Python library.
+It is currently only able to read and write registers.
 Example usage:
-```
+~~~
 # Note: depending on your environment, you may have to be in the same directory as the libRORC.so file to import it 
 import libRORC
 # To open a channel, we can use the card's PCI address or serial number
@@ -88,10 +87,19 @@ channel.register_write(0, 123)
 print channel.__init__.__doc__
 print channel.register_read.__doc__
 print channel.register_write.__doc__
-```
+~~~
 
 Design notes
 ===================
+
+Channels
+-------------------
+The ChannelMasterInterface is implemented using multiple classes.
+ChannelMasterBase takes care of locking and provides default implementations for utility methods.
+ChannelMasterPdaBase uses PDA to take care of memory mapping, registering the DMA buffer with the IOMMU, creating scatter-gather 
+lists and PDA related initialization.
+Finally, CrorcChanenlMaster and CruChannelMaster take care of device-specific implementation details for the C-RORC and
+CRU respectively.  
 
 Enums
 -------------------
@@ -150,34 +158,34 @@ PDA installation
 -------------------
 
 1. Install dependency packages
-  ```
+  ~~~
   yum install kernel-devel pciutils-devel kmod-devel libtool libhugetlbfs
-  ```
+  ~~~
 
 2. Download & extract PDA 11.0.7
-  ```
+  ~~~
   wget https://compeng.uni-frankfurt.de/fileadmin/Images/pda/pda-11.0.7.tar.gz
   tar zxf pda-11.0.7.tar.gz
   cd pda-11.0.7
-  ```
+  ~~~
 
 3. Compile
-  ```
+  ~~~
   ./configure --debug=false --numa=true --modprobe=true
   make install
   cd patches/linux_uio
   make install
-  ```
+  ~~~
   
 4. Optionally, insert kernel module. If the utilities are run as root, PDA will do this automatically.
-  ```
+  ~~~
   modprobe uio\_pci\_dma
-  ```
+  ~~~
 
 5. When using rorc-bench-dma, create hugetlbfs mounts
-  ```
+  ~~~
   hugeadm --create-global-mounts
-  ```
+  ~~~
 
 
 Hugepages
@@ -199,28 +207,28 @@ At some point, we should probably use kernel boot parameters to allocate hugepag
 until then, we must initialize and allocate manually.
 
 1. Install hugetlbfs (will already be installed on most systems)
-  ```
+  ~~~
   yum install libhugetlbfs libhugetlbfs-utils
-  ```
+  ~~~
 
 2. Allocate hugepages
-  ```
+  ~~~
   echo [number] > /proc/sys/vm/nr_hugepages
-  ```
+  ~~~
   Where [number] is enough to cover the DMA buffer needs.
   By default, hugepages are 2 MB. 
 
 3. Check to see if they're actually available
-  ```
+  ~~~
   cat /proc/meminfo | grep Huge
-  ```
+  ~~~
  'HugePages_Total' should correspond to [number]
 
 4. Mount hugetlbfs
-  ```
+  ~~~
   mkdir /mnt/hugetlbfs (if directory does not exist)
   mount --types hugetlbfs none /mnt/hugetlbfs -o pagesize=2M
-  ```
+  ~~~
 
 ALICE Low-level Front-end (ALF) DIM Server
 ===================
@@ -228,14 +236,14 @@ The utilities contain a DIM server for DCS control of the cards
 
 Usage
 -------------------
-./rorc-alf-server --serial=11225 --channel=0
+`./rorc-alf-server --serial=11225 --channel=0`
 Note: if the DIM_DNS_NODE environment variable was not set, the server uses localhost. 
 
 Service description
 -------------------
 
 Services names are under: 
-"ALF/SERIAL_[a]/CHANNEL_[b]/[service name]"
+`ALF/SERIAL_[a]/CHANNEL_[b]/[service name]`
 where [a] = card serial number
       [b] = card channel / BAR index
 

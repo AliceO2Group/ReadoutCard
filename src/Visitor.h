@@ -1,6 +1,8 @@
 /// \file Visitor.h
 /// \brief Definition of class for creating lambda-based visitors for boost::variant
 ///
+/// Note: this was copied from the Configuration library. Should be merged at some point into Common.
+///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #ifndef SRC_RORC_VISITOR_H_
@@ -15,9 +17,6 @@ namespace Visitor {
 
 /// Creates a boost::variant visitor with functions.
 ///
-/// Example:
-/// \snippet test/TestExamples.cxx [Visitor]
-///
 /// \tparam ReturnType Return type of the visitor.
 /// \tparam Types of the lambda functions.
 /// \param functions Functions. One for each type that can be visited.
@@ -28,9 +27,6 @@ Implementation::Visitor<ReturnType, Functions...> make(Functions ... functions)
 }
 
 /// Convenience function to create a boost::variant visitor with functions and immediately apply it.
-///
-/// Example:
-/// \snippet test/TestExamples.cxx [Apply visitor]
 ///
 /// \tparam ReturnType Return type of the visitor.
 /// \tparam Variant Type of the variant.

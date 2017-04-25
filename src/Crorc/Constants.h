@@ -1,4 +1,4 @@
-/// \file Constants.h
+/// \file Crorc/Constants.h
 /// \brief Definitions of RORC related constants
 /// Based on ddl_def.h and rorc.h
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)

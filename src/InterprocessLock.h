@@ -1,5 +1,5 @@
-/// \file Lock.h
-/// \brief Definitions for Lock class
+/// \file InterprocessLock.h
+/// \brief Definitions for InterprocessLock class
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 

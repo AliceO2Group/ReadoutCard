@@ -1,4 +1,4 @@
-/// \file    Version.h
+/// \file    RORC/include/RORC/Version.h
 /// \brief   Report the version for this package.
 ///
 /// \author  Barthelemy von Haller, CERN
