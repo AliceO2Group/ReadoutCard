@@ -310,8 +310,8 @@ class ProgramDmaBench: public Program
       }
 
       // Lock-free queues. Usable size is (size-1), so we add 1
-      folly::ProducerConsumerQueue<size_t> readoutQueue {mMaxSuperpages + 1};
-      folly::ProducerConsumerQueue<size_t> freeQueue {mMaxSuperpages + 1};
+      folly::ProducerConsumerQueue<size_t> readoutQueue {static_cast<uint32_t>(mMaxSuperpages) + 1};
+      folly::ProducerConsumerQueue<size_t> freeQueue {static_cast<uint32_t>(mMaxSuperpages) + 1};
       for (int i = 0; i < mMaxSuperpages; ++i) {
         if (!freeQueue.write(indexToOffset(i))) {
           BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Something went horribly wrong"));
