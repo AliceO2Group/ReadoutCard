@@ -8,7 +8,6 @@
 #include <map>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
-#include <boost/range/iterator_range.hpp>
 #include <boost/format.hpp>
 #include <functional>
 #include <iostream>
@@ -197,28 +196,34 @@ void RorcDevice::printDeviceInfo(std::ostream& ostream)
       barType == PCIBARTYPES_BAR64 ? "BAR64" :
       "n/a";
 
-//  auto f = boost::format("%-14s %10s\n");
-//  ostream << f % "Domain ID" << domainId;
-//  ostream << f % "Bus ID" << busId;
-//  ostream << f % "Function ID" << functionId;
-//  ostream << f % "BAR type" << barTypeString;
+  auto f = boost::format("%-14s %10s\n");
+  ostream << f % "Domain ID" << domainId;
+  ostream << f % "Bus ID" << busId;
+  ostream << f % "Function ID" << functionId;
+  ostream << f % "BAR type" << barTypeString;
 }
 
 int32_t cruGetSerial(Pda::PdaDevice::PdaPciDevice pciDevice)
 {
   int channel = 2; // Must use BAR 2 to access serial number
   Pda::PdaBar pdaBar(pciDevice, channel);
-  return Cru::BarAccessor(&pdaBar).getSerialNumber();
+  uint32_t serial = Cru::BarAccessor(&pdaBar).getSerialNumber();
+  if (serial == 0xFfffFfff) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("CRU reported invalid serial number 0xffffffff, "
+        "a fatal error may have occurred"));
+  }
+  return serial;
 }
-
-// The RORC headers have a lot of macros that cause problems with the rest of this file, so we include it down here.
-#include "c/rorc/rorc.h"
 
 int32_t crorcGetSerial(Pda::PdaDevice::PdaPciDevice pciDevice)
 {
   int channel = 0; // Must use BAR 0 to access flash
   Pda::PdaBar pdaBar(pciDevice, channel);
   uint32_t serial = Crorc::getSerial(pdaBar);
+  if (serial == 0xFfffFfff) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("C-RORC reported invalid serial number 0xffffffff, "
+        "a fatal error may have occurred"));
+  }
   return serial;
 }
 
