@@ -17,7 +17,10 @@ struct LoopbackMode
     /// Loopback mode
     enum type
     {
-      None = 0, Diu = 1, Siu = 2, Rorc = 3
+      None = 0, ///< No loopback
+      Diu = 1, ///< Loopback through DIU
+      Siu = 2, ///< Loopback through SIU
+      Rorc = 3 ///< Internal loopback
     };
 
     /// Converts a LoopbackMode to a string

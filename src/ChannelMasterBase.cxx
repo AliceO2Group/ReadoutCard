@@ -45,9 +45,24 @@ ChannelMasterBase::ChannelMasterBase(CardDescriptor cardDescriptor, const Parame
   }
 
   // Get lock
-  log("Getting master lock", InfoLogger::InfoLogger::Debug);
-  Utilities::resetSmartPtr(mInterprocessLock, paths.lock(), paths.namedMutex());
-  log("Acquired master lock", InfoLogger::InfoLogger::Debug);
+  log("Getting channel lock", InfoLogger::InfoLogger::Debug);
+  try {
+    Utilities::resetSmartPtr(mInterprocessLock, paths.lock(), paths.namedMutex());
+  }
+  catch (const NamedMutexLockException& exception) {
+    if (parameters.getForcedUnlockEnabled().get_value_or(false)) {
+      log("Failed to acquire channel mutex. Forced unlock enabled - attempting cleanup and retry",
+          InfoLogger::InfoLogger::Warning);
+      // The user has indicated to the driver that it is safe to force the unlock. We do it by deleting the lock.
+      boost::interprocess::named_mutex::remove(paths.namedMutex().c_str());
+      // Try again...
+      Utilities::resetSmartPtr(mInterprocessLock, paths.lock(), paths.namedMutex());
+    } else {
+      log("Failed to acquire lock", InfoLogger::InfoLogger::Debug);
+      throw;
+    }
+  }
+  log("Acquired channel lock", InfoLogger::InfoLogger::Debug);
 
   if (auto bufferParameters = parameters.getBufferParameters()) {
     // Create appropriate BufferProvider subclass

@@ -65,52 +65,141 @@ class Parameters
     /// Type for the readout mode parameter
     using ReadoutModeType = ReadoutMode::type;
 
+    /// Type for the forced unlock enabled parameter
+    using ForcedUnlockEnabledType = bool;
+
+
     // Setters
 
     /// Sets the CardId parameter
+    ///
+    /// This can be either a PciAddress, or an integer representing a serial number.
+    /// It may be -1 to instantiate the dummy driver.
+    ///
+    /// Required parameter.
+    ///
     /// \param value The value to set
     /// \return Reference to this object for chaining calls
     auto setCardId(CardIdType value) -> Parameters&;
 
     /// Sets the ChannelNumber parameter
+    ///
+    /// This indicates which DMA channel should be opened.
+    /// * The C-RORC has 6 available channels (numbers 0 to 5).
+    /// * The CRU has one (number 0).
+    ///
+    /// Required parameter.
+    ///
     /// \param value The value to set
     /// \return Reference to this object for chaining calls
     auto setChannelNumber(ChannelNumberType value) -> Parameters&;
 
     /// Sets the DmaPageSize parameter
+    ///
+    /// Supported values:
+    /// * C-RORC: ??? (it seems to be very flexible)
+    /// * CRU: 8 kiB
+    ///
+    /// If not set, the card's driver will select a sensible default
+    ///
     /// \param value The value to set
     /// \return Reference to this object for chaining calls
     auto setDmaPageSize(DmaPageSizeType value) -> Parameters&;
 
     /// Sets the GeneratorEnabled parameter
+    ///
+    /// If enabled, the card will generate data internally.
+    /// The format and content of this data is controlled by the other generator parameters.
+    ///
     /// \param value The value to set
     /// \return Reference to this object for chaining calls
     auto setGeneratorEnabled(GeneratorEnabledType value) -> Parameters&;
 
     /// Sets the GeneratorDataSize parameter
+    ///
+    /// It controls the size in bytes of the generated data per DMA page.
+    ///
+    /// If not set, the driver will default to the DMA page size (the pages will be filled completely).
+    ///
     /// \param value The value to set
     /// \return Reference to this object for chaining calls
     auto setGeneratorDataSize(GeneratorDataSizeType value) -> Parameters&;
 
     /// Sets the GeneratorLoopback parameter
+    ///
+    /// Controls the routing of the generated data.
+    /// Supported loopback modes:
+    /// * C-RORC: all modes
+    /// * CRU: internal loopback only
+    ///
+    /// If not set, the driver will default to internal loopback (LoopbackMode::Rorc).
+    ///
     /// \param value The value to set
     /// \return Reference to this object for chaining calls
     auto setGeneratorLoopback(GeneratorLoopbackType value) -> Parameters&;
 
-    /// Sets the GeneratorPattern parameter
+    /// Sets the GeneratorPattern parameter.
+    ///
+    /// Determines the content of the generated data.
+    /// Supported formats:
+    /// * C-RORC: all formats (I think...)
+    /// * CRU: Constant, Alternating, Incremental
+    ///
+    /// If not set, the driver will default to the incremental pattern (GeneratorPattern::Incremental).
+    ///
     /// \param value The value to set
     /// \return Reference to this object for chaining calls
     auto setGeneratorPattern(GeneratorPatternType value) -> Parameters&;
 
     /// Sets the BufferParameters parameter
+    ///
+    /// Registers a memory (with BufferParameters::Memory) or file (with BufferParameters::File) buffer with the
+    /// DMA channel.
+    ///
+    /// Note that if the IOMMU is not enabled, the buffer may not be presented as a contiguous physical space to the
+    /// readout card. In this case, the user is responsible for ensuring that superpages given to the driver are
+    /// physically contiguous.
+    ///
+    /// It is recommended to use hugepages for the buffer to increase contiguousness, for example by opening a
+    /// MemoryMappedFile in a hugetlbfs filesystem.
+    /// See the README.md file for more information about hugepages.
+    ///
+    /// Required parameter for the C-RORC and CRU drivers.
+    ///
     /// \param value The value to set
     /// \return Reference to this object for chaining calls
     auto setBufferParameters(BufferParametersType value) -> Parameters&;
 
     /// Sets the ReadoutMode parameter
+    ///
+    /// This is a work-in-progress feature. Currently, only the C-RORC is supported in continuous readout mode.
+    ///
     /// \param value The value to set
     /// \return Reference to this object for chaining calls
     auto setReadoutMode(ReadoutModeType value) -> Parameters&;
+
+    /// Sets the ForcedUnlockEnabled parameter
+    ///
+    /// The channel uses two locks to enforce DMA channel exclusivity: a file lock (which is cleaned up automatically on/
+    /// a process exit) and a mutex (which remains locked in the case of a crash).
+    ///
+    /// Normally, when the mutex is left locked because of a crash, it must be cleaned up manually through
+    /// administrative action before the channel can be acquired again.
+    /// But in some cases, it can be safe to clean up the lock automatically.
+    /// For example, when the file lock is unlocked, the mutex is not, and the user process knows for sure it is not
+    /// holding the mutex itself.
+    ///
+    /// When this parameter is set to true, the channel will assume that it's safe to force the mutex.
+    /// The channel will first try to acquire the channel lock normally.
+    /// If it fails to acquire the mutex, it will forcibly clean up and acquire the lock.
+    /// A warning will be logged when the forced acquire is used.
+    ///
+    /// Note that this is a dangerous operation that can cause the system to crash if the assumption does not hold.
+    ///
+    /// \param value The value to set
+    /// \return Reference to this object for chaining calls
+    auto setForcedUnlockEnabled(ForcedUnlockEnabledType value) -> Parameters&;
+
 
     // Non-throwing getters
 
@@ -149,6 +238,11 @@ class Parameters
     /// Gets the ReadoutMode parameter
     /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
     auto getReadoutMode() const -> boost::optional<ReadoutModeType>;
+
+    /// Gets the ForcedUnlockEnabled parameter
+    /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+    auto getForcedUnlockEnabled() const -> boost::optional<ForcedUnlockEnabledType>;
+
 
     // Throwing getters
 
@@ -196,6 +290,12 @@ class Parameters
     /// \exception ParameterException The parameter was not present
     /// \return The value
     auto getReadoutModeRequired() const -> ReadoutModeType;
+
+    /// Gets the ForcedUnlockEnabled parameter
+    /// \exception ParameterException The parameter was not present
+    /// \return The value
+    auto getForcedUnlockEnabledRequired() const -> ForcedUnlockEnabledType;
+
 
     // Helper functions
 

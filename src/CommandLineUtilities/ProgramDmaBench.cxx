@@ -230,6 +230,10 @@ class ProgramDmaBench: public Program
       params.setGeneratorPattern(mOptions.generatorPattern);
       params.setBufferParameters(BufferParameters::Memory { mMemoryMappedFile->getAddress(),
           mMemoryMappedFile->getSize() });
+      // Note that we can force unlock because we know for sure this process is not holding the lock. If we did not know
+      // this, it would be very dangerous to force the lock.
+      params.setForcedUnlockEnabled(true);
+
       if (mOptions.readoutMode) {
         params.setReadoutMode(*mOptions.readoutMode);
       }
@@ -250,17 +254,13 @@ class ProgramDmaBench: public Program
       try {
         mChannel = ChannelFactory().getMaster(params);
       }
-      catch (const NamedMutexLockException& exception) {
-        mLogger << InfoLogger::Warning << "Failed to acquire channel lock, attempting cleanup and retry" << endm;
-        // Note that we can do this because we know for sure this process is not holding the lock. If we did not know
-        // this, it would be very dangerous to manually remove the lock.
-        if (auto mutexName = boost::get_error_info<ErrorInfo::NamedMutexName>(exception)) {
-          boost::interprocess::named_mutex::remove(mutexName->c_str());
-        }
-        mChannel = ChannelFactory().getMaster(params);
+      catch (const FileLockException& e) {
+        mLogger << InfoLogger::Error << "Another process is holding the channel lock (no automatic cleanup possible)"
+            << endm;
+        throw;
       }
-      mCardType = mChannel->getCardType();
 
+      mCardType = mChannel->getCardType();
       mLogger << "Card type: " << CardType::toString(mChannel->getCardType()) << endm;
       mLogger << "Firmware info: " << mChannel->getFirmwareInfo().value_or("unknown") << endm;
 
