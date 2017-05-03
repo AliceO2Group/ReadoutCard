@@ -83,9 +83,9 @@ class ProgramDmaBench: public Program
       Options::addOptionChannel(options);
       Options::addOptionCardId(options);
       options.add_options()
-          ("pages",
-              SuffixOption<uint64_t>::make(&mOptions.maxPages)->default_value("10k"),
-              "Amount of pages to transfer. Give 0 for infinite.")
+          ("bytes",
+              SuffixOption<uint64_t>::make(&mOptions.maxBytes)->default_value("1G"),
+              "Limit of bytes to transfer. Give 0 for infinite.")
           ("buffer-size",
               SuffixOption<size_t>::make(&mBufferSize)->default_value("10Mi"),
               "Buffer size in bytes. Rounded down to 2 MiB multiple. Minimum of 2 MiB. Use 2 MiB hugepage by default; |"
@@ -220,8 +220,6 @@ class ProgramDmaBench: public Program
         }
       }
 
-      mInfinitePages = (mOptions.maxPages <= 0);
-
       // Set up channel parameters
       mPageSize = params.getDmaPageSize().get();
       params.setCardId(cardId);
@@ -233,6 +231,9 @@ class ProgramDmaBench: public Program
       // Note that we can force unlock because we know for sure this process is not holding the lock. If we did not know
       // this, it would be very dangerous to force the lock.
       params.setForcedUnlockEnabled(true);
+
+      mInfinitePages = (mOptions.maxBytes <= 0);
+      mMaxPages = mOptions.maxBytes / mPageSize;
 
       if (mOptions.readoutMode) {
         params.setReadoutMode(*mOptions.readoutMode);
@@ -246,8 +247,9 @@ class ProgramDmaBench: public Program
       mPagesPerSuperpage = mSuperpageSize / mPageSize;
       mLogger << "Buffer size: " << mBufferSize << endm;
       mLogger << "Superpage size: " << mSuperpageSize << endm;
+      mLogger << "Superpages in buffer: " << mMaxSuperpages << endm;
       mLogger << "Page size: " << mPageSize << endm;
-      mLogger << "Max superpages: " << mMaxSuperpages << endm;
+      mLogger << "Page limit: " << mMaxPages << endm;
       mLogger << "Pages per superpage: " << mPagesPerSuperpage << endm;
 
       // Get master lock on channel
@@ -345,7 +347,7 @@ class ProgramDmaBench: public Program
 
           while (!isStopDma()) {
             // Check if we need to stop in the case of a page limit
-            if (!mInfinitePages && mPushCount.load(std::memory_order_relaxed) >= mOptions.maxPages
+            if (!mInfinitePages && mPushCount.load(std::memory_order_relaxed) >= mMaxPages
                 && (currentSuperpagePagesCounted == 0)) {
               break;
             }
@@ -401,7 +403,7 @@ class ProgramDmaBench: public Program
         RandomPauses pauses;
 
         while (!isStopDma()) {
-          if (!mInfinitePages && mReadoutCount.load(std::memory_order_relaxed) >= mOptions.maxPages) {
+          if (!mInfinitePages && mReadoutCount.load(std::memory_order_relaxed) >= mMaxPages) {
             mDmaLoopBreak = true;
             break;
           }
@@ -785,7 +787,7 @@ class ProgramDmaBench: public Program
 
     /// Program options
     struct OptionsStruct {
-        uint64_t maxPages = 0; ///< Limit of pages to push
+        uint64_t maxBytes = 0; ///< Limit of bytes to push
         bool fileOutputAscii = false;
         bool fileOutputBin = false;
         bool resetChannel = false;
@@ -839,6 +841,8 @@ class ProgramDmaBench: public Program
     bool mDisplayUpdateNewline;
 
     size_t mPageSize;
+
+    size_t mMaxPages;
 
     std::unique_ptr<BarHammer> mBarHammer;
 
