@@ -35,6 +35,10 @@ ChannelMasterBase::ChannelMasterBase(CardDescriptor cardDescriptor, const Parame
     const AllowedChannels& allowedChannels)
     : mCardDescriptor(cardDescriptor), mChannelNumber(parameters.getChannelNumberRequired())
 {
+#ifndef NDEBUG
+  log("Backend compiled without NDEBUG; performance may be severely degraded", InfoLogger::InfoLogger::Info);
+#endif
+
   // Check the channel number is allowed
   checkChannelNumber(allowedChannels);
 
