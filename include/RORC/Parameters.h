@@ -20,6 +20,8 @@
 namespace AliceO2 {
 namespace Rorc {
 
+struct ParametersPimpl;
+
 /// Class that holds parameters for channels
 /// Per parameter, it has three functions:
 /// * Setter
@@ -29,6 +31,14 @@ namespace Rorc {
 class Parameters
 {
   public:
+    Parameters();
+    ~Parameters();
+    Parameters(const Parameters& other);
+    Parameters(Parameters&& other);
+    Parameters& operator=(const Parameters& other);
+    Parameters& operator=(Parameters&& other);
+
+
     // Types for parameter values
 
     /// Type for buffer parameters
@@ -324,15 +334,7 @@ class Parameters
     }
 
   private:
-    /// Variant used for internal storage of parameters
-    using Variant = boost::variant<size_t, int32_t, bool, BufferParametersType, CardIdType, GeneratorLoopbackType,
-        GeneratorPatternType, ReadoutModeType, LinkMaskType>;
-
-    /// Map used for internal storage of parameters
-    using Map = std::map<std::string, Variant>;
-
-    /// Map for storage of parameters
-    Map mMap;
+    std::unique_ptr<ParametersPimpl> mPimpl;
 };
 
 } // namespace Rorc
