@@ -7,6 +7,7 @@
 #define ALICEO2_INCLUDE_RORC_PARAMETERS_H_
 
 #include <map>
+#include <set>
 #include <string>
 #include <boost/optional.hpp>
 #include <boost/variant.hpp>
@@ -28,14 +29,6 @@ namespace Rorc {
 class Parameters
 {
   public:
-    /// Macro for defining functions to get/set a parameter
-    #define DEFINE_ALICEO2_RORC_PARAMETER_FUNCTIONS(_name, _type)\
-      using _name##Type = _type;\
-      auto set##_name(_type value) -> Parameters&;\
-      auto get##_name() const -> boost::optional<_type>;\
-      auto get##_name##Required() const -> _type;
-    #undef DEFINE_ALICEO2_RORC_PARAMETER_FUNCTIONS
-
     // Types for parameter values
 
     /// Type for buffer parameters
@@ -67,6 +60,9 @@ class Parameters
 
     /// Type for the forced unlock enabled parameter
     using ForcedUnlockEnabledType = bool;
+
+    /// Type for the link mask parameter
+    using LinkMaskType = std::set<int>;
 
 
     // Setters
@@ -200,6 +196,18 @@ class Parameters
     /// \return Reference to this object for chaining calls
     auto setForcedUnlockEnabled(ForcedUnlockEnabledType value) -> Parameters&;
 
+    /// Sets the LinkMask parameter
+    ///
+    /// Note: this parameter is under construction... it will not yet have any actual effect
+    ///
+    /// The BAR channel may transfer data from multiple links.
+    /// When this parameter is set, the links corresponding to the given number are enabled.
+    /// When this parameter is not set, ??? links will be enabled (none? one? to be determined...)
+    ///
+    /// \param value The value to set
+    /// \return Reference to this object for chaining calls
+    auto setLinkMask(LinkMaskType value) -> Parameters&;
+
 
     // Non-throwing getters
 
@@ -242,6 +250,10 @@ class Parameters
     /// Gets the ForcedUnlockEnabled parameter
     /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
     auto getForcedUnlockEnabled() const -> boost::optional<ForcedUnlockEnabledType>;
+
+    /// Gets the LinkMask parameter
+    /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+    auto getLinkMask() const -> boost::optional<LinkMaskType>;
 
 
     // Throwing getters
@@ -296,6 +308,11 @@ class Parameters
     /// \return The value
     auto getForcedUnlockEnabledRequired() const -> ForcedUnlockEnabledType;
 
+    /// Gets the LinkMask parameter
+    /// \exception ParameterException The parameter was not present
+    /// \return The value
+    auto getLinkMaskRequired() const -> LinkMaskType;
+
 
     // Helper functions
 
@@ -309,7 +326,7 @@ class Parameters
   private:
     /// Variant used for internal storage of parameters
     using Variant = boost::variant<size_t, int32_t, bool, BufferParametersType, CardIdType, GeneratorLoopbackType,
-        GeneratorPatternType, ReadoutModeType>;
+        GeneratorPatternType, ReadoutModeType, LinkMaskType>;
 
     /// Map used for internal storage of parameters
     using Map = std::map<std::string, Variant>;

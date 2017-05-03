@@ -87,7 +87,7 @@ _PARAMETER_FUNCTIONS(GeneratorDataSize, "generator_data_size")
 _PARAMETER_FUNCTIONS(GeneratorPattern, "generator_pattern")
 _PARAMETER_FUNCTIONS(ReadoutMode, "readout_mode")
 _PARAMETER_FUNCTIONS(ForcedUnlockEnabled, "forced_unlock")
-
+_PARAMETER_FUNCTIONS(LinkMask, "link_mask")
 
 #undef _PARAMETER_FUNCTIONS
 
