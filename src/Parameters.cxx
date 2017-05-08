@@ -13,22 +13,41 @@
 
 namespace AliceO2 {
 namespace Rorc {
+
+/// Variant used for internal storage of parameters
+using Variant = boost::variant<size_t, int32_t, bool, Parameters::BufferParametersType, Parameters::CardIdType,
+  Parameters::GeneratorLoopbackType, Parameters::GeneratorPatternType, Parameters::ReadoutModeType,
+  Parameters::LinkMaskType>;
+
+using KeyType = const char*;
+
+/// Map used for internal storage of parameters
+using Map = std::map<KeyType, Variant>;
+
+/// PIMPL for hiding Parameters implementation
+struct ParametersPimpl
+{
+    /// Map for storage of parameters
+    Map map;
+};
+
 namespace {
+
 /// Set a parameter from the map
 /// \tparam T The parameter type to get
 /// \tparam Map The map type to extract from
-template <class T, typename Map>
-void setParam(Map& map, std::string key, const T& value)
+template <class T>
+void setParam(Map& map, KeyType key, const T& value)
 {
-    map[key] = value;
+    map[key] = Variant { value };
 }
 
 /// Get a parameter from the map
 /// \tparam T The parameter type to get
 /// \tparam Map The map type to extract from
 /// \return The value wrapped in an optional if it was found, or boost::none if it was not
-template <typename T, typename Map>
-auto getParam(const Map& map, std::string key) -> boost::optional<T>
+template <typename T>
+auto getParam(const Map& map, KeyType key) -> boost::optional<T>
 {
   auto iterator = map.find(key);
   if (iterator != map.end()) {
@@ -44,8 +63,8 @@ auto getParam(const Map& map, std::string key) -> boost::optional<T>
 /// \tparam T The parameter type to get
 /// \tparam Map The map type to extract from
 /// \return The value
-template <typename T, typename Map>
-auto getParamRequired(const Map& map, std::string key) -> T
+template <typename T>
+auto getParamRequired(const Map& map, KeyType key) -> T
 {
   if (auto optional = getParam<T>(map, key)) {
     return *optional;
@@ -56,21 +75,6 @@ auto getParamRequired(const Map& map, std::string key) -> T
   }
 }
 } // Anonymous namespace
-
-/// PIMPL for hiding Parameters implementation
-struct ParametersPimpl
-{
-    /// Variant used for internal storage of parameters
-    using Variant = boost::variant<size_t, int32_t, bool, Parameters::BufferParametersType, Parameters::CardIdType,
-      Parameters::GeneratorLoopbackType, Parameters::GeneratorPatternType, Parameters::ReadoutModeType,
-      Parameters::LinkMaskType>;
-
-    /// Map used for internal storage of parameters
-    using Map = std::map<std::string, Variant>;
-
-    /// Map for storage of parameters
-    Map map;
-};
 
 /// Helper macro to implement getters/setters
 /// \param _param_name The name of the parameter
@@ -105,7 +109,7 @@ _PARAMETER_FUNCTIONS(ForcedUnlockEnabled, "forced_unlock")
 _PARAMETER_FUNCTIONS(LinkMask, "link_mask")
 #undef _PARAMETER_FUNCTIONS
 
-Parameters::Parameters()
+Parameters::Parameters() : mPimpl(std::make_unique<ParametersPimpl>())
 {
 }
 
@@ -113,25 +117,35 @@ Parameters::~Parameters()
 {
 }
 
-Parameters::Parameters(const Parameters &other)
+Parameters::Parameters(const Parameters& other)
 {
+  mPimpl = std::make_unique<ParametersPimpl>();
   mPimpl->map = other.mPimpl->map;
 }
 
-Parameters::Parameters(Parameters &&other)
+Parameters::Parameters(Parameters&& other)
 {
-  mPimpl->map = std::move(other.mPimpl->map);
+  mPimpl = std::move(other.mPimpl);
 }
 
-Parameters &Parameters::operator=(const Parameters &other)
+Parameters& Parameters::operator=(const Parameters& other)
 {
+  if (&other == this) {
+    return *this;
+  }
+  if (!mPimpl) {
+    mPimpl = std::make_unique<ParametersPimpl>();
+  }
   mPimpl->map = other.mPimpl->map;
   return *this;
 }
 
-Parameters &Parameters::operator=(Parameters &&other)
+Parameters& Parameters::operator=(Parameters&& other)
 {
-  mPimpl->map = std::move(other.mPimpl->map);
+  if (&other == this) {
+    return *this;
+  }
+  mPimpl = std::move(other.mPimpl);
   return *this;
 }
 

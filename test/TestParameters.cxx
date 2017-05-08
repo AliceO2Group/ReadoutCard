@@ -22,6 +22,14 @@ constexpr auto GENERATOR_DATA_SIZE = 5ul;
 constexpr auto GENERATOR_ENABLED = true;
 constexpr auto GENERATOR_LOOPBACK_MODE = LoopbackMode::Rorc;
 
+BOOST_AUTO_TEST_CASE(ParametersConstructors)
+{
+  Parameters p;
+  Parameters p2 = p;
+  Parameters p3 = std::move(p2);
+  Parameters p4 = Parameters::makeParameters(SERIAL_NUMBER, CHANNEL_NUMBER);
+}
+
 BOOST_AUTO_TEST_CASE(ParametersPutGetTest)
 {
   Parameters p = Parameters::makeParameters(SERIAL_NUMBER, CHANNEL_NUMBER)

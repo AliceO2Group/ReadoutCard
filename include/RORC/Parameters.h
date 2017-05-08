@@ -7,6 +7,7 @@
 #define ALICEO2_INCLUDE_RORC_PARAMETERS_H_
 
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 #include <boost/optional.hpp>
