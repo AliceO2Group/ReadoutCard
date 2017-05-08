@@ -1,4 +1,4 @@
-/// \file SuperpageStatus.h
+/// \file Superpage.h
 /// \brief Definition of the SuperpageStatus struct
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)

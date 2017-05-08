@@ -17,8 +17,13 @@ RORCs can have multiple DMA channels, and each channel is treated separately by 
 
 Channel ownership lock
 -------------------
-Clients can acquire a master lock on a channel by instantiating a ChannelMasterInterface implementation through the
-ChannelFactory class. 
+Clients can acquire a master lock on a channel by instantiating a *ChannelMasterInterface* implementation through the
+*ChannelFactory* class. 
+
+The user will need to specify parameters for the channel by passing an instance of the *Parameters* 
+class to the factory function. The most important parameters are the card ID (either a serial number of a PCI address),
+and the BAR channel number. See the *Parameters* class's setter functions for more information about the options 
+available.
 
 The driver uses some files in shared memory:
 * `/dev/shm/alice_o2/rorc/[PCI address]/channel_[channel number]/fifo` - For card FIFOs
@@ -27,15 +32,18 @@ The driver uses some files in shared memory:
 * `/var/lib/hugetlbfs/global/pagesize-[page size]/rorc-dma-bench_id=[PCI address]_chan_[channel number]` - For card benchmark DMA buffers
 
 If the process crashes badly, it may be necessary to clean up the mutex manually, either by deleting with `rm` or by 
-using the `rorc-channel-cleanup` utility.
+using the `rorc-channel-cleanup` utility. There is also the possibility of automatic cleanup by setting forced unlocking
+enabled using the `setForcedUnlockEnabled()` function of the *Parameters* class. However, this option should be used with
+caution. See the function's documentation for more information about the risks.
 
 Once a ChannelMaster has acquired the lock, clients can:
-* Read and write registers
+* Read and write registers of the BAR channel
 * Start and stop DMA
 * Push and read pages
 
-For a usage example, see the program in `RORC/src/Example.cxx`. NOTE: due to recent extensive changes to the library,
-this example is slightly out of date. `RORC/src/CommandLineUtilities/ProgramDmaBench.cxx` might be more helpful.
+For a simple usage example, see the program in `src/Example.cxx`. 
+For high-performance readout, the benchmark program `src/CommandLineUtilities/ProgramDmaBench.cxx` may be more
+instructive.
 
 Limited-access interface
 -------------------
