@@ -47,7 +47,6 @@ class ProgramListCards: public Program
       table << lineFat << header << lineThin;
 
       int i = 0;
-      bool foundUninitialized = false;
       for (const auto& card : cardsFound) {
         // Try to figure out the firmware version
         std::string firmware = "n/a";
@@ -55,12 +54,12 @@ class ProgramListCards: public Program
           Parameters params = Parameters::makeParameters(card.serialNumber, 0);
           // Temporary (hopefully) workaround, because ChannelMaster requires a buffer when initializing
           params.setBufferParameters(BufferParameters::File{"/dev/shm/rorc_channel_utility_dummy_buffer", 4*1024});
-
           firmware = ChannelFactory().getMaster(params)->getFirmwareInfo().value_or("n/a");
         }
         catch (const Exception& e) {
-          foundUninitialized = true;
-          cout << "Could not get firmware version string: " << e.what() << '\n';
+          if (isVerbose()) {
+            cout << "Could not get firmware version string:\n" << boost::diagnostic_information(e) << '\n';
+          }
         }
 
         table << boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciAddress.toString()
@@ -69,14 +68,6 @@ class ProgramListCards: public Program
       }
 
       table << lineFat;
-
-      cout << "Found " << cardsFound.size() << " card(s)\n";
-
-      if (foundUninitialized) {
-        cout << "Found card(s) with invalid channel 0 shared state. Reading the firmware version from these is "
-            "currently not supported by this utility\n";
-      }
-
       cout << table.str();
     }
 };
