@@ -59,14 +59,11 @@ class CruChannelMaster final : public ChannelMasterPdaBase
 
   private:
 
-    /// Limits the number of superpages allowed in the queue
-    static constexpr size_t MAX_SUPERPAGES = 32;
+    // Max amount of superpages per link
+    static constexpr size_t LINK_MAX_SUPERPAGES = 32;
 
-    /// Firmware FIFO Size
-    static constexpr size_t FIFO_QUEUE_MAX = 4;
-
-    using SuperpageQueueType = SuperpageQueue<MAX_SUPERPAGES>;
-    using SuperpageQueueEntry = SuperpageQueueType::SuperpageQueueEntry;
+    // Queue for one link
+    using LinkQueue = boost::circular_buffer<Superpage>;
 
     /// Namespace for enum describing the status of a page's arrival
     struct DataArrivalStatus
@@ -83,7 +80,6 @@ class CruChannelMaster final : public ChannelMasterPdaBase
     void resetCru();
     void setBufferReady();
     void setBufferNonReady();
-    void pushSuperpage(SuperpageQueueEntry& superpage);
 
     Cru::BarAccessor getBar()
     {
@@ -99,35 +95,8 @@ class CruChannelMaster final : public ChannelMasterPdaBase
 
     static constexpr CardType::type CARD_TYPE = CardType::Cru;
 
-    /// Get front index of FIFO
-    int getFifoFront()
-    {
-      return (mFifoBack + mFifoSize) % FIFO_QUEUE_MAX;
-    };
-
-    int getFifoBack()
-    {
-      return mFifoBack;
-    }
-
-    void incrementFifoFront()
-    {
-      mFifoSize++;
-    }
-
-    void incrementFifoBack()
-    {
-      mFifoSize--;
-      mFifoBack = (mFifoBack + 1) % FIFO_QUEUE_MAX;
-    }
-
-    /// Back index of the firmware FIFO
-    int mFifoBack = 0;
-
-    /// Amount of elements in the firmware FIFO
-    int mFifoSize = 0;
-
-    SuperpageQueueType mSuperpageQueue;
+    LinkQueue mLinkQueue { LINK_MAX_SUPERPAGES };
+    uint32_t mLinkSuperpageCounter { 0 };
 
     /// BAR 2 is needed to read serial number, temperature, etc.
     /// We initialize it on demand

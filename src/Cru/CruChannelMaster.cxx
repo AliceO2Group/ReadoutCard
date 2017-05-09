@@ -78,7 +78,8 @@ void CruChannelMaster::deviceStartDma()
 {
   resetCru();
   initCru();
-  mSuperpageQueue.clear();
+  mLinkQueue.clear();
+  mLinkSuperpageCounter = 0;
   setBufferReady();
 }
 
@@ -134,87 +135,61 @@ void CruChannelMaster::pushSuperpage(Superpage superpage)
 {
   checkSuperpage(superpage);
 
-  SuperpageQueueEntry entry;
-  entry.busAddress = getBusOffsetAddress(superpage.getOffset());
-  entry.maxPages = superpage.getSize() / DMA_PAGE_SIZE;
-  entry.pushedPages = 0;
-  entry.superpage = superpage;
-  entry.superpage.received = 0;
+  if (mLinkQueue.size() >= LINK_MAX_SUPERPAGES) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not push superpage, queue is full"));
+  }
+  mLinkQueue.push_back(superpage);
 
-  mSuperpageQueue.addToQueue(entry);
+  auto maxPages = superpage.getSize() / DMA_PAGE_SIZE;
+  auto busAddress = getBusOffsetAddress(superpage.getOffset());
+  getBar().pushSuperpageDescriptor(maxPages, busAddress);
 }
 
 auto CruChannelMaster::popSuperpage() -> Superpage
 {
-  return mSuperpageQueue.removeFromFilledQueue().superpage;
+  if (getSuperpage().isReady()) {
+    auto superpage = mLinkQueue.front();
+    superpage.received = superpage.size;
+    mLinkQueue.pop_front();
+    mLinkSuperpageCounter++;
+    return superpage;
+  } else {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not pop superpage, transfer wasn't ready"));
+  }
 }
 
 void CruChannelMaster::fillSuperpages()
 {
-  // Push superpages
-  {
-    size_t freeDescriptors = FIFO_QUEUE_MAX - mFifoSize;
-    int possibleToPush = std::min(mSuperpageQueue.getPushing().size(), freeDescriptors);
-
-    for (int i = 0; i < possibleToPush; ++i) {
-      SuperpageQueueEntry& entry = mSuperpageQueue.getPushingFrontEntry();
-      pushSuperpage(entry);
-      // Remove superpage from pushing queue
-      mSuperpageQueue.removeFromPushingQueue();
-    }
-  }
-
   // Check for arrivals & handle them
-  if (!mSuperpageQueue.getArrivals().empty()) {
-    while (mFifoSize > 0) {
-      SuperpageQueueEntry& entry = mSuperpageQueue.getArrivalsFrontEntry();
-      auto pagesArrived = getBar().getSuperpagePushedPages(getFifoBack());
-      assert(pagesArrived <= entry.maxPages);
-      entry.superpage.received = pagesArrived * DMA_PAGE_SIZE;
-
-      if (pagesArrived == entry.maxPages) {
-        incrementFifoBack();
-        entry.superpage.ready = true;
-        mSuperpageQueue.moveFromArrivalsToFilledQueue();
-      } else {
-        // If the back one hasn't arrived yet, the next ones will certainly not have arrived either...
-        break;
-      }
-    }
+  uint32_t superpageCount = getBar().getSuperpageCount();
+  if (superpageCount > mLinkSuperpageCounter) {
+    // Front superpage has arrived
+    mLinkQueue.front().ready = true;
   }
-}
-
-void CruChannelMaster::pushSuperpage(SuperpageQueueEntry& entry)
-{
-  assert(mFifoSize < FIFO_QUEUE_MAX);
-  assert(entry.pushedPages < entry.maxPages);
-
-  auto descriptorIndex = getFifoFront();
-
-  getBar().setSuperpageDescriptor(descriptorIndex, entry.maxPages, entry.busAddress);
-
-  incrementFifoFront();
-  entry.pushedPages = entry.maxPages;
 }
 
 int CruChannelMaster::getSuperpageQueueCount()
 {
-  return mSuperpageQueue.getQueueCount();
+  return mLinkQueue.size();
 }
 
 int CruChannelMaster::getSuperpageQueueAvailable()
 {
-  return mSuperpageQueue.getQueueAvailable();
+  return mLinkQueue.capacity() - mLinkQueue.size();
 }
 
 int CruChannelMaster::getSuperpageQueueCapacity()
 {
-  return mSuperpageQueue.getQueueCapacity();
+  return mLinkQueue.capacity();
 }
 
 auto CruChannelMaster::getSuperpage() -> Superpage
 {
-  return mSuperpageQueue.getFrontSuperpage();
+  if (mLinkQueue.size() == 0) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not get front superpage, queue is empty"));
+  }
+
+  return mLinkQueue.front();
 }
 
 boost::optional<float> CruChannelMaster::getTemperature()
@@ -268,8 +243,8 @@ void CruChannelMaster::utilityCleanupState()
 boost::optional<std::string> CruChannelMaster::getFirmwareInfo()
 {
   std::ostringstream stream;
-  stream << std::hex << getBar2().getFirmwareGitHash() << '-' << getBar2().getFirmwareDate() << '-'
-      << getBar2().getFirmwareTime();
+  stream << '-' << getBar2().getFirmwareDate() << '-' << getBar2().getFirmwareTime() << std::hex
+       << getBar2().getFirmwareGitHash();
   return stream.str();
 }
 

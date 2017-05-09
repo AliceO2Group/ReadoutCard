@@ -28,17 +28,15 @@ static constexpr int SUPERPAGE_ADDRESS_HIGH = 0x204/4;
 /// Low address of superpage
 static constexpr int SUPERPAGE_ADDRESS_LOW = 0x208/4;
 
-/// Pages available and index of superpage
-/// Bits [0:4] index
-/// Bites[5:31] 8KiB pages available in superpages
-static constexpr int SUPERPAGE_PAGES_AVAILABLE_AND_INDEX = 0x20c/4;
+/// Size of the superpage in 8KiB pages
+static constexpr int SUPERPAGE_PAGES_AVAILABLE = 0x20c/4;
 
 /// Status of superpages
 /// Byte address: 0x210
 static constexpr int SUPERPAGE_STATUS = 0x210/4;
 
-/// Amount of pushed pages in superpage of index 0.
-static constexpr int SUPERPAGE_PUSHED_PAGES = 0x240/4;
+/// Amount of completely pushed superpages
+static constexpr int SUPERPAGES_PUSHED = 0x240/4;
 
 /// Configuration register for data generator
 /// Bit 0: set to start data generator
