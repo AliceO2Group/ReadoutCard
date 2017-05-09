@@ -8,7 +8,6 @@
 #include <thread>
 #include <sstream>
 #include "ChannelPaths.h"
-#include "ChannelUtilityImpl.h"
 #include "ExceptionInternal.h"
 #include "Utilities/SmartPointer.h"
 
@@ -203,41 +202,6 @@ Pda::PdaBar* CruChannelMaster::getPdaBar2Ptr()
     Utilities::resetSmartPtr(mPdaBar2, getRorcDevice().getPciDevice(), 2);
   }
   return mPdaBar2.get();
-}
-
-std::vector<uint32_t> CruChannelMaster::utilityCopyFifo()
-{
-//  std::vector<uint32_t> copy;
-//  auto* fifo = getFifoUser();
-//  size_t size = sizeof(std::decay<decltype(fifo)>::type);
-//  size_t elements = size / sizeof(decltype(copy)::value_type);
-//  copy.reserve(elements);
-//
-//  auto* fifoData = reinterpret_cast<char*>(fifo);
-//  auto* copyData = reinterpret_cast<char*>(copy.data());
-//  std::copy(fifoData, fifoData + size, copyData);
-//  return copy;
-  return {};
-}
-
-void CruChannelMaster::utilityPrintFifo(std::ostream& os)
-{
-//  ChannelUtility::printCruFifo(getFifoUser(), os);
-}
-
-void CruChannelMaster::utilitySetLedState(bool state)
-{
-  getBar().setLedState(state);
-}
-
-void CruChannelMaster::utilitySanityCheck(std::ostream& os)
-{
-  ChannelUtility::cruSanityCheck(os, this);
-}
-
-void CruChannelMaster::utilityCleanupState()
-{
-  ChannelUtility::cruCleanupState(ChannelPaths(getCardDescriptor().pciAddress, getChannelNumber()));
 }
 
 boost::optional<std::string> CruChannelMaster::getFirmwareInfo()

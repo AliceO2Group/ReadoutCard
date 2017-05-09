@@ -13,7 +13,6 @@
 #include "CardDescriptor.h"
 #include "ChannelBase.h"
 #include "ChannelPaths.h"
-#include "ChannelUtilityInterface.h"
 #include "InterprocessLock.h"
 #include "RORC/ChannelMasterInterface.h"
 #include "RORC/Exception.h"
@@ -26,7 +25,7 @@ namespace Rorc {
 /// Partially implements the ChannelMasterInterface. It provides:
 /// - Interprocess synchronization
 /// - Creation of files and directories related to the channel
-class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface, public ChannelUtilityInterface
+class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface
 {
   public:
     using AllowedChannels = std::set<int>;

@@ -26,12 +26,6 @@ class CruChannelMaster final : public ChannelMasterPdaBase
 
     virtual CardType::type getCardType() override;
 
-    virtual std::vector<uint32_t> utilityCopyFifo() override;
-    virtual void utilityPrintFifo(std::ostream& os) override;
-    virtual void utilitySetLedState(bool state) override;
-    virtual void utilitySanityCheck(std::ostream& os) override;
-    virtual void utilityCleanupState() override;
-
     virtual void pushSuperpage(Superpage) override;
     virtual int getSuperpageQueueCount() override;
     virtual int getSuperpageQueueAvailable() override;

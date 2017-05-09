@@ -7,7 +7,6 @@
 #include <iostream>
 #include <string>
 #include "RORC/ChannelFactory.h"
-#include "ChannelUtilityInterface.h"
 #include "Crorc/Crorc.h"
 #include "ExceptionInternal.h"
 

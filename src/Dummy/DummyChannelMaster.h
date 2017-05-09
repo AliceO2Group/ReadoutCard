@@ -7,7 +7,6 @@
 
 #include <array>
 #include <boost/scoped_ptr.hpp>
-#include "ChannelUtilityInterface.h"
 #include "ChannelMasterBase.h"
 
 namespace AliceO2 {
@@ -29,12 +28,6 @@ class DummyChannelMaster final : public ChannelMasterBase
     virtual uint32_t readRegister(int index) override;
     virtual void writeRegister(int index, uint32_t value) override;
     virtual CardType::type getCardType() override;
-
-    virtual std::vector<uint32_t> utilityCopyFifo() override;
-    virtual void utilityPrintFifo(std::ostream& os) override;
-    virtual void utilitySetLedState(bool state) override;
-    virtual void utilitySanityCheck(std::ostream& os) override;
-    virtual void utilityCleanupState() override;
 
     virtual boost::optional<std::string> getFirmwareInfo() override;
 };

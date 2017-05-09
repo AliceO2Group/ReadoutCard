@@ -28,12 +28,6 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
     virtual ~CrorcChannelMaster() override;
 
     virtual CardType::type getCardType() override;
-
-    virtual std::vector<uint32_t> utilityCopyFifo() override;
-    virtual void utilityPrintFifo(std::ostream& os) override;
-    virtual void utilitySetLedState(bool state) override;
-    virtual void utilitySanityCheck(std::ostream& os) override;
-    virtual void utilityCleanupState() override;
     virtual boost::optional<std::string> getFirmwareInfo() override;
 
     virtual void pushSuperpage(Superpage superpage) override;

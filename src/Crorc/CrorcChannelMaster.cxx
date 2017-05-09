@@ -12,7 +12,6 @@
 #include <boost/circular_buffer.hpp>
 #include <boost/format.hpp>
 #include "ChannelPaths.h"
-#include "ChannelUtilityImpl.h"
 #include "Crorc/Constants.h"
 #include "RorcStatusCode.h"
 #include "Utilities/SmartPointer.h"
@@ -443,34 +442,6 @@ Pda::PdaBar& CrorcChannelMaster::getBar2()
     Utilities::resetSmartPtr(mPdaBar2, getRorcDevice().getPciDevice(), 2);
   }
   return *(mPdaBar2.get());
-}
-
-std::vector<uint32_t> CrorcChannelMaster::utilityCopyFifo()
-{
-  std::vector<uint32_t> copy;
-  auto& fifo = getReadyFifoUser()->dataInt32;
-  copy.insert(copy.begin(), fifo.begin(), fifo.end());
-  return copy;
-}
-
-void CrorcChannelMaster::utilityPrintFifo(std::ostream& os)
-{
-  ChannelUtility::printCrorcFifo(getReadyFifoUser(), os);
-}
-
-void CrorcChannelMaster::utilitySetLedState(bool)
-{
-  BOOST_THROW_EXCEPTION(CrorcException() << ErrorInfo::Message("C-RORC does not support setting LED state"));
-}
-
-void CrorcChannelMaster::utilitySanityCheck(std::ostream& os)
-{
-  ChannelUtility::crorcSanityCheck(os, this);
-}
-
-void CrorcChannelMaster::utilityCleanupState()
-{
-  ChannelUtility::crorcCleanupState(ChannelPaths(getCardDescriptor().pciAddress, getChannelNumber()));
 }
 
 boost::optional<std::string> CrorcChannelMaster::getFirmwareInfo()

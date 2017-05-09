@@ -71,7 +71,6 @@ O2_SETUP(NAME ${MODULE_NAME})
 set(SRCS
   src/CardType.cxx
   src/Factory/ChannelFactory.cxx
-  src/Factory/ChannelUtilityFactory.cxx
   src/ChannelBase.cxx
   src/ChannelMasterBase.cxx
   src/ChannelPaths.cxx
@@ -111,7 +110,6 @@ if(ALICEO2_RORC_PDA_ENABLED)
   list(APPEND SRCS
     src/ChannelMasterPdaBase.cxx
     src/ChannelSlave.cxx
-    src/ChannelUtilityImpl.cxx
     src/Crorc/Crorc.cxx
     src/Crorc/CrorcChannelMaster.cxx
     src/Crorc/CrorcChannelSlave.cxx
@@ -153,13 +151,11 @@ build_util_exec(rorc-reg-write CommandLineUtilities/ProgramRegisterWrite.cxx)
 
 if(ALICEO2_RORC_PDA_ENABLED)
   build_util_exec(rorc-channel-cleanup CommandLineUtilities/ProgramCleanup.cxx)
-  build_util_exec(rorc-cru-blink CommandLineUtilities/ProgramCruBlink.cxx)
   build_util_exec(rorc-example Example.cxx)
   build_util_exec(rorc-flash CommandLineUtilities/ProgramFlash.cxx)
   build_util_exec(rorc-flash-read CommandLineUtilities/ProgramFlashRead.cxx)
   build_util_exec(rorc-list-cards CommandLineUtilities/ProgramListCards.cxx)
-  build_util_exec(rorc-print-fifo CommandLineUtilities/ProgramPrintFifo.cxx)
-  build_util_exec(rorc-sanity-check CommandLineUtilities/ProgramSanityCheck.cxx)
+  #build_util_exec(rorc-sanity-check CommandLineUtilities/ProgramSanityCheck.cxx)
 
   if(DIM_FOUND)
     O2_GENERATE_EXECUTABLE(
