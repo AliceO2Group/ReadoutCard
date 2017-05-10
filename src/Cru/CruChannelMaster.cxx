@@ -28,9 +28,6 @@ namespace
 /// Note: the CRU has a firmware defined fixed page size
 constexpr int DMA_PAGE_SIZE = 8 * 1024;
 
-/// DMA page length in 32-bit words
-constexpr int DMA_PAGE_SIZE_32 = DMA_PAGE_SIZE / 4;
-
 /// DMA addresses must be 32-byte aligned
 constexpr uint64_t DMA_ALIGNMENT = 32;
 } // Anonymous namespace
@@ -61,11 +58,21 @@ CruChannelMaster::CruChannelMaster(const Parameters& parameters)
           << ErrorInfo::Message("CRU currently only supports operation with data generator"));
     }
   }
+
+  Utilities::resetSmartPtr(mPdaBar2, getRorcDevice().getPciDevice(), 2);
+
+  // Insert links
+  getLogger() << "Enabling link ";
+  for (int id : parameters.getLinkMask().value_or(Parameters::LinkMaskType{0})) {
+    getLogger() << id << " ";
+    mLinks.push_back({id});
+  }
+  getLogger() << InfoLogger::InfoLogger::endm;
 }
 
 auto CruChannelMaster::allowedChannels() -> AllowedChannels {
   // Note: BAR 1 is not available because BAR 0 is 64-bit wide, so it 'consumes' two BARs.
-  return {0, 2};
+  return {0};
 }
 
 CruChannelMaster::~CruChannelMaster()
@@ -77,9 +84,19 @@ void CruChannelMaster::deviceStartDma()
 {
   resetCru();
   initCru();
-  mLinkQueue.clear();
-  mLinkSuperpageCounter = 0;
   setBufferReady();
+
+  /// XXX TEMPORARY SETTING FOR A SPECIFIC DATA GENERATOR
+  mPdaBar2->writeRegister(0x8000020/4, 1);
+
+  mLinkToPush = 0;
+  mLinkToPop = 0;
+  mLinksTotalQueueSize = 0;
+  for (auto &link : mLinks) {
+    link.queue.clear();
+    link.superpageCounter = 0;
+  }
+  mReadyQueue.clear();
 }
 
 /// Set buffer to ready
@@ -134,74 +151,98 @@ void CruChannelMaster::pushSuperpage(Superpage superpage)
 {
   checkSuperpage(superpage);
 
-  if (mLinkQueue.size() >= LINK_MAX_SUPERPAGES) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not push superpage, queue is full"));
+  if (getTransferQueueAvailable() == 0) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not push superpage, transfer queue was full"));
   }
-  mLinkQueue.push_back(superpage);
 
-  auto maxPages = superpage.getSize() / DMA_PAGE_SIZE;
-  auto busAddress = getBusOffsetAddress(superpage.getOffset());
-  getBar().pushSuperpageDescriptor(maxPages, busAddress);
+    // Look for an empty slot in the link queues
+  for (int i = 0; i < mLinks.size(); ++i) {
+    auto &link = getNextLinkToPush();
+    if (!link.queue.full()) {
+      link.queue.push_back(superpage);
+      mLinksTotalQueueSize++;
+      auto maxPages = superpage.getSize() / DMA_PAGE_SIZE;
+      auto busAddress = getBusOffsetAddress(superpage.getOffset());
+      getBar().pushSuperpageDescriptor(maxPages, busAddress);
+      return;
+    }
+  }
+
+  // This should never happen
+  BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not push superpage, transfer queue was full"));
+}
+
+auto CruChannelMaster::getSuperpage() -> Superpage
+{
+  if (mReadyQueue.empty()) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not get superpage, ready queue was empty"));
+  }
+
+  return mReadyQueue.front();
 }
 
 auto CruChannelMaster::popSuperpage() -> Superpage
 {
-  if (getSuperpage().isReady()) {
-    auto superpage = mLinkQueue.front();
-    superpage.received = superpage.size;
-    mLinkQueue.pop_front();
-    mLinkSuperpageCounter++;
-    return superpage;
-  } else {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not pop superpage, transfer wasn't ready"));
+  if (mReadyQueue.empty()) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not pop superpage, ready Queue was empty"));
   }
+
+  auto superpage = mReadyQueue.front();
+  mReadyQueue.pop_front();
+  return superpage;
 }
 
 void CruChannelMaster::fillSuperpages()
 {
   // Check for arrivals & handle them
-  uint32_t superpageCount = getBar().getSuperpageCount();
-  if (superpageCount > mLinkSuperpageCounter) {
-    // Front superpage has arrived
-    mLinkQueue.front().ready = true;
-  }
-}
-
-int CruChannelMaster::getSuperpageQueueCount()
-{
-  return mLinkQueue.size();
-}
-
-int CruChannelMaster::getSuperpageQueueAvailable()
-{
-  return mLinkQueue.capacity() - mLinkQueue.size();
-}
-
-int CruChannelMaster::getSuperpageQueueCapacity()
-{
-  return mLinkQueue.capacity();
-}
-
-auto CruChannelMaster::getSuperpage() -> Superpage
-{
-  if (mLinkQueue.size() == 0) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not get front superpage, queue is empty"));
+  for (auto& link : mLinks) {
+    uint32_t superpageCount = getBar().getSuperpageCount();
+    auto available = superpageCount > link.superpageCounter;
+    if (available) {
+      for (int i = 0; i < (superpageCount - link.superpageCounter); ++i) {
+        // Front superpage has arrived
+        link.queue.front().ready = true;
+        link.queue.front().received = link.queue.front().size;
+        mReadyQueue.push_back(link.queue.front());
+        link.queue.pop_front();
+        link.superpageCounter++;
+        mLinksTotalQueueSize--;
+      }
+    }
   }
 
-  return mLinkQueue.front();
+  //  // Look for a ready superpage in the links
+//  for (int i = 0; i < mLinks.size(); ++i) {
+//    auto &link = getNextLinkToPop();
+//
+//    if (getSuperpage().isReady()) {
+//      auto superpage = link.queue.front();
+//      superpage.received = superpage.size;
+//      link.queue.pop_front();
+//      link.superpageCounter++;
+//      mLinksTotalQueueSize++;
+//      return superpage;
+//    } else {
+//      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not pop superpage, transfer wasn't ready"));
+//    }
+//  }
+
+}
+
+int CruChannelMaster::getTransferQueueAvailable()
+{
+  // capacity - size = available
+  return (mLinks.size() * LINK_QUEUE_CAPACITY) - mLinksTotalQueueSize;
+}
+
+int CruChannelMaster::getReadyQueueSize()
+{
+  return mReadyQueue.size();
 }
 
 boost::optional<float> CruChannelMaster::getTemperature()
 {
   return getBar2().getTemperatureCelsius();
-}
-
-Pda::PdaBar* CruChannelMaster::getPdaBar2Ptr()
-{
-  if (!mPdaBar2) {
-    Utilities::resetSmartPtr(mPdaBar2, getRorcDevice().getPciDevice(), 2);
-  }
-  return mPdaBar2.get();
 }
 
 boost::optional<std::string> CruChannelMaster::getFirmwareInfo()

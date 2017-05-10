@@ -59,7 +59,7 @@ int main(int, char**)
         cout << "Time was exceeded!\n";
         break;
       }
-      if (channel->getSuperpageQueueCount() == 0) {
+      if (channel->getReadyQueueSize() == 0) {
         cout << "Done!\n";
         break;
       }

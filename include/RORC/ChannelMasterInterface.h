@@ -41,31 +41,38 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
     /// \param resetLevel The depth of the reset
     virtual void resetChannel(ResetLevel::type resetLevel) = 0;
 
-    /// Adds superpage to queue. A superpage represents a physically contiguous buffer that will be filled with multiple
-    /// pages from the card.
+    /// Adds superpage to "transfer queue".
+    /// A superpage represents a physically contiguous buffer that will be filled with multiple pages from the card.
     /// The user is responsible for making sure enqueued superpages do not overlap - the driver will dutifully overwrite
     /// your data if you tell it to do so.
+    ///
+    /// This method will not necessarily already start the actual transfer of data.
+    /// The driver may delay it until fillSuperpages() is called, for example.
+    /// When the transfer into a superpage is ready, the driver will move it to the "ready queue".
+    /// At that point, it may be inspected with getSuperpage() and popped with popSuperpage().
+    ///
+    /// Note that this method, getSuperpage() and popSuperpage() take and return *copies* of the Superpage struct.
+    /// While the user "owns" the superpage, they cannot change anything about the superpage information given to the
+    /// driver once it is pushed.
     ///
     /// \param superpage Superpage to push
     virtual void pushSuperpage(Superpage superpage) = 0;
 
-    /// Gets the superpage at the front of the queue (i.e. the oldest superpage). Does not pop it.
+    /// Gets the superpage at the front of the "ready queue". Does not pop it.
+    /// Note that it returns a copy of the Superpage's values.
     virtual Superpage getSuperpage() = 0;
 
-    /// Tells the driver to stop keeping track of the superpage at the front of the queue (i.e. the oldest superpage)
+    /// Pops and returns the superpage at the front of the "ready queue".
     virtual Superpage popSuperpage() = 0;
 
-    /// Call in a loop. Equivalent of old fillFifo(). May be replaced by internal driver thread at some point
+    /// Handles internal driver business. Call in a loop. May be replaced by internal driver thread at some point.
     virtual void fillSuperpages() = 0;
 
-    /// Gets the amount of superpages currently in the queue
-    virtual int getSuperpageQueueCount() = 0;
+    /// Gets the amount of superpages that can still be pushed into the "transfer queue"
+    virtual int getTransferQueueAvailable() = 0;
 
-    /// Gets the amount of superpages that can still be enqueued
-    virtual int getSuperpageQueueAvailable() = 0;
-
-    /// Gets the maximum amount of superpages allowed in the queue
-    virtual int getSuperpageQueueCapacity() = 0;
+    /// Gets the amount of superpages currently in the "ready queue"
+    virtual int getReadyQueueSize() = 0;
 
     /// Returns the type of the RORC card this ChannelMaster is controlling
     /// \return The card type

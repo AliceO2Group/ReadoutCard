@@ -261,19 +261,14 @@ void CrorcChannelMaster::startDataReceiving()
   getCrorc().startDataReceiver(mReadyFifoAddressBus);
 }
 
-int CrorcChannelMaster::getSuperpageQueueCount()
+int CrorcChannelMaster::getTransferQueueAvailable()
 {
-  return mSuperpageQueue.getQueueCount();
+  return mSuperpageQueue.getPushing().capacity() - mSuperpageQueue.getPushing().size();
 }
 
-int CrorcChannelMaster::getSuperpageQueueAvailable()
+int CrorcChannelMaster::getReadyQueueSize()
 {
-  return mSuperpageQueue.getQueueAvailable();
-}
-
-int CrorcChannelMaster::getSuperpageQueueCapacity()
-{
-  return mSuperpageQueue.getQueueCapacity();
+  return mSuperpageQueue.getFilled().size();
 }
 
 auto CrorcChannelMaster::getSuperpage() -> Superpage

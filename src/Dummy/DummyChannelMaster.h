@@ -29,6 +29,9 @@ class DummyChannelMaster final : public ChannelMasterBase
     virtual void writeRegister(int index, uint32_t value) override;
     virtual CardType::type getCardType() override;
 
+    virtual int getTransferQueueAvailable() override;
+    virtual int getReadyQueueSize() override;
+
     virtual boost::optional<std::string> getFirmwareInfo() override;
 };
 

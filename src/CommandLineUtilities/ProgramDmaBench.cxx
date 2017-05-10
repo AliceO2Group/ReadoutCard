@@ -21,7 +21,6 @@
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/lexical_cast.hpp>
 #include "BarHammer.h"
-#include "Cru/Constants.h"
 #include "CommandLineUtilities/Common.h"
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
@@ -305,8 +304,6 @@ class ProgramDmaBench: public Program
 
     void dmaLoop()
     {
-      auto indexToOffset = [&](int i) -> size_t { return i * mSuperpageSize; };
-
       if (mMaxSuperpages < 1) {
         throw std::runtime_error("Buffer too small");
       }
@@ -314,8 +311,9 @@ class ProgramDmaBench: public Program
       // Lock-free queues. Usable size is (size-1), so we add 1
       folly::ProducerConsumerQueue<size_t> readoutQueue {static_cast<uint32_t>(mMaxSuperpages) + 1};
       folly::ProducerConsumerQueue<size_t> freeQueue {static_cast<uint32_t>(mMaxSuperpages) + 1};
-      for (int i = 0; i < mMaxSuperpages; ++i) {
-        if (!freeQueue.write(indexToOffset(i))) {
+      for (size_t i = 0; i < mMaxSuperpages; ++i) {
+        size_t offset = i * mSuperpageSize;
+        if (!freeQueue.write(offset)) {
           BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Something went horribly wrong"));
         }
       }
@@ -359,7 +357,7 @@ class ProgramDmaBench: public Program
             mChannel->fillSuperpages();
 
             // Give free superpages to the driver
-            while (mChannel->getSuperpageQueueAvailable() != 0) {
+            while (mChannel->getTransferQueueAvailable() != 0) {
               Superpage superpage;
               if (freeQueue.read(superpage.offset)) {
                 superpage.size = mSuperpageSize;
@@ -372,7 +370,7 @@ class ProgramDmaBench: public Program
             }
 
             // Check for filled superpages
-            if (mChannel->getSuperpageQueueCount() > 0) {
+            if (mChannel->getReadyQueueSize() > 0) {
               auto superpage = mChannel->getSuperpage();
               // We do partial updates of the mPushCount because we can have very large superpages, which would otherwise
               // cause hiccups in the display
@@ -443,7 +441,7 @@ class ProgramDmaBench: public Program
       auto start = std::chrono::steady_clock::now();
       int popped = 0;
       while ((std::chrono::steady_clock::now() - start) < timeout) {
-        if (mChannel->getSuperpageQueueCount() > 0) {
+        if (mChannel->getReadyQueueSize() > 0) {
           auto superpage = mChannel->getSuperpage();
           if (superpage.isFilled()) {
             mChannel->popSuperpage();
@@ -737,14 +735,14 @@ class ProgramDmaBench: public Program
     void printToFile(uintptr_t pageAddress, size_t pageSize, int64_t pageNumber)
     {
       auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
-      auto pageSize32 = pageSize / sizeof(int32_t);
+      auto pageSize32 = pageSize / sizeof(uint32_t);
 
       if (mOptions.fileOutputAscii) {
         mReadoutStream << "Event #" << pageNumber << '\n';
-        int perLine = 8;
+        uint32_t perLine = 8;
 
-        for (int i = 0; i < pageSize32; i += perLine) {
-          for (int j = 0; j < perLine; ++j) {
+        for (uint32_t i = 0; i < pageSize32; i += perLine) {
+          for (uint32_t j = 0; j < perLine; ++j) {
             mReadoutStream << page[i + j] << ' ';
           }
           mReadoutStream << '\n';
@@ -809,8 +807,8 @@ class ProgramDmaBench: public Program
 
     std::atomic<bool> mDmaLoopBreak {false};
     bool mInfinitePages = false;
-    std::atomic<int64_t> mPushCount { 0 };
-    std::atomic<int64_t> mReadoutCount { 0 };
+    std::atomic<uint64_t> mPushCount { 0 };
+    std::atomic<uint64_t> mReadoutCount { 0 };
     int64_t mErrorCount = 0;
     int64_t mDataGeneratorCounter = -1;
     size_t mSuperpageSize = 0;

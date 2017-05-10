@@ -31,9 +31,10 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
     virtual boost::optional<std::string> getFirmwareInfo() override;
 
     virtual void pushSuperpage(Superpage superpage) override;
-    virtual int getSuperpageQueueCount() override;
-    virtual int getSuperpageQueueAvailable() override;
-    virtual int getSuperpageQueueCapacity() override;
+
+    virtual int getTransferQueueAvailable() override;
+    virtual int getReadyQueueSize() override;
+
     virtual Superpage getSuperpage() override;
     virtual Superpage popSuperpage() override;
     virtual void fillSuperpages() override;

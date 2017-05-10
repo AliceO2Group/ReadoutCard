@@ -66,6 +66,16 @@ CardType::type DummyChannelMaster::getCardType()
   return CardType::Dummy;
 }
 
+int DummyChannelMaster::getTransferQueueAvailable()
+{
+  return 0;
+}
+
+int DummyChannelMaster::getReadyQueueSize()
+{
+  return 0;
+}
+
 boost::optional<std::string> DummyChannelMaster::getFirmwareInfo()
 {
   return std::string("Dummy");

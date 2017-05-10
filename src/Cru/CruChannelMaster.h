@@ -27,9 +27,10 @@ class CruChannelMaster final : public ChannelMasterPdaBase
     virtual CardType::type getCardType() override;
 
     virtual void pushSuperpage(Superpage) override;
-    virtual int getSuperpageQueueCount() override;
-    virtual int getSuperpageQueueAvailable() override;
-    virtual int getSuperpageQueueCapacity() override;
+
+    virtual int getTransferQueueAvailable() override;
+    virtual int getReadyQueueSize() override;
+
     virtual Superpage getSuperpage() override;
     virtual Superpage popSuperpage() override;
     virtual void fillSuperpages() override;
@@ -54,20 +55,24 @@ class CruChannelMaster final : public ChannelMasterPdaBase
   private:
 
     // Max amount of superpages per link
-    static constexpr size_t LINK_MAX_SUPERPAGES = 32;
+    static constexpr size_t LINK_QUEUE_CAPACITY = 32;
+
+    // Max amount of superpages in the ready queue
+    static constexpr size_t READY_QUEUE_CAPACITY = 32;
 
     // Queue for one link
-    using LinkQueue = boost::circular_buffer<Superpage>;
+    using SuperpageQueue = boost::circular_buffer<Superpage>;
 
-    /// Namespace for enum describing the status of a page's arrival
-    struct DataArrivalStatus
+    struct Link
     {
-        enum type
-        {
-          NoneArrived,
-          PartArrived,
-          WholeArrived,
-        };
+        /// The link's FEE ID
+        int id { -1 };
+
+        /// The amount of superpages received from this link
+        int superpageCounter { 0 };
+
+        /// The superpage queue
+        SuperpageQueue queue { LINK_QUEUE_CAPACITY };
     };
 
     void initCru();
@@ -80,20 +85,44 @@ class CruChannelMaster final : public ChannelMasterPdaBase
       return Cru::BarAccessor(getPdaBarPtr());
     }
 
-    Pda::PdaBar* getPdaBar2Ptr();
-
     Cru::BarAccessor getBar2()
     {
-      return Cru::BarAccessor(getPdaBar2Ptr());
+      return Cru::BarAccessor(mPdaBar2.get());
     }
 
-    static constexpr CardType::type CARD_TYPE = CardType::Cru;
+    // The link queues are checked round-robin
+    Link& getNextLinkToPush()
+    {
+      auto& link = mLinks.at(mLinkToPush);
+      mLinkToPush++;
+      mLinkToPush = (mLinkToPush == mLinks.size()) ? 0 : mLinkToPush;
+      return link;
+    }
 
-    LinkQueue mLinkQueue { LINK_MAX_SUPERPAGES };
-    uint32_t mLinkSuperpageCounter { 0 };
+    // The link queues are checked round-robin
+    Link& getNextLinkToPop()
+    {
+      auto& link = mLinks.at(mLinkToPop);
+      mLinkToPop++;
+      mLinkToPop = (mLinkToPop == mLinks.size()) ? 0 : mLinkToPop;
+      return link;
+    }
+
+    /// Vector of objects representing links
+    std::vector<Link> mLinks;
+    /// Index into mLinks indicating which link's turn it is to use a superpage handed to the driver
+    int mLinkToPush;
+    /// Index into mLinks indicating which link's turn it is to check for a ready superpage to hand to the user
+    int mLinkToPop;
+    /// Amount of total available superpage slots left across all links
+    int mLinksTotalQueueSize;
+
+    SuperpageQueue mReadyQueue { READY_QUEUE_CAPACITY };
+
+    //LinkQueue mLinkQueue { LINK_MAX_SUPERPAGES };
+    //uint32_t mLinkSuperpageCounter { 0 };
 
     /// BAR 2 is needed to read serial number, temperature, etc.
-    /// We initialize it on demand
     std::unique_ptr<Pda::PdaBar> mPdaBar2;
 
     // These variables are configuration parameters
