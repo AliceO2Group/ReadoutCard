@@ -73,7 +73,7 @@ class Parameters
     using ForcedUnlockEnabledType = bool;
 
     /// Type for the link mask parameter
-    using LinkMaskType = std::set<int>;
+    using LinkMaskType = std::set<uint32_t>;
 
 
     // Setters

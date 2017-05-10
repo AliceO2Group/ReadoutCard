@@ -66,10 +66,10 @@ class CruChannelMaster final : public ChannelMasterPdaBase
     struct Link
     {
         /// The link's FEE ID
-        int id { -1 };
+        uint32_t id { 0xFfffFfff };
 
         /// The amount of superpages received from this link
-        int superpageCounter { 0 };
+        uint32_t superpageCounter { 0 };
 
         /// The superpage queue
         SuperpageQueue queue { LINK_QUEUE_CAPACITY };
@@ -111,11 +111,11 @@ class CruChannelMaster final : public ChannelMasterPdaBase
     /// Vector of objects representing links
     std::vector<Link> mLinks;
     /// Index into mLinks indicating which link's turn it is to use a superpage handed to the driver
-    int mLinkToPush;
+    uint32_t mLinkToPush;
     /// Index into mLinks indicating which link's turn it is to check for a ready superpage to hand to the user
-    int mLinkToPop;
+    uint32_t mLinkToPop;
     /// Amount of total available superpage slots left across all links
-    int mLinksTotalQueueSize;
+    uint32_t mLinksTotalQueueSize;
 
     SuperpageQueue mReadyQueue { READY_QUEUE_CAPACITY };
 

@@ -4,13 +4,7 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "DummyChannelMaster.h"
-#include <iostream>
-#include <string>
-#include <vector>
 #include "RORC/ChannelFactory.h"
-
-using std::cout;
-using std::endl;
 
 namespace AliceO2 {
 namespace Rorc {
@@ -26,39 +20,41 @@ constexpr auto endm = InfoLogger::InfoLogger::StreamOps::endm;
 DummyChannelMaster::DummyChannelMaster(const Parameters& params)
     : ChannelMasterBase(makeDummyDescriptor(), params, { 0, 1, 2, 3, 4, 5, 6, 7 })
 {
-//  cout << "DummyChannelMaster::DummyChannelMaster(serial:" << serial << ", channel:" << channel << ", params:...)"
-//      << endl;
+  getLogger() << "DummyChannelMaster::DummyChannelMaster(channel:" << params.getChannelNumberRequired() << ")"
+      << InfoLogger::InfoLogger::endm;
 }
 
 DummyChannelMaster::~DummyChannelMaster()
 {
-//  cout << "DummyChannelMaster::~DummyChannelMaster()" << endl;
+  getLogger() << "DummyChannelMaster::~DummyChannelMaster()" << InfoLogger::InfoLogger::endm;
 }
 
 void DummyChannelMaster::startDma()
 {
-//  cout << "DummyChannelMaster::startDma()" << endl;
+  getLogger() << "DummyChannelMaster::startDma()" << InfoLogger::InfoLogger::endm;
 }
 
 void DummyChannelMaster::stopDma()
 {
-//  cout << "DummyChannelMaster::stopDma()" << endl;
+  getLogger() << "DummyChannelMaster::stopDma()" << InfoLogger::InfoLogger::endm;
 }
 
 void DummyChannelMaster::resetChannel(ResetLevel::type resetLevel)
 {
-//  cout << "DummyChannelMaster::resetCard(" << ResetLevel::toString(resetLevel) << ")" << endl;
+  getLogger() << "DummyChannelMaster::resetCard(" << ResetLevel::toString(resetLevel) << ")"
+      << InfoLogger::InfoLogger::endm;
 }
 
 uint32_t DummyChannelMaster::readRegister(int index)
 {
-//  cout << "DummyChannelMaster::readRegister(" << index << ")" << endl;
+  getLogger() << "DummyChannelMaster::readRegister(" << index << ")" << InfoLogger::InfoLogger::endm;
   return 0;
 }
 
 void DummyChannelMaster::writeRegister(int index, uint32_t value)
 {
-//  cout << "DummyChannelMaster::writeRegister(index:" << index << ", value:" << value << ")" << endl;
+  getLogger() << "DummyChannelMaster::writeRegister(index:" << index << ", value:" << value << ")"
+      << InfoLogger::InfoLogger::endm;
 }
 
 CardType::type DummyChannelMaster::getCardType()

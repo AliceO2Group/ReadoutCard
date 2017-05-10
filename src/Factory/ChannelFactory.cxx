@@ -4,12 +4,10 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "RORC/ChannelFactory.h"
-#include "RORC/Parameters.h"
 #include "Dummy/DummyChannelMaster.h"
 #include "Dummy/DummyChannelSlave.h"
 #include "Factory/ChannelFactoryUtils.h"
 #ifdef ALICEO2_RORC_PDA_ENABLED
-#  include <pda.h>
 #  include "Crorc/CrorcChannelMaster.h"
 #  include "Crorc/CrorcChannelSlave.h"
 #  include "Cru/CruChannelMaster.h"

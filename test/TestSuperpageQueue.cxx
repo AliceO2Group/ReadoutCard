@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_CASE(Capacity)
 {
   Queue queue;
 
-  for (int i = 0; i < MAX_SUPERPAGES; ++i) {
+  for (size_t i = 0; i < MAX_SUPERPAGES; ++i) {
     queue.addToQueue(Entry());
   }
 
@@ -41,14 +41,14 @@ BOOST_AUTO_TEST_CASE(Lifecycle)
   Queue queue;
   std::array<Id, MAX_SUPERPAGES> ids;
 
-  for (int i = 0; i < MAX_SUPERPAGES; ++i) {
+  for (size_t i = 0; i < MAX_SUPERPAGES; ++i) {
     Entry entry;
     entry.busAddress = i;
     entry.maxPages = 1;
     ids[i] = queue.addToQueue(entry);
   }
 
-  for (int i = 0; i < MAX_SUPERPAGES; ++i) {
+  for (size_t i = 0; i < MAX_SUPERPAGES; ++i) {
     Id id = i;
     Entry& entry = queue.getPushingFrontEntry();
     BOOST_CHECK(entry.busAddress == i);

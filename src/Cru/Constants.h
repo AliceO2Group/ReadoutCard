@@ -47,22 +47,6 @@ static constexpr int SUPERPAGES_PUSHED = 0x240/4;
 /// Bit 3: set to inject error
 static constexpr size_t DATA_GENERATOR_CONTROL = 0x320/4;
 
-/// Some kind of control register
-/// One can "deassert reset for led module" by writing 0xd into this (not sure what that means).
-/// This register does not appear to be necessary to use the LED on/off toggle functionality
-/// Byte address: 0x220
-[[deprecated]] static constexpr size_t LED_DEASSERT_RESET = 136;
-
-/// Some kind of control register
-/// One can "write data in led module" by writing 0x3 into this (not sure what that means).
-/// This register does not appear to be necessary to use the LED on/off toggle functionality
-/// Byte address: 0x230
-[[deprecated]] static constexpr size_t LED_MODULE_DATA = 140;
-
-/// Set to 0xff to turn the LED on, 0x00 to turn off
-/// Byte address: 0x260
-[[deprecated]] static constexpr size_t LED_STATUS = 152;
-
 /// Board serial number
 /// Must be accessed on BAR 2
 /// Byte address: 0x20002c

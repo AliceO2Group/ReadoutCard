@@ -121,9 +121,9 @@ class PublishRpc: public DimRpcInfo
     {
       std::ostringstream stream;
       stream << dnsName << ';';
-      for (int i = 0; i < addresses.size(); ++i) {
+      for (size_t i = 0; i < addresses.size(); ++i) {
         stream << addresses[i];
-        if (i+1 < addresses.size()) {
+        if ((i + 1) < addresses.size()) {
           stream << ',';
         }
       }

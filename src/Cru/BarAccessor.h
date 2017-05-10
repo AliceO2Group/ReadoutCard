@@ -217,13 +217,6 @@ class BarAccessor
       return mPdaBar->setRegister<uint8_t>(toByteAddress(Registers::DEBUG_READ_WRITE), value);
     }
 
-    void setLedState(bool onOrOff)
-    {
-      int on = 0x00; // Yes, a 0 represents the on state
-      int off = 0xff;
-      mPdaBar->writeRegister(Registers::LED_STATUS, onOrOff ? on : off);
-    }
-
   private:
     /// Convert an index to a byte address
     size_t toByteAddress(size_t address32) const

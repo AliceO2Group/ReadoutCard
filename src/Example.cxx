@@ -47,7 +47,7 @@ int main(int, char**)
     cout << "### Pushing pages" << endl;
 
     // Queue up some superpages
-    for (int i = 0; i < superpageCount; ++i) {
+    for (size_t i = 0; i < superpageCount; ++i) {
       auto offset = i * superpageSize;
       auto size = superpageSize;
       channel->pushSuperpage(Rorc::Superpage(offset, size));

@@ -41,9 +41,10 @@ PciAddress addressFromDevice(Pda::PdaDevice::PdaPciDevice pciDevice){
   uint8_t busId;
   uint8_t deviceId;
   uint8_t functionId;
-  PciDevice_getBusID(pciDevice.get(), &busId);
-  PciDevice_getDeviceID(pciDevice.get(), &deviceId);
-  PciDevice_getFunctionID(pciDevice.get(), &functionId);
+  if (PciDevice_getBusID(pciDevice.get(), &busId) || PciDevice_getDeviceID(pciDevice.get(), &deviceId)
+      || PciDevice_getFunctionID(pciDevice.get(), &functionId)) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Failed to retrieve device address"));
+  }
   PciAddress address (busId, deviceId, functionId);
   return address;
 }
@@ -178,16 +179,16 @@ std::vector<CardDescriptor> RorcDevice::findSystemDevices(const PciAddress& addr
 void RorcDevice::printDeviceInfo(std::ostream& ostream)
 {
   uint16_t domainId;
-  PciDevice_getDomainID(mPciDevice->get(), &domainId);
-
   uint8_t busId;
-  PciDevice_getBusID(mPciDevice->get(), &busId);
-
   uint8_t functionId;
-  PciDevice_getFunctionID(mPciDevice->get(), &functionId);
-
   const PciBarTypes* pciBarTypesPtr;
-  PciDevice_getBarTypes(mPciDevice->get(), &pciBarTypesPtr);
+
+  if (PciDevice_getDomainID(mPciDevice->get(), &domainId) || PciDevice_getBusID(mPciDevice->get(), &busId)
+      || PciDevice_getFunctionID(mPciDevice->get(), &functionId)
+      || PciDevice_getBarTypes(mPciDevice->get(), &pciBarTypesPtr)) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Failed to retrieve device info"));
+  }
+
   auto barType = *pciBarTypesPtr;
   auto barTypeString =
       barType == PCIBARTYPES_NOT_MAPPED ? "NOT_MAPPED" :

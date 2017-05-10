@@ -130,7 +130,7 @@ class PublisherRegistry
               std::ostringstream stream;
               stream << "Publisher '" << mServiceDescription.dnsName << "' publishing:\n";
 
-              for (int i = 0; i < mServiceDescription.addresses.size(); ++i) {
+              for (size_t i = 0; i < mServiceDescription.addresses.size(); ++i) {
                 auto index = mServiceDescription.addresses[i] / 4;
                 auto value = mChannel->readRegister(index);
                 stream << "  " << mServiceDescription.addresses[i] << " = " << value << '\n';
@@ -206,7 +206,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
 
       // Start RPC server for stop publish commands
       Alf::StringRpcServer publishStopCommandRpcServer(names.publishStopCommandRpc(),
-          [&](const std::string& parameter) {return publishStopCommand(parameter, channel, publisherRegistry);});
+          [&](const std::string& parameter) {return publishStopCommand(parameter, publisherRegistry);});
 
 //      publishCommand("/ALF/1;20,40;2.0", channel, publisherRegistry);
 //      publishCommand("/ALF/2;504;1.0", channel, publisherRegistry);
@@ -281,19 +281,15 @@ class ProgramAliceLowlevelFrontendServer: public Program
     }
 
     /// RPC handler for publish stop commands
-    static std::string publishStopCommand(const std::string& parameter, ChannelSharedPtr channel,
-        PublisherRegistry& registry)
+    static std::string publishStopCommand(const std::string& parameter, PublisherRegistry& registry)
     {
-      registry.remove("key");
+      registry.remove(parameter);
       return "";
     }
 
     using DimServicePtr = std::unique_ptr<DimService>;
 
     double mTemperature = 45;
-
-    /// Map of register addresses to corresponding services
-    std::unordered_map<uint64_t, DimServicePtr> mServices;
 };
 } // Anonymous namespace
 

@@ -88,7 +88,7 @@ uintptr_t PdaDmaBuffer::getBusOffsetAddress(size_t offset) const
   auto userWithOffset = userBase + offset;
 
   // First we find the SGL entry that contains our address
-  for (int i = 0; i < list.size(); ++i) {
+  for (size_t i = 0; i < list.size(); ++i) {
     auto entryUserStartAddress = list[i].addressUser;
     auto entryUserEndAddress = entryUserStartAddress + list[i].size;
 

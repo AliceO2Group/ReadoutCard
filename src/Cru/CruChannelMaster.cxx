@@ -63,7 +63,7 @@ CruChannelMaster::CruChannelMaster(const Parameters& parameters)
 
   // Insert links
   getLogger() << "Enabling link ";
-  for (int id : parameters.getLinkMask().value_or(Parameters::LinkMaskType{0})) {
+  for (auto id : parameters.getLinkMask().value_or(Parameters::LinkMaskType{0})) {
     getLogger() << id << " ";
     mLinks.push_back({id});
   }
@@ -156,7 +156,7 @@ void CruChannelMaster::pushSuperpage(Superpage superpage)
   }
 
     // Look for an empty slot in the link queues
-  for (int i = 0; i < mLinks.size(); ++i) {
+  for (size_t i = 0; i < mLinks.size(); ++i) {
     auto &link = getNextLinkToPush();
     if (!link.queue.full()) {
       link.queue.push_back(superpage);
@@ -199,7 +199,7 @@ void CruChannelMaster::fillSuperpages()
     uint32_t superpageCount = getBar().getSuperpageCount();
     auto available = superpageCount > link.superpageCounter;
     if (available) {
-      for (int i = 0; i < (superpageCount - link.superpageCounter); ++i) {
+      for (uint32_t i = 0; i < (superpageCount - link.superpageCounter); ++i) {
         // Front superpage has arrived
         link.queue.front().ready = true;
         link.queue.front().received = link.queue.front().size;

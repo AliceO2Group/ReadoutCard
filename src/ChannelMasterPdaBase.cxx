@@ -106,7 +106,7 @@ void ChannelMasterPdaBase::checkSuperpage(const Superpage& superpage)
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not enqueue superpage, size == 0"));
   }
 
-  if (!Utilities::isMultiple(superpage.getSize(), 32*1024)) {
+  if (!Utilities::isMultiple(superpage.getSize(), size_t(32*1024))) {
     BOOST_THROW_EXCEPTION(Exception()
         << ErrorInfo::Message("Could not enqueue superpage, size not a multiple of 32 KiB"));
   }

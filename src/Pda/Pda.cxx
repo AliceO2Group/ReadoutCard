@@ -31,7 +31,7 @@ std::tuple<PageAddress, std::vector<PageAddress>> partitionScatterGatherList(
 
   fifoAddress = {list.at(0).addressUser, list.at(0).addressBus};
 
-  for (int i = 0; i < list.size(); ++i) {
+  for (size_t i = 0; i < list.size(); ++i) {
     auto& entry = list[i];
     if (entry.size < (2l * 1024l * 1024l)) {
       BOOST_THROW_EXCEPTION(CruException()
