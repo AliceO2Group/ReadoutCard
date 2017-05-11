@@ -149,7 +149,7 @@ build_util_exec(roc-reg-read CommandLineUtilities/ProgramRegisterRead.cxx)
 build_util_exec(roc-reg-read-range CommandLineUtilities/ProgramRegisterReadRange)
 build_util_exec(roc-reg-write CommandLineUtilities/ProgramRegisterWrite.cxx)
 
-if(ALICEo2_readoutcard_PDA_ENABLED)
+if(ALICEO2_READOUTCARD_PDA_ENABLED)
   build_util_exec(roc-channel-cleanup CommandLineUtilities/ProgramCleanup.cxx)
   build_util_exec(roc-example Example.cxx)
   build_util_exec(roc-flash CommandLineUtilities/ProgramFlash.cxx)
