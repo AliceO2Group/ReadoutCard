@@ -6,7 +6,7 @@
 #include "ChannelBase.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 void ChannelBase::setLogLevel(InfoLogger::InfoLogger::Severity severity)
 {
@@ -22,5 +22,5 @@ void ChannelBase::log(int serialNumber, int channelNumber, const std::string& me
   mLogger << InfoLogger::InfoLogger::endm;
 }
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

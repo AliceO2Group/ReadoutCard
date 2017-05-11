@@ -4,12 +4,12 @@
 /// \brief Utility that reads a range of registers from a RORC
 
 #include "CommandLineUtilities/Program.h"
-#include "RORC/ChannelFactory.h"
+#include "ReadoutCard/ChannelFactory.h"
 #include <iostream>
 #include <fstream>
 #include <string>
 
-using namespace AliceO2::Rorc::CommandLineUtilities;
+using namespace AliceO2::roc::CommandLineUtilities;
 namespace po = boost::program_options;
 
 namespace {
@@ -38,8 +38,8 @@ class ProgramRegisterReadRange: public Program
       int baseAddress = Options::getOptionRegisterAddress(map);
       int channelNumber = Options::getOptionChannel(map);
       int range = Options::getOptionRegisterRange(map);
-      auto params = AliceO2::Rorc::Parameters::makeParameters(cardId, channelNumber);
-      auto channel = AliceO2::Rorc::ChannelFactory().getSlave(params);
+      auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
+      auto channel = AliceO2::roc::ChannelFactory().getSlave(params);
 
       std::vector<uint32_t> values(range);
 

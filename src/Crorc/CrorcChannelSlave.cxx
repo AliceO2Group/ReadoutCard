@@ -6,7 +6,7 @@
 #include "Crorc/CrorcChannelSlave.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 CrorcChannelSlave::CrorcChannelSlave(const Parameters& parameters)
     : ChannelSlave(parameters)
@@ -22,5 +22,5 @@ CardType::type CrorcChannelSlave::getCardType()
   return CardType::Crorc;
 }
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

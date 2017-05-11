@@ -3,18 +3,18 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_RORC_CHANNELFACTORY_H_
-#define ALICEO2_INCLUDE_RORC_CHANNELFACTORY_H_
+#ifndef ALICEO2_INCLUDE_READOUTCARD_CHANNELFACTORY_H_
+#define ALICEO2_INCLUDE_READOUTCARD_CHANNELFACTORY_H_
 
 
-#include "RORC/Parameters.h"
+#include "ReadoutCard/Parameters.h"
 #include <memory>
 #include <string>
-#include "RORC/ChannelMasterInterface.h"
-#include "RORC/ChannelSlaveInterface.h"
+#include "ReadoutCard/ChannelMasterInterface.h"
+#include "ReadoutCard/ChannelSlaveInterface.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Factory class for creating objects to access and control card channels
 class ChannelFactory
@@ -39,7 +39,7 @@ class ChannelFactory
     SlaveSharedPtr getSlave(const Parameters& parameters);
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_INCLUDE_RORC_CHANNELFACTORY_H_
+#endif // ALICEO2_INCLUDE_READOUTCARD_CHANNELFACTORY_H_

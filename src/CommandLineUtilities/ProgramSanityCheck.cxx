@@ -7,13 +7,13 @@
 #include <thread>
 #include <chrono>
 #include "Factory/ChannelUtilityFactory.h"
-#include "RORC/CardType.h"
-#include "RORC/Exception.h"
+#include "ReadoutCard/CardType.h"
+#include "ReadoutCard/Exception.h"
 #include <boost/format.hpp>
 #include "CommandLineUtilities/Program.h"
 
-using namespace AliceO2::Rorc::CommandLineUtilities;
-using namespace AliceO2::Rorc;
+using namespace AliceO2::roc::CommandLineUtilities;
+using namespace AliceO2::roc;
 using std::cout;
 using std::endl;
 
@@ -50,8 +50,8 @@ class ProgramSanityCheck: public Program
         return;
       }
 
-      auto params = AliceO2::Rorc::Parameters::makeParameters(cardId, channelNumber);
-      auto channel = AliceO2::Rorc::ChannelUtilityFactory().getUtility(params);
+      auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
+      auto channel = AliceO2::roc::ChannelUtilityFactory().getUtility(params);
       channel->utilitySanityCheck(cout);
     }
 };

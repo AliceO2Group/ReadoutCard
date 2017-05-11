@@ -7,7 +7,7 @@
 #include "Utilities/SmartPointer.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 ChannelSlave::ChannelSlave(const Parameters& parameters)
  : mChannelNumber(parameters.getChannelNumberRequired())
@@ -40,5 +40,5 @@ void ChannelSlave::writeRegister(int index, uint32_t value)
   mPdaBar->writeRegister(index, value);
 }
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

@@ -20,11 +20,11 @@ find_package(PDA)
 if(PDA_FOUND)
     message(STATUS "PDA found")
     # Add definition to enable the PDA implementation in the code
-    set(ALICEO2_RORC_PDA_ENABLED TRUE)
-    add_definitions(-DALICEO2_RORC_PDA_ENABLED)
+    set(ALICEO2_READOUTCARD_PDA_ENABLED TRUE)
+    add_definitions(-DALICEO2_READOUTCARD_PDA_ENABLED)
     include_directories(SYSTEM ${PDA_INCLUDE_DIRS})
 else()
-    message(WARNING "PDA not found, RORC module will have a dummy implementation only (skip, no error)")
+    message(WARNING "PDA not found, ReadoutCard module will have a dummy implementation only (skip, no error)")
 endif(PDA_FOUND)
 
 # DIM
@@ -32,12 +32,12 @@ find_package(DIM)
 if(DIM_FOUND)
     include_directories(${DIM_INCLUDE_DIRS})
 else()
-    message(WARNING "DIM not found, RORC module's ALF utilities will not be compiled")
+    message(WARNING "DIM not found, ReadoutCard module's ALF utilities will not be compiled")
 endif(DIM_FOUND)
 
 o2_define_bucket(
   NAME
-  o2_rorc_bucket
+  o2_readoutcard_bucket
 
   DEPENDENCIES
   ${PDA_LIBRARIES_MAYBE}
@@ -55,20 +55,19 @@ o2_define_bucket(
 
 o2_define_bucket(
   NAME
-  o2_rorc_pda
+  o2_readoutcard_pda
 
   DEPENDENCIES
-  o2_rorc_bucket
+  o2_readoutcard_bucket
   ${PDA_LIBRARIES}
 
   SYSTEMINCLUDE_DIRECTORIES
   ${Boost_INCLUDE_DIR}
 )
 
-
 o2_define_bucket(
   NAME
-  o2_rorc_dim
+  o2_readoutcard_dim
 
   DEPENDENCIES
   ${DIM_LIBRARY}
@@ -78,7 +77,7 @@ o2_define_bucket(
 
 o2_define_bucket(
   NAME
-  o2_rorc_python
+  o2_readoutcard_python
 
   DEPENDENCIES
   ${Boost_PYTHON_LIBRARY}
@@ -90,12 +89,12 @@ o2_define_bucket(
 
 o2_define_bucket(
   NAME
-  o2_rorc_pda_python
+  o2_readoutcard_pda_python
 
   DEPENDENCIES
-  o2_rorc_bucket
-  o2_rorc_pda
-  o2_rorc_python
+  o2_readoutcard_bucket
+  o2_readoutcard_pda
+  o2_readoutcard_python
   ${PDA_LIBRARIES}
 
   SYSTEMINCLUDE_DIRECTORIES

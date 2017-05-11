@@ -9,11 +9,11 @@
 #include "CommandLineUtilities/Program.h"
 #include "CommandLineUtilities/Common.h"
 #include "RorcDevice.h"
-#include "RORC/ChannelFactory.h"
+#include "ReadoutCard/ChannelFactory.h"
 #include <boost/format.hpp>
 
-using namespace AliceO2::Rorc::CommandLineUtilities;
-using namespace AliceO2::Rorc;
+using namespace AliceO2::roc::CommandLineUtilities;
+using namespace AliceO2::roc;
 using std::cout;
 using std::endl;
 
@@ -33,7 +33,7 @@ class ProgramListCards: public Program
 
     virtual void run(const boost::program_options::variables_map&)
     {
-      auto cardsFound = AliceO2::Rorc::RorcDevice::findSystemDevices();
+      auto cardsFound = AliceO2::roc::RorcDevice::findSystemDevices();
 
       std::ostringstream table;
 
@@ -53,7 +53,7 @@ class ProgramListCards: public Program
         try {
           Parameters params = Parameters::makeParameters(card.serialNumber, 0);
           // Temporary (hopefully) workaround, because ChannelMaster requires a buffer when initializing
-          params.setBufferParameters(BufferParameters::File{"/dev/shm/rorc_channel_utility_dummy_buffer", 4*1024});
+          params.setBufferParameters(buffer_parameters::File{"/dev/shm/rorc_channel_utility_dummy_buffer", 4*1024});
           firmware = ChannelFactory().getMaster(params)->getFirmwareInfo().value_or("n/a");
         }
         catch (const Exception& e) {

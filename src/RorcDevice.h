@@ -9,13 +9,13 @@
 #include <string>
 #include "CardDescriptor.h"
 #include "Pda/PdaDevice.h"
-#include "RORC/CardType.h"
-#include "RORC/Parameters.h"
-#include "RORC/ParameterTypes/PciAddress.h"
-#include "RORC/PciId.h"
+#include "ReadoutCard/CardType.h"
+#include "ReadoutCard/Parameters.h"
+#include "ReadoutCard/ParameterTypes/PciAddress.h"
+#include "ReadoutCard/PciId.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Represents a single RORC PCI device
 class RorcDevice
@@ -80,5 +80,5 @@ class RorcDevice
     CardDescriptor mDescriptor;
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

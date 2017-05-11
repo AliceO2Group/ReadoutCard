@@ -3,16 +3,16 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "RORC/Parameters.h"
+#include "ReadoutCard/Parameters.h"
 
 #define BOOST_TEST_MODULE RORC_TestEnums
 #define BOOST_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 #include <assert.h>
-#include "RORC/Exception.h"
+#include "ReadoutCard/Exception.h"
 
-using namespace AliceO2::Rorc;
+using namespace AliceO2::roc;
 
 constexpr auto SERIAL_NUMBER = 1;
 constexpr auto CHANNEL_NUMBER = 2;
@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE(ParametersPutGetTest)
       .setGeneratorDataSize(GENERATOR_DATA_SIZE)
       .setGeneratorEnabled(GENERATOR_ENABLED)
       .setGeneratorLoopback(GENERATOR_LOOPBACK_MODE)
-      .setBufferParameters(BufferParameters::File{"/my/file.shm", 0});
+      .setBufferParameters(buffer_parameters::File{"/my/file.shm", 0});
 
   BOOST_REQUIRE(boost::get<int>(p.getCardId().get()) == SERIAL_NUMBER);
   BOOST_REQUIRE(p.getChannelNumber().get_value_or(0) == CHANNEL_NUMBER);
@@ -53,8 +53,8 @@ BOOST_AUTO_TEST_CASE(ParametersPutGetTest)
   BOOST_REQUIRE(p.getGeneratorEnabledRequired() == GENERATOR_ENABLED);
   BOOST_REQUIRE(p.getGeneratorLoopbackRequired() == GENERATOR_LOOPBACK_MODE);
 
-  BOOST_REQUIRE(boost::get<BufferParameters::File>(p.getBufferParametersRequired()).path == "/my/file.shm");
-  BOOST_REQUIRE(boost::get<BufferParameters::File>(p.getBufferParametersRequired()).size == 0);
+  BOOST_REQUIRE(boost::get<buffer_parameters::File>(p.getBufferParametersRequired()).path == "/my/file.shm");
+  BOOST_REQUIRE(boost::get<buffer_parameters::File>(p.getBufferParametersRequired()).size == 0);
 }
 
 BOOST_AUTO_TEST_CASE(ParametersThrowTest)

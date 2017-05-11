@@ -3,11 +3,11 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "RORC/ParameterTypes/ReadoutMode.h"
+#include "ReadoutCard/ParameterTypes/ReadoutMode.h"
 #include "Utilities/Enum.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace {
 
 static const auto converter = Utilities::makeEnumConverter<ReadoutMode::type>({
@@ -26,6 +26,6 @@ ReadoutMode::type ReadoutMode::fromString(const std::string& string)
   return converter.fromString(string);
 }
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 

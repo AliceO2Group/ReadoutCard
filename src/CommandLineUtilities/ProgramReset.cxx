@@ -5,10 +5,10 @@
 
 #include "CommandLineUtilities/Program.h"
 #include <iostream>
-#include "RORC/ChannelFactory.h"
+#include "ReadoutCard/ChannelFactory.h"
 
 namespace {
-using namespace AliceO2::Rorc::CommandLineUtilities;
+using namespace AliceO2::roc::CommandLineUtilities;
 
 class ProgramReset: public Program
 {
@@ -33,8 +33,8 @@ class ProgramReset: public Program
       auto cardId = Options::getOptionCardId(map);
       int channelNumber = Options::getOptionChannel(map);
 
-      auto params = AliceO2::Rorc::Parameters::makeParameters(cardId, channelNumber);
-      auto channel = AliceO2::Rorc::ChannelFactory().getMaster(params);
+      auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
+      auto channel = AliceO2::roc::ChannelFactory().getMaster(params);
       channel->resetChannel(resetLevel);
     }
 };

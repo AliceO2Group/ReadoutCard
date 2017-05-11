@@ -7,7 +7,7 @@
 
 namespace AliceO2
 {
-namespace Rorc
+namespace roc
 {
 
 namespace Rorc
@@ -172,7 +172,7 @@ constexpr int IFSTW     = 12; ///< IFSTW
 constexpr int RORC_DATA_BLOCK_NOT_ARRIVED      = 0;
 constexpr int RORC_NOT_END_OF_EVENT_ARRIVED    = 1;
 constexpr int RORC_LAST_BLOCK_OF_EVENT_ARRIVED = 2;
-} // namespace Rorc
+} // namespace roc
 
 /// DDL definitions
 namespace Ddl
@@ -330,5 +330,5 @@ constexpr int OFFL   = 0x00001000; ///< SIU in Offline state
 constexpr int POR    = 0x00000000; ///< SIU in Power On Reset state
 } // namespace PortState
 } // namespace Siu
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

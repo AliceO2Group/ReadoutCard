@@ -10,14 +10,14 @@
 #include "PageAddress.h"
 #include "Pda/PdaBar.h"
 #include "Pda/PdaDmaBuffer.h"
-#include "RORC/ChannelMasterInterface.h"
-#include "RORC/Exception.h"
-#include "RORC/MemoryMappedFile.h"
-#include "RORC/Parameters.h"
+#include "ReadoutCard/ChannelMasterInterface.h"
+#include "ReadoutCard/Exception.h"
+#include "ReadoutCard/MemoryMappedFile.h"
+#include "ReadoutCard/Parameters.h"
 #include "RorcDevice.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Partially implements the ChannelMasterInterface. It takes care of PDA-based functionality that is common to the
 /// C-RORC and CRU implementations.
@@ -121,5 +121,5 @@ class ChannelMasterPdaBase: public ChannelMasterBase
     boost::scoped_ptr<Pda::PdaDmaBuffer> mPdaDmaBuffer;
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

@@ -11,12 +11,12 @@
 #include <boost/scoped_ptr.hpp>
 #include "ChannelMasterPdaBase.h"
 #include "Crorc.h"
-#include "RORC/Parameters.h"
+#include "ReadoutCard/Parameters.h"
 #include "ReadyFifo.h"
 #include "SuperpageQueue.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Extends ChannelMaster object, and provides device-specific functionality
 /// Note: the functions prefixed with "crorc" are translated from the functions of the C interface (src/c/rorc/...")
@@ -211,5 +211,5 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
     Crorc::Crorc::DiuConfig mDiuConfig;
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

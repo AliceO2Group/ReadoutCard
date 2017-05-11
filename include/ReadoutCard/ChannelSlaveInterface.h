@@ -3,16 +3,16 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_RORC_CHANNELSLAVEINTERFACE_H_
-#define ALICEO2_INCLUDE_RORC_CHANNELSLAVEINTERFACE_H_
+#ifndef ALICEO2_INCLUDE_READOUTCARD_CHANNELSLAVEINTERFACE_H_
+#define ALICEO2_INCLUDE_READOUTCARD_CHANNELSLAVEINTERFACE_H_
 
 #include <cstdint>
-#include "RORC/CardType.h"
-#include "RORC/RegisterReadWriteInterface.h"
-#include "RORC/Parameters.h"
+#include "ReadoutCard/CardType.h"
+#include "ReadoutCard/RegisterReadWriteInterface.h"
+#include "ReadoutCard/Parameters.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Provides a limited-access interface to a RORC channel
 /// TODO
@@ -30,7 +30,7 @@ class ChannelSlaveInterface: public virtual RegisterReadWriteInterface
     virtual CardType::type getCardType() = 0;
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_INCLUDE_RORC_CHANNELSLAVEINTERFACE_H_
+#endif // ALICEO2_INCLUDE_READOUTCARD_CHANNELSLAVEINTERFACE_H_

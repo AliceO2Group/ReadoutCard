@@ -10,14 +10,14 @@
 #include <boost/exception/all.hpp>
 #include <boost/format.hpp>
 #include <cstdint>
-#include "RORC/CardType.h"
+#include "ReadoutCard/CardType.h"
 #include "RorcStatusCode.h"
 
-using namespace AliceO2::Rorc;
+using namespace AliceO2::roc;
 namespace b = boost;
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 void addPossibleCauses(boost::exception& exception, const std::vector<std::string>& newCauses)
 {
@@ -33,7 +33,7 @@ void addPossibleCauses(boost::exception& exception, const std::vector<std::strin
   }
 }
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 
 template <typename Message>

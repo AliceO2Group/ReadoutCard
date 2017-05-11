@@ -17,12 +17,12 @@
 #include "Common/BasicThread.h"
 #include "Common/GuardFunction.h"
 #include "ExceptionInternal.h"
-#include "RORC/Parameters.h"
-#include "RORC/ChannelFactory.h"
+#include "ReadoutCard/Parameters.h"
+#include "ReadoutCard/ChannelFactory.h"
 
 namespace {
-using namespace AliceO2::Rorc::CommandLineUtilities;
-using namespace AliceO2::Rorc;
+using namespace AliceO2::roc::CommandLineUtilities;
+using namespace AliceO2::roc;
 using std::cout;
 using std::endl;
 
@@ -181,8 +181,8 @@ class ProgramAliceLowlevelFrontendServer: public Program
       // Get card channel for register access
       int serialNumber = Options::getOptionSerialNumber(map);
       int channelNumber = Options::getOptionChannel(map);
-      auto params = AliceO2::Rorc::Parameters::makeParameters(serialNumber, channelNumber);
-      auto channel = AliceO2::Rorc::ChannelFactory().getSlave(params);
+      auto params = AliceO2::roc::Parameters::makeParameters(serialNumber, channelNumber);
+      auto channel = AliceO2::roc::ChannelFactory().getSlave(params);
 
       DimServer::start("ALF");
       // Object that stops the DIM service when destroyed

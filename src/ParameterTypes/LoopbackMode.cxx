@@ -3,11 +3,11 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "RORC/ParameterTypes/LoopbackMode.h"
+#include "ReadoutCard/ParameterTypes/LoopbackMode.h"
 #include "Utilities/Enum.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace {
 
 static const auto converter = Utilities::makeEnumConverter<LoopbackMode::type>({
@@ -34,6 +34,6 @@ LoopbackMode::type LoopbackMode::fromString(const std::string& string)
   return converter.fromString(string);
 }
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 

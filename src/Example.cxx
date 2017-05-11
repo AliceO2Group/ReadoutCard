@@ -7,9 +7,9 @@
 #include <chrono>
 #include <thread>
 #include <boost/exception/diagnostic_information.hpp>
-#include "RORC/ChannelFactory.h"
-#include "RORC/Exception.h"
-#include "RORC/MemoryMappedFile.h"
+#include "ReadoutCard/ChannelFactory.h"
+#include "ReadoutCard/Exception.h"
+#include "ReadoutCard/MemoryMappedFile.h"
 
 using std::cout;
 using std::endl;
@@ -25,16 +25,16 @@ int main(int, char**)
     constexpr size_t superpageSize = 2*1024*1024;
     constexpr size_t superpageCount = 5;
     constexpr size_t bufferSize = superpageCount * superpageSize;
-    Rorc::MemoryMappedFile file {"/dev/hugepages/rorc_example.bin", bufferSize};
+    roc::MemoryMappedFile file {"/dev/hugepages/rorc_example.bin", bufferSize};
 
     // Create parameters object for channel
-    auto parameters = Rorc::Parameters()
+    auto parameters = roc::Parameters()
         .setCardId(-1) // Dummy card
         .setChannelNumber(0) // DMA channel 0
-        .setBufferParameters(Rorc::BufferParameters::Memory{file.getAddress(), bufferSize}); // Register our buffer
+        .setBufferParameters(roc::buffer_parameters::Memory{file.getAddress(), bufferSize}); // Register our buffer
 
     // Get the DMA channel
-    std::shared_ptr<Rorc::ChannelMasterInterface> channel = Rorc::ChannelFactory().getMaster(parameters);
+    std::shared_ptr<roc::ChannelMasterInterface> channel = roc::ChannelFactory().getMaster(parameters);
 
     // Start the DMA
     cout << "\n### Starting DMA" << endl;
@@ -50,7 +50,7 @@ int main(int, char**)
     for (size_t i = 0; i < superpageCount; ++i) {
       auto offset = i * superpageSize;
       auto size = superpageSize;
-      channel->pushSuperpage(Rorc::Superpage(offset, size));
+      channel->pushSuperpage(roc::Superpage(offset, size));
       cout << "Pushed superpage " << i << '\n';
     }
 

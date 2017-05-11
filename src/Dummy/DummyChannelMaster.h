@@ -10,7 +10,7 @@
 #include "ChannelMasterBase.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// A dummy implementation of the ChannelMasterInterface.
 /// This exists so that the RORC module may be built even if the all the dependencies of the 'real' card
@@ -35,5 +35,5 @@ class DummyChannelMaster final : public ChannelMasterBase
     virtual boost::optional<std::string> getFirmwareInfo() override;
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

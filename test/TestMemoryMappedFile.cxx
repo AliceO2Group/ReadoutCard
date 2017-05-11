@@ -3,7 +3,7 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "RORC/MemoryMappedFile.h"
+#include "ReadoutCard/MemoryMappedFile.h"
 
 #define BOOST_TEST_MODULE RORC_TestMemoryMappedFile
 #define BOOST_TEST_MAIN
@@ -12,11 +12,11 @@
 #include <boost/filesystem.hpp>
 #include <assert.h>
 #include <string>
-#include "RORC/Exception.h"
+#include "ReadoutCard/Exception.h"
 
 namespace {
 
-using namespace ::AliceO2::Rorc;
+using namespace ::AliceO2::roc;
 
 const std::string filePath("/tmp/AliceO2_MemoryMappedFile_Test");
 const std::string badFilePath("/tmp/AliceO2_MemoryMappedFile_Test/12345abcdf/xyz/bad/path/");

@@ -13,7 +13,7 @@
 #include "Visitor.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 namespace b = boost;
 namespace bfs = boost::filesystem;
@@ -71,10 +71,10 @@ ChannelMasterBase::ChannelMasterBase(CardDescriptor cardDescriptor, const Parame
   if (auto bufferParameters = parameters.getBufferParameters()) {
     // Create appropriate BufferProvider subclass
     mBufferProvider = Visitor::apply<std::unique_ptr<BufferProvider>>(*bufferParameters,
-        [&](BufferParameters::Memory parameters){ return std::make_unique<BufferProviderMemory>(parameters); },
-        [&](BufferParameters::File parameters){ return std::make_unique<BufferProviderFile>(parameters); });
+        [&](buffer_parameters::Memory parameters){ return std::make_unique<BufferProviderMemory>(parameters); },
+        [&](buffer_parameters::File parameters){ return std::make_unique<BufferProviderFile>(parameters); });
   } else {
-    BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("ChannelMaster requires BufferParameters"));
+    BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("ChannelMaster requires buffer_parameters"));
   }
 }
 
@@ -83,5 +83,5 @@ ChannelMasterBase::~ChannelMasterBase()
   log("Releasing master lock", InfoLogger::InfoLogger::Debug);
 }
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

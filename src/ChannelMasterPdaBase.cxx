@@ -11,7 +11,7 @@
 #include "Visitor.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace {
 
 CardDescriptor getDescriptor(const Parameters& parameters)
@@ -122,5 +122,5 @@ void ChannelMasterPdaBase::checkSuperpage(const Superpage& superpage)
   }
 }
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

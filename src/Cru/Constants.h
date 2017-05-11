@@ -3,12 +3,12 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_RORC_CRU_CONSTANTS
-#define ALICEO2_RORC_CRU_CONSTANTS
+#ifndef ALICEO2_READOUTCARD_CRU_CONSTANTS
+#define ALICEO2_READOUTCARD_CRU_CONSTANTS
 
 namespace AliceO2
 {
-namespace Rorc
+namespace roc
 {
 namespace Cru
 {
@@ -93,7 +93,7 @@ static constexpr size_t FIRMWARE_TIME = 9;
 
 } // namespace Cru
 } // namespace Registers
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_RORC_CRU_CONSTANTS
+#endif // ALICEO2_READOUTCARD_CRU_CONSTANTS

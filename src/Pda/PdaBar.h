@@ -5,13 +5,13 @@
 
 #pragma once
 
-#include "RORC/RegisterReadWriteInterface.h"
+#include "ReadoutCard/RegisterReadWriteInterface.h"
 #include <pda.h>
 #include "PdaDevice.h"
 #include "ExceptionInternal.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace Pda {
 
 /// A simple wrapper around the PDA BAR object, providing some convenience functions
@@ -95,5 +95,5 @@ class PdaBar : public RegisterReadWriteInterface
 };
 
 } // namespace Pda
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

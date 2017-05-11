@@ -14,13 +14,13 @@
 #include "ChannelBase.h"
 #include "ChannelPaths.h"
 #include "InterprocessLock.h"
-#include "RORC/ChannelMasterInterface.h"
-#include "RORC/Exception.h"
-#include "RORC/Parameters.h"
+#include "ReadoutCard/ChannelMasterInterface.h"
+#include "ReadoutCard/Exception.h"
+#include "ReadoutCard/Parameters.h"
 #include "Utilities/Util.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Partially implements the ChannelMasterInterface. It provides:
 /// - Interprocess synchronization
@@ -131,5 +131,5 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface
     std::unique_ptr<BufferProvider> mBufferProvider;
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

@@ -7,10 +7,10 @@
 
 #include <boost/throw_exception.hpp>
 #include "InfoLogger/InfoLogger.hxx"
-#include "RORC/Exception.h"
+#include "ReadoutCard/Exception.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace Utilities {
 
 /// Log an exception to the InfoLogger
@@ -29,7 +29,7 @@ inline void _logStdException(const std::exception& e, InfoLogger::InfoLogger& lo
   logger << severity << e.what() << InfoLogger::InfoLogger::endm;
 }
 
-#ifdef ALICEO2_RORC_DISABLE_EXCEPTION_LOGGING
+#ifdef ALICEO2_READOUTCARD_DISABLE_EXCEPTION_LOGGING
 #define THROW_LOGGED_EXCEPTION(_logger, _severity, _exception)\
   BOOST_THROW_EXCEPTION(_exception);
 #else
@@ -48,5 +48,5 @@ inline void _logStdException(const std::exception& e, InfoLogger::InfoLogger& lo
 #endif
 
 } // namespace Util
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

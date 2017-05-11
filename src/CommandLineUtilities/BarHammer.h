@@ -8,10 +8,10 @@
 #include <atomic>
 #include "Common/BasicThread.h"
 #include "Cru/Constants.h"
-#include "RORC/ChannelMasterInterface.h"
+#include "ReadoutCard/ChannelMasterInterface.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace CommandLineUtilities {
 
 class BarHammer : public AliceO2::Common::BasicThread
@@ -57,5 +57,5 @@ class BarHammer : public AliceO2::Common::BasicThread
 };
 
 } // namespace CommandLineUtilities
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

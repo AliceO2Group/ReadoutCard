@@ -11,7 +11,7 @@
 #include <assert.h>
 #include <string>
 
-using namespace AliceO2::Rorc;
+using namespace AliceO2::roc;
 
 namespace {
 

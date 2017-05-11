@@ -3,13 +3,13 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_RORC_RESETLEVEL_H_
-#define ALICEO2_INCLUDE_RORC_RESETLEVEL_H_
+#ifndef ALICEO2_INCLUDE_READOUTCARD_RESETLEVEL_H_
+#define ALICEO2_INCLUDE_READOUTCARD_RESETLEVEL_H_
 
 #include <string>
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Namespace for the RORC reset level enum, and supporting functions
 struct ResetLevel
@@ -29,7 +29,7 @@ struct ResetLevel
     static bool includesExternal(const ResetLevel::type& level);
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_INCLUDE_RORC_RESETLEVEL_H_
+#endif // ALICEO2_INCLUDE_READOUTCARD_RESETLEVEL_H_

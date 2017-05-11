@@ -3,26 +3,26 @@
 ///
 /// \author  Barthelemy von Haller, CERN
 
-#ifndef ALICEO2_RORC_VERSION_H
-#define ALICEO2_RORC_VERSION_H
+#ifndef ALICEO2_READOUTCARD_VERSION_H
+#define ALICEO2_READOUTCARD_VERSION_H
 
 #include <string>
 #include <sstream>
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace Core {
 /// The current major version.
-#define RORC_VERSION_MAJOR @VERSION_MAJOR@
+#define RORC_VERSION_MAJOR 0
 
 /// The current minor version.
-#define RORC_VERSION_MINOR @VERSION_MINOR@
+#define RORC_VERSION_MINOR 1
 
 /// The current patch level.
-#define RORC_VERSION_PATCH @VERSION_PATCH@
+#define RORC_VERSION_PATCH 0
 
 /// The current VCS revision.
-#define RORC_VCS_REVISION "@VCS_REVISION@"
+#define RORC_VCS_REVISION "454f08b5d91df7204251e821b7349b5f355862c9"
 
 /// True if the current version is newer than the given one.
 #define RORC_VERSION_GT(MAJOR, MINOR, PATCH) \
@@ -93,7 +93,7 @@ class Version {
 };
 
 } // namespace Core
-} // namespace Rorc
+} // namespace ReadoutCard
 } // namespace AliceO2
 
-#endif // ALICEO2_RORC_VERSION_H
+#endif // ALICEO2_READOUTCARD_VERSION_H

@@ -4,10 +4,10 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "DummyChannelMaster.h"
-#include "RORC/ChannelFactory.h"
+#include "ReadoutCard/ChannelFactory.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace {
 CardDescriptor makeDummyDescriptor()
 {
@@ -77,5 +77,5 @@ boost::optional<std::string> DummyChannelMaster::getFirmwareInfo()
   return std::string("Dummy");
 }
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

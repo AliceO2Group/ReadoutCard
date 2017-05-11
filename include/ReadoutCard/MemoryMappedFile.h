@@ -9,7 +9,7 @@
 #include <memory>
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 struct MemoryMappedFileInternal;
 
@@ -33,5 +33,5 @@ class MemoryMappedFile
     std::unique_ptr<MemoryMappedFileInternal> mInternal;
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

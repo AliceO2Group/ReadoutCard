@@ -24,7 +24,7 @@ using std::endl;
 using namespace std::literals;
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 CrorcChannelMaster::CrorcChannelMaster(const Parameters& parameters)
     : ChannelMasterPdaBase(parameters, allowedChannels()), //
@@ -461,6 +461,6 @@ boost::optional<std::string> CrorcChannelMaster::getFirmwareInfo()
   return stream.str();
 }
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 

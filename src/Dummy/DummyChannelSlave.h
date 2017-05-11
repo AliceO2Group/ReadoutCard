@@ -5,11 +5,11 @@
 
 #pragma once
 
-#include "RORC/ChannelSlaveInterface.h"
+#include "ReadoutCard/ChannelSlaveInterface.h"
 #include <array>
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// A dummy implementation of the ChannelSlaveInterface.
 /// This exists so that the RORC module may be built even if the all the dependencies of the 'real' card
@@ -27,5 +27,5 @@ class DummyChannelSlave : public ChannelSlaveInterface
     virtual CardType::type getCardType() override;
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

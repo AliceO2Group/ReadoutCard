@@ -10,11 +10,11 @@
 #include <queue>
 #include <boost/circular_buffer_fwd.hpp>
 #include "Cru/BarAccessor.h"
-#include "RORC/Parameters.h"
+#include "ReadoutCard/Parameters.h"
 #include "SuperpageQueue.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Extends ChannelMaster object, and provides device-specific functionality
 class CruChannelMaster final : public ChannelMasterPdaBase
@@ -155,5 +155,5 @@ class CruChannelMaster final : public ChannelMasterPdaBase
     size_t mGeneratorDataSize;
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

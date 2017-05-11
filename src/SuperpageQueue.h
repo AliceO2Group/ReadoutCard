@@ -3,17 +3,17 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_RORC_SRC_SUPERPAGEQUEUE_H_
-#define ALICEO2_RORC_SRC_SUPERPAGEQUEUE_H_
+#ifndef ALICEO2_READOUTCARD_SRC_SUPERPAGEQUEUE_H_
+#define ALICEO2_READOUTCARD_SRC_SUPERPAGEQUEUE_H_
 
 #include <iostream>
 #include <unordered_map>
 #include <boost/circular_buffer.hpp>
-#include "RORC/Superpage.h"
+#include "ReadoutCard/Superpage.h"
 #include "ExceptionInternal.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Queue to handle superpages
 /// We keep this header-only to make it inlineable, since these are all very short and simple functions.
@@ -289,7 +289,7 @@ class SuperpageQueue {
 };
 
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_RORC_SRC_SUPERPAGEQUEUE_H_
+#endif // ALICEO2_READOUTCARD_SRC_SUPERPAGEQUEUE_H_

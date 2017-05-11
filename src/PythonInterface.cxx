@@ -11,11 +11,11 @@
 #include <python2.7/Python.h>
 #include "Common/GuardFunction.h"
 #include "ExceptionInternal.h"
-#include "RORC/ChannelFactory.h"
-#include "RORC/Parameters.h"
+#include "ReadoutCard/ChannelFactory.h"
+#include "ReadoutCard/Parameters.h"
 
 namespace {
-using namespace AliceO2::Rorc;
+using namespace AliceO2::roc;
 /// This is a Python wrapper class for a channel. It only provides register read and write access.
 
 /// Documentation for the init function (constructor)
@@ -80,7 +80,7 @@ class Channel
     }
 
   private:
-    std::shared_ptr<AliceO2::Rorc::ChannelSlaveInterface> mChannel;
+    std::shared_ptr<AliceO2::roc::ChannelSlaveInterface> mChannel;
 };
 } // Anonymous namespace
 

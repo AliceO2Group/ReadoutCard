@@ -3,20 +3,20 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_RORC_CHANNELMASTERINTERFACE_H_
-#define ALICEO2_INCLUDE_RORC_CHANNELMASTERINTERFACE_H_
+#ifndef ALICEO2_INCLUDE_READOUTCARD_CHANNELMASTERINTERFACE_H_
+#define ALICEO2_INCLUDE_READOUTCARD_CHANNELMASTERINTERFACE_H_
 
 #include <cstdint>
 #include <boost/optional.hpp>
 #include <InfoLogger/InfoLogger.hxx>
-#include "RORC/Parameters.h"
-#include "RORC/CardType.h"
-#include "RORC/ParameterTypes/ResetLevel.h"
-#include "RORC/RegisterReadWriteInterface.h"
-#include "RORC/Superpage.h"
+#include "ReadoutCard/Parameters.h"
+#include "ReadoutCard/CardType.h"
+#include "ReadoutCard/ParameterTypes/ResetLevel.h"
+#include "ReadoutCard/RegisterReadWriteInterface.h"
+#include "ReadoutCard/Superpage.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Pure abstract interface for objects that obtain a master lock on a channel and provides an interface to control
 /// and use that channel.
@@ -91,7 +91,7 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
     virtual boost::optional<std::string> getFirmwareInfo() = 0;
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_INCLUDE_RORC_CHANNELMASTERINTERFACE_H_
+#endif // ALICEO2_INCLUDE_READOUTCARD_CHANNELMASTERINTERFACE_H_

@@ -9,10 +9,10 @@
 #include <boost/exception/diagnostic_information.hpp>
 #include "CommandLineUtilities/Program.h"
 #include "Factory/ChannelUtilityFactory.h"
-#include "RORC/Exception.h"
+#include "ReadoutCard/Exception.h"
 
-using namespace AliceO2::Rorc::CommandLineUtilities;
-using namespace AliceO2::Rorc;
+using namespace AliceO2::roc::CommandLineUtilities;
+using namespace AliceO2::roc;
 namespace b = boost;
 using std::cout;
 using std::endl;
@@ -38,7 +38,7 @@ class ProgramPrintFifo: public Program
     {
       auto cardId = Options::getOptionCardId(map);
       int channelNumber = Options::getOptionChannel(map);
-      auto params = AliceO2::Rorc::Parameters::makeParameters(cardId, channelNumber);
+      auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
       auto channel = ChannelUtilityFactory().getUtility(params);
 
       if (map.count("nopretty")) {

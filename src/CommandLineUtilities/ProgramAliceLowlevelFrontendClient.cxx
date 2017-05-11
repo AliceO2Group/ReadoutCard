@@ -16,7 +16,7 @@ using std::cout;
 using std::endl;
 
 namespace {
-using namespace AliceO2::Rorc::CommandLineUtilities;
+using namespace AliceO2::roc::CommandLineUtilities;
 
 double gTemperature = 0;
 
@@ -58,8 +58,8 @@ class ProgramAliceLowlevelFrontendClient: public Program
       // Get DIM DNS node from environment
       if (getenv(std::string("DIM_DNS_NODE").c_str()) == nullptr) {
         BOOST_THROW_EXCEPTION(
-            AliceO2::Rorc::Exception()
-                << AliceO2::Rorc::ErrorInfo::Message("Environment variable 'DIM_DNS_NODE' not set"));
+            AliceO2::roc::Exception()
+                << AliceO2::roc::ErrorInfo::Message("Environment variable 'DIM_DNS_NODE' not set"));
       }
 
       // Get program options

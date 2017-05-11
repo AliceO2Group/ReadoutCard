@@ -3,13 +3,13 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_RORC_GENERATORPATTERN_H_
-#define ALICEO2_INCLUDE_RORC_GENERATORPATTERN_H_
+#ifndef ALICEO2_INCLUDE_READOUTCARD_GENERATORPATTERN_H_
+#define ALICEO2_INCLUDE_READOUTCARD_GENERATORPATTERN_H_
 
 #include <string>
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Namespace for the RORC generator pattern enum
 struct GeneratorPattern
@@ -33,7 +33,7 @@ struct GeneratorPattern
   static auto fromString(const std::string& string) -> GeneratorPattern::type;
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_INCLUDE_RORC_GENERATORPATTERN_H_
+#endif // ALICEO2_INCLUDE_READOUTCARD_GENERATORPATTERN_H_

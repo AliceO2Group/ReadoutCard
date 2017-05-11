@@ -4,13 +4,13 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include <iostream>
-#include "RORC/ChannelFactory.h"
+#include "ReadoutCard/ChannelFactory.h"
 #include "CommandLineUtilities/Common.h"
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
 
-using namespace AliceO2::Rorc::CommandLineUtilities;
-using namespace AliceO2::Rorc;
+using namespace AliceO2::roc::CommandLineUtilities;
+using namespace AliceO2::roc;
 using std::cout;
 using std::endl;
 namespace po = boost::program_options;
@@ -42,7 +42,7 @@ class ProgramCleanup: public Program
       // This non-forced cleanup asks the ChannelMaster to clean up itself.
       // It will not succeed if the channel was not initialized properly before the running of this program.
       cout << "### Attempting cleanup...\n";
-      auto params = AliceO2::Rorc::Parameters::makeParameters(cardId, channelNumber);
+      auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
       params.setForcedUnlockEnabled(mForceCleanup);
       auto channel = ChannelFactory().getMaster(params);
       cout << "### Done!\n";

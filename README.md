@@ -1,7 +1,10 @@
-# RORC module
-The RORC module is the software that directly interfaces with the RORC (ReadOut and Receiver Card) PCIe cards.
-RORCs can have multiple DMA channels, and each channel is treated separately by the program.
-  (Note: the old C-RORC card has 6 channels, the upcoming CRU 1.)
+# ReadoutCard (RoC) module
+The RoC module* is a C++ library that provides a high-level interface for accessing and controlling high-performance data 
+acquisition PCIe cards.
+
+It currently supports the C-RORC and CRU cards.
+
+**Formerly known as the RORC module*
 
 Channel ownership lock
 -------------------
@@ -146,13 +149,11 @@ Also, the PDA kernel module must be inserted as root in any case.
 
 Dependencies
 ===================
-
 The RORC module depends on the PDA (Portable Driver Architecture) library. 
 If PDA is not detected on the system, only a dummy implementation of the interface will be compiled.
 
 PDA installation
 -------------------
-
 1. Install dependency packages
   ~~~
   yum install kernel-devel pciutils-devel kmod-devel libtool libhugetlbfs
@@ -183,22 +184,25 @@ PDA installation
   hugeadm --create-global-mounts
   ~~~
 
-
 Hugepages
 ===================
+Most x86-64 CPUs have an MMU that supports 4 KiB, 2 MiB and 1 GiB page sizes. 
+4KB is the default, while the bigger ones are referred to as hugepages in Linux.
+Since the cards can have DMA page sizes larger than 4KiB (the CRU's is 8KiB for example),
+a 4KiB page size can easily become problematic if they are at all fragmented.
+The roc-dma-bench program uses hugepages to ensure the buffer's memory is more contiguous and the DMA scatter-gather 
+list is small.
+But hugepages have to be allocated in advance. And they're not really needed with the IOMMU enabled 
+(note: performance impact of using the IOMMU has not been measured).
 
-When using shared memory allocations for the DMA buffer, it is highly recommended to configure hugepage support
-on the system.
-Without hugepages, scatter-gather lists may be highly fragmented.
-In addition, with larger RORC page sizes (> 4 KB), the driver may have difficulty finding enough contiguous memory to 
-use for RORC pages.
-For more information about hugepages, refer to the linux kernel docs: 
+When implementing a readout program with the ReadoutCard library, it is practically mandatory to either 
+enable the IOMMU, or allocate the DMA buffer using hugepages.
+
+For more detailed information about hugepages, refer to the linux kernel docs: 
   https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt
-
 
 Hugepages configuration
 -------------------
-
 At some point, we should probably use kernel boot parameters to allocate hugepages, or use some boot-time script, but 
 until then, we must initialize and allocate manually.
 
@@ -206,25 +210,33 @@ until then, we must initialize and allocate manually.
   ~~~
   yum install libhugetlbfs libhugetlbfs-utils
   ~~~
+  
+2. Set up filesystem mounts
+  ~~~
+  hugeadm --create-global-mounts
+  ~~~
 
-2. Allocate hugepages
+3. Allocate hugepages
   ~~~
-  echo [number] > /proc/sys/vm/nr_hugepages
+  # 2 MiB hugepages
+  echo [number] > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
+  # 1 GiB
+  echo [number] > /sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages
   ~~~
-  Where [number] is enough to cover the DMA buffer needs.
-  By default, hugepages are 2 MB. 
+  Where [number] is enough to cover your DMA buffer needs.
 
-3. Check to see if they're actually available
+4. Check to see if they're actually available
   ~~~
-  cat /proc/meminfo | grep Huge
+  hugeadm --pool-list
   ~~~
- 'HugePages_Total' should correspond to [number]
 
-4. Mount hugetlbfs
-  ~~~
-  mkdir /mnt/hugetlbfs (if directory does not exist)
-  mount --types hugetlbfs none /mnt/hugetlbfs -o pagesize=2M
-  ~~~
+IOMMU
+===================
+To enable the IOMMU, add `iommu=on` to the kernel boot parameters.
+
+When the IOMMU is enabled, the ReadoutCard library will be able to present any user-allocated buffer that was registered
+with the channel as a contiguous address space to the card, simplifying memory allocation.
+
 
 ALICE Low-level Front-end (ALF) DIM Server
 ===================

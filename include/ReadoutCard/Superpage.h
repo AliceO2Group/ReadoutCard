@@ -3,13 +3,13 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_RORC_SUPERPAGE_H_
-#define ALICEO2_INCLUDE_RORC_SUPERPAGE_H_
+#ifndef ALICEO2_INCLUDE_READOUTCARD_SUPERPAGE_H_
+#define ALICEO2_INCLUDE_READOUTCARD_SUPERPAGE_H_
 
 #include <cstddef>
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Simple struct for holding basic info about a superpage
 struct Superpage
@@ -66,7 +66,7 @@ struct Superpage
     bool ready = false; ///< Indicates this superpage is ready
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_INCLUDE_RORC_SUPERPAGE_H_
+#endif // ALICEO2_INCLUDE_READOUTCARD_SUPERPAGE_H_

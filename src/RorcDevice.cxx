@@ -15,11 +15,11 @@
 #include "Cru/BarAccessor.h"
 #include "Pda/PdaBar.h"
 #include "Pda/PdaDevice.h"
-#include "RORC/Exception.h"
+#include "ReadoutCard/Exception.h"
 #include "Utilities/SmartPointer.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 int32_t crorcGetSerial(Pda::PdaDevice::PdaPciDevice pciDevice);
 int32_t cruGetSerial(Pda::PdaDevice::PdaPciDevice pciDevice);
@@ -228,5 +228,5 @@ int32_t crorcGetSerial(Pda::PdaDevice::PdaPciDevice pciDevice)
   return serial;
 }
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

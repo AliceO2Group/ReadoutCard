@@ -9,10 +9,10 @@
 #include <string>
 #include <vector>
 #include <pda.h>
-#include "RORC/PciId.h"
+#include "ReadoutCard/PciId.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace Pda {
 
 /// Handles the creation and cleanup of the PDA DeviceOperator and PciDevice objects
@@ -98,5 +98,5 @@ class PdaDevice
 };
 
 } // namespace Pda
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

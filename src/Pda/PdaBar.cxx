@@ -9,10 +9,10 @@
 #include <string>
 #include <boost/lexical_cast.hpp>
 
-#include "RORC/Exception.h"
+#include "ReadoutCard/Exception.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace Pda {
 
 PdaBar::PdaBar() : mPdaBar(nullptr), mBarLength(-1), mBarNumber(-1), mUserspaceAddress(0)
@@ -47,5 +47,5 @@ PdaBar::PdaBar(PdaDevice::PdaPciDevice pciDevice, int barNumberInt) : mBarNumber
 }
 
 } // namespace Pda
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

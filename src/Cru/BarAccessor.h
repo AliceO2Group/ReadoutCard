@@ -12,7 +12,7 @@
 #include "Utilities/Util.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace Cru {
 
 /// A simple wrapper object for accessing the CRU BAR
@@ -238,5 +238,5 @@ class BarAccessor
 };
 
 } // namespace Cru
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

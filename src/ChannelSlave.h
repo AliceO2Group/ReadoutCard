@@ -8,11 +8,11 @@
 #include "RorcDevice.h"
 #include <boost/scoped_ptr.hpp>
 #include "Pda/PdaBar.h"
-#include "RORC/ChannelSlaveInterface.h"
-#include "RORC/Parameters.h"
+#include "ReadoutCard/ChannelSlaveInterface.h"
+#include "ReadoutCard/Parameters.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Partially implements the ChannelSlaveInterface. It takes care of:
 /// - Interprocess synchronization
@@ -42,5 +42,5 @@ class ChannelSlave: public ChannelSlaveInterface
     boost::scoped_ptr<Pda::PdaBar> mPdaBar;
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

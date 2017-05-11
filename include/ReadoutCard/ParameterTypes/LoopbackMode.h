@@ -3,13 +3,13 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_RORC_LOOPBACKMODE_H_
-#define ALICEO2_INCLUDE_RORC_LOOPBACKMODE_H_
+#ifndef ALICEO2_INCLUDE_READOUTCARD_LOOPBACKMODE_H_
+#define ALICEO2_INCLUDE_READOUTCARD_LOOPBACKMODE_H_
 
 #include <string>
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Namespace for the RORC loopback mode enum, and supporting functions
 struct LoopbackMode
@@ -33,7 +33,7 @@ struct LoopbackMode
     static bool isExternal(const LoopbackMode::type& mode);
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_INCLUDE_RORC_LOOPBACKMODE_H_
+#endif // ALICEO2_INCLUDE_READOUTCARD_LOOPBACKMODE_H_

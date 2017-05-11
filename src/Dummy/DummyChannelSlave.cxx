@@ -9,7 +9,7 @@
 using std::cout;
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 DummyChannelSlave::DummyChannelSlave(const Parameters& parameters)
 {
@@ -48,5 +48,5 @@ CardType::type DummyChannelSlave::getCardType()
   return CardType::Dummy;
 }
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

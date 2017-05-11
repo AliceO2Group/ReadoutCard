@@ -6,7 +6,7 @@
 #include "CruChannelSlave.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 CruChannelSlave::CruChannelSlave(const Parameters& parameters)
     : ChannelSlave(parameters)
@@ -22,5 +22,5 @@ CardType::type CruChannelSlave::getCardType()
   return CardType::Cru;
 }
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

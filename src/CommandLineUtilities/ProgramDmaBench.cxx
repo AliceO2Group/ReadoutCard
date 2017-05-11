@@ -30,14 +30,14 @@
 #include "ExceptionLogging.h"
 #include "InfoLogger/InfoLogger.hxx"
 #include "folly/ProducerConsumerQueue.h"
-#include "RORC/ChannelFactory.h"
-#include "RORC/MemoryMappedFile.h"
-#include "RORC/Parameters.h"
+#include "ReadoutCard/ChannelFactory.h"
+#include "ReadoutCard/MemoryMappedFile.h"
+#include "ReadoutCard/Parameters.h"
 #include "Utilities/SmartPointer.h"
 #include "Utilities/Util.h"
 
-using namespace AliceO2::Rorc::CommandLineUtilities;
-using namespace AliceO2::Rorc;
+using namespace AliceO2::roc::CommandLineUtilities;
+using namespace AliceO2::roc;
 using namespace AliceO2::InfoLogger;
 using AliceO2::Common::SuffixOption;
 using std::cout;
@@ -225,7 +225,7 @@ class ProgramDmaBench: public Program
       params.setChannelNumber(channelNumber);
       params.setGeneratorDataSize(mPageSize);
       params.setGeneratorPattern(mOptions.generatorPattern);
-      params.setBufferParameters(BufferParameters::Memory { mMemoryMappedFile->getAddress(),
+      params.setBufferParameters(buffer_parameters::Memory { mMemoryMappedFile->getAddress(),
           mMemoryMappedFile->getSize() });
       // Note that we can force unlock because we know for sure this process is not holding the lock. If we did not know
       // this, it would be very dangerous to force the lock.

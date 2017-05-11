@@ -3,10 +3,10 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "RORC/CardType.h"
-#include "RORC/ParameterTypes/LoopbackMode.h"
-#include "RORC/ParameterTypes/ReadoutMode.h"
-#include "RORC/ParameterTypes/ResetLevel.h"
+#include "ReadoutCard/CardType.h"
+#include "ReadoutCard/ParameterTypes/LoopbackMode.h"
+#include "ReadoutCard/ParameterTypes/ReadoutMode.h"
+#include "ReadoutCard/ParameterTypes/ResetLevel.h"
 
 #define BOOST_TEST_MODULE RORC_TestEnums
 #define BOOST_TEST_MAIN
@@ -15,7 +15,7 @@
 #include <assert.h>
 #include <string>
 
-using namespace AliceO2::Rorc;
+using namespace AliceO2::roc;
 
 /// Helper method for checking enum to/from string conversions
 template <typename E>

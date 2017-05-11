@@ -19,11 +19,11 @@
 #include <boost/exception/all.hpp>
 #include "InterprocessLock.h"
 
-#include "RORC/Exception.h"
+#include "ReadoutCard/Exception.h"
 
 namespace {
 
-using namespace ::AliceO2::Rorc;
+using namespace ::AliceO2::roc;
 namespace b = boost;
 namespace bip = boost::interprocess;
 namespace bfs = boost::filesystem;

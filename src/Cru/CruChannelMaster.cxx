@@ -20,7 +20,7 @@ using namespace std::literals;
 
 namespace AliceO2
 {
-namespace Rorc
+namespace roc
 {
 namespace
 {
@@ -234,5 +234,5 @@ boost::optional<std::string> CruChannelMaster::getFirmwareInfo()
       % getBar2().getFirmwareGitHash());
 }
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

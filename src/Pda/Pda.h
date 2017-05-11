@@ -12,7 +12,7 @@
 #include "PdaDmaBuffer.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace Pda {
 
 /// Partition the memory of the scatter gather list into sections for the FIFO and pages
@@ -24,7 +24,7 @@ std::tuple<PageAddress, std::vector<PageAddress>> partitionScatterGatherList(
     const Pda::PdaDmaBuffer::ScatterGatherVector& list, size_t fifoSize, size_t pageSize);
 
 } // namespace Pda
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 
 #endif /* SRC_PDA_PDA_H_ */

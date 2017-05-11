@@ -3,11 +3,11 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "RORC/ParameterTypes/GeneratorPattern.h"
+#include "ReadoutCard/ParameterTypes/GeneratorPattern.h"
 #include "Utilities/Enum.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace {
 
 static const auto converter = Utilities::makeEnumConverter<GeneratorPattern::type>({
@@ -33,6 +33,6 @@ GeneratorPattern::type GeneratorPattern::fromString(const std::string& string)
   return converter.fromString(string);
 }
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 

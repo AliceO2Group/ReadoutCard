@@ -3,14 +3,14 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_RORC_BUFFERPARAMETERS_H_
-#define ALICEO2_INCLUDE_RORC_BUFFERPARAMETERS_H_
+#ifndef ALICEO2_INCLUDE_READOUTCARD_BUFFERPARAMETERS_H_
+#define ALICEO2_INCLUDE_READOUTCARD_BUFFERPARAMETERS_H_
 
 #include <string>
 
 namespace AliceO2 {
-namespace Rorc {
-namespace BufferParameters {
+namespace roc {
+namespace buffer_parameters {
 
 /// Buffer parameters for user-provided DMA buffer passed by pointer
 struct Memory
@@ -26,8 +26,8 @@ struct File
     size_t size; ///< Size of shared memory file
 };
 
-} // namespace BufferParameters
-} // namespace Rorc
+} // namespace buffer_parameters
+} // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_INCLUDE_RORC_BUFFERPARAMETERS_H_
+#endif // ALICEO2_INCLUDE_READOUTCARD_BUFFERPARAMETERS_H_

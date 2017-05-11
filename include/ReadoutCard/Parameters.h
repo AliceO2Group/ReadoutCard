@@ -3,8 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_RORC_PARAMETERS_H_
-#define ALICEO2_INCLUDE_RORC_PARAMETERS_H_
+#ifndef ALICEO2_INCLUDE_READOUTCARD_PARAMETERS_H_
+#define ALICEO2_INCLUDE_READOUTCARD_PARAMETERS_H_
 
 #include <map>
 #include <memory>
@@ -12,14 +12,14 @@
 #include <string>
 #include <boost/optional.hpp>
 #include <boost/variant.hpp>
-#include "RORC/ParameterTypes/BufferParameters.h"
-#include "RORC/ParameterTypes/GeneratorPattern.h"
-#include "RORC/ParameterTypes/LoopbackMode.h"
-#include "RORC/ParameterTypes/PciAddress.h"
-#include "RORC/ParameterTypes/ReadoutMode.h"
+#include "ReadoutCard/ParameterTypes/BufferParameters.h"
+#include "ReadoutCard/ParameterTypes/GeneratorPattern.h"
+#include "ReadoutCard/ParameterTypes/LoopbackMode.h"
+#include "ReadoutCard/ParameterTypes/PciAddress.h"
+#include "ReadoutCard/ParameterTypes/ReadoutMode.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 struct ParametersPimpl;
 
@@ -43,10 +43,10 @@ class Parameters
     // Types for parameter values
 
     /// Type for buffer parameters
-    using BufferParametersType = boost::variant<BufferParameters::Memory, BufferParameters::File>;
+    using BufferParametersType = boost::variant<buffer_parameters::Memory, buffer_parameters::File>;
 
     /// Type for the CardId parameter. It can hold either a serial number or PciAddress.
-    using CardIdType = boost::variant<int, ::AliceO2::Rorc::PciAddress>;
+    using CardIdType = boost::variant<int, ::AliceO2::roc::PciAddress>;
 
     /// Type for the ChannelNumber parameter
     using ChannelNumberType = int32_t;
@@ -338,7 +338,7 @@ class Parameters
     std::unique_ptr<ParametersPimpl> mPimpl;
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_INCLUDE_RORC_PARAMETERS_H_
+#endif // ALICEO2_INCLUDE_READOUTCARD_PARAMETERS_H_

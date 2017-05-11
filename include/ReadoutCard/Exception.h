@@ -3,15 +3,15 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_RORC_EXCEPTION_H_
-#define ALICEO2_INCLUDE_RORC_EXCEPTION_H_
+#ifndef ALICEO2_INCLUDE_READOUTCARD_EXCEPTION_H_
+#define ALICEO2_INCLUDE_READOUTCARD_EXCEPTION_H_
 
 #include <Common/Exceptions.h>
 #include <stdexcept>
 #include <boost/exception/exception.hpp>
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 //// RORC exception definitions
 struct Exception : Common::Exception {};
@@ -55,7 +55,7 @@ struct ProgramOptionException : virtual UtilException {};
 struct InvalidOptionValueException : virtual ProgramOptionException {};
 struct OptionRequiredException : virtual ProgramOptionException {};
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_INCLUDE_RORC_EXCEPTION_H_
+#endif // ALICEO2_INCLUDE_READOUTCARD_EXCEPTION_H_

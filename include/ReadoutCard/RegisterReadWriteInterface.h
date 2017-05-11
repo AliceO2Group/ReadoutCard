@@ -3,13 +3,13 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_RORC_REGISTERREADWRITEINTERFACE_H_
-#define ALICEO2_INCLUDE_RORC_REGISTERREADWRITEINTERFACE_H_
+#ifndef ALICEO2_INCLUDE_READOUTCARD_REGISTERREADWRITEINTERFACE_H_
+#define ALICEO2_INCLUDE_READOUTCARD_REGISTERREADWRITEINTERFACE_H_
 
 #include <cstdint>
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// A simple interface for reading and writing 32-bit registers.
 class RegisterReadWriteInterface
@@ -29,7 +29,7 @@ class RegisterReadWriteInterface
     virtual void writeRegister(int index, uint32_t value) = 0;
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_INCLUDE_RORC_REGISTERREADWRITEINTERFACE_H_
+#endif // ALICEO2_INCLUDE_READOUTCARD_REGISTERREADWRITEINTERFACE_H_

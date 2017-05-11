@@ -10,7 +10,7 @@
 #include <boost/algorithm/string/split.hpp>
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace Utilities {
 
 std::vector<MemoryMap> getMemoryMaps()
@@ -45,5 +45,5 @@ std::vector<MemoryMap> getMemoryMaps()
 }
 
 } // namespace Util
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

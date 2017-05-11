@@ -15,7 +15,7 @@
 #include "ExceptionInternal.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace CommandLineUtilities {
 namespace Options {
 
@@ -292,5 +292,5 @@ Parameters getOptionsParameterMap(const boost::program_options::variables_map& v
 
 } // namespace Options
 } // namespace Util
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

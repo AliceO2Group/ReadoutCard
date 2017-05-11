@@ -3,7 +3,7 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "RORC/Parameters.h"
+#include "ReadoutCard/Parameters.h"
 #include <map>
 #include <set>
 #include <string>
@@ -12,7 +12,7 @@
 #include "ExceptionInternal.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Variant used for internal storage of parameters
 using Variant = boost::variant<size_t, int32_t, bool, Parameters::BufferParametersType, Parameters::CardIdType,
@@ -149,5 +149,5 @@ Parameters& Parameters::operator=(Parameters&& other)
   return *this;
 }
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

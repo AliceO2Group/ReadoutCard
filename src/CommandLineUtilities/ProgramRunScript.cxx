@@ -11,11 +11,11 @@
 #include <python2.7/Python.h>
 #include "Common/GuardFunction.h"
 #include "ExceptionInternal.h"
-#include "RORC/ChannelFactory.h"
-#include "RORC/Parameters.h"
+#include "ReadoutCard/ChannelFactory.h"
+#include "ReadoutCard/Parameters.h"
 
 namespace {
-using namespace AliceO2::Rorc::CommandLineUtilities;
+using namespace AliceO2::roc::CommandLineUtilities;
 namespace bpy = boost::python;
 
 /// Simple example script
@@ -37,14 +37,14 @@ rorc.register_write_32(channel, 0x40, 123)
 )";
 
 
-AliceO2::Rorc::Parameters::CardIdType sCardId;
+AliceO2::roc::Parameters::CardIdType sCardId;
 
 /// Channels for Python interface
-std::map<int, AliceO2::Rorc::ChannelFactory::SlaveSharedPtr> sChannelMap;
+std::map<int, AliceO2::roc::ChannelFactory::SlaveSharedPtr> sChannelMap;
 
 struct PythonWrapper
 {
-    static AliceO2::Rorc::ChannelSlaveInterface* getChannel(int channelNumber)
+    static AliceO2::roc::ChannelSlaveInterface* getChannel(int channelNumber)
     {
       auto found = sChannelMap.find(channelNumber);
       if (found != sChannelMap.end()) {
@@ -52,9 +52,9 @@ struct PythonWrapper
         return found->second.get();
       } else {
         // Channel is not yet opened, so we open it, insert it into the map, and return it
-        auto params = AliceO2::Rorc::Parameters::makeParameters(sCardId, channelNumber);
+        auto params = AliceO2::roc::Parameters::makeParameters(sCardId, channelNumber);
         auto inserted =
-            sChannelMap.insert(std::make_pair(channelNumber, AliceO2::Rorc::ChannelFactory().getSlave(params))).first;
+            sChannelMap.insert(std::make_pair(channelNumber, AliceO2::roc::ChannelFactory().getSlave(params))).first;
         return inserted->second.get();
       }
     }
@@ -126,8 +126,8 @@ class ProgramRunScript : public Program
       }
 
       if (mScriptFilename.empty()) {
-        BOOST_THROW_EXCEPTION(AliceO2::Rorc::ProgramOptionException()
-            << AliceO2::Rorc::ErrorInfo::Message("Empty script path"));
+        BOOST_THROW_EXCEPTION(AliceO2::roc::ProgramOptionException()
+            << AliceO2::roc::ErrorInfo::Message("Empty script path"));
       }
 
       sCardId = Options::getOptionCardId(map);

@@ -3,13 +3,13 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_RORC_CARDTYPE_H_
-#define ALICEO2_INCLUDE_RORC_CARDTYPE_H_
+#ifndef ALICEO2_INCLUDE_READOUTCARD_CARDTYPE_H_
+#define ALICEO2_INCLUDE_READOUTCARD_CARDTYPE_H_
 
 #include <string>
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Namespace for enum describing a RORC card type, and supporting functions
 struct CardType
@@ -84,7 +84,7 @@ static_assert(!isValidTag<int>(), "");
 
 } // namespace CardTypeTag
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_INCLUDE_RORC_CARDTYPE_H_
+#endif // ALICEO2_INCLUDE_READOUTCARD_CARDTYPE_H_

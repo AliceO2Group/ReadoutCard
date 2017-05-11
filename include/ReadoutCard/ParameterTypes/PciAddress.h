@@ -3,13 +3,13 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_RORC_INCLUDE_PCIADDRESS_H_
-#define ALICEO2_RORC_INCLUDE_PCIADDRESS_H_
+#ifndef ALICEO2_READOUTCARD_INCLUDE_PCIADDRESS_H_
+#define ALICEO2_READOUTCARD_INCLUDE_PCIADDRESS_H_
 
 #include <string>
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Data holder class for a PCI address, consisting of a bus, slot and function number
 class PciAddress
@@ -62,7 +62,7 @@ class PciAddress
     int function;
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_RORC_INCLUDE_RORC_H_
+#endif // ALICEO2_READOUTCARD_INCLUDE_READOUTCARD_H_

@@ -3,13 +3,13 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_RORC_READOUTMODE_H_
-#define ALICEO2_INCLUDE_RORC_READOUTMODE_H_
+#ifndef ALICEO2_INCLUDE_READOUTCARD_READOUTMODE_H_
+#define ALICEO2_INCLUDE_READOUTCARD_READOUTMODE_H_
 
 #include <string>
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Namespace for the RORC readout mode enum, and supporting functions
 struct ReadoutMode
@@ -28,7 +28,7 @@ struct ReadoutMode
     static ReadoutMode::type fromString(const std::string& string);
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_INCLUDE_RORC_READOUTMODE_H_
+#endif // ALICEO2_INCLUDE_READOUTCARD_READOUTMODE_H_

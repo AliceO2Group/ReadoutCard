@@ -7,17 +7,17 @@
 
 #include <memory>
 #include "BufferProvider.h"
-#include "RORC/MemoryMappedFile.h"
+#include "ReadoutCard/MemoryMappedFile.h"
 #include "Utilities/Util.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Buffer provider for a buffer that must be memory-mapped from a file
 class BufferProviderFile : public BufferProvider
 {
   public:
-    BufferProviderFile(const BufferParameters::File& parameters)
+    BufferProviderFile(const buffer_parameters::File& parameters)
     {
       Utilities::resetSmartPtr(mMappedFilePages, parameters.path, parameters.size);
       initialize(mMappedFilePages->getAddress(), parameters.size);
@@ -32,5 +32,5 @@ class BufferProviderFile : public BufferProvider
     std::unique_ptr<MemoryMappedFile> mMappedFilePages;
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

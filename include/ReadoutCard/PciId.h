@@ -3,13 +3,13 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_RORC_PCIID_H_
-#define ALICEO2_INCLUDE_RORC_PCIID_H_
+#ifndef ALICEO2_INCLUDE_READOUTCARD_PCIID_H_
+#define ALICEO2_INCLUDE_READOUTCARD_PCIID_H_
 
 #include <string>
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Simple data holder class for a PCI ID, consisting of a device ID and vendor ID.
 struct PciId
@@ -28,7 +28,7 @@ struct PciId
     std::string vendor;
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_INCLUDE_RORC_PCIID_H_
+#endif // ALICEO2_INCLUDE_READOUTCARD_PCIID_H_

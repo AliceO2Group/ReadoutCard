@@ -10,7 +10,7 @@
 #include <InfoLogger/InfoLogger.hxx>
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Implements channel functionality common to Master and Slave channels. It provides:
 /// - Logging facilities
@@ -41,5 +41,5 @@ class ChannelBase
     InfoLogger::InfoLogger::Severity mLogLevel;
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
