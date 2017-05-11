@@ -16,7 +16,7 @@ Table of Contents
 6. [ALICE Low-level Front-end (ALF) DIM Server](#alf)
 
 
-Introduction  <div id='introduction'/>
+<div id='introduction'/> Introduction  
 ===================
 ### Supported cards
 The library currently supports the C-RORC and CRU cards.
@@ -49,7 +49,7 @@ For information on how to configure the IOMMU and hugepages for the purposes of 
 see the "Installation" section.
 
 
-Usage  <div id='usage'/>
+Usage <div id='usage'/> 
 ===================
 For a simple usage example, see the program in `src/Example.cxx`.
 For high-performance readout, the benchmark program `src/CommandLineUtilities/ProgramDmaBench.cxx` may be more
@@ -102,10 +102,10 @@ For detailed information and usage examples, use a program's `--help` option.
 
 Most programs will also provide more detailed output when given the `--verbose` option.
 
-#### roc-alf-client & rorc-alf-server
+### roc-alf-client & rorc-alf-server
 See section "ALICE Low-level Front-end"
 
-#### roc-bench-dma
+### roc-bench-dma
 DMA throughput and stress-testing benchmarks.
 It may use files in these directories for DMA buffers: 
 * `/var/lib/hugetlbfs/global/pagesize-2MB`
@@ -187,8 +187,9 @@ print channel.register_write.__doc__
 ~~~
 
 
-Installation  <div id='installation'/>
+<div id='installation'/> Installation
 ===================
+Install the dependencies below and follow the instructions for building the FLP prototype.
 
 Dependencies
 -------------------
@@ -290,7 +291,7 @@ physical memory, which may be very difficult to allocate. With an SGL, we can us
 The regions can also presented in userspace as contiguous memory, thanks to the magic of the MMU.   
 
 
-Known issues  <div id='known-issues'/>
+<div id='known-issues'/> Known issues
 ===================
 C-RORC concurrent channels
 -------------------
@@ -306,7 +307,7 @@ users to create/read/write files.
 Also, the PDA kernel module must be inserted as root in any case.
 
 
-ALICE Low-level Front-end (ALF) DIM Server  <div id='alf'/>
+<div id='alf'/> ALICE Low-level Front-end (ALF) DIM Server
 ===================
 The utilities contain a DIM server for DCS control of the cards 
 
