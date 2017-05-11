@@ -16,8 +16,7 @@ Table of Contents
 6. [ALICE Low-level Front-end (ALF) DIM Server](#alf)
 
 
-<div id='introduction'/>
-Introduction  
+Introduction  <div id='introduction'/>
 ===================
 ### Supported cards
 The library currently supports the C-RORC and CRU cards.
@@ -50,7 +49,7 @@ For information on how to configure the IOMMU and hugepages for the purposes of 
 see the "Installation" section.
 
 
-Usage <div id='usage'/>
+Usage  <div id='usage'/>
 ===================
 For a simple usage example, see the program in `src/Example.cxx`.
 For high-performance readout, the benchmark program `src/CommandLineUtilities/ProgramDmaBench.cxx` may be more
@@ -188,7 +187,7 @@ print channel.register_write.__doc__
 ~~~
 
 
-<div id='installation'/> Installation
+Installation  <div id='installation'/>
 ===================
 Install the dependencies below and follow the instructions for building the FLP prototype.
 
@@ -292,7 +291,7 @@ physical memory, which may be very difficult to allocate. With an SGL, we can us
 The regions can also presented in userspace as contiguous memory, thanks to the magic of the MMU.   
 
 
-<div id='known-issues'/> Known issues
+Known issues  <div id='known-issues'/>
 ===================
 C-RORC concurrent channels
 -------------------
@@ -308,7 +307,7 @@ users to create/read/write files.
 Also, the PDA kernel module must be inserted as root in any case.
 
 
-<div id='alf'/> ALICE Low-level Front-end (ALF) DIM Server
+ALICE Low-level Front-end (ALF) DIM Server  <div id='alf'/>
 ===================
 The utilities contain a DIM server for DCS control of the cards 
 
