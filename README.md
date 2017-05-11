@@ -16,7 +16,8 @@ Table of Contents
 6. [ALICE Low-level Front-end (ALF) DIM Server](#alf)
 
 
-<div id='introduction'/> Introduction  
+<div id='introduction'/>
+Introduction  
 ===================
 ### Supported cards
 The library currently supports the C-RORC and CRU cards.
@@ -49,7 +50,7 @@ For information on how to configure the IOMMU and hugepages for the purposes of 
 see the "Installation" section.
 
 
-Usage <div id='usage'/> 
+Usage <div id='usage'/>
 ===================
 For a simple usage example, see the program in `src/Example.cxx`.
 For high-performance readout, the benchmark program `src/CommandLineUtilities/ProgramDmaBench.cxx` may be more
