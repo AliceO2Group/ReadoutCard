@@ -84,7 +84,9 @@ class Channel
 };
 } // Anonymous namespace
 
-BOOST_PYTHON_MODULE(libRORC)
+// Note that the name given here to BOOST_PYTHON_MODULE must be the actual name of the shared object file this file is
+// compiled into
+BOOST_PYTHON_MODULE(libReadoutCard)
 {
   using namespace boost::python;
 

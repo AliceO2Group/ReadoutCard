@@ -20,7 +20,7 @@ constexpr auto DMA_BUFFER_SIZE = 3ul;
 constexpr auto DMA_PAGE_SIZE = 4ul;
 constexpr auto GENERATOR_DATA_SIZE = 5ul;
 constexpr auto GENERATOR_ENABLED = true;
-constexpr auto GENERATOR_LOOPBACK_MODE = LoopbackMode::Rorc;
+constexpr auto GENERATOR_LOOPBACK_MODE = LoopbackMode::Internal;
 
 BOOST_AUTO_TEST_CASE(ParametersConstructors)
 {

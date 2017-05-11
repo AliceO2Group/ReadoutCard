@@ -1,5 +1,5 @@
 /// \file Example.cxx
-/// \brief Example of pushing pages with the RORC C++ interface
+/// \brief Example of pushing pages with the ReadoutCard C++ interface
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 

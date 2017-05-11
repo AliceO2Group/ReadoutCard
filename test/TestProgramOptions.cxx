@@ -3,7 +3,6 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "ReadoutCard/RORC.h"
 #include "CommandLineUtilities/Options.h"
 
 #define BOOST_TEST_MODULE RORC_TestProgramOptions
@@ -52,7 +51,7 @@ BOOST_AUTO_TEST_CASE(UtilOptions)
   auto map = getOptionsParameterMap(vm);
   BOOST_CHECK_MESSAGE(map.getDmaPageSizeRequired() == 300l * 1024l, "dma page size");
   BOOST_CHECK_MESSAGE(map.getGeneratorEnabledRequired() == true, "generator enable");
-  BOOST_CHECK_MESSAGE(map.getGeneratorLoopbackRequired() == AliceO2::roc::LoopbackMode::Rorc, "generator loopback mode");
+  BOOST_CHECK_MESSAGE(map.getGeneratorLoopbackRequired() == AliceO2::roc::LoopbackMode::Internal, "generator loopback mode");
   BOOST_CHECK_MESSAGE(getOptionSerialNumber(vm) == 500, "serial number");
 }
 

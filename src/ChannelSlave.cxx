@@ -14,14 +14,14 @@ ChannelSlave::ChannelSlave(const Parameters& parameters)
 {
   auto id = parameters.getCardIdRequired();
   if (auto serial = boost::get<int>(&id)) {
-    Utilities::resetSmartPtr(mRorcDevice, *serial);
+    Utilities::resetSmartPtr(mRocPciDevice, *serial);
     mSerialNumber = *serial;
   } else if (auto address = boost::get<PciAddress>(&id)) {
-    Utilities::resetSmartPtr(mRorcDevice, *address);
-    mSerialNumber = mRorcDevice->getSerialNumber();
+    Utilities::resetSmartPtr(mRocPciDevice, *address);
+    mSerialNumber = mRocPciDevice->getSerialNumber();
   }
 
-  Utilities::resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), mChannelNumber);
+  Utilities::resetSmartPtr(mPdaBar, mRocPciDevice->getPciDevice(), mChannelNumber);
 }
 
 ChannelSlave::~ChannelSlave()

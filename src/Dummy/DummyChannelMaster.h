@@ -13,7 +13,7 @@ namespace AliceO2 {
 namespace roc {
 
 /// A dummy implementation of the ChannelMasterInterface.
-/// This exists so that the RORC module may be built even if the all the dependencies of the 'real' card
+/// This exists so that the ReadoutCard module may be built even if the all the dependencies of the 'real' card
 /// implementation are not met (this mainly concerns the PDA driver library).
 /// It provides some basic simulation of page pushing and output.
 class DummyChannelMaster final : public ChannelMasterBase

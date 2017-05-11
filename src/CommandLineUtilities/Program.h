@@ -17,7 +17,7 @@ namespace AliceO2 {
 namespace roc {
 namespace CommandLineUtilities {
 
-/// Helper class for making a RORC utility program. It adds logging facilities to the Common::Program
+/// Helper class for making a ReadoutCard utility program. It adds logging facilities to the Common::Program
 /// - SIGINT signals
 class Program : public AliceO2::Common::Program
 {

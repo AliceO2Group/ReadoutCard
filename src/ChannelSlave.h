@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "RorcDevice.h"
+#include "RocPciDevice.h"
 #include <boost/scoped_ptr.hpp>
 #include "Pda/PdaBar.h"
 #include "ReadoutCard/ChannelSlaveInterface.h"
@@ -36,7 +36,7 @@ class ChannelSlave: public ChannelSlaveInterface
     int mChannelNumber;
 
     /// PDA device objects
-    boost::scoped_ptr<RorcDevice> mRorcDevice;
+    boost::scoped_ptr<RocPciDevice> mRocPciDevice;
 
     /// PDA BAR object
     boost::scoped_ptr<Pda::PdaBar> mPdaBar;

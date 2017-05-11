@@ -10,7 +10,7 @@
 #include "ReadoutCard/CardType.h"
 #include "ReadoutCard/Parameters.h"
 #ifdef ALICEO2_READOUTCARD_PDA_ENABLED
-# include "RorcDevice.h"
+# include "RocPciDevice.h"
 #endif
 
 namespace AliceO2 {
@@ -21,7 +21,7 @@ namespace FactoryHelper {
 #ifdef ALICEO2_READOUTCARD_PDA_ENABLED
 inline CardDescriptor findCard(int serial)
 {
-  auto cardsFound = RorcDevice::findSystemDevices(serial);
+  auto cardsFound = RocPciDevice::findSystemDevices(serial);
 
   if (cardsFound.empty()) {
     BOOST_THROW_EXCEPTION(Exception()
@@ -43,7 +43,7 @@ inline CardDescriptor findCard(int serial)
 
 inline CardDescriptor findCard(const PciAddress& address)
 {
-  auto cardsFound = RorcDevice::findSystemDevices(address);
+  auto cardsFound = RocPciDevice::findSystemDevices(address);
 
   if (cardsFound.empty()) {
     BOOST_THROW_EXCEPTION(Exception()

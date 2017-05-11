@@ -12,7 +12,7 @@ namespace {
 
 static const auto converter = Utilities::makeEnumConverter<LoopbackMode::type>({
   { LoopbackMode::None, "NONE" },
-  { LoopbackMode::Rorc, "RORC" },
+  { LoopbackMode::Internal, "INTERNAL" },
   { LoopbackMode::Diu, "DIU" },
   { LoopbackMode::Siu, "SIU" },
 });

@@ -1,5 +1,5 @@
 /// \file ExceptionInternal.h
-/// \brief Definition of internal RORC exceptions and related functions.
+/// \brief Definition of internal ReadoutCard exceptions and related functions.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 

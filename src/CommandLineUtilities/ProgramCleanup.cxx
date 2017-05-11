@@ -23,7 +23,7 @@ class ProgramCleanup: public Program
 
     virtual Description getDescription()
     {
-      return {"Cleanup", "Cleans up RORC state", "./rorc-cleanup --id=12345 --channel=0"};
+      return {"Cleanup", "Cleans up ReadoutCard state", "roc-cleanup --id=12345 --channel=0"};
     }
 
     virtual void addOptions(po::options_description& options)

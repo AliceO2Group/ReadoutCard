@@ -17,7 +17,7 @@ namespace roc {
 struct Exception : Common::Exception {};
 
 // General exception definitions
-struct RorcPdaException : virtual Exception {};
+struct PdaException : virtual Exception {};
 struct MemoryMapException : virtual Exception {};
 struct ParameterException : virtual Exception {};
 struct ParseException : virtual Exception {};

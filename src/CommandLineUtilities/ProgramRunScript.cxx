@@ -21,19 +21,19 @@ namespace bpy = boost::python;
 /// Simple example script
 auto sExampleScript = R"(
 # Run this with:
-# rorc-run-script --example > example.py
-# rorc-run-script --script=example.py --id=-1
+# roc-run-script --example > example.py
+# roc-run-script --script=example.py --id=-1
 
-print 'Hello RORC Python script!'
+print 'Hello ReadoutCard Python script!'
 
 print '\nPrinting function docs'
-print rorc.register_read_32.__doc__
-print rorc.register_write_32.__doc__
+print roc.register_read_32.__doc__
+print roc.register_write_32.__doc__
 
 print '\nReading and writing registers'
 channel = 0
-rorc.register_read_32(channel, 0x40)
-rorc.register_write_32(channel, 0x40, 123)
+roc.register_read_32(channel, 0x40)
+roc.register_write_32(channel, 0x40, 123)
 )";
 
 
@@ -72,7 +72,7 @@ struct PythonWrapper
     /// Puts this class into the given Python namespace
     static void putClass(bpy::object& mainNamespace)
     {
-      auto className = "rorc";
+      auto className = "roc";
       auto readName = "register_read_32";
       auto writeName = "register_write_32";
       auto readDoc =
@@ -104,7 +104,7 @@ class ProgramRunScript : public Program
     virtual Description getDescription()
     {
       return {"Run script", "Runs a Python script to perform actions on a channel",
-          "./rorc-run-script --id=12345 --script=myscript.py"};
+          "roc-run-script --id=12345 --script=myscript.py"};
     }
 
     virtual void addOptions(boost::program_options::options_description& options)

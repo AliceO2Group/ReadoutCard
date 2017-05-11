@@ -1,5 +1,5 @@
 /// \file Options.h
-/// \brief Definition of functions for the RORC utilities to handle program options
+/// \brief Definition of functions for the ReadoutCard utilities to handle program options
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 

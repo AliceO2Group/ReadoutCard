@@ -14,7 +14,7 @@
 #include "ReadoutCard/Exception.h"
 #include "ReadoutCard/MemoryMappedFile.h"
 #include "ReadoutCard/Parameters.h"
-#include "RorcDevice.h"
+#include "RocPciDevice.h"
 
 namespace AliceO2 {
 namespace roc {
@@ -101,9 +101,9 @@ class ChannelMasterPdaBase: public ChannelMasterBase
       return mPdaBar.get();
     }
 
-    const RorcDevice& getRorcDevice() const
+    const RocPciDevice& getRocPciDevice() const
     {
-      return *(mRorcDevice.get());
+      return *(mRocPciDevice.get());
     }
 
   private:
@@ -112,7 +112,7 @@ class ChannelMasterPdaBase: public ChannelMasterBase
     DmaState::type mDmaState;
 
     /// PDA device objects
-    boost::scoped_ptr<RorcDevice> mRorcDevice;
+    boost::scoped_ptr<RocPciDevice> mRocPciDevice;
 
     /// PDA BAR object
     boost::scoped_ptr<Pda::PdaBar> mPdaBar;

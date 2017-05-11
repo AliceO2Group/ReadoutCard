@@ -1,5 +1,5 @@
-/// \file RORC.h
-/// \brief Convenience header for the RORC module
+/// \file ReadoutCard.h
+/// \brief Convenience header for the ReadoutCard module
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 

@@ -29,10 +29,10 @@ namespace roc {
 CrorcChannelMaster::CrorcChannelMaster(const Parameters& parameters)
     : ChannelMasterPdaBase(parameters, allowedChannels()), //
     mPageSize(parameters.getDmaPageSize().get_value_or(8*1024)), // 8 kB default for uniformity with CRU
-    mInitialResetLevel(ResetLevel::Rorc), // It's good to reset at least the card channel in general
+    mInitialResetLevel(ResetLevel::Internal), // It's good to reset at least the card channel in general
     mNoRDYRX(true), // Not sure
     mUseFeeAddress(false), // Not sure
-    mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Rorc)), // Internal loopback by default
+    mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)), // Internal loopback by default
     mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)), // Use data generator by default
     mGeneratorPattern(parameters.getGeneratorPattern().get_value_or(GeneratorPattern::Incremental)), //
     mGeneratorMaximumEvents(0), // Infinite events
@@ -50,7 +50,7 @@ CrorcChannelMaster::CrorcChannelMaster(const Parameters& parameters)
     // Note: if resizing the file fails, we might've accidentally put the file in a hugetlbfs mount with 1 GB page size
     constexpr auto FIFO_SIZE = sizeof(ReadyFifo);
     Utilities::resetSmartPtr(mBufferFifoFile, getPaths().fifo(), FIFO_SIZE);
-    Utilities::resetSmartPtr(mPdaDmaBufferFifo, getRorcDevice().getPciDevice(), mBufferFifoFile->getAddress(),
+    Utilities::resetSmartPtr(mPdaDmaBufferFifo, getRocPciDevice().getPciDevice(), mBufferFifoFile->getAddress(),
         FIFO_SIZE, getPdaDmaBufferIndexFifo(getChannelNumber()));
 
     const auto& entry = mPdaDmaBufferFifo->getScatterGatherList().at(0);
@@ -188,7 +188,7 @@ void CrorcChannelMaster::deviceResetChannel(ResetLevel::type resetLevel)
   }
 
   try {
-    if (resetLevel == ResetLevel::Rorc) {
+    if (resetLevel == ResetLevel::Internal) {
       getCrorc().resetCommand(Rorc::Reset::FF, mDiuConfig);
       getCrorc().resetCommand(Rorc::Reset::RORC, mDiuConfig);
     }
@@ -196,7 +196,7 @@ void CrorcChannelMaster::deviceResetChannel(ResetLevel::type resetLevel)
     if (LoopbackMode::isExternal(mLoopbackMode)) {
       getCrorc().armDdl(Rorc::Reset::DIU, mDiuConfig);
 
-      if ((resetLevel == ResetLevel::RorcDiuSiu) && (mLoopbackMode != LoopbackMode::Diu))
+      if ((resetLevel == ResetLevel::InternalDiuSiu) && (mLoopbackMode != LoopbackMode::Diu))
       {
         // Wait a little before SIU reset.
         std::this_thread::sleep_for(100ms); /// XXX Why???
@@ -227,7 +227,7 @@ void CrorcChannelMaster::startDataGenerator()
   getCrorc().armDataGenerator(mGeneratorInitialValue, mGeneratorInitialWord, mGeneratorPattern, mGeneratorDataSize,
       mGeneratorSeed);
 
-  if (LoopbackMode::Rorc == mLoopbackMode) {
+  if (LoopbackMode::Internal == mLoopbackMode) {
     getCrorc().setLoopbackOn();
     std::this_thread::sleep_for(100ms); // XXX Why???
   }
@@ -249,7 +249,7 @@ void CrorcChannelMaster::startDataReceiving()
 
   // Preparing the card.
   if (LoopbackMode::Siu == mLoopbackMode) {
-    deviceResetChannel(ResetLevel::RorcDiuSiu);
+    deviceResetChannel(ResetLevel::InternalDiuSiu);
     getCrorc().assertLinkUp();
     getCrorc().siuCommand(Ddl::RandCIFST);
     getCrorc().diuCommand(Ddl::RandCIFST);
@@ -434,7 +434,7 @@ CardType::type CrorcChannelMaster::getCardType()
 Pda::PdaBar& CrorcChannelMaster::getBar2()
 {
   if (!mPdaBar2) {
-    Utilities::resetSmartPtr(mPdaBar2, getRorcDevice().getPciDevice(), 2);
+    Utilities::resetSmartPtr(mPdaBar2, getRocPciDevice().getPciDevice(), 2);
   }
   return *(mPdaBar2.get());
 }

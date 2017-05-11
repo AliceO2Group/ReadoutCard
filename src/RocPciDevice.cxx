@@ -1,9 +1,9 @@
-/// \file RorcDevice.cxx
-/// \brief Implementation of the RorcDevice class.
+/// \file RocPcievice.cxx
+/// \brief Implementation of the RocPciDevice class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "RorcDevice.h"
+#include "RocPciDevice.h"
 
 #include <map>
 #include <boost/filesystem.hpp>
@@ -54,7 +54,7 @@ CardDescriptor defaultDescriptor() {
 }
 } // Anonymous namespace
 
-void RorcDevice::initWithSerial(int serialNumber)
+void RocPciDevice::initWithSerial(int serialNumber)
 {
   try {
     for (const auto& type : deviceTypes) {
@@ -76,7 +76,7 @@ void RorcDevice::initWithSerial(int serialNumber)
   }
 }
 
-void RorcDevice::initWithAddress(const PciAddress& address)
+void RocPciDevice::initWithAddress(const PciAddress& address)
 {
   try {
     for (const auto& type : deviceTypes) {
@@ -97,19 +97,19 @@ void RorcDevice::initWithAddress(const PciAddress& address)
   }
 }
 
-RorcDevice::RorcDevice(int serialNumber)
+RocPciDevice::RocPciDevice(int serialNumber)
     : mDescriptor(defaultDescriptor())
 {
   initWithSerial(serialNumber);
 }
 
-RorcDevice::RorcDevice(const PciAddress& address)
+RocPciDevice::RocPciDevice(const PciAddress& address)
     : mDescriptor(defaultDescriptor())
 {
   initWithAddress(address);
 }
 
-RorcDevice::RorcDevice(const Parameters::CardIdType& cardId)
+RocPciDevice::RocPciDevice(const Parameters::CardIdType& cardId)
     : mDescriptor(defaultDescriptor())
 {
   if (auto serial = boost::get<int>(&cardId)) {
@@ -119,11 +119,11 @@ RorcDevice::RorcDevice(const Parameters::CardIdType& cardId)
   }
 }
 
-RorcDevice::~RorcDevice()
+RocPciDevice::~RocPciDevice()
 {
 }
 
-std::vector<CardDescriptor> RorcDevice::findSystemDevices()
+std::vector<CardDescriptor> RocPciDevice::findSystemDevices()
 {
   std::vector<CardDescriptor> cards;
   for (const auto& type : deviceTypes) {
@@ -135,7 +135,7 @@ std::vector<CardDescriptor> RorcDevice::findSystemDevices()
   return cards;
 }
 
-std::vector<CardDescriptor> RorcDevice::findSystemDevices(int serialNumber)
+std::vector<CardDescriptor> RocPciDevice::findSystemDevices(int serialNumber)
 {
   std::vector<CardDescriptor> cards;
   try {
@@ -156,7 +156,7 @@ std::vector<CardDescriptor> RorcDevice::findSystemDevices(int serialNumber)
   return cards;
 }
 
-std::vector<CardDescriptor> RorcDevice::findSystemDevices(const PciAddress& address)
+std::vector<CardDescriptor> RocPciDevice::findSystemDevices(const PciAddress& address)
 {
   std::vector<CardDescriptor> cards;
   try {
@@ -176,7 +176,7 @@ std::vector<CardDescriptor> RorcDevice::findSystemDevices(const PciAddress& addr
   return cards;
 }
 
-void RorcDevice::printDeviceInfo(std::ostream& ostream)
+void RocPciDevice::printDeviceInfo(std::ostream& ostream)
 {
   uint16_t domainId;
   uint8_t busId;

@@ -1,6 +1,6 @@
 /// \file ProgramDmaBench.cxx
 ///
-/// \brief Utility that tests RORC DMA performance
+/// \brief Utility that tests ReadoutCard DMA performance
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 
@@ -27,7 +27,6 @@
 #include "Common/Iommu.h"
 #include "Common/SuffixOption.h"
 #include "ExceptionInternal.h"
-#include "ExceptionLogging.h"
 #include "InfoLogger/InfoLogger.hxx"
 #include "folly/ProducerConsumerQueue.h"
 #include "ReadoutCard/ChannelFactory.h"
@@ -73,8 +72,8 @@ class ProgramDmaBench: public Program
 
     virtual Description getDescription()
     {
-      return {"DMA Benchmark", "Test RORC DMA performance", "rorc-bench-dma --id=2:0.0 --channel=0 --reset --pages=1M "
-        "--buffer-size=1Gi --verbose --superpage-size=128Ki"};
+      return {"DMA Benchmark", "Test ReadoutCard DMA performance",
+          "roc-bench-dma --verbose --id=42:0.0 --channel=0 --buffer-size=32Mi --superpage-size=2Mi --bytes=1G"};
     }
 
     virtual void addOptions(po::options_description& options)
@@ -183,8 +182,9 @@ class ProgramDmaBench: public Program
 
         if (!AliceO2::Common::Iommu::isEnabled()) {
           if (!Utilities::isMultiple(hugePageSize, mSuperpageSize)) {
-            throw ParameterException() << ErrorInfo::Message("IOMMU not enabled & hugepage size is not a multiple of "
-                "superpage size. Superpages may cross hugepage boundaries and cause invalid PCIe memory accesses");
+            BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("IOMMU not enabled & hugepage size is "
+                "not a multiple of superpage size. Superpages may cross hugepage boundaries and cause invalid PCIe "
+                "memory accesses"));
           }
           mLogger << "IOMMU not enabled" << endm;
         } else {
@@ -198,7 +198,7 @@ class ProgramDmaBench: public Program
         auto createBuffer = [&](HugePageType hugePageType) {
           // Create buffer file
           std::string bufferFilePath = b::str(
-              b::format("/var/lib/hugetlbfs/global/pagesize-%s/rorc-dma-bench_id=%s_chan=%s_pages")
+              b::format("/var/lib/hugetlbfs/global/pagesize-%roc-bench-dma_id=%s_chan=%s_pages")
                   % (hugePageType == HugePageType::SIZE_2MB ? "2MB" : "1GB") % map["id"].as<std::string>()
                   % channelNumber);
           Utilities::resetSmartPtr(mMemoryMappedFile, bufferFilePath, mBufferSize, mOptions.removePagesFile);
@@ -267,7 +267,7 @@ class ProgramDmaBench: public Program
 
       if (mOptions.resetChannel) {
         mLogger << "Resetting channel" << endm;
-        mChannel->resetChannel(ResetLevel::Rorc);
+        mChannel->resetChannel(ResetLevel::Internal);
       }
 
       mLogger << "Starting benchmark" << endm;

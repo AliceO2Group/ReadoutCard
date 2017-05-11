@@ -1,5 +1,5 @@
 /// \file Options.cxx
-/// \brief Implementation of functions for the RORC utilities to handle program options
+/// \brief Implementation of functions for the ReadoutCard utilities to handle program options
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
@@ -61,12 +61,12 @@ static Option<int> registerRange("range", "Amount of registers to print past giv
 static Option<int> serialNumber("serial", "Card serial number");
 static Option<std::string> registerValue("value", "Register value, either in decimal or hex (prefix with 0x)");
 static Option<std::string> cardId("id", "Card ID: either serial number or PCI address in 'lspci' format");
-static Option<std::string> resetLevel("reset", "Reset level [NOTHING, RORC, RORC_DIU, RORC_DIU_SIU]", false);
+static Option<std::string> resetLevel("reset", "Reset level [NOTHING, INTERNAL, INTERNAL_DIU, INTERNAL_DIU_SIU]", false);
 
 // Options for ChannelParameters
 static Option<size_t> cpDmaPageSize("page-size", "Card page size in KiB", true, 8);
 static Option<bool> cpGenEnable("generator", "Enable data generator", true, true);
-static Option<std::string> cpGenLoopback("loopback", "Generator loopback mode [NONE, RORC, DIU, SIU]", true, "RORC");
+static Option<std::string> cpGenLoopback("loopback", "Generator loopback mode [NONE, INTERNAL, DIU, SIU]", true, "INTERNAL");
 
 }
 

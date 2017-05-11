@@ -34,8 +34,8 @@ constexpr uint64_t DMA_ALIGNMENT = 32;
 
 CruChannelMaster::CruChannelMaster(const Parameters& parameters)
     : ChannelMasterPdaBase(parameters, allowedChannels()), //
-      mInitialResetLevel(ResetLevel::Rorc), // It's good to reset at least the card channel in general
-      mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Rorc)), // Internal loopback by default
+      mInitialResetLevel(ResetLevel::Internal), // It's good to reset at least the card channel in general
+      mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)), // Internal loopback by default
       mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)), // Use data generator by default
       mGeneratorPattern(parameters.getGeneratorPattern().get_value_or(GeneratorPattern::Incremental)), //
       mGeneratorMaximumEvents(0), // Infinite events
@@ -59,7 +59,7 @@ CruChannelMaster::CruChannelMaster(const Parameters& parameters)
     }
   }
 
-  Utilities::resetSmartPtr(mPdaBar2, getRorcDevice().getPciDevice(), 2);
+  Utilities::resetSmartPtr(mPdaBar2, getRocPciDevice().getPciDevice(), 2);
 
   // Insert links
   getLogger() << "Enabling link ";

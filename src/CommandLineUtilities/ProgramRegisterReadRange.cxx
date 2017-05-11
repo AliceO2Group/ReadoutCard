@@ -1,7 +1,7 @@
 /// \file ProgramRegisterReadRange.cxx
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
-/// \brief Utility that reads a range of registers from a RORC
+/// \brief Utility that reads a range of registers from a card
 
 #include "CommandLineUtilities/Program.h"
 #include "ReadoutCard/ChannelFactory.h"
@@ -20,7 +20,7 @@ class ProgramRegisterReadRange: public Program
     virtual Description getDescription()
     {
       return {"Read Register Range", "Read a range of registers",
-          "./rorc-reg-read-range --id=12345 --channel=0 --address=0x8 --range=10"};
+          "roc-reg-read-range --id=12345 --channel=0 --address=0x8 --range=10"};
     }
 
     virtual void addOptions(po::options_description& options)

@@ -33,13 +33,13 @@ BOOST_AUTO_TEST_CASE(EnumCardTypeConversion)
 
 BOOST_AUTO_TEST_CASE(EnumLoopbackModeConversion)
 {
-  checkEnumConversion<LoopbackMode>({LoopbackMode::Diu, LoopbackMode::None, LoopbackMode::Rorc, LoopbackMode::Siu});
+  checkEnumConversion<LoopbackMode>({LoopbackMode::Diu, LoopbackMode::None, LoopbackMode::Internal, LoopbackMode::Siu});
 }
 
 BOOST_AUTO_TEST_CASE(EnumResetLevelConversion)
 {
-  checkEnumConversion<ResetLevel>({ResetLevel::Nothing, ResetLevel::Rorc, ResetLevel::RorcDiu,
-      ResetLevel::RorcDiuSiu});
+  checkEnumConversion<ResetLevel>({ResetLevel::Nothing, ResetLevel::Internal, ResetLevel::InternalDiu,
+      ResetLevel::InternalDiuSiu});
 }
 
 BOOST_AUTO_TEST_CASE(EnumReadoutModeConversion)

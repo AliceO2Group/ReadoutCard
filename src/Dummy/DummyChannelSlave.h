@@ -12,7 +12,7 @@ namespace AliceO2 {
 namespace roc {
 
 /// A dummy implementation of the ChannelSlaveInterface.
-/// This exists so that the RORC module may be built even if the all the dependencies of the 'real' card
+/// This exists so that the ReadoutCard module may be built even if the all the dependencies of the 'real' card
 /// implementation are not met (this mainly concerns the PDA driver library).
 /// In the future, a dummy implementation could be a simulated card. Currently, methods of this implementation do
 /// nothing besides print which method was called. Returned values are static and should not be used.

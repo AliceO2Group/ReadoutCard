@@ -1,7 +1,7 @@
 /// \file ProgramRegisterWrite.cxx
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
-/// \brief Utility that writes to a register on a RORC
+/// \brief Utility that writes to a register on a card
 
 #include "CommandLineUtilities/Program.h"
 #include "ReadoutCard/ChannelFactory.h"
@@ -19,7 +19,7 @@ class ProgramRegisterWrite: public Program
     virtual Description getDescription()
     {
       return {"Write Register", "Write a value to a single register",
-          "./rorc-reg-write --id=12345 --channel=0 --address=0x8 --value=0"};
+          "roc-reg-write --id=12345 --channel=0 --address=0x8 --value=0"};
     }
 
     virtual void addOptions(boost::program_options::options_description& options)

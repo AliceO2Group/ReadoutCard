@@ -1,5 +1,5 @@
-/// \file RorcDevice.h
-/// \brief Definition of the RorcDevice class.
+/// \file RocPciDevice.h
+/// \brief Definition of the RocPciDevice class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
@@ -17,17 +17,17 @@
 namespace AliceO2 {
 namespace roc {
 
-/// Represents a single RORC PCI device
-class RorcDevice
+/// Represents a single ReadoutCard PCI device
+class RocPciDevice
 {
   public:
-    RorcDevice(int serialNumber);
+    RocPciDevice(int serialNumber);
 
-    RorcDevice(const PciAddress& address);
+    RocPciDevice(const PciAddress& address);
 
-    RorcDevice(const Parameters::CardIdType& cardId);
+    RocPciDevice(const Parameters::CardIdType& cardId);
 
-    ~RorcDevice();
+    ~RocPciDevice();
 
     CardDescriptor getCardDescriptor() const
     {
@@ -61,13 +61,13 @@ class RorcDevice
 
     void printDeviceInfo(std::ostream& ostream);
 
-    // Finds RORC devices on the system
+    // Finds ReadoutCard devices on the system
     static std::vector<CardDescriptor> findSystemDevices();
 
-    // Finds RORC devices on the system with the given serial number
+    // Finds ReadoutCard devices on the system with the given serial number
     static std::vector<CardDescriptor> findSystemDevices(int serialNumber);
 
-    // Finds RORC devices on the system with the given address
+    // Finds ReadoutCard devices on the system with the given address
     static std::vector<CardDescriptor> findSystemDevices(const PciAddress& address);
 
   private:

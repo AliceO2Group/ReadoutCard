@@ -119,7 +119,7 @@ if(ALICEO2_READOUTCARD_PDA_ENABLED)
     src/Pda/PdaBar.cxx
     src/Pda/PdaDevice.cxx
     src/Pda/PdaDmaBuffer.cxx
-    src/RorcDevice.cxx
+          src/RocPciDevice.cxx
   )
   if(PYTHONLIBS_FOUND)
     list(APPEND SRCS

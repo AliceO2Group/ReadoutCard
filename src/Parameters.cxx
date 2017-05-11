@@ -1,5 +1,5 @@
 /// \file Parameters.cxx
-/// \brief Implementation of the RORC Parameters and associated functions
+/// \brief Implementation of the ReadoutCard Parameters and associated functions
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 

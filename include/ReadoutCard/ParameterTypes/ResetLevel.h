@@ -16,7 +16,10 @@ struct ResetLevel
 {
     enum type
     {
-      Nothing = 0, Rorc = 1, RorcDiu = 2, RorcDiuSiu = 3,
+      Nothing = 0, ///< No reset
+      Internal = 1, ///< Reset internally only
+      InternalDiu = 2, ///< Reset internally, and the DIU
+      InternalDiuSiu = 3, ///< Reset internally, the DIU, and the SIU
     };
 
     /// Converts a ResetLevel to a string

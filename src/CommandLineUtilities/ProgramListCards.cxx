@@ -1,5 +1,5 @@
 /// \file ProgramListCards.cxx
-/// \brief Utility that lists the RORC devices on the system
+/// \brief Utility that lists the ReadoutCard devices on the system
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
@@ -7,8 +7,7 @@
 #include <sstream>
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
-#include "CommandLineUtilities/Common.h"
-#include "RorcDevice.h"
+#include "RocPciDevice.h"
 #include "ReadoutCard/ChannelFactory.h"
 #include <boost/format.hpp>
 
@@ -24,7 +23,7 @@ class ProgramListCards: public Program
 
     virtual Description getDescription()
     {
-      return {"List Cards", "Lists installed RORC cards and some basic information about them", "./rorc-list-cards"};
+      return {"List Cards", "Lists installed cards and some basic information about them", "roc-list-cards"};
     }
 
     virtual void addOptions(boost::program_options::options_description&)
@@ -33,7 +32,7 @@ class ProgramListCards: public Program
 
     virtual void run(const boost::program_options::variables_map&)
     {
-      auto cardsFound = AliceO2::roc::RorcDevice::findSystemDevices();
+      auto cardsFound = AliceO2::roc::RocPciDevice::findSystemDevices();
 
       std::ostringstream table;
 

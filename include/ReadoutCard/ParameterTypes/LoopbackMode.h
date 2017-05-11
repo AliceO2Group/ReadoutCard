@@ -11,7 +11,7 @@
 namespace AliceO2 {
 namespace roc {
 
-/// Namespace for the RORC loopback mode enum, and supporting functions
+/// Namespace for the ReadoutCard loopback mode enum, and supporting functions
 struct LoopbackMode
 {
     /// Loopback mode
@@ -20,7 +20,7 @@ struct LoopbackMode
       None = 0, ///< No loopback
       Diu = 1, ///< Loopback through DIU
       Siu = 2, ///< Loopback through SIU
-      Rorc = 3 ///< Internal loopback
+      Internal = 3 ///< Internal loopback
     };
 
     /// Converts a LoopbackMode to a string

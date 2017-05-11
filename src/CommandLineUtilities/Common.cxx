@@ -1,5 +1,5 @@
 /// \file Common.cxx
-/// \brief Implementation of common functions for the RORC utilities.
+/// \brief Implementation of common functions for the ReadoutCard utilities.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 

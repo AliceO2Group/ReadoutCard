@@ -17,8 +17,8 @@ namespace {
 CardDescriptor getDescriptor(const Parameters& parameters)
 {
   return Visitor::apply<CardDescriptor>(parameters.getCardIdRequired(),
-      [&](int serial) {return RorcDevice(serial).getCardDescriptor();},
-      [&](const PciAddress& address) {return RorcDevice(address).getCardDescriptor();});
+      [&](int serial) {return RocPciDevice(serial).getCardDescriptor();},
+      [&](const PciAddress& address) {return RocPciDevice(address).getCardDescriptor();});
 }
 
 }
@@ -28,14 +28,14 @@ ChannelMasterPdaBase::ChannelMasterPdaBase(const Parameters& parameters,
     : ChannelMasterBase(getDescriptor(parameters), parameters, allowedChannels), mDmaState(DmaState::STOPPED)
 {
   // Initialize PDA & DMA objects
-  Utilities::resetSmartPtr(mRorcDevice, getSerialNumber());
+  Utilities::resetSmartPtr(mRocPciDevice, getSerialNumber());
 
   log("Initializing BAR", InfoLogger::InfoLogger::Debug);
-  Utilities::resetSmartPtr(mPdaBar, mRorcDevice->getPciDevice(), getChannelNumber());
+  Utilities::resetSmartPtr(mPdaBar, mRocPciDevice->getPciDevice(), getChannelNumber());
 
   // Register user's page data buffer
   log("Initializing memory-mapped DMA buffer", InfoLogger::InfoLogger::Debug);
-  Utilities::resetSmartPtr(mPdaDmaBuffer, mRorcDevice->getPciDevice(), getBufferProvider().getAddress(),
+  Utilities::resetSmartPtr(mPdaDmaBuffer, mRocPciDevice->getPciDevice(), getBufferProvider().getAddress(),
       getBufferProvider().getSize(), getPdaDmaBufferIndexPages(getChannelNumber(), 0));
   log(std::string("Scatter-gather list size: ") + std::to_string(mPdaDmaBuffer->getScatterGatherList().size()));
 }

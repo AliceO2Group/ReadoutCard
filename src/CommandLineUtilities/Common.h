@@ -1,5 +1,5 @@
 /// \file Common.h
-/// \brief Definition of common functions for the RORC utilities.
+/// \brief Definition of common functions for the ReadoutCard utilities.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 

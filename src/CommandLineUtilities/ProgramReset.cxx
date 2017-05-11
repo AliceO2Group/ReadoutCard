@@ -1,5 +1,5 @@
 /// \file ProgramReset.cxx
-/// \brief Utility that resets a RORC
+/// \brief Utility that resets a ReadoutCard
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
@@ -16,7 +16,7 @@ class ProgramReset: public Program
 
     virtual Description getDescription()
     {
-      return {"Reset", "Resets a channel", "./rorc-reset --id=12345 --channel=0 --reset=RORC_DIU_SIU"};
+      return {"Reset", "Resets a channel", "roc-reset --id=12345 --channel=0 --reset=INTERNAL_DIU_SIU"};
     }
 
     virtual void addOptions(boost::program_options::options_description& options)

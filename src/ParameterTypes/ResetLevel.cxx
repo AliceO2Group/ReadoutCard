@@ -11,17 +11,17 @@ namespace roc {
 namespace {
 
 static const auto converter = Utilities::makeEnumConverter<ResetLevel::type>({
-  { ResetLevel::Nothing,    "NOTHING" },
-  { ResetLevel::Rorc,       "RORC" },
-  { ResetLevel::RorcDiu,    "RORC_DIU" },
-  { ResetLevel::RorcDiuSiu, "RORC_DIU_SIU" },
+  { ResetLevel::Nothing,        "NOTHING" },
+  { ResetLevel::Internal,       "INTERNAL" },
+  { ResetLevel::InternalDiu,    "INTERNAL_DIU" },
+  { ResetLevel::InternalDiuSiu, "INTERNAL_DIU_SIU" },
 });
 
 } // Anonymous namespace
 
 bool ResetLevel::includesExternal(const ResetLevel::type& mode)
 {
-  return mode == ResetLevel::RorcDiu || mode == ResetLevel::RorcDiuSiu;
+  return mode == ResetLevel::InternalDiu || mode == ResetLevel::InternalDiuSiu;
 }
 
 std::string ResetLevel::toString(const ResetLevel::type& level)

@@ -43,7 +43,7 @@ class ProgramAliceLowlevelFrontendClient: public Program
 
     virtual Description getDescription() override
     {
-      return {"ALF DIM Client example", "ALICE low-level front-end DIM Client example", "./rorc-alf-client"};
+      return {"ALF DIM Client example", "ALICE low-level front-end DIM Client example", "roc-alf-client"};
     }
 
     virtual void addOptions(boost::program_options::options_description& options) override
