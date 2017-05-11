@@ -4,9 +4,9 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "CruChannelMaster.h"
-#include <boost/dynamic_bitset.hpp>
-#include <thread>
 #include <sstream>
+#include <thread>
+#include <boost/format.hpp>
 #include "ChannelPaths.h"
 #include "ExceptionInternal.h"
 #include "Utilities/SmartPointer.h"
@@ -230,10 +230,8 @@ boost::optional<float> CruChannelMaster::getTemperature()
 
 boost::optional<std::string> CruChannelMaster::getFirmwareInfo()
 {
-  std::ostringstream stream;
-  stream << getBar2().getFirmwareDate() << '-' << getBar2().getFirmwareTime() << '-' << std::hex
-       << getBar2().getFirmwareGitHash();
-  return stream.str();
+  return boost::str(boost::format("%x-%x-%x") % getBar2().getFirmwareDate() % getBar2().getFirmwareTime()
+      % getBar2().getFirmwareGitHash());
 }
 
 } // namespace Rorc

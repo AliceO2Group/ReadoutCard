@@ -68,13 +68,14 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
     /// Handles internal driver business. Call in a loop. May be replaced by internal driver thread at some point.
     virtual void fillSuperpages() = 0;
 
-    /// Gets the amount of superpages that can still be pushed into the "transfer queue"
+    /// Gets the amount of superpages that can still be pushed into the "transfer queue" using pushSuperpage()
     virtual int getTransferQueueAvailable() = 0;
 
-    /// Gets the amount of superpages currently in the "ready queue"
+    /// Gets the amount of superpages currently in the "ready queue". If there is more than one available, the front
+    /// superpage can be inspected with getSuperpage() or popped with popSuperpage().
     virtual int getReadyQueueSize() = 0;
 
-    /// Returns the type of the RORC card this ChannelMaster is controlling
+    /// Returns the type of the card this ChannelMaster is controlling
     /// \return The card type
     virtual CardType::type getCardType() = 0;
 

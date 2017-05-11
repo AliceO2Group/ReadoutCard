@@ -31,13 +31,13 @@ ChannelSlave::~ChannelSlave()
 uint32_t ChannelSlave::readRegister(int index)
 {
   // TODO Access restriction
-  return mPdaBar->getRegister<uint32_t>(index * sizeof(uint32_t));
+  return mPdaBar->readRegister(index);
 }
 
 void ChannelSlave::writeRegister(int index, uint32_t value)
 {
   // TODO Access restriction
-  mPdaBar->setRegister<uint32_t>(index * sizeof(uint32_t), value);
+  mPdaBar->writeRegister(index, value);
 }
 
 } // namespace Rorc

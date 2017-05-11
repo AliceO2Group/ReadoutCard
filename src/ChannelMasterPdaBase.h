@@ -91,24 +91,9 @@ class ChannelMasterPdaBase: public ChannelMasterBase
     /// Function for getting the bus address that corresponds to the user address + given offset
     uintptr_t getBusOffsetAddress(size_t offset);
 
-    uintptr_t getBarUserspace() const
-    {
-      return mPdaBar->getUserspaceAddress();
-    }
-
-    volatile uint32_t* getBarUserspaceU32() const
-    {
-      return mPdaBar->getUserspaceAddressU32();
-    }
-
     const Pda::PdaDmaBuffer& getPdaDmaBuffer() const
     {
       return *(mPdaDmaBuffer.get());
-    }
-
-    Pda::PdaBar& getPdaBar()
-    {
-      return *(mPdaBar.get());
     }
 
     Pda::PdaBar* getPdaBarPtr()
@@ -119,11 +104,6 @@ class ChannelMasterPdaBase: public ChannelMasterBase
     const RorcDevice& getRorcDevice() const
     {
       return *(mRorcDevice.get());
-    }
-
-    DmaState::type getDmaState() const
-    {
-      return mDmaState;
     }
 
   private:

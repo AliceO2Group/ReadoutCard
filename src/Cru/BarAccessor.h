@@ -142,7 +142,7 @@ class BarAccessor
     boost::optional<float> convertTemperatureRaw(uint32_t registerValue) const
     {
       /// It's a 10 bit register, so: 2^10 - 1
-      constexpr int REGISTER_MAX_VALUE = 1023;
+      constexpr uint32_t REGISTER_MAX_VALUE = 1023;
 
       // Conversion formula from: https://documentation.altera.com/#/00045071-AA$AA00044865
       if (registerValue == 0 || registerValue > REGISTER_MAX_VALUE) {
@@ -209,12 +209,12 @@ class BarAccessor
 
     uint8_t getDebugReadWriteRegister()
     {
-      return mPdaBar->getRegister<uint8_t>(toByteAddress(Registers::DEBUG_READ_WRITE));
+      return mPdaBar->barRead<uint8_t>(toByteAddress(Registers::DEBUG_READ_WRITE));
     }
 
     void setDebugReadWriteRegister(uint8_t value)
     {
-      return mPdaBar->setRegister<uint8_t>(toByteAddress(Registers::DEBUG_READ_WRITE), value);
+      return mPdaBar->barWrite<uint8_t>(toByteAddress(Registers::DEBUG_READ_WRITE), value);
     }
 
   private:

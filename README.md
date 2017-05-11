@@ -1,16 +1,4 @@
 # RORC module
-
-
-Authors
-===================
-
-* C layer: Tuan Mate Nguyen (tuan.mate@outlook.com)
-* C++: Pascal Boeschoten (pascal.boeschoten@cern.ch)
-
-
-Description
-===================
-
 The RORC module is the software that directly interfaces with the RORC (ReadOut and Receiver Card) PCIe cards.
 RORCs can have multiple DMA channels, and each channel is treated separately by the program.
   (Note: the old C-RORC card has 6 channels, the upcoming CRU 1.)
@@ -280,19 +268,3 @@ Card's core temperature in degrees Celsius
 * Service type: Published
 * Service name: TEMPERATURE
 * Value type: double
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

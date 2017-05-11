@@ -87,12 +87,12 @@ void ChannelMasterPdaBase::resetChannel(ResetLevel::type resetLevel)
 
 uint32_t ChannelMasterPdaBase::readRegister(int index)
 {
-  return mPdaBar->getRegister<uint32_t>(index * sizeof(uint32_t));
+  return mPdaBar->readRegister(index);
 }
 
 void ChannelMasterPdaBase::writeRegister(int index, uint32_t value)
 {
-  mPdaBar->setRegister<uint32_t>(index * sizeof(uint32_t), value);
+  mPdaBar->writeRegister(index, value);
 }
 
 uintptr_t ChannelMasterPdaBase::getBusOffsetAddress(size_t offset)
