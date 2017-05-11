@@ -210,23 +210,6 @@ void CruChannelMaster::fillSuperpages()
       }
     }
   }
-
-  //  // Look for a ready superpage in the links
-//  for (int i = 0; i < mLinks.size(); ++i) {
-//    auto &link = getNextLinkToPop();
-//
-//    if (getSuperpage().isReady()) {
-//      auto superpage = link.queue.front();
-//      superpage.received = superpage.size;
-//      link.queue.pop_front();
-//      link.superpageCounter++;
-//      mLinksTotalQueueSize++;
-//      return superpage;
-//    } else {
-//      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not pop superpage, transfer wasn't ready"));
-//    }
-//  }
-
 }
 
 int CruChannelMaster::getTransferQueueAvailable()
@@ -248,7 +231,7 @@ boost::optional<float> CruChannelMaster::getTemperature()
 boost::optional<std::string> CruChannelMaster::getFirmwareInfo()
 {
   std::ostringstream stream;
-  stream << '-' << getBar2().getFirmwareDate() << '-' << getBar2().getFirmwareTime() << std::hex
+  stream << getBar2().getFirmwareDate() << '-' << getBar2().getFirmwareTime() << '-' << std::hex
        << getBar2().getFirmwareGitHash();
   return stream.str();
 }
