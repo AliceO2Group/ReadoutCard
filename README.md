@@ -1,15 +1,64 @@
-# ReadoutCard (RoC) module
-The RoC module* is a C++ library that provides a high-level interface for accessing and controlling high-performance data 
-acquisition PCIe cards.
-
-It currently supports the C-RORC and CRU cards.
+ReadoutCard (RoC) module
+===================
+The ReadoutCard module* is a C++ library that provides a high-level interface for accessing and controlling 
+high-performance data acquisition PCIe cards.
 
 **Formerly known as the RORC module*
 
-Channel ownership lock
+
+Table of Contents
+===================
+1. [Introduction](#introduction)
+2. [Usage](#usage)
+3. [Installation](#installation)
+4. [Implementation notes](#implementation-notes)
+5. [Known issues](#known-issues)
+6. [ALICE Low-level Front-end (ALF) DIM Server](#alf)
+
+
+Introduction  <div id='introduction'/>
+===================
+### Supported cards
+The library currently supports the C-RORC and CRU cards.
+It also provides a software-based dummy card (see the section "Dummy implementation" for more details)
+
+[todo] BAR, DMA buffer, Superpages, pages, and other confusing terminology, memory layout
+
+### The MMU, hugepages, and the IOMMU
+Most x86-64 CPUs have an MMU that supports 4 KiB, 2 MiB and 1 GiB page sizes. 
+4KB is the default, while the bigger ones are referred to as hugepages in Linux.
+Since the cards can have DMA page sizes larger than 4KiB (the CRU's is 8KiB for example),
+a 4KiB page size can easily become problematic if they are at all fragmented.
+The roc-dma-bench program uses hugepages to ensure the buffer's memory is more contiguous and the DMA scatter-gather 
+list is small.
+
+But hugepages have to be allocated in advance. And they're not really needed with the IOMMU enabled 
+(note: performance impact of using the IOMMU has not been measured).
+With an enabled IOMMU, the ReadoutCard library will be able to present any user-allocated buffer that was registered
+with the channel as a contiguous address space to the card, simplifying DMA buffer management.
+
+When implementing a readout program with the ReadoutCard library, it is practically mandatory to either 
+enable the IOMMU, or allocate the DMA buffer using hugepages.
+
+Note that an IOMMU may not be available on your system.
+
+For more detailed information about hugepages, refer to the linux kernel docs: 
+  https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt
+  
+For information on how to configure the IOMMU and hugepages for the purposes of this library, 
+see the "Installation" section.
+
+
+Usage  <div id='usage'/>
+===================
+For a simple usage example, see the program in `src/Example.cxx`.
+For high-performance readout, the benchmark program `src/CommandLineUtilities/ProgramDmaBench.cxx` may be more
+instructive.
+
+DMA channels
 -------------------
-Clients can acquire a master lock on a channel by instantiating a *ChannelMasterInterface* implementation through the
-*ChannelFactory* class. 
+Clients can acquire a lock on a DMA channel by instantiating a *ChannelMasterInterface* implementation through 
+the *ChannelFactory* class. Once this object is constructed, it will provide exclusive access to the DMA channel.
 
 The user will need to specify parameters for the channel by passing an instance of the *Parameters* 
 class to the factory function. The most important parameters are the card ID (either a serial number of a PCI address),
@@ -28,39 +77,87 @@ enabled using the `setForcedUnlockEnabled()` function of the *Parameters* class.
 caution. See the function's documentation for more information about the risks.
 
 Once a ChannelMaster has acquired the lock, clients can:
-* Read and write registers of the BAR channel
 * Start and stop DMA
 * Push and read pages
+* Read and write registers of the BAR channel
 
-For a simple usage example, see the program in `src/Example.cxx`. 
-For high-performance readout, the benchmark program `src/CommandLineUtilities/ProgramDmaBench.cxx` may be more
-instructive.
-
-Limited-access interface
+BAR interface
 -------------------
-Users can also get a limited-access object (implementing ChannelSlaveInterface) from the
-factory. It is restricted to reading and writing registers. 
+Users can also get a limited-access object (implementing *ChannelSlaveInterface*) from the *ChannelFactory*. 
+It is restricted to reading and writing registers to the BAR. 
 Currently, there are no limits imposed on which registers are allowed to be read from and written to, so it is still a
 "dangerous" interface. But in the future, protections may be added.
 
-Dummy objects
+Dummy implementation
 -------------------
-The ChannelFactory can instantiate a dummy object if a certain serial number (currently -1 is used) is passed to its
-functions. If PDA is not available (see 'Dependencies') the factory will **always** instantiate a dummy object.
+The ChannelFactory can instantiate a dummy object if the serial number -1 is passed to its functions.
+This dummy object may at some point provide a mock DMA transfer, but currently it does not do anything.
+ 
+If PDA is not available (see 'Dependencies') the factory will **always** instantiate a dummy object.
 
 Utility programs
 -------------------
-The RORC module contains some utility programs to assist with RORC debugging and administration.
-rorc-bench-dma uses files in these directories for DMA buffers: 
+The module contains some utility programs to assist with ReadoutCard debugging and administration.
+For detailed information and usage examples, use a program's `--help` option.
+
+Most programs will also provide more detailed output when given the `--verbose` option.
+
+#### roc-alf-client & rorc-alf-server
+See section "ALICE Low-level Front-end"
+
+#### roc-bench-dma
+DMA throughput and stress-testing benchmarks.
+It may use files in these directories for DMA buffers: 
 * `/var/lib/hugetlbfs/global/pagesize-2MB`
 * `/var/lib/hugetlbfs/global/pagesize-1GB`
+The program will report the exact file used. 
 They can be inspected manually if needed, e.g. with hexdump: `hexdump -e '"%07_ax" " | " 4/8 "%08x " "\n"' [filename]`
+
+### roc-channel-cleanup
+In the event of a serious crash, such as a segfault, it may be necessary to clean up and reset a channel.
+See section "Channel ownership lock" for more details.
+
+### roc-example
+The compiled example of `src/Example.cxx`
+ 
+### roc-flash
+Flashes firmware from a file onto the card.
+Note that it is not advised to abort a flash in progress, as this will corrupt the firmware present on the card. 
+Please commit to your flash.
+
+Once a flash has completed, the host will need to be rebooted for the new firmware to be loaded.
+
+Currently only supports the C-RORC.
+
+### roc-flash-read
+Reads from the card's flash memory.
+
+Currently only supports the C-RORC.
+
+### roc-list-cards
+Lists the readout cards present on the system, along with their type, PCI address, vendor ID, device ID, serial number, 
+and firmware version.    
+
+### roc-reg-[read, read-range, write]
+Writes and reads registers to/from a card's BAR. 
+By convention, registers are 32-bit unsigned integers.
+Note that their addresses are given by byte address, and not as you would index an array of 32-bit integers.
+
+### roc-reset
+Resets a card channel
+
+### roc-run-script
+*Deprecated, see section "Python interface"*
+
+Run a Python script that can use a simple interface to use the library.
+
 
 Exceptions
 -------------------
-The RORC module makes use of exceptions. Nearly all of these are derived from `boost::exception`.
-They are defined in the header 'RORC/Exception.h'. These exceptions may contain extensive information about the cause
-of the issue in the form of `boost::error_info` structs which can aid in debugging. 
+The module makes use of exceptions. Nearly all of these are derived from `boost::exception`.
+They are defined in the header 'ReadoutCard/Exception.h'. 
+These exceptions may contain extensive information about the cause of the issue in the form of `boost::error_info` 
+structs which can aid in debugging. 
 To generate a diagnostic report, you may use `boost::diagnostic_information(exception)`.      
 
 Python interface
@@ -69,13 +166,14 @@ If the library is compiled with Boost Python available, the shared object will b
 It is currently only able to read and write registers.
 Example usage:
 ~~~
-# Note: depending on your environment, you may have to be in the same directory as the libRORC.so file to import it 
-import libRORC
+# Note: depending on your environment, you may have to be in the same directory
+# as the libReadoutCard.so file to import it 
+import libReadoutCard
 # To open a channel, we can use the card's PCI address or serial number
 # Here we open channel number 0
-channel = libRORC.Channel("42:0.0", 0) # PCI address
-channel = libRORC.Channel("12345", 0) # Serial number
-channel = libRORC.Channel("-1", 0) # Dummy channel
+channel = libReadoutCard.Channel("42:0.0", 0) # PCI address
+channel = libReadoutCard.Channel("12345", 0) # Serial number
+channel = libReadoutCard.Channel("-1", 0) # Dummy channel
 
 # Read register at index 0
 channel.register_read(0)
@@ -88,72 +186,16 @@ print channel.register_read.__doc__
 print channel.register_write.__doc__
 ~~~
 
-Design notes
+
+Installation  <div id='installation'/>
 ===================
-
-Channels
--------------------
-The ChannelMasterInterface is implemented using multiple classes.
-ChannelMasterBase takes care of locking and provides default implementations for utility methods.
-ChannelMasterPdaBase uses PDA to take care of memory mapping, registering the DMA buffer with the IOMMU, creating scatter-gather 
-lists and PDA related initialization.
-Finally, CrorcChanenlMaster and CruChannelMaster take care of device-specific implementation details for the C-RORC and
-CRU respectively.  
-
-Enums
--------------------
-Enums are surrounded by a struct, so we can group both the enum values themselves and any accompanying functions.
-It also allows us to use the type of the struct as a template parameter.
-
-Volatile variables
--------------------
-Throughout the library, the variables which (may) refer to memory which the card can write to are declared as volatile. 
-This is to indicate to the compiler that the values of these variables may change at any time, completely outside of the
-control of the process. This means the compiler will avoid certain optimizations that may lead to unexpected behaviour. 
-
-Shared memory usage
--------------------
-* DMA buffer (the push destination)
-* Card's FIFO (card updates status in here)
-* For ChannelMaster (& subclasses) "persistent member variables":
-  * Must be quickly updated
-  * Capable of stop & resume
-  * Persistent as long as system runs (not across reboots, since then cards & firmware may be changed) 
-* For mutex (inter & intra process channel lock
-TODO elaborate a bit more
-
-Scatter-gather lists
--------------------
-Scatter-gather lists (SGLs) contain a sequence of memory regions that the card's DMA engine can use.
-The granularity of the regions is in pages. Without an SGL, the DMA buffer would have to be a contiguous piece of 
-physical memory, which may be very difficult to allocate. With an SGL, we can use pages scattered over physical memory.
-The regions can also presented in userspace as contiguous memory, thanks to the magic of the MMU.   
-
-
-Known issues
-===================
-
-C-RORC concurrent channels
--------------------
-On certain machines, initializing multiple C-RORC channels concurrently has led to hard lockups.
-The cause is unknown, but adding acpi=off to the Linux boot options fixed the issue.
-The issue has occurred on Dell R720 servers.
-
-Permissions
--------------------
-The library must be run either by root users, or users part of the group 'pda'. In case of 'pda' group users, make sure
-the `/dev/shm/alice_o2` and `/mnt/hugetlbfs/alice_o2` directories have sufficient permissions that allow those 
-users to create/read/write files.
-Also, the PDA kernel module must be inserted as root in any case.
-
 
 Dependencies
-===================
-The RORC module depends on the PDA (Portable Driver Architecture) library. 
+-------------------
+### PDA
+The module depends on the PDA (Portable Driver Architecture) library. 
 If PDA is not detected on the system, only a dummy implementation of the interface will be compiled.
 
-PDA installation
--------------------
 1. Install dependency packages
   ~~~
   yum install kernel-devel pciutils-devel kmod-devel libtool libhugetlbfs
@@ -179,30 +221,7 @@ PDA installation
   modprobe uio\_pci\_dma
   ~~~
 
-5. When using rorc-bench-dma, create hugetlbfs mounts
-  ~~~
-  hugeadm --create-global-mounts
-  ~~~
-
-Hugepages
-===================
-Most x86-64 CPUs have an MMU that supports 4 KiB, 2 MiB and 1 GiB page sizes. 
-4KB is the default, while the bigger ones are referred to as hugepages in Linux.
-Since the cards can have DMA page sizes larger than 4KiB (the CRU's is 8KiB for example),
-a 4KiB page size can easily become problematic if they are at all fragmented.
-The roc-dma-bench program uses hugepages to ensure the buffer's memory is more contiguous and the DMA scatter-gather 
-list is small.
-But hugepages have to be allocated in advance. And they're not really needed with the IOMMU enabled 
-(note: performance impact of using the IOMMU has not been measured).
-
-When implementing a readout program with the ReadoutCard library, it is practically mandatory to either 
-enable the IOMMU, or allocate the DMA buffer using hugepages.
-
-For more detailed information about hugepages, refer to the linux kernel docs: 
-  https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt
-
-Hugepages configuration
--------------------
+### Hugepages
 At some point, we should probably use kernel boot parameters to allocate hugepages, or use some boot-time script, but 
 until then, we must initialize and allocate manually.
 
@@ -230,21 +249,70 @@ until then, we must initialize and allocate manually.
   hugeadm --pool-list
   ~~~
 
-IOMMU
-===================
+### IOMMU
 To enable the IOMMU, add `iommu=on` to the kernel boot parameters.
 
-When the IOMMU is enabled, the ReadoutCard library will be able to present any user-allocated buffer that was registered
-with the channel as a contiguous address space to the card, simplifying memory allocation.
+
+Implementation notes  <div id='implementation-notes'/>
+===================
+Channel classes
+-------------------
+The ChannelMasterInterface is implemented using multiple classes.
+ChannelMasterBase takes care of locking and provides default implementations for utility methods.
+ChannelMasterPdaBase uses PDA to take care of memory mapping, registering the DMA buffer with the IOMMU, 
+creating scatter-gather lists and PDA related initialization.
+Finally, CrorcChannelMaster and CruChannelMaster take care of device-specific implementation details for the C-RORC and
+CRU respectively.
+
+Enums
+-------------------
+Enums are surrounded by a struct, so we can group both the enum values themselves and any accompanying functions.
+It also allows us to use the type of the struct as a template parameter.
+
+Volatile variables
+-------------------
+Throughout the library, the variables which (may) refer to memory which the card can write to are declared as volatile. 
+This is to indicate to the compiler that the values of these variables may change at any time, completely outside of the
+control of the process. This means the compiler will avoid certain optimizations that may lead to unexpected behaviour. 
+
+Shared memory usage
+-------------------
+Shared memory is used in several places:
+* C-RORC's FIFO (card updates status of DMA transfers in here)
+* For locks and mutexes (inter & intra process channel lock)
+* DMA buffers (as destination for DMA transfers)
+
+Scatter-gather lists
+-------------------
+Scatter-gather lists (SGLs) contain a sequence of memory regions that the card's DMA engine can use.
+The granularity of the regions is in pages. Without an SGL, the DMA buffer would have to be a contiguous piece of 
+physical memory, which may be very difficult to allocate. With an SGL, we can use pages scattered over physical memory.
+The regions can also presented in userspace as contiguous memory, thanks to the magic of the MMU.   
 
 
-ALICE Low-level Front-end (ALF) DIM Server
+Known issues  <div id='known-issues'/>
+===================
+C-RORC concurrent channels
+-------------------
+On certain machines, initializing multiple C-RORC channels concurrently has led to hard lockups.
+The cause is unknown, but adding acpi=off to the Linux boot options fixed the issue.
+The issue has occurred on Dell R720 servers.
+
+Permissions
+-------------------
+The library must be run either by root users, or users part of the group 'pda'. In case of 'pda' group users, make sure
+the `/dev/shm/alice_o2` and `/mnt/hugetlbfs/alice_o2` directories have sufficient permissions that allow those 
+users to create/read/write files.
+Also, the PDA kernel module must be inserted as root in any case.
+
+
+ALICE Low-level Front-end (ALF) DIM Server  <div id='alf'/>
 ===================
 The utilities contain a DIM server for DCS control of the cards 
 
 Usage
 -------------------
-`./rorc-alf-server --serial=11225 --channel=0`
+`./roc-alf-server --serial=11225 --channel=0`
 Note: if the DIM_DNS_NODE environment variable was not set, the server uses localhost. 
 
 Service description
@@ -253,7 +321,7 @@ Service description
 Services names are under: 
 `ALF/SERIAL_[a]/CHANNEL_[b]/[service name]`
 where [a] = card serial number
-      [b] = card channel / BAR index
+      [b] = BAR index
 
 * The RPC calls take a string argument and return a string.
 * When the argument must contain multiple values, they must be comma-separated.
