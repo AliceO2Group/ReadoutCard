@@ -1,10 +1,18 @@
-find_package(Boost 1.56 
+if(APPLE)
+    set(rt_lib "")
+    set(boost_python_component "")
+else()
+    set(rt_lib "rt")
+    set(boost_python_component "python")
+endif()
+
+find_package(Boost 1.56
   COMPONENTS 
   unit_test_framework 
   filesystem 
   system 
   program_options 
-  python
+  ${boost_python_component}
   REQUIRED
   )
 find_package(Git QUIET)
@@ -46,7 +54,7 @@ o2_define_bucket(
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   InfoLogger
   Common
-  rt
+  ${rt_lib}
   pthread
 
   SYSTEMINCLUDE_DIRECTORIES
