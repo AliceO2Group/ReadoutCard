@@ -34,7 +34,7 @@ class ProgramReset: public Program
       int channelNumber = Options::getOptionChannel(map);
 
       auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
-      auto channel = AliceO2::roc::ChannelFactory().getMaster(params);
+      auto channel = AliceO2::roc::ChannelFactory().getDmaChannel(params);
       channel->resetChannel(resetLevel);
     }
 };

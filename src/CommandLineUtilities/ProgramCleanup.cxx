@@ -39,12 +39,12 @@ class ProgramCleanup: public Program
       auto cardId = Options::getOptionCardId(map);
       auto channelNumber = Options::getOptionChannel(map);
 
-      // This non-forced cleanup asks the ChannelMaster to clean up itself.
+      // This non-forced cleanup asks the DmaChannel to clean up itself.
       // It will not succeed if the channel was not initialized properly before the running of this program.
       cout << "### Attempting cleanup...\n";
       auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
       params.setForcedUnlockEnabled(mForceCleanup);
-      auto channel = ChannelFactory().getMaster(params);
+      auto channel = ChannelFactory().getDmaChannel(params);
       cout << "### Done!\n";
     }
 

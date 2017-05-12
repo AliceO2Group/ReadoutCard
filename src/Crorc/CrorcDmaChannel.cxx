@@ -1,9 +1,9 @@
-/// \file CrorcChannelMaster.cxx
-/// \brief Implementation of the CrorcChannelMaster class.
+/// \file CrorcDmaChannel.cxx
+/// \brief Implementation of the CrorcDmaChannel class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "CrorcChannelMaster.h"
+#include "CrorcDmaChannel.h"
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -26,8 +26,8 @@ using namespace std::literals;
 namespace AliceO2 {
 namespace roc {
 
-CrorcChannelMaster::CrorcChannelMaster(const Parameters& parameters)
-    : ChannelMasterPdaBase(parameters, allowedChannels()), //
+CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
+    : DmaChannelPdaBase(parameters, allowedChannels()), //
     mPageSize(parameters.getDmaPageSize().get_value_or(8*1024)), // 8 kB default for uniformity with CRU
     mInitialResetLevel(ResetLevel::Internal), // It's good to reset at least the card channel in general
     mNoRDYRX(true), // Not sure
@@ -69,16 +69,16 @@ CrorcChannelMaster::CrorcChannelMaster(const Parameters& parameters)
   mDmaBufferUserspace = getPdaDmaBuffer().getScatterGatherList().at(0).addressUser;
 }
 
-auto CrorcChannelMaster::allowedChannels() -> AllowedChannels {
+auto CrorcDmaChannel::allowedChannels() -> AllowedChannels {
   return {0, 1, 2, 3, 4, 5};
 }
 
-CrorcChannelMaster::~CrorcChannelMaster()
+CrorcDmaChannel::~CrorcDmaChannel()
 {
   deviceStopDma();
 }
 
-void CrorcChannelMaster::deviceStartDma()
+void CrorcDmaChannel::deviceStartDma()
 {
   log("DMA start deferred until superpage available");
 
@@ -88,7 +88,7 @@ void CrorcChannelMaster::deviceStartDma()
   mPendingDmaStart = true;
 }
 
-void CrorcChannelMaster::startPendingDma(SuperpageQueueEntry& entry)
+void CrorcDmaChannel::startPendingDma(SuperpageQueueEntry& entry)
 {
   if (!mPendingDmaStart) {
     return;
@@ -166,7 +166,7 @@ void CrorcChannelMaster::startPendingDma(SuperpageQueueEntry& entry)
   }
 }
 
-void CrorcChannelMaster::deviceStopDma()
+void CrorcDmaChannel::deviceStopDma()
 {
   if (mGeneratorEnabled) {
     // Starting the data generator
@@ -181,7 +181,7 @@ void CrorcChannelMaster::deviceStopDma()
   }
 }
 
-void CrorcChannelMaster::deviceResetChannel(ResetLevel::type resetLevel)
+void CrorcDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)
 {
   if (resetLevel == ResetLevel::Nothing) {
     return;
@@ -218,7 +218,7 @@ void CrorcChannelMaster::deviceResetChannel(ResetLevel::type resetLevel)
   std::this_thread::sleep_for(100ms); /// XXX Why???
 }
 
-void CrorcChannelMaster::startDataGenerator()
+void CrorcDmaChannel::startDataGenerator()
 {
   if (LoopbackMode::None == mLoopbackMode) {
     getCrorc().startTrigger(mDiuConfig);
@@ -243,7 +243,7 @@ void CrorcChannelMaster::startDataGenerator()
   getCrorc().startDataGenerator(mGeneratorMaximumEvents);
 }
 
-void CrorcChannelMaster::startDataReceiving()
+void CrorcDmaChannel::startDataReceiving()
 {
   getCrorc().initDiuVersion();
 
@@ -261,22 +261,22 @@ void CrorcChannelMaster::startDataReceiving()
   getCrorc().startDataReceiver(mReadyFifoAddressBus);
 }
 
-int CrorcChannelMaster::getTransferQueueAvailable()
+int CrorcDmaChannel::getTransferQueueAvailable()
 {
   return mSuperpageQueue.getPushing().capacity() - mSuperpageQueue.getPushing().size();
 }
 
-int CrorcChannelMaster::getReadyQueueSize()
+int CrorcDmaChannel::getReadyQueueSize()
 {
   return mSuperpageQueue.getFilled().size();
 }
 
-auto CrorcChannelMaster::getSuperpage() -> Superpage
+auto CrorcDmaChannel::getSuperpage() -> Superpage
 {
   return mSuperpageQueue.getFrontSuperpage();
 }
 
-void CrorcChannelMaster::pushSuperpage(Superpage superpage)
+void CrorcDmaChannel::pushSuperpage(Superpage superpage)
 {
   checkSuperpage(superpage);
   constexpr size_t MIN_SIZE = 1*1024*1024;
@@ -296,12 +296,12 @@ void CrorcChannelMaster::pushSuperpage(Superpage superpage)
   mSuperpageQueue.addToQueue(entry);
 }
 
-auto CrorcChannelMaster::popSuperpage() -> Superpage
+auto CrorcDmaChannel::popSuperpage() -> Superpage
 {
   return mSuperpageQueue.removeFromFilledQueue().superpage;
 }
 
-void CrorcChannelMaster::fillSuperpages()
+void CrorcDmaChannel::fillSuperpages()
 {
   // Push new pages into superpage
   if (!mSuperpageQueue.getPushing().empty()) {
@@ -373,7 +373,7 @@ void CrorcChannelMaster::fillSuperpages()
   }
 }
 
-void CrorcChannelMaster::pushIntoSuperpage(SuperpageQueueEntry& entry)
+void CrorcDmaChannel::pushIntoSuperpage(SuperpageQueueEntry& entry)
 {
   assert(mFifoSize < FIFO_QUEUE_MAX);
   assert(entry.pushedPages < entry.maxPages);
@@ -383,20 +383,20 @@ void CrorcChannelMaster::pushIntoSuperpage(SuperpageQueueEntry& entry)
   entry.pushedPages++;
 }
 
-uintptr_t CrorcChannelMaster::getNextSuperpageBusAddress(const SuperpageQueueEntry& entry)
+uintptr_t CrorcDmaChannel::getNextSuperpageBusAddress(const SuperpageQueueEntry& entry)
 {
   auto offset = mPageSize * entry.pushedPages;
   uintptr_t pageBusAddress = entry.busAddress + offset;
   return pageBusAddress;
 }
 
-void CrorcChannelMaster::pushFreeFifoPage(int readyFifoIndex, uintptr_t pageBusAddress)
+void CrorcDmaChannel::pushFreeFifoPage(int readyFifoIndex, uintptr_t pageBusAddress)
 {
   size_t pageWords = mPageSize / 4; // Size in 32-bit words
   getCrorc().pushRxFreeFifo(pageBusAddress, pageWords, readyFifoIndex);
 }
 
-CrorcChannelMaster::DataArrivalStatus::type CrorcChannelMaster::dataArrived(int index)
+CrorcDmaChannel::DataArrivalStatus::type CrorcDmaChannel::dataArrived(int index)
 {
   auto length = getReadyFifoUser()->entries[index].length;
   auto status = getReadyFifoUser()->entries[index].status;
@@ -426,12 +426,12 @@ CrorcChannelMaster::DataArrivalStatus::type CrorcChannelMaster::dataArrived(int 
       << ErrorInfo::FifoIndex(index));
 }
 
-CardType::type CrorcChannelMaster::getCardType()
+CardType::type CrorcDmaChannel::getCardType()
 {
   return CardType::Crorc;
 }
 
-Pda::PdaBar& CrorcChannelMaster::getBar2()
+Pda::PdaBar& CrorcDmaChannel::getBar2()
 {
   if (!mPdaBar2) {
     Utilities::resetSmartPtr(mPdaBar2, getRocPciDevice().getPciDevice(), 2);
@@ -439,7 +439,7 @@ Pda::PdaBar& CrorcChannelMaster::getBar2()
   return *(mPdaBar2.get());
 }
 
-boost::optional<std::string> CrorcChannelMaster::getFirmwareInfo()
+boost::optional<std::string> CrorcDmaChannel::getFirmwareInfo()
 {
   uint32_t version = readRegister(Rorc::RFID);
   auto bits = [&](int lsb, int msb) { return Utilities::getBits(version, lsb, msb); };

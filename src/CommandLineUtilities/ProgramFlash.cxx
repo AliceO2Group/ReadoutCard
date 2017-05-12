@@ -38,7 +38,7 @@ class ProgramCrorcFlash: public Program
       auto cardId = Options::getOptionCardId(map);
       auto channelNumber = 0;
       auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
-      auto channel = AliceO2::roc::ChannelFactory().getSlave(params);
+      auto channel = AliceO2::roc::ChannelFactory().getBar(params);
 
       if (channel->getCardType() != CardType::Crorc) {
         BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Only C-RORC supported for now"));

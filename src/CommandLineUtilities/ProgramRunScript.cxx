@@ -40,11 +40,11 @@ roc.register_write_32(channel, 0x40, 123)
 AliceO2::roc::Parameters::CardIdType sCardId;
 
 /// Channels for Python interface
-std::map<int, AliceO2::roc::ChannelFactory::SlaveSharedPtr> sChannelMap;
+std::map<int, AliceO2::roc::ChannelFactory::BarSharedPtr> sChannelMap;
 
 struct PythonWrapper
 {
-    static AliceO2::roc::ChannelSlaveInterface* getChannel(int channelNumber)
+    static AliceO2::roc::BarInterface* getChannel(int channelNumber)
     {
       auto found = sChannelMap.find(channelNumber);
       if (found != sChannelMap.end()) {
@@ -54,7 +54,7 @@ struct PythonWrapper
         // Channel is not yet opened, so we open it, insert it into the map, and return it
         auto params = AliceO2::roc::Parameters::makeParameters(sCardId, channelNumber);
         auto inserted =
-            sChannelMap.insert(std::make_pair(channelNumber, AliceO2::roc::ChannelFactory().getSlave(params))).first;
+            sChannelMap.insert(std::make_pair(channelNumber, AliceO2::roc::ChannelFactory().getBar(params))).first;
         return inserted->second.get();
       }
     }

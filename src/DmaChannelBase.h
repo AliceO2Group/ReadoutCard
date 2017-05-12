@@ -1,5 +1,5 @@
-/// \file ChannelMasterBase.h
-/// \brief Definition of the ChannelMasterBase class.
+/// \file DmaChannelBase.h
+/// \brief Definition of the DmaChannelBase class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
@@ -9,12 +9,13 @@
 #include <vector>
 #include <memory>
 #include <mutex>
+#include <boost/optional.hpp>
+#include <InfoLogger/InfoLogger.hxx>
 #include "BufferProvider.h"
 #include "CardDescriptor.h"
-#include "ChannelBase.h"
 #include "ChannelPaths.h"
 #include "InterprocessLock.h"
-#include "ReadoutCard/ChannelMasterInterface.h"
+#include "ReadoutCard/DmaChannelInterface.h"
 #include "ReadoutCard/Exception.h"
 #include "ReadoutCard/Parameters.h"
 #include "Utilities/Util.h"
@@ -22,22 +23,23 @@
 namespace AliceO2 {
 namespace roc {
 
-/// Partially implements the ChannelMasterInterface. It provides:
+/// Partially implements the DmaChannelInterface. It provides:
 /// - Interprocess synchronization
 /// - Creation of files and directories related to the channel
-class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface
+/// - Logging facilities
+class DmaChannelBase: public DmaChannelInterface
 {
   public:
     using AllowedChannels = std::set<int>;
 
-    /// Constructor for the ChannelMaster object
+    /// Constructor for the DmaChannel object
     /// \param cardDescriptor Card descriptor
     /// \param parameters Parameters of the channel
     /// \param allowedChannels Channels allowed by this card type
-    ChannelMasterBase(CardDescriptor cardDescriptor, const Parameters& parameters,
+    DmaChannelBase(CardDescriptor cardDescriptor, const Parameters& parameters,
         const AllowedChannels& allowedChannels);
 
-    virtual ~ChannelMasterBase();
+    virtual ~DmaChannelBase();
 
     virtual void pushSuperpage(Superpage) override
     {
@@ -94,16 +96,6 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface
       return mCardDescriptor;
     }
 
-    virtual void setLogLevel(InfoLogger::InfoLogger::Severity severity) final override
-    {
-      ChannelBase::setLogLevel(severity);
-    }
-
-    void log(const std::string& message, boost::optional<InfoLogger::InfoLogger::Severity> severity = boost::none)
-    {
-      ChannelBase::log(getSerialNumber(), getChannelNumber(), message, severity);
-    }
-
     ChannelPaths getPaths()
     {
       return {getCardDescriptor().pciAddress, getChannelNumber()};
@@ -112,6 +104,23 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface
     const BufferProvider& getBufferProvider()
     {
       return *mBufferProvider;
+    }
+
+    void log(const std::string& message, boost::optional<InfoLogger::InfoLogger::Severity> severity = boost::none);
+
+    InfoLogger::InfoLogger& getLogger()
+    {
+      return mLogger;
+    }
+
+    InfoLogger::InfoLogger::Severity getLogLevel()
+    {
+      return mLogLevel;
+    }
+
+    virtual void setLogLevel(InfoLogger::InfoLogger::Severity severity) final override
+    {
+      mLogLevel = severity;
     }
 
   private:
@@ -129,6 +138,12 @@ class ChannelMasterBase: public ChannelBase, public ChannelMasterInterface
 
     /// Contains addresses & size of the buffer
     std::unique_ptr<BufferProvider> mBufferProvider;
+
+    /// InfoLogger instance
+    InfoLogger::InfoLogger mLogger;
+
+    /// Current log level
+    InfoLogger::InfoLogger::Severity mLogLevel;
 };
 
 } // namespace roc

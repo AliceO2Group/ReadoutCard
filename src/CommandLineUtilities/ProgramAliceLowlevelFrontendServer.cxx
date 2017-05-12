@@ -26,7 +26,7 @@ using namespace AliceO2::roc;
 using std::cout;
 using std::endl;
 
-using ChannelSharedPtr = std::shared_ptr<ChannelSlaveInterface>;
+using ChannelSharedPtr = std::shared_ptr<BarInterface>;
 
 /// Splits a string
 static std::vector<std::string> split(const std::string& string, const char* separators = ",")
@@ -182,7 +182,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
       int serialNumber = Options::getOptionSerialNumber(map);
       int channelNumber = Options::getOptionChannel(map);
       auto params = AliceO2::roc::Parameters::makeParameters(serialNumber, channelNumber);
-      auto channel = AliceO2::roc::ChannelFactory().getSlave(params);
+      auto channel = AliceO2::roc::ChannelFactory().getBar(params);
 
       DimServer::start("ALF");
       // Object that stops the DIM service when destroyed

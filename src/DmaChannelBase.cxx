@@ -1,9 +1,9 @@
-/// \file ChannelMasterBase.cxx
-/// \brief Implementation of the ChannelMasterBase class.
+/// \file DmaChannelBase.cxx
+/// \brief Implementation of the DmaChannelBase class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "ChannelMasterBase.h"
+#include "DmaChannelBase.h"
 #include <iostream>
 #include "BufferProviderFile.h"
 #include "BufferProviderMemory.h"
@@ -18,7 +18,7 @@ namespace roc {
 namespace b = boost;
 namespace bfs = boost::filesystem;
 
-void ChannelMasterBase::checkChannelNumber(const AllowedChannels& allowedChannels)
+void DmaChannelBase::checkChannelNumber(const AllowedChannels& allowedChannels)
 {
   if (!allowedChannels.count(mChannelNumber)) {
     std::ostringstream stream;
@@ -31,7 +31,7 @@ void ChannelMasterBase::checkChannelNumber(const AllowedChannels& allowedChannel
   }
 }
 
-ChannelMasterBase::ChannelMasterBase(CardDescriptor cardDescriptor, const Parameters& parameters,
+DmaChannelBase::DmaChannelBase(CardDescriptor cardDescriptor, const Parameters& parameters,
     const AllowedChannels& allowedChannels)
     : mCardDescriptor(cardDescriptor), mChannelNumber(parameters.getChannelNumberRequired())
 {
@@ -49,24 +49,24 @@ ChannelMasterBase::ChannelMasterBase(CardDescriptor cardDescriptor, const Parame
   }
 
   // Get lock
-  log("Getting channel lock", InfoLogger::InfoLogger::Debug);
+  log("Acquiring DMA channel lock", InfoLogger::InfoLogger::Debug);
   try {
     Utilities::resetSmartPtr(mInterprocessLock, paths.lock(), paths.namedMutex());
   }
   catch (const NamedMutexLockException& exception) {
     if (parameters.getForcedUnlockEnabled().get_value_or(false)) {
-      log("Failed to acquire channel mutex. Forced unlock enabled - attempting cleanup and retry",
+      log("Failed to acquire DMA channel mutex. Forced unlock enabled - attempting cleanup and retry",
           InfoLogger::InfoLogger::Warning);
       // The user has indicated to the driver that it is safe to force the unlock. We do it by deleting the lock.
       boost::interprocess::named_mutex::remove(paths.namedMutex().c_str());
       // Try again...
       Utilities::resetSmartPtr(mInterprocessLock, paths.lock(), paths.namedMutex());
     } else {
-      log("Failed to acquire lock", InfoLogger::InfoLogger::Debug);
+      log("Failed to acquire DMA channel lock", InfoLogger::InfoLogger::Debug);
       throw;
     }
   }
-  log("Acquired channel lock", InfoLogger::InfoLogger::Debug);
+  log("Acquired DMA channel lock", InfoLogger::InfoLogger::Debug);
 
   if (auto bufferParameters = parameters.getBufferParameters()) {
     // Create appropriate BufferProvider subclass
@@ -74,14 +74,23 @@ ChannelMasterBase::ChannelMasterBase(CardDescriptor cardDescriptor, const Parame
         [&](buffer_parameters::Memory parameters){ return std::make_unique<BufferProviderMemory>(parameters); },
         [&](buffer_parameters::File parameters){ return std::make_unique<BufferProviderFile>(parameters); });
   } else {
-    BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("ChannelMaster requires buffer_parameters"));
+    BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("DmaChannel requires buffer_parameters"));
   }
 }
 
-ChannelMasterBase::~ChannelMasterBase()
+DmaChannelBase::~DmaChannelBase()
 {
-  log("Releasing master lock", InfoLogger::InfoLogger::Debug);
+  log("Releasing DMA channel lock", InfoLogger::InfoLogger::Debug);
 }
+
+void DmaChannelBase::log(const std::string& message, boost::optional<InfoLogger::InfoLogger::Severity> severity)
+{
+  mLogger << severity.get_value_or(mLogLevel);
+  mLogger << "[serial:" << getSerialNumber() << " channel:" << getChannelNumber() << "] ";
+  mLogger << message;
+  mLogger << InfoLogger::InfoLogger::endm;
+}
+
 
 } // namespace roc
 } // namespace AliceO2

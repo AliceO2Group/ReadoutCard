@@ -251,9 +251,9 @@ class ProgramDmaBench: public Program
       mLogger << "Page limit: " << mMaxPages << endm;
       mLogger << "Pages per superpage: " << mPagesPerSuperpage << endm;
 
-      // Get master lock on channel
+      // Get DMA channel object
       try {
-        mChannel = ChannelFactory().getMaster(params);
+        mChannel = ChannelFactory().getDmaChannel(params);
       }
       catch (const FileLockException& e) {
         mLogger << InfoLogger::Error << "Another process is holding the channel lock (no automatic cleanup possible)"
@@ -852,7 +852,7 @@ class ProgramDmaBench: public Program
 
     InfoLogger mLogger;
 
-    std::shared_ptr<ChannelMasterInterface> mChannel;
+    std::shared_ptr<DmaChannelInterface> mChannel;
 };
 
 int main(int argc, char** argv)

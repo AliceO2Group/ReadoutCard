@@ -14,7 +14,7 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/optional.hpp>
 #include "SuperpageQueue.h"
-#include "ReadoutCard/ChannelMasterInterface.h"
+#include "ReadoutCard/DmaChannelInterface.h"
 
 using namespace ::AliceO2::roc;
 

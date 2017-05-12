@@ -51,9 +51,9 @@ class ProgramListCards: public Program
         std::string firmware = "n/a";
         try {
           Parameters params = Parameters::makeParameters(card.serialNumber, 0);
-          // Temporary (hopefully) workaround, because ChannelMaster requires a buffer when initializing
+          // Temporary (hopefully) workaround, because DmaChannel requires a buffer when initializing
           params.setBufferParameters(buffer_parameters::File{"/dev/shm/rorc_channel_utility_dummy_buffer", 4*1024});
-          firmware = ChannelFactory().getMaster(params)->getFirmwareInfo().value_or("n/a");
+          firmware = ChannelFactory().getDmaChannel(params)->getFirmwareInfo().value_or("n/a");
         }
         catch (const Exception& e) {
           if (isVerbose()) {

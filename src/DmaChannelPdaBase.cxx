@@ -1,9 +1,9 @@
-/// \file ChannelMasterPdaBase.cxx
-/// \brief Implementation of the ChannelMasterPdaBase class.
+/// \file DmaChannelPdaBase.cxx
+/// \brief Implementation of the DmaChannelPdaBase class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "ChannelMasterPdaBase.h"
+#include "DmaChannelPdaBase.h"
 #include <boost/filesystem/path.hpp>
 #include "Pda/Pda.h"
 #include "Utilities/SmartPointer.h"
@@ -23,9 +23,9 @@ CardDescriptor getDescriptor(const Parameters& parameters)
 
 }
 
-ChannelMasterPdaBase::ChannelMasterPdaBase(const Parameters& parameters,
+DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
     const AllowedChannels& allowedChannels)
-    : ChannelMasterBase(getDescriptor(parameters), parameters, allowedChannels), mDmaState(DmaState::STOPPED)
+    : DmaChannelBase(getDescriptor(parameters), parameters, allowedChannels), mDmaState(DmaState::STOPPED)
 {
   // Initialize PDA & DMA objects
   Utilities::resetSmartPtr(mRocPciDevice, getSerialNumber());
@@ -40,12 +40,12 @@ ChannelMasterPdaBase::ChannelMasterPdaBase(const Parameters& parameters,
   log(std::string("Scatter-gather list size: ") + std::to_string(mPdaDmaBuffer->getScatterGatherList().size()));
 }
 
-ChannelMasterPdaBase::~ChannelMasterPdaBase()
+DmaChannelPdaBase::~DmaChannelPdaBase()
 {
 }
 
 // Checks DMA state and forwards call to subclass if necessary
-void ChannelMasterPdaBase::startDma()
+void DmaChannelPdaBase::startDma()
 {
   if (mDmaState == DmaState::UNKNOWN) {
     log("Unknown DMA state");
@@ -59,7 +59,7 @@ void ChannelMasterPdaBase::startDma()
 }
 
 // Checks DMA state and forwards call to subclass if necessary
-void ChannelMasterPdaBase::stopDma()
+void DmaChannelPdaBase::stopDma()
 {
   if (mDmaState == DmaState::UNKNOWN) {
     log("Unknown DMA state");
@@ -72,7 +72,7 @@ void ChannelMasterPdaBase::stopDma()
   mDmaState = DmaState::STOPPED;
 }
 
-void ChannelMasterPdaBase::resetChannel(ResetLevel::type resetLevel)
+void DmaChannelPdaBase::resetChannel(ResetLevel::type resetLevel)
 {
   if (mDmaState == DmaState::UNKNOWN) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Reset channel failed: DMA in unknown state"));
@@ -85,22 +85,22 @@ void ChannelMasterPdaBase::resetChannel(ResetLevel::type resetLevel)
   deviceResetChannel(resetLevel);
 }
 
-uint32_t ChannelMasterPdaBase::readRegister(int index)
+uint32_t DmaChannelPdaBase::readRegister(int index)
 {
   return mPdaBar->readRegister(index);
 }
 
-void ChannelMasterPdaBase::writeRegister(int index, uint32_t value)
+void DmaChannelPdaBase::writeRegister(int index, uint32_t value)
 {
   mPdaBar->writeRegister(index, value);
 }
 
-uintptr_t ChannelMasterPdaBase::getBusOffsetAddress(size_t offset)
+uintptr_t DmaChannelPdaBase::getBusOffsetAddress(size_t offset)
 {
   return getPdaDmaBuffer().getBusOffsetAddress(offset);
 }
 
-void ChannelMasterPdaBase::checkSuperpage(const Superpage& superpage)
+void DmaChannelPdaBase::checkSuperpage(const Superpage& superpage)
 {
   if (superpage.getSize() == 0) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not enqueue superpage, size == 0"));

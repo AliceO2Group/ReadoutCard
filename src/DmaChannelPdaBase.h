@@ -1,16 +1,16 @@
-/// \file ChannelMasterPdaBase.h
-/// \brief Definition of the ChannelMasterPdaBase class.
+/// \file DmaChannelPdaBase.h
+/// \brief Definition of the DmaChannelPdaBase class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #pragma once
 
 #include <boost/scoped_ptr.hpp>
-#include "ChannelMasterBase.h"
+#include "DmaChannelBase.h"
 #include "PageAddress.h"
 #include "Pda/PdaBar.h"
 #include "Pda/PdaDmaBuffer.h"
-#include "ReadoutCard/ChannelMasterInterface.h"
+#include "ReadoutCard/DmaChannelInterface.h"
 #include "ReadoutCard/Exception.h"
 #include "ReadoutCard/MemoryMappedFile.h"
 #include "ReadoutCard/Parameters.h"
@@ -19,19 +19,19 @@
 namespace AliceO2 {
 namespace roc {
 
-/// Partially implements the ChannelMasterInterface. It takes care of PDA-based functionality that is common to the
+/// Partially implements the DmaChannelInterface. It takes care of PDA-based functionality that is common to the
 /// C-RORC and CRU implementations.
-class ChannelMasterPdaBase: public ChannelMasterBase
+class DmaChannelPdaBase: public DmaChannelBase
 {
   public:
     using AllowedChannels = std::set<int>;
 
-    /// Constructor for the ChannelMaster object
+    /// Constructor for the DmaChannel object
     /// \param parameters Parameters of the channel
     /// \param allowedChannels Channels allowed by this card type
-    ChannelMasterPdaBase(const Parameters& parameters, const AllowedChannels& allowedChannels);
+    DmaChannelPdaBase(const Parameters& parameters, const AllowedChannels& allowedChannels);
 
-    ~ChannelMasterPdaBase();
+    ~DmaChannelPdaBase();
 
     virtual void startDma() final override;
     virtual void stopDma() final override;

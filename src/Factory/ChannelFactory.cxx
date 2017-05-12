@@ -4,14 +4,14 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "ReadoutCard/ChannelFactory.h"
-#include "Dummy/DummyChannelMaster.h"
-#include "Dummy/DummyChannelSlave.h"
+#include "Dummy/DummyDmaChannel.h"
+#include "Dummy/DummyBar.h"
 #include "Factory/ChannelFactoryUtils.h"
 #ifdef ALICEO2_READOUTCARD_PDA_ENABLED
-#  include "Crorc/CrorcChannelMaster.h"
-#  include "Crorc/CrorcChannelSlave.h"
-#  include "Cru/CruChannelMaster.h"
-#  include "Cru/CruChannelSlave.h"
+#  include "Crorc/CrorcDmaChannel.h"
+#  include "Crorc/CrorcBar.h"
+#  include "Cru/CruDmaChannel.h"
+#  include "Cru/CruBar.h"
 #else
 #  pragma message("PDA not enabled, ChannelFactory will always return a dummy implementation")
 #endif
@@ -30,24 +30,24 @@ ChannelFactory::~ChannelFactory()
 {
 }
 
-auto ChannelFactory::getMaster(const Parameters& params) -> MasterSharedPtr
+auto ChannelFactory::getDmaChannel(const Parameters &params) -> DmaChannelSharedPtr
 {
-  return makeChannel<ChannelMasterInterface>(params, DUMMY_SERIAL_NUMBER
-    , DummyTag, [&]{ return std::make_shared<DummyChannelMaster>(params); }
+  return makeChannel<DmaChannelInterface>(params, DUMMY_SERIAL_NUMBER
+    , DummyTag, [&]{ return std::make_shared<DummyDmaChannel>(params); }
 #ifdef ALICEO2_READOUTCARD_PDA_ENABLED
-    , CrorcTag, [&]{ return std::make_shared<CrorcChannelMaster>(params); }
-    , CruTag,   [&]{ return std::make_shared<CruChannelMaster>(params); }
+    , CrorcTag, [&]{ return std::make_shared<CrorcDmaChannel>(params); }
+    , CruTag,   [&]{ return std::make_shared<CruDmaChannel>(params); }
 #endif
     );
 }
 
-auto ChannelFactory::getSlave(const Parameters& params) -> SlaveSharedPtr
+auto ChannelFactory::getBar(const Parameters &params) -> BarSharedPtr
 {
-  return makeChannel<ChannelSlaveInterface>(params, DUMMY_SERIAL_NUMBER
-    , DummyTag, [&]{ return std::make_shared<DummyChannelSlave>(params); }
+  return makeChannel<BarInterface>(params, DUMMY_SERIAL_NUMBER
+    , DummyTag, [&]{ return std::make_shared<DummyBar>(params); }
 #ifdef ALICEO2_READOUTCARD_PDA_ENABLED
-    , CrorcTag, [&]{ return std::make_shared<CrorcChannelSlave>(params); }
-    , CruTag,   [&]{ return std::make_shared<CruChannelSlave>(params); }
+    , CrorcTag, [&]{ return std::make_shared<CrorcBar>(params); }
+    , CruTag,   [&]{ return std::make_shared<CruBar>(params); }
 #endif
     );
 }

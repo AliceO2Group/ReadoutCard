@@ -10,8 +10,8 @@
 #include "ReadoutCard/Parameters.h"
 #include <memory>
 #include <string>
-#include "ReadoutCard/ChannelMasterInterface.h"
-#include "ReadoutCard/ChannelSlaveInterface.h"
+#include "ReadoutCard/DmaChannelInterface.h"
+#include "ReadoutCard/BarInterface.h"
 
 namespace AliceO2 {
 namespace roc {
@@ -22,21 +22,21 @@ class ChannelFactory
   public:
     static constexpr int DUMMY_SERIAL_NUMBER = -1;
 
-    using MasterSharedPtr = ChannelMasterInterface::MasterSharedPtr;
-    using SlaveSharedPtr = std::shared_ptr<ChannelSlaveInterface>;
+    using DmaChannelSharedPtr = std::shared_ptr<DmaChannelInterface>;
+    using BarSharedPtr = std::shared_ptr<BarInterface>;
 
     ChannelFactory();
     virtual ~ChannelFactory();
 
-    /// Get a master channel object with the given serial number and channel number.
+    /// Get an object to access a DMA channel with the given serial number and channel number.
     /// Passing 'DUMMY_SERIAL_NUMBER' as serial number returns a dummy implementation
     /// \param parameters Parameters for the channel
-    MasterSharedPtr getMaster(const Parameters& parameters);
+    DmaChannelSharedPtr getDmaChannel(const Parameters &parameters);
 
-    /// Get a slave channel object with the given serial number and channel number.
+    /// Get an object to access a BAR with the given serial number and channel number.
     /// Passing 'DUMMY_SERIAL_NUMBER' as serial number returns a dummy implementation
     /// \param parameters Parameters for the channel
-    SlaveSharedPtr getSlave(const Parameters& parameters);
+    BarSharedPtr getBar(const Parameters &parameters);
 };
 
 } // namespace roc

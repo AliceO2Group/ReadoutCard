@@ -1,10 +1,10 @@
-/// \file ChannelMasterInterface.h
-/// \brief Definition of the ChannelMasterInterface class.
+/// \file DmaChannelInterface.h
+/// \brief Definition of the DmaChannelInterface class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_READOUTCARD_CHANNELMASTERINTERFACE_H_
-#define ALICEO2_INCLUDE_READOUTCARD_CHANNELMASTERINTERFACE_H_
+#ifndef ALICEO2_INCLUDE_READOUTCARD_DMACHANNELINTERFACE_H_
+#define ALICEO2_INCLUDE_READOUTCARD_DMACHANNELINTERFACE_H_
 
 #include <cstdint>
 #include <boost/optional.hpp>
@@ -18,14 +18,11 @@
 namespace AliceO2 {
 namespace roc {
 
-/// Pure abstract interface for objects that obtain a master lock on a channel and provides an interface to control
-/// and use that channel.
-class ChannelMasterInterface: public virtual RegisterReadWriteInterface
+/// Interface for objects that provide an interface to control and use a DMA channel.
+class DmaChannelInterface: public virtual RegisterReadWriteInterface
 {
   public:
-    using MasterSharedPtr = std::shared_ptr<ChannelMasterInterface>;
-
-    virtual ~ChannelMasterInterface()
+    virtual ~DmaChannelInterface()
     {
     }
 
@@ -75,7 +72,7 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
     /// superpage can be inspected with getSuperpage() or popped with popSuperpage().
     virtual int getReadyQueueSize() = 0;
 
-    /// Returns the type of the card this ChannelMaster is controlling
+    /// Returns the type of the card this DmaChannelInterface is controlling
     /// \return The card type
     virtual CardType::type getCardType() = 0;
 
@@ -94,4 +91,4 @@ class ChannelMasterInterface: public virtual RegisterReadWriteInterface
 } // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_INCLUDE_READOUTCARD_CHANNELMASTERINTERFACE_H_
+#endif // ALICEO2_INCLUDE_READOUTCARD_DMACHANNELINTERFACE_H_

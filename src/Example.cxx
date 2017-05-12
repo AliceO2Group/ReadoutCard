@@ -18,8 +18,8 @@ using namespace AliceO2;
 int main(int, char**)
 {
   try {
-    // Get the channel master object
-    cout << "\n### Acquiring channel master object" << endl;
+    // Get the DMA channel object
+    cout << "\n### Acquiring DMA channel object" << endl;
 
     // Create a 10MiB file in 2MiB hugepage filesystem
     constexpr size_t superpageSize = 2*1024*1024;
@@ -34,7 +34,7 @@ int main(int, char**)
         .setBufferParameters(roc::buffer_parameters::Memory{file.getAddress(), bufferSize}); // Register our buffer
 
     // Get the DMA channel
-    std::shared_ptr<roc::ChannelMasterInterface> channel = roc::ChannelFactory().getMaster(parameters);
+    std::shared_ptr<roc::DmaChannelInterface> channel = roc::ChannelFactory().getDmaChannel(parameters);
 
     // Start the DMA
     cout << "\n### Starting DMA" << endl;

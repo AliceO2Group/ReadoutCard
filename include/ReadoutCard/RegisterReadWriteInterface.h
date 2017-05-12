@@ -21,11 +21,13 @@ class RegisterReadWriteInterface
 
     /// Reads a BAR register. The registers are indexed per 32 bits
     /// \param index The index of the register
+    /// \throw May throw an UnsafeReadAccess exception
     virtual uint32_t readRegister(int index) = 0;
 
     /// Writes a BAR register
     /// \param index The index of the register
     /// \param value The value to be written into the register
+    /// \throw May throw an UnsafeWriteAccess exception
     virtual void writeRegister(int index, uint32_t value) = 0;
 };
 

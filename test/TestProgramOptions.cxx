@@ -26,7 +26,7 @@ BOOST_AUTO_TEST_CASE(UtilOptions)
       "--value=0x250",
       "--page-size=300",
       "--generator=true",
-      "--loopback=RORC",
+      "--loopback=INTERNAL",
       "--serial=500",
   };
 

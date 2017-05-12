@@ -1,11 +1,11 @@
-/// \file CruChannelMaster.h
-/// \brief Definition of the CruChannelMaster class.
+/// \file CruDmaChannel.h
+/// \brief Definition of the CruDmaChannel class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #pragma once
 
-#include "ChannelMasterPdaBase.h"
+#include "DmaChannelPdaBase.h"
 #include <memory>
 #include <queue>
 #include <boost/circular_buffer_fwd.hpp>
@@ -16,13 +16,13 @@
 namespace AliceO2 {
 namespace roc {
 
-/// Extends ChannelMaster object, and provides device-specific functionality
-class CruChannelMaster final : public ChannelMasterPdaBase
+/// Extends DmaChannel object, and provides device-specific functionality
+class CruDmaChannel final : public DmaChannelPdaBase
 {
   public:
 
-    CruChannelMaster(const Parameters& parameters);
-    virtual ~CruChannelMaster() override;
+    CruDmaChannel(const Parameters& parameters);
+    virtual ~CruDmaChannel() override;
 
     virtual CardType::type getCardType() override;
 
@@ -49,7 +49,7 @@ class CruChannelMaster final : public ChannelMasterPdaBase
     /// Name for the CRU shared data object in the shared state file
     static std::string getCruSharedDataName()
     {
-      return "CruChannelMasterSharedData";
+      return "CruDmaChannelSharedData";
     }
 
   private:

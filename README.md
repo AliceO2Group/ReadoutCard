@@ -57,11 +57,11 @@ instructive.
 
 DMA channels
 -------------------
-Clients can acquire a lock on a DMA channel by instantiating a *ChannelMasterInterface* implementation through 
+Clients can acquire a lock on a DMA channel by instantiating a *DmaChannelInterface* implementation through 
 the *ChannelFactory* class. Once this object is constructed, it will provide exclusive access to the DMA channel.
 
 The user will need to specify parameters for the channel by passing an instance of the *Parameters* 
-class to the factory function. The most important parameters are the card ID (either a serial number of a PCI address),
+class to the factory function. The most important parameters are the card ID (either a serial number or a PCI address),
 and the BAR channel number. See the *Parameters* class's setter functions for more information about the options 
 available.
 
@@ -76,14 +76,14 @@ using the `rorc-channel-cleanup` utility. There is also the possibility of autom
 enabled using the `setForcedUnlockEnabled()` function of the *Parameters* class. However, this option should be used with
 caution. See the function's documentation for more information about the risks.
 
-Once a ChannelMaster has acquired the lock, clients can:
+Once a DMA channel has acquired the lock, clients can:
 * Start and stop DMA
 * Push and read pages
 * Read and write registers of the BAR channel
 
 BAR interface
 -------------------
-Users can also get a limited-access object (implementing *ChannelSlaveInterface*) from the *ChannelFactory*. 
+Users can also get a limited-access object (implementing *BarInterface*) from the *ChannelFactory*. 
 It is restricted to reading and writing registers to the BAR. 
 Currently, there are no limits imposed on which registers are allowed to be read from and written to, so it is still a
 "dangerous" interface. But in the future, protections may be added.
@@ -258,11 +258,11 @@ Implementation notes  <div id='implementation-notes'/>
 ===================
 Channel classes
 -------------------
-The ChannelMasterInterface is implemented using multiple classes.
-ChannelMasterBase takes care of locking and provides default implementations for utility methods.
-ChannelMasterPdaBase uses PDA to take care of memory mapping, registering the DMA buffer with the IOMMU, 
+The DmaChannelInterface is implemented using multiple classes.
+DmaChannelBase takes care of locking and provides default implementations for utility methods.
+DmaChannelPdaBase uses PDA to take care of memory mapping, registering the DMA buffer with the IOMMU, 
 creating scatter-gather lists and PDA related initialization.
-Finally, CrorcChannelMaster and CruChannelMaster take care of device-specific implementation details for the C-RORC and
+Finally, CrorcDmaChannel and CruDmaChannel take care of device-specific implementation details for the C-RORC and
 CRU respectively.
 
 Enums

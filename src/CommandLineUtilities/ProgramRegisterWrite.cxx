@@ -39,7 +39,7 @@ class ProgramRegisterWrite: public Program
       int registerValue = Options::getOptionRegisterValue(map);
       auto readback = !bool(map.count(NOREAD_SWITCH));
       auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
-      auto channel = AliceO2::roc::ChannelFactory().getSlave(params);
+      auto channel = AliceO2::roc::ChannelFactory().getBar(params);
 
       // Registers are indexed by 32 bits (4 bytes)
       channel->writeRegister(address / 4, registerValue);

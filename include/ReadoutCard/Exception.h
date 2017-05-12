@@ -30,6 +30,9 @@ struct DeviceFinderException : virtual Exception {};
 struct SharedStateException : virtual Exception {};
 struct SharedObjectNotFoundException : virtual Exception {};
 struct TimeoutException : virtual Exception {};
+struct UnsafeAccess : virtual Exception {};
+struct UnsafeReadAccess : virtual UnsafeAccess {};
+struct UnsafeWriteAccess : virtual UnsafeAccess {};
 
 // C-RORC exception definitions
 struct CrorcException : virtual Exception {};

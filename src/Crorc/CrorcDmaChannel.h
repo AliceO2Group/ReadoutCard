@@ -1,5 +1,5 @@
-/// \file CrorcChannelMaster.h
-/// \brief Definition of the CrorcChannelMaster class.
+/// \file CrorcDmaChannel.h
+/// \brief Definition of the CrorcDmaChannel class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <boost/circular_buffer_fwd.hpp>
 #include <boost/scoped_ptr.hpp>
-#include "ChannelMasterPdaBase.h"
+#include "DmaChannelPdaBase.h"
 #include "Crorc.h"
 #include "ReadoutCard/Parameters.h"
 #include "ReadyFifo.h"
@@ -18,14 +18,14 @@
 namespace AliceO2 {
 namespace roc {
 
-/// Extends ChannelMaster object, and provides device-specific functionality
+/// Extends DmaChannel object, and provides device-specific functionality
 /// Note: the functions prefixed with "crorc" are translated from the functions of the C interface (src/c/rorc/...")
-class CrorcChannelMaster final : public ChannelMasterPdaBase
+class CrorcDmaChannel final : public DmaChannelPdaBase
 {
   public:
 
-    CrorcChannelMaster(const Parameters& parameters);
-    virtual ~CrorcChannelMaster() override;
+    CrorcDmaChannel(const Parameters& parameters);
+    virtual ~CrorcDmaChannel() override;
 
     virtual CardType::type getCardType() override;
     virtual boost::optional<std::string> getFirmwareInfo() override;
@@ -47,17 +47,7 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
     virtual void deviceStopDma() override;
     virtual void deviceResetChannel(ResetLevel::type resetLevel) override;
 
-    /// Name for the CRORC shared data object in the shared state file
-    static std::string getCrorcSharedDataName()
-    {
-      return "CrorcChannelMasterSharedData";
-    }
-
   private:
-
-    /// This card's card type!
-    static constexpr CardType::type CARD_TYPE = CardType::Crorc;
-
     /// Limits the number of superpages allowed in the queue
     static constexpr size_t MAX_SUPERPAGES = 32;
 
@@ -115,16 +105,6 @@ class CrorcChannelMaster final : public ChannelMasterPdaBase
 
     /// Push a page into a superpage
     void pushIntoSuperpage(SuperpageQueueEntry& superpage);
-
-    uintptr_t getReadyFifoAddressBus() const
-    {
-      return mReadyFifoAddressBus;
-    }
-
-    uintptr_t getReadyFifoAddressUser() const
-    {
-      return mReadyFifoAddressUser;
-    }
 
     /// Get front index of FIFO
     int getFifoFront() const

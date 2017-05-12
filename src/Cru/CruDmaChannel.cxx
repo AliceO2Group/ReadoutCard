@@ -1,9 +1,9 @@
-/// \file CruChannelMaster.cxx
-/// \brief Implementation of the CruChannelMaster class.
+/// \file CruDmaChannel.cxx
+/// \brief Implementation of the CruDmaChannel class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "CruChannelMaster.h"
+#include "CruDmaChannel.h"
 #include <sstream>
 #include <thread>
 #include <boost/format.hpp>
@@ -32,8 +32,8 @@ constexpr int DMA_PAGE_SIZE = 8 * 1024;
 constexpr uint64_t DMA_ALIGNMENT = 32;
 } // Anonymous namespace
 
-CruChannelMaster::CruChannelMaster(const Parameters& parameters)
-    : ChannelMasterPdaBase(parameters, allowedChannels()), //
+CruDmaChannel::CruDmaChannel(const Parameters& parameters)
+    : DmaChannelPdaBase(parameters, allowedChannels()), //
       mInitialResetLevel(ResetLevel::Internal), // It's good to reset at least the card channel in general
       mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)), // Internal loopback by default
       mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)), // Use data generator by default
@@ -70,17 +70,17 @@ CruChannelMaster::CruChannelMaster(const Parameters& parameters)
   getLogger() << InfoLogger::InfoLogger::endm;
 }
 
-auto CruChannelMaster::allowedChannels() -> AllowedChannels {
+auto CruDmaChannel::allowedChannels() -> AllowedChannels {
   // Note: BAR 1 is not available because BAR 0 is 64-bit wide, so it 'consumes' two BARs.
   return {0};
 }
 
-CruChannelMaster::~CruChannelMaster()
+CruDmaChannel::~CruDmaChannel()
 {
   setBufferNonReady();
 }
 
-void CruChannelMaster::deviceStartDma()
+void CruDmaChannel::deviceStartDma()
 {
   resetCru();
   initCru();
@@ -100,24 +100,24 @@ void CruChannelMaster::deviceStartDma()
 }
 
 /// Set buffer to ready
-void CruChannelMaster::setBufferReady()
+void CruDmaChannel::setBufferReady()
 {
   getBar().setDataEmulatorEnabled(true);
   std::this_thread::sleep_for(10ms);
 }
 
 /// Set buffer to non-ready
-void CruChannelMaster::setBufferNonReady()
+void CruDmaChannel::setBufferNonReady()
 {
   getBar().setDataEmulatorEnabled(false);
 }
 
-void CruChannelMaster::deviceStopDma()
+void CruDmaChannel::deviceStopDma()
 {
   setBufferNonReady();
 }
 
-void CruChannelMaster::deviceResetChannel(ResetLevel::type resetLevel)
+void CruDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)
 {
   if (resetLevel == ResetLevel::Nothing) {
     return;
@@ -126,12 +126,12 @@ void CruChannelMaster::deviceResetChannel(ResetLevel::type resetLevel)
   resetCru();
 }
 
-CardType::type CruChannelMaster::getCardType()
+CardType::type CruDmaChannel::getCardType()
 {
   return CardType::Cru;
 }
 
-void CruChannelMaster::resetCru()
+void CruDmaChannel::resetCru()
 {
   getBar().resetDataGeneratorCounter();
   std::this_thread::sleep_for(100ms);
@@ -139,7 +139,7 @@ void CruChannelMaster::resetCru()
   std::this_thread::sleep_for(100ms);
 }
 
-void CruChannelMaster::initCru()
+void CruDmaChannel::initCru()
 {
   // Set data generator pattern
   if (mGeneratorEnabled) {
@@ -147,7 +147,7 @@ void CruChannelMaster::initCru()
   }
 }
 
-void CruChannelMaster::pushSuperpage(Superpage superpage)
+void CruDmaChannel::pushSuperpage(Superpage superpage)
 {
   checkSuperpage(superpage);
 
@@ -172,7 +172,7 @@ void CruChannelMaster::pushSuperpage(Superpage superpage)
   BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not push superpage, transfer queue was full"));
 }
 
-auto CruChannelMaster::getSuperpage() -> Superpage
+auto CruDmaChannel::getSuperpage() -> Superpage
 {
   if (mReadyQueue.empty()) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not get superpage, ready queue was empty"));
@@ -181,7 +181,7 @@ auto CruChannelMaster::getSuperpage() -> Superpage
   return mReadyQueue.front();
 }
 
-auto CruChannelMaster::popSuperpage() -> Superpage
+auto CruDmaChannel::popSuperpage() -> Superpage
 {
   if (mReadyQueue.empty()) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not pop superpage, ready Queue was empty"));
@@ -192,7 +192,7 @@ auto CruChannelMaster::popSuperpage() -> Superpage
   return superpage;
 }
 
-void CruChannelMaster::fillSuperpages()
+void CruDmaChannel::fillSuperpages()
 {
   // Check for arrivals & handle them
   for (auto& link : mLinks) {
@@ -212,23 +212,23 @@ void CruChannelMaster::fillSuperpages()
   }
 }
 
-int CruChannelMaster::getTransferQueueAvailable()
+int CruDmaChannel::getTransferQueueAvailable()
 {
   // capacity - size = available
   return (mLinks.size() * LINK_QUEUE_CAPACITY) - mLinksTotalQueueSize;
 }
 
-int CruChannelMaster::getReadyQueueSize()
+int CruDmaChannel::getReadyQueueSize()
 {
   return mReadyQueue.size();
 }
 
-boost::optional<float> CruChannelMaster::getTemperature()
+boost::optional<float> CruDmaChannel::getTemperature()
 {
   return getBar2().getTemperatureCelsius();
 }
 
-boost::optional<std::string> CruChannelMaster::getFirmwareInfo()
+boost::optional<std::string> CruDmaChannel::getFirmwareInfo()
 {
   return boost::str(boost::format("%x-%x-%x") % getBar2().getFirmwareDate() % getBar2().getFirmwareTime()
       % getBar2().getFirmwareGitHash());

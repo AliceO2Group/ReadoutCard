@@ -5,8 +5,8 @@
 
 #include "ReadoutCard/CardType.h"
 #include "ReadoutCard/ChannelFactory.h"
-#include "ReadoutCard/ChannelMasterInterface.h"
-#include "ReadoutCard/ChannelSlaveInterface.h"
+#include "ReadoutCard/DmaChannelInterface.h"
+#include "ReadoutCard/BarInterface.h"
 #include "ReadoutCard/Exception.h"
 #include "ReadoutCard/Parameters.h"
 #include "ReadoutCard/RegisterReadWriteInterface.h"

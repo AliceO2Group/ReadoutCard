@@ -66,7 +66,7 @@ class Channel
         throw std::runtime_error("Failed to parse card ID as either PCI address or serial number");
       }
 
-      mChannel = ChannelFactory().getSlave(Parameters::makeParameters(cardId, channelNumber));
+      mChannel = ChannelFactory().getBar(Parameters::makeParameters(cardId, channelNumber));
     }
 
     uint32_t read(uint32_t address)
@@ -80,7 +80,7 @@ class Channel
     }
 
   private:
-    std::shared_ptr<AliceO2::roc::ChannelSlaveInterface> mChannel;
+    std::shared_ptr<AliceO2::roc::BarInterface> mChannel;
 };
 } // Anonymous namespace
 

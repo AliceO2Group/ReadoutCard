@@ -31,10 +31,6 @@ static constexpr int SUPERPAGE_ADDRESS_LOW = 0x208/4;
 /// Size of the superpage in 8KiB pages
 static constexpr int SUPERPAGE_PAGES_AVAILABLE = 0x20c/4;
 
-/// Status of superpages
-/// Byte address: 0x210
-static constexpr int SUPERPAGE_STATUS = 0x210/4;
-
 /// Amount of completely pushed superpages
 static constexpr int SUPERPAGES_PUSHED = 0x240/4;
 

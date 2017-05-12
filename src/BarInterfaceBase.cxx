@@ -1,44 +1,47 @@
-/// \file ChannelSlave.cxx
-/// \brief Implementation of the ChannelSlave class.
+/// \file BarInterfaceBase.cxx
+/// \brief Implementation of the BarInterfaceBase class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "ChannelSlave.h"
+#include "BarInterfaceBase.h"
 #include "Utilities/SmartPointer.h"
 
 namespace AliceO2 {
 namespace roc {
 
-ChannelSlave::ChannelSlave(const Parameters& parameters)
- : mChannelNumber(parameters.getChannelNumberRequired())
+BarInterfaceBase::BarInterfaceBase(const Parameters& parameters)
+ : mBarIndex(parameters.getChannelNumberRequired())
 {
   auto id = parameters.getCardIdRequired();
   if (auto serial = boost::get<int>(&id)) {
     Utilities::resetSmartPtr(mRocPciDevice, *serial);
-    mSerialNumber = *serial;
   } else if (auto address = boost::get<PciAddress>(&id)) {
     Utilities::resetSmartPtr(mRocPciDevice, *address);
-    mSerialNumber = mRocPciDevice->getSerialNumber();
   }
-
-  Utilities::resetSmartPtr(mPdaBar, mRocPciDevice->getPciDevice(), mChannelNumber);
+  Utilities::resetSmartPtr(mPdaBar, mRocPciDevice->getPciDevice(), mBarIndex);
 }
 
-ChannelSlave::~ChannelSlave()
+BarInterfaceBase::~BarInterfaceBase()
 {
 }
 
-uint32_t ChannelSlave::readRegister(int index)
+uint32_t BarInterfaceBase::readRegister(int index)
 {
   // TODO Access restriction
   return mPdaBar->readRegister(index);
 }
 
-void ChannelSlave::writeRegister(int index, uint32_t value)
+void BarInterfaceBase::writeRegister(int index, uint32_t value)
 {
   // TODO Access restriction
   mPdaBar->writeRegister(index, value);
 }
+
+int BarInterfaceBase::getBarIndex() const
+{
+  return mBarIndex;
+}
+
 
 } // namespace roc
 } // namespace AliceO2

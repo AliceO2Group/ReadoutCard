@@ -39,7 +39,7 @@ class ProgramRegisterReadRange: public Program
       int channelNumber = Options::getOptionChannel(map);
       int range = Options::getOptionRegisterRange(map);
       auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
-      auto channel = AliceO2::roc::ChannelFactory().getSlave(params);
+      auto channel = AliceO2::roc::ChannelFactory().getBar(params);
 
       std::vector<uint32_t> values(range);
 
