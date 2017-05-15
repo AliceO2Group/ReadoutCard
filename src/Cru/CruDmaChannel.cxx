@@ -184,7 +184,7 @@ auto CruDmaChannel::getSuperpage() -> Superpage
 auto CruDmaChannel::popSuperpage() -> Superpage
 {
   if (mReadyQueue.empty()) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not pop superpage, ready Queue was empty"));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not pop superpage, ready queue was empty"));
   }
 
   auto superpage = mReadyQueue.front();
@@ -200,6 +200,9 @@ void CruDmaChannel::fillSuperpages()
     auto available = superpageCount > link.superpageCounter;
     if (available) {
       for (uint32_t i = 0; i < (superpageCount - link.superpageCounter); ++i) {
+        if (mReadyQueue.full()) {
+          break;
+        }
         // Front superpage has arrived
         link.queue.front().ready = true;
         link.queue.front().received = link.queue.front().size;

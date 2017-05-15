@@ -38,34 +38,15 @@ class DmaChannelBase: public DmaChannelInterface
     /// \param allowedChannels Channels allowed by this card type
     DmaChannelBase(CardDescriptor cardDescriptor, const Parameters& parameters,
         const AllowedChannels& allowedChannels);
-
     virtual ~DmaChannelBase();
 
-    virtual void pushSuperpage(Superpage) override
-    {
-      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("not yet implemented"));
-    }
-
-    virtual Superpage getSuperpage() override
-    {
-      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("not yet implemented"));
-    }
-
-    virtual Superpage popSuperpage() override
-    {
-      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("not yet implemented"));
-    }
-
-    virtual void fillSuperpages() override
-    {
-      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("not yet implemented"));
-    }
-
+    /// Default implementation for optional function
     virtual boost::optional<float> getTemperature() override
     {
       return {};
     }
 
+    /// Default implementation for optional function
     virtual boost::optional<std::string> getFirmwareInfo() override
     {
       return {};

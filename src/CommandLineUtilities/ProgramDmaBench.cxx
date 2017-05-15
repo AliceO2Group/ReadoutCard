@@ -198,7 +198,7 @@ class ProgramDmaBench: public Program
         auto createBuffer = [&](HugePageType hugePageType) {
           // Create buffer file
           std::string bufferFilePath = b::str(
-              b::format("/var/lib/hugetlbfs/global/pagesize-%roc-bench-dma_id=%s_chan=%s_pages")
+              b::format("/var/lib/hugetlbfs/global/pagesize-%s/roc-bench-dma_id=%s_chan=%s_pages")
                   % (hugePageType == HugePageType::SIZE_2MB ? "2MB" : "1GB") % map["id"].as<std::string>()
                   % channelNumber);
           Utilities::resetSmartPtr(mMemoryMappedFile, bufferFilePath, mBufferSize, mOptions.removePagesFile);
