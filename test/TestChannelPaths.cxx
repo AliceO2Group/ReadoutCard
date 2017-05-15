@@ -14,7 +14,7 @@
 
 BOOST_AUTO_TEST_CASE(ChannelPathsTest)
 {
-  using namespace AliceO2::Rorc;
+  using namespace AliceO2::roc;
   ChannelPaths paths(PciAddress {0,0,0}, 0);
   BOOST_CHECK_NO_THROW(paths.fifo());
   BOOST_CHECK_NO_THROW(paths.lock());

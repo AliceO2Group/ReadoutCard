@@ -12,7 +12,7 @@
 #include "Utilities/Util.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace Cru {
 
 /// A simple wrapper object for accessing the CRU BAR
@@ -30,44 +30,38 @@ class BarAccessor
         BUSY
     };
 
-    /// Set the registers of a descriptor entry
-    /// \param index FIFO index
+    /// Push a superpage into the FIFO
     /// \param pages Amount of 8 kiB pages in superpage
     /// \param busAddress Superpage PCI bus address
-    void setSuperpageDescriptor(uint32_t index, uint32_t pages, uintptr_t busAddress)
+    void pushSuperpageDescriptor(uint32_t pages, uintptr_t busAddress)
     {
-      assert(index < SUPERPAGE_DESCRIPTORS);
-
       // Set superpage address
       mPdaBar->writeRegister(Registers::SUPERPAGE_ADDRESS_HIGH, Utilities::getUpper32Bits(busAddress));
       mPdaBar->writeRegister(Registers::SUPERPAGE_ADDRESS_LOW, Utilities::getLower32Bits(busAddress));
-
-      // Set superpage size and FIFO index
-      const uint32_t addressShift = 5;
-      const uint32_t indexMask = 0b11111;
-      uint32_t pagesAvailableAndIndex = index & indexMask;
-      pagesAvailableAndIndex |= (pages << addressShift) & (~indexMask);
-      mPdaBar->writeRegister(Registers::SUPERPAGE_PAGES_AVAILABLE_AND_INDEX, pagesAvailableAndIndex);
-
-      // Set superpage enabled
-      mPdaBar->writeRegister(Registers::SUPERPAGE_STATUS, index);
+      // Set superpage size
+      mPdaBar->writeRegister(Registers::SUPERPAGE_PAGES_AVAILABLE, pages);
     }
 
-    uint32_t getSuperpagePushedPages(uint32_t index)
-    {
-      assert(index < SUPERPAGE_DESCRIPTORS);
-      return mPdaBar->readRegister(Registers::SUPERPAGE_PUSHED_PAGES + index);
-    }
+//    uint32_t getSuperpagePushedPages(uint32_t index)
+//    {
+//      assert(index < SUPERPAGE_DESCRIPTORS);
+//      return mPdaBar->readRegister(Registers::SUPERPAGE_PUSHED_PAGES + index);
+//    }
 
-    BufferStatus getSuperpageBufferStatus(uint32_t index)
+//    BufferStatus getSuperpageBufferStatus(uint32_t index)
+//    {
+//      uint32_t status = mPdaBar->readRegister(Registers::SUPERPAGE_STATUS);
+//      uint32_t bit = status & (0b1 << index);
+//      if (bit == 0) {
+//        return BufferStatus::BUSY;
+//      } else {
+//        return BufferStatus::AVAILABLE;
+//      }
+//    }
+
+    uint32_t getSuperpageCount()
     {
-      uint32_t status = mPdaBar->readRegister(Registers::SUPERPAGE_STATUS);
-      uint32_t bit = status & (0b1 << index);
-      if (bit == 0) {
-        return BufferStatus::BUSY;
-      } else {
-        return BufferStatus::AVAILABLE;
-      }
+      return mPdaBar->readRegister(Registers::SUPERPAGES_PUSHED);
     }
 
     void setDataEmulatorEnabled(bool enabled) const
@@ -148,7 +142,7 @@ class BarAccessor
     boost::optional<float> convertTemperatureRaw(uint32_t registerValue) const
     {
       /// It's a 10 bit register, so: 2^10 - 1
-      constexpr int REGISTER_MAX_VALUE = 1023;
+      constexpr uint32_t REGISTER_MAX_VALUE = 1023;
 
       // Conversion formula from: https://documentation.altera.com/#/00045071-AA$AA00044865
       if (registerValue == 0 || registerValue > REGISTER_MAX_VALUE) {
@@ -215,19 +209,12 @@ class BarAccessor
 
     uint8_t getDebugReadWriteRegister()
     {
-      return mPdaBar->getRegister<uint8_t>(toByteAddress(Registers::DEBUG_READ_WRITE));
+      return mPdaBar->barRead<uint8_t>(toByteAddress(Registers::DEBUG_READ_WRITE));
     }
 
     void setDebugReadWriteRegister(uint8_t value)
     {
-      return mPdaBar->setRegister<uint8_t>(toByteAddress(Registers::DEBUG_READ_WRITE), value);
-    }
-
-    void setLedState(bool onOrOff)
-    {
-      int on = 0x00; // Yes, a 0 represents the on state
-      int off = 0xff;
-      mPdaBar->writeRegister(Registers::LED_STATUS, onOrOff ? on : off);
+      return mPdaBar->barWrite<uint8_t>(toByteAddress(Registers::DEBUG_READ_WRITE), value);
     }
 
   private:
@@ -251,5 +238,5 @@ class BarAccessor
 };
 
 } // namespace Cru
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

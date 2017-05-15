@@ -5,12 +5,12 @@
 
 #pragma once
 
-#include "RORC/CardType.h"
-#include "RORC/ParameterTypes/PciAddress.h"
-#include "RORC/PciId.h"
+#include "ReadoutCard/CardType.h"
+#include "ReadoutCard/ParameterTypes/PciAddress.h"
+#include "ReadoutCard/PciId.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Data holder for basic information about a card
 struct CardDescriptor
@@ -21,5 +21,5 @@ struct CardDescriptor
     PciAddress pciAddress;
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

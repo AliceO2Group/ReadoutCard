@@ -11,13 +11,13 @@
 #include "Common/Program.h"
 #include "CommandLineUtilities/Common.h"
 #include "CommandLineUtilities/Options.h"
-#include "RORC/Exception.h"
+#include "ReadoutCard/Exception.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace CommandLineUtilities {
 
-/// Helper class for making a RORC utility program. It adds logging facilities to the Common::Program
+/// Helper class for making a ReadoutCard utility program. It adds logging facilities to the Common::Program
 /// - SIGINT signals
 class Program : public AliceO2::Common::Program
 {
@@ -47,5 +47,5 @@ class Program : public AliceO2::Common::Program
 };
 
 } // namespace CommandLineUtilities
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

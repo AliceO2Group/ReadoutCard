@@ -3,25 +3,25 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "RORC/ParameterTypes/ResetLevel.h"
+#include "ReadoutCard/ParameterTypes/ResetLevel.h"
 #include "Utilities/Enum.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace {
 
 static const auto converter = Utilities::makeEnumConverter<ResetLevel::type>({
-  { ResetLevel::Nothing,    "NOTHING" },
-  { ResetLevel::Rorc,       "RORC" },
-  { ResetLevel::RorcDiu,    "RORC_DIU" },
-  { ResetLevel::RorcDiuSiu, "RORC_DIU_SIU" },
+  { ResetLevel::Nothing,        "NOTHING" },
+  { ResetLevel::Internal,       "INTERNAL" },
+  { ResetLevel::InternalDiu,    "INTERNAL_DIU" },
+  { ResetLevel::InternalDiuSiu, "INTERNAL_DIU_SIU" },
 });
 
 } // Anonymous namespace
 
 bool ResetLevel::includesExternal(const ResetLevel::type& mode)
 {
-  return mode == ResetLevel::RorcDiu || mode == ResetLevel::RorcDiuSiu;
+  return mode == ResetLevel::InternalDiu || mode == ResetLevel::InternalDiuSiu;
 }
 
 std::string ResetLevel::toString(const ResetLevel::type& level)
@@ -34,6 +34,6 @@ ResetLevel::type ResetLevel::fromString(const std::string& string)
   return converter.fromString(string);
 }
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 

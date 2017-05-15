@@ -9,7 +9,7 @@
 namespace b = boost;
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace {
 static const char* DIR_SHAREDMEM = "/dev/shm/alice_o2/rorc";
 static const char* FORMAT = "%s/%s/channel_%i/%s";
@@ -39,5 +39,5 @@ std::string ChannelPaths::namedMutex() const
   return b::str(b::format("alice_o2_rorc_%s_channel_%i.mutex") % mPciAddress.toString() % mChannel);
 }
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

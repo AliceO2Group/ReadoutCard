@@ -9,7 +9,7 @@
 #include <array>
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 constexpr int READYFIFO_ENTRIES = 128;
 
@@ -55,6 +55,6 @@ union ReadyFifo
 static_assert(sizeof(ReadyFifo::Entry) == 8, "Size of ReadyFifo::Entry invalid");
 static_assert(sizeof(ReadyFifo) == (READYFIFO_ENTRIES * sizeof(ReadyFifo::Entry)), "Size of ReadyFifo invalid");
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 

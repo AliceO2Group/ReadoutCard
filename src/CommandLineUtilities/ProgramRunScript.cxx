@@ -11,40 +11,40 @@
 #include <python2.7/Python.h>
 #include "Common/GuardFunction.h"
 #include "ExceptionInternal.h"
-#include "RORC/ChannelFactory.h"
-#include "RORC/Parameters.h"
+#include "ReadoutCard/ChannelFactory.h"
+#include "ReadoutCard/Parameters.h"
 
 namespace {
-using namespace AliceO2::Rorc::CommandLineUtilities;
+using namespace AliceO2::roc::CommandLineUtilities;
 namespace bpy = boost::python;
 
 /// Simple example script
 auto sExampleScript = R"(
 # Run this with:
-# rorc-run-script --example > example.py
-# rorc-run-script --script=example.py --id=-1
+# roc-run-script --example > example.py
+# roc-run-script --script=example.py --id=-1
 
-print 'Hello RORC Python script!'
+print 'Hello ReadoutCard Python script!'
 
 print '\nPrinting function docs'
-print rorc.register_read_32.__doc__
-print rorc.register_write_32.__doc__
+print roc.register_read_32.__doc__
+print roc.register_write_32.__doc__
 
 print '\nReading and writing registers'
 channel = 0
-rorc.register_read_32(channel, 0x40)
-rorc.register_write_32(channel, 0x40, 123)
+roc.register_read_32(channel, 0x40)
+roc.register_write_32(channel, 0x40, 123)
 )";
 
 
-AliceO2::Rorc::Parameters::CardIdType sCardId;
+AliceO2::roc::Parameters::CardIdType sCardId;
 
 /// Channels for Python interface
-std::map<int, AliceO2::Rorc::ChannelFactory::SlaveSharedPtr> sChannelMap;
+std::map<int, AliceO2::roc::ChannelFactory::BarSharedPtr> sChannelMap;
 
 struct PythonWrapper
 {
-    static AliceO2::Rorc::ChannelSlaveInterface* getChannel(int channelNumber)
+    static AliceO2::roc::BarInterface* getChannel(int channelNumber)
     {
       auto found = sChannelMap.find(channelNumber);
       if (found != sChannelMap.end()) {
@@ -52,9 +52,9 @@ struct PythonWrapper
         return found->second.get();
       } else {
         // Channel is not yet opened, so we open it, insert it into the map, and return it
-        auto params = AliceO2::Rorc::Parameters::makeParameters(sCardId, channelNumber);
+        auto params = AliceO2::roc::Parameters::makeParameters(sCardId, channelNumber);
         auto inserted =
-            sChannelMap.insert(std::make_pair(channelNumber, AliceO2::Rorc::ChannelFactory().getSlave(params))).first;
+            sChannelMap.insert(std::make_pair(channelNumber, AliceO2::roc::ChannelFactory().getBar(params))).first;
         return inserted->second.get();
       }
     }
@@ -72,7 +72,7 @@ struct PythonWrapper
     /// Puts this class into the given Python namespace
     static void putClass(bpy::object& mainNamespace)
     {
-      auto className = "rorc";
+      auto className = "roc";
       auto readName = "register_read_32";
       auto writeName = "register_write_32";
       auto readDoc =
@@ -104,7 +104,7 @@ class ProgramRunScript : public Program
     virtual Description getDescription()
     {
       return {"Run script", "Runs a Python script to perform actions on a channel",
-          "./rorc-run-script --id=12345 --script=myscript.py"};
+          "roc-run-script --id=12345 --script=myscript.py"};
     }
 
     virtual void addOptions(boost::program_options::options_description& options)
@@ -126,8 +126,8 @@ class ProgramRunScript : public Program
       }
 
       if (mScriptFilename.empty()) {
-        BOOST_THROW_EXCEPTION(AliceO2::Rorc::ProgramOptionException()
-            << AliceO2::Rorc::ErrorInfo::Message("Empty script path"));
+        BOOST_THROW_EXCEPTION(AliceO2::roc::ProgramOptionException()
+            << AliceO2::roc::ErrorInfo::Message("Empty script path"));
       }
 
       sCardId = Options::getOptionCardId(map);

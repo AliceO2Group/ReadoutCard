@@ -3,7 +3,7 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "RORC/ParameterTypes/PciAddress.h"
+#include "ReadoutCard/ParameterTypes/PciAddress.h"
 #include <iomanip>
 #include <sstream>
 #include <boost/format.hpp>
@@ -11,7 +11,7 @@
 #include "ExceptionInternal.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 namespace {
   bool parseLspciFormat(const std::string& string, int& bus, int& slot, int& function)
@@ -63,5 +63,5 @@ std::string PciAddress::toString() const
   return boost::str(boost::format("%02x:%02x.%1x") % bus % slot % function);
 }
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

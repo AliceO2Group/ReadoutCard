@@ -8,7 +8,7 @@
 #include <cstdint>
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace Utilities {
 
 /// Is x a multiple of y
@@ -60,5 +60,5 @@ inline bool checkAlignment(void* address, uint64_t alignment)
 }
 
 } // namespace Util
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

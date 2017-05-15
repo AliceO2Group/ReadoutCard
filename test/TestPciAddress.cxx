@@ -9,10 +9,10 @@
 #include <boost/test/unit_test.hpp>
 #include <string>
 #include <vector>
-#include "RORC/Exception.h"
-#include "RORC/ParameterTypes/PciAddress.h"
+#include "ReadoutCard/Exception.h"
+#include "ReadoutCard/ParameterTypes/PciAddress.h"
 
-using namespace ::AliceO2::Rorc;
+using namespace ::AliceO2::roc;
 
 namespace {
 

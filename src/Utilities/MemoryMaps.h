@@ -6,7 +6,7 @@
 #pragma once
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace Utilities {
 
 struct MemoryMap
@@ -22,5 +22,5 @@ struct MemoryMap
 std::vector<MemoryMap> getMemoryMaps();
 
 } // namespace Util
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

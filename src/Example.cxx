@@ -1,5 +1,5 @@
 /// \file Example.cxx
-/// \brief Example of pushing pages with the RORC C++ interface
+/// \brief Example of pushing pages with the ReadoutCard C++ interface
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
@@ -7,9 +7,9 @@
 #include <chrono>
 #include <thread>
 #include <boost/exception/diagnostic_information.hpp>
-#include "RORC/ChannelFactory.h"
-#include "RORC/Exception.h"
-#include "RORC/MemoryMappedFile.h"
+#include "ReadoutCard/ChannelFactory.h"
+#include "ReadoutCard/Exception.h"
+#include "ReadoutCard/MemoryMappedFile.h"
 
 using std::cout;
 using std::endl;
@@ -18,23 +18,23 @@ using namespace AliceO2;
 int main(int, char**)
 {
   try {
-    // Get the channel master object
-    cout << "\n### Acquiring channel master object" << endl;
+    // Get the DMA channel object
+    cout << "\n### Acquiring DMA channel object" << endl;
 
     // Create a 10MiB file in 2MiB hugepage filesystem
     constexpr size_t superpageSize = 2*1024*1024;
     constexpr size_t superpageCount = 5;
     constexpr size_t bufferSize = superpageCount * superpageSize;
-    Rorc::MemoryMappedFile file {"/dev/hugepages/rorc_example.bin", bufferSize};
+    roc::MemoryMappedFile file {"/dev/hugepages/rorc_example.bin", bufferSize};
 
     // Create parameters object for channel
-    auto parameters = Rorc::Parameters()
+    auto parameters = roc::Parameters()
         .setCardId(-1) // Dummy card
         .setChannelNumber(0) // DMA channel 0
-        .setBufferParameters(Rorc::BufferParameters::Memory{file.getAddress(), bufferSize}); // Register our buffer
+        .setBufferParameters(roc::buffer_parameters::Memory{file.getAddress(), bufferSize}); // Register our buffer
 
     // Get the DMA channel
-    std::shared_ptr<Rorc::ChannelMasterInterface> channel = Rorc::ChannelFactory().getMaster(parameters);
+    std::shared_ptr<roc::DmaChannelInterface> channel = roc::ChannelFactory().getDmaChannel(parameters);
 
     // Start the DMA
     cout << "\n### Starting DMA" << endl;
@@ -47,10 +47,10 @@ int main(int, char**)
     cout << "### Pushing pages" << endl;
 
     // Queue up some superpages
-    for (int i = 0; i < superpageCount; ++i) {
+    for (size_t i = 0; i < superpageCount; ++i) {
       auto offset = i * superpageSize;
       auto size = superpageSize;
-      channel->pushSuperpage(Rorc::Superpage(offset, size));
+      channel->pushSuperpage(roc::Superpage(offset, size));
       cout << "Pushed superpage " << i << '\n';
     }
 
@@ -59,7 +59,7 @@ int main(int, char**)
         cout << "Time was exceeded!\n";
         break;
       }
-      if (channel->getSuperpageQueueCount() == 0) {
+      if (channel->getReadyQueueSize() == 0) {
         cout << "Done!\n";
         break;
       }

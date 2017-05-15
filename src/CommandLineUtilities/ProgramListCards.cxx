@@ -1,5 +1,5 @@
 /// \file ProgramListCards.cxx
-/// \brief Utility that lists the RORC devices on the system
+/// \brief Utility that lists the ReadoutCard devices on the system
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
@@ -7,13 +7,12 @@
 #include <sstream>
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
-#include "CommandLineUtilities/Common.h"
-#include "RorcDevice.h"
-#include "RORC/ChannelFactory.h"
+#include "RocPciDevice.h"
+#include "ReadoutCard/ChannelFactory.h"
 #include <boost/format.hpp>
 
-using namespace AliceO2::Rorc::CommandLineUtilities;
-using namespace AliceO2::Rorc;
+using namespace AliceO2::roc::CommandLineUtilities;
+using namespace AliceO2::roc;
 using std::cout;
 using std::endl;
 
@@ -24,7 +23,7 @@ class ProgramListCards: public Program
 
     virtual Description getDescription()
     {
-      return {"List Cards", "Lists installed RORC cards and some basic information about them", "./rorc-list-cards"};
+      return {"List Cards", "Lists installed cards and some basic information about them", "roc-list-cards"};
     }
 
     virtual void addOptions(boost::program_options::options_description&)
@@ -33,7 +32,7 @@ class ProgramListCards: public Program
 
     virtual void run(const boost::program_options::variables_map&)
     {
-      auto cardsFound = AliceO2::Rorc::RorcDevice::findSystemDevices();
+      auto cardsFound = AliceO2::roc::RocPciDevice::findSystemDevices();
 
       std::ostringstream table;
 
@@ -47,20 +46,19 @@ class ProgramListCards: public Program
       table << lineFat << header << lineThin;
 
       int i = 0;
-      bool foundUninitialized = false;
       for (const auto& card : cardsFound) {
         // Try to figure out the firmware version
         std::string firmware = "n/a";
         try {
           Parameters params = Parameters::makeParameters(card.serialNumber, 0);
-          // Temporary (hopefully) workaround, because ChannelMaster requires a buffer when initializing
-          params.setBufferParameters(BufferParameters::File{"/dev/shm/rorc_channel_utility_dummy_buffer", 4*1024});
-
-          firmware = ChannelFactory().getMaster(params)->getFirmwareInfo().value_or("n/a");
+          // Temporary (hopefully) workaround, because DmaChannel requires a buffer when initializing
+          params.setBufferParameters(buffer_parameters::File{"/dev/shm/rorc_channel_utility_dummy_buffer", 4*1024});
+          firmware = ChannelFactory().getDmaChannel(params)->getFirmwareInfo().value_or("n/a");
         }
         catch (const Exception& e) {
-          foundUninitialized = true;
-          cout << "Could not get firmware version string: " << e.what() << '\n';
+          if (isVerbose()) {
+            cout << "Could not get firmware version string:\n" << boost::diagnostic_information(e) << '\n';
+          }
         }
 
         table << boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciAddress.toString()
@@ -69,14 +67,6 @@ class ProgramListCards: public Program
       }
 
       table << lineFat;
-
-      cout << "Found " << cardsFound.size() << " card(s)\n";
-
-      if (foundUninitialized) {
-        cout << "Found card(s) with invalid channel 0 shared state. Reading the firmware version from these is "
-            "currently not supported by this utility\n";
-      }
-
       cout << table.str();
     }
 };

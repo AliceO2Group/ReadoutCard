@@ -3,8 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_RORC_INTERPROCESSMUTEX_H_
-#define ALICEO2_RORC_INTERPROCESSMUTEX_H_
+#ifndef ALICEO2_READOUTCARD_INTERPROCESSMUTEX_H_
+#define ALICEO2_READOUTCARD_INTERPROCESSMUTEX_H_
 
 #include <mutex>
 #include <boost/interprocess/sync/file_lock.hpp>
@@ -17,7 +17,7 @@
 #include "Utilities/SmartPointer.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace Interprocess {
 
 /// This lock uses two mutexes internally to help detect inconsistent state.
@@ -89,7 +89,7 @@ class Lock
 };
 
 } // namespace Interprocess
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 
-#endif /* ALICEO2_RORC_INTERPROCESSMUTEX_H_ */
+#endif /* ALICEO2_READOUTCARD_INTERPROCESSMUTEX_H_ */

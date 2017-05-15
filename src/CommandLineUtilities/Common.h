@@ -1,5 +1,5 @@
 /// \file Common.h
-/// \brief Definition of common functions for the RORC utilities.
+/// \brief Definition of common functions for the ReadoutCard utilities.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
@@ -8,7 +8,7 @@
 #include <boost/program_options.hpp>
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace CommandLineUtilities {
 namespace Common {
 
@@ -26,5 +26,5 @@ std::string makeRegisterString(int address, uint32_t value);
 
 } // namespace Common
 } // namespace CommandLineUtilities
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

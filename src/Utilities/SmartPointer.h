@@ -6,7 +6,7 @@
 #pragma once
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace Utilities {
 
 /// Convenience function to reset a smart pointer
@@ -17,5 +17,5 @@ void resetSmartPtr(SmartPtr& ptr, Args&&... args)
 }
 
 } // namespace Util
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

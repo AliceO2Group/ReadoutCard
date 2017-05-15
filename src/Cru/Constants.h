@@ -3,12 +3,12 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_RORC_CRU_CONSTANTS
-#define ALICEO2_RORC_CRU_CONSTANTS
+#ifndef ALICEO2_READOUTCARD_CRU_CONSTANTS
+#define ALICEO2_READOUTCARD_CRU_CONSTANTS
 
 namespace AliceO2
 {
-namespace Rorc
+namespace roc
 {
 namespace Cru
 {
@@ -28,17 +28,11 @@ static constexpr int SUPERPAGE_ADDRESS_HIGH = 0x204/4;
 /// Low address of superpage
 static constexpr int SUPERPAGE_ADDRESS_LOW = 0x208/4;
 
-/// Pages available and index of superpage
-/// Bits [0:4] index
-/// Bites[5:31] 8KiB pages available in superpages
-static constexpr int SUPERPAGE_PAGES_AVAILABLE_AND_INDEX = 0x20c/4;
+/// Size of the superpage in 8KiB pages
+static constexpr int SUPERPAGE_PAGES_AVAILABLE = 0x20c/4;
 
-/// Status of superpages
-/// Byte address: 0x210
-static constexpr int SUPERPAGE_STATUS = 0x210/4;
-
-/// Amount of pushed pages in superpage of index 0.
-static constexpr int SUPERPAGE_PUSHED_PAGES = 0x240/4;
+/// Amount of completely pushed superpages
+static constexpr int SUPERPAGES_PUSHED = 0x240/4;
 
 /// Configuration register for data generator
 /// Bit 0: set to start data generator
@@ -48,22 +42,6 @@ static constexpr int SUPERPAGE_PUSHED_PAGES = 0x240/4;
 ///   0b11 -> 0x12345678
 /// Bit 3: set to inject error
 static constexpr size_t DATA_GENERATOR_CONTROL = 0x320/4;
-
-/// Some kind of control register
-/// One can "deassert reset for led module" by writing 0xd into this (not sure what that means).
-/// This register does not appear to be necessary to use the LED on/off toggle functionality
-/// Byte address: 0x220
-[[deprecated]] static constexpr size_t LED_DEASSERT_RESET = 136;
-
-/// Some kind of control register
-/// One can "write data in led module" by writing 0x3 into this (not sure what that means).
-/// This register does not appear to be necessary to use the LED on/off toggle functionality
-/// Byte address: 0x230
-[[deprecated]] static constexpr size_t LED_MODULE_DATA = 140;
-
-/// Set to 0xff to turn the LED on, 0x00 to turn off
-/// Byte address: 0x260
-[[deprecated]] static constexpr size_t LED_STATUS = 152;
 
 /// Board serial number
 /// Must be accessed on BAR 2
@@ -111,7 +89,7 @@ static constexpr size_t FIRMWARE_TIME = 9;
 
 } // namespace Cru
 } // namespace Registers
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_RORC_CRU_CONSTANTS
+#endif // ALICEO2_READOUTCARD_CRU_CONSTANTS

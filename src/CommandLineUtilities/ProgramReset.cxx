@@ -1,14 +1,14 @@
 /// \file ProgramReset.cxx
-/// \brief Utility that resets a RORC
+/// \brief Utility that resets a ReadoutCard
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "CommandLineUtilities/Program.h"
 #include <iostream>
-#include "RORC/ChannelFactory.h"
+#include "ReadoutCard/ChannelFactory.h"
 
 namespace {
-using namespace AliceO2::Rorc::CommandLineUtilities;
+using namespace AliceO2::roc::CommandLineUtilities;
 
 class ProgramReset: public Program
 {
@@ -16,7 +16,7 @@ class ProgramReset: public Program
 
     virtual Description getDescription()
     {
-      return {"Reset", "Resets a channel", "./rorc-reset --id=12345 --channel=0 --reset=RORC_DIU_SIU"};
+      return {"Reset", "Resets a channel", "roc-reset --id=12345 --channel=0 --reset=INTERNAL_DIU_SIU"};
     }
 
     virtual void addOptions(boost::program_options::options_description& options)
@@ -33,8 +33,8 @@ class ProgramReset: public Program
       auto cardId = Options::getOptionCardId(map);
       int channelNumber = Options::getOptionChannel(map);
 
-      auto params = AliceO2::Rorc::Parameters::makeParameters(cardId, channelNumber);
-      auto channel = AliceO2::Rorc::ChannelFactory().getMaster(params);
+      auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
+      auto channel = AliceO2::roc::ChannelFactory().getDmaChannel(params);
       channel->resetChannel(resetLevel);
     }
 };

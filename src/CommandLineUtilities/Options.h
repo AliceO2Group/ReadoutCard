@@ -1,5 +1,5 @@
 /// \file Options.h
-/// \brief Definition of functions for the RORC utilities to handle program options
+/// \brief Definition of functions for the ReadoutCard utilities to handle program options
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
@@ -9,13 +9,13 @@
 #include <boost/exception/all.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <iostream>
-#include "RORC/Exception.h"
-#include "RORC/Parameters.h"
-#include "RORC/ParameterTypes/GeneratorPattern.h"
-#include "RORC/ParameterTypes/ResetLevel.h"
+#include "ReadoutCard/Exception.h"
+#include "ReadoutCard/Parameters.h"
+#include "ReadoutCard/ParameterTypes/GeneratorPattern.h"
+#include "ReadoutCard/ParameterTypes/ResetLevel.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace CommandLineUtilities {
 namespace Options {
 
@@ -40,5 +40,5 @@ Parameters getOptionsParameterMap(const boost::program_options::variables_map& v
 
 } // namespace Options
 } // namespace CommandLineUtilities
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

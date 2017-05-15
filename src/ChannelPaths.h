@@ -6,10 +6,10 @@
 #pragma once
 
 #include <string>
-#include "RORC/ParameterTypes/PciAddress.h"
+#include "ReadoutCard/ParameterTypes/PciAddress.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Namespace for functions to generate paths for filesystem object used by the Channel classes
 class ChannelPaths
@@ -41,5 +41,5 @@ class ChannelPaths
     const int mChannel;
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

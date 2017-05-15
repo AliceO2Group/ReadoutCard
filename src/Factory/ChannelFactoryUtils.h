@@ -7,21 +7,21 @@
 #include <algorithm>
 #include "CardDescriptor.h"
 #include "ExceptionInternal.h"
-#include "RORC/CardType.h"
-#include "RORC/Parameters.h"
-#ifdef ALICEO2_RORC_PDA_ENABLED
-# include "RorcDevice.h"
+#include "ReadoutCard/CardType.h"
+#include "ReadoutCard/Parameters.h"
+#ifdef ALICEO2_READOUTCARD_PDA_ENABLED
+# include "RocPciDevice.h"
 #endif
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 namespace FactoryHelper {
 
-#ifdef ALICEO2_RORC_PDA_ENABLED
+#ifdef ALICEO2_READOUTCARD_PDA_ENABLED
 inline CardDescriptor findCard(int serial)
 {
-  auto cardsFound = RorcDevice::findSystemDevices(serial);
+  auto cardsFound = RocPciDevice::findSystemDevices(serial);
 
   if (cardsFound.empty()) {
     BOOST_THROW_EXCEPTION(Exception()
@@ -43,7 +43,7 @@ inline CardDescriptor findCard(int serial)
 
 inline CardDescriptor findCard(const PciAddress& address)
 {
-  auto cardsFound = RorcDevice::findSystemDevices(address);
+  auto cardsFound = RocPciDevice::findSystemDevices(address);
 
   if (cardsFound.empty()) {
     BOOST_THROW_EXCEPTION(Exception()
@@ -77,7 +77,7 @@ template <typename Interface>
 std::shared_ptr<Interface> channelFactoryHelper(int serialNumber, int dummySerial,
     const std::map<CardType::type, std::function<std::shared_ptr<Interface>()>>& map)
 {
-#ifdef ALICEO2_RORC_PDA_ENABLED
+#ifdef ALICEO2_READOUTCARD_PDA_ENABLED
   if (serialNumber == dummySerial) {
     return map.at(CardType::Dummy)();
   } else {
@@ -149,7 +149,7 @@ struct Make<Result, Index, Tag, Function, Args...>
 } // namespace _make_impl
 
 /// Helper template method for the channel factories. If serial == dummySerial, the dummy will be instantiated.
-/// If ALICEO2_RORC_PDA_ENABLED is not defined, a dummy will always be instantiated.
+/// If ALICEO2_READOUTCARD_PDA_ENABLED is not defined, a dummy will always be instantiated.
 /// It does essentially the same thing as channelFactoryHelper, except with:
 ///  - More checks and work done at compile time (an invalid tag will cause a compile error instead of a runtime error)
 ///  - Less curly braces.
@@ -176,7 +176,7 @@ std::shared_ptr<Interface> makeChannel(const Parameters& params, int dummySerial
     return Make<SharedPtr, 0, Args...>::makeDummy(std::forward<Args>(args)...);
   };
 
-#ifndef ALICEO2_RORC_PDA_ENABLED
+#ifndef ALICEO2_READOUTCARD_PDA_ENABLED
   // If PDA is NOT enabled we only make dummies
   return makeDummy();
 #else
@@ -198,5 +198,5 @@ std::shared_ptr<Interface> makeChannel(const Parameters& params, int dummySerial
 }
 } // namespace FactoryHelper
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

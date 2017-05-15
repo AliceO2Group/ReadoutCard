@@ -1,12 +1,12 @@
 /// \file ProgramRegisterWrite.cxx
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 ///
-/// \brief Utility that writes to a register on a RORC
+/// \brief Utility that writes to a register on a card
 
 #include "CommandLineUtilities/Program.h"
-#include "RORC/ChannelFactory.h"
+#include "ReadoutCard/ChannelFactory.h"
 
-using namespace AliceO2::Rorc::CommandLineUtilities;
+using namespace AliceO2::roc::CommandLineUtilities;
 
 namespace {
 
@@ -19,7 +19,7 @@ class ProgramRegisterWrite: public Program
     virtual Description getDescription()
     {
       return {"Write Register", "Write a value to a single register",
-          "./rorc-reg-write --id=12345 --channel=0 --address=0x8 --value=0"};
+          "roc-reg-write --id=12345 --channel=0 --address=0x8 --value=0"};
     }
 
     virtual void addOptions(boost::program_options::options_description& options)
@@ -38,8 +38,8 @@ class ProgramRegisterWrite: public Program
       int channelNumber = Options::getOptionChannel(map);
       int registerValue = Options::getOptionRegisterValue(map);
       auto readback = !bool(map.count(NOREAD_SWITCH));
-      auto params = AliceO2::Rorc::Parameters::makeParameters(cardId, channelNumber);
-      auto channel = AliceO2::Rorc::ChannelFactory().getSlave(params);
+      auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
+      auto channel = AliceO2::roc::ChannelFactory().getBar(params);
 
       // Registers are indexed by 32 bits (4 bytes)
       channel->writeRegister(address / 4, registerValue);

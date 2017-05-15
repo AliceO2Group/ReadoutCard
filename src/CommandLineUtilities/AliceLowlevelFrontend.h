@@ -3,8 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_RORC_UTILITIES_ALF_ALICELOWLEVELFRONTEND_H
-#define ALICEO2_RORC_UTILITIES_ALF_ALICELOWLEVELFRONTEND_H
+#ifndef ALICEO2_READOUTCARD_UTILITIES_ALF_ALICELOWLEVELFRONTEND_H
+#define ALICEO2_READOUTCARD_UTILITIES_ALF_ALICELOWLEVELFRONTEND_H
 
 #include <string>
 #include <functional>
@@ -121,9 +121,9 @@ class PublishRpc: public DimRpcInfo
     {
       std::ostringstream stream;
       stream << dnsName << ';';
-      for (int i = 0; i < addresses.size(); ++i) {
+      for (size_t i = 0; i < addresses.size(); ++i) {
         stream << addresses[i];
-        if (i+1 < addresses.size()) {
+        if ((i + 1) < addresses.size()) {
           stream << ',';
         }
       }
@@ -134,7 +134,7 @@ class PublishRpc: public DimRpcInfo
       auto returnValue = std::string(getString());
 //      printf("Publish got return: %s\n", returnValue.c_str());
       if (isFail(returnValue)) {
-        BOOST_THROW_EXCEPTION(AliceO2::Rorc::Exception() << AliceO2::Rorc::ErrorInfo::Message(returnValue));
+        BOOST_THROW_EXCEPTION(AliceO2::roc::Exception() << AliceO2::roc::ErrorInfo::Message(returnValue));
       }
     }
 };
@@ -153,7 +153,7 @@ class RegisterReadRpc: public DimRpcInfo
       auto returnValue = std::string(getString());
 //      printf("Read got return: %s\n", returnValue.c_str());
       if (isFail(returnValue)) {
-        BOOST_THROW_EXCEPTION(AliceO2::Rorc::Exception() << AliceO2::Rorc::ErrorInfo::Message(returnValue));
+        BOOST_THROW_EXCEPTION(AliceO2::roc::Exception() << AliceO2::roc::ErrorInfo::Message(returnValue));
       }
       return boost::lexical_cast<uint32_t>(stripPrefix(returnValue));
     }
@@ -174,7 +174,7 @@ class RegisterWriteRpc: public DimRpcInfo
       auto returnValue = std::string(getString());
 //      printf("Write got return: %s\n", returnValue.c_str());
       if (isFail(returnValue)) {
-        BOOST_THROW_EXCEPTION(AliceO2::Rorc::Exception() << AliceO2::Rorc::ErrorInfo::Message(returnValue));
+        BOOST_THROW_EXCEPTION(AliceO2::roc::Exception() << AliceO2::roc::ErrorInfo::Message(returnValue));
       }
     }
 };
@@ -194,7 +194,7 @@ class RegisterWriteBlockRpc: public DimRpcInfo
       auto returnValue = std::string(getString());
       printf("Write got return: %s\n", returnValue.c_str());
       if (isFail(returnValue)) {
-        BOOST_THROW_EXCEPTION(AliceO2::Rorc::Exception() << AliceO2::Rorc::ErrorInfo::Message(returnValue));
+        BOOST_THROW_EXCEPTION(AliceO2::roc::Exception() << AliceO2::roc::ErrorInfo::Message(returnValue));
       }
     }
 };
@@ -266,4 +266,4 @@ class CallbackCommand : public DimCommand
 
 }
 
-#endif // ALICEO2_RORC_UTILITIES_ALF_ALICELOWLEVELFRONTEND_H
+#endif // ALICEO2_READOUTCARD_UTILITIES_ALF_ALICELOWLEVELFRONTEND_H

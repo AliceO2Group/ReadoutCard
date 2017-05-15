@@ -1,14 +1,14 @@
 /// \file ProgramRegisterRead.cxx
-/// \brief Utility that reads a register from a RORC
+/// \brief Utility that reads a register from a card
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "CommandLineUtilities/Program.h"
 #include <iostream>
-#include "RORC/ChannelFactory.h"
+#include "ReadoutCard/ChannelFactory.h"
 
 namespace {
-using namespace AliceO2::Rorc::CommandLineUtilities;
+using namespace AliceO2::roc::CommandLineUtilities;
 
 class ProgramRegisterRead: public Program
 {
@@ -16,7 +16,7 @@ class ProgramRegisterRead: public Program
 
     virtual Description getDescription()
     {
-      return {"Read Register", "Read a single register", "./rorc-reg-read --id=12345 --channel=0 --address=0x8"};
+      return {"Read Register", "Read a single register", "roc-reg-read --id=12345 --channel=0 --address=0x8"};
     }
 
     virtual void addOptions(boost::program_options::options_description& options)
@@ -31,8 +31,8 @@ class ProgramRegisterRead: public Program
       auto cardId = Options::getOptionCardId(map);
       int address = Options::getOptionRegisterAddress(map);
       int channelNumber = Options::getOptionChannel(map);
-      auto params = AliceO2::Rorc::Parameters::makeParameters(cardId, channelNumber);
-      auto channel = AliceO2::Rorc::ChannelFactory().getSlave(params);
+      auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
+      auto channel = AliceO2::roc::ChannelFactory().getBar(params);
 
       // Registers are indexed by 32 bits (4 bytes)
       uint32_t value = channel->readRegister(address / 4);

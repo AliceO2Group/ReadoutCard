@@ -10,7 +10,7 @@
 #include "MemoryMappedFile.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Wrapper around MemoryMappedFile to provide a typed interface. Note that the user is responsible for making sure
 /// the type is appropriate for type aliasing into a memory mapped region.
@@ -42,5 +42,5 @@ class TypedMemoryMappedFile
     MemoryMappedFile mMemoryMappedFile;
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

@@ -9,13 +9,13 @@
 #include "Utilities/Util.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Buffer provider for a buffer that is already available in memory
 class BufferProviderMemory : public BufferProvider
 {
   public:
-    BufferProviderMemory(const BufferParameters::Memory& parameters)
+    BufferProviderMemory(const buffer_parameters::Memory& parameters)
     {
       initialize(parameters.address, parameters.size);
     }
@@ -25,5 +25,5 @@ class BufferProviderMemory : public BufferProvider
     }
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

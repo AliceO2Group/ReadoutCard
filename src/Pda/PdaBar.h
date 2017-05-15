@@ -5,13 +5,13 @@
 
 #pragma once
 
-#include "RORC/RegisterReadWriteInterface.h"
+#include "ReadoutCard/RegisterReadWriteInterface.h"
 #include <pda.h>
 #include "PdaDevice.h"
 #include "ExceptionInternal.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace Pda {
 
 /// A simple wrapper around the PDA BAR object, providing some convenience functions
@@ -19,16 +19,33 @@ class PdaBar : public RegisterReadWriteInterface
 {
   public:
     PdaBar();
+
     PdaBar(PdaDevice::PdaPciDevice pciDevice, int barNumber);
 
     virtual uint32_t readRegister(int index)
     {
-      return getRegister<uint32_t>(index * sizeof(uint32_t));
+      return barRead<uint32_t>(index * sizeof(uint32_t));
     }
 
     virtual void writeRegister(int index, uint32_t value)
     {
-      setRegister<uint32_t>(index * sizeof(uint32_t), value);
+      barWrite<uint32_t>(index * sizeof(uint32_t), value);
+    }
+
+    template<typename T>
+    void barWrite(uintptr_t byteOffset, const T &value) const
+    {
+      assertRange<T>(byteOffset);
+      memcpy(getOffsetAddress(byteOffset), &value, sizeof(T));
+    }
+
+    template<typename T>
+    T barRead(uintptr_t byteOffset) const
+    {
+      assertRange<T>(byteOffset);
+      T value;
+      memcpy(&value, getOffsetAddress(byteOffset), sizeof(T));
+      return value;
     }
 
     int getBarNumber() const
@@ -41,39 +58,15 @@ class PdaBar : public RegisterReadWriteInterface
       return mBarLength;
     }
 
-    Bar* getPdaBar() const
-    {
-      return mPdaBar;
-    }
-
-    template <typename T>
+  private:
+    template<typename T>
     bool isInRange(size_t offset) const
     {
-      auto address = reinterpret_cast<volatile char*>(mUserspaceAddress);
-      return &address[offset + sizeof(T)] < &address[mBarLength];
+      return (mUserspaceAddress + offset + sizeof(T)) < (mUserspaceAddress + mBarLength);
     }
 
-    /// Get the value of a register from the BAR
-    /// \param offset The byte offset of the register
     template <typename T>
-    T getRegister(size_t offset) const
-    {
-      return at<T>(offset);
-    }
-
-    /// Set the value of a register from the BAR
-    /// \param offset The byte offset of the register
-    /// \param value The value to set
-    template <typename T>
-    void setRegister(size_t offset, T value) const
-    {
-      at<T>(offset) = value;
-    }
-
-    /// Get a reference to a register from the BAR
-    /// \param offset The byte offset of the register
-    template <typename T>
-    volatile T& at(size_t offset) const
+    void assertRange(uintptr_t offset) const
     {
       if (!isInRange<T>(offset)) {
         BOOST_THROW_EXCEPTION(Exception()
@@ -81,40 +74,13 @@ class PdaBar : public RegisterReadWriteInterface
             << ErrorInfo::BarIndex(offset)
             << ErrorInfo::BarSize(getBarLength()));
       }
-
-      return *reinterpret_cast<volatile T*>(getUserspaceAddress() + offset);
     }
 
     void* getOffsetAddress(uintptr_t byteOffset) const
     {
-      return reinterpret_cast<void*>(getUserspaceAddress() + byteOffset);
+      return reinterpret_cast<void*>(mUserspaceAddress + byteOffset);
     }
 
-    template<typename T>
-    void barWrite(uintptr_t byteOffset, const T& value) const
-    {
-      memcpy(getOffsetAddress(byteOffset), &value, sizeof(T));
-    }
-
-    template<typename T>
-    T barRead(uintptr_t byteOffset) const
-    {
-      T value;
-      memcpy(&value, getOffsetAddress(byteOffset), sizeof(T));
-      return value;
-    }
-
-    uintptr_t getUserspaceAddress() const
-    {
-      return mUserspaceAddress;
-    }
-
-    volatile uint32_t* getUserspaceAddressU32() const
-    {
-      return reinterpret_cast<volatile uint32_t*>(mUserspaceAddress);
-    }
-
-  private:
     /// PDA object for the PCI BAR
     Bar* mPdaBar;
 
@@ -129,5 +95,5 @@ class PdaBar : public RegisterReadWriteInterface
 };
 
 } // namespace Pda
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

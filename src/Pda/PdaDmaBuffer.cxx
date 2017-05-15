@@ -8,7 +8,7 @@
 #include "ExceptionInternal.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace Pda {
 
 PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAddress, size_t userBufferSize,
@@ -25,14 +25,14 @@ PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAd
       DMABuffer* tempDmaBuffer;
       if (PciDevice_getDMABuffer(pciDevice.get(), dmaBufferId, &tempDmaBuffer) != PDA_SUCCESS) {
         // Give up
-        BOOST_THROW_EXCEPTION(RorcPdaException() << ErrorInfo::Message(
+        BOOST_THROW_EXCEPTION(PdaException() << ErrorInfo::Message(
             "Failed to register external DMA buffer; Failed to get previous buffer for cleanup"));
       }
 
       // Free it
       if (PciDevice_deleteDMABuffer(pciDevice.get(), tempDmaBuffer) != PDA_SUCCESS) {
         // Give up
-        BOOST_THROW_EXCEPTION(RorcPdaException() << ErrorInfo::Message(
+        BOOST_THROW_EXCEPTION(PdaException() << ErrorInfo::Message(
             "Failed to register external DMA buffer; Failed to delete previous buffer for cleanup"));
       }
 
@@ -40,19 +40,19 @@ PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAd
       if (PciDevice_registerDMABuffer(pciDevice.get(), dmaBufferId, userBufferAddress, userBufferSize,
           &mDmaBuffer) != PDA_SUCCESS) {
         // Give up
-        BOOST_THROW_EXCEPTION(RorcPdaException() << ErrorInfo::Message(
+        BOOST_THROW_EXCEPTION(PdaException() << ErrorInfo::Message(
             "Failed to register external DMA buffer; Failed retry after automatic cleanup of previous buffer"));
       }
     }
   }
-  catch (RorcPdaException& e) {
+  catch (PdaException& e) {
     addPossibleCauses(e, {"Program previously exited without cleaning up DMA buffer, reinserting DMA kernel module may "
         " help, but ensure no channels are open before reinsertion (modprobe -r uio_pci_dma; modprobe uio_pci_dma"});
   }
 
   DMABuffer_SGNode* sgList;
   if (DMABuffer_getSGList(mDmaBuffer, &sgList) != PDA_SUCCESS) {
-    BOOST_THROW_EXCEPTION(RorcPdaException() << ErrorInfo::Message("Failed to get scatter-gather list"));
+    BOOST_THROW_EXCEPTION(PdaException() << ErrorInfo::Message("Failed to get scatter-gather list"));
   }
 
   auto node = sgList;
@@ -68,7 +68,7 @@ PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAd
   }
 
   if (mScatterGatherVector.empty()) {
-    BOOST_THROW_EXCEPTION(RorcPdaException() << ErrorInfo::Message(
+    BOOST_THROW_EXCEPTION(PdaException() << ErrorInfo::Message(
         "Failed to initialize scatter-gather list, was empty"));
   }
 }
@@ -88,7 +88,7 @@ uintptr_t PdaDmaBuffer::getBusOffsetAddress(size_t offset) const
   auto userWithOffset = userBase + offset;
 
   // First we find the SGL entry that contains our address
-  for (int i = 0; i < list.size(); ++i) {
+  for (size_t i = 0; i < list.size(); ++i) {
     auto entryUserStartAddress = list[i].addressUser;
     auto entryUserEndAddress = entryUserStartAddress + list[i].size;
 
@@ -108,5 +108,5 @@ uintptr_t PdaDmaBuffer::getBusOffsetAddress(size_t offset) const
 }
 
 } // namespace Pda
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

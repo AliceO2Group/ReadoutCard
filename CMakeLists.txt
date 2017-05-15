@@ -19,11 +19,11 @@ endforeach ()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake) # project specific cmake dir
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 
-project(RORC)
+project(ReadoutCard)
 
 # Load some basic macros which are needed later on
 include(O2Utils)
-include(RORCDependencies)
+include(ReadoutCardDependencies)
 include(O2)
 
 # Set the default build type to "RelWithDebInfo"
@@ -61,7 +61,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra -fPIC")
 # Module, library and executable definition
 ####################################
 
-set(MODULE_NAME "RORC")
+set(MODULE_NAME "ReadoutCard")
 
 link_o2_subproject(Common)
 link_o2_subproject(InfoLogger)
@@ -71,12 +71,10 @@ O2_SETUP(NAME ${MODULE_NAME})
 set(SRCS
   src/CardType.cxx
   src/Factory/ChannelFactory.cxx
-  src/Factory/ChannelUtilityFactory.cxx
-  src/ChannelBase.cxx
-  src/ChannelMasterBase.cxx
+        src/DmaChannelBase.cxx
   src/ChannelPaths.cxx
-  src/Dummy/DummyChannelMaster.cxx
-  src/Dummy/DummyChannelSlave.cxx
+        src/Dummy/DummyDmaChannel.cxx
+  src/Dummy/DummyBar.cxx
   src/ExceptionInternal.cxx
   src/MemoryMappedFile.cxx
   src/Parameters.cxx
@@ -104,32 +102,31 @@ include_directories(
 message("CMAKE INCLUE: ${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 set(LIBRARY_NAME ${MODULE_NAME})
-set(BUCKET_NAME o2_rorc_bucket)
+set(BUCKET_NAME o2_readoutcard_bucket)
 
 
-if(ALICEO2_RORC_PDA_ENABLED)
+if(ALICEO2_READOUTCARD_PDA_ENABLED)
   list(APPEND SRCS
-    src/ChannelMasterPdaBase.cxx
-    src/ChannelSlave.cxx
-    src/ChannelUtilityImpl.cxx
+          src/DmaChannelPdaBase.cxx
+          src/BarInterfaceBase.cxx
     src/Crorc/Crorc.cxx
-    src/Crorc/CrorcChannelMaster.cxx
-    src/Crorc/CrorcChannelSlave.cxx
-    src/Cru/CruChannelMaster.cxx
-    src/Cru/CruChannelSlave.cxx
+          src/Crorc/CrorcDmaChannel.cxx
+          src/Crorc/CrorcBar.cxx
+          src/Cru/CruDmaChannel.cxx
+          src/Cru/CruBar.cxx
     src/Pda/Pda.cxx
     src/Pda/PdaBar.cxx
     src/Pda/PdaDevice.cxx
     src/Pda/PdaDmaBuffer.cxx
-    src/RorcDevice.cxx
+          src/RocPciDevice.cxx
   )
   if(PYTHONLIBS_FOUND)
     list(APPEND SRCS
       src/PythonInterface.cxx
     )
-    set(BUCKET_NAME o2_rorc_pda_python)
+    set(BUCKET_NAME o2_readoutcard_pda_python)
   else()
-    set(BUCKET_NAME o2_rorc_pda)
+    set(BUCKET_NAME o2_readoutcard_pda)
   endif()
 endif()
 
@@ -145,34 +142,32 @@ function(build_util_exec execname filename)
   )
 endfunction()
 
-build_util_exec(rorc-bench-dma CommandLineUtilities/ProgramDmaBench.cxx)
-build_util_exec(rorc-reset CommandLineUtilities/ProgramReset.cxx)
-build_util_exec(rorc-reg-read CommandLineUtilities/ProgramRegisterRead.cxx)
-build_util_exec(rorc-reg-read-range CommandLineUtilities/ProgramRegisterReadRange)
-build_util_exec(rorc-reg-write CommandLineUtilities/ProgramRegisterWrite.cxx)
+build_util_exec(roc-bench-dma CommandLineUtilities/ProgramDmaBench.cxx)
+build_util_exec(roc-reset CommandLineUtilities/ProgramReset.cxx)
+build_util_exec(roc-reg-read CommandLineUtilities/ProgramRegisterRead.cxx)
+build_util_exec(roc-reg-read-range CommandLineUtilities/ProgramRegisterReadRange)
+build_util_exec(roc-reg-write CommandLineUtilities/ProgramRegisterWrite.cxx)
 
-if(ALICEO2_RORC_PDA_ENABLED)
-  build_util_exec(rorc-channel-cleanup CommandLineUtilities/ProgramCleanup.cxx)
-  build_util_exec(rorc-cru-blink CommandLineUtilities/ProgramCruBlink.cxx)
-  build_util_exec(rorc-example Example.cxx)
-  build_util_exec(rorc-flash CommandLineUtilities/ProgramFlash.cxx)
-  build_util_exec(rorc-flash-read CommandLineUtilities/ProgramFlashRead.cxx)
-  build_util_exec(rorc-list-cards CommandLineUtilities/ProgramListCards.cxx)
-  build_util_exec(rorc-print-fifo CommandLineUtilities/ProgramPrintFifo.cxx)
-  build_util_exec(rorc-sanity-check CommandLineUtilities/ProgramSanityCheck.cxx)
+if(ALICEO2_READOUTCARD_PDA_ENABLED)
+  build_util_exec(roc-channel-cleanup CommandLineUtilities/ProgramCleanup.cxx)
+  build_util_exec(roc-example Example.cxx)
+  build_util_exec(roc-flash CommandLineUtilities/ProgramFlash.cxx)
+  build_util_exec(roc-flash-read CommandLineUtilities/ProgramFlashRead.cxx)
+  build_util_exec(roc-list-cards CommandLineUtilities/ProgramListCards.cxx)
+  #build_util_exec(roc-sanity-check CommandLineUtilities/ProgramSanityCheck.cxx)
 
   if(DIM_FOUND)
     O2_GENERATE_EXECUTABLE(
-        EXE_NAME rorc-alf-client
+        EXE_NAME roc-alf-client
         SOURCES src/CommandLineUtilities/ProgramAliceLowlevelFrontendClient.cxx
         MODULE_LIBRARY_NAME ${LIBRARY_NAME}
-        BUCKET_NAME o2_rorc_dim
+        BUCKET_NAME o2_readoutcard_dim
    )
    O2_GENERATE_EXECUTABLE(
-        EXE_NAME rorc-alf-server
+        EXE_NAME roc-alf-server
         SOURCES src/CommandLineUtilities/ProgramAliceLowlevelFrontendServer.cxx
         MODULE_LIBRARY_NAME ${LIBRARY_NAME}
-        BUCKET_NAME o2_rorc_dim
+        BUCKET_NAME o2_readoutcard_dim
    )
 
   else()
@@ -181,13 +176,13 @@ if(ALICEO2_RORC_PDA_ENABLED)
 
   if(PYTHONLIBS_FOUND)
     O2_GENERATE_EXECUTABLE(
-        EXE_NAME rorc-run-script
+        EXE_NAME roc-run-script
         SOURCES src/CommandLineUtilities/ProgramRunScript.cxx
         MODULE_LIBRARY_NAME ${LIBRARY_NAME}
-        BUCKET_NAME o2_rorc_python
+        BUCKET_NAME o2_readoutcard_python
    )
   else()
-    message(INFO "PythonLibs not found, 'rorc-run-script' utility will not be built")
+    message(INFO "PythonLibs not found, 'roc-run-script' utility will not be built")
   endif()
 endif()
 

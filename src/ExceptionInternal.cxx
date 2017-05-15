@@ -1,5 +1,5 @@
 /// \file ExceptionInternal.cxx
-/// \brief Implementation of internal RORC exceptions and related functions.
+/// \brief Implementation of internal ReadoutCard exceptions and related functions.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
@@ -10,14 +10,14 @@
 #include <boost/exception/all.hpp>
 #include <boost/format.hpp>
 #include <cstdint>
-#include "RORC/CardType.h"
+#include "ReadoutCard/CardType.h"
 #include "RorcStatusCode.h"
 
-using namespace AliceO2::Rorc;
+using namespace AliceO2::roc;
 namespace b = boost;
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 void addPossibleCauses(boost::exception& exception, const std::vector<std::string>& newCauses)
 {
@@ -33,7 +33,7 @@ void addPossibleCauses(boost::exception& exception, const std::vector<std::strin
   }
 }
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
 
 template <typename Message>
@@ -105,27 +105,27 @@ std::string to_string(const ErrorInfo::PciIds& e)
 
 std::string to_string(const ErrorInfo::LoopbackMode& e)
 {
-  return toStringHelper("RORC loopback mode", e.value(), LoopbackMode::toString(e.value()));
+  return toStringHelper("ReadoutCard loopback mode", e.value(), LoopbackMode::toString(e.value()));
 }
 
 std::string to_string(const ErrorInfo::ResetLevel& e)
 {
-  return toStringHelper("RORC reset level", e.value(), ResetLevel::toString(e.value()));
+  return toStringHelper("ReadoutCard reset level", e.value(), ResetLevel::toString(e.value()));
 }
 
 std::string to_string(const ErrorInfo::StatusCode& e)
 {
-  return toStringHelper("RORC C API status code", e.value(), StatusCode::getString(e.value()));
+  return toStringHelper("ReadoutCard C API status code", e.value(), StatusCode::getString(e.value()));
 }
 
 std::string to_string(const ErrorInfo::CardType& e)
 {
-  return toStringHelper("RORC card type", e.value(), CardType::toString(e.value()));
+  return toStringHelper("ReadoutCard card type", e.value(), CardType::toString(e.value()));
 }
 
 std::string to_string(const ErrorInfo::PciAddress& e)
 {
-  return toStringHelper("RORC PCI address", e.value().toString());
+  return toStringHelper("ReadoutCard PCI address", e.value().toString());
 }
 
 } // namespace boost

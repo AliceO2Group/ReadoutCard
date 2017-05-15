@@ -17,7 +17,7 @@
 #include <boost/lexical_cast.hpp>
 #include "Crorc/Constants.h"
 #include "ExceptionInternal.h"
-#include "RORC/RegisterReadWriteInterface.h"
+#include "ReadoutCard/RegisterReadWriteInterface.h"
 
 using namespace std::chrono_literals;
 using std::this_thread::sleep_for;
@@ -65,7 +65,7 @@ auto incr15 = [](auto a) {return (((a) + 1) & 0xf);};
 
 namespace AliceO2
 {
-namespace Rorc
+namespace roc
 {
 namespace Crorc
 {
@@ -399,7 +399,7 @@ void Crorc::stopDataReceiver()
 }
 
 /* ddlSendCommand sends one command to the given link.
- * Parameters: dev      pointer to Rorc device. It defines the link
+ * Parameters: dev      pointer to roc device. It defines the link
  *                      where the command will be sent
  *             dest     command destination: 0 RORC, 1 DIU, 2 SIU, 4 FEE.
  *                      if -1 then the full command is in the
@@ -1022,5 +1022,5 @@ int getSerial(RegisterReadWriteInterface& bar0)
 }
 
 } // namespace Crorc
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

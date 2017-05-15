@@ -3,7 +3,7 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "RORC/CardType.h"
+#include "ReadoutCard/CardType.h"
 #include "Factory/ChannelFactoryUtils.h"
 #include <map>
 #include <memory>
@@ -15,8 +15,8 @@
 #include <assert.h>
 #include <string>
 
-using namespace ::AliceO2::Rorc;
-using namespace ::AliceO2::Rorc::CardTypeTag;
+using namespace ::AliceO2::roc;
+using namespace ::AliceO2::roc::CardTypeTag;
 
 namespace {
 

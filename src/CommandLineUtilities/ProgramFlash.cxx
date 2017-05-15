@@ -6,12 +6,11 @@
 #include "CommandLineUtilities/Program.h"
 #include <iostream>
 #include <string>
-#include "RORC/ChannelFactory.h"
-#include "ChannelUtilityInterface.h"
+#include "ReadoutCard/ChannelFactory.h"
 #include "Crorc/Crorc.h"
 #include "ExceptionInternal.h"
 
-using namespace AliceO2::Rorc::CommandLineUtilities;
+using namespace AliceO2::roc::CommandLineUtilities;
 using std::cout;
 using std::endl;
 namespace po = boost::program_options;
@@ -23,7 +22,7 @@ class ProgramCrorcFlash: public Program
 
     virtual Description getDescription()
     {
-      return {"Flash", "Programs the card's flash memory", "./rorc-flash --id=12345 --file=/dir/my_file"};
+      return {"Flash", "Programs the card's flash memory", "roc-flash --id=12345 --file=/dir/my_file"};
     }
 
     virtual void addOptions(po::options_description& options)
@@ -34,12 +33,12 @@ class ProgramCrorcFlash: public Program
 
     virtual void run(const boost::program_options::variables_map& map)
     {
-      using namespace AliceO2::Rorc;
+      using namespace AliceO2::roc;
 
       auto cardId = Options::getOptionCardId(map);
       auto channelNumber = 0;
-      auto params = AliceO2::Rorc::Parameters::makeParameters(cardId, channelNumber);
-      auto channel = AliceO2::Rorc::ChannelFactory().getSlave(params);
+      auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
+      auto channel = AliceO2::roc::ChannelFactory().getBar(params);
 
       if (channel->getCardType() != CardType::Crorc) {
         BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Only C-RORC supported for now"));

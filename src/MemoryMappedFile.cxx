@@ -3,7 +3,7 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "RORC/MemoryMappedFile.h"
+#include "ReadoutCard/MemoryMappedFile.h"
 #include <fstream>
 #include <boost/filesystem.hpp>
 #include <boost/interprocess/file_mapping.hpp>
@@ -11,7 +11,7 @@
 #include "ExceptionInternal.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 namespace b = boost;
 namespace bip = boost::interprocess;
@@ -104,5 +104,5 @@ void MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
   }
 }
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

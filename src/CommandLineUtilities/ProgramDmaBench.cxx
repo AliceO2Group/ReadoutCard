@@ -1,6 +1,6 @@
 /// \file ProgramDmaBench.cxx
 ///
-/// \brief Utility that tests RORC DMA performance
+/// \brief Utility that tests ReadoutCard DMA performance
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 
@@ -21,24 +21,22 @@
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/lexical_cast.hpp>
 #include "BarHammer.h"
-#include "Cru/Constants.h"
 #include "CommandLineUtilities/Common.h"
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
 #include "Common/Iommu.h"
 #include "Common/SuffixOption.h"
 #include "ExceptionInternal.h"
-#include "ExceptionLogging.h"
 #include "InfoLogger/InfoLogger.hxx"
 #include "folly/ProducerConsumerQueue.h"
-#include "RORC/ChannelFactory.h"
-#include "RORC/MemoryMappedFile.h"
-#include "RORC/Parameters.h"
+#include "ReadoutCard/ChannelFactory.h"
+#include "ReadoutCard/MemoryMappedFile.h"
+#include "ReadoutCard/Parameters.h"
 #include "Utilities/SmartPointer.h"
 #include "Utilities/Util.h"
 
-using namespace AliceO2::Rorc::CommandLineUtilities;
-using namespace AliceO2::Rorc;
+using namespace AliceO2::roc::CommandLineUtilities;
+using namespace AliceO2::roc;
 using namespace AliceO2::InfoLogger;
 using AliceO2::Common::SuffixOption;
 using std::cout;
@@ -74,8 +72,8 @@ class ProgramDmaBench: public Program
 
     virtual Description getDescription()
     {
-      return {"DMA Benchmark", "Test RORC DMA performance", "rorc-bench-dma --id=2:0.0 --channel=0 --reset --pages=1M "
-        "--buffer-size=1Gi --verbose --superpage-size=128Ki"};
+      return {"DMA Benchmark", "Test ReadoutCard DMA performance",
+          "roc-bench-dma --verbose --id=42:0.0 --channel=0 --buffer-size=32Mi --superpage-size=2Mi --bytes=1G"};
     }
 
     virtual void addOptions(po::options_description& options)
@@ -184,8 +182,9 @@ class ProgramDmaBench: public Program
 
         if (!AliceO2::Common::Iommu::isEnabled()) {
           if (!Utilities::isMultiple(hugePageSize, mSuperpageSize)) {
-            throw ParameterException() << ErrorInfo::Message("IOMMU not enabled & hugepage size is not a multiple of "
-                "superpage size. Superpages may cross hugepage boundaries and cause invalid PCIe memory accesses");
+            BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("IOMMU not enabled & hugepage size is "
+                "not a multiple of superpage size. Superpages may cross hugepage boundaries and cause invalid PCIe "
+                "memory accesses"));
           }
           mLogger << "IOMMU not enabled" << endm;
         } else {
@@ -199,7 +198,7 @@ class ProgramDmaBench: public Program
         auto createBuffer = [&](HugePageType hugePageType) {
           // Create buffer file
           std::string bufferFilePath = b::str(
-              b::format("/var/lib/hugetlbfs/global/pagesize-%s/rorc-dma-bench_id=%s_chan=%s_pages")
+              b::format("/var/lib/hugetlbfs/global/pagesize-%roc-bench-dma_id=%s_chan=%s_pages")
                   % (hugePageType == HugePageType::SIZE_2MB ? "2MB" : "1GB") % map["id"].as<std::string>()
                   % channelNumber);
           Utilities::resetSmartPtr(mMemoryMappedFile, bufferFilePath, mBufferSize, mOptions.removePagesFile);
@@ -226,7 +225,7 @@ class ProgramDmaBench: public Program
       params.setChannelNumber(channelNumber);
       params.setGeneratorDataSize(mPageSize);
       params.setGeneratorPattern(mOptions.generatorPattern);
-      params.setBufferParameters(BufferParameters::Memory { mMemoryMappedFile->getAddress(),
+      params.setBufferParameters(buffer_parameters::Memory { mMemoryMappedFile->getAddress(),
           mMemoryMappedFile->getSize() });
       // Note that we can force unlock because we know for sure this process is not holding the lock. If we did not know
       // this, it would be very dangerous to force the lock.
@@ -252,9 +251,9 @@ class ProgramDmaBench: public Program
       mLogger << "Page limit: " << mMaxPages << endm;
       mLogger << "Pages per superpage: " << mPagesPerSuperpage << endm;
 
-      // Get master lock on channel
+      // Get DMA channel object
       try {
-        mChannel = ChannelFactory().getMaster(params);
+        mChannel = ChannelFactory().getDmaChannel(params);
       }
       catch (const FileLockException& e) {
         mLogger << InfoLogger::Error << "Another process is holding the channel lock (no automatic cleanup possible)"
@@ -268,7 +267,7 @@ class ProgramDmaBench: public Program
 
       if (mOptions.resetChannel) {
         mLogger << "Resetting channel" << endm;
-        mChannel->resetChannel(ResetLevel::Rorc);
+        mChannel->resetChannel(ResetLevel::Internal);
       }
 
       mLogger << "Starting benchmark" << endm;
@@ -305,8 +304,6 @@ class ProgramDmaBench: public Program
 
     void dmaLoop()
     {
-      auto indexToOffset = [&](int i) -> size_t { return i * mSuperpageSize; };
-
       if (mMaxSuperpages < 1) {
         throw std::runtime_error("Buffer too small");
       }
@@ -314,8 +311,9 @@ class ProgramDmaBench: public Program
       // Lock-free queues. Usable size is (size-1), so we add 1
       folly::ProducerConsumerQueue<size_t> readoutQueue {static_cast<uint32_t>(mMaxSuperpages) + 1};
       folly::ProducerConsumerQueue<size_t> freeQueue {static_cast<uint32_t>(mMaxSuperpages) + 1};
-      for (int i = 0; i < mMaxSuperpages; ++i) {
-        if (!freeQueue.write(indexToOffset(i))) {
+      for (size_t i = 0; i < mMaxSuperpages; ++i) {
+        size_t offset = i * mSuperpageSize;
+        if (!freeQueue.write(offset)) {
           BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Something went horribly wrong"));
         }
       }
@@ -359,7 +357,7 @@ class ProgramDmaBench: public Program
             mChannel->fillSuperpages();
 
             // Give free superpages to the driver
-            while (mChannel->getSuperpageQueueAvailable() != 0) {
+            while (mChannel->getTransferQueueAvailable() != 0) {
               Superpage superpage;
               if (freeQueue.read(superpage.offset)) {
                 superpage.size = mSuperpageSize;
@@ -372,7 +370,7 @@ class ProgramDmaBench: public Program
             }
 
             // Check for filled superpages
-            if (mChannel->getSuperpageQueueCount() > 0) {
+            if (mChannel->getReadyQueueSize() > 0) {
               auto superpage = mChannel->getSuperpage();
               // We do partial updates of the mPushCount because we can have very large superpages, which would otherwise
               // cause hiccups in the display
@@ -443,7 +441,7 @@ class ProgramDmaBench: public Program
       auto start = std::chrono::steady_clock::now();
       int popped = 0;
       while ((std::chrono::steady_clock::now() - start) < timeout) {
-        if (mChannel->getSuperpageQueueCount() > 0) {
+        if (mChannel->getReadyQueueSize() > 0) {
           auto superpage = mChannel->getSuperpage();
           if (superpage.isFilled()) {
             mChannel->popSuperpage();
@@ -737,14 +735,14 @@ class ProgramDmaBench: public Program
     void printToFile(uintptr_t pageAddress, size_t pageSize, int64_t pageNumber)
     {
       auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
-      auto pageSize32 = pageSize / sizeof(int32_t);
+      auto pageSize32 = pageSize / sizeof(uint32_t);
 
       if (mOptions.fileOutputAscii) {
         mReadoutStream << "Event #" << pageNumber << '\n';
-        int perLine = 8;
+        uint32_t perLine = 8;
 
-        for (int i = 0; i < pageSize32; i += perLine) {
-          for (int j = 0; j < perLine; ++j) {
+        for (uint32_t i = 0; i < pageSize32; i += perLine) {
+          for (uint32_t j = 0; j < perLine; ++j) {
             mReadoutStream << page[i + j] << ' ';
           }
           mReadoutStream << '\n';
@@ -809,8 +807,8 @@ class ProgramDmaBench: public Program
 
     std::atomic<bool> mDmaLoopBreak {false};
     bool mInfinitePages = false;
-    std::atomic<int64_t> mPushCount { 0 };
-    std::atomic<int64_t> mReadoutCount { 0 };
+    std::atomic<uint64_t> mPushCount { 0 };
+    std::atomic<uint64_t> mReadoutCount { 0 };
     int64_t mErrorCount = 0;
     int64_t mDataGeneratorCounter = -1;
     size_t mSuperpageSize = 0;
@@ -854,7 +852,7 @@ class ProgramDmaBench: public Program
 
     InfoLogger mLogger;
 
-    std::shared_ptr<ChannelMasterInterface> mChannel;
+    std::shared_ptr<DmaChannelInterface> mChannel;
 };
 
 int main(int argc, char** argv)

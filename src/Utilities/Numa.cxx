@@ -10,7 +10,7 @@
 #include "Common/System.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace Utilities {
 namespace b = boost;
 namespace {
@@ -35,5 +35,5 @@ int getNumaNode(const PciAddress& pciAddress)
 }
 
 } // namespace Util
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

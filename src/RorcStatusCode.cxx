@@ -8,7 +8,7 @@
 #include <map>
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace StatusCode {
 
 constexpr static int RORC_STATUS_OK = -1;
@@ -45,5 +45,5 @@ std::string getString(int statusCode)
 }
 
 } // namespace StatusCode
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

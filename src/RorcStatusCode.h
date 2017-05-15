@@ -8,12 +8,12 @@
 #include <string>
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace StatusCode {
 
 /// Get a string representing a RORC C API status code
 std::string getString(int statusCode);
 
 } // namespace StatusCode
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

@@ -8,13 +8,13 @@
 #include <atomic>
 #include <iostream>
 #include <string>
-#include "RORC/ParameterTypes/GeneratorPattern.h"
-#include "RORC/RegisterReadWriteInterface.h"
+#include "ReadoutCard/ParameterTypes/GeneratorPattern.h"
+#include "ReadoutCard/RegisterReadWriteInterface.h"
 #include "RxFreeFifoState.h"
 #include "StWord.h"
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 namespace Crorc {
 
 /// Retrieve the serial number from the C-RORC's flash memory.
@@ -163,5 +163,5 @@ class Crorc
 };
 
 } // namespace Crorc
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2

@@ -11,11 +11,11 @@
 #include <python2.7/Python.h>
 #include "Common/GuardFunction.h"
 #include "ExceptionInternal.h"
-#include "RORC/ChannelFactory.h"
-#include "RORC/Parameters.h"
+#include "ReadoutCard/ChannelFactory.h"
+#include "ReadoutCard/Parameters.h"
 
 namespace {
-using namespace AliceO2::Rorc;
+using namespace AliceO2::roc;
 /// This is a Python wrapper class for a channel. It only provides register read and write access.
 
 /// Documentation for the init function (constructor)
@@ -66,7 +66,7 @@ class Channel
         throw std::runtime_error("Failed to parse card ID as either PCI address or serial number");
       }
 
-      mChannel = ChannelFactory().getSlave(Parameters::makeParameters(cardId, channelNumber));
+      mChannel = ChannelFactory().getBar(Parameters::makeParameters(cardId, channelNumber));
     }
 
     uint32_t read(uint32_t address)
@@ -80,11 +80,13 @@ class Channel
     }
 
   private:
-    std::shared_ptr<AliceO2::Rorc::ChannelSlaveInterface> mChannel;
+    std::shared_ptr<AliceO2::roc::BarInterface> mChannel;
 };
 } // Anonymous namespace
 
-BOOST_PYTHON_MODULE(libRORC)
+// Note that the name given here to BOOST_PYTHON_MODULE must be the actual name of the shared object file this file is
+// compiled into
+BOOST_PYTHON_MODULE(libReadoutCard)
 {
   using namespace boost::python;
 

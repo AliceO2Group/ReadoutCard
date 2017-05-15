@@ -6,7 +6,7 @@
 #pragma once
 
 namespace AliceO2 {
-namespace Rorc {
+namespace roc {
 
 /// Base class for objects that provides addresses and offsets for buffers (typically DMA buffers)
 class BufferProvider
@@ -45,5 +45,5 @@ class BufferProvider
     size_t mSize = 0;
 };
 
-} // namespace Rorc
+} // namespace roc
 } // namespace AliceO2
