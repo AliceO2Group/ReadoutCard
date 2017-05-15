@@ -49,6 +49,7 @@ DEFINE_ERRINFO(GeneratorEventLength, size_t);
 DEFINE_ERRINFO(GeneratorPattern, int);
 DEFINE_ERRINFO(GeneratorSeed, int);
 DEFINE_ERRINFO(Index, size_t);
+DEFINE_ERRINFO(LinkId, uint32_t);
 DEFINE_ERRINFO(LoopbackMode, ::AliceO2::roc::LoopbackMode::type);
 DEFINE_ERRINFO(NamedMutexName, std::string);
 DEFINE_ERRINFO(Offset, size_t);

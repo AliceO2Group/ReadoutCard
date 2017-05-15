@@ -33,6 +33,7 @@ struct TimeoutException : virtual Exception {};
 struct UnsafeAccess : virtual Exception {};
 struct UnsafeReadAccess : virtual UnsafeAccess {};
 struct UnsafeWriteAccess : virtual UnsafeAccess {};
+struct InvalidLinkId : virtual Exception {};
 
 // C-RORC exception definitions
 struct CrorcException : virtual Exception {};

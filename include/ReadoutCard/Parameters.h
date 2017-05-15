@@ -215,6 +215,8 @@ class Parameters
     /// When this parameter is set, the links corresponding to the given number are enabled.
     /// When this parameter is not set, ??? links will be enabled (none? one? to be determined...)
     ///
+    /// When an invalid link is given, the DMA channel may throw an InvalidLinkId exception.
+    ///
     /// \param value The value to set
     /// \return Reference to this object for chaining calls
     auto setLinkMask(LinkMaskType value) -> Parameters&;

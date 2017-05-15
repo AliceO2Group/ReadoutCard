@@ -55,7 +55,7 @@ class CruDmaChannel final : public DmaChannelPdaBase
   private:
 
     // Max amount of superpages per link
-    static constexpr size_t LINK_QUEUE_CAPACITY = 32;
+    static constexpr size_t LINK_QUEUE_CAPACITY = Cru::MAX_SUPERPAGE_DESCRIPTORS;
 
     // Max amount of superpages in the ready queue
     static constexpr size_t READY_QUEUE_CAPACITY = 32;
