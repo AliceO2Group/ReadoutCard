@@ -14,12 +14,14 @@
 #include <sstream>
 #include <stdexcept>
 #include <thread>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/circular_buffer.hpp>
 #include <boost/interprocess/sync/named_mutex.hpp>
 #include <boost/format.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include "BarHammer.h"
 #include "CommandLineUtilities/Common.h"
 #include "CommandLineUtilities/Options.h"
@@ -92,6 +94,9 @@ class ProgramDmaBench: public Program
               SuffixOption<size_t>::make(&mSuperpageSize)->default_value("1Mi"),
               "Superpage size in bytes. Note that it can't be larger than the buffer. If the IOMMU is not enabled, the "
               "hugepage size must be a multiple of the superpage size")
+          ("links",
+              po::value<std::string>(&mOptions.links)->default_value("0"),
+              "Links to open. A comma separated list of integers or ranges, e.g. '0,2,5-10'")
           ("reset",
               po::bool_switch(&mOptions.resetChannel),
               "Reset channel during initialization")
@@ -130,6 +135,35 @@ class ProgramDmaBench: public Program
 
     virtual void run(const po::variables_map& map)
     {
+      // Parse link string
+      try {
+        std::set<uint32_t> links;
+
+        // Separate by comma
+        std::vector<std::string> commaSeparateds;
+        boost::split(commaSeparateds, mOptions.links, boost::is_any_of(","));
+        for (const auto& commaSeparated : commaSeparateds) {
+          if (commaSeparated.find("-") != std::string::npos) {
+            // Separate ranges by dash
+            std::vector<std::string> dashSeparateds;
+            boost::split(dashSeparateds, commaSeparated, boost::is_any_of("-"));
+            if (dashSeparateds.size() != 2) {
+              throw ParameterException() << ErrorInfo::Message("Invalid link string format");
+            }
+            auto start = boost::lexical_cast<uint32_t>(dashSeparateds[0]);
+            auto end = boost::lexical_cast<uint32_t>(dashSeparateds[1]);
+            for (uint32_t i = start; i <= end; ++i) {
+              links.insert(boost::lexical_cast<uint32_t>(i));
+            }
+          } else {
+            links.insert(boost::lexical_cast<uint32_t>(link));
+          }
+        }
+      }
+      catch (boost::bad_lexical_cast& e) {
+        throw ParameterException() << ErrorInfo::Message(std::string("Invalid link string format: ") + e.what());
+      }
+
       auto cardId = Options::getOptionCardId(map);
       int channelNumber = Options::getOptionChannel(map);
       auto params = Options::getOptionsParameterMap(map);
@@ -795,14 +829,13 @@ class ProgramDmaBench: public Program
         bool noResyncCounter = false;
         bool barHammer = false;
         bool removePagesFile = false;
-        bool delayReadout = false;
         std::string generatorPatternString;
         std::string readoutModeString;
         std::string fileOutputPathBin;
         std::string fileOutputPathAscii;
-        size_t superpageSizeMiB;
         GeneratorPattern::type generatorPattern = GeneratorPattern::Incremental;
         b::optional<ReadoutMode::type> readoutMode;
+        std::string links;
     } mOptions;
 
     std::atomic<bool> mDmaLoopBreak {false};
@@ -831,9 +864,6 @@ class ProgramDmaBench: public Program
 
     /// Was the header printed?
     bool mHeaderPrinted = false;
-
-    /// Time of the last display update
-    TimePoint mLastDisplayUpdate;
 
     /// Indicates the display must add a newline to the table
     bool mDisplayUpdateNewline;

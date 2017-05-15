@@ -46,12 +46,6 @@ class CruDmaChannel final : public DmaChannelPdaBase
     virtual void deviceStopDma() override;
     virtual void deviceResetChannel(ResetLevel::type resetLevel) override;
 
-    /// Name for the CRU shared data object in the shared state file
-    static std::string getCruSharedDataName()
-    {
-      return "CruDmaChannelSharedData";
-    }
-
   private:
 
     // Max amount of superpages per link
@@ -118,9 +112,6 @@ class CruDmaChannel final : public DmaChannelPdaBase
     uint32_t mLinksTotalQueueSize;
 
     SuperpageQueue mReadyQueue { READY_QUEUE_CAPACITY };
-
-    //LinkQueue mLinkQueue { LINK_MAX_SUPERPAGES };
-    //uint32_t mLinkSuperpageCounter { 0 };
 
     /// BAR 2 is needed to read serial number, temperature, etc.
     std::unique_ptr<Pda::PdaBar> mPdaBar2;
