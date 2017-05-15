@@ -66,7 +66,41 @@ auto READOUT_ERRORS_PATH = "readout_errors.txt";
 constexpr int64_t MAX_RECORDED_ERRORS = 1000;
 /// End InfoLogger message alias
 constexpr auto endm = InfoLogger::endm;
+
+/// Parses a string for link IDs. Can contain comma separated integers or ranges, e.g. "0,1,2,10-14,16-24"
+std::set<uint32_t> parseLinkString(std::string linkString)
+{
+  std::set<uint32_t> links;
+
+  try {
+    // Separate by comma
+    std::vector<std::string> commaSeparateds;
+    b::split(commaSeparateds, linkString, b::is_any_of(","));
+    for (const auto& commaSeparated : commaSeparateds) {
+      if (commaSeparated.find("-") != std::string::npos) {
+        // Separate ranges by dash
+        std::vector<std::string> dashSeparateds;
+        b::split(dashSeparateds, commaSeparated, b::is_any_of("-"));
+        if (dashSeparateds.size() != 2) {
+          throw ParameterException() << ErrorInfo::Message("Invalid link string format");
+        }
+        auto start = b::lexical_cast<uint32_t>(dashSeparateds[0]);
+        auto end = b::lexical_cast<uint32_t>(dashSeparateds[1]);
+        for (uint32_t i = start; i <= end; ++i) {
+          links.insert(i);
+        }
+      } else {
+        links.insert(b::lexical_cast<uint32_t>(commaSeparated));
+      }
+    }
+  }
+  catch (b::bad_lexical_cast& e) {
+    throw ParameterException() << ErrorInfo::Message(std::string("Invalid link string format: ") + e.what());
+  }
+
+  return links;
 }
+} // Anonymous namespace
 
 class ProgramDmaBench: public Program
 {
@@ -135,35 +169,6 @@ class ProgramDmaBench: public Program
 
     virtual void run(const po::variables_map& map)
     {
-      // Parse link string
-      try {
-        std::set<uint32_t> links;
-
-        // Separate by comma
-        std::vector<std::string> commaSeparateds;
-        boost::split(commaSeparateds, mOptions.links, boost::is_any_of(","));
-        for (const auto& commaSeparated : commaSeparateds) {
-          if (commaSeparated.find("-") != std::string::npos) {
-            // Separate ranges by dash
-            std::vector<std::string> dashSeparateds;
-            boost::split(dashSeparateds, commaSeparated, boost::is_any_of("-"));
-            if (dashSeparateds.size() != 2) {
-              throw ParameterException() << ErrorInfo::Message("Invalid link string format");
-            }
-            auto start = boost::lexical_cast<uint32_t>(dashSeparateds[0]);
-            auto end = boost::lexical_cast<uint32_t>(dashSeparateds[1]);
-            for (uint32_t i = start; i <= end; ++i) {
-              links.insert(boost::lexical_cast<uint32_t>(i));
-            }
-          } else {
-            links.insert(boost::lexical_cast<uint32_t>(link));
-          }
-        }
-      }
-      catch (boost::bad_lexical_cast& e) {
-        throw ParameterException() << ErrorInfo::Message(std::string("Invalid link string format: ") + e.what());
-      }
-
       auto cardId = Options::getOptionCardId(map);
       int channelNumber = Options::getOptionChannel(map);
       auto params = Options::getOptionsParameterMap(map);
@@ -264,6 +269,7 @@ class ProgramDmaBench: public Program
       // Note that we can force unlock because we know for sure this process is not holding the lock. If we did not know
       // this, it would be very dangerous to force the lock.
       params.setForcedUnlockEnabled(true);
+      params.setLinkMask(parseLinkString(mOptions.links));
 
       mInfinitePages = (mOptions.maxBytes <= 0);
       mMaxPages = mOptions.maxBytes / mPageSize;
@@ -542,7 +548,8 @@ class ProgramDmaBench: public Program
         auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
         auto pageSize32 = pageSize / sizeof(int32_t);
         constexpr uint32_t PATTERN_STRIDE = 8; // The data emulator writes to every 8th 32-bit word
-        for (uint32_t i = 0; i < pageSize32; i += PATTERN_STRIDE)
+        constexpr uint32_t START = PATTERN_STRIDE; // We skip the first part, because it contains the link ID
+        for (uint32_t i = START; i < pageSize32; i += PATTERN_STRIDE)
         {
           uint32_t expectedValue = patternFunction(i);
           uint32_t actualValue = page[i];
