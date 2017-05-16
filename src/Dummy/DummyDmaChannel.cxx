@@ -147,7 +147,7 @@ boost::optional<float> DummyDmaChannel::getTemperature()
 {
   auto seconds = std::chrono::duration_cast<std::chrono::seconds>(
     std::chrono::steady_clock::now().time_since_epoch()).count();
-  std::mt19937 engine {seconds};
+  std::mt19937 engine {static_cast<uint32_t>(seconds)};
   std::uniform_real_distribution<float> distribution {37, 43};
   return {distribution(engine)};
 }
