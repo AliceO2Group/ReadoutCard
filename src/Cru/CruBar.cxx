@@ -22,11 +22,11 @@ CardType::type CruBar::getCardType()
   return CardType::Cru;
 }
 
-void CruBar::checkReadSafe(int index)
+void CruBar::checkReadSafe(int)
 {
 }
 
-void CruBar::checkWriteSafe(int index, uint32_t value)
+void CruBar::checkWriteSafe(int, uint32_t)
 {
 }
 

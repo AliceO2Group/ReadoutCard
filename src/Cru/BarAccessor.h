@@ -30,38 +30,28 @@ class BarAccessor
         BUSY
     };
 
-    /// Push a superpage into the FIFO
+    /// Push a superpage into the FIFO of a link
+    /// \param link Link number
     /// \param pages Amount of 8 kiB pages in superpage
     /// \param busAddress Superpage PCI bus address
-    void pushSuperpageDescriptor(uint32_t pages, uintptr_t busAddress)
+    void pushSuperpageDescriptor(uint32_t link, uint32_t pages, uintptr_t busAddress)
     {
-      // Set superpage address
-      mPdaBar->writeRegister(Registers::SUPERPAGE_ADDRESS_HIGH, Utilities::getUpper32Bits(busAddress));
-      mPdaBar->writeRegister(Registers::SUPERPAGE_ADDRESS_LOW, Utilities::getLower32Bits(busAddress));
-      // Set superpage size
-      mPdaBar->writeRegister(Registers::SUPERPAGE_PAGES_AVAILABLE, pages);
+      auto offset = Registers::LINK_SUPERPAGE_OFFSET * link;
+
+      // Set superpage address. These writes are buffered on the firmware side.
+      mPdaBar->writeRegister(offset + Registers::LINK_BASE_SUPERPAGE_ADDRESS_HIGH,
+          Utilities::getUpper32Bits(busAddress));
+      mPdaBar->writeRegister(offset + Registers::LINK_BASE_SUPERPAGE_ADDRESS_LOW,
+          Utilities::getLower32Bits(busAddress));
+      // Set superpage size. This write signals the push of the descriptor into the link's FIFO.
+      mPdaBar->writeRegister(offset + Registers::LINK_BASE_SUPERPAGE_SIZE, pages);
     }
 
-//    uint32_t getSuperpagePushedPages(uint32_t index)
-//    {
-//      assert(index < SUPERPAGE_DESCRIPTORS);
-//      return mPdaBar->readRegister(Registers::SUPERPAGE_PUSHED_PAGES + index);
-//    }
-
-//    BufferStatus getSuperpageBufferStatus(uint32_t index)
-//    {
-//      uint32_t status = mPdaBar->readRegister(Registers::SUPERPAGE_STATUS);
-//      uint32_t bit = status & (0b1 << index);
-//      if (bit == 0) {
-//        return BufferStatus::BUSY;
-//      } else {
-//        return BufferStatus::AVAILABLE;
-//      }
-//    }
-
-    uint32_t getSuperpageCount()
+    /// Get amount of superpages pushed by a link
+    /// \param link Link number
+    uint32_t getSuperpageCount(uint32_t link)
     {
-      return mPdaBar->readRegister(Registers::SUPERPAGES_PUSHED);
+      return mPdaBar->readRegister(Registers::LINK_SUPERPAGE_OFFSET * link + Registers::LINK_BASE_SUPERPAGES_PUSHED);
     }
 
     void setDataEmulatorEnabled(bool enabled) const

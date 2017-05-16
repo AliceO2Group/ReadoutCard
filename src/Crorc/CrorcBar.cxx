@@ -22,11 +22,11 @@ CardType::type CrorcBar::getCardType()
   return CardType::Crorc;
 }
 
-void CrorcBar::checkReadSafe(int index)
+void CrorcBar::checkReadSafe(int)
 {
 }
 
-void CrorcBar::checkWriteSafe(int index, uint32_t value)
+void CrorcBar::checkWriteSafe(int, uint32_t)
 {
 }
 

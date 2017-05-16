@@ -7,6 +7,8 @@
 
 #include <array>
 #include <boost/scoped_ptr.hpp>
+#include <boost/circular_buffer_fwd.hpp>
+#include <boost/circular_buffer.hpp>
 #include "DmaChannelBase.h"
 
 namespace AliceO2 {
@@ -22,6 +24,15 @@ class DummyDmaChannel final : public DmaChannelBase
 
     DummyDmaChannel(const Parameters& parameters);
     virtual ~DummyDmaChannel();
+
+    virtual void pushSuperpage(Superpage) override;
+    virtual Superpage getSuperpage() override;
+    virtual Superpage popSuperpage() override;
+    virtual void fillSuperpages() override;
+    virtual boost::optional<float> getTemperature() override;
+    virtual boost::optional<std::string> getFirmwareInfo() override;
+    virtual int getTransferQueueAvailable() override;
+    virtual int getReadyQueueSize() override;
     virtual void resetChannel(ResetLevel::type resetLevel) override;
     virtual void startDma() override;
     virtual void stopDma() override;
@@ -29,10 +40,11 @@ class DummyDmaChannel final : public DmaChannelBase
     virtual void writeRegister(int index, uint32_t value) override;
     virtual CardType::type getCardType() override;
 
-    virtual int getTransferQueueAvailable() override;
-    virtual int getReadyQueueSize() override;
+  private:
+    using Queue = boost::circular_buffer<Superpage>;
 
-    virtual boost::optional<std::string> getFirmwareInfo() override;
+    Queue mTransferQueue;
+    Queue mReadyQueue;
 };
 
 } // namespace roc

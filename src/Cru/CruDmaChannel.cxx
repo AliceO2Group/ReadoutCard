@@ -22,15 +22,6 @@ namespace AliceO2
 {
 namespace roc
 {
-namespace
-{
-/// DMA page length in bytes
-/// Note: the CRU has a firmware defined fixed page size
-constexpr int DMA_PAGE_SIZE = 8 * 1024;
-
-/// DMA addresses must be 32-byte aligned
-constexpr uint64_t DMA_ALIGNMENT = 32;
-} // Anonymous namespace
 
 CruDmaChannel::CruDmaChannel(const Parameters& parameters)
     : DmaChannelPdaBase(parameters, allowedChannels()), //
@@ -42,10 +33,10 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
       mGeneratorInitialValue(0), // Start from 0
       mGeneratorInitialWord(0), // First word
       mGeneratorSeed(0), // Presumably for random patterns, incremental doesn't really need it
-      mGeneratorDataSize(parameters.getGeneratorDataSize().get_value_or(DMA_PAGE_SIZE)) // Can use page size
+      mGeneratorDataSize(parameters.getGeneratorDataSize().get_value_or(Cru::DMA_PAGE_SIZE)) // Can use page size
 {
   if (auto pageSize = parameters.getDmaPageSize()) {
-    if (pageSize.get() != DMA_PAGE_SIZE) {
+    if (pageSize.get() != Cru::DMA_PAGE_SIZE) {
       BOOST_THROW_EXCEPTION(CruException()
           << ErrorInfo::Message("CRU only supports an 8kB page size")
           << ErrorInfo::DmaPageSize(pageSize.get()));
@@ -62,8 +53,13 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
   Utilities::resetSmartPtr(mPdaBar2, getRocPciDevice().getPciDevice(), 2);
 
   // Insert links
-  getLogger() << "Enabling link ";
-  for (auto id : parameters.getLinkMask().value_or(Parameters::LinkMaskType{0})) {
+  getLogger() << "Enabling link(s): ";
+  for (uint32_t id : parameters.getLinkMask().value_or(Parameters::LinkMaskType{0})) {
+    if (id >= Cru::MAX_LINKS) {
+      BOOST_THROW_EXCEPTION(InvalidLinkId()
+          << ErrorInfo::Message("CRU does not support given link ID")
+          << ErrorInfo::LinkId(id));
+    }
     getLogger() << id << " ";
     mLinks.push_back({id});
   }
@@ -71,7 +67,7 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
 }
 
 auto CruDmaChannel::allowedChannels() -> AllowedChannels {
-  // Note: BAR 1 is not available because BAR 0 is 64-bit wide, so it 'consumes' two BARs.
+  // We have only one DMA channel per CRU
   return {0};
 }
 
@@ -134,9 +130,9 @@ CardType::type CruDmaChannel::getCardType()
 void CruDmaChannel::resetCru()
 {
   getBar().resetDataGeneratorCounter();
-  std::this_thread::sleep_for(100ms);
+  std::this_thread::sleep_for(10ms);
   getBar().resetCard();
-  std::this_thread::sleep_for(100ms);
+  std::this_thread::sleep_for(10ms);
 }
 
 void CruDmaChannel::initCru()
@@ -161,9 +157,9 @@ void CruDmaChannel::pushSuperpage(Superpage superpage)
     if (!link.queue.full()) {
       link.queue.push_back(superpage);
       mLinksTotalQueueSize++;
-      auto maxPages = superpage.getSize() / DMA_PAGE_SIZE;
+      auto maxPages = superpage.getSize() / Cru::DMA_PAGE_SIZE;
       auto busAddress = getBusOffsetAddress(superpage.getOffset());
-      getBar().pushSuperpageDescriptor(maxPages, busAddress);
+      getBar().pushSuperpageDescriptor(link.id, maxPages, busAddress);
       return;
     }
   }
@@ -184,7 +180,7 @@ auto CruDmaChannel::getSuperpage() -> Superpage
 auto CruDmaChannel::popSuperpage() -> Superpage
 {
   if (mReadyQueue.empty()) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not pop superpage, ready Queue was empty"));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not pop superpage, ready queue was empty"));
   }
 
   auto superpage = mReadyQueue.front();
@@ -196,10 +192,13 @@ void CruDmaChannel::fillSuperpages()
 {
   // Check for arrivals & handle them
   for (auto& link : mLinks) {
-    uint32_t superpageCount = getBar().getSuperpageCount();
+    uint32_t superpageCount = getBar().getSuperpageCount(link.id);
     auto available = superpageCount > link.superpageCounter;
     if (available) {
       for (uint32_t i = 0; i < (superpageCount - link.superpageCounter); ++i) {
+        if (mReadyQueue.full()) {
+          break;
+        }
         // Front superpage has arrived
         link.queue.front().ready = true;
         link.queue.front().received = link.queue.front().size;

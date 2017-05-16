@@ -14,12 +14,14 @@
 #include <sstream>
 #include <stdexcept>
 #include <thread>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/circular_buffer.hpp>
 #include <boost/interprocess/sync/named_mutex.hpp>
 #include <boost/format.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include "BarHammer.h"
 #include "CommandLineUtilities/Common.h"
 #include "CommandLineUtilities/Options.h"
@@ -64,7 +66,41 @@ auto READOUT_ERRORS_PATH = "readout_errors.txt";
 constexpr int64_t MAX_RECORDED_ERRORS = 1000;
 /// End InfoLogger message alias
 constexpr auto endm = InfoLogger::endm;
+
+/// Parses a string for link IDs. Can contain comma separated integers or ranges, e.g. "0,1,2,10-14,16-24"
+std::set<uint32_t> parseLinkString(std::string linkString)
+{
+  std::set<uint32_t> links;
+
+  try {
+    // Separate by comma
+    std::vector<std::string> commaSeparateds;
+    b::split(commaSeparateds, linkString, b::is_any_of(","));
+    for (const auto& commaSeparated : commaSeparateds) {
+      if (commaSeparated.find("-") != std::string::npos) {
+        // Separate ranges by dash
+        std::vector<std::string> dashSeparateds;
+        b::split(dashSeparateds, commaSeparated, b::is_any_of("-"));
+        if (dashSeparateds.size() != 2) {
+          throw ParameterException() << ErrorInfo::Message("Invalid link string format");
+        }
+        auto start = b::lexical_cast<uint32_t>(dashSeparateds[0]);
+        auto end = b::lexical_cast<uint32_t>(dashSeparateds[1]);
+        for (uint32_t i = start; i <= end; ++i) {
+          links.insert(i);
+        }
+      } else {
+        links.insert(b::lexical_cast<uint32_t>(commaSeparated));
+      }
+    }
+  }
+  catch (b::bad_lexical_cast& e) {
+    throw ParameterException() << ErrorInfo::Message(std::string("Invalid link string format: ") + e.what());
+  }
+
+  return links;
 }
+} // Anonymous namespace
 
 class ProgramDmaBench: public Program
 {
@@ -92,6 +128,9 @@ class ProgramDmaBench: public Program
               SuffixOption<size_t>::make(&mSuperpageSize)->default_value("1Mi"),
               "Superpage size in bytes. Note that it can't be larger than the buffer. If the IOMMU is not enabled, the "
               "hugepage size must be a multiple of the superpage size")
+          ("links",
+              po::value<std::string>(&mOptions.links)->default_value("0"),
+              "Links to open. A comma separated list of integers or ranges, e.g. '0,2,5-10'")
           ("reset",
               po::bool_switch(&mOptions.resetChannel),
               "Reset channel during initialization")
@@ -198,7 +237,7 @@ class ProgramDmaBench: public Program
         auto createBuffer = [&](HugePageType hugePageType) {
           // Create buffer file
           std::string bufferFilePath = b::str(
-              b::format("/var/lib/hugetlbfs/global/pagesize-%roc-bench-dma_id=%s_chan=%s_pages")
+              b::format("/var/lib/hugetlbfs/global/pagesize-%s/roc-bench-dma_id=%s_chan=%s_pages")
                   % (hugePageType == HugePageType::SIZE_2MB ? "2MB" : "1GB") % map["id"].as<std::string>()
                   % channelNumber);
           Utilities::resetSmartPtr(mMemoryMappedFile, bufferFilePath, mBufferSize, mOptions.removePagesFile);
@@ -230,6 +269,7 @@ class ProgramDmaBench: public Program
       // Note that we can force unlock because we know for sure this process is not holding the lock. If we did not know
       // this, it would be very dangerous to force the lock.
       params.setForcedUnlockEnabled(true);
+      params.setLinkMask(parseLinkString(mOptions.links));
 
       mInfinitePages = (mOptions.maxBytes <= 0);
       mMaxPages = mOptions.maxBytes / mPageSize;
@@ -508,7 +548,8 @@ class ProgramDmaBench: public Program
         auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
         auto pageSize32 = pageSize / sizeof(int32_t);
         constexpr uint32_t PATTERN_STRIDE = 8; // The data emulator writes to every 8th 32-bit word
-        for (uint32_t i = 0; i < pageSize32; i += PATTERN_STRIDE)
+        constexpr uint32_t START = PATTERN_STRIDE; // We skip the first part, because it contains the link ID
+        for (uint32_t i = START; i < pageSize32; i += PATTERN_STRIDE)
         {
           uint32_t expectedValue = patternFunction(i);
           uint32_t actualValue = page[i];
@@ -795,14 +836,13 @@ class ProgramDmaBench: public Program
         bool noResyncCounter = false;
         bool barHammer = false;
         bool removePagesFile = false;
-        bool delayReadout = false;
         std::string generatorPatternString;
         std::string readoutModeString;
         std::string fileOutputPathBin;
         std::string fileOutputPathAscii;
-        size_t superpageSizeMiB;
         GeneratorPattern::type generatorPattern = GeneratorPattern::Incremental;
         b::optional<ReadoutMode::type> readoutMode;
+        std::string links;
     } mOptions;
 
     std::atomic<bool> mDmaLoopBreak {false};
@@ -831,9 +871,6 @@ class ProgramDmaBench: public Program
 
     /// Was the header printed?
     bool mHeaderPrinted = false;
-
-    /// Time of the last display update
-    TimePoint mLastDisplayUpdate;
 
     /// Indicates the display must add a newline to the table
     bool mDisplayUpdateNewline;
