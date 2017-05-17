@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <boost/optional/optional.hpp>
 #include "Cru/Constants.h"
+#include "Cru/FirmwareFeatures.h"
 #include "Pda/PdaBar.h"
 #include "Utilities/Util.h"
 
@@ -77,7 +78,7 @@ class BarAccessor
       mPdaBar->writeRegister(Registers::RESET_CONTROL, 0x1);
     }
 
-    void setDataGeneratorPattern(GeneratorPattern::type pattern)
+    void setDataGeneratorPattern(GeneratorPattern::type pattern, size_t size)
     {
       uint32_t bits = mPdaBar->readRegister(Registers::DATA_GENERATOR_CONTROL);
 
@@ -98,6 +99,22 @@ class BarAccessor
           BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Unsupported generator pattern for CRU")
                   << ErrorInfo::GeneratorPattern(pattern));
       }
+
+      if (!Utilities::isMultiple(size, 32ul)) {
+        BOOST_THROW_EXCEPTION(Exception()
+            << ErrorInfo::Message("Unsupported generator data size for CRU; must be multiple of 32 bytes")
+            << ErrorInfo::GeneratorEventLength(size));
+      }
+
+      if (size > 8192ul) {
+        BOOST_THROW_EXCEPTION(Exception()
+            << ErrorInfo::Message("Unsupported generator data size for CRU; must be smaller than 8 KiB")
+            << ErrorInfo::GeneratorEventLength(size));
+      }
+
+      uint32_t sizeValue = (size/32) << 8;
+      bits &= ~(uint32_t(0xff00));
+      bits &= sizeValue;
 
       mPdaBar->writeRegister(Registers::DATA_GENERATOR_CONTROL, bits);
     }
@@ -197,6 +214,15 @@ class BarAccessor
       return mPdaBar->readRegister(Registers::FIRMWARE_TIME);
     }
 
+    FirmwareFeatures getFirmwareFeatures()
+    {
+      FirmwareFeatures features;
+      features.standalone = false;
+      features.temperature = false;
+      features.loopback0x8000020Bar2Register = false;
+      return features;
+    }
+
     uint8_t getDebugReadWriteRegister()
     {
       return mPdaBar->barRead<uint8_t>(toByteAddress(Registers::DEBUG_READ_WRITE));
@@ -224,7 +250,6 @@ class BarAccessor
     }
 
     Pda::PdaBar* mPdaBar;
-//    uintptr_t bar;
 };
 
 } // namespace Cru

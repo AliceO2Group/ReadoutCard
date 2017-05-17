@@ -71,9 +71,9 @@ O2_SETUP(NAME ${MODULE_NAME})
 set(SRCS
   src/CardType.cxx
   src/Factory/ChannelFactory.cxx
-        src/DmaChannelBase.cxx
+  src/DmaChannelBase.cxx
   src/ChannelPaths.cxx
-        src/Dummy/DummyDmaChannel.cxx
+  src/Dummy/DummyDmaChannel.cxx
   src/Dummy/DummyBar.cxx
   src/ExceptionInternal.cxx
   src/MemoryMappedFile.cxx
@@ -99,7 +99,7 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}/include
   ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
-message("CMAKE INCLUE: ${CMAKE_CURRENT_SOURCE_DIR}/src")
+message("CMAKE INCLUDE: ${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 set(LIBRARY_NAME ${MODULE_NAME})
 set(BUCKET_NAME o2_readoutcard_bucket)
@@ -107,18 +107,18 @@ set(BUCKET_NAME o2_readoutcard_bucket)
 
 if(ALICEO2_READOUTCARD_PDA_ENABLED)
   list(APPEND SRCS
-          src/DmaChannelPdaBase.cxx
-          src/BarInterfaceBase.cxx
+    src/DmaChannelPdaBase.cxx
+    src/BarInterfaceBase.cxx
     src/Crorc/Crorc.cxx
-          src/Crorc/CrorcDmaChannel.cxx
-          src/Crorc/CrorcBar.cxx
-          src/Cru/CruDmaChannel.cxx
-          src/Cru/CruBar.cxx
+    src/Crorc/CrorcDmaChannel.cxx
+    src/Crorc/CrorcBar.cxx
+    src/Cru/CruDmaChannel.cxx
+    src/Cru/CruBar.cxx
     src/Pda/Pda.cxx
     src/Pda/PdaBar.cxx
     src/Pda/PdaDevice.cxx
     src/Pda/PdaDmaBuffer.cxx
-          src/RocPciDevice.cxx
+    src/RocPciDevice.cxx
   )
   if(PYTHONLIBS_FOUND)
     list(APPEND SRCS

@@ -19,7 +19,7 @@ namespace AliceO2 {
 namespace roc {
 
 /// Interface for objects that provide an interface to control and use a DMA channel.
-class DmaChannelInterface: public virtual RegisterReadWriteInterface
+class DmaChannelInterface
 {
   public:
     virtual ~DmaChannelInterface()

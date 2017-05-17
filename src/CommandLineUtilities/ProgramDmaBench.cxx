@@ -14,14 +14,11 @@
 #include <sstream>
 #include <stdexcept>
 #include <thread>
-#include <boost/algorithm/string/split.hpp>
-#include <boost/algorithm/string/trim.hpp>
 #include <boost/circular_buffer.hpp>
 #include <boost/interprocess/sync/named_mutex.hpp>
 #include <boost/format.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string/split.hpp>
 #include "BarHammer.h"
 #include "CommandLineUtilities/Common.h"
 #include "CommandLineUtilities/Options.h"
@@ -66,40 +63,6 @@ auto READOUT_ERRORS_PATH = "readout_errors.txt";
 constexpr int64_t MAX_RECORDED_ERRORS = 1000;
 /// End InfoLogger message alias
 constexpr auto endm = InfoLogger::endm;
-
-/// Parses a string for link IDs. Can contain comma separated integers or ranges, e.g. "0,1,2,10-14,16-24"
-std::set<uint32_t> parseLinkString(std::string linkString)
-{
-  std::set<uint32_t> links;
-
-  try {
-    // Separate by comma
-    std::vector<std::string> commaSeparateds;
-    b::split(commaSeparateds, linkString, b::is_any_of(","));
-    for (const auto& commaSeparated : commaSeparateds) {
-      if (commaSeparated.find("-") != std::string::npos) {
-        // Separate ranges by dash
-        std::vector<std::string> dashSeparateds;
-        b::split(dashSeparateds, commaSeparated, b::is_any_of("-"));
-        if (dashSeparateds.size() != 2) {
-          throw ParameterException() << ErrorInfo::Message("Invalid link string format");
-        }
-        auto start = b::lexical_cast<uint32_t>(dashSeparateds[0]);
-        auto end = b::lexical_cast<uint32_t>(dashSeparateds[1]);
-        for (uint32_t i = start; i <= end; ++i) {
-          links.insert(i);
-        }
-      } else {
-        links.insert(b::lexical_cast<uint32_t>(commaSeparated));
-      }
-    }
-  }
-  catch (b::bad_lexical_cast& e) {
-    throw ParameterException() << ErrorInfo::Message(std::string("Invalid link string format: ") + e.what());
-  }
-
-  return links;
-}
 } // Anonymous namespace
 
 class ProgramDmaBench: public Program
@@ -128,6 +91,9 @@ class ProgramDmaBench: public Program
               SuffixOption<size_t>::make(&mSuperpageSize)->default_value("1Mi"),
               "Superpage size in bytes. Note that it can't be larger than the buffer. If the IOMMU is not enabled, the "
               "hugepage size must be a multiple of the superpage size")
+          ("generator-size",
+              SuffixOption<size_t>::make(&mOptions.dataGeneratorSize)->default_value("0"),
+              "Data generator data size. 0 will use internal driver default.")
           ("links",
               po::value<std::string>(&mOptions.links)->default_value("0"),
               "Links to open. A comma separated list of integers or ranges, e.g. '0,2,5-10'")
@@ -143,6 +109,9 @@ class ProgramDmaBench: public Program
           ("no-errorcheck",
               po::bool_switch(&mOptions.noErrorCheck),
               "Skip error checking")
+          ("no-temperature",
+              po::bool_switch(&mOptions.noTemperature),
+              "No temperature readout")
           ("pattern",
               po::value<std::string>(&mOptions.generatorPatternString)->default_value("INCREMENTAL"),
               "Error check with given pattern [INCREMENTAL, ALTERNATING, CONSTANT, RANDOM]")
@@ -269,7 +238,7 @@ class ProgramDmaBench: public Program
       // Note that we can force unlock because we know for sure this process is not holding the lock. If we did not know
       // this, it would be very dangerous to force the lock.
       params.setForcedUnlockEnabled(true);
-      params.setLinkMask(parseLinkString(mOptions.links));
+      params.setLinkMask(Parameters::linkMaskFromString(mOptions.links));
 
       mInfinitePages = (mOptions.maxBytes <= 0);
       mMaxPages = mOptions.maxBytes / mPageSize;
@@ -290,6 +259,13 @@ class ProgramDmaBench: public Program
       mLogger << "Page size: " << mPageSize << endm;
       mLogger << "Page limit: " << mMaxPages << endm;
       mLogger << "Pages per superpage: " << mPagesPerSuperpage << endm;
+
+      if (mOptions.dataGeneratorSize != 0) {
+        params.setGeneratorDataSize(mOptions.dataGeneratorSize);
+        mLogger << "Generator data size: " << mOptions.dataGeneratorSize << endm;
+      } else {
+        mLogger << "Generator data size: <internal default>"  << endm;
+      }
 
       // Get DMA channel object
       try {
@@ -320,7 +296,7 @@ class ProgramDmaBench: public Program
               << ErrorInfo::Message("BarHammer option currently only supported for CRU\n"));
         }
         Utilities::resetSmartPtr(mBarHammer);
-        mBarHammer->start(mChannel);
+        mBarHammer->start(ChannelFactory().getBar(Parameters::makeParameters(cardId, 0)));
       }
 
       mRunTime.start = std::chrono::steady_clock::now();
@@ -684,10 +660,14 @@ class ProgramDmaBench: public Program
 
        mOptions.noErrorCheck ? format % "n/a" : format % mErrorCount; // Errors
 
-       if (auto temperature = mChannel->getTemperature()) {
-         format % *temperature;
-       } else {
+       if (mOptions.noTemperature) {
          format % "n/a";
+       } else {
+         if (auto temperature = mChannel->getTemperature()) {
+           format % *temperature;
+         } else {
+           format % "n/a";
+         }
        }
 
        cout << '\r' << format;
@@ -832,6 +812,7 @@ class ProgramDmaBench: public Program
         bool resetChannel = false;
         bool randomPause = false;
         bool noErrorCheck = false;
+        bool noTemperature = false;
         bool pageReset = false;
         bool noResyncCounter = false;
         bool barHammer = false;
@@ -843,6 +824,7 @@ class ProgramDmaBench: public Program
         GeneratorPattern::type generatorPattern = GeneratorPattern::Incremental;
         b::optional<ReadoutMode::type> readoutMode;
         std::string links;
+        size_t dataGeneratorSize;
     } mOptions;
 
     std::atomic<bool> mDmaLoopBreak {false};

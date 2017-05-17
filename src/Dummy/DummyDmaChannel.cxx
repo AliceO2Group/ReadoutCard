@@ -53,18 +53,6 @@ void DummyDmaChannel::resetChannel(ResetLevel::type resetLevel)
       << InfoLogger::InfoLogger::endm;
 }
 
-uint32_t DummyDmaChannel::readRegister(int index)
-{
-  getLogger() << "DummyDmaChannel::readRegister(" << index << ")" << InfoLogger::InfoLogger::endm;
-  return 0;
-}
-
-void DummyDmaChannel::writeRegister(int index, uint32_t value)
-{
-  getLogger() << "DummyDmaChannel::writeRegister(index:" << index << ", value:" << value << ")"
-      << InfoLogger::InfoLogger::endm;
-}
-
 CardType::type DummyDmaChannel::getCardType()
 {
   return CardType::Dummy;

@@ -62,3 +62,18 @@ BOOST_AUTO_TEST_CASE(ParametersThrowTest)
   auto p = Parameters::makeParameters(SERIAL_NUMBER, CHANNEL_NUMBER);
   BOOST_CHECK_THROW(p.getGeneratorEnabledRequired(), ParameterException);
 }
+
+BOOST_AUTO_TEST_CASE(ParametersLinkMaskFromString)
+{
+  {
+    auto a = Parameters::LinkMaskType{0, 1, 2, 3, 4, 5};
+    BOOST_CHECK(Parameters::linkMaskFromString("0,1,2,3,4,5") == a);
+    BOOST_CHECK(Parameters::linkMaskFromString("0-5") == a);
+  }
+  {
+    auto b = Parameters::LinkMaskType{0, 1, 4, 5, 6};
+    BOOST_CHECK(Parameters::linkMaskFromString("0,1,4,5,6") == b);
+    BOOST_CHECK(Parameters::linkMaskFromString("0,1,4-6") == b);
+    BOOST_CHECK(Parameters::linkMaskFromString("0-1,4-6") == b);
+  }
+}

@@ -105,9 +105,12 @@ class Parameters
     ///
     /// Supported values:
     /// * C-RORC: ??? (it seems to be very flexible)
-    /// * CRU: 8 kiB
+    /// * CRU: 8 KiB
     ///
     /// If not set, the card's driver will select a sensible default
+    ///
+    /// NOTE: Will probably be removed. In which case for the C-RORC this will be set per superpage to the superpage
+    ///   size. For the CRU, it is non-configurable anyway.
     ///
     /// \param value The value to set
     /// \return Reference to this object for chaining calls
@@ -126,7 +129,11 @@ class Parameters
     ///
     /// It controls the size in bytes of the generated data per DMA page.
     ///
-    /// If not set, the driver will default to the DMA page size (the pages will be filled completely).
+    /// Supported values:
+    /// * C-RORC: multiples of 32 bits, up to 2097152 bytes.
+    /// * CRU: multiples of 256 bits, up to 8 KiB.
+    ///
+    /// If not set, the driver will default to the DMA page size, i.e. the pages will be filled completely.
     ///
     /// \param value The value to set
     /// \return Reference to this object for chaining calls
@@ -209,13 +216,14 @@ class Parameters
 
     /// Sets the LinkMask parameter
     ///
-    /// Note: this parameter is under construction... it will not yet have any actual effect
-    ///
     /// The BAR channel may transfer data from multiple links.
     /// When this parameter is set, the links corresponding to the given number are enabled.
     /// When this parameter is not set, ??? links will be enabled (none? one? to be determined...)
     ///
     /// When an invalid link is given, the DMA channel may throw an InvalidLinkId exception.
+    ///
+    /// Note: the linkMaskFromString() function may be used to convert a std::string to a LinkMaskType that can be
+    /// passed to this setter, which may be convenient when converting from string-based configuration values.
     ///
     /// \param value The value to set
     /// \return Reference to this object for chaining calls
@@ -335,6 +343,12 @@ class Parameters
     {
       return Parameters().setCardId(cardId).setChannelNumber(channel);
     }
+
+    /// Convert a string to a set of link IDs for the setLinkMask() function.
+    /// Can contain comma separated integers or ranges, for example:
+    /// * "0,1,2,8-10" for links 0, 1, 2, 8, 9 and 10
+    /// * "0-19,21-23" for links 0 to 23 except 20
+    static LinkMaskType linkMaskFromString(const std::string& string);
 
   private:
     std::unique_ptr<ParametersPimpl> mPimpl;

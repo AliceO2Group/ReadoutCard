@@ -36,8 +36,6 @@ class DmaChannelPdaBase: public DmaChannelBase
     virtual void startDma() final override;
     virtual void stopDma() final override;
     void resetChannel(ResetLevel::type resetLevel) final override;
-    virtual uint32_t readRegister(int index) final override;
-    virtual void writeRegister(int index, uint32_t value) final override;
 
   protected:
 
@@ -96,11 +94,6 @@ class DmaChannelPdaBase: public DmaChannelBase
       return *(mPdaDmaBuffer.get());
     }
 
-    Pda::PdaBar* getPdaBarPtr()
-    {
-      return mPdaBar.get();
-    }
-
     const RocPciDevice& getRocPciDevice() const
     {
       return *(mRocPciDevice.get());
@@ -113,9 +106,6 @@ class DmaChannelPdaBase: public DmaChannelBase
 
     /// PDA device objects
     boost::scoped_ptr<RocPciDevice> mRocPciDevice;
-
-    /// PDA BAR object
-    boost::scoped_ptr<Pda::PdaBar> mPdaBar;
 
     /// PDA DMABuffer object for the pages
     boost::scoped_ptr<Pda::PdaDmaBuffer> mPdaDmaBuffer;

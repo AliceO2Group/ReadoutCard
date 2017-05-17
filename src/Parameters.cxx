@@ -7,6 +7,9 @@
 #include <map>
 #include <set>
 #include <string>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/optional.hpp>
 #include <boost/variant.hpp>
 #include "ExceptionInternal.h"
@@ -147,6 +150,39 @@ Parameters& Parameters::operator=(Parameters&& other)
   }
   mPimpl = std::move(other.mPimpl);
   return *this;
+}
+
+auto Parameters::linkMaskFromString(const std::string& string) -> LinkMaskType
+{
+  std::set<uint32_t> links;
+
+  try {
+    // Separate by comma
+    std::vector<std::string> commaSeparateds;
+    boost::split(commaSeparateds, string, boost::is_any_of(","));
+    for (const auto& commaSeparated : commaSeparateds) {
+      if (commaSeparated.find("-") != std::string::npos) {
+        // Separate ranges by dash
+        std::vector<std::string> dashSeparateds;
+        boost::split(dashSeparateds, commaSeparated, boost::is_any_of("-"));
+        if (dashSeparateds.size() != 2) {
+          throw ParameterException() << ErrorInfo::Message("Invalid link string format");
+        }
+        auto start = boost::lexical_cast<uint32_t>(dashSeparateds[0]);
+        auto end = boost::lexical_cast<uint32_t>(dashSeparateds[1]);
+        for (uint32_t i = start; i <= end; ++i) {
+          links.insert(i);
+        }
+      } else {
+        links.insert(boost::lexical_cast<uint32_t>(commaSeparated));
+      }
+    }
+  }
+  catch (boost::bad_lexical_cast& e) {
+    throw ParameterException() << ErrorInfo::Message(std::string("Invalid link string format: ") + e.what());
+  }
+
+  return links;
 }
 
 } // namespace roc

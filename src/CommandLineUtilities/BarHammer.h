@@ -8,7 +8,7 @@
 #include <atomic>
 #include "Common/BasicThread.h"
 #include "Cru/Constants.h"
-#include "ReadoutCard/DmaChannelInterface.h"
+#include "ReadoutCard/BarInterface.h"
 
 namespace AliceO2 {
 namespace roc {
@@ -17,7 +17,7 @@ namespace CommandLineUtilities {
 class BarHammer : public AliceO2::Common::BasicThread
 {
   public:
-    void start(const std::shared_ptr<DmaChannelInterface>& channelIn)
+    void start(const std::shared_ptr<BarInterface>& channelIn)
     {
       mChannel = channelIn;
       BasicThread::start([&](std::atomic<bool>* stopFlag) {
@@ -51,7 +51,7 @@ class BarHammer : public AliceO2::Common::BasicThread
     }
 
   private:
-    std::shared_ptr<DmaChannelInterface> mChannel;
+    std::shared_ptr<BarInterface> mChannel;
     std::atomic<int64_t> mHammerCount;
     static constexpr int64_t MULTIPLIER {10000};
 };

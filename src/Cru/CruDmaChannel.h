@@ -10,6 +10,7 @@
 #include <queue>
 #include <boost/circular_buffer_fwd.hpp>
 #include "Cru/BarAccessor.h"
+#include "Cru/FirmwareFeatures.h"
 #include "ReadoutCard/Parameters.h"
 #include "SuperpageQueue.h"
 
@@ -76,12 +77,12 @@ class CruDmaChannel final : public DmaChannelPdaBase
 
     Cru::BarAccessor getBar()
     {
-      return Cru::BarAccessor(getPdaBarPtr());
+      return Cru::BarAccessor(&mPdaBar);
     }
 
     Cru::BarAccessor getBar2()
     {
-      return Cru::BarAccessor(mPdaBar2.get());
+      return Cru::BarAccessor(&mPdaBar2);
     }
 
     // The link queues are checked round-robin
@@ -102,6 +103,15 @@ class CruDmaChannel final : public DmaChannelPdaBase
       return link;
     }
 
+    /// BAR 0 is needed for DMA engine interaction and various other functions
+    Pda::PdaBar mPdaBar;
+
+    /// BAR 2 is needed to read serial number, temperature, etc.
+    Pda::PdaBar mPdaBar2;
+
+    /// Features of the firmware
+    const FirmwareFeatures mFeatures;
+
     /// Vector of objects representing links
     std::vector<Link> mLinks;
     /// Index into mLinks indicating which link's turn it is to use a superpage handed to the driver
@@ -112,9 +122,6 @@ class CruDmaChannel final : public DmaChannelPdaBase
     uint32_t mLinksTotalQueueSize;
 
     SuperpageQueue mReadyQueue { READY_QUEUE_CAPACITY };
-
-    /// BAR 2 is needed to read serial number, temperature, etc.
-    std::unique_ptr<Pda::PdaBar> mPdaBar2;
 
     // These variables are configuration parameters
 

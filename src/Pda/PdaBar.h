@@ -9,6 +9,9 @@
 #include <pda.h>
 #include "PdaDevice.h"
 #include "ExceptionInternal.h"
+#ifndef NDEBUG
+# include <boost/type_index.hpp>
+#endif
 
 namespace AliceO2 {
 namespace roc {
@@ -35,6 +38,11 @@ class PdaBar : public RegisterReadWriteInterface
     template<typename T>
     void barWrite(uintptr_t byteOffset, const T &value) const
     {
+#ifndef NDEBUG
+      std::printf("PdaBar::barWrite<%s>(address=0x%lx, value=0x%x)\n",
+                  boost::typeindex::type_id<T>().pretty_name().c_str(), byteOffset, value);
+      std::fflush(stdout);
+#endif
       assertRange<T>(byteOffset);
       memcpy(getOffsetAddress(byteOffset), &value, sizeof(T));
     }
@@ -42,9 +50,20 @@ class PdaBar : public RegisterReadWriteInterface
     template<typename T>
     T barRead(uintptr_t byteOffset) const
     {
+#ifndef NDEBUG
+      std::printf("PdaBar::barRead<%s>(address=0x%lx)\n",
+                  boost::typeindex::type_id<T>().pretty_name().c_str(), byteOffset);
+      std::fflush(stdout);
+#endif
       assertRange<T>(byteOffset);
       T value;
       memcpy(&value, getOffsetAddress(byteOffset), sizeof(T));
+#ifndef NDEBUG
+      std::printf("PdaBar::barRead<%s>(address=0x%lx) -> 0x%x\n",
+                  boost::typeindex::type_id<T>().pretty_name().c_str(), byteOffset, value);
+      std::fflush(stdout);
+#endif
+
       return value;
     }
 

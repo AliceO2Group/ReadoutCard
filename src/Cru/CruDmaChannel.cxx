@@ -25,6 +25,9 @@ namespace roc
 
 CruDmaChannel::CruDmaChannel(const Parameters& parameters)
     : DmaChannelPdaBase(parameters, allowedChannels()), //
+      mPdaBar(getRocPciDevice().getPciDevice(), 0), // Initialize BAR 0
+      mPdaBar2(getRocPciDevice().getPciDevice(), 2), // Initialize BAR 2
+      mFeatures(getBar().getFirmwareFeatures()), // Get which features of the firmware are enabled
       mInitialResetLevel(ResetLevel::Internal), // It's good to reset at least the card channel in general
       mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)), // Internal loopback by default
       mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)), // Use data generator by default
@@ -38,7 +41,7 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
   if (auto pageSize = parameters.getDmaPageSize()) {
     if (pageSize.get() != Cru::DMA_PAGE_SIZE) {
       BOOST_THROW_EXCEPTION(CruException()
-          << ErrorInfo::Message("CRU only supports an 8kB page size")
+          << ErrorInfo::Message("CRU only supports an 8KiB page size")
           << ErrorInfo::DmaPageSize(pageSize.get()));
     }
   }
@@ -49,8 +52,6 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
           << ErrorInfo::Message("CRU currently only supports operation with data generator"));
     }
   }
-
-  Utilities::resetSmartPtr(mPdaBar2, getRocPciDevice().getPciDevice(), 2);
 
   // Insert links
   getLogger() << "Enabling link(s): ";
@@ -82,8 +83,9 @@ void CruDmaChannel::deviceStartDma()
   initCru();
   setBufferReady();
 
-  /// XXX TEMPORARY SETTING FOR A SPECIFIC DATA GENERATOR
-  mPdaBar2->writeRegister(0x8000020/4, 1);
+  if (mFeatures.loopback0x8000020Bar2Register) {
+    mPdaBar2.writeRegister(0x8000020 / 4, 1);
+  }
 
   mLinkToPush = 0;
   mLinkToPop = 0;
@@ -118,7 +120,6 @@ void CruDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)
   if (resetLevel == ResetLevel::Nothing) {
     return;
   }
-
   resetCru();
 }
 
@@ -130,16 +131,16 @@ CardType::type CruDmaChannel::getCardType()
 void CruDmaChannel::resetCru()
 {
   getBar().resetDataGeneratorCounter();
-  std::this_thread::sleep_for(10ms);
+  std::this_thread::sleep_for(100ms);
   getBar().resetCard();
-  std::this_thread::sleep_for(10ms);
+  std::this_thread::sleep_for(100ms);
 }
 
 void CruDmaChannel::initCru()
 {
   // Set data generator pattern
   if (mGeneratorEnabled) {
-    getBar().setDataGeneratorPattern(mGeneratorPattern);
+    getBar().setDataGeneratorPattern(mGeneratorPattern, mGeneratorDataSize);
   }
 }
 
@@ -151,10 +152,11 @@ void CruDmaChannel::pushSuperpage(Superpage superpage)
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not push superpage, transfer queue was full"));
   }
 
-    // Look for an empty slot in the link queues
+  // Look for an empty slot in the link queues
   for (size_t i = 0; i < mLinks.size(); ++i) {
     auto &link = getNextLinkToPush();
     if (!link.queue.full()) {
+      //printf("L %02u - push >>>\n", link.id);
       link.queue.push_back(superpage);
       mLinksTotalQueueSize++;
       auto maxPages = superpage.getSize() / Cru::DMA_PAGE_SIZE;
@@ -173,7 +175,6 @@ auto CruDmaChannel::getSuperpage() -> Superpage
   if (mReadyQueue.empty()) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not get superpage, ready queue was empty"));
   }
-
   return mReadyQueue.front();
 }
 
@@ -182,7 +183,6 @@ auto CruDmaChannel::popSuperpage() -> Superpage
   if (mReadyQueue.empty()) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not pop superpage, ready queue was empty"));
   }
-
   auto superpage = mReadyQueue.front();
   mReadyQueue.pop_front();
   return superpage;
@@ -193,12 +193,16 @@ void CruDmaChannel::fillSuperpages()
   // Check for arrivals & handle them
   for (auto& link : mLinks) {
     uint32_t superpageCount = getBar().getSuperpageCount(link.id);
+//    printf("L %02u - superpage_count=%u\n", link.id, superpageCount);
     auto available = superpageCount > link.superpageCounter;
     if (available) {
-      for (uint32_t i = 0; i < (superpageCount - link.superpageCounter); ++i) {
+      uint32_t amountAvailable = superpageCount - link.superpageCounter;
+      for (uint32_t i = 0; i < amountAvailable; ++i) {
         if (mReadyQueue.full()) {
           break;
         }
+        //printf("L %02u - pop <<<\n", link.id);
+
         // Front superpage has arrived
         link.queue.front().ready = true;
         link.queue.front().received = link.queue.front().size;
@@ -224,7 +228,7 @@ int CruDmaChannel::getReadyQueueSize()
 
 boost::optional<float> CruDmaChannel::getTemperature()
 {
-  return getBar2().getTemperatureCelsius();
+  return mFeatures.temperature ? getBar2().getTemperatureCelsius() : {};
 }
 
 boost::optional<std::string> CruDmaChannel::getFirmwareInfo()

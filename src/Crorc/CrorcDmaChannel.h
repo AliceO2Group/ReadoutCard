@@ -73,7 +73,7 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
     /// C-RORC function helper
     Crorc::Crorc getCrorc()
     {
-      return {*this};
+      return {mPdaBar};
     }
 
     ReadyFifo* getReadyFifoUser()
@@ -112,7 +112,11 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
       return (mFifoBack + mFifoSize) % READYFIFO_ENTRIES;
     };
 
-    Pda::PdaBar& getBar2();
+    /// BAR 0 is needed for DMA engine interaction and various other functions
+    Pda::PdaBar mPdaBar;
+
+    /// BAR 2 is needed for configuration
+    Pda::PdaBar mPdaBar2;
 
     /// Memory mapped file for the ReadyFIFO
     boost::scoped_ptr<MemoryMappedFile> mBufferFifoFile;
@@ -142,8 +146,6 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
     /// superpage to actually start.
     bool mPendingDmaStart = false;
 
-    /// BAR 2 is needed for configuration
-    std::unique_ptr<Pda::PdaBar> mPdaBar2;
 
     // These variables are configuration parameters
 

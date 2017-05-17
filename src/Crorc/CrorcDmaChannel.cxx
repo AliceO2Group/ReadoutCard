@@ -28,6 +28,8 @@ namespace roc {
 
 CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
     : DmaChannelPdaBase(parameters, allowedChannels()), //
+    mPdaBar(getRocPciDevice().getPciDevice(), getChannelNumber()), // Initialize main DMA channel BAR
+    mPdaBar2(getRocPciDevice().getPciDevice(), 2), // Initialize BAR 2
     mPageSize(parameters.getDmaPageSize().get_value_or(8*1024)), // 8 kB default for uniformity with CRU
     mInitialResetLevel(ResetLevel::Internal), // It's good to reset at least the card channel in general
     mNoRDYRX(true), // Not sure
@@ -98,7 +100,7 @@ void CrorcDmaChannel::startPendingDma(SuperpageQueueEntry& entry)
 
   if (mUseContinuousReadout) {
     log("Initializing continuous readout");
-    Crorc::Crorc::initReadoutContinuous(getBar2());
+    Crorc::Crorc::initReadoutContinuous(mPdaBar2);
   }
 
   // Find DIU version, required for armDdl()
@@ -162,7 +164,7 @@ void CrorcDmaChannel::startPendingDma(SuperpageQueueEntry& entry)
 
   if (mUseContinuousReadout) {
     log("Starting continuous readout");
-    Crorc::Crorc::startReadoutContinuous(getBar2());
+    Crorc::Crorc::startReadoutContinuous(mPdaBar2);
   }
 }
 
@@ -431,17 +433,9 @@ CardType::type CrorcDmaChannel::getCardType()
   return CardType::Crorc;
 }
 
-Pda::PdaBar& CrorcDmaChannel::getBar2()
-{
-  if (!mPdaBar2) {
-    Utilities::resetSmartPtr(mPdaBar2, getRocPciDevice().getPciDevice(), 2);
-  }
-  return *(mPdaBar2.get());
-}
-
 boost::optional<std::string> CrorcDmaChannel::getFirmwareInfo()
 {
-  uint32_t version = readRegister(Rorc::RFID);
+  uint32_t version = mPdaBar.readRegister(Rorc::RFID);
   auto bits = [&](int lsb, int msb) { return Utilities::getBits(version, lsb, msb); };
 
   uint32_t reserved = bits(24, 31);

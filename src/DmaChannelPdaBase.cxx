@@ -30,9 +30,6 @@ DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
   // Initialize PDA & DMA objects
   Utilities::resetSmartPtr(mRocPciDevice, getSerialNumber());
 
-  log("Initializing BAR", InfoLogger::InfoLogger::Debug);
-  Utilities::resetSmartPtr(mPdaBar, mRocPciDevice->getPciDevice(), getChannelNumber());
-
   // Register user's page data buffer
   log("Initializing memory-mapped DMA buffer", InfoLogger::InfoLogger::Debug);
   Utilities::resetSmartPtr(mPdaDmaBuffer, mRocPciDevice->getPciDevice(), getBufferProvider().getAddress(),
@@ -83,16 +80,6 @@ void DmaChannelPdaBase::resetChannel(ResetLevel::type resetLevel)
 
   log("Resetting channel", InfoLogger::InfoLogger::Debug);
   deviceResetChannel(resetLevel);
-}
-
-uint32_t DmaChannelPdaBase::readRegister(int index)
-{
-  return mPdaBar->readRegister(index);
-}
-
-void DmaChannelPdaBase::writeRegister(int index, uint32_t value)
-{
-  mPdaBar->writeRegister(index, value);
 }
 
 uintptr_t DmaChannelPdaBase::getBusOffsetAddress(size_t offset)
