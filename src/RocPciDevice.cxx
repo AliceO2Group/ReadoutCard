@@ -21,15 +21,15 @@
 namespace AliceO2 {
 namespace roc {
 
-int32_t crorcGetSerial(Pda::PdaDevice::PdaPciDevice pciDevice);
-int32_t cruGetSerial(Pda::PdaDevice::PdaPciDevice pciDevice);
+boost::optional<int32_t> crorcGetSerial(Pda::PdaDevice::PdaPciDevice pciDevice);
+boost::optional<int32_t> cruGetSerial(Pda::PdaDevice::PdaPciDevice pciDevice);
 
 namespace {
 struct DeviceType
 {
     CardType::type cardType;
     const PciId pciId;
-    std::function<int32_t (Pda::PdaDevice::PdaPciDevice pciDevice)> getSerial;
+    std::function<boost::optional<int32_t> (Pda::PdaDevice::PdaPciDevice pciDevice)> getSerial;
 };
 
 const std::vector<DeviceType> deviceTypes = {
@@ -204,27 +204,21 @@ void RocPciDevice::printDeviceInfo(std::ostream& ostream)
   ostream << f % "BAR type" << barTypeString;
 }
 
-int32_t cruGetSerial(Pda::PdaDevice::PdaPciDevice pciDevice)
+boost::optional<int32_t> cruGetSerial(Pda::PdaDevice::PdaPciDevice pciDevice)
 {
-  int channel = 2; // Must use BAR 2 to access serial number
-  Pda::PdaBar pdaBar(pciDevice, channel);
-  uint32_t serial = Cru::BarAccessor(&pdaBar).getSerialNumber();
-  if (serial == 0xFfffFfff) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("CRU reported invalid serial number 0xffffffff, "
-        "a fatal error may have occurred"));
+  Pda::PdaBar pdaBar0(pciDevice, 0); // Must use BAR 0 to check if serial number is available
+  Pda::PdaBar pdaBar2(pciDevice, 2); // Must use BAR 2 to access serial number
+  if (Cru::BarAccessor(&pdaBar0).getFirmwareFeatures().serial) {
+    return Cru::BarAccessor(&pdaBar2).getSerialNumber();
+  } else {
+    return {};
   }
-  return serial;
 }
 
-int32_t crorcGetSerial(Pda::PdaDevice::PdaPciDevice pciDevice)
+boost::optional<int32_t> crorcGetSerial(Pda::PdaDevice::PdaPciDevice pciDevice)
 {
-  int channel = 0; // Must use BAR 0 to access flash
-  Pda::PdaBar pdaBar(pciDevice, channel);
-  uint32_t serial = Crorc::getSerial(pdaBar);
-  if (serial == 0xFfffFfff) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("C-RORC reported invalid serial number 0xffffffff, "
-        "a fatal error may have occurred"));
-  }
+  Pda::PdaBar pdaBar(pciDevice, 0); // Must use BAR 0 to access flash
+  int32_t serial = Crorc::getSerial(pdaBar);
   return serial;
 }
 

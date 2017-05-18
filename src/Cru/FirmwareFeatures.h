@@ -7,13 +7,16 @@ namespace roc {
 struct FirmwareFeatures
 {
     /// Is the card's firmware a "standalone design"?
-    bool standalone;
+    bool standalone = false;
+
+    /// Is a serial number available?
+    bool serial = false;
 
     /// Is the special register for loopback at BAR2 0x8000020 enabled?
-    bool loopback0x8000020Bar2Register;
+    bool loopback0x8000020Bar2Register = false;
 
     /// Is the temperature sensor enabled?
-    bool temperature;
+    bool temperature = false;
 };
 
 } // namespace roc

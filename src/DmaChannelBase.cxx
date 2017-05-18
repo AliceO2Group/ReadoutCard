@@ -86,7 +86,11 @@ DmaChannelBase::~DmaChannelBase()
 void DmaChannelBase::log(const std::string& message, boost::optional<InfoLogger::InfoLogger::Severity> severity)
 {
   mLogger << severity.get_value_or(mLogLevel);
-  mLogger << "[serial:" << getSerialNumber() << " channel:" << getChannelNumber() << "] ";
+  mLogger << "[pci=" << getCardDescriptor().pciAddress.toString();
+  if (auto serial = getSerialNumber()) {
+    mLogger << " serial=" << serial.get();
+  }
+  mLogger << " channel=" << getChannelNumber() << "] ";
   mLogger << message;
   mLogger << InfoLogger::InfoLogger::endm;
 }

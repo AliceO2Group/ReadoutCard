@@ -44,7 +44,7 @@ class RocPciDevice
       return mDescriptor.cardType;
     }
 
-    int getSerialNumber() const
+    boost::optional<int> getSerialNumber() const
     {
       return mDescriptor.serialNumber;
     }

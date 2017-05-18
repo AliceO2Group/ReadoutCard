@@ -79,6 +79,17 @@ class DmaChannelInterface
     /// Sets the InfoLogger log level for this channel
     virtual void setLogLevel(InfoLogger::InfoLogger::Severity severity) = 0;
 
+
+    // Optional features
+
+    /// Request injection of errors
+    /// \return True if successful, false if no errors were injected
+//    bool injectErrors() = 0;
+
+    /// Gets card serial number if available
+    /// \return Serial number if available, else an empty optional
+//    virtual boost::optional<int32_t> getSerial() = 0;
+
     /// Gets card temperature in °C if available
     /// \return Temperature in °C if available, else an empty optional
     virtual boost::optional<float> getTemperature() = 0;

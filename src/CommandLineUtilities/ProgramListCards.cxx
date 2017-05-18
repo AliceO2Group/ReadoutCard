@@ -50,7 +50,7 @@ class ProgramListCards: public Program
         // Try to figure out the firmware version
         std::string firmware = "n/a";
         try {
-          Parameters params = Parameters::makeParameters(card.serialNumber, 0);
+          Parameters params = Parameters::makeParameters(card.pciAddress, 0);
           // Temporary (hopefully) workaround, because DmaChannel requires a buffer when initializing
           params.setBufferParameters(buffer_parameters::File{"/dev/shm/rorc_channel_utility_dummy_buffer", 4*1024});
           firmware = ChannelFactory().getDmaChannel(params)->getFirmwareInfo().value_or("n/a");
@@ -61,8 +61,15 @@ class ProgramListCards: public Program
           }
         }
 
-        table << boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciAddress.toString()
-            % card.pciId.vendor % card.pciId.device % card.serialNumber % firmware;
+        auto format = boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciAddress.toString()
+            % card.pciId.vendor % card.pciId.device;
+        if (auto serial = card.serialNumber) {
+          format % serial.get();
+        } else {
+          format % "n/a";
+        }
+        format % firmware;
+        table << format;
         i++;
       }
 
