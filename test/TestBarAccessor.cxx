@@ -20,7 +20,7 @@ BOOST_AUTO_TEST_CASE(TestFirmwareFeatures)
     FirmwareFeatures f = Cru::BarAccessor::convertToFirmwareFeatures(0x40000000);
     BOOST_CHECK(!f.standalone);
     BOOST_CHECK(f.serial);
-    BOOST_CHECK(f.loopback0x8000020Bar2Register);
+    BOOST_CHECK(f.dataSelection);
     BOOST_CHECK(f.temperature);
     BOOST_CHECK(f.firmwareInfo);
   }
@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_CASE(TestFirmwareFeatures)
     FirmwareFeatures f = Cru::BarAccessor::convertToFirmwareFeatures(0x40005AFE);
     BOOST_CHECK(f.standalone);
     BOOST_CHECK(f.serial);
-    BOOST_CHECK(f.loopback0x8000020Bar2Register);
+    BOOST_CHECK(f.dataSelection);
     BOOST_CHECK(f.temperature);
     BOOST_CHECK(f.firmwareInfo);
   }
@@ -38,13 +38,13 @@ BOOST_AUTO_TEST_CASE(TestFirmwareFeatures)
     FirmwareFeatures f = Cru::BarAccessor::convertToFirmwareFeatures(0x40005AFE + (0b1111 << 16));
     BOOST_CHECK(f.standalone);
     BOOST_CHECK(!f.serial);
-    BOOST_CHECK(!f.loopback0x8000020Bar2Register);
+    BOOST_CHECK(!f.dataSelection);
     BOOST_CHECK(!f.temperature);
     BOOST_CHECK(!f.firmwareInfo);
   }
   {
     // Standalone individual features disabled
-    BOOST_CHECK(!Cru::BarAccessor::convertToFirmwareFeatures(0x40005AFE + (1 << 16)).loopback0x8000020Bar2Register);
+    BOOST_CHECK(!Cru::BarAccessor::convertToFirmwareFeatures(0x40005AFE + (1 << 16)).dataSelection);
     BOOST_CHECK(!Cru::BarAccessor::convertToFirmwareFeatures(0x40005AFE + (1 << 17)).temperature);
     BOOST_CHECK(!Cru::BarAccessor::convertToFirmwareFeatures(0x40005AFE + (1 << 18)).serial);
     BOOST_CHECK(!Cru::BarAccessor::convertToFirmwareFeatures(0x40005AFE + (1 << 19)).firmwareInfo);
