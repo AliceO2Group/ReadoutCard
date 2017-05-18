@@ -112,9 +112,10 @@ class BarAccessor
             << ErrorInfo::GeneratorEventLength(size));
       }
 
+      // We set the size in 256-bit words
       uint32_t sizeValue = (size/32) << 8;
       bits &= ~(uint32_t(0xff00));
-      bits &= sizeValue;
+      bits += sizeValue;
 
       mPdaBar->writeRegister(Registers::DATA_GENERATOR_CONTROL, bits);
     }
