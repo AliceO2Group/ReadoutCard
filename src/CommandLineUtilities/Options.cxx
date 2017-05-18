@@ -149,6 +149,21 @@ void addOptionResetLevel(po::options_description& optionsDescription)
   addOption(option::resetLevel, optionsDescription);
 }
 
+void addOptionPageSize(po::options_description& optionsDescription)
+{
+  addOption(option::cpDmaPageSize, optionsDescription);
+}
+
+void addOptionGeneratorEnabled(po::options_description& optionsDescription)
+{
+  addOption(option::cpGenEnable, optionsDescription);
+}
+
+void addOptionGeneratorLoopback(po::options_description& optionsDescription)
+{
+  addOption(option::cpGenLoopback, optionsDescription);
+}
+
 int getOptionChannel(const po::variables_map& variablesMap)
 {
   auto value = getOptionRequired(option::channel, variablesMap);

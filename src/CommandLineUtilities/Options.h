@@ -13,6 +13,7 @@
 #include "ReadoutCard/Parameters.h"
 #include "ReadoutCard/ParameterTypes/GeneratorPattern.h"
 #include "ReadoutCard/ParameterTypes/ResetLevel.h"
+#include "ReadoutCard/ParameterTypes/LoopbackMode.h"
 
 namespace AliceO2 {
 namespace roc {
@@ -29,12 +30,19 @@ void addOptionSerialNumber(boost::program_options::options_description& optionsD
 void addOptionResetLevel(boost::program_options::options_description& optionsDescription);
 void addOptionCardId(boost::program_options::options_description& optionsDescription);
 void addOptionsChannelParameters(boost::program_options::options_description& optionsDescription);
+void addOptionPageSize(boost::program_options::options_description& optionsDescription);
+void addOptionGeneratorEnabled(boost::program_options::options_description& optionsDescription);
+void addOptionGeneratorLoopback(boost::program_options::options_description& optionsDescription);
+
 int getOptionRegisterAddress(const boost::program_options::variables_map& variablesMap);
 int getOptionRegisterValue(const boost::program_options::variables_map& variablesMap);
 int getOptionChannel(const boost::program_options::variables_map& variablesMap);
 int getOptionSerialNumber(const boost::program_options::variables_map& variablesMap);
 ResetLevel::type getOptionResetLevel(const boost::program_options::variables_map& variablesMap);
 Parameters::CardIdType getOptionCardId(const boost::program_options::variables_map& variablesMap);
+//size_t void getOptionPageSize(const boost::program_options::variables_map& variablesMap);
+//bool getOptionGeneratorEnabled(const boost::program_options::variables_map& variablesMap);
+//LoopbackMode::type getOptionGeneratorLoopback(const boost::program_options::variables_map& variablesMap);
 int getOptionRegisterRange(const boost::program_options::variables_map& variablesMap);
 Parameters getOptionsParameterMap(const boost::program_options::variables_map& variablesMap);
 

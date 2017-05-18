@@ -77,9 +77,10 @@ class ProgramDmaBench: public Program
 
     virtual void addOptions(po::options_description& options)
     {
-      Options::addOptionChannel(options);
-      Options::addOptionCardId(options);
       options.add_options()
+          ("bar-hammer",
+              po::bool_switch(&mOptions.barHammer),
+              "Stress the BAR with repeated writes and measure performance")
           ("bytes",
               SuffixOption<uint64_t>::make(&mOptions.maxBytes)->default_value("1G"),
               "Limit of bytes to transfer. Give 0 for infinite.")
@@ -87,60 +88,70 @@ class ProgramDmaBench: public Program
               SuffixOption<size_t>::make(&mBufferSize)->default_value("10Mi"),
               "Buffer size in bytes. Rounded down to 2 MiB multiple. Minimum of 2 MiB. Use 2 MiB hugepage by default; |"
               "if buffer size is a multiple of 1 GiB, will try to use GiB hugepages")
+          ("dma-channel",
+              po::value<int>(&mOptions.dmaChannel)->default_value(0),
+              "DMA channel selection (note: C-RORC has channels 0 to 5, CRU only 0)");
+      Options::addOptionGeneratorEnabled(options);
+      options.add_options()
+          ("generator-size",
+              SuffixOption<size_t>::make(&mOptions.dataGeneratorSize)->default_value("0"),
+              "Data generator data size. 0 will use internal driver default.");
+      Options::addOptionCardId(options);
+      options.add_options()
+          ("links",
+              po::value<std::string>(&mOptions.links)->default_value("0"),
+              "Links to open. A comma separated list of integers or ranges, e.g. '0,2,5-10'");
+      Options::addOptionGeneratorLoopback(options);
+      options.add_options()
+          ("no-errorcheck",
+              po::bool_switch(&mOptions.noErrorCheck),
+              "Skip error checking")
+          ("no-resync",
+              po::bool_switch(&mOptions.noResyncCounter),
+              "Disable counter resync")
+          ("no-temperature",
+              po::bool_switch(&mOptions.noTemperature),
+              "No temperature readout")
+          ("page-reset",
+              po::bool_switch(&mOptions.pageReset),
+              "Reset page to default values after readout (slow)");
+      Options::addOptionPageSize(options);
+      options.add_options()
+          ("pattern",
+              po::value<std::string>(&mOptions.generatorPatternString)->default_value("INCREMENTAL"),
+              "Error check with given pattern [INCREMENTAL, ALTERNATING, CONSTANT, RANDOM]")
+          ("random-pause",
+              po::bool_switch(&mOptions.randomPause),
+              "Randomly pause readout")
+          ("readout-mode",
+              po::value<std::string>(&mOptions.readoutModeString),
+              "Set readout mode [CONTINUOUS]")
+          ("reset",
+              po::bool_switch(&mOptions.resetChannel),
+              "Reset channel during initialization")
+          ("rm-pages-file",
+              po::bool_switch(&mOptions.removePagesFile),
+              "Remove the file used for pages after benchmark completes")
           ("superpage-size",
               SuffixOption<size_t>::make(&mSuperpageSize)->default_value("1Mi"),
               "Superpage size in bytes. Note that it can't be larger than the buffer. If the IOMMU is not enabled, the "
               "hugepage size must be a multiple of the superpage size")
-          ("generator-size",
-              SuffixOption<size_t>::make(&mOptions.dataGeneratorSize)->default_value("0"),
-              "Data generator data size. 0 will use internal driver default.")
-          ("links",
-              po::value<std::string>(&mOptions.links)->default_value("0"),
-              "Links to open. A comma separated list of integers or ranges, e.g. '0,2,5-10'")
-          ("reset",
-              po::bool_switch(&mOptions.resetChannel),
-              "Reset channel during initialization")
           ("to-file-ascii",
               po::value<std::string>(&mOptions.fileOutputPathAscii),
               "Read out to given file in ASCII format")
           ("to-file-bin",
               po::value<std::string>(&mOptions.fileOutputPathBin),
               "Read out to given file in binary format (only contains raw data from pages)")
-          ("no-errorcheck",
-              po::bool_switch(&mOptions.noErrorCheck),
-              "Skip error checking")
-          ("no-temperature",
-              po::bool_switch(&mOptions.noTemperature),
-              "No temperature readout")
-          ("pattern",
-              po::value<std::string>(&mOptions.generatorPatternString)->default_value("INCREMENTAL"),
-              "Error check with given pattern [INCREMENTAL, ALTERNATING, CONSTANT, RANDOM]")
-          ("readout-mode",
-              po::value<std::string>(&mOptions.readoutModeString),
-              "Set readout mode [CONTINUOUS]")
-          ("no-resync",
-              po::bool_switch(&mOptions.noResyncCounter),
-              "Disable counter resync")
-          ("page-reset",
-              po::bool_switch(&mOptions.pageReset),
-              "Reset page to default values after readout (slow)")
-          ("bar-hammer",
-              po::bool_switch(&mOptions.barHammer),
-              "Stress the BAR with repeated writes and measure performance")
-          ("random-pause",
-              po::bool_switch(&mOptions.randomPause),
-              "Randomly pause readout")
-          ("rm-pages-file",
-              po::bool_switch(&mOptions.removePagesFile),
-              "Remove the file used for pages after benchmark completes");
+          ;
+
       Options::addOptionsChannelParameters(options);
     }
 
     virtual void run(const po::variables_map& map)
     {
-      auto cardId = Options::getOptionCardId(map);
-      int channelNumber = Options::getOptionChannel(map);
       auto params = Options::getOptionsParameterMap(map);
+      auto cardId = Options::getOptionCardId(map);
+      mLogger << "DMA channel: " << mOptions.dmaChannel << endm;
 
       // Handle file output options
       {
@@ -208,7 +219,7 @@ class ProgramDmaBench: public Program
           std::string bufferFilePath = b::str(
               b::format("/var/lib/hugetlbfs/global/pagesize-%s/roc-bench-dma_id=%s_chan=%s_pages")
                   % (hugePageType == HugePageType::SIZE_2MB ? "2MB" : "1GB") % map["id"].as<std::string>()
-                  % channelNumber);
+                  % mOptions.dmaChannel);
           Utilities::resetSmartPtr(mMemoryMappedFile, bufferFilePath, mBufferSize, mOptions.removePagesFile);
           mBufferBaseAddress = reinterpret_cast<uintptr_t>(mMemoryMappedFile->getAddress());
           mLogger << "Using buffer file path: " << bufferFilePath << endm;
@@ -230,7 +241,7 @@ class ProgramDmaBench: public Program
       // Set up channel parameters
       mPageSize = params.getDmaPageSize().get();
       params.setCardId(cardId);
-      params.setChannelNumber(channelNumber);
+      params.setChannelNumber(mOptions.dmaChannel);
       params.setGeneratorDataSize(mPageSize);
       params.setGeneratorPattern(mOptions.generatorPattern);
       params.setBufferParameters(buffer_parameters::Memory { mMemoryMappedFile->getAddress(),
@@ -807,6 +818,7 @@ class ProgramDmaBench: public Program
     /// Program options
     struct OptionsStruct {
         uint64_t maxBytes = 0; ///< Limit of bytes to push
+        int dmaChannel = 0;
         bool fileOutputAscii = false;
         bool fileOutputBin = false;
         bool resetChannel = false;
