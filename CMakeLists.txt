@@ -114,7 +114,6 @@ if(ALICEO2_READOUTCARD_PDA_ENABLED)
     src/Crorc/CrorcBar.cxx
     src/Cru/CruDmaChannel.cxx
     src/Cru/CruBar.cxx
-    src/Pda/Pda.cxx
     src/Pda/PdaBar.cxx
     src/Pda/PdaDevice.cxx
     src/Pda/PdaDmaBuffer.cxx

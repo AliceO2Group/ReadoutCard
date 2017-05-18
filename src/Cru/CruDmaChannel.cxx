@@ -228,7 +228,11 @@ int CruDmaChannel::getReadyQueueSize()
 
 boost::optional<float> CruDmaChannel::getTemperature()
 {
-  return mFeatures.temperature ? getBar2().getTemperatureCelsius() : {};
+  if (mFeatures.temperature) {
+    return getBar2().getTemperatureCelsius();
+  } else {
+    return {};
+  }
 }
 
 boost::optional<std::string> CruDmaChannel::getFirmwareInfo()
