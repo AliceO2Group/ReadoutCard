@@ -16,7 +16,7 @@ namespace roc {
 /// implementation are not met (this mainly concerns the PDA driver library).
 /// In the future, a dummy implementation could be a simulated card. Currently, methods of this implementation do
 /// nothing besides print which method was called. Returned values are static and should not be used.
-class DummyBar : public BarInterface
+class DummyBar final : public BarInterface
 {
   public:
 
@@ -33,6 +33,11 @@ class DummyBar : public BarInterface
     virtual size_t getSize() const override
     {
       return 4*1024;
+    }
+
+    virtual CardType::type getCardType() override
+    {
+      return CardType::Dummy;
     }
 
   private:

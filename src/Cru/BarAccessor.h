@@ -170,7 +170,7 @@ class BarAccessor
         // Standalone firmware
         auto enabled = [&](int i){ return Utilities::getBit(reg, i) == 0; };
         features.standalone = true;
-        features.loopback0x8000020Bar2Register = enabled(16);
+        features.dataSelection = enabled(16);
         features.temperature = enabled(17);
         features.serial = enabled(18);
         features.firmwareInfo = enabled(19);
@@ -178,7 +178,7 @@ class BarAccessor
         // Integrated firmware
         features.standalone = false;
         features.temperature = true;
-        features.loopback0x8000020Bar2Register = true;
+        features.dataSelection = true;
         features.serial = true;
         features.firmwareInfo = true;
       }

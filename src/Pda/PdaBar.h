@@ -45,6 +45,11 @@ class PdaBar : public BarInterface
       return mBarNumber;
     }
 
+    virtual CardType::type getCardType() override
+    {
+      return CardType::Unknown;
+    }
+
     template<typename T>
     void barWrite(uintptr_t byteOffset, const T &value) const
     {

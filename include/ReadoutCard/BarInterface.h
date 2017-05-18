@@ -28,6 +28,10 @@ class BarInterface: public virtual RegisterReadWriteInterface
 
     /// Get the size of this BAR in bytes
     virtual size_t getSize() const = 0;
+
+    /// Returns the type of the card
+    /// \return The card type
+    virtual CardType::type getCardType() = 0;
 };
 
 } // namespace roc

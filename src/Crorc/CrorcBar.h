@@ -11,14 +11,18 @@ namespace AliceO2 {
 namespace roc {
 
 /// TODO Currently a placeholder
-class CrorcBar: public BarInterfaceBase
+class CrorcBar final : public BarInterfaceBase
 {
   public:
-
     CrorcBar(const Parameters& parameters);
     virtual ~CrorcBar();
     virtual void checkReadSafe(int index) override;
     virtual void checkWriteSafe(int index, uint32_t value) override;
+
+    virtual CardType::type getCardType() override
+    {
+      return CardType::Crorc;
+    }
 };
 
 } // namespace roc

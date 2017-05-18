@@ -53,6 +53,16 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
     }
   }
 
+  if (mFeatures.standalone) {
+    auto logFeature = [&](auto name, bool enabled) { if (!enabled) { getLogger() << " " << name; }};
+    getLogger() << "Standalone firmware features disabled: ";
+    logFeature("firmware-info", mFeatures.firmwareInfo);
+    logFeature("serial-number", mFeatures.serial);
+    logFeature("temperature", mFeatures.temperature);
+    logFeature("data-selection", mFeatures.dataSelection);
+    getLogger() << InfoLogger::InfoLogger::endm;
+  }
+
   // Insert links
   getLogger() << "Enabling link(s): ";
   for (uint32_t id : parameters.getLinkMask().value_or(Parameters::LinkMaskType{0})) {
@@ -83,7 +93,8 @@ void CruDmaChannel::deviceStartDma()
   initCru();
   setBufferReady();
 
-  if (mFeatures.loopback0x8000020Bar2Register) {
+  if (mFeatures.dataSelection) {
+    // Something with selecting the data source... [insert link to documentation here]
     mPdaBar2.writeRegister(0x8000020 / 4, 1);
   }
 
