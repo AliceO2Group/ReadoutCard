@@ -126,8 +126,12 @@ class BarAccessor
             << ErrorInfo::Message("Can only get serial number from BAR 2")
             << ErrorInfo::BarIndex(mPdaBar->getBarNumber()));
       }
-
-      return mPdaBar->readRegister(Registers::SERIAL_NUMBER);
+      auto serial = mPdaBar->readRegister(Registers::SERIAL_NUMBER);
+      if (serial == 0xFfffFfff) {
+        BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("CRU reported invalid serial number 0xffffffff, "
+            "a fatal error may have occurred"));
+      }
+      return serial;
     }
 
     /// Get raw data from the temperature register
@@ -217,6 +221,7 @@ class BarAccessor
     FirmwareFeatures getFirmwareFeatures()
     {
       FirmwareFeatures features;
+      features.serial = false;
       features.standalone = false;
       features.temperature = false;
       features.loopback0x8000020Bar2Register = false;

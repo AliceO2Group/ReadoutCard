@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <boost/optional.hpp>
 #include "ReadoutCard/CardType.h"
 #include "ReadoutCard/ParameterTypes/PciAddress.h"
 #include "ReadoutCard/PciId.h"
@@ -16,7 +17,7 @@ namespace roc {
 struct CardDescriptor
 {
     CardType::type cardType;
-    int serialNumber;
+    boost::optional<int> serialNumber;
     PciId pciId;
     PciAddress pciAddress;
 };

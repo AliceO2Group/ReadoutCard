@@ -1018,7 +1018,12 @@ int getSerial(RegisterReadWriteInterface& bar0)
 
   // We don't use the first character for the conversion, since we started reading one byte before the serial number
   // location in the flash
-  return boost::lexical_cast<int>(data.data() + 1, Rorc::Serial::LENGTH);
+  uint32_t serial = boost::lexical_cast<int>(data.data() + 1, Rorc::Serial::LENGTH);
+  if (serial == 0xFfffFfff) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("C-RORC reported invalid serial number 0xffffffff, "
+                                                              "a fatal error may have occurred"));
+  }
+  return serial;
 }
 
 } // namespace Crorc

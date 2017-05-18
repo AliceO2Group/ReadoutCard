@@ -13,7 +13,7 @@ namespace AliceO2 {
 namespace roc {
 namespace {
 
-CardDescriptor getDescriptor(const Parameters& parameters)
+CardDescriptor createCardDescriptor(const Parameters& parameters)
 {
   return Visitor::apply<CardDescriptor>(parameters.getCardIdRequired(),
       [&](int serial) {return RocPciDevice(serial).getCardDescriptor();},
@@ -24,10 +24,10 @@ CardDescriptor getDescriptor(const Parameters& parameters)
 
 DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
     const AllowedChannels& allowedChannels)
-    : DmaChannelBase(getDescriptor(parameters), parameters, allowedChannels), mDmaState(DmaState::STOPPED)
+    : DmaChannelBase(createCardDescriptor(parameters), parameters, allowedChannels), mDmaState(DmaState::STOPPED)
 {
   // Initialize PDA & DMA objects
-  Utilities::resetSmartPtr(mRocPciDevice, getSerialNumber());
+  Utilities::resetSmartPtr(mRocPciDevice, getCardDescriptor().pciAddress);
 
   // Register user's page data buffer
   log("Initializing memory-mapped DMA buffer", InfoLogger::InfoLogger::Debug);
