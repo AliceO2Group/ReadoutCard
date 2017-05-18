@@ -89,7 +89,7 @@ class PublisherRegistry
       auto iter = mPublishers.find(dnsName);
       if (iter != mPublishers.end()) {
         cout << "Removing publisher: " << dnsName << '\n';
-        iter->second->stop();
+        iter->second->join();
         mPublishers.erase(iter);
       }
     }
@@ -123,7 +123,7 @@ class PublisherRegistry
             auto registerCount = registerValues.size();
             auto size = registerCount * sizeof(decltype(registerValues)::value_type);
             auto format = boost::str(boost::format("I:%d") % registerCount);
-            DimService service(mServiceDescription.dnsName.c_str(), format.c_str(), registerValues.data(), size);
+//            DimService service(mServiceDescription.dnsName.c_str(), format.c_str(), registerValues.data(), size);
 
             while(!stopFlag->load(std::memory_order_relaxed)) {
 
@@ -139,7 +139,7 @@ class PublisherRegistry
 
               cout << stream.str();
 
-              service.updateService();
+//              service.updateService();
 
               auto nextTime = startTime + std::chrono::duration<double>(iteration * mServiceDescription.interval);
               std::this_thread::sleep_until(nextTime);
@@ -154,6 +154,85 @@ class PublisherRegistry
 
     std::unordered_map<std::string, std::unique_ptr<Publisher>> mPublishers;
     Mutex mMutex;
+};
+
+/// Class that handles adding/removing publishers
+class UnthreadedPublisherRegistry
+{
+  public:
+    struct ServiceDescription
+    {
+        std::string dnsName;
+        std::vector<size_t> addresses;
+        std::chrono::seconds interval;
+        std::chrono::steady_clock::time_point nextUpdate;
+    };
+
+    /// Add service
+    void add(const ServiceDescription& serviceDescription)
+    {
+      if (mServices.count(serviceDescription.dnsName)) {
+        remove(serviceDescription.dnsName);
+      }
+
+      cout << "Starting publisher '" << serviceDescription.dnsName << "' with "
+          << serviceDescription.addresses.size() << " addresses at interval "
+          << serviceDescription.interval.count() << "s \n";
+
+
+      // Prepare the service and its variable
+      std::vector<uint32_t> registerValues(serviceDescription.addresses.size());
+      auto registerCount = registerValues.size();
+      auto size = registerCount * sizeof(decltype(registerValues)::value_type);
+      auto format = boost::str(boost::format("I:%d") % registerCount);
+
+      mServices.find()
+      Service service {serviceDescription, std::make_unique<DimService>(
+        serviceDescription.dnsName.c_str(), format.c_str(), registerValues.data(), size)};
+
+
+
+    }
+
+    /// Remove service
+    void remove(std::string dnsName)
+    {
+      cout << "Stopping publisher '" << dnsName << "'\n";
+    }
+
+    /// Call this frequently
+    void loop(ChannelSharedPtr& channel)
+    {
+      for (auto& service: mServices) {
+        std::ostringstream stream;
+        stream << "Publisher '" << mServiceDescription.dnsName << "' publishing:\n";
+
+        for (size_t i = 0; i < mServiceDescription.addresses.size(); ++i) {
+          auto index = mServiceDescription.addresses[i] / 4;
+          auto value = mChannel->readRegister(index);
+          stream << "  " << mServiceDescription.addresses[i] << " = " << value << '\n';
+          registerValues[i] = mChannel->readRegister(index);
+        }
+
+        cout << stream.str();
+
+//              service.updateService();
+
+        auto nextTime = startTime + std::chrono::duration<double>(iteration * mServiceDescription.interval);
+        std::this_thread::sleep_until(nextTime);
+        iteration++;
+      }
+    }
+
+  private:
+
+    struct Service
+    {
+        ServiceDescription description;
+        std::unique_ptr<DimService> dimService;
+    };
+
+    std::unordered_map<std::string, std::unique_ptr<Service>> mServices;
 };
 
 class ProgramAliceLowlevelFrontendServer: public Program
@@ -186,7 +265,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
 
       DimServer::start("ALF");
       // Object that stops the DIM service when destroyed
-      AliceO2::Common::GuardFunction dimStopper([]{DimServer::stop();});
+      //AliceO2::Common::GuardFunction dimStopper([]{DimServer::stop();});
 
       Alf::ServiceNames names(serialNumber, channelNumber);
 
@@ -212,11 +291,11 @@ class ProgramAliceLowlevelFrontendServer: public Program
 //      publishCommand("/ALF/2;504;1.0", channel, publisherRegistry);
 
       // Start temperature service
-      DimService temperatureService(names.temperature().c_str(), mTemperature);
+//      DimService temperatureService(names.temperature().c_str(), mTemperature);
       while (!isSigInt()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-        mTemperature = double((std::rand() % 100) + 400) / 10.0;
-        temperatureService.updateService(mTemperature);
+//        mTemperature = double((std::rand() % 100) + 400) / 10.0;
+//        temperatureService.updateService(mTemperature);
       }
     }
 
@@ -271,6 +350,8 @@ class ProgramAliceLowlevelFrontendServer: public Program
     static std::string publishCommand(const std::string& parameter, ChannelSharedPtr channel,
         PublisherRegistry& registry)
     {
+      cout << "Received publish command: '" << parameter << "'" << endl;
+
       auto params = split(parameter, ";");
       auto serviceName = params.at(0);
       auto registerAddresses = lexicalCastVector<size_t>(split(params.at(1), ","));
@@ -283,6 +364,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
     /// RPC handler for publish stop commands
     static std::string publishStopCommand(const std::string& parameter, PublisherRegistry& registry)
     {
+      cout << "Received stop command: '" << parameter << "'" << endl;
       registry.remove(parameter);
       return "";
     }

@@ -139,6 +139,24 @@ class PublishRpc: public DimRpcInfo
     }
 };
 
+class PublishStopRpc: public DimRpcInfo
+{
+  public:
+    PublishStopRpc(const std::string &serviceName)
+      : DimRpcInfo(serviceName.c_str(), toCharBuffer("").data())
+    {
+    }
+
+    void stop(std::string dnsName)
+    {
+      setDataString(dnsName, *this);
+      auto returnValue = std::string(getString());
+      if (isFail(returnValue)) {
+        BOOST_THROW_EXCEPTION(AliceO2::roc::Exception() << AliceO2::roc::ErrorInfo::Message(returnValue));
+      }
+    }
+};
+
 class RegisterReadRpc: public DimRpcInfo
 {
   public:
