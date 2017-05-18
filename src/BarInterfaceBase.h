@@ -5,8 +5,8 @@
 
 #pragma once
 
+#include <memory>
 #include "RocPciDevice.h"
-#include <boost/scoped_ptr.hpp>
 #include "Pda/PdaBar.h"
 #include "ReadoutCard/BarInterface.h"
 #include "ReadoutCard/Parameters.h"
@@ -24,17 +24,26 @@ class BarInterfaceBase: public BarInterface
 
     virtual uint32_t readRegister(int index) override;
     virtual void writeRegister(int index, uint32_t value) override;
-    virtual int getBarIndex() const override;
+
+    virtual int getIndex() const override
+    {
+      return mPdaBar->getIndex();
+    }
+
+    virtual size_t getSize() const override
+    {
+      return mPdaBar->getSize();
+    }
 
   protected:
     /// BAR index
     int mBarIndex;
 
     /// PDA device objects
-    boost::scoped_ptr<RocPciDevice> mRocPciDevice;
+    std::unique_ptr<RocPciDevice> mRocPciDevice;
 
     /// PDA BAR object
-    boost::scoped_ptr<Pda::PdaBar> mPdaBar;
+    std::unique_ptr<Pda::PdaBar> mPdaBar;
 
   private:
     /// Inheriting classes must implement this to check whether a given read is safe.

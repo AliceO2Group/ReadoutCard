@@ -21,7 +21,7 @@ class BarAccessor
 {
   public:
     BarAccessor(Pda::PdaBar* pdaBar)
-        : mPdaBar(pdaBar)
+        : mBar(pdaBar)
     {
     }
 
@@ -40,47 +40,47 @@ class BarAccessor
       auto offset = Registers::LINK_SUPERPAGE_OFFSET * link;
 
       // Set superpage address. These writes are buffered on the firmware side.
-      mPdaBar->writeRegister(offset + Registers::LINK_BASE_SUPERPAGE_ADDRESS_HIGH,
+      mBar->writeRegister(offset + Registers::LINK_BASE_SUPERPAGE_ADDRESS_HIGH,
           Utilities::getUpper32Bits(busAddress));
-      mPdaBar->writeRegister(offset + Registers::LINK_BASE_SUPERPAGE_ADDRESS_LOW,
+      mBar->writeRegister(offset + Registers::LINK_BASE_SUPERPAGE_ADDRESS_LOW,
           Utilities::getLower32Bits(busAddress));
       // Set superpage size. This write signals the push of the descriptor into the link's FIFO.
-      mPdaBar->writeRegister(offset + Registers::LINK_BASE_SUPERPAGE_SIZE, pages);
+      mBar->writeRegister(offset + Registers::LINK_BASE_SUPERPAGE_SIZE, pages);
     }
 
     /// Get amount of superpages pushed by a link
     /// \param link Link number
     uint32_t getSuperpageCount(uint32_t link)
     {
-      return mPdaBar->readRegister(Registers::LINK_SUPERPAGE_OFFSET * link + Registers::LINK_BASE_SUPERPAGES_PUSHED);
+      return mBar->readRegister(Registers::LINK_SUPERPAGE_OFFSET * link + Registers::LINK_BASE_SUPERPAGES_PUSHED);
     }
 
     void setDataEmulatorEnabled(bool enabled) const
     {
-      mPdaBar->writeRegister(Registers::DMA_CONTROL, enabled ? 0x1 : 0x0);
+      mBar->writeRegister(Registers::DMA_CONTROL, enabled ? 0x1 : 0x0);
 
-      uint32_t bits = mPdaBar->readRegister(Registers::DATA_GENERATOR_CONTROL);
+      uint32_t bits = mBar->readRegister(Registers::DATA_GENERATOR_CONTROL);
       if (enabled) {
         bits |= uint32_t(1);
       } else {
         bits ^= ~uint32_t(1);
       }
-      mPdaBar->writeRegister(Registers::DATA_GENERATOR_CONTROL, bits);
+      mBar->writeRegister(Registers::DATA_GENERATOR_CONTROL, bits);
     }
 
     void resetDataGeneratorCounter() const
     {
-      mPdaBar->writeRegister(Registers::RESET_CONTROL, 0x2);
+      mBar->writeRegister(Registers::RESET_CONTROL, 0x2);
     }
 
     void resetCard() const
     {
-      mPdaBar->writeRegister(Registers::RESET_CONTROL, 0x1);
+      mBar->writeRegister(Registers::RESET_CONTROL, 0x1);
     }
 
     void setDataGeneratorPattern(GeneratorPattern::type pattern, size_t size)
     {
-      uint32_t bits = mPdaBar->readRegister(Registers::DATA_GENERATOR_CONTROL);
+      uint32_t bits = mBar->readRegister(Registers::DATA_GENERATOR_CONTROL);
 
       switch (pattern) {
         case GeneratorPattern::Incremental:
@@ -117,17 +117,17 @@ class BarAccessor
       bits &= ~(uint32_t(0xff00));
       bits += sizeValue;
 
-      mPdaBar->writeRegister(Registers::DATA_GENERATOR_CONTROL, bits);
+      mBar->writeRegister(Registers::DATA_GENERATOR_CONTROL, bits);
     }
 
     uint32_t getSerialNumber() const
     {
-      if (mPdaBar->getBarNumber() != 2) {
+      if (mBar->getIndex() != 2) {
         BOOST_THROW_EXCEPTION(Exception()
             << ErrorInfo::Message("Can only get serial number from BAR 2")
-            << ErrorInfo::BarIndex(mPdaBar->getBarNumber()));
+            << ErrorInfo::BarIndex(mBar->getIndex()));
       }
-      auto serial = mPdaBar->readRegister(Registers::SERIAL_NUMBER);
+      auto serial = mBar->readRegister(Registers::SERIAL_NUMBER);
       if (serial == 0xFfffFfff) {
         BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("CRU reported invalid serial number 0xffffffff, "
             "a fatal error may have occurred"));
@@ -138,14 +138,14 @@ class BarAccessor
     /// Get raw data from the temperature register
     uint32_t getTemperatureRaw() const
     {
-      if (mPdaBar->getBarNumber() != 2) {
+      if (mBar->getIndex() != 2) {
         BOOST_THROW_EXCEPTION(Exception()
             << ErrorInfo::Message("Can only get temperature from BAR 2")
-            << ErrorInfo::BarIndex(mPdaBar->getBarNumber()));
+            << ErrorInfo::BarIndex(mBar->getIndex()));
       }
 
       // Only use lower 10 bits
-      return mPdaBar->readRegister(Registers::TEMPERATURE) & 0x3ff;
+      return mBar->readRegister(Registers::TEMPERATURE) & 0x3ff;
     }
 
     /// Converts a value from the CRU's temperature register and converts it to a °C double value.
@@ -176,47 +176,47 @@ class BarAccessor
 
     uint32_t getFirmwareCompileInfo()
     {
-      return mPdaBar->readRegister(Registers::FIRMWARE_COMPILE_INFO);
+      return mBar->readRegister(Registers::FIRMWARE_COMPILE_INFO);
     }
 
     uint32_t getFirmwareGitHash()
     {
-      if (mPdaBar->getBarNumber() != 2) {
+      if (mBar->getIndex() != 2) {
         BOOST_THROW_EXCEPTION(Exception()
             << ErrorInfo::Message("Can only get git hash from BAR 2")
-            << ErrorInfo::BarIndex(mPdaBar->getBarNumber()));
+            << ErrorInfo::BarIndex(mBar->getIndex()));
       }
-      return mPdaBar->readRegister(Registers::FIRMWARE_GIT_HASH);
+      return mBar->readRegister(Registers::FIRMWARE_GIT_HASH);
     }
 
     uint32_t getFirmwareDateEpoch()
     {
-      if (mPdaBar->getBarNumber() != 2) {
+      if (mBar->getIndex() != 2) {
         BOOST_THROW_EXCEPTION(Exception()
             << ErrorInfo::Message("Can only get firmware epoch from BAR 2")
-            << ErrorInfo::BarIndex(mPdaBar->getBarNumber()));
+            << ErrorInfo::BarIndex(mBar->getIndex()));
       }
-      return mPdaBar->readRegister(Registers::FIRMWARE_EPOCH);
+      return mBar->readRegister(Registers::FIRMWARE_EPOCH);
     }
 
     uint32_t getFirmwareDate()
     {
-      if (mPdaBar->getBarNumber() != 2) {
+      if (mBar->getIndex() != 2) {
         BOOST_THROW_EXCEPTION(Exception()
             << ErrorInfo::Message("Can only get firmware date from BAR 2")
-            << ErrorInfo::BarIndex(mPdaBar->getBarNumber()));
+            << ErrorInfo::BarIndex(mBar->getIndex()));
       }
-      return mPdaBar->readRegister(Registers::FIRMWARE_DATE);
+      return mBar->readRegister(Registers::FIRMWARE_DATE);
     }
 
     uint32_t getFirmwareTime()
     {
-      if (mPdaBar->getBarNumber() != 2) {
+      if (mBar->getIndex() != 2) {
         BOOST_THROW_EXCEPTION(Exception()
             << ErrorInfo::Message("Can only get firmware time from BAR 2")
-            << ErrorInfo::BarIndex(mPdaBar->getBarNumber()));
+            << ErrorInfo::BarIndex(mBar->getIndex()));
       }
-      return mPdaBar->readRegister(Registers::FIRMWARE_TIME);
+      return mBar->readRegister(Registers::FIRMWARE_TIME);
     }
 
     FirmwareFeatures getFirmwareFeatures()
@@ -229,15 +229,15 @@ class BarAccessor
       return features;
     }
 
-    uint8_t getDebugReadWriteRegister()
-    {
-      return mPdaBar->barRead<uint8_t>(toByteAddress(Registers::DEBUG_READ_WRITE));
-    }
-
-    void setDebugReadWriteRegister(uint8_t value)
-    {
-      return mPdaBar->barWrite<uint8_t>(toByteAddress(Registers::DEBUG_READ_WRITE), value);
-    }
+//    uint8_t getDebugReadWriteRegister()
+//    {
+//      return mPdaBar->barRead<uint8_t>(toByteAddress(Registers::DEBUG_READ_WRITE));
+//    }
+//
+//    void setDebugReadWriteRegister(uint8_t value)
+//    {
+//      return mPdaBar->barWrite<uint8_t>(toByteAddress(Registers::DEBUG_READ_WRITE), value);
+//    }
 
   private:
     /// Convert an index to a byte address
@@ -255,7 +255,7 @@ class BarAccessor
       }
     }
 
-    Pda::PdaBar* mPdaBar;
+    BarInterface* mBar;
 };
 
 } // namespace Cru

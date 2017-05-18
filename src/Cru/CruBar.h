@@ -16,7 +16,6 @@ class CruBar: public BarInterfaceBase
   public:
     CruBar(const Parameters& parameters);
     virtual ~CruBar();
-    virtual CardType::type getCardType() override;
     virtual void checkReadSafe(int index) override;
     virtual void checkWriteSafe(int index, uint32_t value) override;
 };

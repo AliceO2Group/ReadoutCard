@@ -17,11 +17,6 @@ CrorcBar::~CrorcBar()
 {
 }
 
-CardType::type CrorcBar::getCardType()
-{
-  return CardType::Crorc;
-}
-
 void CrorcBar::checkReadSafe(int)
 {
 }

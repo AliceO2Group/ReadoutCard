@@ -17,7 +17,6 @@ class CrorcBar: public BarInterfaceBase
 
     CrorcBar(const Parameters& parameters);
     virtual ~CrorcBar();
-    virtual CardType::type getCardType() override;
     virtual void checkReadSafe(int index) override;
     virtual void checkWriteSafe(int index, uint32_t value) override;
 };

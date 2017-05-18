@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "ReadoutCard/RegisterReadWriteInterface.h"
+#include "ReadoutCard/BarInterface.h"
 #include <pda.h>
 #include "PdaDevice.h"
 #include "ExceptionInternal.h"
@@ -18,7 +18,7 @@ namespace roc {
 namespace Pda {
 
 /// A simple wrapper around the PDA BAR object, providing some convenience functions
-class PdaBar : public RegisterReadWriteInterface
+class PdaBar : public BarInterface
 {
   public:
     PdaBar();
@@ -33,6 +33,16 @@ class PdaBar : public RegisterReadWriteInterface
     virtual void writeRegister(int index, uint32_t value)
     {
       barWrite<uint32_t>(index * sizeof(uint32_t), value);
+    }
+
+    virtual int getIndex() const override
+    {
+      return mBarNumber;
+    }
+
+    virtual size_t getSize() const override
+    {
+      return mBarNumber;
     }
 
     template<typename T>

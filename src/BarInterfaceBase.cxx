@@ -37,11 +37,5 @@ void BarInterfaceBase::writeRegister(int index, uint32_t value)
   mPdaBar->writeRegister(index, value);
 }
 
-int BarInterfaceBase::getBarIndex() const
-{
-  return mBarIndex;
-}
-
-
 } // namespace roc
 } // namespace AliceO2

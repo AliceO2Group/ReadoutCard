@@ -17,11 +17,6 @@ CruBar::~CruBar()
 {
 }
 
-CardType::type CruBar::getCardType()
-{
-  return CardType::Cru;
-}
-
 void CruBar::checkReadSafe(int)
 {
 }

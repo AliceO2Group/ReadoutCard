@@ -43,15 +43,5 @@ void DummyBar::writeRegister(int index, uint32_t value)
   cout << "DummyBar::writeRegister(index:" << index << ", value:" << value << ")\n";
 }
 
-CardType::type DummyBar::getCardType()
-{
-  return CardType::Dummy;
-}
-
-int DummyBar::getBarIndex() const
-{
-  return mBarIndex;
-}
-
 } // namespace roc
 } // namespace AliceO2

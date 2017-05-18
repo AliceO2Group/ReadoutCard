@@ -24,10 +24,10 @@ class BarInterface: public virtual RegisterReadWriteInterface
     }
 
     /// Get the index of this BAR
-    virtual int getBarIndex() const = 0;
+    virtual int getIndex() const = 0;
 
-    /// Get the type of the card of this BAR
-    virtual CardType::type getCardType() = 0;
+    /// Get the size of this BAR in bytes
+    virtual size_t getSize() const = 0;
 };
 
 } // namespace roc

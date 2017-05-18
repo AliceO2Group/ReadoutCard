@@ -24,8 +24,16 @@ class DummyBar : public BarInterface
     virtual ~DummyBar();
     virtual uint32_t readRegister(int index) override;
     virtual void writeRegister(int index, uint32_t value) override;
-    virtual CardType::type getCardType() override;
-    virtual int getBarIndex() const override;
+
+    virtual int getIndex() const override
+    {
+      return mBarIndex;
+    }
+
+    virtual size_t getSize() const override
+    {
+      return 4*1024;
+    }
 
   private:
     int mBarIndex;
