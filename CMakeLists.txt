@@ -191,6 +191,7 @@ add_subdirectory(doc)
 set(CTEST_TESTING_TIMEOUT 15)
 
 set(TEST_SRCS
+  test/TestBarAccessor.cxx
   test/TestChannelFactoryUtils.cxx
   test/TestChannelPaths.cxx
   test/TestEnums.cxx

@@ -58,13 +58,8 @@ class BarAccessor
     void setDataEmulatorEnabled(bool enabled) const
     {
       mBar->writeRegister(Registers::DMA_CONTROL, enabled ? 0x1 : 0x0);
-
       uint32_t bits = mBar->readRegister(Registers::DATA_GENERATOR_CONTROL);
-      if (enabled) {
-        bits |= uint32_t(1);
-      } else {
-        bits ^= ~uint32_t(1);
-      }
+      setDataGeneratorEnableBits(bits, enabled);
       mBar->writeRegister(Registers::DATA_GENERATOR_CONTROL, bits);
     }
 
@@ -81,42 +76,8 @@ class BarAccessor
     void setDataGeneratorPattern(GeneratorPattern::type pattern, size_t size)
     {
       uint32_t bits = mBar->readRegister(Registers::DATA_GENERATOR_CONTROL);
-
-      switch (pattern) {
-        case GeneratorPattern::Incremental:
-          setBit(bits, 1, true);
-          setBit(bits, 2, false);
-          break;
-        case GeneratorPattern::Alternating:
-          setBit(bits, 1, false);
-          setBit(bits, 2, true);
-          break;
-        case GeneratorPattern::Constant:
-          setBit(bits, 1, true);
-          setBit(bits, 2, true);
-          break;
-        default:
-          BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Unsupported generator pattern for CRU")
-                  << ErrorInfo::GeneratorPattern(pattern));
-      }
-
-      if (!Utilities::isMultiple(size, 32ul)) {
-        BOOST_THROW_EXCEPTION(Exception()
-            << ErrorInfo::Message("Unsupported generator data size for CRU; must be multiple of 32 bytes")
-            << ErrorInfo::GeneratorEventLength(size));
-      }
-
-      if (size > 8192ul) {
-        BOOST_THROW_EXCEPTION(Exception()
-            << ErrorInfo::Message("Unsupported generator data size for CRU; must be smaller than 8 KiB")
-            << ErrorInfo::GeneratorEventLength(size));
-      }
-
-      // We set the size in 256-bit words
-      uint32_t sizeValue = (size/32) << 8;
-      bits &= ~(uint32_t(0xff00));
-      bits += sizeValue;
-
+      setDataGeneratorPatternBits(bits, pattern);
+      setDataGeneratorSizeBits(bits, size);
       mBar->writeRegister(Registers::DATA_GENERATOR_CONTROL, bits);
     }
 
@@ -198,12 +159,16 @@ class BarAccessor
     FirmwareFeatures getFirmwareFeatures()
     {
       assertBarIndex(0, "Can only get firmware features from BAR 0");
-      uint32_t reg = mBar->readRegister(Registers::FIRMWARE_FEATURES);
+      return convertToFirmwareFeatures(mBar->readRegister(Registers::FIRMWARE_FEATURES));
+    }
+
+    static FirmwareFeatures convertToFirmwareFeatures(uint32_t reg)
+    {
       FirmwareFeatures features;
       uint32_t safeword = Utilities::getBits(reg, 0, 15);
       if (safeword == 0x5afe) {
         // Standalone firmware
-        auto enabled = [&](int i){ return Utilities::getBit(reg, i) != 0; };
+        auto enabled = [&](int i){ return Utilities::getBit(reg, i) == 0; };
         features.standalone = true;
         features.loopback0x8000020Bar2Register = enabled(16);
         features.temperature = enabled(17);
@@ -216,6 +181,52 @@ class BarAccessor
         features.serial = true;
       }
       return features;
+    }
+
+    static void setDataGeneratorPatternBits(uint32_t& bits, GeneratorPattern::type pattern)
+    {
+      switch (pattern) {
+        case GeneratorPattern::Incremental:
+          Utilities::setBit(bits, 1, true);
+          Utilities::setBit(bits, 2, false);
+          break;
+        case GeneratorPattern::Alternating:
+          Utilities::setBit(bits, 1, false);
+          Utilities::setBit(bits, 2, true);
+          break;
+        case GeneratorPattern::Constant:
+          Utilities::setBit(bits, 1, true);
+          Utilities::setBit(bits, 2, true);
+          break;
+        default:
+          BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Unsupported generator pattern for CRU")
+                                            << ErrorInfo::GeneratorPattern(pattern));
+      }
+    }
+
+    static void setDataGeneratorSizeBits(uint32_t& bits, size_t size)
+    {
+      if (!Utilities::isMultiple(size, 32ul)) {
+        BOOST_THROW_EXCEPTION(Exception()
+            << ErrorInfo::Message("Unsupported generator data size for CRU; must be multiple of 32 bytes")
+            << ErrorInfo::GeneratorEventLength(size));
+      }
+
+      if (size < 32 || size > 8192ul) {
+        BOOST_THROW_EXCEPTION(Exception()
+            << ErrorInfo::Message("Unsupported generator data size for CRU; must be >= 32 bytes and <= 8 KiB")
+            << ErrorInfo::GeneratorEventLength(size));
+      }
+
+      // We set the size in 256-bit (32 byte) words and do -1 because that's how it works.
+      uint32_t sizeValue = ((size/32) - 1) << 8;
+      bits &= ~(uint32_t(0xff00));
+      bits += sizeValue;
+    }
+
+    static void setDataGeneratorEnableBits(uint32_t& bits, bool enabled)
+    {
+      Utilities::setBit(bits, 0, enabled);
     }
 
 //    uint8_t getDebugReadWriteRegister()
@@ -233,16 +244,6 @@ class BarAccessor
     size_t toByteAddress(size_t address32) const
     {
       return address32 * 4;
-    }
-
-    // TODO use Utilities::setBit()
-    void setBit(uint32_t& bits, int index, bool value) const
-    {
-      if (value) {
-        bits |= uint32_t(1) << index;
-      } else {
-        bits &= ~(uint32_t(1) << index);
-      }
     }
 
     void assertBarIndex(int index, std::string message) const

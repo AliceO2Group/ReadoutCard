@@ -5,7 +5,7 @@
 
 #include "ReadoutCard/Parameters.h"
 
-#define BOOST_TEST_MODULE RORC_TestEnums
+#define BOOST_TEST_MODULE RORC_TestParameters
 #define BOOST_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
