@@ -16,25 +16,38 @@ using namespace AliceO2::roc;
 BOOST_AUTO_TEST_CASE(TestFirmwareFeatures)
 {
   {
+    // Integrated firmware should have everything
     FirmwareFeatures f = Cru::BarAccessor::convertToFirmwareFeatures(0x40000000);
-    BOOST_CHECK(f.standalone == false);
-    BOOST_CHECK(f.serial == true);
-    BOOST_CHECK(f.loopback0x8000020Bar2Register == true);
-    BOOST_CHECK(f.temperature == true);
+    BOOST_CHECK(!f.standalone);
+    BOOST_CHECK(f.serial);
+    BOOST_CHECK(f.loopback0x8000020Bar2Register);
+    BOOST_CHECK(f.temperature);
+    BOOST_CHECK(f.firmwareInfo);
   }
   {
-    FirmwareFeatures f = Cru::BarAccessor::convertToFirmwareFeatures(0x40015AFE);
-    BOOST_CHECK(f.standalone == true);
-    BOOST_CHECK(f.serial == false);
-    BOOST_CHECK(f.loopback0x8000020Bar2Register == false);
-    BOOST_CHECK(f.temperature == true);
+    // Standalone with everything enabled
+    FirmwareFeatures f = Cru::BarAccessor::convertToFirmwareFeatures(0x40005AFE);
+    BOOST_CHECK(f.standalone);
+    BOOST_CHECK(f.serial);
+    BOOST_CHECK(f.loopback0x8000020Bar2Register);
+    BOOST_CHECK(f.temperature);
+    BOOST_CHECK(f.firmwareInfo);
   }
   {
-    FirmwareFeatures f = Cru::BarAccessor::convertToFirmwareFeatures(0x40035AFE);
-    BOOST_CHECK(f.standalone == true);
-    BOOST_CHECK(f.serial == false);
-    BOOST_CHECK(f.loopback0x8000020Bar2Register == false);
-    BOOST_CHECK(f.temperature == false);
+    // Standalone with everything disabled
+    FirmwareFeatures f = Cru::BarAccessor::convertToFirmwareFeatures(0x40005AFE + (0b1111 << 16));
+    BOOST_CHECK(f.standalone);
+    BOOST_CHECK(!f.serial);
+    BOOST_CHECK(!f.loopback0x8000020Bar2Register);
+    BOOST_CHECK(!f.temperature);
+    BOOST_CHECK(!f.firmwareInfo);
+  }
+  {
+    // Standalone individual features disabled
+    BOOST_CHECK(!Cru::BarAccessor::convertToFirmwareFeatures(0x40005AFE + (1 << 16)).loopback0x8000020Bar2Register);
+    BOOST_CHECK(!Cru::BarAccessor::convertToFirmwareFeatures(0x40005AFE + (1 << 17)).temperature);
+    BOOST_CHECK(!Cru::BarAccessor::convertToFirmwareFeatures(0x40005AFE + (1 << 18)).serial);
+    BOOST_CHECK(!Cru::BarAccessor::convertToFirmwareFeatures(0x40005AFE + (1 << 19)).firmwareInfo);
   }
 }
 

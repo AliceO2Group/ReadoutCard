@@ -72,7 +72,7 @@ class ProgramDmaBench: public Program
     virtual Description getDescription()
     {
       return {"DMA Benchmark", "Test ReadoutCard DMA performance",
-          "roc-bench-dma --verbose --id=42:0.0 --channel=0 --buffer-size=32Mi --superpage-size=2Mi --bytes=1G"};
+          "roc-bench-dma --verbose --id=42:0.0 --bytes=10G"};
     }
 
     virtual void addOptions(po::options_description& options)

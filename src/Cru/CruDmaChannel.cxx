@@ -237,8 +237,12 @@ boost::optional<float> CruDmaChannel::getTemperature()
 
 boost::optional<std::string> CruDmaChannel::getFirmwareInfo()
 {
-  return boost::str(boost::format("%x-%x-%x") % getBar2().getFirmwareDate() % getBar2().getFirmwareTime()
-      % getBar2().getFirmwareGitHash());
+  if (mFeatures.firmwareInfo) {
+    return boost::str(boost::format("%x-%x-%x") % getBar2().getFirmwareDate() % getBar2().getFirmwareTime()
+        % getBar2().getFirmwareGitHash());
+  } else {
+    return {};
+  }
 }
 
 } // namespace roc

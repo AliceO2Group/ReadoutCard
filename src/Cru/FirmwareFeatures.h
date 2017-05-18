@@ -12,6 +12,9 @@ struct FirmwareFeatures
     /// Is a serial number available?
     bool serial = false;
 
+    /// Is firmware information available?
+    bool firmwareInfo = false;
+
     /// Is the special register for loopback at BAR2 0x8000020 enabled?
     bool loopback0x8000020Bar2Register = false;
 
