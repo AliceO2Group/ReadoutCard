@@ -22,12 +22,6 @@ class BarHammer : public AliceO2::Common::BasicThread
       mChannel = channelIn;
       BasicThread::start([&](std::atomic<bool>* stopFlag) {
         auto channel = mChannel;
-
-        if (channel->getCardType() != CardType::Cru) {
-          throw std::runtime_error("BarHammer only supported for CRU");
-          return;
-        }
-
         if (!channel) {
           return;
         }

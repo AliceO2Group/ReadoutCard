@@ -63,6 +63,11 @@ static constexpr size_t SERIAL_NUMBER = 524299;
 /// Byte address: 0x280
 static constexpr size_t FIRMWARE_COMPILE_INFO = 160;
 
+/// Register containing compilation info of the firmware
+/// Can be used as a sort of version number
+/// Byte address: 0x280
+static constexpr size_t FIRMWARE_FEATURES = 0x41C/4;
+
 /// Reset control register
 /// * Write a 1 to reset the card
 /// * Write a 2 to reset data generator counter

@@ -29,6 +29,21 @@ inline uint32_t getUpper32Bits(uint64_t x)
 }
 
 template <typename T>
+T getBit(T x, int index) {
+  return (x >> index) & 1;
+}
+
+template <typename T>
+void setBit(T& bits, int index, bool value)
+{
+  if (value) {
+    bits |= T(1) << index;
+  } else {
+    bits &= ~(T(1) << index);
+  }
+}
+
+template <typename T>
 T getBits(T x, int lsb, int msb) {
   assert(lsb < msb);
   return (x >> lsb) & ~(~T(0) << (msb - lsb + T(1)));

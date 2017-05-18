@@ -122,11 +122,7 @@ class BarAccessor
 
     uint32_t getSerialNumber() const
     {
-      if (mBar->getIndex() != 2) {
-        BOOST_THROW_EXCEPTION(Exception()
-            << ErrorInfo::Message("Can only get serial number from BAR 2")
-            << ErrorInfo::BarIndex(mBar->getIndex()));
-      }
+      assertBarIndex(2, "Can only get serial number from BAR 2");
       auto serial = mBar->readRegister(Registers::SERIAL_NUMBER);
       if (serial == 0xFfffFfff) {
         BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("CRU reported invalid serial number 0xffffffff, "
@@ -138,12 +134,7 @@ class BarAccessor
     /// Get raw data from the temperature register
     uint32_t getTemperatureRaw() const
     {
-      if (mBar->getIndex() != 2) {
-        BOOST_THROW_EXCEPTION(Exception()
-            << ErrorInfo::Message("Can only get temperature from BAR 2")
-            << ErrorInfo::BarIndex(mBar->getIndex()));
-      }
-
+      assertBarIndex(2, "Can only get temperature from BAR 2");
       // Only use lower 10 bits
       return mBar->readRegister(Registers::TEMPERATURE) & 0x3ff;
     }
@@ -176,56 +167,54 @@ class BarAccessor
 
     uint32_t getFirmwareCompileInfo()
     {
+      assertBarIndex(0, "Can only get firmware compile info from BAR 0");
       return mBar->readRegister(Registers::FIRMWARE_COMPILE_INFO);
     }
 
     uint32_t getFirmwareGitHash()
     {
-      if (mBar->getIndex() != 2) {
-        BOOST_THROW_EXCEPTION(Exception()
-            << ErrorInfo::Message("Can only get git hash from BAR 2")
-            << ErrorInfo::BarIndex(mBar->getIndex()));
-      }
+      assertBarIndex(2, "Can only get git hash from BAR 2");
       return mBar->readRegister(Registers::FIRMWARE_GIT_HASH);
     }
 
     uint32_t getFirmwareDateEpoch()
     {
-      if (mBar->getIndex() != 2) {
-        BOOST_THROW_EXCEPTION(Exception()
-            << ErrorInfo::Message("Can only get firmware epoch from BAR 2")
-            << ErrorInfo::BarIndex(mBar->getIndex()));
-      }
+      assertBarIndex(2, "Can only get firmware epoch from BAR 2");
       return mBar->readRegister(Registers::FIRMWARE_EPOCH);
     }
 
     uint32_t getFirmwareDate()
     {
-      if (mBar->getIndex() != 2) {
-        BOOST_THROW_EXCEPTION(Exception()
-            << ErrorInfo::Message("Can only get firmware date from BAR 2")
-            << ErrorInfo::BarIndex(mBar->getIndex()));
-      }
+      assertBarIndex(2, "Can only get firmware date from BAR 2");
       return mBar->readRegister(Registers::FIRMWARE_DATE);
     }
 
     uint32_t getFirmwareTime()
     {
-      if (mBar->getIndex() != 2) {
-        BOOST_THROW_EXCEPTION(Exception()
-            << ErrorInfo::Message("Can only get firmware time from BAR 2")
-            << ErrorInfo::BarIndex(mBar->getIndex()));
-      }
+      assertBarIndex(2, "Can only get firmware time from BAR 2");
       return mBar->readRegister(Registers::FIRMWARE_TIME);
     }
 
     FirmwareFeatures getFirmwareFeatures()
     {
+      assertBarIndex(0, "Can only get firmware features from BAR 0");
+      uint32_t reg = mBar->readRegister(Registers::FIRMWARE_FEATURES);
       FirmwareFeatures features;
-      features.serial = false;
-      features.standalone = false;
-      features.temperature = false;
-      features.loopback0x8000020Bar2Register = false;
+      uint32_t safeword = Utilities::getBits(reg, 0, 15);
+      if (safeword == 0x5afe) {
+        // Standalone firmware
+        auto enabled = [&](int i){ return Utilities::getBit(reg, i) != 0; };
+        features.standalone = true;
+        features.loopback0x8000020Bar2Register = enabled(16);
+        features.temperature = enabled(17);
+        features.serial = false;
+      } else {
+        // Integrated firmware
+        features.standalone = false;
+        features.temperature = true;
+        features.loopback0x8000020Bar2Register = true;
+        features.serial = true;
+      }
       return features;
     }
 
@@ -246,12 +235,20 @@ class BarAccessor
       return address32 * 4;
     }
 
+    // TODO use Utilities::setBit()
     void setBit(uint32_t& bits, int index, bool value) const
     {
       if (value) {
         bits |= uint32_t(1) << index;
       } else {
         bits &= ~(uint32_t(1) << index);
+      }
+    }
+
+    void assertBarIndex(int index, std::string message) const
+    {
+      if (mBar->getIndex() != index) {
+        BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(message) << ErrorInfo::BarIndex(mBar->getIndex()));
       }
     }
 
