@@ -166,10 +166,8 @@ If the library is compiled with Boost Python available, the shared object will b
 It is currently only able to read and write registers.
 Example usage:
 ~~~
-# Note: depending on your environment, you may have to be in the same directory
-# as the libReadoutCard.so file to import it 
 import libReadoutCard
-# To open a channel, we can use the card's PCI address or serial number
+# To open a BAR channel, we can use the card's PCI address or serial number
 # Here we open channel number 0
 bar = libReadoutCard.BarChannel("42:0.0", 0) # PCI address
 bar = libReadoutCard.BarChannel("12345", 0) # Serial number
@@ -185,7 +183,9 @@ print bar.__init__.__doc__
 print bar.register_read.__doc__
 print bar.register_write.__doc__
 ~~~
-
+Note: depending on your environment, you may have to be in the same directory as the libReadoutCard.so file to import 
+it.
+You can also set the PYTHONPATH environment variable to the directory containing the libReadoutCard.so file.
 
 Installation  <div id='installation'/>
 ===================

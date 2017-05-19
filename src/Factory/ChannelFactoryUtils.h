@@ -64,40 +64,6 @@ inline CardDescriptor findCard(const PciAddress& address)
 }
 #endif
 
-/// Helper template method for the channel factories.
-/// \param serialNumber Serial number of the card
-/// \param dummySerial Serial number that indicates a dummy object should be instantiated
-/// \param map A mapping of CardType to functions that create a shared pointer to an implementation of the Interface
-///   Formed by pairs of arguments of a CardType and an std::function. The first mapping must use Dummy.
-///   Example:
-///   auto sharedPointer = channelFactoryHelper<ChannelMasterInterface>(12345, -1, {
-///       { CardType::DUMMY, []{ return makeDummy(); }},
-///       { CardType::CRORC, []{ return makeCrorc(); }}});
-template <typename Interface>
-std::shared_ptr<Interface> channelFactoryHelper(int serialNumber, int dummySerial,
-    const std::map<CardType::type, std::function<std::shared_ptr<Interface>()>>& map)
-{
-#ifdef ALICEO2_READOUTCARD_PDA_ENABLED
-  if (serialNumber == dummySerial) {
-    return map.at(CardType::Dummy)();
-  } else {
-
-    auto card = findCard(serialNumber);
-
-    if (map.count(card.cardType) == 0) {
-      BOOST_THROW_EXCEPTION(Exception()
-          << ErrorInfo::Message("Unknown card type")
-          << ErrorInfo::SerialNumber(serialNumber)
-          << ErrorInfo::CardType(card.cardType));
-    }
-
-    return map.at(card.cardType)();
-  }
-#else
-  return map.at(CardType::Dummy)();
-#endif
-}
-
 /// "private" namespace for the implementation of makeChannel()
 namespace _make_impl {
 
