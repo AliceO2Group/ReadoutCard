@@ -7,8 +7,9 @@
 
 #include "DmaChannelPdaBase.h"
 #include <memory>
-#include <queue>
-#include <boost/circular_buffer_fwd.hpp>
+#include <deque>
+//#define BOOST_CB_ENABLE_DEBUG 1
+#include <boost/circular_buffer.hpp>
 #include "Cru/BarAccessor.h"
 #include "Cru/FirmwareFeatures.h"
 #include "ReadoutCard/Parameters.h"
@@ -61,13 +62,13 @@ class CruDmaChannel final : public DmaChannelPdaBase
     struct Link
     {
         /// The link's FEE ID
-        uint32_t id { 0xFfffFfff };
+        uint32_t id;
 
         /// The amount of superpages received from this link
-        uint32_t superpageCounter { 0 };
+        uint32_t superpageCounter;
 
         /// The superpage queue
-        SuperpageQueue queue { LINK_QUEUE_CAPACITY };
+        SuperpageQueue queue {LINK_QUEUE_CAPACITY};
     };
 
     void initCru();

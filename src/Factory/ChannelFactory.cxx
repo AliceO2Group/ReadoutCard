@@ -32,7 +32,7 @@ ChannelFactory::~ChannelFactory()
 
 auto ChannelFactory::getDmaChannel(const Parameters &params) -> DmaChannelSharedPtr
 {
-  return makeChannel<DmaChannelInterface>(params, DUMMY_SERIAL_NUMBER
+  return makeChannel<DmaChannelInterface>(params, getDummySerialNumber()
     , DummyTag, [&]{ return std::make_shared<DummyDmaChannel>(params); }
 #ifdef ALICEO2_READOUTCARD_PDA_ENABLED
     , CrorcTag, [&]{ return std::make_shared<CrorcDmaChannel>(params); }
@@ -43,7 +43,7 @@ auto ChannelFactory::getDmaChannel(const Parameters &params) -> DmaChannelShared
 
 auto ChannelFactory::getBar(const Parameters &params) -> BarSharedPtr
 {
-  return makeChannel<BarInterface>(params, DUMMY_SERIAL_NUMBER
+  return makeChannel<BarInterface>(params, getDummySerialNumber()
     , DummyTag, [&]{ return std::make_shared<DummyBar>(params); }
 #ifdef ALICEO2_READOUTCARD_PDA_ENABLED
     , CrorcTag, [&]{ return std::make_shared<CrorcBar>(params); }

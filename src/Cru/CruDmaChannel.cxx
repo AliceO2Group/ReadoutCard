@@ -55,7 +55,7 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
 
   if (mFeatures.standalone) {
     auto logFeature = [&](auto name, bool enabled) { if (!enabled) { getLogger() << " " << name; }};
-    getLogger() << "Standalone firmware features disabled: ";
+    getLogger() << "Standalone firmware features disabled:";
     logFeature("firmware-info", mFeatures.firmwareInfo);
     logFeature("serial-number", mFeatures.serial);
     logFeature("temperature", mFeatures.temperature);
@@ -64,17 +64,20 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
   }
 
   // Insert links
-  getLogger() << "Enabling link(s): ";
-  for (uint32_t id : parameters.getLinkMask().value_or(Parameters::LinkMaskType{0})) {
-    if (id >= Cru::MAX_LINKS) {
-      BOOST_THROW_EXCEPTION(InvalidLinkId()
-          << ErrorInfo::Message("CRU does not support given link ID")
+  {
+    getLogger() << "Enabling link(s): ";
+    auto linkMask = parameters.getLinkMask().value_or(Parameters::LinkMaskType{0});
+    mLinks.reserve(linkMask.size());
+    for (uint32_t id : linkMask) {
+      if (id >= Cru::MAX_LINKS) {
+        BOOST_THROW_EXCEPTION(InvalidLinkId() << ErrorInfo::Message("CRU does not support given link ID")
           << ErrorInfo::LinkId(id));
+      }
+      getLogger() << id << " ";
+      mLinks.push_back({id});
     }
-    getLogger() << id << " ";
-    mLinks.push_back({id});
+    getLogger() << InfoLogger::InfoLogger::endm;
   }
-  getLogger() << InfoLogger::InfoLogger::endm;
 }
 
 auto CruDmaChannel::allowedChannels() -> AllowedChannels {
@@ -166,8 +169,7 @@ void CruDmaChannel::pushSuperpage(Superpage superpage)
   // Look for an empty slot in the link queues
   for (size_t i = 0; i < mLinks.size(); ++i) {
     auto &link = getNextLinkToPush();
-    if (!link.queue.full()) {
-      //printf("L %02u - push >>>\n", link.id);
+    if (link.queue.size() < LINK_QUEUE_CAPACITY) {
       link.queue.push_back(superpage);
       mLinksTotalQueueSize++;
       auto maxPages = superpage.getSize() / Cru::DMA_PAGE_SIZE;
@@ -204,15 +206,24 @@ void CruDmaChannel::fillSuperpages()
   // Check for arrivals & handle them
   for (auto& link : mLinks) {
     uint32_t superpageCount = getBar().getSuperpageCount(link.id);
-//    printf("L %02u - superpage_count=%u\n", link.id, superpageCount);
     auto available = superpageCount > link.superpageCounter;
     if (available) {
       uint32_t amountAvailable = superpageCount - link.superpageCounter;
+      if (amountAvailable > link.queue.size()) {
+        getLogger() << InfoLogger::InfoLogger::Error
+          << "FATAL: Firmware reported more superpages available (" << amountAvailable <<
+          ") than should be present in FIFO (" << link.queue.size() << "); "
+          << link.superpageCounter << " superpages received from link " << link.id << " according to driver, "
+          << superpageCount << " pushed according to firmware" << InfoLogger::InfoLogger::endm;
+
+        BOOST_THROW_EXCEPTION(Exception()
+            << ErrorInfo::Message("FATAL: Firmware reported more superpages available than should be present in FIFO"));
+      }
       for (uint32_t i = 0; i < amountAvailable; ++i) {
-        if (mReadyQueue.full()) {
+        if (mReadyQueue.size() >= READY_QUEUE_CAPACITY) {
           break;
         }
-        //printf("L %02u - pop <<<\n", link.id);
+        printf("L %02u - pop <<<\n", link.id);
 
         // Front superpage has arrived
         link.queue.front().ready = true;

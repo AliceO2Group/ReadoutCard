@@ -20,7 +20,7 @@ namespace roc {
 class ChannelFactory
 {
   public:
-    static constexpr int DUMMY_SERIAL_NUMBER = -1;
+    // static constexpr int DUMMY_SERIAL_NUMBER = -1; ///< Deprecated, use getDummySerialNumber() instead
 
     using DmaChannelSharedPtr = std::shared_ptr<DmaChannelInterface>;
     using BarSharedPtr = std::shared_ptr<BarInterface>;
@@ -37,6 +37,11 @@ class ChannelFactory
     /// Passing 'DUMMY_SERIAL_NUMBER' as serial number returns a dummy implementation
     /// \param parameters Parameters for the channel
     BarSharedPtr getBar(const Parameters &parameters);
+
+    static int getDummySerialNumber()
+    {
+      return -1;
+    }
 };
 
 } // namespace roc

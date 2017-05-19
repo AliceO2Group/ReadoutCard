@@ -214,7 +214,7 @@ class BarAccessor
             << ErrorInfo::GeneratorEventLength(size));
       }
 
-      if (size < 32 || size > 8192ul) {
+      if (size < 32 || size > Cru::DMA_PAGE_SIZE) {
         BOOST_THROW_EXCEPTION(Exception()
             << ErrorInfo::Message("Unsupported generator data size for CRU; must be >= 32 bytes and <= 8 KiB")
             << ErrorInfo::GeneratorEventLength(size));

@@ -112,6 +112,9 @@ class ProgramDmaBench: public Program
           ("no-temperature",
               po::bool_switch(&mOptions.noTemperature),
               "No temperature readout")
+          ("no-display",
+              po::bool_switch(&mOptions.noDisplay),
+             "Disable command-line display")
           ("page-reset",
               po::bool_switch(&mOptions.pageReset),
               "Reset page to default values after readout (slow)");
@@ -531,11 +534,14 @@ class ProgramDmaBench: public Program
 
     bool checkErrorsCru(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, uint32_t counter)
     {
+      // Check the header
+      // TODO
+
       auto check = [&](auto patternFunction) {
         auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
         auto pageSize32 = pageSize / sizeof(int32_t);
         constexpr uint32_t PATTERN_STRIDE = 8; // The data emulator writes to every 8th 32-bit word
-        constexpr uint32_t START = PATTERN_STRIDE; // We skip the first part, because it contains the link ID
+        constexpr uint32_t START = 16; // We skip the 512 bit (16 * 32 bit) header
         for (uint32_t i = START; i < pageSize32; i += PATTERN_STRIDE)
         {
           uint32_t expectedValue = patternFunction(i);
@@ -646,7 +652,7 @@ class ProgramDmaBench: public Program
 
       // Status display updates
       // Wait until the DMA has really started before printing our table to avoid messy output
-      if (isVerbose() && mPushCount.load(std::memory_order_relaxed) != 0) {
+      if (!mOptions.noDisplay && mPushCount.load(std::memory_order_relaxed) != 0) {
         updateStatusDisplay();
       }
     }
@@ -825,6 +831,7 @@ class ProgramDmaBench: public Program
         bool randomPause = false;
         bool noErrorCheck = false;
         bool noTemperature = false;
+        bool noDisplay = false;
         bool pageReset = false;
         bool noResyncCounter = false;
         bool barHammer = false;
