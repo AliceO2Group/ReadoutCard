@@ -171,19 +171,19 @@ Example usage:
 import libReadoutCard
 # To open a channel, we can use the card's PCI address or serial number
 # Here we open channel number 0
-channel = libReadoutCard.Channel("42:0.0", 0) # PCI address
-channel = libReadoutCard.Channel("12345", 0) # Serial number
-channel = libReadoutCard.Channel("-1", 0) # Dummy channel
+bar = libReadoutCard.BarChannel("42:0.0", 0) # PCI address
+bar = libReadoutCard.BarChannel("12345", 0) # Serial number
+bar = libReadoutCard.BarChannel("-1", 0) # Dummy channel
 
 # Read register at index 0
-channel.register_read(0)
+bar.register_read(0)
 # Write 123 to register at index 0
-channel.register_write(0, 123)
+bar.register_write(0, 123)
 
 # Print doc strings for more information
-print channel.__init__.__doc__
-print channel.register_read.__doc__
-print channel.register_write.__doc__
+print bar.__init__.__doc__
+print bar.register_read.__doc__
+print bar.register_write.__doc__
 ~~~
 
 

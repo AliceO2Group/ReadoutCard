@@ -4,27 +4,23 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include <iostream>
-#include <map>
-#include <vector>
 #include <string>
 #include <boost/python.hpp>
-#include <python2.7/Python.h>
 #include "Common/GuardFunction.h"
 #include "ExceptionInternal.h"
 #include "ReadoutCard/ChannelFactory.h"
-#include "ReadoutCard/Parameters.h"
 
 namespace {
 using namespace AliceO2::roc;
-/// This is a Python wrapper class for a channel. It only provides register read and write access.
+/// This is a Python wrapper class for a BAR channel. It only provides register read and write access.
 
 /// Documentation for the init function (constructor)
 auto sInitDocString =
-R"(Initializes a Channel object
+R"(Initializes a BarChannel object
 
 Args:
     card id: String containing PCI address (e.g. 42:0.0) or serial number (e.g. 12345)
-    channel number: Number of the BAR/channel to open)";
+    channel number: Number of the BAR channel to open)";
 
 /// Documentation for the register read function
 auto sRegisterReadDocString =
@@ -44,10 +40,10 @@ Args:
     value: 32-bit value to write to the register)";
 
 
-class Channel
+class BarChannel
 {
   public:
-    Channel(std::string cardIdString, int channelNumber)
+    BarChannel(std::string cardIdString, int channelNumber)
     {
       Parameters::CardIdType cardId;
 
@@ -66,21 +62,21 @@ class Channel
         throw std::runtime_error("Failed to parse card ID as either PCI address or serial number");
       }
 
-      mChannel = ChannelFactory().getBar(Parameters::makeParameters(cardId, channelNumber));
+      mBarChannel = ChannelFactory().getBar(Parameters::makeParameters(cardId, channelNumber));
     }
 
     uint32_t read(uint32_t address)
     {
-      return mChannel->readRegister(address / 4);
+      return mBarChannel->readRegister(address / 4);
     }
 
     void write(uint32_t address, uint32_t value)
     {
-      return mChannel->writeRegister(address / 4, value);
+      return mBarChannel->writeRegister(address / 4, value);
     }
 
   private:
-    std::shared_ptr<AliceO2::roc::BarInterface> mChannel;
+    std::shared_ptr<AliceO2::roc::BarInterface> mBarChannel;
 };
 } // Anonymous namespace
 
@@ -90,8 +86,8 @@ BOOST_PYTHON_MODULE(libReadoutCard)
 {
   using namespace boost::python;
 
-  class_<Channel>("Channel", init<std::string, int>(sInitDocString))
-      .def("register_read", &Channel::read, sRegisterReadDocString)
-      .def("register_write", &Channel::write, sRegisterWriteDocString);
+  class_<BarChannel>("BarChannel", init<std::string, int>(sInitDocString))
+      .def("register_read", &BarChannel::read, sRegisterReadDocString)
+      .def("register_write", &BarChannel::write, sRegisterWriteDocString);
 }
 
