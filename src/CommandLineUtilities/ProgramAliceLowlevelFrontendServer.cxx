@@ -13,6 +13,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/variant.hpp>
+#include <InfoLogger/InfoLogger.hxx>
 #include <dim/dis.hxx>
 #include "AliceLowlevelFrontend.h"
 #include "Common/BasicThread.h"
@@ -26,8 +27,13 @@
 namespace {
 using namespace AliceO2::roc::CommandLineUtilities;
 using namespace AliceO2::roc;
-using std::cout;
-using std::endl;
+using namespace AliceO2::InfoLogger;
+
+InfoLogger& getInfoLogger()
+{
+  static InfoLogger logger;
+  return logger;
+}
 
 using ChannelSharedPtr = std::shared_ptr<BarInterface>;
 
@@ -114,23 +120,23 @@ class PublisherRegistry
           dimService = std::make_unique<DimService>(mDescription.dnsName.c_str(), format.c_str(), registerValues.data(),
             registerValues.size());
 
-          cout << "Starting publisher '" << mDescription.dnsName << "' with "
+          getInfoLogger() << "Starting publisher '" << mDescription.dnsName << "' with "
             << mDescription.addresses.size() << " address(es) at interval "
-            << mDescription.interval.count() << "ms \n";
+            << mDescription.interval.count() << "ms" << InfoLogger::endm;
         }
 
         ~Service()
         {
-          cout << "Stopping publisher '" << mDescription.dnsName << "'" << endl;
+          getInfoLogger() << "Stopping publisher '" << mDescription.dnsName << "'" << InfoLogger::endm;
         }
 
         void updateRegisterValues(RegisterReadWriteInterface& channel)
         {
-          cout << "Updating '" << mDescription.dnsName << "':" << endl;
+          getInfoLogger() << "Updating '" << mDescription.dnsName << "':" << InfoLogger::endm;
           for (size_t i = 0; i < mDescription.addresses.size(); ++i) {
             auto index = mDescription.addresses[i] / 4;
             auto value = channel.readRegister(index);
-            cout << "  " << mDescription.addresses[i] << " = " << value << endl;
+            getInfoLogger() << "  " << mDescription.addresses[i] << " = " << value << InfoLogger::endm;
             registerValues.at(i) = channel.readRegister(index);
           }
           dimService->updateService();
@@ -205,23 +211,23 @@ class ProgramAliceLowlevelFrontendServer: public Program
       }
 
       // Get card channel for register access
-      int serialNumber = Options::getOptionSerialNumber(map);
-      int channelNumber = Options::getOptionChannel(map);
-      auto params = AliceO2::roc::Parameters::makeParameters(serialNumber, channelNumber);
+      mSerialNumber = Options::getOptionSerialNumber(map);
+      mChannelNumber = Options::getOptionChannel(map);
+      auto params = AliceO2::roc::Parameters::makeParameters(mSerialNumber, mChannelNumber);
       auto channel = AliceO2::roc::ChannelFactory().getBar(params);
 
       DimServer::start("ALF");
 
       // Object for service DNS names
-      Alf::ServiceNames names(serialNumber, channelNumber);
+      Alf::ServiceNames names(mSerialNumber, mChannelNumber);
 
       // Start RPC server for reading registers
-      cout << "Starting service " << names.registerReadRpc() << endl;
+      getInfoLogger() << "Starting service " << names.registerReadRpc() << InfoLogger::endm;
       Alf::StringRpcServer registerReadRpcServer(names.registerReadRpc(),
           [&](const std::string& parameter) {return registerRead(parameter, channel);});
 
       // Start RPC server for writing registers
-      cout << "Starting service " << names.registerWriteRpc() << endl;
+      getInfoLogger() << "Starting service " << names.registerWriteRpc() << InfoLogger::endm;
       Alf::StringRpcServer registerWriteRpcServer(names.registerWriteRpc(),
           [&](const std::string& parameter) {return registerWrite(parameter, channel);});
 
@@ -229,12 +235,12 @@ class ProgramAliceLowlevelFrontendServer: public Program
       PublisherRegistry publisherRegistry {channel};
 
       // Start RPC server for publish commands
-      cout << "Starting service " << names.publishCommandRpc() << endl;
+      getInfoLogger() << "Starting service " << names.publishCommandRpc() << InfoLogger::endm;
       Alf::StringRpcServer publishStartCommandRpcServer(names.publishCommandRpc(),
           [&](const std::string& parameter) {return publishStartCommand(parameter, mCommandQueue);});
 
       // Start RPC server for stop publish commands
-      cout << "Starting service " << names.publishStopCommandRpc() << endl;
+      getInfoLogger() << "Starting service " << names.publishStopCommandRpc() << InfoLogger::endm;
       Alf::StringRpcServer publishStopCommandRpcServer(names.publishStopCommandRpc(),
           [&](const std::string& parameter) {return publishStopCommand(parameter, mCommandQueue);});
 
@@ -281,7 +287,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
 
       uint32_t value = channel->readRegister(address / 4);
 
-      cout << "READ   " << Common::makeRegisterString(address, value);
+      getInfoLogger() << "READ   " << Common::makeRegisterString(address, value) << InfoLogger::endm;
       return std::to_string(value);
     }
 
@@ -298,7 +304,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
       auto value = boost::lexical_cast<uint32_t>(params[1]);
       checkAddress(address);
 
-      cout << "WRITE  " << Common::makeRegisterString(address, value);
+      getInfoLogger() << "WRITE  " << Common::makeRegisterString(address, value) << InfoLogger::endm;
 
       if (address == 0x1f4) {
         // This is to the command register, we need to wait until the card indicates it's not busy before sending a
@@ -314,7 +320,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
     /// RPC handler for publish commands
     static std::string publishStartCommand(const std::string& parameter, CommandQueue& commandQueue)
     {
-      cout << "Received publish command: '" << parameter << "'" << endl;
+      getInfoLogger() << "Received publish command: '" << parameter << "'" << InfoLogger::endm;
       auto params = split(parameter, ";");
 
       ServiceDescription description;
@@ -323,7 +329,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
       description.interval = std::chrono::milliseconds(int64_t(boost::lexical_cast<double>(params.at(2)) * 1000.0));
 
       if (!commandQueue.write(CommandPublishStart{std::move(description)})) {
-        cout << "  command queue was full!" << endl;
+        getInfoLogger() << "  command queue was full!" << InfoLogger::endm;
       }
       return "";
     }
@@ -331,15 +337,16 @@ class ProgramAliceLowlevelFrontendServer: public Program
     /// RPC handler for publish stop commands
     static std::string publishStopCommand(const std::string& parameter, CommandQueue& commandQueue)
     {
-      cout << "Received stop command: '" << parameter << "'" << endl;
+      getInfoLogger() << "Received stop command: '" << parameter << "'" << InfoLogger::endm;
       if (!commandQueue.write(CommandPublishStop{parameter})) {
-        cout << "  command queue was full!" << endl;
+        getInfoLogger() << "  command queue was full!" << InfoLogger::endm;
       }
       return "";
     }
 
+    int mSerialNumber = 0;
+    int mChannelNumber = 0;
     CommandQueue mCommandQueue;
-
     double mTemperature = 40;
 };
 } // Anonymous namespace
