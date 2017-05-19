@@ -76,33 +76,33 @@ class ProgramAliceLowlevelFrontendClient: public Program
       Alf::PublishRpc publishRpc(names.publishCommandRpc());
 
       publishRpc.publish("ALF/TEST/1", 1.0, {0x1fc});
-//      publishRpc.publish("ALF/TEST/2", 3.0, {0x1ec});
+      publishRpc.publish("ALF/TEST/2", 3.0, {0x100, 0x104, 0x108});
 
-      while (!isSigInt()) {
-//        cout << "-------------------------------------\n";
-//        cout << "Temperature   = " << gTemperature << endl;
-//
-//        int writes = 10; //std::rand() % 50;
-//        cout << "Write   0x1f8 = 0x1 times " << writes << endl;
-//        for (int i = 0; i < writes; ++i) {
-//          writeRpc.writeRegister(0x1f8, 0x1);
-//        }
-//
-//        cout << "Read    0x1fc = " << readRpc.readRegister(0x1fc) << endl;
-//        cout << "Read    0x1ec = " << readRpc.readRegister(0x1ec) << endl;
-//        cout << "Cmd     0x1f4 = 0x1" << endl;
-//        writeRpc.writeRegister(0x1f4, 0x1);
-//        cout << "Cmd     0x1f4 = 0x2" << endl;
-//        writeRpc.writeRegister(0x1f4, 0x1);
-//        cout << "Cmd     0x1f4 = 0x3" << endl;
-//        writeRpc.writeRegister(0x1f4, 0x1);
+      while (!isSigInt())
+      {
+        cout << "-------------------------------------\n";
+        cout << "Temperature   = " << gTemperature << endl;
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        int writes = 10; //std::rand() % 50;
+        cout << "Write   0x1f8 = 0x1 times " << writes << endl;
+        for (int i = 0; i < writes; ++i) {
+          writeRpc.writeRegister(0x1f8, 0x1);
+        }
+
+        cout << "Read    0x1fc = " << readRpc.readRegister(0x1fc) << endl;
+        cout << "Read    0x1ec = " << readRpc.readRegister(0x1ec) << endl;
+        cout << "Cmd     0x1f4 = 0x1" << endl;
+        writeRpc.writeRegister(0x1f4, 0x1);
+        cout << "Cmd     0x1f4 = 0x2" << endl;
+        writeRpc.writeRegister(0x1f4, 0x1);
+        cout << "Cmd     0x1f4 = 0x3" << endl;
+        writeRpc.writeRegister(0x1f4, 0x1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
       }
 
       Alf::PublishStopRpc publishStopRpc(names.publishStopCommandRpc());
       publishStopRpc.stop("ALF/TEST/1");
-//      publishStopRpc.stop("ALF/TEST/2");
+      publishStopRpc.stop("ALF/TEST/2");
     }
 };
 } // Anonymous namespace

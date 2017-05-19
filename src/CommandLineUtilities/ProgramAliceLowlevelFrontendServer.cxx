@@ -12,13 +12,16 @@
 #include <mutex>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/variant.hpp>
 #include <dim/dis.hxx>
 #include "AliceLowlevelFrontend.h"
 #include "Common/BasicThread.h"
 #include "Common/GuardFunction.h"
 #include "ExceptionInternal.h"
+#include "folly/ProducerConsumerQueue.h"
 #include "ReadoutCard/Parameters.h"
 #include "ReadoutCard/ChannelFactory.h"
+#include "Visitor.h"
 
 namespace {
 using namespace AliceO2::roc::CommandLineUtilities;
@@ -47,126 +50,20 @@ static std::vector<T> lexicalCastVector(const std::vector<U>& items)
   return result;
 }
 
+struct ServiceDescription
+{
+    std::string dnsName;
+    std::vector<uintptr_t> addresses;
+    std::chrono::milliseconds interval;
+};
+
 /// Class that handles adding/removing publishers
 class PublisherRegistry
 {
   public:
-    struct ServiceDescription
+    PublisherRegistry(ChannelSharedPtr channel) : mChannel(channel)
     {
-        std::string dnsName;
-        double interval; // in seconds
-        std::vector<size_t> addresses;
-    };
-
-    using PublishFunction = std::function<void(ChannelSharedPtr)>;
-
-    void add(ChannelSharedPtr channel, ServiceDescription serviceDescription)
-    {
-      LockGuard lockGuard(mMutex);
-      // Remove previous service with this name in case it existed
-      removeImpl(serviceDescription.dnsName);
-
-      // Add new service
-      cout << "Adding publisher: " << serviceDescription.dnsName << '\n';
-      auto iter = mPublishers.insert(
-          std::make_pair(serviceDescription.dnsName, std::make_unique<Publisher>(channel, serviceDescription)));
-      iter.first->second->start();
     }
-
-    void remove(std::string dnsName)
-    {
-      LockGuard lockGuard(mMutex);
-      removeImpl(dnsName);
-    }
-
-  private:
-    using Mutex = std::mutex;
-    using LockGuard = std::lock_guard<Mutex>;
-
-    void removeImpl(std::string dnsName)
-    {
-      // Remove if it exists
-      auto iter = mPublishers.find(dnsName);
-      if (iter != mPublishers.end()) {
-        cout << "Removing publisher: " << dnsName << '\n';
-        iter->second->join();
-        mPublishers.erase(iter);
-      }
-    }
-
-    /// Class that publishes values at an interval.
-    /// TODO Use condition variables, so we can wake up the thread and stop it immediately, not having to wait for its
-    ///   next iteration
-    class Publisher: public AliceO2::Common::BasicThread
-    {
-      public:
-
-        Publisher(ChannelSharedPtr channel, ServiceDescription serviceDescription)
-            : mServiceDescription(serviceDescription), mChannel(channel)
-        {
-        }
-
-        void start()
-        {
-          BasicThread::start([&](std::atomic<bool>* stopFlag) {
-            auto startTime = std::chrono::high_resolution_clock::now();
-            int iteration = 0;
-
-            cout << "Starting publisher '" << mServiceDescription.dnsName << "' with "
-            << mServiceDescription.addresses.size() << " addresses at interval "
-            << mServiceDescription.interval << "s \n";
-            AliceO2::Common::GuardFunction logGuard([&]{
-              cout << "Stopping publisher '" << mServiceDescription.dnsName << "'\n";});
-
-            // Prepare the service and its variable
-            std::vector<uint32_t> registerValues(mServiceDescription.addresses.size());
-            auto registerCount = registerValues.size();
-            auto size = registerCount * sizeof(decltype(registerValues)::value_type);
-            auto format = boost::str(boost::format("I:%d") % registerCount);
-//            DimService service(mServiceDescription.dnsName.c_str(), format.c_str(), registerValues.data(), size);
-
-            while(!stopFlag->load(std::memory_order_relaxed)) {
-
-              std::ostringstream stream;
-              stream << "Publisher '" << mServiceDescription.dnsName << "' publishing:\n";
-
-              for (size_t i = 0; i < mServiceDescription.addresses.size(); ++i) {
-                auto index = mServiceDescription.addresses[i] / 4;
-                auto value = mChannel->readRegister(index);
-                stream << "  " << mServiceDescription.addresses[i] << " = " << value << '\n';
-                registerValues[i] = mChannel->readRegister(index);
-              }
-
-              cout << stream.str();
-
-//              service.updateService();
-
-              auto nextTime = startTime + std::chrono::duration<double>(iteration * mServiceDescription.interval);
-              std::this_thread::sleep_until(nextTime);
-              iteration++;
-            }
-          });
-        }
-
-        ServiceDescription mServiceDescription;
-        ChannelSharedPtr mChannel;
-    };
-
-    std::unordered_map<std::string, std::unique_ptr<Publisher>> mPublishers;
-    Mutex mMutex;
-};
-
-/// Class that handles adding/removing publishers
-class UnthreadedPublisherRegistry
-{
-  public:
-    struct ServiceDescription
-    {
-        std::string dnsName;
-        std::vector<size_t> addresses;
-        std::chrono::seconds interval;
-        std::chrono::steady_clock::time_point nextUpdate;
-    };
 
     /// Add service
     void add(const ServiceDescription& serviceDescription)
@@ -174,65 +71,115 @@ class UnthreadedPublisherRegistry
       if (mServices.count(serviceDescription.dnsName)) {
         remove(serviceDescription.dnsName);
       }
-
-      cout << "Starting publisher '" << serviceDescription.dnsName << "' with "
-          << serviceDescription.addresses.size() << " addresses at interval "
-          << serviceDescription.interval.count() << "s \n";
-
-
-      // Prepare the service and its variable
-      std::vector<uint32_t> registerValues(serviceDescription.addresses.size());
-      auto registerCount = registerValues.size();
-      auto size = registerCount * sizeof(decltype(registerValues)::value_type);
-      auto format = boost::str(boost::format("I:%d") % registerCount);
-
-      mServices.find()
-      Service service {serviceDescription, std::make_unique<DimService>(
-        serviceDescription.dnsName.c_str(), format.c_str(), registerValues.data(), size)};
-
-
-
+      mServices.insert(std::make_pair(serviceDescription.dnsName, std::make_unique<Service>(serviceDescription)));
     }
 
     /// Remove service
     void remove(std::string dnsName)
     {
-      cout << "Stopping publisher '" << dnsName << "'\n";
+      mServices.erase(dnsName);
     }
 
-    /// Call this frequently
-    void loop(ChannelSharedPtr& channel)
+    /// Call this in a loop
+    void loop()
     {
-      for (auto& service: mServices) {
-        std::ostringstream stream;
-        stream << "Publisher '" << mServiceDescription.dnsName << "' publishing:\n";
+      auto now = std::chrono::steady_clock::now();
+      std::chrono::steady_clock::time_point next = now + std::chrono::seconds(1);
 
-        for (size_t i = 0; i < mServiceDescription.addresses.size(); ++i) {
-          auto index = mServiceDescription.addresses[i] / 4;
-          auto value = mChannel->readRegister(index);
-          stream << "  " << mServiceDescription.addresses[i] << " = " << value << '\n';
-          registerValues[i] = mChannel->readRegister(index);
+      for (auto& kv: mServices) {
+        auto& service = *kv.second;
+        if (service.nextUpdate < now) {
+          service.updateRegisterValues(*mChannel.get());
+          service.advanceUpdateTime();
+          if (service.nextUpdate < next) {
+            next = service.nextUpdate;
+          }
         }
-
-        cout << stream.str();
-
-//              service.updateService();
-
-        auto nextTime = startTime + std::chrono::duration<double>(iteration * mServiceDescription.interval);
-        std::this_thread::sleep_until(nextTime);
-        iteration++;
       }
+      std::this_thread::sleep_until(next);
     }
 
   private:
 
-    struct Service
+    class Service
     {
-        ServiceDescription description;
+      public:
+        Service(const ServiceDescription& description)
+        {
+          mDescription = description;
+          nextUpdate = std::chrono::steady_clock::now();
+          registerValues.resize(mDescription.addresses.size());
+
+          auto format = boost::str(boost::format("I:%d") % registerValues.size());
+          dimService = std::make_unique<DimService>(mDescription.dnsName.c_str(), format.c_str(), registerValues.data(),
+            registerValues.size());
+
+          cout << "Starting publisher '" << mDescription.dnsName << "' with "
+            << mDescription.addresses.size() << " address(es) at interval "
+            << mDescription.interval.count() << "ms \n";
+        }
+
+        ~Service()
+        {
+          cout << "Stopping publisher '" << mDescription.dnsName << "'" << endl;
+        }
+
+        void updateRegisterValues(RegisterReadWriteInterface& channel)
+        {
+          cout << "Updating '" << mDescription.dnsName << "':" << endl;
+          for (size_t i = 0; i < mDescription.addresses.size(); ++i) {
+            auto index = mDescription.addresses[i] / 4;
+            auto value = channel.readRegister(index);
+            cout << "  " << mDescription.addresses[i] << " = " << value << endl;
+            registerValues.at(i) = channel.readRegister(index);
+          }
+          dimService->updateService();
+        }
+
+        void advanceUpdateTime()
+        {
+          nextUpdate = nextUpdate + mDescription.interval;
+        }
+
+        ServiceDescription mDescription;
+        std::chrono::steady_clock::time_point nextUpdate;
+        std::vector<uint32_t> registerValues;
         std::unique_ptr<DimService> dimService;
     };
 
+    ChannelSharedPtr mChannel;
     std::unordered_map<std::string, std::unique_ptr<Service>> mServices;
+};
+
+struct CommandPublishStart
+{
+    ServiceDescription description;
+};
+
+struct CommandPublishStop
+{
+    std::string dnsName;
+};
+
+using CommandVariant = boost::variant<CommandPublishStart, CommandPublishStop>;
+
+class CommandQueue
+{
+  public:
+
+    template <class ...Args>
+    bool write(Args&&... recordArgs)
+    {
+      return mQueue.write(std::forward<Args>(recordArgs)...);
+    }
+
+    bool read(CommandVariant& command)
+    {
+      return mQueue.read(command);
+    }
+
+  private:
+    folly::ProducerConsumerQueue<CommandVariant> mQueue {512};
 };
 
 class ProgramAliceLowlevelFrontendServer: public Program
@@ -264,38 +211,56 @@ class ProgramAliceLowlevelFrontendServer: public Program
       auto channel = AliceO2::roc::ChannelFactory().getBar(params);
 
       DimServer::start("ALF");
-      // Object that stops the DIM service when destroyed
-      //AliceO2::Common::GuardFunction dimStopper([]{DimServer::stop();});
 
+      // Object for service DNS names
       Alf::ServiceNames names(serialNumber, channelNumber);
 
       // Start RPC server for reading registers
+      cout << "Starting service " << names.registerReadRpc() << endl;
       Alf::StringRpcServer registerReadRpcServer(names.registerReadRpc(),
           [&](const std::string& parameter) {return registerRead(parameter, channel);});
 
       // Start RPC server for writing registers
+      cout << "Starting service " << names.registerWriteRpc() << endl;
       Alf::StringRpcServer registerWriteRpcServer(names.registerWriteRpc(),
           [&](const std::string& parameter) {return registerWrite(parameter, channel);});
 
-      PublisherRegistry publisherRegistry;
+      //PublisherRegistry publisherRegistry;
+      PublisherRegistry publisherRegistry {channel};
 
       // Start RPC server for publish commands
-      Alf::StringRpcServer publishCommandRpcServer(names.publishCommandRpc(),
-          [&](const std::string& parameter) {return publishCommand(parameter, channel, publisherRegistry);});
+      cout << "Starting service " << names.publishCommandRpc() << endl;
+      Alf::StringRpcServer publishStartCommandRpcServer(names.publishCommandRpc(),
+          [&](const std::string& parameter) {return publishStartCommand(parameter, mCommandQueue);});
 
       // Start RPC server for stop publish commands
+      cout << "Starting service " << names.publishStopCommandRpc() << endl;
       Alf::StringRpcServer publishStopCommandRpcServer(names.publishStopCommandRpc(),
-          [&](const std::string& parameter) {return publishStopCommand(parameter, publisherRegistry);});
-
-//      publishCommand("/ALF/1;20,40;2.0", channel, publisherRegistry);
-//      publishCommand("/ALF/2;504;1.0", channel, publisherRegistry);
+          [&](const std::string& parameter) {return publishStopCommand(parameter, mCommandQueue);});
 
       // Start temperature service
-//      DimService temperatureService(names.temperature().c_str(), mTemperature);
-      while (!isSigInt()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-//        mTemperature = double((std::rand() % 100) + 400) / 10.0;
-//        temperatureService.updateService(mTemperature);
+      DimService temperatureService(names.temperature().c_str(), mTemperature);
+
+      while (!isSigInt())
+      {
+        {
+          // Take care of publishing commands from the queue
+          CommandVariant command;
+          while (mCommandQueue.read(command)) {
+            Visitor::apply(command,
+                [&](const CommandPublishStart& command){
+                  publisherRegistry.add(command.description);
+                },
+                [&](const CommandPublishStop& command){
+                  publisherRegistry.remove(command.dnsName);
+                }
+            );
+          }
+        }
+
+        publisherRegistry.loop();
+        mTemperature = double((std::rand() % 100) + 400) / 10.0;
+        temperatureService.updateService(mTemperature);
       }
     }
 
@@ -347,31 +312,35 @@ class ProgramAliceLowlevelFrontendServer: public Program
     }
 
     /// RPC handler for publish commands
-    static std::string publishCommand(const std::string& parameter, ChannelSharedPtr channel,
-        PublisherRegistry& registry)
+    static std::string publishStartCommand(const std::string& parameter, CommandQueue& commandQueue)
     {
       cout << "Received publish command: '" << parameter << "'" << endl;
-
       auto params = split(parameter, ";");
-      auto serviceName = params.at(0);
-      auto registerAddresses = lexicalCastVector<size_t>(split(params.at(1), ","));
-      auto interval = boost::lexical_cast<double>(params.at(2));
 
-      registry.add(channel, { serviceName, interval, registerAddresses });
+      ServiceDescription description;
+      description.addresses = lexicalCastVector<uintptr_t >(split(params.at(1), ","));
+      description.dnsName = params.at(0);
+      description.interval = std::chrono::milliseconds(int64_t(boost::lexical_cast<double>(params.at(2)) * 1000.0));
+
+      if (!commandQueue.write(CommandPublishStart{std::move(description)})) {
+        cout << "  command queue was full!" << endl;
+      }
       return "";
     }
 
     /// RPC handler for publish stop commands
-    static std::string publishStopCommand(const std::string& parameter, PublisherRegistry& registry)
+    static std::string publishStopCommand(const std::string& parameter, CommandQueue& commandQueue)
     {
       cout << "Received stop command: '" << parameter << "'" << endl;
-      registry.remove(parameter);
+      if (!commandQueue.write(CommandPublishStop{parameter})) {
+        cout << "  command queue was full!" << endl;
+      }
       return "";
     }
 
-    using DimServicePtr = std::unique_ptr<DimService>;
+    CommandQueue mCommandQueue;
 
-    double mTemperature = 45;
+    double mTemperature = 40;
 };
 } // Anonymous namespace
 
