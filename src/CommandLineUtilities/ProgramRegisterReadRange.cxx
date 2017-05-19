@@ -52,7 +52,7 @@ class ProgramRegisterReadRange: public Program
 
       if (mFile.empty()) {
         for (int i = 0; i < range; ++i) {
-          std::cout << Common::makeRegisterString((baseIndex + i) * 4, values[i]);
+          std::cout << Common::makeRegisterString((baseIndex + i) * 4, values[i]) << '\n';
         }
       }
       else {

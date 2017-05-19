@@ -46,7 +46,7 @@ class ProgramRegisterWrite: public Program
       if (readback) {
         auto value = channel->readRegister(address / 4);
         if (isVerbose()) {
-          std::cout << Common::makeRegisterString(address, value);
+          std::cout << Common::makeRegisterString(address, value) << '\n';
         } else {
           std::cout << "0x" << std::hex << value << '\n';
         }
