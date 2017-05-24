@@ -125,6 +125,18 @@ class Crorc
 
     RxFreeFifoState getRxFreeFifoState();
 
+    static void scaInit(RegisterReadWriteInterface& bar2);
+
+    static void scaWrite(RegisterReadWriteInterface& bar2, uint32_t command, uint32_t data);
+
+    struct ScaReadResult
+    {
+        uint32_t data;
+        uint32_t command;
+        uint32_t time;
+    };
+    static ScaReadResult scaRead(RegisterReadWriteInterface& bar2);
+
     /// Set C-RORC for continuous readout
     static void initReadoutContinuous(RegisterReadWriteInterface& bar2);
 

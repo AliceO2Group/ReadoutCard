@@ -93,6 +93,17 @@ constexpr int LRD     = 62; ///< FLASH READY register
 constexpr int RES0xFC = 63; ///< reserved (0x0FC) register
 } // namespace Flash
 
+/// SCA interface
+namespace Sca
+{
+constexpr int DATA    = 0x1e0 / 4;
+constexpr int COMMAND = 0x1e4 / 4;
+constexpr int CONTROL = 0x1e8 / 4;
+constexpr int READ_DATA    = 0x1f0 / 4;
+constexpr int READ_COMMAND = 0x1f4 / 4;
+constexpr int READ_TIME    = 0x1ec / 4;
+} // namespace Sca
+
 /// Serial number related constants
 namespace Serial
 {
