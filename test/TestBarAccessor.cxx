@@ -62,6 +62,13 @@ BOOST_AUTO_TEST_CASE(TestDataGeneratorConfiguration)
   }
   {
     uint32_t bits = 0;
+    Cru::BarAccessor::setDataGeneratorRandomSizeBits(bits, true);
+    BOOST_CHECK(bits == (1 << 16));
+    Cru::BarAccessor::setDataGeneratorRandomSizeBits(bits, false);
+    BOOST_CHECK(bits != (1 << 16));
+  }
+  {
+    uint32_t bits = 0;
     Cru::BarAccessor::setDataGeneratorEnableBits(bits, true);
     BOOST_CHECK(bits == 0x1);
     Cru::BarAccessor::setDataGeneratorPatternBits(bits, GeneratorPattern::Incremental);

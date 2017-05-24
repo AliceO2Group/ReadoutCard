@@ -73,12 +73,18 @@ class BarAccessor
       mBar->writeRegister(Registers::RESET_CONTROL, 0x1);
     }
 
-    void setDataGeneratorPattern(GeneratorPattern::type pattern, size_t size)
+    void setDataGeneratorPattern(GeneratorPattern::type pattern, size_t size, bool randomEnabled)
     {
       uint32_t bits = mBar->readRegister(Registers::DATA_GENERATOR_CONTROL);
       setDataGeneratorPatternBits(bits, pattern);
       setDataGeneratorSizeBits(bits, size);
+      setDataGeneratorRandomSizeBits(bits, randomEnabled);
       mBar->writeRegister(Registers::DATA_GENERATOR_CONTROL, bits);
+    }
+
+    void dataGeneratorInjectError()
+    {
+      mBar->writeRegister(Registers::DATA_GENERATOR_CONTROL, Registers::DATA_GENERATOR_CONTROL_CMD_INJECT_ERROR);
     }
 
     uint32_t getSerialNumber() const
@@ -230,6 +236,12 @@ class BarAccessor
     {
       Utilities::setBit(bits, 0, enabled);
     }
+
+    static void setDataGeneratorRandomSizeBits(uint32_t& bits, bool enabled)
+    {
+      Utilities::setBit(bits, 16, enabled);
+    }
+
 
 //    uint8_t getDebugReadWriteRegister()
 //    {

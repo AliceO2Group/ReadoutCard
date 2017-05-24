@@ -28,6 +28,12 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
     virtual ~CrorcDmaChannel() override;
 
     virtual CardType::type getCardType() override;
+
+    virtual bool injectError() override
+    {
+        return false;
+    }
+
     virtual boost::optional<std::string> getFirmwareInfo() override;
 
     virtual void pushSuperpage(Superpage superpage) override;

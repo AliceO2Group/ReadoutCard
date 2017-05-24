@@ -1,15 +1,16 @@
 ReadoutCard (RoC) module
 ===================
-The ReadoutCard module* is a C++ library that provides a high-level interface for accessing and controlling 
-high-performance data acquisition PCIe cards.
-
-**Formerly known as the RORC module*
-
 
 Table of Contents
 ===================
 1. [Introduction](#introduction)
 2. [Usage](#usage)
+  1. [DMA channels](#usage-dma-channels)
+  2. [BAR interface](#usage-bar-interface)
+  3. [Dummy implementation](#usage-dummy-implementation)
+  4. [Utility programs](#usage-utility-programs)
+  5. [Exceptions](#usage-exceptions)
+  6. [Python interface](#usage-python-interface)
 3. [Installation](#installation)
 4. [Implementation notes](#implementation-notes)
 5. [Known issues](#known-issues)
@@ -18,10 +19,21 @@ Table of Contents
 
 Introduction  <div id='introduction'/>
 ===================
-### Supported cards
-The library currently supports the C-RORC and CRU cards.
-It also provides a software-based dummy card (see the section "Dummy implementation" for more details)
+The ReadoutCard module* is a C++ library that provides a high-level interface for accessing and controlling 
+high-performance data acquisition PCIe cards.
 
+Included in the library are several supporting command-line utilities for listing cards, accessing registers, 
+performing tests, maintenance, benchmarks, etc. See the section 'Utility programs' for more information. 
+
+If you are just interested in reading and writing to the BAR, without particularly high performance requirements,
+feel free to skip ahead to the section "Python interface" for the most convenient way to do so.
+
+The library currently supports the C-RORC and CRU cards.
+It also provides a software-based dummy card (see the section "Dummy implementation" for more details).
+
+* *Formerly known as the RORC module*
+
+## Terminology
 [todo] BAR, DMA buffer, Superpages, pages, and other confusing terminology, memory layout
 
 ### The MMU, hugepages, and the IOMMU
@@ -61,9 +73,10 @@ Clients can acquire a lock on a DMA channel by instantiating a *DmaChannelInterf
 the *ChannelFactory* class. Once this object is constructed, it will provide exclusive access to the DMA channel.
 
 The user will need to specify parameters for the channel by passing an instance of the *Parameters* 
-class to the factory function. The most important parameters are the card ID (either a serial number or a PCI address),
-and the BAR channel number. See the *Parameters* class's setter functions for more information about the options 
-available.
+class to the factory function. 
+The most important parameters are the card ID (either a serial number or a PCI address), and the BAR channel number.
+The serial number and PCI address (as well as additional information) can be listed using the `roc-list-cards` utility.
+See the *Parameters* class's setter functions for more information about the options available.
 
 The driver uses some files in shared memory:
 * `/dev/shm/alice_o2/rorc/[PCI address]/channel_[channel number]/fifo` - For card FIFOs
@@ -72,7 +85,7 @@ The driver uses some files in shared memory:
 * `/var/lib/hugetlbfs/global/pagesize-[page size]/rorc-dma-bench_id=[PCI address]_chan_[channel number]` - For card benchmark DMA buffers
 
 If the process crashes badly, it may be necessary to clean up the mutex manually, either by deleting with `rm` or by 
-using the `rorc-channel-cleanup` utility. There is also the possibility of automatic cleanup by setting forced unlocking
+using the `roc-channel-cleanup` utility. There is also the possibility of automatic cleanup by setting forced unlocking
 enabled using the `setForcedUnlockEnabled()` function of the *Parameters* class. However, this option should be used with
 caution. See the function's documentation for more information about the risks.
 

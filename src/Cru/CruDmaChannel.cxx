@@ -32,6 +32,7 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
       mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)), // Internal loopback by default
       mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)), // Use data generator by default
       mGeneratorPattern(parameters.getGeneratorPattern().get_value_or(GeneratorPattern::Incremental)), //
+      mGeneratorDataSizeRandomEnabled(parameters.getGeneratorRandomSizeEnabled().get_value_or(true)), //
       mGeneratorMaximumEvents(0), // Infinite events
       mGeneratorInitialValue(0), // Start from 0
       mGeneratorInitialWord(0), // First word
@@ -154,7 +155,7 @@ void CruDmaChannel::initCru()
 {
   // Set data generator pattern
   if (mGeneratorEnabled) {
-    getBar().setDataGeneratorPattern(mGeneratorPattern, mGeneratorDataSize);
+    getBar().setDataGeneratorPattern(mGeneratorPattern, mGeneratorDataSize, mGeneratorDataSizeRandomEnabled);
   }
 }
 
@@ -170,6 +171,7 @@ void CruDmaChannel::pushSuperpage(Superpage superpage)
   for (size_t i = 0; i < mLinks.size(); ++i) {
     auto &link = getNextLinkToPush();
     if (link.queue.size() < LINK_QUEUE_CAPACITY) {
+//      printf("L %02u - push >>>\n", link.id);
       link.queue.push_back(superpage);
       mLinksTotalQueueSize++;
       auto maxPages = superpage.getSize() / Cru::DMA_PAGE_SIZE;
@@ -223,7 +225,7 @@ void CruDmaChannel::fillSuperpages()
         if (mReadyQueue.size() >= READY_QUEUE_CAPACITY) {
           break;
         }
-        printf("L %02u - pop <<<\n", link.id);
+//        printf("L %02u - pop <<<\n", link.id);
 
         // Front superpage has arrived
         link.queue.front().ready = true;
@@ -246,6 +248,16 @@ int CruDmaChannel::getTransferQueueAvailable()
 int CruDmaChannel::getReadyQueueSize()
 {
   return mReadyQueue.size();
+}
+
+bool CruDmaChannel::injectError()
+{
+  if (mGeneratorEnabled) {
+    getBar().dataGeneratorInjectError();
+    return true;
+  } else {
+    return false;
+  }
 }
 
 boost::optional<float> CruDmaChannel::getTemperature()

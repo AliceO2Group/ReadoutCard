@@ -37,6 +37,7 @@ class CruDmaChannel final : public DmaChannelPdaBase
     virtual Superpage popSuperpage() override;
     virtual void fillSuperpages() override;
 
+    virtual bool injectError() override;
     virtual boost::optional<float> getTemperature() override;
     virtual boost::optional<std::string> getFirmwareInfo() override;
 
@@ -62,10 +63,10 @@ class CruDmaChannel final : public DmaChannelPdaBase
     struct Link
     {
         /// The link's FEE ID
-        uint32_t id;
+        uint32_t id = 0;
 
         /// The amount of superpages received from this link
-        uint32_t superpageCounter;
+        uint32_t superpageCounter = 0;
 
         /// The superpage queue
         SuperpageQueue queue {LINK_QUEUE_CAPACITY};
@@ -137,6 +138,9 @@ class CruDmaChannel final : public DmaChannelPdaBase
 
     /// Data pattern for the data generator
     GeneratorPattern::type mGeneratorPattern;
+
+    /// Random data size
+    bool mGeneratorDataSizeRandomEnabled;
 
     /// Maximum number of events
     int mGeneratorMaximumEvents;

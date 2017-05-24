@@ -14,8 +14,14 @@
 namespace AliceO2 {
 namespace roc {
 
-/// Provides access to a BAR of a readout card
-/// Access to 'dangerous' registers may be restricted: UnsafeReadAccess and UnsafeWriteAccess exceptions may be thrown
+/// Provides access to a BAR of a readout card.
+///
+/// Registers are read and written in 32-bit chunks.
+/// Inherits from RegisterReadWriteInterface and implements the read & write methods.
+///
+/// Access to 'dangerous' registers may be restricted: UnsafeReadAccess and UnsafeWriteAccess exceptions may be thrown.
+///
+/// To instantiate an implementation, use the ChannelFactory::getBar() method.
 class BarInterface: public virtual RegisterReadWriteInterface
 {
   public:

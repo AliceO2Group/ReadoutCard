@@ -29,6 +29,10 @@ class DummyDmaChannel final : public DmaChannelBase
     virtual Superpage getSuperpage() override;
     virtual Superpage popSuperpage() override;
     virtual void fillSuperpages() override;
+    virtual bool injectError() override
+    {
+      return false;
+    }
     virtual boost::optional<float> getTemperature() override;
     virtual boost::optional<std::string> getFirmwareInfo() override;
     virtual int getTransferQueueAvailable() override;

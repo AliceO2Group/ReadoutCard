@@ -53,6 +53,8 @@ static constexpr int LINK_SUPERPAGE_OFFSET = 0x10/4;
 /// Bit 3: set to inject error
 static constexpr size_t DATA_GENERATOR_CONTROL = 0x420/4;
 
+static constexpr uint32_t DATA_GENERATOR_CONTROL_CMD_INJECT_ERROR = 0x8;
+
 /// Board serial number
 /// Must be accessed on BAR 2
 /// Byte address: 0x20002c

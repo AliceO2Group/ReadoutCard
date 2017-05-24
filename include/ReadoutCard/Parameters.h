@@ -42,7 +42,7 @@ class Parameters
 
     // Types for parameter values
 
-    /// Type for buffer parameters
+    /// Type for buffer parameters. It can hold either Memory or File buffer parameters.
     using BufferParametersType = boost::variant<buffer_parameters::Memory, buffer_parameters::File>;
 
     /// Type for the CardId parameter. It can hold either a serial number or PciAddress.
@@ -65,6 +65,9 @@ class Parameters
 
     /// Type for the generator pattern parameter
     using GeneratorPatternType = GeneratorPattern::type;
+
+    /// Type for the generator data size parameter
+    using GeneratorRandomSizeEnabledType = bool;
 
     /// Type for the readout mode parameter
     using ReadoutModeType = ReadoutMode::type;
@@ -130,8 +133,8 @@ class Parameters
     /// It controls the size in bytes of the generated data per DMA page.
     ///
     /// Supported values:
-    /// * C-RORC: multiples of 32 bits, up to 2097152 bytes.
-    /// * CRU: multiples of 256 bits, up to 8 KiB.
+    /// * C-RORC: multiples of 4 bytes, up to 2097152 bytes.
+    /// * CRU: multiples of 32 bytes, minimum 64 bytes, up to 8 KiB.
     ///
     /// If not set, the driver will default to the DMA page size, i.e. the pages will be filled completely.
     ///
@@ -164,6 +167,16 @@ class Parameters
     /// \param value The value to set
     /// \return Reference to this object for chaining calls
     auto setGeneratorPattern(GeneratorPatternType value) -> Parameters&;
+
+    /// Sets the GeneratorRandomSizeEnabled parameter.
+    ///
+    /// If enabled, the content of the DMA pages will have a random size.
+    /// * C-RORC: currently unsupported
+    /// * CRU: Size varies between 32 bytes and the DMA page size
+    ///
+    /// \param value The value to set
+    /// \return Reference to this object for chaining calls
+    auto setGeneratorRandomSizeEnabled(GeneratorRandomSizeEnabledType value) -> Parameters&;
 
     /// Sets the BufferParameters parameter
     ///
@@ -260,6 +273,10 @@ class Parameters
     /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
     auto getGeneratorPattern() const -> boost::optional<GeneratorPatternType>;
 
+    /// Gets the GeneratorRandomSizeEnabled parameter
+    /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+    auto getGeneratorRandomSizeEnabled() const -> boost::optional<GeneratorRandomSizeEnabledType>;
+
     /// Gets the BufferParameters parameter
     /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
     auto getBufferParameters() const -> boost::optional<BufferParametersType>;
@@ -313,6 +330,11 @@ class Parameters
     /// \exception ParameterException The parameter was not present
     /// \return The value
     auto getGeneratorPatternRequired() const -> GeneratorPatternType;
+
+    /// Gets the GeneratorRandomSizeEnabled parameter
+    /// \exception ParameterException The parameter was not present
+    /// \return The value
+    auto getGeneratorRandomSizeEnabledRequired() const -> GeneratorRandomSizeEnabledType;
 
     /// Gets the BufferParameters parameter
     /// \exception ParameterException The parameter was not present

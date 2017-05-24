@@ -82,9 +82,10 @@ class DmaChannelInterface
 
     // Optional features
 
-    /// Request injection of errors
-    /// \return True if successful, false if no errors were injected
-//    bool injectErrors() = 0;
+    /// Request injection of an error into the data stream
+    /// Currently, only the CRU backend supports this when using the internal data generator
+    /// \return True if successful, false if no error was injected
+    virtual bool injectError() = 0;
 
     /// Gets card serial number if available
     /// \return Serial number if available, else an empty optional
