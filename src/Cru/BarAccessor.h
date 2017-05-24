@@ -9,7 +9,8 @@
 #include <boost/optional/optional.hpp>
 #include "Cru/Constants.h"
 #include "Cru/FirmwareFeatures.h"
-#include "Pda/PdaBar.h"
+#include "ExceptionInternal.h"
+#include "ReadoutCard/BarInterface.h"
 #include "Utilities/Util.h"
 
 namespace AliceO2 {
@@ -20,8 +21,8 @@ namespace Cru {
 class BarAccessor
 {
   public:
-    BarAccessor(Pda::PdaBar* pdaBar)
-        : mBar(pdaBar)
+    BarAccessor(BarInterface* bar)
+        : mBar(bar)
     {
     }
 

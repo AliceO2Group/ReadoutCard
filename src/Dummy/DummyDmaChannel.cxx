@@ -131,6 +131,11 @@ void DummyDmaChannel::fillSuperpages()
   }
 }
 
+boost::optional<int32_t> DummyDmaChannel::getSerial()
+{
+  return ChannelFactory::getDummySerialNumber();
+}
+
 boost::optional<float> DummyDmaChannel::getTemperature()
 {
   auto seconds = std::chrono::duration_cast<std::chrono::seconds>(

@@ -89,7 +89,7 @@ class DmaChannelInterface
 
     /// Gets card serial number if available
     /// \return Serial number if available, else an empty optional
-//    virtual boost::optional<int32_t> getSerial() = 0;
+    virtual boost::optional<int32_t> getSerial() = 0;
 
     /// Gets card temperature in °C if available
     /// \return Temperature in °C if available, else an empty optional

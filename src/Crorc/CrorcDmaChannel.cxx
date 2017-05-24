@@ -433,6 +433,11 @@ CardType::type CrorcDmaChannel::getCardType()
   return CardType::Crorc;
 }
 
+boost::optional<int32_t> CrorcDmaChannel::getSerial()
+{
+  return Crorc::getSerial(mPdaBar);
+}
+
 boost::optional<std::string> CrorcDmaChannel::getFirmwareInfo()
 {
   uint32_t version = mPdaBar.readRegister(Rorc::RFID);

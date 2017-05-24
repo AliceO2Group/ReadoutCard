@@ -33,6 +33,7 @@ class DummyDmaChannel final : public DmaChannelBase
     {
       return false;
     }
+    virtual boost::optional<int32_t> getSerial() override;
     virtual boost::optional<float> getTemperature() override;
     virtual boost::optional<std::string> getFirmwareInfo() override;
     virtual int getTransferQueueAvailable() override;

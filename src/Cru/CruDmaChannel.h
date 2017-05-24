@@ -38,6 +38,7 @@ class CruDmaChannel final : public DmaChannelPdaBase
     virtual void fillSuperpages() override;
 
     virtual bool injectError() override;
+    virtual boost::optional<int32_t> getSerial() override;
     virtual boost::optional<float> getTemperature() override;
     virtual boost::optional<std::string> getFirmwareInfo() override;
 

@@ -260,6 +260,15 @@ bool CruDmaChannel::injectError()
   }
 }
 
+boost::optional<int32_t> CruDmaChannel::getSerial()
+{
+  if (mFeatures.serial) {
+    return getBar2().getSerialNumber();
+  } else {
+    return {};
+  }
+}
+
 boost::optional<float> CruDmaChannel::getTemperature()
 {
   if (mFeatures.temperature) {
