@@ -235,8 +235,8 @@ class ProgramAliceLowlevelFrontendServer: public Program
       PublisherRegistry publisherRegistry {channel};
 
       // Start RPC server for publish commands
-      getInfoLogger() << "Starting service " << names.publishCommandRpc() << InfoLogger::endm;
-      Alf::StringRpcServer publishStartCommandRpcServer(names.publishCommandRpc(),
+      getInfoLogger() << "Starting service " << names.publishStartCommandRpc() << InfoLogger::endm;
+      Alf::StringRpcServer publishStartCommandRpcServer(names.publishStartCommandRpc(),
           [&](const std::string& parameter) {return publishStartCommand(parameter, mCommandQueue);});
 
       // Start RPC server for stop publish commands

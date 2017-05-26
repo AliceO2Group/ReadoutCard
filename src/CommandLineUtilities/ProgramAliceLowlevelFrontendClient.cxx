@@ -73,7 +73,7 @@ class ProgramAliceLowlevelFrontendClient: public Program
       Alf::RegisterWriteRpc writeRpc(names.registerWriteRpc());
 
 
-      Alf::PublishRpc publishRpc(names.publishCommandRpc());
+      Alf::PublishRpc publishRpc(names.publishStartCommandRpc());
 
       publishRpc.publish("ALF/TEST/1", 1.0, {0x1fc});
       publishRpc.publish("ALF/TEST/2", 3.0, {0x100, 0x104, 0x108});

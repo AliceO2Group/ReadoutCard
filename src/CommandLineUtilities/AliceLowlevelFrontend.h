@@ -36,7 +36,7 @@ struct ServiceNames
       return boost::str(boost::format("ALF/SERIAL_%d/CHANNEL_%d/REGISTER_WRITE") % serial % channel);
     }
 
-    std::string publishCommandRpc()
+    std::string publishStartCommandRpc()
     {
       return boost::str(boost::format("ALF/SERIAL_%d/CHANNEL_%d/PUBLISH_SERVICE") % serial % channel);
     }
@@ -44,6 +44,11 @@ struct ServiceNames
     std::string publishStopCommandRpc()
     {
       return boost::str(boost::format("ALF/SERIAL_%d/CHANNEL_%d/PUBLISH_SERVICE_STOP") % serial % channel);
+    }
+
+    std::string writeSca()
+    {
+      return boost::str(boost::format("ALF/SERIAL_%d/CHANNEL_%d/PUBLISH_SERVICE") % serial % channel);
     }
 
     std::string temperature()
