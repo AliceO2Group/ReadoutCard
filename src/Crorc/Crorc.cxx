@@ -1032,7 +1032,6 @@ void Crorc::scaInit(RegisterReadWriteInterface& bar2)
   bar2.writeRegister(Rorc::Sca::CONTROL, 0x2);
   bar2.writeRegister(Rorc::Sca::CONTROL, 0x1);
   bar2.writeRegister(Rorc::Sca::CONTROL, 0x0);
-
 }
 
 void Crorc::scaWrite(RegisterReadWriteInterface& bar2, uint32_t command, uint32_t data)

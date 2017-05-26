@@ -52,19 +52,27 @@ class CruDmaChannel final : public DmaChannelPdaBase
 
   private:
 
-    // Max amount of superpages per link
+    /// Max amount of superpages per link
     static constexpr size_t LINK_QUEUE_CAPACITY = Cru::MAX_SUPERPAGE_DESCRIPTORS;
 
-    // Max amount of superpages in the ready queue
+    /// Max amount of superpages in the ready queue
     static constexpr size_t READY_QUEUE_CAPACITY = 32;
 
-    // Queue for one link
+    /// Queue for one link
     using SuperpageQueue = boost::circular_buffer<Superpage>;
+
+    /// Index into mLinks
+    using LinkIndex = uint8_t;
+    static_assert(std::numeric_limits<LinkIndex>::max() >= Cru::MAX_LINKS, "");
+
+    /// ID for a link
+    using LinkId = uint8_t;
+    static_assert(std::numeric_limits<LinkId>::max() >= Cru::MAX_LINKS, "");
 
     struct Link
     {
         /// The link's FEE ID
-        uint32_t id = 0;
+        LinkId id = 0;
 
         /// The amount of superpages received from this link
         uint32_t superpageCounter = 0;
@@ -88,24 +96,6 @@ class CruDmaChannel final : public DmaChannelPdaBase
       return Cru::BarAccessor(&mPdaBar2);
     }
 
-    // The link queues are checked round-robin
-    Link& getNextLinkToPush()
-    {
-      auto& link = mLinks.at(mLinkToPush);
-      mLinkToPush++;
-      mLinkToPush = (mLinkToPush == mLinks.size()) ? 0 : mLinkToPush;
-      return link;
-    }
-
-    // The link queues are checked round-robin
-    Link& getNextLinkToPop()
-    {
-      auto& link = mLinks.at(mLinkToPop);
-      mLinkToPop++;
-      mLinkToPop = (mLinkToPop == mLinks.size()) ? 0 : mLinkToPop;
-      return link;
-    }
-
     /// BAR 0 is needed for DMA engine interaction and various other functions
     Pda::PdaBar mPdaBar;
 
@@ -117,12 +107,12 @@ class CruDmaChannel final : public DmaChannelPdaBase
 
     /// Vector of objects representing links
     std::vector<Link> mLinks;
-    /// Index into mLinks indicating which link's turn it is to use a superpage handed to the driver
-    uint32_t mLinkToPush;
-    /// Index into mLinks indicating which link's turn it is to check for a ready superpage to hand to the user
-    uint32_t mLinkToPop;
-    /// Amount of total available superpage slots left across all links
-    uint32_t mLinksTotalQueueSize;
+
+    /// Queue to track in which order to push superpages to which link.
+    /// At the start, it's filled round-robin with LinkIndexes.
+    /// When a superpage is pushed, a LinkIndex is popped from the front of the queue and pushed to that link.
+    /// When a superpage is popped, the LinkIndex of the link it was popped from is pushed to the back of the queue.
+    boost::circular_buffer<LinkIndex> mLinkIndexQueue;
 
     SuperpageQueue mReadyQueue { READY_QUEUE_CAPACITY };
 

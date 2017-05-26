@@ -75,7 +75,7 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
           << ErrorInfo::LinkId(id));
       }
       getLogger() << id << " ";
-      mLinks.push_back({id});
+      mLinks.push_back({static_cast<LinkId>(id)});
     }
     getLogger() << InfoLogger::InfoLogger::endm;
   }
@@ -102,14 +102,19 @@ void CruDmaChannel::deviceStartDma()
     mPdaBar2.writeRegister(0x8000020 / 4, 1);
   }
 
-  mLinkToPush = 0;
-  mLinkToPop = 0;
-  mLinksTotalQueueSize = 0;
   for (auto &link : mLinks) {
     link.queue.clear();
     link.superpageCounter = 0;
   }
   mReadyQueue.clear();
+
+  mLinkIndexQueue.resize(LINK_QUEUE_CAPACITY * mLinks.size());
+  mLinkIndexQueue.clear();
+  for (size_t i = 0; i < LINK_QUEUE_CAPACITY; ++i) {
+    for (LinkIndex i = 0; i < mLinks.size(); ++i) {
+      mLinkIndexQueue.push_back(i);
+    }
+  }
 }
 
 /// Set buffer to ready
@@ -163,22 +168,23 @@ void CruDmaChannel::pushSuperpage(Superpage superpage)
 {
   checkSuperpage(superpage);
 
-  if (getTransferQueueAvailable() == 0) {
+  if (mLinkIndexQueue.empty()) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not push superpage, transfer queue was full"));
   }
 
-  // Look for an empty slot in the link queues
-  for (size_t i = 0; i < mLinks.size(); ++i) {
-    auto &link = getNextLinkToPush();
-    if (link.queue.size() < LINK_QUEUE_CAPACITY) {
+  // Get the next link to push
+  LinkIndex linkIndex = mLinkIndexQueue.front();
+
+  auto &link = mLinks[linkIndex];
+  if (link.queue.size() < LINK_QUEUE_CAPACITY) {
 //      printf("L %02u - push >>>\n", link.id);
-      link.queue.push_back(superpage);
-      mLinksTotalQueueSize++;
-      auto maxPages = superpage.getSize() / Cru::DMA_PAGE_SIZE;
-      auto busAddress = getBusOffsetAddress(superpage.getOffset());
-      getBar().pushSuperpageDescriptor(link.id, maxPages, busAddress);
-      return;
-    }
+    mLinkIndexQueue.pop_front();
+    link.queue.push_back(superpage);
+
+    auto maxPages = superpage.getSize() / Cru::DMA_PAGE_SIZE;
+    auto busAddress = getBusOffsetAddress(superpage.getOffset());
+    getBar().pushSuperpageDescriptor(link.id, maxPages, busAddress);
+    return;
   }
 
   // This should never happen
@@ -206,7 +212,9 @@ auto CruDmaChannel::popSuperpage() -> Superpage
 void CruDmaChannel::fillSuperpages()
 {
   // Check for arrivals & handle them
-  for (auto& link : mLinks) {
+  const auto size = mLinks.size();
+  for (LinkIndex i = 0; i < size; ++i) {
+    auto& link = mLinks[i];
     uint32_t superpageCount = getBar().getSuperpageCount(link.id);
     auto available = superpageCount > link.superpageCounter;
     if (available) {
@@ -233,7 +241,9 @@ void CruDmaChannel::fillSuperpages()
         mReadyQueue.push_back(link.queue.front());
         link.queue.pop_front();
         link.superpageCounter++;
-        mLinksTotalQueueSize--;
+
+        // We can add the Link's index back to the queue
+        mLinkIndexQueue.push_back(i);
       }
     }
   }
@@ -241,8 +251,7 @@ void CruDmaChannel::fillSuperpages()
 
 int CruDmaChannel::getTransferQueueAvailable()
 {
-  // capacity - size = available
-  return (mLinks.size() * LINK_QUEUE_CAPACITY) - mLinksTotalQueueSize;
+  return mLinkIndexQueue.size();
 }
 
 int CruDmaChannel::getReadyQueueSize()
