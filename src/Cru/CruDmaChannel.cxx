@@ -108,13 +108,7 @@ void CruDmaChannel::deviceStartDma()
   }
   mReadyQueue.clear();
 
-  mLinkIndexQueue.resize(LINK_QUEUE_CAPACITY * mLinks.size());
-  mLinkIndexQueue.clear();
-  for (size_t i = 0; i < LINK_QUEUE_CAPACITY; ++i) {
-    for (LinkIndex i = 0; i < mLinks.size(); ++i) {
-      mLinkIndexQueue.push_back(i);
-    }
-  }
+  mLinkQueuesTotalAvailable = LINK_QUEUE_CAPACITY * mLinks.size();
 }
 
 /// Set buffer to ready
@@ -164,31 +158,55 @@ void CruDmaChannel::initCru()
   }
 }
 
+auto CruDmaChannel::getNextLinkIndex() -> LinkIndex
+{
+  auto smallestQueueIndex = std::numeric_limits<LinkIndex>::max();
+  auto smallestQueueSize = std::numeric_limits<size_t>::max();
+
+  for (size_t i = 0; i < mLinks.size(); ++i) {
+    auto queueSize = mLinks[i].queue.size();
+    if (queueSize < smallestQueueSize) {
+      smallestQueueIndex = i;
+      smallestQueueSize = queueSize;
+    }
+  }
+
+  return smallestQueueIndex;
+}
+
 void CruDmaChannel::pushSuperpage(Superpage superpage)
 {
   checkSuperpage(superpage);
 
-  if (mLinkIndexQueue.empty()) {
+  if (mLinkQueuesTotalAvailable == 0) {
+    // Note: the transfer queue refers to the firmware, not the mLinkIndexQueue which contains the LinkIds for links
+    // that can still be pushed into (essentially the opposite of the firmware's queue).
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not push superpage, transfer queue was full"));
   }
 
   // Get the next link to push
-  LinkIndex linkIndex = mLinkIndexQueue.front();
+  auto &link = mLinks[getNextLinkIndex()];
 
-  auto &link = mLinks[linkIndex];
-  if (link.queue.size() < LINK_QUEUE_CAPACITY) {
-//      printf("L %02u - push >>>\n", link.id);
-    mLinkIndexQueue.pop_front();
-    link.queue.push_back(superpage);
-
-    auto maxPages = superpage.getSize() / Cru::DMA_PAGE_SIZE;
-    auto busAddress = getBusOffsetAddress(superpage.getOffset());
-    getBar().pushSuperpageDescriptor(link.id, maxPages, busAddress);
-    return;
+  if (link.queue.size() >= LINK_QUEUE_CAPACITY) {
+    // Is the link's FIFO out of space?
+    // This should never happen
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not push superpage, link queue was full"));
   }
 
-  // This should never happen
-  BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not push superpage, transfer queue was full"));
+  // Once we've confirmed the link has a slot available, we push the superpage
+//  printf("L %02u push - tav=%lu\n", link.id, mLinkQueuesTotalAvailable);
+  mLinkQueuesTotalAvailable--;
+  link.queue.push_back(superpage);
+
+//  printf("                        SIZES:");
+//  for (LinkIndex linkIndex = 0; linkIndex < mLinks.size(); ++linkIndex) {
+//    printf(" %lu", mLinks[linkIndex].queue.size());
+//  }
+//  printf("\n");
+
+  auto maxPages = superpage.getSize() / Cru::DMA_PAGE_SIZE;
+  auto busAddress = getBusOffsetAddress(superpage.getOffset());
+  getBar().pushSuperpageDescriptor(link.id, maxPages, busAddress);
 }
 
 auto CruDmaChannel::getSuperpage() -> Superpage
@@ -213,8 +231,8 @@ void CruDmaChannel::fillSuperpages()
 {
   // Check for arrivals & handle them
   const auto size = mLinks.size();
-  for (LinkIndex i = 0; i < size; ++i) {
-    auto& link = mLinks[i];
+  for (LinkIndex linkIndex = 0; linkIndex < size; ++linkIndex) {
+    auto& link = mLinks[linkIndex];
     uint32_t superpageCount = getBar().getSuperpageCount(link.id);
     auto available = superpageCount > link.superpageCounter;
     if (available) {
@@ -223,27 +241,33 @@ void CruDmaChannel::fillSuperpages()
         getLogger() << InfoLogger::InfoLogger::Error
           << "FATAL: Firmware reported more superpages available (" << amountAvailable <<
           ") than should be present in FIFO (" << link.queue.size() << "); "
-          << link.superpageCounter << " superpages received from link " << link.id << " according to driver, "
+          << link.superpageCounter << " superpages received from link " << int(link.id) << " according to driver, "
           << superpageCount << " pushed according to firmware" << InfoLogger::InfoLogger::endm;
-
         BOOST_THROW_EXCEPTION(Exception()
             << ErrorInfo::Message("FATAL: Firmware reported more superpages available than should be present in FIFO"));
       }
+
       for (uint32_t i = 0; i < amountAvailable; ++i) {
         if (mReadyQueue.size() >= READY_QUEUE_CAPACITY) {
           break;
         }
-//        printf("L %02u - pop <<<\n", link.id);
 
         // Front superpage has arrived
         link.queue.front().ready = true;
         link.queue.front().received = link.queue.front().size;
         mReadyQueue.push_back(link.queue.front());
+        mLinkQueuesTotalAvailable++;
         link.queue.pop_front();
         link.superpageCounter++;
 
-        // We can add the Link's index back to the queue
-        mLinkIndexQueue.push_back(i);
+//        printf("  L %02u pop - tav=%lu qsize=%lu spcount=%u \n", link.id, mLinkQueuesTotalAvailable,
+//          link.queue.size(), link.superpageCounter);
+//
+//        printf("                        SIZES:");
+//        for (LinkIndex linkIndex = 0; linkIndex < mLinks.size(); ++linkIndex) {
+//          printf(" %lu", mLinks[linkIndex].queue.size());
+//        }
+//        printf("\n");
       }
     }
   }
@@ -251,7 +275,7 @@ void CruDmaChannel::fillSuperpages()
 
 int CruDmaChannel::getTransferQueueAvailable()
 {
-  return mLinkIndexQueue.size();
+  return mLinkQueuesTotalAvailable;
 }
 
 int CruDmaChannel::getReadyQueueSize()

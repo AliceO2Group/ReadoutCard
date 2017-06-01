@@ -96,6 +96,9 @@ class CruDmaChannel final : public DmaChannelPdaBase
       return Cru::BarAccessor(&mPdaBar2);
     }
 
+    /// Gets index of next link to push
+    LinkIndex getNextLinkIndex();
+
     /// BAR 0 is needed for DMA engine interaction and various other functions
     Pda::PdaBar mPdaBar;
 
@@ -108,11 +111,8 @@ class CruDmaChannel final : public DmaChannelPdaBase
     /// Vector of objects representing links
     std::vector<Link> mLinks;
 
-    /// Queue to track in which order to push superpages to which link.
-    /// At the start, it's filled round-robin with LinkIndexes.
-    /// When a superpage is pushed, a LinkIndex is popped from the front of the queue and pushed to that link.
-    /// When a superpage is popped, the LinkIndex of the link it was popped from is pushed to the back of the queue.
-    boost::circular_buffer<LinkIndex> mLinkIndexQueue;
+    /// To keep track of how many slots are available in the link queues (in mLinks) in total
+    size_t mLinkQueuesTotalAvailable;
 
     SuperpageQueue mReadyQueue { READY_QUEUE_CAPACITY };
 

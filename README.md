@@ -31,10 +31,19 @@ feel free to skip ahead to the section "Python interface" for the most convenien
 The library currently supports the C-RORC and CRU cards.
 It also provides a software-based dummy card (see the section "Dummy implementation" for more details).
 
-* *Formerly known as the RORC module*
+**Formerly known as the RORC module*
 
 ## Terminology
 [todo] BAR, DMA buffer, Superpages, pages, and other confusing terminology, memory layout
+
+The following table provides an overview of the units in the memory layout that you might encounter 
+
+| Unit | Description | Typical size |
+| --- | --- | --- |
+| Channel buffer | A typically large buffer for DMA transfers from one DMA channel. Created by readout process by allocating hugepages | Several GiB |
+| Hugepage       | A large CPU MMU page | Either 2 MiB or 1 GiB on x86-64 |  
+| Superpage      | A physically contiguous subdivision of a hugepage (1 MiB multiple). It is passed to the driver, which will fill it with DMA pages without further intervention | 2 MiB |
+| DMA page       | The unit of individual DMA transfers used by the card | 8 KiB for CRU, configurable for C-RORC |
 
 ### The MMU, hugepages, and the IOMMU
 Most x86-64 CPUs have an MMU that supports 4 KiB, 2 MiB and 1 GiB page sizes. 
