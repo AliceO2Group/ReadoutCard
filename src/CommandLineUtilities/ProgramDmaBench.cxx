@@ -505,10 +505,8 @@ class ProgramDmaBench: public Program
           switch (mCardType) {
             case CardType::Crorc:
               return getEventNumber(pageAddress);
-              break;
             case CardType::Cru:
               return getEventNumber(pageAddress) / 256;
-              break;
             default: throw std::runtime_error("Error checking unsupported for this card type");
           }
         };

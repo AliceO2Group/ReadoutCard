@@ -221,32 +221,25 @@ class ProgramAliceLowlevelFrontendServer: public Program
       // Object for service DNS names
       Alf::ServiceNames names(mSerialNumber, mChannelNumber);
 
-      // Start RPC server for reading registers
-      getInfoLogger() << "Starting service " << names.registerReadRpc() << InfoLogger::endm;
-      Alf::StringRpcServer registerReadRpcServer(names.registerReadRpc(),
-          [&](const std::string& parameter) {return registerRead(parameter, channel);});
+      auto makeServer = [&](std::string name, auto callback) {
+        getInfoLogger() << "Starting service " << name << InfoLogger::endm;
+        return std::make_unique<Alf::StringRpcServer>(name, callback);
+      };
 
-      // Start RPC server for writing registers
-      getInfoLogger() << "Starting service " << names.registerWriteRpc() << InfoLogger::endm;
-      Alf::StringRpcServer registerWriteRpcServer(names.registerWriteRpc(),
-          [&](const std::string& parameter) {return registerWrite(parameter, channel);});
+      // Start RPC servers
+      auto serverRead = makeServer(names.registerReadRpc(),
+        [&](auto parameter){return registerRead(parameter, channel);});
+      auto serverWrite = makeServer(names.registerWriteRpc(),
+        [&](auto parameter){return registerWrite(parameter, channel);});
+      auto serverPublishStart = makeServer(names.publishCommandRpc(),
+        [&](auto parameter){return publishStartCommand(parameter, mCommandQueue);});
+      auto serverPublishStop = makeServer(names.publishStopCommandRpc(),
+        [&](auto parameter){return publishStopCommand(parameter, mCommandQueue);});
 
-      //PublisherRegistry publisherRegistry;
-      PublisherRegistry publisherRegistry {channel};
-
-      // Start RPC server for publish commands
-      getInfoLogger() << "Starting service " << names.publishCommandRpc() << InfoLogger::endm;
-      Alf::StringRpcServer publishStartCommandRpcServer(names.publishCommandRpc(),
-          [&](const std::string& parameter) {return publishStartCommand(parameter, mCommandQueue);});
-
-      // Start RPC server for stop publish commands
-      getInfoLogger() << "Starting service " << names.publishStopCommandRpc() << InfoLogger::endm;
-      Alf::StringRpcServer publishStopCommandRpcServer(names.publishStopCommandRpc(),
-          [&](const std::string& parameter) {return publishStopCommand(parameter, mCommandQueue);});
-
-      // Start temperature service
+      // Start dummy temperature service
       DimService temperatureService(names.temperature().c_str(), mTemperature);
 
+      PublisherRegistry publisherRegistry {channel};
       while (!isSigInt())
       {
         {
@@ -287,7 +280,8 @@ class ProgramAliceLowlevelFrontendServer: public Program
 
       uint32_t value = channel->readRegister(address / 4);
 
-      getInfoLogger() << "READ   " << Common::makeRegisterString(address, value) << InfoLogger::endm;
+      // getInfoLogger() << "READ   " << Common::makeRegisterString(address, value) << InfoLogger::endm;
+
       return std::to_string(value);
     }
 
@@ -304,7 +298,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
       auto value = boost::lexical_cast<uint32_t>(params[1]);
       checkAddress(address);
 
-      getInfoLogger() << "WRITE  " << Common::makeRegisterString(address, value) << InfoLogger::endm;
+      // getInfoLogger() << "WRITE  " << Common::makeRegisterString(address, value) << InfoLogger::endm;
 
       if (address == 0x1f4) {
         // This is to the command register, we need to wait until the card indicates it's not busy before sending a
