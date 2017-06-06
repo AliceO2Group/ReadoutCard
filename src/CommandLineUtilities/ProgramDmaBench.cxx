@@ -115,7 +115,10 @@ class ProgramDmaBench: public Program
               "No temperature readout")
           ("no-display",
               po::bool_switch(&mOptions.noDisplay),
-             "Disable command-line display")
+              "Disable command-line display")
+          ("no-rm-pages-file",
+              po::bool_switch(&mOptions.noRemovePagesFile),
+              "Don't remove the file used for pages after benchmark completes")
           ("page-reset",
               po::bool_switch(&mOptions.pageReset),
               "Reset page to default values after readout (slow)");
@@ -133,9 +136,6 @@ class ProgramDmaBench: public Program
           ("reset",
               po::bool_switch(&mOptions.resetChannel),
               "Reset channel during initialization")
-          ("rm-pages-file",
-              po::bool_switch(&mOptions.removePagesFile),
-              "Remove the file used for pages after benchmark completes")
           ("superpage-size",
               SuffixOption<size_t>::make(&mSuperpageSize)->default_value("1Mi"),
               "Superpage size in bytes. Note that it can't be larger than the buffer. If the IOMMU is not enabled, the "
@@ -224,7 +224,7 @@ class ProgramDmaBench: public Program
               b::format("/var/lib/hugetlbfs/global/pagesize-%s/roc-bench-dma_id=%s_chan=%s_pages")
                   % (hugePageType == HugePageType::SIZE_2MB ? "2MB" : "1GB") % map["id"].as<std::string>()
                   % mOptions.dmaChannel);
-          Utilities::resetSmartPtr(mMemoryMappedFile, bufferFilePath, mBufferSize, mOptions.removePagesFile);
+          Utilities::resetSmartPtr(mMemoryMappedFile, bufferFilePath, mBufferSize, !mOptions.noRemovePagesFile);
           mBufferBaseAddress = reinterpret_cast<uintptr_t>(mMemoryMappedFile->getAddress());
           mLogger << "Using buffer file path: " << bufferFilePath << endm;
         };
@@ -484,12 +484,12 @@ class ProgramDmaBench: public Program
       mLogger << "Popped " << popped << " excess pages" << endm;
     }
 
-    uint32_t getEventNumber(uintptr_t pageAddress)
+    uint32_t get32bitFromPage(uintptr_t pageAddress, size_t index)
     {
-      auto page = reinterpret_cast<void*>(pageAddress);
-      uint32_t eventNumber = 0;
-      memcpy(&eventNumber, page, sizeof(eventNumber));
-      return eventNumber;
+      auto page = reinterpret_cast<void*>(pageAddress + index*4);
+      uint32_t value = 0;
+      memcpy(&value, page, sizeof(value));
+      return value;
     }
 
     void readoutPage(uintptr_t pageAddress, size_t pageSize, int64_t readoutCount)
@@ -504,9 +504,9 @@ class ProgramDmaBench: public Program
         auto getDataGeneratorCounterFromPage = [&]{
           switch (mCardType) {
             case CardType::Crorc:
-              return getEventNumber(pageAddress);
+              return get32bitFromPage(pageAddress, 0);
             case CardType::Cru:
-              return getEventNumber(pageAddress) / 256;
+              return get32bitFromPage(pageAddress, 23);
             default: throw std::runtime_error("Error checking unsupported for this card type");
           }
         };
@@ -516,7 +516,7 @@ class ProgramDmaBench: public Program
           mDataGeneratorCounter = getDataGeneratorCounterFromPage();
         }
 
-        bool hasError = checkErrors(pageAddress, pageSize, readoutCount, mDataGeneratorCounter);
+        bool hasError = checkErrors(pageAddress, pageSize, readoutCount);
         if (hasError && !mOptions.noResyncCounter) {
           // Resync the counter
           mDataGeneratorCounter = getDataGeneratorCounterFromPage();
@@ -527,43 +527,72 @@ class ProgramDmaBench: public Program
         // Set the buffer to the default value after the readout
         resetPage(pageAddress, pageSize);
       }
-
-      mDataGeneratorCounter++;
     }
 
-    bool checkErrorsCru(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, uint32_t counter)
+    bool checkErrorsCru(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber)
     {
-      // Check the header
-      // TODO
+      auto counter = mDataGeneratorCounter;
+      // Get stuff from the header
+      auto words = get32bitFromPage(pageAddress, 4); // Amount of 256 bit words in DMA page
+      auto wordsBytes = words * 256 / 8;
 
-      auto check = [&](auto patternFunction) {
-        auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
-        auto pageSize32 = pageSize / sizeof(int32_t);
-        constexpr uint32_t PATTERN_STRIDE = 8; // The data emulator writes to every 8th 32-bit word
-        constexpr uint32_t START = 16; // We skip the 512 bit (16 * 32 bit) header
-        for (uint32_t i = START; i < pageSize32; i += PATTERN_STRIDE)
-        {
-          uint32_t expectedValue = patternFunction(i);
-          uint32_t actualValue = page[i];
+      if (words < 2 || wordsBytes > pageSize) {
+        // Report error
+        mErrorCount++;
+        if (mErrorCount < MAX_RECORDED_ERRORS) {
+          mErrorStream << b::format("event:%d cnt:%d size out of range\n") % eventNumber % counter;
+        }
+        return false;
+      }
+
+      mDataGeneratorCounter += words - 2;
+
+      auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
+      constexpr uint32_t HEADER_WORDS = 2; // We skip the 2 header words
+
+      for (uint32_t i = 0; (i + HEADER_WORDS) < words; ++i) {
+        constexpr uint32_t INTS_PER_WORD = 8; // Each word should contain 8 identical 32-bit integers
+        for (uint32_t j = 0; j < INTS_PER_WORD; ++j) {
+          uint32_t expectedValue = counter + i;
+          uint32_t actualValue = page[(i + HEADER_WORDS) * INTS_PER_WORD + j];
+
           if (actualValue != expectedValue) {
             // Report error
             mErrorCount++;
-            if (isVerbose() && mErrorCount < MAX_RECORDED_ERRORS) {
+            if (mErrorCount < MAX_RECORDED_ERRORS) {
               mErrorStream << b::format("event:%d i:%d cnt:%d exp:0x%x val:0x%x\n")
-                  % eventNumber % i % counter % expectedValue % actualValue;
+                % eventNumber % i % counter % expectedValue % actualValue;
             }
             return true;
           }
         }
-        return false;
-      };
-
-      switch (mOptions.generatorPattern) {
-        case GeneratorPattern::Incremental: return check([&](uint32_t i) { return counter * 256 + i / 8; });
-        case GeneratorPattern::Alternating: return check([&](uint32_t)   { return 0xa5a5a5a5; });
-        case GeneratorPattern::Constant:    return check([&](uint32_t)   { return 0x12345678; });
-        default: ;
       }
+      return false;
+
+//      auto check = [&](auto patternFunction) {
+//        for (uint32_t i = START; i < pageSize32; i += PATTERN_STRIDE)
+//        {
+//          uint32_t expectedValue = patternFunction(i);
+//          uint32_t actualValue = page[i];
+//          if (actualValue != expectedValue) {
+//            // Report error
+//            mErrorCount++;
+//            if (mErrorCount < MAX_RECORDED_ERRORS) {
+//              mErrorStream << b::format("event:%d i:%d cnt:%d exp:0x%x val:0x%x\n")
+//                  % eventNumber % i % counter % expectedValue % actualValue;
+//            }
+//            return true;
+//          }
+//        }
+//        return false;
+//      };
+//
+//      switch (mOptions.generatorPattern) {
+//        case GeneratorPattern::Incremental: return check([&](uint32_t i) { return counter * 256 + i / 8; });
+//        case GeneratorPattern::Alternating: return check([&](uint32_t)   { return 0xa5a5a5a5; });
+//        case GeneratorPattern::Constant:    return check([&](uint32_t)   { return 0x12345678; });
+//        default: ;
+//      }
 
       BOOST_THROW_EXCEPTION(Exception()
           << ErrorInfo::Message("Unsupported pattern for CRU error checking")
@@ -574,14 +603,17 @@ class ProgramDmaBench: public Program
         uint32_t actualValue)
     {
       mErrorCount++;
-       if (isVerbose() && mErrorCount < MAX_RECORDED_ERRORS) {
+       if (mErrorCount < MAX_RECORDED_ERRORS) {
          mErrorStream << b::format("event:%d i:%d cnt:%d exp:0x%x val:0x%x\n")
              % eventNumber % index % generatorCounter % expectedValue % actualValue;
        }
     }
 
-    bool checkErrorsCrorc(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, uint32_t counter)
+    bool checkErrorsCrorc(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber)
     {
+      auto counter = mDataGeneratorCounter;
+      mDataGeneratorCounter++;
+
       auto check = [&](auto patternFunction) {
         auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
         auto pageSize32 = pageSize / sizeof(int32_t);
@@ -618,13 +650,13 @@ class ProgramDmaBench: public Program
     }
 
     /// Checks and reports errors
-    bool checkErrors(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, uint32_t counter)
+    bool checkErrors(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber)
     {
       switch (mCardType) {
         case CardType::Crorc:
-          return checkErrorsCrorc(pageAddress, pageSize, eventNumber, counter);
+          return checkErrorsCrorc(pageAddress, pageSize, eventNumber);
         case CardType::Cru:
-          return checkErrorsCru(pageAddress, pageSize, eventNumber, counter);
+          return checkErrorsCru(pageAddress, pageSize, eventNumber);
         default:
           throw std::runtime_error("Error checking unsupported for this card type");
       }
@@ -754,19 +786,12 @@ class ProgramDmaBench: public Program
     {
       auto errorStr = mErrorStream.str();
 
-      if (isVerbose()) {
-        size_t maxChars = 2000;
-        if (!errorStr.empty()) {
-          cout << "Errors:\n";
-          cout << errorStr.substr(0, maxChars);
-          if (errorStr.length() > maxChars) {
-            cout << "\n... more follow (" << (errorStr.length() - maxChars) << " characters)\n";
-          }
-        }
+      if (!errorStr.empty()) {
+        getLogger() << "Outputting " << std::min(mErrorCount, MAX_RECORDED_ERRORS) << " errors to '"
+          << READOUT_ERRORS_PATH << "'" << endm;
+        std::ofstream stream(READOUT_ERRORS_PATH);
+        stream << errorStr;
       }
-
-      std::ofstream stream(READOUT_ERRORS_PATH);
-      stream << errorStr;
     }
 
     void printToFile(uintptr_t pageAddress, size_t pageSize, int64_t pageNumber)
@@ -834,7 +859,7 @@ class ProgramDmaBench: public Program
         bool pageReset = false;
         bool noResyncCounter = false;
         bool barHammer = false;
-        bool removePagesFile = false;
+        bool noRemovePagesFile = false;
         std::string generatorPatternString;
         std::string readoutModeString;
         std::string fileOutputPathBin;

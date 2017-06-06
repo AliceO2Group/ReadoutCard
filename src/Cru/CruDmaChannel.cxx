@@ -4,17 +4,9 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "CruDmaChannel.h"
-#include <sstream>
 #include <thread>
 #include <boost/format.hpp>
-#include "ChannelPaths.h"
 #include "ExceptionInternal.h"
-#include "Utilities/SmartPointer.h"
-
-/// Creates a CruException and attaches data using the given message string
-#define CRU_EXCEPTION(_err_message) \
-  CruException() \
-      << errinfo_rorc_generic_message(_err_message)
 
 using namespace std::literals;
 
@@ -32,7 +24,7 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
       mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)), // Internal loopback by default
       mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)), // Use data generator by default
       mGeneratorPattern(parameters.getGeneratorPattern().get_value_or(GeneratorPattern::Incremental)), //
-      mGeneratorDataSizeRandomEnabled(parameters.getGeneratorRandomSizeEnabled().get_value_or(true)), //
+      mGeneratorDataSizeRandomEnabled(parameters.getGeneratorRandomSizeEnabled().get_value_or(false)), //
       mGeneratorMaximumEvents(0), // Infinite events
       mGeneratorInitialValue(0), // Start from 0
       mGeneratorInitialWord(0), // First word
@@ -194,15 +186,8 @@ void CruDmaChannel::pushSuperpage(Superpage superpage)
   }
 
   // Once we've confirmed the link has a slot available, we push the superpage
-//  printf("L %02u push - tav=%lu\n", link.id, mLinkQueuesTotalAvailable);
   mLinkQueuesTotalAvailable--;
   link.queue.push_back(superpage);
-
-//  printf("                        SIZES:");
-//  for (LinkIndex linkIndex = 0; linkIndex < mLinks.size(); ++linkIndex) {
-//    printf(" %lu", mLinks[linkIndex].queue.size());
-//  }
-//  printf("\n");
 
   auto maxPages = superpage.getSize() / Cru::DMA_PAGE_SIZE;
   auto busAddress = getBusOffsetAddress(superpage.getOffset());
@@ -259,15 +244,6 @@ void CruDmaChannel::fillSuperpages()
         mLinkQueuesTotalAvailable++;
         link.queue.pop_front();
         link.superpageCounter++;
-
-//        printf("  L %02u pop - tav=%lu qsize=%lu spcount=%u \n", link.id, mLinkQueuesTotalAvailable,
-//          link.queue.size(), link.superpageCounter);
-//
-//        printf("                        SIZES:");
-//        for (LinkIndex linkIndex = 0; linkIndex < mLinks.size(); ++linkIndex) {
-//          printf(" %lu", mLinks[linkIndex].queue.size());
-//        }
-//        printf("\n");
       }
     }
   }
@@ -314,8 +290,8 @@ boost::optional<float> CruDmaChannel::getTemperature()
 boost::optional<std::string> CruDmaChannel::getFirmwareInfo()
 {
   if (mFeatures.firmwareInfo) {
-    return boost::str(boost::format("%x-%x-%x") % getBar2().getFirmwareDate() % getBar2().getFirmwareTime()
-        % getBar2().getFirmwareGitHash());
+    return (boost::format("%x-%x-%x") % getBar2().getFirmwareDate() % getBar2().getFirmwareTime()
+        % getBar2().getFirmwareGitHash()).str();
   } else {
     return {};
   }
