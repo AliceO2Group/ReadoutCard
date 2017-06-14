@@ -106,6 +106,10 @@ inline bool isFail(const std::string& string)
 
 inline std::string stripPrefix(const std::string& string)
 {
+  if (string.length() < PREFIX_LENGTH) {
+    BOOST_THROW_EXCEPTION(AliceO2::roc::Exception()
+      << AliceO2::roc::ErrorInfo::Message("string too short to contain prefix"));
+  }
   return string.substr(PREFIX_LENGTH);
 }
 
