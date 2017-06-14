@@ -1051,6 +1051,16 @@ auto Crorc::scaRead(RegisterReadWriteInterface& bar2) -> ScaReadResult
   };
 }
 
+auto Crorc::scaGpioWrite(RegisterReadWriteInterface& bar2, uint32_t data) -> ScaReadResult
+{
+  scaInit(bar2);
+  scaWrite(bar2, 0x00013302, 0xFf000000);
+  scaWrite(bar2, 0x02023320, 0xFfffFfff);
+  scaWrite(bar2, 0x02031010, data);
+  scaWrite(bar2, 0x02030011, 0x0);
+  return scaRead(bar2);
+}
+
 
 } // namespace Crorc
 } // namespace roc

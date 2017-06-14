@@ -127,7 +127,12 @@ class Crorc
 
     static void scaInit(RegisterReadWriteInterface& bar2);
 
-    static void scaWrite(RegisterReadWriteInterface& bar2, uint32_t command, uint32_t data);
+    struct ScaWriteCommand
+    {
+        uint8_t command;
+        uint8_t transaction;
+        uint8_t channel;
+    };
 
     struct ScaReadResult
     {
@@ -135,7 +140,12 @@ class Crorc
         uint32_t command;
         uint32_t time;
     };
+
+    static void scaWrite(RegisterReadWriteInterface& bar2, uint32_t command, uint32_t data);
+
     static ScaReadResult scaRead(RegisterReadWriteInterface& bar2);
+
+    static ScaReadResult scaGpioWrite(RegisterReadWriteInterface& bar2, uint32_t data);
 
     /// Set C-RORC for continuous readout
     static void initReadoutContinuous(RegisterReadWriteInterface& bar2);
