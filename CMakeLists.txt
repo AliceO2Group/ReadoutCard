@@ -218,3 +218,10 @@ if(hasParent)
     set(PROJECT_${PROJECT_NAME} true PARENT_SCOPE)
 endif()
 include(PackageConfigurator)
+
+# Install the hugetlbfs script separately, because it's not a compiled target
+install(
+  FILES src/roc-setup-hugetlbfs.sh
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+  RENAME roc-setup-hugetlbfs
+  PERMISSIONS GROUP_EXECUTE)
