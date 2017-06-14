@@ -31,17 +31,15 @@ feel free to skip ahead to the section "Python interface" for the most convenien
 The library currently supports the C-RORC and CRU cards.
 It also provides a software-based dummy card (see the section "Dummy implementation" for more details).
 
-**Formerly known as the RORC module*
+`*` *Formerly known as the RORC module*
 
 ## Terminology
-[todo] BAR, DMA buffer, Superpages, pages, and other confusing terminology, memory layout
-
 The following table provides an overview of the units in the memory layout that you might encounter 
 
 | Unit | Description | Typical size |
 | --- | --- | --- |
-| Channel buffer | A typically large buffer for DMA transfers from one DMA channel. Created by readout process by allocating hugepages | Several GiB |
-| Hugepage       | A large CPU MMU page | Either 2 MiB or 1 GiB on x86-64 |  
+| Channel buffer | A typically large buffer for DMA transfers from one DMA channel. Typically created by readout process by allocating hugepages | Several GiB |
+| Hugepage       | A large CPU MMU page | 2 MiB or 1 GiB |  
 | Superpage      | A physically contiguous subdivision of a hugepage (1 MiB multiple). It is passed to the driver, which will fill it with DMA pages without further intervention | 2 MiB |
 | DMA page       | The unit of individual DMA transfers used by the card | 8 KiB for CRU, configurable for C-RORC |
 
@@ -335,14 +333,14 @@ The utilities contain a DIM server for DCS control of the cards
 
 Usage
 -------------------
-`./roc-alf-server --serial=11225 --channel=0`
-Note: if the DIM_DNS_NODE environment variable was not set, the server uses localhost. 
+`DIM_DNS_NODE=mydimdns roc-alf-server --serial=11225 --channel=0`
 
 Service description
 -------------------
 
 Services names are under: 
 `ALF/SERIAL_[a]/CHANNEL_[b]/[service name]`
+
 where [a] = card serial number
       [b] = BAR index
 

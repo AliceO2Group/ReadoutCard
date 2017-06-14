@@ -71,8 +71,14 @@ class ProgramDmaBench: public Program
 
     virtual Description getDescription()
     {
-      return {"DMA Benchmark",
-        "Test ReadoutCard DMA performance\n",
+      return {
+        "DMA Benchmark",
+        "Test ReadoutCard DMA performance\n"
+          "Various options are available to change aspects of the DMA process, error checking and recording of data.\n"
+          "This program requires the user to preallocate a sufficient amount of hugepages for its DMA buffer. See the "
+          "README.md for more information.\n"
+          "The options specifying a size take power-of-10 and power-of-2 unit prefixes. For example '--bytes=1T' "
+          "(1 terabyte) or '--buffer-size=1Gi' (1 gibibyte)",
         "roc-bench-dma --verbose --id=42:0.0 --bytes=10G"};
     }
 

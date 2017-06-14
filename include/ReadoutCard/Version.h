@@ -1,4 +1,4 @@
-/// \file    RORC/include/RORC/Version.h
+/// \file    RORC/include/ReadoutCard/Version.h
 /// \brief   Report the version for this package.
 ///
 /// \author  Barthelemy von Haller, CERN

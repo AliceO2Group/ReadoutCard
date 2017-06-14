@@ -21,7 +21,6 @@ struct Superpage
     {
     }
 
-    /// TODO
     /// Returns true if the superpage is ready, meaning the transfer is complete. This does not necessarily mean the
     /// superpage is filled.
     bool isReady() const
@@ -35,7 +34,7 @@ struct Superpage
       return received == getSize();
     }
 
-    /// Offset from the start of the DMA buffer to the start of the superpage. Must be ???-byte aligned.
+    /// Offset from the start of the DMA buffer to the start of the superpage.
     size_t getOffset() const
     {
       return offset;
