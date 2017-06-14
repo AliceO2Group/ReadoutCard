@@ -84,9 +84,10 @@ void MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
       BOOST_THROW_EXCEPTION(MemoryMapException()
           << ErrorInfo::Message(std::string("Failed to resize memory map file: ") + e.what())
           << ErrorInfo::PossibleCauses({
-              "Size not a multiple of page size (possibly multiple of hugepages); ",
-              "Not enough memory available (check hugepage allocation)",
-              "Insufficient permissions"}));
+            "Size not a multiple of page size",
+            "Not enough memory available",
+            "Not enough memory available (check 'hugeadm --pool-list')",
+            "Insufficient permissions"}));
     }
 
     try {
@@ -95,7 +96,9 @@ void MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
     } catch (const std::exception& e) {
       BOOST_THROW_EXCEPTION(MemoryMapException()
           << ErrorInfo::Message(std::string("Failed to memory map file: ") + e.what())
-          << ErrorInfo::PossibleCauses({"Not enough memory available (possibly not enough hugepages allocated)"}));
+          << ErrorInfo::PossibleCauses({
+            "Not enough memory available",
+            "Not enough hugepages allocated (check 'hugeadm --pool-list')"}));
     }
   }
   catch (MemoryMapException& e) {
