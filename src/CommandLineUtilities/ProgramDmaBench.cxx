@@ -83,10 +83,10 @@ class ProgramDmaBench: public Program
               po::bool_switch(&mOptions.barHammer),
               "Stress the BAR with repeated writes and measure performance")
           ("bytes",
-              SuffixOption<uint64_t>::make(&mOptions.maxBytes)->default_value("1G"),
+              SuffixOption<uint64_t>::make(&mOptions.maxBytes)->default_value("0"),
               "Limit of bytes to transfer. Give 0 for infinite.")
           ("buffer-size",
-              SuffixOption<size_t>::make(&mBufferSize)->default_value("10Mi"),
+              SuffixOption<size_t>::make(&mBufferSize)->default_value("1Gi"),
               "Buffer size in bytes. Rounded down to 2 MiB multiple. Minimum of 2 MiB. Use 2 MiB hugepage by default; |"
               "if buffer size is a multiple of 1 GiB, will try to use GiB hugepages")
           ("dma-channel",
