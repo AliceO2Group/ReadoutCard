@@ -22,26 +22,33 @@
 #include "folly/ProducerConsumerQueue.h"
 #include "ReadoutCard/Parameters.h"
 #include "ReadoutCard/ChannelFactory.h"
+#include "Sca.h"
+#include "ServiceNames.h"
 #include "Visitor.h"
 
+namespace AliceO2 {
+namespace roc {
+namespace CommandLineUtilities {
+namespace Alf {
 namespace {
-using namespace AliceO2::roc::CommandLineUtilities;
-using namespace AliceO2::roc;
-using namespace AliceO2::InfoLogger;
 
-InfoLogger& getInfoLogger()
+namespace b = boost;
+
+constexpr auto endm = AliceO2::InfoLogger::InfoLogger::endm;
+
+AliceO2::InfoLogger::InfoLogger& getInfoLogger()
 {
-  static InfoLogger logger;
+  static AliceO2::InfoLogger::InfoLogger logger;
   return logger;
 }
 
 using ChannelSharedPtr = std::shared_ptr<BarInterface>;
 
 /// Splits a string
-static std::vector<std::string> split(const std::string& string, const char* separators = ",")
+static std::vector<std::string> split(const std::string& string, const char* separators)
 {
   std::vector<std::string> split;
-  boost::split(split, string, boost::is_any_of(separators));
+  b::split(split, string, b::is_any_of(separators));
   return split;
 }
 
@@ -51,7 +58,7 @@ static std::vector<T> lexicalCastVector(const std::vector<U>& items)
 {
   std::vector<T> result;
   for (const auto& i : items) {
-    result.push_back(boost::lexical_cast<T>(i));
+    result.push_back(b::lexical_cast<T>(i));
   }
   return result;
 }
@@ -116,27 +123,27 @@ class PublisherRegistry
           nextUpdate = std::chrono::steady_clock::now();
           registerValues.resize(mDescription.addresses.size());
 
-          auto format = boost::str(boost::format("I:%d") % registerValues.size());
+          auto format = b::str(b::format("I:%d") % registerValues.size());
           dimService = std::make_unique<DimService>(mDescription.dnsName.c_str(), format.c_str(), registerValues.data(),
             registerValues.size());
 
           getInfoLogger() << "Starting publisher '" << mDescription.dnsName << "' with "
             << mDescription.addresses.size() << " address(es) at interval "
-            << mDescription.interval.count() << "ms" << InfoLogger::endm;
+            << mDescription.interval.count() << "ms" << endm;
         }
 
         ~Service()
         {
-          getInfoLogger() << "Stopping publisher '" << mDescription.dnsName << "'" << InfoLogger::endm;
+          getInfoLogger() << "Stopping publisher '" << mDescription.dnsName << "'" << endm;
         }
 
         void updateRegisterValues(RegisterReadWriteInterface& channel)
         {
-          getInfoLogger() << "Updating '" << mDescription.dnsName << "':" << InfoLogger::endm;
+          getInfoLogger() << "Updating '" << mDescription.dnsName << "':" << endm;
           for (size_t i = 0; i < mDescription.addresses.size(); ++i) {
             auto index = mDescription.addresses[i] / 4;
             auto value = channel.readRegister(index);
-            getInfoLogger() << "  " << mDescription.addresses[i] << " = " << value << InfoLogger::endm;
+            getInfoLogger() << "  " << mDescription.addresses[i] << " = " << value << endm;
             registerValues.at(i) = channel.readRegister(index);
           }
           dimService->updateService();
@@ -167,7 +174,7 @@ struct CommandPublishStop
     std::string dnsName;
 };
 
-using CommandVariant = boost::variant<CommandPublishStart, CommandPublishStop>;
+using CommandVariant = b::variant<CommandPublishStart, CommandPublishStop>;
 
 class CommandQueue
 {
@@ -197,13 +204,12 @@ class ProgramAliceLowlevelFrontendServer: public Program
       return {"ALF DIM Server", "ALICE low-level front-end DIM Server", "roc-alf-server --serial=12345 --channel=0"};
     }
 
-    virtual void addOptions(boost::program_options::options_description& options) override
+    virtual void addOptions(b::program_options::options_description& options) override
     {
-      Options::addOptionChannel(options);
       Options::addOptionSerialNumber(options);
     }
 
-    virtual void run(const boost::program_options::variables_map& map) override
+    virtual void run(const b::program_options::variables_map& map) override
     {
       // Get DIM DNS node from environment
       if (getenv(std::string("DIM_DNS_NODE").c_str()) == nullptr) {
@@ -212,9 +218,8 @@ class ProgramAliceLowlevelFrontendServer: public Program
 
       // Get card channel for register access
       mSerialNumber = Options::getOptionSerialNumber(map);
-      mChannelNumber = Options::getOptionChannel(map);
-      auto params = AliceO2::roc::Parameters::makeParameters(mSerialNumber, mChannelNumber);
-      auto channel = AliceO2::roc::ChannelFactory().getBar(params);
+      auto bar0 = ChannelFactory().getBar(Parameters::makeParameters(mSerialNumber, 0));
+      auto bar2 = ChannelFactory().getBar(Parameters::makeParameters(mSerialNumber, 2));
 
       DimServer::start("ALF");
 
@@ -222,24 +227,28 @@ class ProgramAliceLowlevelFrontendServer: public Program
       Alf::ServiceNames names(mSerialNumber, mChannelNumber);
 
       auto makeServer = [&](std::string name, auto callback) {
-        getInfoLogger() << "Starting service " << name << InfoLogger::endm;
+        getInfoLogger() << "Starting service " << name << endm;
         return std::make_unique<Alf::StringRpcServer>(name, callback);
       };
 
       // Start RPC servers
       auto serverRead = makeServer(names.registerReadRpc(),
-        [&](auto parameter){return registerRead(parameter, channel);});
+        [&](auto parameter){return registerRead(parameter, bar0);});
       auto serverWrite = makeServer(names.registerWriteRpc(),
-        [&](auto parameter){return registerWrite(parameter, channel);});
+        [&](auto parameter){return registerWrite(parameter, bar0);});
       auto serverPublishStart = makeServer(names.publishStartCommandRpc(),
         [&](auto parameter){return publishStartCommand(parameter, mCommandQueue);});
       auto serverPublishStop = makeServer(names.publishStopCommandRpc(),
         [&](auto parameter){return publishStopCommand(parameter, mCommandQueue);});
+      auto serverScaRead = makeServer(names.scaRead(),
+        [&](auto parameter){return scaRead(parameter, bar2);});
+      auto serverScaWrite = makeServer(names.scaWrite(),
+        [&](auto parameter){return scaWrite(parameter, bar2);});
 
       // Start dummy temperature service
       DimService temperatureService(names.temperature().c_str(), mTemperature);
 
-      PublisherRegistry publisherRegistry {channel};
+      PublisherRegistry publisherRegistry {bar0};
       while (!isSigInt())
       {
         {
@@ -275,12 +284,12 @@ class ProgramAliceLowlevelFrontendServer: public Program
     /// RPC handler for register reads
     static std::string registerRead(const std::string& parameter, ChannelSharedPtr channel)
     {
-      auto address = boost::lexical_cast<uint64_t>(parameter);
+      auto address = b::lexical_cast<uint64_t>(parameter);
       checkAddress(address);
 
       uint32_t value = channel->readRegister(address / 4);
 
-      // getInfoLogger() << "READ   " << Common::makeRegisterString(address, value) << InfoLogger::endm;
+      // getInfoLogger() << "READ   " << Common::makeRegisterString(address, value) << endm;
 
       return std::to_string(value);
     }
@@ -288,17 +297,17 @@ class ProgramAliceLowlevelFrontendServer: public Program
     /// RPC handler for register writes
     static std::string registerWrite(const std::string& parameter, ChannelSharedPtr channel)
     {
-      std::vector<std::string> params = split(parameter);
+      std::vector<std::string> params = split(parameter, ",");
 
       if (params.size() != 2) {
         BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Write RPC call did not have 2 parameters"));
       }
 
-      auto address = boost::lexical_cast<uint64_t>(params[0]);
-      auto value = boost::lexical_cast<uint32_t>(params[1]);
+      auto address = b::lexical_cast<uint64_t>(params[0]);
+      auto value = b::lexical_cast<uint32_t>(params[1]);
       checkAddress(address);
 
-      // getInfoLogger() << "WRITE  " << Common::makeRegisterString(address, value) << InfoLogger::endm;
+      // getInfoLogger() << "WRITE  " << Common::makeRegisterString(address, value) << endm;
 
       if (address == 0x1f4) {
         // This is to the command register, we need to wait until the card indicates it's not busy before sending a
@@ -314,16 +323,16 @@ class ProgramAliceLowlevelFrontendServer: public Program
     /// RPC handler for publish commands
     static std::string publishStartCommand(const std::string& parameter, CommandQueue& commandQueue)
     {
-      getInfoLogger() << "Received publish command: '" << parameter << "'" << InfoLogger::endm;
+      getInfoLogger() << "Received publish command: '" << parameter << "'" << endm;
       auto params = split(parameter, ";");
 
       ServiceDescription description;
       description.addresses = lexicalCastVector<uintptr_t >(split(params.at(1), ","));
       description.dnsName = params.at(0);
-      description.interval = std::chrono::milliseconds(int64_t(boost::lexical_cast<double>(params.at(2)) * 1000.0));
+      description.interval = std::chrono::milliseconds(int64_t(b::lexical_cast<double>(params.at(2)) * 1000.0));
 
       if (!commandQueue.write(CommandPublishStart{std::move(description)})) {
-        getInfoLogger() << "  command queue was full!" << InfoLogger::endm;
+        getInfoLogger() << "  command queue was full!" << endm;
       }
       return "";
     }
@@ -331,10 +340,28 @@ class ProgramAliceLowlevelFrontendServer: public Program
     /// RPC handler for publish stop commands
     static std::string publishStopCommand(const std::string& parameter, CommandQueue& commandQueue)
     {
-      getInfoLogger() << "Received stop command: '" << parameter << "'" << InfoLogger::endm;
+      getInfoLogger() << "Received stop command: '" << parameter << "'" << endm;
       if (!commandQueue.write(CommandPublishStop{parameter})) {
-        getInfoLogger() << "  command queue was full!" << InfoLogger::endm;
+        getInfoLogger() << "  command queue was full!" << endm;
       }
+      return "";
+    }
+
+    static std::string scaRead(const std::string& parameter, ChannelSharedPtr bar2)
+    {
+      getInfoLogger() << "SCA_READ: '" << parameter << "'" << endm;
+      //auto params = split(parameter, ",");
+      auto result = Sca(*bar2, bar2->getCardType()).read();
+      return (b::format("%1%,%2%,%3%") % result.data % result.command % result.time).str();
+    }
+
+    static std::string scaWrite(const std::string& parameter, ChannelSharedPtr bar2)
+    {
+      getInfoLogger() << "SCA_WRITE: '" << parameter << "'" << endm;
+      auto params = split(parameter, ",");
+      auto command = b::lexical_cast<uint32_t>(params.at(0));
+      auto data = b::lexical_cast<uint32_t>(params.at(1));
+      Sca(*bar2, bar2->getCardType()).write(command, data);
       return "";
     }
 
@@ -344,8 +371,12 @@ class ProgramAliceLowlevelFrontendServer: public Program
     double mTemperature = 40;
 };
 } // Anonymous namespace
+} // namespace Alf
+} // namespace CommandLineUtilities
+} // namespace roc
+} // namespace AliceO2
 
 int main(int argc, char** argv)
 {
-  return ProgramAliceLowlevelFrontendServer().execute(argc, argv);
+  return AliceO2::roc::CommandLineUtilities::Alf::ProgramAliceLowlevelFrontendServer().execute(argc, argv);
 }

@@ -17,61 +17,16 @@
 #include <boost/format.hpp>
 #include "ExceptionInternal.h"
 
+namespace AliceO2 {
+namespace roc {
+namespace CommandLineUtilities {
 namespace Alf {
 
-struct ServiceNames
-{
-    ServiceNames(int serialNumber, int channelNumber)
-        : serial(serialNumber), channel(channelNumber)
-    {
-    }
-
-    std::string registerReadRpc()
-    {
-      return format("REGISTER_READ");
-    }
-
-    std::string registerWriteRpc()
-    {
-      return format("REGISTER_WRITE");
-    }
-
-    std::string publishStartCommandRpc()
-    {
-      return format("PUBLISH_SERVICE");
-    }
-
-    std::string publishStopCommandRpc()
-    {
-      return format("PUBLISH_SERVICE_STOP");
-    }
-
-    std::string scaWrite()
-    {
-      return format("SCA_WRITE");
-    }
-
-    std::string scaRead()
-    {
-      return format("SCA_WRITE");
-    }
-
-    std::string temperature()
-    {
-      return format("TEMPERATURE");
-    }
-
-    const int serial;
-    const int channel;
-
-  private:
-    std::string format(std::string name) {
-      return ((boost::format("ALF/SERIAL_%d/CHANNEL_%d/%s") % serial % channel % name)).str();
-    }
-};
+/// Length of the success/failure prefix that's returned in RPC calls
+constexpr size_t PREFIX_LENGTH = 8;
 
 /// We use this in a few places because DIM insists on non-const char*
-std::vector<char> toCharBuffer(const std::string& string, bool addTerminator = true)
+inline std::vector<char> toCharBuffer(const std::string& string, bool addTerminator = true)
 {
   std::vector<char> buffer(string.begin(), string.end());
   if (addTerminator) {
@@ -81,13 +36,11 @@ std::vector<char> toCharBuffer(const std::string& string, bool addTerminator = t
 }
 
 template <typename DimObject>
-void setDataString(const std::string& string, DimObject& dimObject, bool addTerminator = true)
+inline void setDataString(const std::string& string, DimObject& dimObject, bool addTerminator = true)
 {
   auto buffer = toCharBuffer(string, addTerminator);
   dimObject.setData(buffer.data(), buffer.size());
 }
-
-constexpr size_t PREFIX_LENGTH = 8;
 
 inline std::string successPrefix()
 {
@@ -145,7 +98,8 @@ class DimRpcInfoWrapper
     {
       auto string = std::string(mRpcInfo->getString());
       if (isFail(string)) {
-        BOOST_THROW_EXCEPTION(AliceO2::roc::Exception() << AliceO2::roc::ErrorInfo::Message(string));
+        BOOST_THROW_EXCEPTION(
+          AliceO2::roc::Exception() << AliceO2::roc::ErrorInfo::Message("ALF server failure" + string));
       }
       return string;
     }
@@ -245,6 +199,37 @@ class RegisterWriteBlockRpc: DimRpcInfoWrapper
     }
 };
 
+class ScaReadRpc: DimRpcInfoWrapper
+{
+  public:
+    ScaReadRpc(const std::string& serviceName)
+      : DimRpcInfoWrapper(serviceName)
+    {
+    }
+
+    std::string read()
+    {
+      setString("");
+      return stripPrefix(getString());
+    }
+};
+
+class ScaWriteRpc: DimRpcInfoWrapper
+{
+  public:
+    ScaWriteRpc(const std::string& serviceName)
+      : DimRpcInfoWrapper(serviceName)
+    {
+    }
+
+    std::string write(uint32_t command, uint32_t data)
+    {
+      auto string = std::to_string(command) + ',' + std::to_string(data);
+      setString(string);
+      return stripPrefix(getString());
+    }
+};
+
 class StringRpcServer: public DimRpc
 {
   public:
@@ -272,6 +257,9 @@ class StringRpcServer: public DimRpc
     Callback callback;
 };
 
-}
+} // namespace Alf
+} // namespace CommandLineUtilities
+} // namespace roc
+} // namespace AliceO2
 
 #endif // ALICEO2_READOUTCARD_UTILITIES_ALF_ALICELOWLEVELFRONTEND_H

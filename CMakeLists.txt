@@ -84,6 +84,8 @@ set(SRCS
   src/ParameterTypes/ResetLevel.cxx
   src/ParameterTypes/ReadoutMode.cxx
   src/RorcStatusCode.cxx
+  src/CommandLineUtilities/AliceLowlevelFrontend/Sca.cxx
+  src/CommandLineUtilities/AliceLowlevelFrontend/ServiceNames.cxx
   src/CommandLineUtilities/Common.cxx
   src/CommandLineUtilities/Options.cxx
 )
@@ -158,13 +160,13 @@ if(ALICEO2_READOUTCARD_PDA_ENABLED)
   if(DIM_FOUND)
     O2_GENERATE_EXECUTABLE(
         EXE_NAME roc-alf-client
-        SOURCES src/CommandLineUtilities/ProgramAliceLowlevelFrontendClient.cxx
+        SOURCES src/CommandLineUtilities/AliceLowlevelFrontend/ProgramAliceLowlevelFrontendClient.cxx
         MODULE_LIBRARY_NAME ${LIBRARY_NAME}
         BUCKET_NAME o2_readoutcard_dim
    )
    O2_GENERATE_EXECUTABLE(
         EXE_NAME roc-alf-server
-        SOURCES src/CommandLineUtilities/ProgramAliceLowlevelFrontendServer.cxx
+        SOURCES src/CommandLineUtilities/AliceLowlevelFrontend/ProgramAliceLowlevelFrontendServer.cxx
         MODULE_LIBRARY_NAME ${LIBRARY_NAME}
         BUCKET_NAME o2_readoutcard_dim
    )

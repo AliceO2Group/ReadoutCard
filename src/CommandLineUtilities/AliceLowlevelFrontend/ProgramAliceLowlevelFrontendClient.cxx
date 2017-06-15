@@ -6,11 +6,10 @@
 #include "CommandLineUtilities/Program.h"
 #include <iostream>
 #include <thread>
-#include <chrono>
-#include <boost/optional/optional_io.hpp>
 #include <dim/dic.hxx>
-#include "ExceptionInternal.h"
 #include "AliceLowlevelFrontend.h"
+#include "ExceptionInternal.h"
+#include "ServiceNames.h"
 
 using std::cout;
 using std::endl;
@@ -71,6 +70,8 @@ class ProgramAliceLowlevelFrontendClient: public Program
       TemperatureInfo alfTestInt(names.temperature());
       Alf::RegisterReadRpc readRpc(names.registerReadRpc());
       Alf::RegisterWriteRpc writeRpc(names.registerWriteRpc());
+      Alf::ScaReadRpc scaReadRpc(names.scaRead());
+      Alf::ScaWriteRpc scaWriteRpc(names.scaWrite());
       Alf::PublishRpc publishRpc(names.publishStartCommandRpc());
 
       publishRpc.publish("ALF/TEST/1", 1.0, {0x1fc});
@@ -81,6 +82,11 @@ class ProgramAliceLowlevelFrontendClient: public Program
         readRpc.readRegister(0x1fc);
       }
       cout << "Done!" << endl;
+
+      cout << "SCA read" << endl;
+      cout << "  result: " << scaReadRpc.read() << endl;
+      cout << "SCA write" << endl;
+      cout << "  result: " << scaWriteRpc.write(0x0, 0x0) << endl;
 
       while (!isSigInt())
       {
