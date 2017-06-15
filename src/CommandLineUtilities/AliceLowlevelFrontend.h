@@ -28,36 +28,46 @@ struct ServiceNames
 
     std::string registerReadRpc()
     {
-      return boost::str(boost::format("ALF/SERIAL_%d/CHANNEL_%d/REGISTER_READ") % serial % channel);
+      return format("REGISTER_READ");
     }
 
     std::string registerWriteRpc()
     {
-      return boost::str(boost::format("ALF/SERIAL_%d/CHANNEL_%d/REGISTER_WRITE") % serial % channel);
+      return format("REGISTER_WRITE");
     }
 
     std::string publishStartCommandRpc()
     {
-      return boost::str(boost::format("ALF/SERIAL_%d/CHANNEL_%d/PUBLISH_SERVICE") % serial % channel);
+      return format("PUBLISH_SERVICE");
     }
 
     std::string publishStopCommandRpc()
     {
-      return boost::str(boost::format("ALF/SERIAL_%d/CHANNEL_%d/PUBLISH_SERVICE_STOP") % serial % channel);
+      return format("PUBLISH_SERVICE_STOP");
     }
 
-    std::string writeSca()
+    std::string scaWrite()
     {
-      return boost::str(boost::format("ALF/SERIAL_%d/CHANNEL_%d/PUBLISH_SERVICE") % serial % channel);
+      return format("SCA_WRITE");
+    }
+
+    std::string scaRead()
+    {
+      return format("SCA_WRITE");
     }
 
     std::string temperature()
     {
-      return boost::str(boost::format("ALF/SERIAL_%d/CHANNEL_%d/TEMPERATURE") % serial % channel);
+      return format("TEMPERATURE");
     }
 
     const int serial;
     const int channel;
+
+  private:
+    std::string format(std::string name) {
+      return ((boost::format("ALF/SERIAL_%d/CHANNEL_%d/%s") % serial % channel % name)).str();
+    }
 };
 
 /// We use this in a few places because DIM insists on non-const char*
