@@ -4,17 +4,9 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "CruDmaChannel.h"
-#include <sstream>
 #include <thread>
 #include <boost/format.hpp>
-#include "ChannelPaths.h"
 #include "ExceptionInternal.h"
-#include "Utilities/SmartPointer.h"
-
-/// Creates a CruException and attaches data using the given message string
-#define CRU_EXCEPTION(_err_message) \
-  CruException() \
-      << errinfo_rorc_generic_message(_err_message)
 
 using namespace std::literals;
 
@@ -32,7 +24,7 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
       mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)), // Internal loopback by default
       mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)), // Use data generator by default
       mGeneratorPattern(parameters.getGeneratorPattern().get_value_or(GeneratorPattern::Incremental)), //
-      mGeneratorDataSizeRandomEnabled(parameters.getGeneratorRandomSizeEnabled().get_value_or(true)), //
+      mGeneratorDataSizeRandomEnabled(parameters.getGeneratorRandomSizeEnabled().get_value_or(false)), //
       mGeneratorMaximumEvents(0), // Infinite events
       mGeneratorInitialValue(0), // Start from 0
       mGeneratorInitialWord(0), // First word
@@ -75,7 +67,7 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
           << ErrorInfo::LinkId(id));
       }
       getLogger() << id << " ";
-      mLinks.push_back({id});
+      mLinks.push_back({static_cast<LinkId>(id)});
     }
     getLogger() << InfoLogger::InfoLogger::endm;
   }
@@ -102,14 +94,13 @@ void CruDmaChannel::deviceStartDma()
     mPdaBar2.writeRegister(0x8000020 / 4, 1);
   }
 
-  mLinkToPush = 0;
-  mLinkToPop = 0;
-  mLinksTotalQueueSize = 0;
   for (auto &link : mLinks) {
     link.queue.clear();
     link.superpageCounter = 0;
   }
   mReadyQueue.clear();
+
+  mLinkQueuesTotalAvailable = LINK_QUEUE_CAPACITY * mLinks.size();
 }
 
 /// Set buffer to ready
@@ -159,30 +150,48 @@ void CruDmaChannel::initCru()
   }
 }
 
+auto CruDmaChannel::getNextLinkIndex() -> LinkIndex
+{
+  auto smallestQueueIndex = std::numeric_limits<LinkIndex>::max();
+  auto smallestQueueSize = std::numeric_limits<size_t>::max();
+
+  for (size_t i = 0; i < mLinks.size(); ++i) {
+    auto queueSize = mLinks[i].queue.size();
+    if (queueSize < smallestQueueSize) {
+      smallestQueueIndex = i;
+      smallestQueueSize = queueSize;
+    }
+  }
+
+  return smallestQueueIndex;
+}
+
 void CruDmaChannel::pushSuperpage(Superpage superpage)
 {
   checkSuperpage(superpage);
 
-  if (getTransferQueueAvailable() == 0) {
+  if (mLinkQueuesTotalAvailable == 0) {
+    // Note: the transfer queue refers to the firmware, not the mLinkIndexQueue which contains the LinkIds for links
+    // that can still be pushed into (essentially the opposite of the firmware's queue).
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not push superpage, transfer queue was full"));
   }
 
-  // Look for an empty slot in the link queues
-  for (size_t i = 0; i < mLinks.size(); ++i) {
-    auto &link = getNextLinkToPush();
-    if (link.queue.size() < LINK_QUEUE_CAPACITY) {
-//      printf("L %02u - push >>>\n", link.id);
-      link.queue.push_back(superpage);
-      mLinksTotalQueueSize++;
-      auto maxPages = superpage.getSize() / Cru::DMA_PAGE_SIZE;
-      auto busAddress = getBusOffsetAddress(superpage.getOffset());
-      getBar().pushSuperpageDescriptor(link.id, maxPages, busAddress);
-      return;
-    }
+  // Get the next link to push
+  auto &link = mLinks[getNextLinkIndex()];
+
+  if (link.queue.size() >= LINK_QUEUE_CAPACITY) {
+    // Is the link's FIFO out of space?
+    // This should never happen
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not push superpage, link queue was full"));
   }
 
-  // This should never happen
-  BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not push superpage, transfer queue was full"));
+  // Once we've confirmed the link has a slot available, we push the superpage
+  mLinkQueuesTotalAvailable--;
+  link.queue.push_back(superpage);
+
+  auto maxPages = superpage.getSize() / Cru::DMA_PAGE_SIZE;
+  auto busAddress = getBusOffsetAddress(superpage.getOffset());
+  getBar().pushSuperpageDescriptor(link.id, maxPages, busAddress);
 }
 
 auto CruDmaChannel::getSuperpage() -> Superpage
@@ -206,7 +215,9 @@ auto CruDmaChannel::popSuperpage() -> Superpage
 void CruDmaChannel::fillSuperpages()
 {
   // Check for arrivals & handle them
-  for (auto& link : mLinks) {
+  const auto size = mLinks.size();
+  for (LinkIndex linkIndex = 0; linkIndex < size; ++linkIndex) {
+    auto& link = mLinks[linkIndex];
     uint32_t superpageCount = getBar().getSuperpageCount(link.id);
     auto available = superpageCount > link.superpageCounter;
     if (available) {
@@ -215,25 +226,24 @@ void CruDmaChannel::fillSuperpages()
         getLogger() << InfoLogger::InfoLogger::Error
           << "FATAL: Firmware reported more superpages available (" << amountAvailable <<
           ") than should be present in FIFO (" << link.queue.size() << "); "
-          << link.superpageCounter << " superpages received from link " << link.id << " according to driver, "
+          << link.superpageCounter << " superpages received from link " << int(link.id) << " according to driver, "
           << superpageCount << " pushed according to firmware" << InfoLogger::InfoLogger::endm;
-
         BOOST_THROW_EXCEPTION(Exception()
             << ErrorInfo::Message("FATAL: Firmware reported more superpages available than should be present in FIFO"));
       }
+
       for (uint32_t i = 0; i < amountAvailable; ++i) {
         if (mReadyQueue.size() >= READY_QUEUE_CAPACITY) {
           break;
         }
-//        printf("L %02u - pop <<<\n", link.id);
 
         // Front superpage has arrived
         link.queue.front().ready = true;
         link.queue.front().received = link.queue.front().size;
         mReadyQueue.push_back(link.queue.front());
+        mLinkQueuesTotalAvailable++;
         link.queue.pop_front();
         link.superpageCounter++;
-        mLinksTotalQueueSize--;
       }
     }
   }
@@ -241,8 +251,7 @@ void CruDmaChannel::fillSuperpages()
 
 int CruDmaChannel::getTransferQueueAvailable()
 {
-  // capacity - size = available
-  return (mLinks.size() * LINK_QUEUE_CAPACITY) - mLinksTotalQueueSize;
+  return mLinkQueuesTotalAvailable;
 }
 
 int CruDmaChannel::getReadyQueueSize()
@@ -281,8 +290,8 @@ boost::optional<float> CruDmaChannel::getTemperature()
 boost::optional<std::string> CruDmaChannel::getFirmwareInfo()
 {
   if (mFeatures.firmwareInfo) {
-    return boost::str(boost::format("%x-%x-%x") % getBar2().getFirmwareDate() % getBar2().getFirmwareTime()
-        % getBar2().getFirmwareGitHash());
+    return (boost::format("%x-%x-%x") % getBar2().getFirmwareDate() % getBar2().getFirmwareTime()
+        % getBar2().getFirmwareGitHash()).str();
   } else {
     return {};
   }

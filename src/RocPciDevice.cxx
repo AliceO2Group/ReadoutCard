@@ -1,4 +1,4 @@
-/// \file RocPcievice.cxx
+/// \file RocPciDevice.cxx
 /// \brief Implementation of the RocPciDevice class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)

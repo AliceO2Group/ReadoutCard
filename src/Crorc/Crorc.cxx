@@ -1026,6 +1026,42 @@ int getSerial(RegisterReadWriteInterface& bar0)
   return serial;
 }
 
+void Crorc::scaInit(RegisterReadWriteInterface& bar2)
+{
+  bar2.writeRegister(Rorc::Sca::CONTROL, 0x1);
+  bar2.writeRegister(Rorc::Sca::CONTROL, 0x2);
+  bar2.writeRegister(Rorc::Sca::CONTROL, 0x1);
+  bar2.writeRegister(Rorc::Sca::CONTROL, 0x0);
+}
+
+void Crorc::scaWrite(RegisterReadWriteInterface& bar2, uint32_t command, uint32_t data)
+{
+  bar2.writeRegister(Rorc::Sca::DATA, data);
+  bar2.writeRegister(Rorc::Sca::COMMAND, command);
+  bar2.writeRegister(Rorc::Sca::CONTROL, 0x4);
+  bar2.writeRegister(Rorc::Sca::CONTROL, 0x0);
+}
+
+auto Crorc::scaRead(RegisterReadWriteInterface& bar2) -> ScaReadResult
+{
+  return {
+    bar2.readRegister(Rorc::Sca::READ_DATA),
+    bar2.readRegister(Rorc::Sca::READ_COMMAND),
+    bar2.readRegister(Rorc::Sca::READ_TIME)
+  };
+}
+
+auto Crorc::scaGpioWrite(RegisterReadWriteInterface& bar2, uint32_t data) -> ScaReadResult
+{
+  scaInit(bar2);
+  scaWrite(bar2, 0x00013302, 0xFf000000);
+  scaWrite(bar2, 0x02023320, 0xFfffFfff);
+  scaWrite(bar2, 0x02031010, data);
+  scaWrite(bar2, 0x02030011, 0x0);
+  return scaRead(bar2);
+}
+
+
 } // namespace Crorc
 } // namespace roc
 } // namespace AliceO2

@@ -39,7 +39,13 @@ class DmaChannelInterface
     virtual void resetChannel(ResetLevel::type resetLevel) = 0;
 
     /// Adds superpage to "transfer queue".
-    /// A superpage represents a physically contiguous buffer that will be filled with multiple pages from the card.
+    /// A superpage represents a buffer that will be filled with multiple pages by the card.
+    ///
+    /// It *must* be contiguous in the card's bus address space. The two recommended ways to ensure this are:
+    ///  * Make sure the superpage is contained within a hugepage (see README.md for more info on hugepages)
+    ///  * Enable your machine's IOMMU. In this case, the channel buffer that you register when opening a channel will
+    ///    be completely contiguous as far as the card is concerned.
+    ///
     /// The user is responsible for making sure enqueued superpages do not overlap - the driver will dutifully overwrite
     /// your data if you tell it to do so.
     ///

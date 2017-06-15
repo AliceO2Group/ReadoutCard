@@ -111,14 +111,48 @@ inline bool isFail(const std::string& string)
 
 inline std::string stripPrefix(const std::string& string)
 {
+  if (string.length() < PREFIX_LENGTH) {
+    BOOST_THROW_EXCEPTION(AliceO2::roc::Exception()
+      << AliceO2::roc::ErrorInfo::Message("string too short to contain prefix"));
+  }
   return string.substr(PREFIX_LENGTH);
 }
 
-class PublishRpc: public DimRpcInfo
+class DimRpcInfoWrapper
+{
+  public:
+    DimRpcInfoWrapper(const std::string& serviceName)
+      : mRpcInfo(std::make_unique<DimRpcInfo>(serviceName.c_str(), toCharBuffer("").data()))
+    {
+    }
+
+    void setString(std::string string)
+    {
+      setDataString(string, getDimRpcInfo());
+    }
+
+    std::string getString()
+    {
+      auto string = std::string(mRpcInfo->getString());
+      if (isFail(string)) {
+        BOOST_THROW_EXCEPTION(AliceO2::roc::Exception() << AliceO2::roc::ErrorInfo::Message(string));
+      }
+      return string;
+    }
+
+    DimRpcInfo& getDimRpcInfo() const {
+      return *mRpcInfo.get();
+    }
+
+  private:
+    std::unique_ptr<DimRpcInfo> mRpcInfo;
+};
+
+class PublishRpc : DimRpcInfoWrapper
 {
   public:
     PublishRpc(const std::string& serviceName)
-        : DimRpcInfo(serviceName.c_str(), toCharBuffer("").data())
+        : DimRpcInfoWrapper(serviceName)
     {
     }
 
@@ -134,115 +168,71 @@ class PublishRpc: public DimRpcInfo
       }
       stream << ';' << frequency;
       printf("Publish: %s\n", stream.str().c_str());
-      setDataString(stream.str(), *this);
-
-      auto returnValue = std::string(getString());
-//      printf("Publish got return: %s\n", returnValue.c_str());
-      if (isFail(returnValue)) {
-        BOOST_THROW_EXCEPTION(AliceO2::roc::Exception() << AliceO2::roc::ErrorInfo::Message(returnValue));
-      }
+      setString(stream.str());
+      getString();
     }
 };
 
-class PublishStopRpc: public DimRpcInfo
+class PublishStopRpc: DimRpcInfoWrapper
 {
   public:
     PublishStopRpc(const std::string &serviceName)
-      : DimRpcInfo(serviceName.c_str(), toCharBuffer("").data())
+      : DimRpcInfoWrapper(serviceName)
     {
     }
 
     void stop(std::string dnsName)
     {
-      setDataString(dnsName, *this);
-      auto returnValue = std::string(getString());
-      if (isFail(returnValue)) {
-        BOOST_THROW_EXCEPTION(AliceO2::roc::Exception() << AliceO2::roc::ErrorInfo::Message(returnValue));
-      }
+      setString(dnsName);
+      getString();
     }
 };
 
-class RegisterReadRpc: public DimRpcInfo
+class RegisterReadRpc: DimRpcInfoWrapper
 {
   public:
     RegisterReadRpc(const std::string& serviceName)
-        : DimRpcInfo(serviceName.c_str(), toCharBuffer("").data())
+        : DimRpcInfoWrapper(serviceName)
     {
     }
 
     uint32_t readRegister(uint64_t registerAddress)
     {
-      setDataString(std::to_string(registerAddress), *this);
-      auto returnValue = std::string(getString());
-//      printf("Read got return: %s\n", returnValue.c_str());
-      if (isFail(returnValue)) {
-        BOOST_THROW_EXCEPTION(AliceO2::roc::Exception() << AliceO2::roc::ErrorInfo::Message(returnValue));
-      }
-      return boost::lexical_cast<uint32_t>(stripPrefix(returnValue));
+      setString(std::to_string(registerAddress));
+      return boost::lexical_cast<uint32_t>(stripPrefix(getString()));
     }
 };
 
-class RegisterWriteRpc: public DimRpcInfo
+class RegisterWriteRpc: DimRpcInfoWrapper
 {
   public:
     RegisterWriteRpc(const std::string& serviceName)
-        : DimRpcInfo(serviceName.c_str(), toCharBuffer("").data())
+        : DimRpcInfoWrapper(serviceName)
     {
     }
 
     void writeRegister(uint64_t registerAddress, uint32_t registerValue)
     {
       auto string = std::to_string(registerAddress) + ',' + std::to_string(registerValue);
-      setDataString(string, *this);
-      auto returnValue = std::string(getString());
-//      printf("Write got return: %s\n", returnValue.c_str());
-      if (isFail(returnValue)) {
-        BOOST_THROW_EXCEPTION(AliceO2::roc::Exception() << AliceO2::roc::ErrorInfo::Message(returnValue));
-      }
+      setString(string);
+      getString();
     }
 };
 
-class RegisterWriteBlockRpc: public DimRpcInfo
+class RegisterWriteBlockRpc: DimRpcInfoWrapper
 {
   public:
     RegisterWriteBlockRpc(const std::string& serviceName)
-        : DimRpcInfo(serviceName.c_str(), toCharBuffer("").data())
+        : DimRpcInfoWrapper(serviceName)
     {
     }
 
     void writeRegister(uint64_t registerAddress, uint32_t registerValue)
     {
       auto string = std::to_string(registerAddress) + ',' + std::to_string(registerValue);
-      setDataString(string, *this);
-      auto returnValue = std::string(getString());
-      printf("Write got return: %s\n", returnValue.c_str());
-      if (isFail(returnValue)) {
-        BOOST_THROW_EXCEPTION(AliceO2::roc::Exception() << AliceO2::roc::ErrorInfo::Message(returnValue));
-      }
+      setString(string);
+      getString();
     }
-};
-
-class BasicRpcServer: public DimRpc
-{
-  public:
-    using Callback = std::function<void(BasicRpcServer&)>;
-
-    BasicRpcServer(const std::string& serviceName, const char* formatIn, const char* formatOut, Callback callback)
-        : DimRpc(serviceName.c_str(), formatIn, formatOut), callback(callback)
-    {
-    }
-
-  private:
-    void rpcHandler()
-    {
-      try {
-        callback(*this);
-      } catch (const std::exception& e) {
-        printf("Error: %s\n", e.what());
-      }
-    }
-
-    Callback callback;
 };
 
 class StringRpcServer: public DimRpc
@@ -255,12 +245,14 @@ class StringRpcServer: public DimRpc
     {
     }
 
+    StringRpcServer(const StringRpcServer& b) = delete;
+    StringRpcServer(StringRpcServer&& b) = delete;
+
   private:
     void rpcHandler() override
     {
       try {
-        std::string parameter = getString();
-        std::string returnValue = callback(parameter);
+        auto returnValue = callback(std::string(getString()));
         Alf::setDataString(Alf::makeSuccessString(returnValue), *this);
       } catch (const std::exception& e) {
         Alf::setDataString(Alf::makeFailString(e.what()), *this);
@@ -268,23 +260,6 @@ class StringRpcServer: public DimRpc
     }
 
     Callback callback;
-};
-
-class CallbackCommand : public DimCommand
-{
-  public:
-    CallbackCommand(const std::string& serviceName, const char* format, std::function<void()> callback)
-        : DimCommand(serviceName.c_str(), format), callback(callback)
-    {
-    }
-
-  private:
-    void commandHandler() override
-    {
-      callback();
-    }
-
-    std::function<void()> callback;
 };
 
 }
