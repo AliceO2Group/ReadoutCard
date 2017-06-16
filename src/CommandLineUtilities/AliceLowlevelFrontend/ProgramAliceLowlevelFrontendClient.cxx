@@ -47,7 +47,6 @@ class ProgramAliceLowlevelFrontendClient: public Program
 
     virtual void addOptions(boost::program_options::options_description& options) override
     {
-      Options::addOptionChannel(options);
       Options::addOptionSerialNumber(options);
       Options::addOptionCardId(options);
     }
@@ -63,10 +62,9 @@ class ProgramAliceLowlevelFrontendClient: public Program
 
       // Get program options
       int serialNumber = Options::getOptionSerialNumber(map);
-      int channelNumber = Options::getOptionChannel(map);
 
       // Initialize DIM objects
-      Alf::ServiceNames names(serialNumber, channelNumber);
+      Alf::ServiceNames names(serialNumber);
       TemperatureInfo alfTestInt(names.temperature());
       Alf::RegisterReadRpc readRpc(names.registerReadRpc());
       Alf::RegisterWriteRpc writeRpc(names.registerWriteRpc());

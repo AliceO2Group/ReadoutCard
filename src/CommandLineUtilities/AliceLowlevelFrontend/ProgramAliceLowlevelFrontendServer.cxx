@@ -16,8 +16,6 @@
 #include <InfoLogger/InfoLogger.hxx>
 #include <dim/dis.hxx>
 #include "AliceLowlevelFrontend.h"
-#include "Common/BasicThread.h"
-#include "Common/GuardFunction.h"
 #include "ExceptionInternal.h"
 #include "folly/ProducerConsumerQueue.h"
 #include "ReadoutCard/Parameters.h"
@@ -224,7 +222,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
       DimServer::start("ALF");
 
       // Object for service DNS names
-      Alf::ServiceNames names(mSerialNumber, mChannelNumber);
+      Alf::ServiceNames names(mSerialNumber);
 
       auto makeServer = [&](std::string name, auto callback) {
         getInfoLogger() << "Starting service " << name << endm;
@@ -244,6 +242,8 @@ class ProgramAliceLowlevelFrontendServer: public Program
         [&](auto parameter){return scaRead(parameter, bar2);});
       auto serverScaWrite = makeServer(names.scaWrite(),
         [&](auto parameter){return scaWrite(parameter, bar2);});
+      auto serverScaGpioWrite = makeServer(names.scaGpioWrite(),
+        [&](auto parameter){return scaGpioWrite(parameter, bar2);});
 
       // Start dummy temperature service
       DimService temperatureService(names.temperature().c_str(), mTemperature);
@@ -365,8 +365,15 @@ class ProgramAliceLowlevelFrontendServer: public Program
       return "";
     }
 
+    static std::string scaGpioWrite(const std::string& parameter, ChannelSharedPtr bar2)
+    {
+      getInfoLogger() << "SCA_GPIO_WRITE: '" << parameter << "'" << endm;
+      auto data = b::lexical_cast<uint32_t>(parameter);
+      Sca(*bar2, bar2->getCardType()).gpioWrite(data);
+      return "";
+    }
+
     int mSerialNumber = 0;
-    int mChannelNumber = 0;
     CommandQueue mCommandQueue;
     double mTemperature = 40;
 };

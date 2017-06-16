@@ -16,8 +16,8 @@ namespace Alf {
 class ServiceNames
 {
   public:
-    ServiceNames(int serialNumber, int channelNumber)
-        : serial(serialNumber), channel(channelNumber)
+    ServiceNames(int serialNumber)
+        : serial(serialNumber)
     {
     }
 
@@ -27,12 +27,12 @@ class ServiceNames
     std::string publishStopCommandRpc() const;
     std::string scaWrite() const;
     std::string scaRead() const;
+    std::string scaGpioWrite() const;
     std::string temperature() const;
 
   private:
     std::string format(std::string name) const;
     const int serial;
-    const int channel;
 };
 
 } // namespace Alf

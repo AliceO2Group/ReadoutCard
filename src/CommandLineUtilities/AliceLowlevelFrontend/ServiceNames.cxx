@@ -23,11 +23,12 @@ DEFSERVICENAME(publishStartCommandRpc, "PUBLISH_SERVICE")
 DEFSERVICENAME(publishStopCommandRpc, "PUBLISH_SERVICE_STOP")
 DEFSERVICENAME(scaRead, "SCA_READ")
 DEFSERVICENAME(scaWrite, "SCA_WRITE")
+DEFSERVICENAME(scaGpioWrite, "SCA_GPIO_WRITE")
 DEFSERVICENAME(temperature, "TEMPERATURE")
 
 std::string ServiceNames::format(std::string name) const
 {
-  return ((boost::format("ALF/SERIAL_%d/CHANNEL_%d/%s") % serial % channel % name)).str();
+  return ((boost::format("ALF/SERIAL_%d/%s") % serial % name)).str();
 }
 
 } // namespace Alf

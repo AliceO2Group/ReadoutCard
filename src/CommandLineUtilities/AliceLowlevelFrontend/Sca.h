@@ -15,7 +15,7 @@ namespace roc {
 namespace CommandLineUtilities {
 namespace Alf {
 
-
+/// Class for interfacing with the C-RORC's and CRU's Slow-Control Adapter (SCA)
 class Sca
 {
   public:
@@ -44,7 +44,10 @@ class Sca
     void barWrite(int index, uint32_t data);
     uint32_t barRead(int index);
 
+    /// Interface for BAR 2
     RegisterReadWriteInterface& bar2;
+
+    /// Offset for the registers. May differ per card
     int offset;
 };
 

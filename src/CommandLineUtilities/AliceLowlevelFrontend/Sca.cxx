@@ -34,6 +34,7 @@ Sca::Sca(RegisterReadWriteInterface &bar2, CardType::type cardType) : bar2(bar2)
 
 void Sca::init()
 {
+  // TODO Sort out magic numbers
   barWrite(Registers::CONTROL, 0x1);
   barWrite(Registers::CONTROL, 0x2);
   barWrite(Registers::CONTROL, 0x1);
@@ -42,6 +43,7 @@ void Sca::init()
 
 void Sca::write(uint32_t command, uint32_t data)
 {
+  // TODO Sort out magic numbers
   barWrite(Registers::DATA, data);
   barWrite(Registers::COMMAND, command);
   barWrite(Registers::CONTROL, 0x4);
@@ -60,6 +62,7 @@ auto Sca::read() -> ReadResult
 auto Sca::gpioWrite(uint32_t data) -> ReadResult
 {
   init();
+  // TODO Sort out magic numbers
   write(0x00013302, 0xFf000000);
   write(0x02023320, 0xFfffFfff);
   write(0x02031010, data);
