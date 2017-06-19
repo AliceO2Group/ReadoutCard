@@ -225,4 +225,5 @@ include(PackageConfigurator)
 install(
   FILES src/roc-setup-hugetlbfs.sh
   DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+  PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
   RENAME roc-setup-hugetlbfs)
