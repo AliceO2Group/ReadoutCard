@@ -19,18 +19,17 @@ namespace Alf {
 class Sca
 {
   public:
-    struct WriteCommand
-    {
-        uint8_t command;
-        uint8_t transaction;
-        uint8_t channel;
-    };
+//    struct WriteCommand
+//    {
+//        uint8_t command;
+//        uint8_t transaction;
+//        uint8_t channel;
+//    };
 
     struct ReadResult
     {
         uint32_t data;
         uint32_t command;
-        uint32_t time;
     };
 
     Sca(RegisterReadWriteInterface& bar2, CardType::type cardType);
@@ -38,11 +37,16 @@ class Sca
     void init();
     void write(uint32_t command, uint32_t data);
     ReadResult read();
+    void gpioEnable();
     ReadResult gpioWrite(uint32_t data);
+
 
   private:
     void barWrite(int index, uint32_t data);
     uint32_t barRead(int index);
+    void executeCommand();
+    void waitOnBusyClear();
+    void checkError(uint32_t command);
 
     /// Interface for BAR 2
     RegisterReadWriteInterface& bar2;

@@ -219,6 +219,8 @@ class ProgramAliceLowlevelFrontendServer: public Program
       auto bar0 = ChannelFactory().getBar(Parameters::makeParameters(mSerialNumber, 0));
       auto bar2 = ChannelFactory().getBar(Parameters::makeParameters(mSerialNumber, 2));
 
+      Sca(*bar2, bar2->getCardType()).gpioEnable();
+
       DimServer::start("ALF");
 
       // Object for service DNS names
@@ -352,7 +354,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
       getInfoLogger() << "SCA_READ: '" << parameter << "'" << endm;
       //auto params = split(parameter, ",");
       auto result = Sca(*bar2, bar2->getCardType()).read();
-      return (b::format("%1%,%2%,%3%") % result.data % result.command % result.time).str();
+      return (b::format("%1%,%2%") % result.data % result.command).str();
     }
 
     static std::string scaWrite(const std::string& parameter, ChannelSharedPtr bar2)
