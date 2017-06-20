@@ -7,6 +7,7 @@
 #define ALICEO2_READOUTCARD_INCLUDE_PCIADDRESS_H_
 
 #include <string>
+#include <boost/optional.hpp>
 
 namespace AliceO2 {
 namespace roc {
@@ -29,6 +30,10 @@ class PciAddress
     /// Converts a PciAddress object to a string in "lspci" format: "[bus]:[slot].[function]".
     /// For example: "01:23.0"
     std::string toString() const;
+
+    /// Converts a PciAddress object from a string in "lspci" format: "[bus]:[slot].[function]".
+    /// For example: "01:23.0"
+    static boost::optional<PciAddress> fromString(std::string string);
 
     bool operator==(const PciAddress& other) const
     {

@@ -153,10 +153,12 @@ std::shared_ptr<Interface> makeChannel(const Parameters& params, int dummySerial
 
   auto id = params.getCardIdRequired();
 
-  if (auto serial = boost::get<int>(&id)) {
-    return (dummySerial == *serial) ? makeDummy() : makeReal(findCard(*serial).cardType);
-  } else if (auto address = boost::get<PciAddress>(&id)) {
-    return makeReal(findCard(*address).cardType);
+  if (auto serialMaybe = boost::get<int>(&id)) {
+    auto serial = *serialMaybe;
+    return (dummySerial == serial) ? makeDummy() : makeReal(findCard(serial).cardType);
+  } else if (auto addressMaybe = boost::get<PciAddress>(&id)) {
+    auto address = *addressMaybe;
+    return makeReal(findCard(address).cardType);
   } else {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Invalid Card ID"));
   }

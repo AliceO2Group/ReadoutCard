@@ -367,10 +367,19 @@ class Parameters
     }
 
     /// Convert a string to a set of link IDs for the setLinkMask() function.
-    /// Can contain comma separated integers or ranges, for example:
+    /// Can contain comma separated integers or ranges. For example:
     /// * "0,1,2,8-10" for links 0, 1, 2, 8, 9 and 10
     /// * "0-19,21-23" for links 0 to 23 except 20
+    /// \throw ParseException on failure to parse
     static LinkMaskType linkMaskFromString(const std::string& string);
+
+    /// Convert a string to a CardIdType for the setCardId() function.
+    /// Can contain an integer or PCI address. For example:
+    /// * "12345"
+    /// * "42:0.0"
+    /// \throw ParseException on failure to parse
+    /// \throw ParameterException on PciAddress numbers out of range
+    static CardIdType cardIdFromString(const std::string& string);
 
   private:
     std::unique_ptr<ParametersPimpl> mPimpl;

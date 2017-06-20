@@ -76,4 +76,23 @@ BOOST_AUTO_TEST_CASE(ParametersLinkMaskFromString)
     BOOST_CHECK(Parameters::linkMaskFromString("0,1,4-6") == b);
     BOOST_CHECK(Parameters::linkMaskFromString("0-1,4-6") == b);
   }
+  BOOST_CHECK_THROW(Parameters::linkMaskFromString("0/2/3/4"), ParseException);
+  BOOST_CHECK_THROW(Parameters::linkMaskFromString("0,1,2,3+4"), ParseException);
+}
+
+BOOST_AUTO_TEST_CASE(ParametersCardIdFromString)
+{
+  {
+    Parameters::CardIdType cardId = PciAddress("42:0.0");
+    BOOST_CHECK(Parameters::cardIdFromString("42:0.0") == cardId);
+    BOOST_CHECK(Parameters::cardIdFromString("12345") != cardId);
+  }
+  {
+    Parameters::CardIdType cardId = 12345;
+    BOOST_CHECK(Parameters::cardIdFromString("42:0.0") != cardId);
+    BOOST_CHECK(Parameters::cardIdFromString("12345") == cardId);
+  }
+  BOOST_CHECK_THROW(Parameters::cardIdFromString("9123:132745.796"), ParameterException);
+  BOOST_CHECK_THROW(Parameters::cardIdFromString("42:0:0"), ParseException);
+  BOOST_CHECK_THROW(Parameters::cardIdFromString("3248758792345"), ParseException);
 }

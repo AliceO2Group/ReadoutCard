@@ -63,5 +63,15 @@ std::string PciAddress::toString() const
   return boost::str(boost::format("%02x:%02x.%1x") % bus % slot % function);
 }
 
+boost::optional<PciAddress> PciAddress::fromString(std::string string)
+{
+  try {
+    return PciAddress(string);
+  }
+  catch (const ParseException& e) {
+    return {};
+  }
+}
+
 } // namespace roc
 } // namespace AliceO2

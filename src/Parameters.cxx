@@ -167,7 +167,7 @@ auto Parameters::linkMaskFromString(const std::string& string) -> LinkMaskType
         std::vector<std::string> dashSeparateds;
         boost::split(dashSeparateds, commaSeparated, boost::is_any_of("-"));
         if (dashSeparateds.size() != 2) {
-          throw ParameterException() << ErrorInfo::Message("Invalid link string format");
+          BOOST_THROW_EXCEPTION(ParseException() << ErrorInfo::Message("Invalid link string format"));
         }
         auto start = boost::lexical_cast<uint32_t>(dashSeparateds[0]);
         auto end = boost::lexical_cast<uint32_t>(dashSeparateds[1]);
@@ -180,10 +180,25 @@ auto Parameters::linkMaskFromString(const std::string& string) -> LinkMaskType
     }
   }
   catch (boost::bad_lexical_cast& e) {
-    throw ParameterException() << ErrorInfo::Message(std::string("Invalid link string format: ") + e.what());
+    BOOST_THROW_EXCEPTION(
+      ParseException() << ErrorInfo::Message(std::string("Invalid link string format: ") + e.what()));
   }
 
   return links;
+}
+
+auto Parameters::cardIdFromString(const std::string& string) -> CardIdType
+{
+  if (auto pciAddressMaybe = PciAddress::fromString(string)) {
+    return *pciAddressMaybe;
+  } else {
+    int serial = 0;
+    if (!boost::conversion::try_lexical_convert<int>(string, serial)) {
+      BOOST_THROW_EXCEPTION(
+        ParseException() << ErrorInfo::Message("Failed to parse card ID as either PCI address or serial number"));
+    }
+    return serial;
+  }
 }
 
 } // namespace roc

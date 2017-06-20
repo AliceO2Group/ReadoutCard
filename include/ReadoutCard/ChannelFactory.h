@@ -33,10 +33,18 @@ class ChannelFactory
     /// \param parameters Parameters for the channel
     DmaChannelSharedPtr getDmaChannel(const Parameters &parameters);
 
-    /// Get an object to access a BAR with the given serial number and channel number.
+    /// Get an object to access a BAR with the given card ID and channel number.
     /// Passing 'DUMMY_SERIAL_NUMBER' as serial number returns a dummy implementation
     /// \param parameters Parameters for the channel
     BarSharedPtr getBar(const Parameters &parameters);
+
+    /// Get an object to access a BAR with the given card ID and channel number.
+    /// Passing 'DUMMY_SERIAL_NUMBER' as serial number returns a dummy implementation
+    /// \param parameters Parameters for the channel
+    BarSharedPtr getBar(const Parameters::CardIdType& cardId, const Parameters::ChannelNumberType& channel)
+    {
+      return getBar(Parameters::makeParameters(cardId, channel));
+    }
 
     static int getDummySerialNumber()
     {

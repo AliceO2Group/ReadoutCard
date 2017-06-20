@@ -5,7 +5,7 @@
 
 #include <iostream>
 #include <string>
-#include <boost/lexical_cast.hpp>
+#include <boost/lexical_cast/try_lexical_convert.hpp>
 #include <boost/python.hpp>
 #include "Common/GuardFunction.h"
 #include "ExceptionInternal.h"
@@ -46,25 +46,7 @@ class BarChannel
   public:
     BarChannel(std::string cardIdString, int channelNumber)
     {
-      Parameters::CardIdType cardId;
-
-      // Try to interpret card ID as PCI address
-      try {
-        cardId = PciAddress(cardIdString);
-      }
-      catch (const ParseException& e) {
-      }
-
-      if (cardId.empty()) {
-        // Try to interpret card ID as serial number
-        try {
-          cardId = boost::lexical_cast<int>(cardIdString);
-        }
-        catch (const boost::bad_lexical_cast &e) {
-          throw std::runtime_error("Failed to parse card ID as either PCI address or serial number");
-        }
-      }
-
+      auto cardId = Parameters::cardIdFromString(cardIdString);
       mBarChannel = ChannelFactory().getBar(Parameters::makeParameters(cardId, channelNumber));
     }
 
