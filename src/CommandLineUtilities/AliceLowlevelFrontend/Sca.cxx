@@ -38,6 +38,12 @@ Sca::Sca(RegisterReadWriteInterface &bar2, CardType::type cardType) : bar2(bar2)
 {
 }
 
+void Sca::initialize()
+{
+  init();
+  gpioEnable();
+}
+
 void Sca::init()
 {
   barWrite(Registers::CONTROL, 0x1);

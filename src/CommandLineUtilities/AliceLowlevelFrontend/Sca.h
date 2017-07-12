@@ -34,14 +34,14 @@ class Sca
 
     Sca(RegisterReadWriteInterface& bar2, CardType::type cardType);
 
-    void init();
+    void initialize();
     void write(uint32_t command, uint32_t data);
     ReadResult read();
-    void gpioEnable();
     ReadResult gpioWrite(uint32_t data);
 
-
   private:
+    void init();
+    void gpioEnable();
     void barWrite(int index, uint32_t data);
     uint32_t barRead(int index);
     void executeCommand();

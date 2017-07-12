@@ -219,7 +219,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
       auto bar0 = ChannelFactory().getBar(Parameters::makeParameters(mSerialNumber, 0));
       auto bar2 = ChannelFactory().getBar(Parameters::makeParameters(mSerialNumber, 2));
 
-      Sca(*bar2, bar2->getCardType()).gpioEnable();
+      Sca(*bar2, bar2->getCardType()).initialize();
 
       DimServer::start("ALF");
 
@@ -240,10 +240,10 @@ class ProgramAliceLowlevelFrontendServer: public Program
         [&](auto parameter){return publishStartCommand(parameter, mCommandQueue);});
       auto serverPublishStop = makeServer(names.publishStopCommandRpc(),
         [&](auto parameter){return publishStopCommand(parameter, mCommandQueue);});
-      auto serverScaRead = makeServer(names.scaRead(),
-        [&](auto parameter){return scaRead(parameter, bar2);});
-      auto serverScaWrite = makeServer(names.scaWrite(),
-        [&](auto parameter){return scaWrite(parameter, bar2);});
+//      auto serverScaRead = makeServer(names.scaRead(),
+//        [&](auto parameter){return scaRead(parameter, bar2);});
+//      auto serverScaWrite = makeServer(names.scaWrite(),
+//        [&](auto parameter){return scaWrite(parameter, bar2);});
       auto serverScaGpioWrite = makeServer(names.scaGpioWrite(),
         [&](auto parameter){return scaGpioWrite(parameter, bar2);});
 
@@ -371,8 +371,8 @@ class ProgramAliceLowlevelFrontendServer: public Program
     {
       getInfoLogger() << "SCA_GPIO_WRITE: '" << parameter << "'" << endm;
       auto data = b::lexical_cast<uint32_t>(parameter);
-      Sca(*bar2, bar2->getCardType()).gpioWrite(data);
-      return "";
+      auto result = Sca(*bar2, bar2->getCardType()).gpioWrite(data);
+      return (b::format("%x,%x") % result.data % result.command).str();
     }
 
     int mSerialNumber = 0;
