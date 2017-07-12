@@ -265,7 +265,7 @@ void CrorcDmaChannel::startDataReceiving()
 
 int CrorcDmaChannel::getTransferQueueAvailable()
 {
-  return mSuperpageQueue.getPushing().capacity() - mSuperpageQueue.getPushing().size();
+  return mSuperpageQueue.getQueueAvailable();
 }
 
 int CrorcDmaChannel::getReadyQueueSize()

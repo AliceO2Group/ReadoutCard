@@ -15,6 +15,7 @@
 #include <vector>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/lexical_cast/try_lexical_convert.hpp>
 #include "Crorc/Constants.h"
 #include "ExceptionInternal.h"
 #include "ReadoutCard/RegisterReadWriteInterface.h"
@@ -999,7 +1000,7 @@ void Crorc::initReadoutTriggered(RegisterReadWriteInterface&)
   BOOST_THROW_EXCEPTION(std::runtime_error("not implemented"));
 }
 
-int getSerial(RegisterReadWriteInterface& bar0)
+boost::optional<int32_t> getSerial(RegisterReadWriteInterface& bar0)
 {
   // Reading the FLASH.
   uint32_t address = Rorc::Serial::FLASH_ADDRESS;
@@ -1018,12 +1019,17 @@ int getSerial(RegisterReadWriteInterface& bar0)
 
   // We don't use the first character for the conversion, since we started reading one byte before the serial number
   // location in the flash
-  uint32_t serial = boost::lexical_cast<int>(data.data() + 1, Rorc::Serial::LENGTH);
+  uint32_t serial = 0;
+  if (!boost::conversion::try_lexical_convert(data.data() + 1, Rorc::Serial::LENGTH, serial)) {
+    return {};
+  }
+
   if (serial == 0xFfffFfff) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("C-RORC reported invalid serial number 0xffffffff, "
                                                               "a fatal error may have occurred"));
   }
-  return serial;
+
+  return {int32_t(serial)};
 }
 
 } // namespace Crorc

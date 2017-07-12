@@ -218,8 +218,7 @@ boost::optional<int32_t> cruGetSerial(Pda::PdaDevice::PdaPciDevice pciDevice)
 boost::optional<int32_t> crorcGetSerial(Pda::PdaDevice::PdaPciDevice pciDevice)
 {
   Pda::PdaBar pdaBar(pciDevice, 0); // Must use BAR 0 to access flash
-  int32_t serial = Crorc::getSerial(pdaBar);
-  return serial;
+  return Crorc::getSerial(pdaBar);
 }
 
 } // namespace roc
