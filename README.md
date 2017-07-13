@@ -222,11 +222,10 @@ If PDA is not detected on the system, only a dummy implementation of the interfa
   yum install kernel-devel pciutils-devel kmod-devel libtool libhugetlbfs
   ~~~
 
-2. Download & extract PDA 11.0.7
+2. Download PDA
   ~~~
-  wget https://compeng.uni-frankfurt.de/fileadmin/Images/pda/pda-11.0.7.tar.gz
-  tar zxf pda-11.0.7.tar.gz
-  cd pda-11.0.7
+  git clone https://github.com/PascalBoeschoten/pda.git
+  cd pda
   ~~~
 
 3. Compile
