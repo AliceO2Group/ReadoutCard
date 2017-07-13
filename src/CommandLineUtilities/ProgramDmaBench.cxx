@@ -378,7 +378,6 @@ class ProgramDmaBench: public Program
         try {
           RandomPauses pauses;
           int currentSuperpagePagesCounted = 0;
-          auto rest = [&]{ std::this_thread::sleep_for(RESTING_TIME_PUSH_THREAD); };
 
           while (!isStopDma()) {
             // Check if we need to stop in the case of a page limit
@@ -393,21 +392,28 @@ class ProgramDmaBench: public Program
             // Keep the driver's queue filled
             mChannel->fillSuperpages();
 
+            auto shouldRest = false;
+
             // Give free superpages to the driver
-            while (mChannel->getTransferQueueAvailable() != 0) {
-              Superpage superpage;
-              if (freeQueue.read(superpage.offset)) {
-                superpage.size = mSuperpageSize;
-                mChannel->pushSuperpage(superpage);
-              } else {
-                // No free pages available, so take a little break
-                rest();
-                break;
+            if (mChannel->getTransferQueueAvailable() != 0) {
+              while (mChannel->getTransferQueueAvailable() != 0) {
+                Superpage superpage;
+                if (freeQueue.read(superpage.offset)) {
+                  superpage.size = mSuperpageSize;
+                  mChannel->pushSuperpage(superpage);
+                } else {
+                  // No free pages available, so take a little break
+                  shouldRest = true;
+                  break;
+                }
               }
+            } else {
+              // No transfer queue slots available on the card
+              shouldRest = true;
             }
 
             // Check for filled superpages
-            if (mChannel->getReadyQueueSize() > 0) {
+            while (mChannel->getReadyQueueSize() != 0) {
               auto superpage = mChannel->getSuperpage();
               // We do partial updates of the mPushCount because we can have very large superpages, which would otherwise
               // cause hiccups in the display
@@ -422,8 +428,13 @@ class ProgramDmaBench: public Program
                 mChannel->popSuperpage();
               } else {
                 // Readout is backed up, so rest a while
-                rest();
+                shouldRest = true;
+                break;
               }
+            }
+
+            if (shouldRest) {
+              std::this_thread::sleep_for(RESTING_TIME_PUSH_THREAD);
             }
           }
         }
@@ -445,7 +456,6 @@ class ProgramDmaBench: public Program
           if (mOptions.randomPause) {
             pauses.pauseIfNeeded();
           }
-          auto rest = [&]{ std::this_thread::sleep_for(RESTING_TIME_READOUT_THREAD); };
 
           size_t offset;
           if (readoutQueue.read(offset)) {
@@ -463,7 +473,7 @@ class ProgramDmaBench: public Program
             }
           } else {
             // No superpages available to read out, so have a nap
-            rest();
+            std::this_thread::sleep_for(RESTING_TIME_READOUT_THREAD);
           }
         }
       }
