@@ -7,11 +7,11 @@ else()
 endif()
 
 find_package(Boost 1.56
-  COMPONENTS 
-  unit_test_framework 
-  filesystem 
-  system 
-  program_options 
+  COMPONENTS
+  unit_test_framework
+  filesystem
+  system
+  program_options
   ${boost_python_component}
   REQUIRED
   )
@@ -38,6 +38,7 @@ endif(PDA_FOUND)
 # DIM
 find_package(DIM)
 if(DIM_FOUND)
+    message(STATUS "DIM found")
     include_directories(${DIM_INCLUDE_DIRS})
 else()
     message(WARNING "DIM not found, ReadoutCard module's ALF utilities will not be compiled")

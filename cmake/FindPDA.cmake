@@ -3,7 +3,6 @@
 #  PDA_FOUND        - System has PDA
 #  PDA_INCLUDE_DIRS - The PDA include directories
 #  PDA_LIBRARIES    - The libraries needed to use PDA
-#  PDA_DEFINITIONS  - Compiler switches required for using PDA
 #
 # This script can use the following variables:
 #  PDA_ROOT - Installation root to tell this module where to look. (it tries /usr and /usr/local otherwise)
