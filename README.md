@@ -224,7 +224,7 @@ If PDA is not detected on the system, only a dummy implementation of the interfa
 
 2. Download PDA
   ~~~
-  git clone https://github.com/PascalBoeschoten/pda.git
+  git clone https://github.com/AliceO2Group/pda.git
   cd pda
   ~~~
 
