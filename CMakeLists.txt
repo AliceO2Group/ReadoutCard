@@ -101,7 +101,6 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}/include
   ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
-message("CMAKE INCLUDE: ${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 set(LIBRARY_NAME ${MODULE_NAME})
 set(BUCKET_NAME o2_readoutcard_bucket)
