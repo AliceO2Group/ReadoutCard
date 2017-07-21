@@ -31,10 +31,20 @@ fi
 echo $HUGEPAGES_1G_NUMBER > $HUGEPAGES_1G_SYSFILE
 
 
+# Add group for PDA
+# This group will be allowed to do PCI things with the driver, and create files in the hugetlbfs mounts
+echo ""
+echo "Adding 'pda' group"
+groupadd --force pda
+
+
 # Create hugetlbfs mounts in /var/lib/hugetlbfs/global/...
 echo ""
 echo "Creating hugetlbfs mounts"
 hugeadm --create-global-mounts
+echo "Setting permissions on hugeltbfs mounts"
+chgrp -R pda /var/lib/hugetlbfs/global/*
+chmod -R g+rwx /var/lib/hugetlbfs/global/*
 
 
 # Display hugepage status
