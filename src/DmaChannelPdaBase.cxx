@@ -5,6 +5,8 @@
 
 #include "DmaChannelPdaBase.h"
 #include <boost/filesystem/path.hpp>
+#include "Common/Iommu.h"
+#include "Utilities/MemoryMaps.h"
 #include "Utilities/SmartPointer.h"
 #include "Utilities/Util.h"
 #include "Visitor.h"
@@ -45,6 +47,34 @@ DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
         " This means the IOMMU is off and the buffer is not backed by hugepages - an unsupported buffer configuration.";
       log(message, InfoLogger::InfoLogger::Error);
       BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(message));
+    }
+  }
+
+  // Check memory mappings if it's hugepage
+  {
+    bool checked = false;
+    const auto maps = Utilities::getMemoryMaps();
+    for (const auto& map : maps) {
+      const auto bufferAddress = reinterpret_cast<uintptr_t>(getBufferProvider().getAddress());
+      if (map.addressStart == bufferAddress) {
+        if (map.pageSizeKiB > 4) {
+          log("Buffer is hugepage-backed", InfoLogger::InfoLogger::Info);
+        } else {
+          if (Common::Iommu::isEnabled()) {
+            log("Buffer is NOT hugepage-backed, but IOMMU is enabled", InfoLogger::InfoLogger::Warning);
+          } else {
+            std::string message = "Buffer is NOT hugepage-backed and IOMMU is disabled - unsupported buffer "
+              "configuration";
+            log(message, InfoLogger::InfoLogger::Error);
+            BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(message));
+          }
+        }
+        checked = true;
+        break;
+      }
+    }
+    if (!checked) {
+      log("Failed to check if buffer is hugepage-backed", InfoLogger::InfoLogger::Warning);
     }
   }
 }

@@ -84,6 +84,7 @@ set(SRCS
   src/ParameterTypes/ResetLevel.cxx
   src/ParameterTypes/ReadoutMode.cxx
   src/RorcStatusCode.cxx
+  src/Utilities/MemoryMaps.cxx
   src/CommandLineUtilities/AliceLowlevelFrontend/Sca.cxx
   src/CommandLineUtilities/AliceLowlevelFrontend/ServiceNames.cxx
   src/CommandLineUtilities/Common.cxx
