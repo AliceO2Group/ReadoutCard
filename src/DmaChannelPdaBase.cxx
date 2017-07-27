@@ -33,7 +33,20 @@ DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
   log("Initializing memory-mapped DMA buffer", InfoLogger::InfoLogger::Debug);
   Utilities::resetSmartPtr(mPdaDmaBuffer, mRocPciDevice->getPciDevice(), getBufferProvider().getAddress(),
       getBufferProvider().getSize(), getPdaDmaBufferIndexPages(getChannelNumber(), 0));
-  log(std::string("Scatter-gather list size: ") + std::to_string(mPdaDmaBuffer->getScatterGatherList().size()));
+
+  // Check if scatter-gather list is not suspicious
+  {
+    auto listSize = mPdaDmaBuffer->getScatterGatherList().size();
+    auto hugePageMinSize = 1024*1024*2; // 2 MiB, the smallest hugepage size
+    auto bufferSize = getBufferProvider().getSize();
+    log(std::string("Scatter-gather list size: ") + std::to_string(listSize));
+    if (listSize > (bufferSize / hugePageMinSize)) {
+      std::string message = "Scatter-gather list size greater than buffer size divided by 2MiB (minimum hugepage size)."
+        " This means the IOMMU is off and the buffer is not backed by hugepages - an unsupported buffer configuration.";
+      log(message, InfoLogger::InfoLogger::Error);
+      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(message));
+    }
+  }
 }
 
 DmaChannelPdaBase::~DmaChannelPdaBase()

@@ -58,6 +58,17 @@ PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAd
   auto node = sgList;
 
   while (node != nullptr) {
+    // Check if scatter-gather list is not suspicious
+    {
+      auto hugePageMinSize = 1024 * 1024 * 2; // 2 MiB, the smallest hugepage size
+      if (node->length < hugePageMinSize) {
+        BOOST_THROW_EXCEPTION(
+          Exception() << ErrorInfo::Message("Scatter-gather node smaller than 2 MiB (minimum hugepage"
+            " size. This means the IOMMU is off and the buffer is not backed by hugepages - an unsupported buffer "
+            "configuration."));
+      }
+    }
+
     ScatterGatherEntry e;
     e.size = node->length;
     e.addressUser = reinterpret_cast<uintptr_t>(node->u_pointer);

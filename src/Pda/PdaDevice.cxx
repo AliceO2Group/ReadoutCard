@@ -54,7 +54,8 @@ PdaDevice::PdaDevice(const PciId& pciId) : mDeviceOperator(nullptr)
   catch (boost::exception& e) {
     e << ErrorInfo::PciId(pciId);
     addPossibleCauses(e, {"Driver module not inserted (> modprobe uio_pci_dma)",
-        "Driver module doesn't match kernel version"});
+        "PDA kernel module version doesn't match kernel version",
+        "PDA userspace library version incompatible with PDA kernel module version (> modinfo uio_pci_dma)"});
     throw;
   }
 }
