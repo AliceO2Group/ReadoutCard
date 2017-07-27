@@ -245,6 +245,8 @@ If PDA is not detected on the system, only a dummy implementation of the interfa
 At some point, we should probably use kernel boot parameters to allocate hugepages, or use some boot-time script, but 
 until then, we must initialize and allocate manually.
 
+Either use the script roc-setup-hugetlbfs.sh (located in the src directory), or do manually:
+
 1. Install hugetlbfs (will already be installed on most systems)
   ~~~
   yum install libhugetlbfs libhugetlbfs-utils
