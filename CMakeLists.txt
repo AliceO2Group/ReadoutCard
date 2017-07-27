@@ -107,6 +107,7 @@ set(BUCKET_NAME o2_readoutcard_bucket)
 
 
 if(ALICEO2_READOUTCARD_PDA_ENABLED)
+  include_directories(${PDA_INCLUDE_DIRS})
   list(APPEND SRCS
     src/DmaChannelPdaBase.cxx
     src/BarInterfaceBase.cxx

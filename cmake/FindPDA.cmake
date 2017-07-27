@@ -10,13 +10,11 @@
 find_package(PkgConfig)
 
 # find includes
-find_path(PDA_INCLUDE_DIR device_operator.h
-        HINTS ${PDA_ROOT}/include /usr/local/include /usr/include PATH_SUFFIXES "pda")
-# Remove the final "pda"
-get_filename_component(PDA_INCLUDE_DIR ${PDA_INCLUDE_DIR} DIRECTORY)
+find_path(PDA_INCLUDE_DIR pda.h
+        HINTS ${PDA_ROOT} /usr/local/include /usr/include PATH_SUFFIXES "pda")
 
 # find libraries
-find_library(PDA_LIBRARY NAMES pda HINTS /usr/local/lib /usr/lib ${PDA_ROOT}/lib)
+find_library(PDA_LIBRARY NAMES pda HINTS /usr/local/lib /usr/lib ${PDA_ROOT})
 
 set(PDA_LIBRARIES ${PDA_LIBRARY})
 set(PDA_INCLUDE_DIRS ${PDA_INCLUDE_DIR})
