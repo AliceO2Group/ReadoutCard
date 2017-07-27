@@ -14,32 +14,32 @@ HUGEPAGES_1G_NUMBER=0
 
 
 # Allocate hugepages of each type
+echo -n "File '${HUGEPAGES_2M_CONF}' "
 if [ -f $HUGEPAGES_2M_CONF ]; then
   HUGEPAGES_2M_NUMBER=$(cat $HUGEPAGES_2M_CONF)
-  echo "Allocating configured amount of 2 MiB hugepages: ${HUGEPAGES_2M_NUMBER}"
+  echo "found, allocating configured amount of 2 MiB hugepages: ${HUGEPAGES_2M_NUMBER}"
 else
-  echo "Allocating default amount of 2 MiB hugepages: ${HUGEPAGES_2M_NUMBER}"
+  echo "not found, allocating default amount of 2 MiB hugepages: ${HUGEPAGES_2M_NUMBER}"
 fi
 echo $HUGEPAGES_2M_NUMBER > $HUGEPAGES_2M_SYSFILE
 
+echo -n "File '${HUGEPAGES_1G_CONF}' "
 if [ -f $HUGEPAGES_1G_CONF ]; then
-  HUGEPAGES_2M_NUMBER=$(cat $HUGEPAGES_1G_CONF)
-  echo "Allocating configured amount of 1 GiB hugepages: ${HUGEPAGES_1G_NUMBER}"
+  HUGEPAGES_1G_NUMBER=$(cat $HUGEPAGES_1G_CONF)
+  echo "found, allocating configured amount of 1 GiB hugepages: ${HUGEPAGES_1G_NUMBER}"
 else
-  echo "Allocating default amount of 1 GiB hugepages: ${HUGEPAGES_1G_NUMBER}"
+  echo "not found, allocating default amount of 1 GiB hugepages: ${HUGEPAGES_1G_NUMBER}"
 fi
 echo $HUGEPAGES_1G_NUMBER > $HUGEPAGES_1G_SYSFILE
 
 
 # Add group for PDA
 # This group will be allowed to do PCI things with the driver, and create files in the hugetlbfs mounts
-echo ""
 echo "Adding 'pda' group"
 groupadd --force pda
 
 
 # Create hugetlbfs mounts in /var/lib/hugetlbfs/global/...
-echo ""
 echo "Creating hugetlbfs mounts"
 hugeadm --create-global-mounts
 echo "Setting permissions on hugeltbfs mounts"
@@ -52,4 +52,4 @@ echo ""
 echo "Hugepages:"
 hugeadm --pool-list
 echo ""
-echo "Note: use 'echo [number] > /sys/kernel/mm/hugepages/hugepages-[size]/nr_hugepages' to allocate more hugepages"
+echo "Note: use 'echo [number] > /sys/kernel/mm/hugepages/hugepages-[size]/nr_hugepages' to allocate hugepages manually"
