@@ -240,10 +240,10 @@ class ProgramAliceLowlevelFrontendServer: public Program
         [&](auto parameter){return publishStartCommand(parameter, mCommandQueue);});
       auto serverPublishStop = makeServer(names.publishStopCommandRpc(),
         [&](auto parameter){return publishStopCommand(parameter, mCommandQueue);});
-//      auto serverScaRead = makeServer(names.scaRead(),
-//        [&](auto parameter){return scaRead(parameter, bar2);});
-//      auto serverScaWrite = makeServer(names.scaWrite(),
-//        [&](auto parameter){return scaWrite(parameter, bar2);});
+      auto serverScaRead = makeServer(names.scaRead(),
+        [&](auto parameter){return scaRead(parameter, bar2);});
+      auto serverScaWrite = makeServer(names.scaWrite(),
+        [&](auto parameter){return scaWrite(parameter, bar2);});
       auto serverScaGpioWrite = makeServer(names.scaGpioWrite(),
         [&](auto parameter){return scaGpioWrite(parameter, bar2);});
 
@@ -351,7 +351,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
 
     static std::string scaRead(const std::string& parameter, ChannelSharedPtr bar2)
     {
-      getInfoLogger() << "SCA_READ: '" << parameter << "'" << endm;
+      getInfoLogger() << "SCA_READ" << endm;
       //auto params = split(parameter, ",");
       auto result = Sca(*bar2, bar2->getCardType()).read();
       return (b::format("%1%,%2%") % result.data % result.command).str();
@@ -361,8 +361,8 @@ class ProgramAliceLowlevelFrontendServer: public Program
     {
       getInfoLogger() << "SCA_WRITE: '" << parameter << "'" << endm;
       auto params = split(parameter, ",");
-      auto command = b::lexical_cast<uint32_t>(params.at(0));
-      auto data = b::lexical_cast<uint32_t>(params.at(1));
+      auto data = b::lexical_cast<uint32_t>(params.at(0));
+      auto command = b::lexical_cast<uint32_t>(params.at(1));
       Sca(*bar2, bar2->getCardType()).write(command, data);
       return "";
     }
