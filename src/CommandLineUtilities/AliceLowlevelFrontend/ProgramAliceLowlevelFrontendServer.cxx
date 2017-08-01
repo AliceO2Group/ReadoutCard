@@ -199,7 +199,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
 
     virtual Description getDescription() override
     {
-      return {"ALF DIM Server", "ALICE low-level front-end DIM Server", "roc-alf-server --serial=12345 --channel=0"};
+      return {"ALF DIM Server", "ALICE low-level front-end DIM Server", "roc-alf-server --serial=12345"};
     }
 
     virtual void addOptions(b::program_options::options_description& options) override
