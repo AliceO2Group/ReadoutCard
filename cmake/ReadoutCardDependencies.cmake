@@ -30,7 +30,6 @@ if(PDA_FOUND)
     # Add definition to enable the PDA implementation in the code
     set(ALICEO2_READOUTCARD_PDA_ENABLED TRUE)
     add_definitions(-DALICEO2_READOUTCARD_PDA_ENABLED)
-    include_directories(SYSTEM ${PDA_INCLUDE_DIRS})
 else()
     message(WARNING "PDA not found, ReadoutCard module will have a dummy implementation only (skip, no error)")
 endif(PDA_FOUND)
@@ -39,7 +38,6 @@ endif(PDA_FOUND)
 find_package(DIM)
 if(DIM_FOUND)
     message(STATUS "DIM found")
-    include_directories(${DIM_INCLUDE_DIRS})
 else()
     message(WARNING "DIM not found, ReadoutCard module's ALF utilities will not be compiled")
 endif(DIM_FOUND)
@@ -72,6 +70,7 @@ o2_define_bucket(
 
   SYSTEMINCLUDE_DIRECTORIES
   ${Boost_INCLUDE_DIR}
+  ${PDA_INCLUDE_DIRS}
 )
 
 o2_define_bucket(
@@ -81,7 +80,8 @@ o2_define_bucket(
   DEPENDENCIES
   ${DIM_LIBRARY}
 
-  INCLUDE_DIRECTORIES
+    SYSTEMINCLUDE_DIRECTORIES
+    ${DIM_INCLUDE_DIRS}
 )
 
 o2_define_bucket(
@@ -104,8 +104,4 @@ o2_define_bucket(
   o2_readoutcard_bucket
   o2_readoutcard_pda
   o2_readoutcard_python
-  ${PDA_LIBRARIES}
-
-  SYSTEMINCLUDE_DIRECTORIES
-  ${Boost_INCLUDE_DIR}
 )
