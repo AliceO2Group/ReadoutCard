@@ -4,16 +4,27 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "PdaDmaBuffer.h"
+#include <boost/interprocess/sync/scoped_lock.hpp>
+#include <boost/interprocess/sync/named_mutex.hpp>
 #include <pda.h>
 #include "ExceptionInternal.h"
 
 namespace AliceO2 {
 namespace roc {
 namespace Pda {
+namespace {
+using Mutex = boost::interprocess::named_mutex;
+using Lock = boost::interprocess::scoped_lock<Mutex>;
+auto MUTEX_NAME = "AliceO2_roc_Pda_PdaDmaBuffer_Mutex";
+} // Anonymous namespace
 
 PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAddress, size_t userBufferSize,
     int dmaBufferId) : mPciDevice(pciDevice)
 {
+  // Safeguard against PDA kernel module deadlocks
+  Mutex mutex {boost::interprocess::open_or_create, MUTEX_NAME};
+  Lock lock {mutex};
+
   try {
     // Tell PDA we're using our already allocated userspace buffer.
     if (PciDevice_registerDMABuffer(pciDevice.get(), dmaBufferId, userBufferAddress, userBufferSize,
@@ -86,6 +97,10 @@ PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAd
 
 PdaDmaBuffer::~PdaDmaBuffer()
 {
+  // Safeguard against PDA kernel module deadlocks
+  Mutex mutex {boost::interprocess::open_or_create, MUTEX_NAME};
+  Lock lock {mutex};
+
   PciDevice_deleteDMABuffer(mPciDevice.get(), mDmaBuffer);
 }
 
