@@ -71,21 +71,30 @@ class ProgramAliceLowlevelFrontendClient: public Program
       Alf::RegisterWriteRpc writeRpc(names.registerWriteRpc());
       Alf::ScaReadRpc scaReadRpc(names.scaRead());
       Alf::ScaWriteRpc scaWriteRpc(names.scaWrite());
+      Alf::ScaGpioWriteRpc scaGpioWriteRpc(names.scaGpioWrite());
       Alf::PublishRpc publishRpc(names.publishStartCommandRpc());
 
       publishRpc.publish("ALF/TEST/1", 1.0, {0x1fc});
       publishRpc.publish("ALF/TEST/2", 3.0, {0x100, 0x104, 0x108});
+
+      for (int i = 0; i < 10; ++i) {
+        cout << "SCA GPIO write" << endl;
+        cout << "  result: " << scaGpioWriteRpc.write(0x0f0f0f0f) << endl;
+      }
+
+//      for (int i = 0; i < 10; ++i) {
+//        auto transactionId = i + 0x10000;
+//        cout << "SCA write" << endl;
+//        cout << "  result: " << scaWriteRpc.write(0xffff + transactionId, i) << endl;
+//        cout << "SCA read" << endl;
+//        cout << "  result: " << scaReadRpc.read() << endl;
+//      }
 
       cout << "1k writes to 0x1fc..." << endl;
       for (int i = 0; i < 1000; ++i) {
         readRpc.readRegister(0x1fc);
       }
       cout << "Done!" << endl;
-
-      cout << "SCA read" << endl;
-      cout << "  result: " << scaReadRpc.read() << endl;
-      cout << "SCA write" << endl;
-      cout << "  result: " << scaWriteRpc.write(0x0, 0x0) << endl;
 
       while (!isSigInt())
       {

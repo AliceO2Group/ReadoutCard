@@ -224,11 +224,27 @@ class ScaWriteRpc: DimRpcInfoWrapper
 
     std::string write(uint32_t command, uint32_t data)
     {
-      auto string = std::to_string(command) + ',' + std::to_string(data);
+      auto string = std::to_string(data) + ',' + std::to_string(command);
       setString(string);
       return stripPrefix(getString());
     }
 };
+
+class ScaGpioWriteRpc: DimRpcInfoWrapper
+{
+  public:
+    ScaGpioWriteRpc(const std::string& serviceName)
+      : DimRpcInfoWrapper(serviceName)
+    {
+    }
+
+    std::string write(uint32_t data)
+    {
+      setString(std::to_string(data));
+      return stripPrefix(getString());
+    }
+};
+
 
 class StringRpcServer: public DimRpc
 {
