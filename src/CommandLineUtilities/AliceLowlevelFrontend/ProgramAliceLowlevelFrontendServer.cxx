@@ -244,6 +244,8 @@ class ProgramAliceLowlevelFrontendServer: public Program
         [&](auto parameter){return scaRead(parameter, bar2);});
       auto serverScaWrite = makeServer(names.scaWrite(),
         [&](auto parameter){return scaWrite(parameter, bar2);});
+      auto serverScaGpioRead = makeServer(names.scaGpioRead(),
+        [&](auto parameter){return scaGpioRead(parameter, bar2);});
       auto serverScaGpioWrite = makeServer(names.scaGpioWrite(),
         [&](auto parameter){return scaGpioWrite(parameter, bar2);});
 
@@ -349,12 +351,12 @@ class ProgramAliceLowlevelFrontendServer: public Program
       return "";
     }
 
-    static std::string scaRead(const std::string& parameter, ChannelSharedPtr bar2)
+    static std::string scaRead(const std::string&, ChannelSharedPtr bar2)
     {
       getInfoLogger() << "SCA_READ" << endm;
       //auto params = split(parameter, ",");
       auto result = Sca(*bar2, bar2->getCardType()).read();
-      return (b::format("%1%,%2%") % result.data % result.command).str();
+      return (b::format("%d,%d") % result.data % result.command).str();
     }
 
     static std::string scaWrite(const std::string& parameter, ChannelSharedPtr bar2)
@@ -367,12 +369,19 @@ class ProgramAliceLowlevelFrontendServer: public Program
       return "";
     }
 
+    static std::string scaGpioRead(const std::string&, ChannelSharedPtr bar2)
+    {
+      getInfoLogger() << "SCA_GPIO_READ" << endm;
+      auto result = Sca(*bar2, bar2->getCardType()).gpioRead();
+      return (b::format("%d") % result.data).str();
+    }
+
     static std::string scaGpioWrite(const std::string& parameter, ChannelSharedPtr bar2)
     {
       getInfoLogger() << "SCA_GPIO_WRITE: '" << parameter << "'" << endm;
       auto data = b::lexical_cast<uint32_t>(parameter);
       auto result = Sca(*bar2, bar2->getCardType()).gpioWrite(data);
-      return (b::format("%x,%x") % result.data % result.command).str();
+      return (b::format("%d") % result.data).str();
     }
 
     int mSerialNumber = 0;

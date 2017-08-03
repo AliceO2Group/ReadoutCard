@@ -60,9 +60,9 @@ void Sca::write(uint32_t command, uint32_t data)
   barWrite(Registers::WRITE_DATA, data);
   barWrite(Registers::WRITE_COMMAND, command);
   executeCommand();
-  auto time = barRead(Registers::TIME) * 4;
+//  auto time = barRead(Registers::TIME) * 4;
 //  printf("Sca::write  DATA=0x%x   CH=0x%x   TR=0x%x   CMD=0x%x   TIME(ns)=%u\n", data, command >> 24, (command >> 16) & 0xff,
-    command & 0xff, time);
+//    command & 0xff, time);
 }
 
 auto Sca::read() -> ReadResult
@@ -135,6 +135,15 @@ auto Sca::gpioWrite(uint32_t data) -> ReadResult
   write(0x02060001, 0x0);
   return read();
 }
+
+auto Sca::gpioRead() -> ReadResult
+{
+//  printf("Sca::gpioRead\n", data);
+  // RD DATA
+  write(0x02050011, 0x0);
+  return read();
+}
+
 
 void Sca::barWrite(int index, uint32_t data)
 {

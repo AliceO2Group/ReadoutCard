@@ -71,6 +71,7 @@ class ProgramAliceLowlevelFrontendClient: public Program
       Alf::RegisterWriteRpc writeRpc(names.registerWriteRpc());
       Alf::ScaReadRpc scaReadRpc(names.scaRead());
       Alf::ScaWriteRpc scaWriteRpc(names.scaWrite());
+      Alf::ScaGpioReadRpc scaGpioReadRpc(names.scaGpioRead());
       Alf::ScaGpioWriteRpc scaGpioWriteRpc(names.scaGpioWrite());
       Alf::PublishRpc publishRpc(names.publishStartCommandRpc());
 
@@ -78,8 +79,10 @@ class ProgramAliceLowlevelFrontendClient: public Program
       publishRpc.publish("ALF/TEST/2", 3.0, {0x100, 0x104, 0x108});
 
       for (int i = 0; i < 10; ++i) {
-        cout << "SCA GPIO write" << endl;
-        cout << "  result: " << scaGpioWriteRpc.write(0x0f0f0f0f) << endl;
+        cout << "SCA GPIO write '" << i << "'" << endl;
+        cout << "  result: " << scaGpioWriteRpc.write(i) << endl;
+        cout << "SCA GPIO read" << endl;
+        cout << "  result: " << scaGpioReadRpc.read() << endl;
       }
 
 //      for (int i = 0; i < 10; ++i) {

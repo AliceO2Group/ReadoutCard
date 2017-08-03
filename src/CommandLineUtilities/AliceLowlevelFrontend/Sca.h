@@ -37,6 +37,7 @@ class Sca
     void initialize();
     void write(uint32_t command, uint32_t data);
     ReadResult read();
+    ReadResult gpioRead();
     ReadResult gpioWrite(uint32_t data);
 
   private:

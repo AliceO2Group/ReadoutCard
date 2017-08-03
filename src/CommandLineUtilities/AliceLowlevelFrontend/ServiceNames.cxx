@@ -24,6 +24,7 @@ DEFSERVICENAME(publishStopCommandRpc, "PUBLISH_SERVICE_STOP")
 DEFSERVICENAME(scaRead, "SCA_READ")
 DEFSERVICENAME(scaWrite, "SCA_WRITE")
 DEFSERVICENAME(scaGpioWrite, "SCA_GPIO_WRITE")
+DEFSERVICENAME(scaGpioRead, "SCA_GPIO_READ")
 DEFSERVICENAME(temperature, "TEMPERATURE")
 
 std::string ServiceNames::format(std::string name) const

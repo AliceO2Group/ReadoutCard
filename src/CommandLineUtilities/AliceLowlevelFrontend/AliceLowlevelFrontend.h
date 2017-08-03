@@ -245,6 +245,21 @@ class ScaGpioWriteRpc: DimRpcInfoWrapper
     }
 };
 
+class ScaGpioReadRpc: DimRpcInfoWrapper
+{
+  public:
+    ScaGpioReadRpc(const std::string& serviceName)
+      : DimRpcInfoWrapper(serviceName)
+    {
+    }
+
+    std::string read()
+    {
+      setString("");
+      return stripPrefix(getString());
+    }
+};
+
 
 class StringRpcServer: public DimRpc
 {

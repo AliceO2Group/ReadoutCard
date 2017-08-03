@@ -50,12 +50,19 @@ A basic write to the SCA
 * Parameters: SCA data, SCA command
 * Return: empty
 
+#### SCA GPIO read
+Read the GPIO pins
+* Service type: RPC call
+* Service name: SCA_GPIO_READ
+* Parameters:
+* Return: SCA data
+
 #### SCA GPIO write
 Set enabled the selected GPIO pins
 * Service type: RPC call
 * Service name: SCA_GPIO_WRITE
 * Parameters: SCA data
-* Return: SCA data, SCA command
+* Return: SCA data
 
 #### Temperature
 Card's core temperature in degrees Celsius

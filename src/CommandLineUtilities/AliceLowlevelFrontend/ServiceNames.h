@@ -28,6 +28,7 @@ class ServiceNames
     std::string scaWrite() const;
     std::string scaRead() const;
     std::string scaGpioWrite() const;
+    std::string scaGpioRead() const;
     std::string temperature() const;
 
   private:
