@@ -11,9 +11,9 @@ find_package(PkgConfig)
 
 # find includes
 find_path(PDA_INCLUDE_DIR pda.h
-        HINTS ${PDA_ROOT} ${PDA_ROOT}/include /usr/local/include /usr/include)
+        HINTS ${PDA_INCLUDE_DIR} ${PDA_ROOT} ${PDA_ROOT}/include /usr/local/include /usr/include)
 # find libraries
-find_library(PDA_LIBRARY NAMES pda HINTS ${PDA_ROOT} ${PDA_ROOT}/lib /usr/local/lib /usr/lib )
+find_library(PDA_LIBRARY NAMES pda HINTS ${PDA_LIBRARY} ${PDA_ROOT} ${PDA_ROOT}/lib /usr/local/lib /usr/lib )
 
 set(PDA_LIBRARIES ${PDA_LIBRARY})
 set(PDA_INCLUDE_DIRS ${PDA_INCLUDE_DIR})
