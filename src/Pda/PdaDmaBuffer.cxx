@@ -71,7 +71,6 @@ PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAd
     while (node != nullptr) {
       if (requireHugepage) {
         size_t hugePageMinSize = 1024 * 1024 * 2; // 2 MiB, the smallest hugepage size
-        printf("node->length=%lu\n", node->length);
         if (node->length < hugePageMinSize) {
           BOOST_THROW_EXCEPTION(
             PdaException() << ErrorInfo::Message("Scatter-gather node smaller than 2 MiB (minimum hugepage"
