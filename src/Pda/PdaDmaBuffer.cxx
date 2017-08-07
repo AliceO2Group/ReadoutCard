@@ -19,7 +19,7 @@ auto MUTEX_NAME = "AliceO2_roc_Pda_PdaDmaBuffer_Mutex";
 } // Anonymous namespace
 
 PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAddress, size_t userBufferSize,
-    int dmaBufferId) : mPciDevice(pciDevice)
+    int dmaBufferId, bool requireHugepage) : mPciDevice(pciDevice)
 {
   // Safeguard against PDA kernel module deadlocks
   Mutex mutex {boost::interprocess::open_or_create, MUTEX_NAME};
@@ -61,37 +61,42 @@ PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAd
         " help, but ensure no channels are open before reinsertion (modprobe -r uio_pci_dma; modprobe uio_pci_dma"});
   }
 
-  DMABuffer_SGNode* sgList;
-  if (DMABuffer_getSGList(mDmaBuffer, &sgList) != PDA_SUCCESS) {
-    BOOST_THROW_EXCEPTION(PdaException() << ErrorInfo::Message("Failed to get scatter-gather list"));
-  }
-
-  auto node = sgList;
-
-  while (node != nullptr) {
-    // Check if scatter-gather list is not suspicious
-    {
-      auto hugePageMinSize = 1024 * 1024 * 2; // 2 MiB, the smallest hugepage size
-      if (node->length < hugePageMinSize) {
-        BOOST_THROW_EXCEPTION(
-          Exception() << ErrorInfo::Message("Scatter-gather node smaller than 2 MiB (minimum hugepage"
-            " size. This means the IOMMU is off and the buffer is not backed by hugepages - an unsupported buffer "
-            "configuration."));
-      }
+  try {
+    DMABuffer_SGNode *sgList;
+    if (DMABuffer_getSGList(mDmaBuffer, &sgList) != PDA_SUCCESS) {
+      BOOST_THROW_EXCEPTION(PdaException() << ErrorInfo::Message("Failed to get scatter-gather list"));
     }
 
-    ScatterGatherEntry e;
-    e.size = node->length;
-    e.addressUser = reinterpret_cast<uintptr_t>(node->u_pointer);
-    e.addressBus = reinterpret_cast<uintptr_t>(node->d_pointer);
-    e.addressKernel = reinterpret_cast<uintptr_t>(node->k_pointer);
-    mScatterGatherVector.push_back(e);
-    node = node->next;
-  }
+    auto node = sgList;
+    while (node != nullptr) {
+      if (requireHugepage) {
+        size_t hugePageMinSize = 1024 * 1024 * 2; // 2 MiB, the smallest hugepage size
+        printf("node->length=%lu\n", node->length);
+        if (node->length < hugePageMinSize) {
+          BOOST_THROW_EXCEPTION(
+            PdaException() << ErrorInfo::Message("Scatter-gather node smaller than 2 MiB (minimum hugepage"
+              " size. This means the IOMMU is off and the buffer is not backed by hugepages - an unsupported buffer "
+              "configuration."));
+        }
+      }
 
-  if (mScatterGatherVector.empty()) {
-    BOOST_THROW_EXCEPTION(PdaException() << ErrorInfo::Message(
+      ScatterGatherEntry e;
+      e.size = node->length;
+      e.addressUser = reinterpret_cast<uintptr_t>(node->u_pointer);
+      e.addressBus = reinterpret_cast<uintptr_t>(node->d_pointer);
+      e.addressKernel = reinterpret_cast<uintptr_t>(node->k_pointer);
+      mScatterGatherVector.push_back(e);
+      node = node->next;
+    }
+
+    if (mScatterGatherVector.empty()) {
+      BOOST_THROW_EXCEPTION(PdaException() << ErrorInfo::Message(
         "Failed to initialize scatter-gather list, was empty"));
+    }
+  }
+  catch (const PdaException& ) {
+    PciDevice_deleteDMABuffer(mPciDevice.get(), mDmaBuffer);
+    throw;
   }
 }
 
@@ -107,8 +112,6 @@ PdaDmaBuffer::~PdaDmaBuffer()
 uintptr_t PdaDmaBuffer::getBusOffsetAddress(size_t offset) const
 {
   const auto& list = mScatterGatherVector;
-
-  // TODO shortcut for SGL size 1 (happens with small buffers, or when IOMMU is enabled)
 
   auto userBase = list.at(0).addressUser;
   auto userWithOffset = userBase + offset;

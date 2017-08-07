@@ -23,8 +23,9 @@ class PdaDmaBuffer
     /// \param userBufferAddress Address of the user-allocated buffer
     /// \param userBufferSize Size of the user-allocated buffer
     /// \param dmaBufferId Unique ID to use for registering the buffer (uniqueness must be card-wide)
+    /// \param requireHugepage Require the buffer to have hugepage-sized scatter-gather list nodes
     PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAddress, size_t userBufferSize,
-        int dmaBufferId);
+        int dmaBufferId, bool requireHugepage = true);
 
     ~PdaDmaBuffer();
 

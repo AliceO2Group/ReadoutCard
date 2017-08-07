@@ -53,7 +53,7 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
     constexpr auto FIFO_SIZE = sizeof(ReadyFifo);
     Utilities::resetSmartPtr(mBufferFifoFile, getPaths().fifo(), FIFO_SIZE);
     Utilities::resetSmartPtr(mPdaDmaBufferFifo, getRocPciDevice().getPciDevice(), mBufferFifoFile->getAddress(),
-        FIFO_SIZE, getPdaDmaBufferIndexFifo(getChannelNumber()));
+        FIFO_SIZE, getPdaDmaBufferIndexFifo(getChannelNumber()), false);// note the 'false' at the end specifies non-hugepage memory
 
     const auto& entry = mPdaDmaBufferFifo->getScatterGatherList().at(0);
     if (entry.size < FIFO_SIZE) {
