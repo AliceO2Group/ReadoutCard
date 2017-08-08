@@ -197,6 +197,7 @@ set(TEST_SRCS
   test/TestBarAccessor.cxx
   test/TestChannelFactoryUtils.cxx
   test/TestChannelPaths.cxx
+  test/TestCruDataFormat.cxx
   test/TestEnums.cxx
   test/TestInterprocessLock.cxx
   test/TestMemoryMappedFile.cxx
