@@ -121,7 +121,7 @@ class PublisherRegistry
           nextUpdate = std::chrono::steady_clock::now();
           registerValues.resize(mDescription.addresses.size());
 
-          auto format = b::str(b::format("I:%d") % registerValues.size());
+          auto format = (b::format("I:%1%") % registerValues.size()).str();
           dimService = std::make_unique<DimService>(mDescription.dnsName.c_str(), format.c_str(), registerValues.data(),
             registerValues.size());
 
@@ -356,7 +356,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
       getInfoLogger() << "SCA_READ" << endm;
       //auto params = split(parameter, ",");
       auto result = Sca(*bar2, bar2->getCardType()).read();
-      return (b::format("%d,%d") % result.data % result.command).str();
+      return (b::format("%u,%u") % result.data % result.command).str();
     }
 
     static std::string scaWrite(const std::string& parameter, ChannelSharedPtr bar2)
@@ -373,7 +373,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
     {
       getInfoLogger() << "SCA_GPIO_READ" << endm;
       auto result = Sca(*bar2, bar2->getCardType()).gpioRead();
-      return (b::format("%d") % result.data).str();
+      return (b::format("%u") % result.data).str();
     }
 
     static std::string scaGpioWrite(const std::string& parameter, ChannelSharedPtr bar2)
@@ -381,7 +381,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
       getInfoLogger() << "SCA_GPIO_WRITE: '" << parameter << "'" << endm;
       auto data = b::lexical_cast<uint32_t>(parameter);
       auto result = Sca(*bar2, bar2->getCardType()).gpioWrite(data);
-      return (b::format("%d") % result.data).str();
+      return (b::format("%u") % result.data).str();
     }
 
     int mSerialNumber = 0;
