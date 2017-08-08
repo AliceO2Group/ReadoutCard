@@ -66,7 +66,8 @@ DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
             std::string message = "Buffer is NOT hugepage-backed and IOMMU is disabled - unsupported buffer "
               "configuration";
             log(message, InfoLogger::InfoLogger::Error);
-            BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(message));
+            BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(message)
+              << ErrorInfo::PossibleCauses({"roc-setup-hugetlbfs was not run"}));
           }
         }
         checked = true;
