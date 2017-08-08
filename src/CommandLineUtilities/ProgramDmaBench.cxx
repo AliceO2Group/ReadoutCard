@@ -25,6 +25,7 @@
 #include "CommandLineUtilities/Program.h"
 #include "Common/Iommu.h"
 #include "Common/SuffixOption.h"
+#include "Cru/DataFormat.h"
 #include "ExceptionInternal.h"
 #include "InfoLogger/InfoLogger.hxx"
 #include "folly/ProducerConsumerQueue.h"
@@ -45,6 +46,10 @@ namespace b = boost;
 namespace po = boost::program_options;
 
 namespace {
+/// Initial value for link counters
+constexpr auto LINK_COUNTER_INITIAL_VALUE = std::numeric_limits<uint64_t>::max();
+/// Maximum supported links
+constexpr auto MAX_LINKS = 32;
 /// Interval for low priority thread (display updates, etc)
 constexpr auto LOW_PRIORITY_INTERVAL = 10ms;
 /// Resting time if push thread has nothing to do
@@ -60,7 +65,7 @@ const std::string PROGRESS_FORMAT("  %02s:%02s:%02s   %-12s  %-12s  %-12s  %-5.1
 /// Path for error log
 auto READOUT_ERRORS_PATH = "readout_errors.txt";
 /// Max amount of errors that are recorded into the error stream
-constexpr int64_t MAX_RECORDED_ERRORS = 1000;
+constexpr int64_t MAX_RECORDED_ERRORS = 10000;
 /// End InfoLogger message alias
 constexpr auto endm = InfoLogger::endm;
 } // Anonymous namespace
@@ -159,6 +164,10 @@ class ProgramDmaBench: public Program
 
     virtual void run(const po::variables_map& map)
     {
+      for (auto& i : mLinkCounters) {
+        i = LINK_COUNTER_INITIAL_VALUE;
+      }
+
       auto params = Options::getOptionsParameterMap(map);
       auto cardId = Options::getOptionCardId(map);
       mLogger << "DMA channel: " << mOptions.dmaChannel << endm;
@@ -259,7 +268,8 @@ class ProgramDmaBench: public Program
       // Note that we can force unlock because we know for sure this process is not holding the lock. If we did not know
       // this, it would be very dangerous to force the lock.
       params.setForcedUnlockEnabled(true);
-      params.setLinkMask(Parameters::linkMaskFromString(mOptions.links));
+      mLinkMask = Parameters::linkMaskFromString(mOptions.links);
+      params.setLinkMask(mLinkMask);
 
       mInfinitePages = (mOptions.maxBytes <= 0);
       mMaxPages = mOptions.maxBytes / mPageSize;
@@ -508,6 +518,17 @@ class ProgramDmaBench: public Program
       return value;
     }
 
+    uint32_t getDataGeneratorCounterFromPage(uintptr_t pageAddress)
+    {
+      switch (mCardType) {
+        case CardType::Crorc:
+          return get32bitFromPage(pageAddress, 0);
+        case CardType::Cru:
+          return get32bitFromPage(pageAddress, 23);
+        default: throw std::runtime_error("Error checking unsupported for this card type");
+      }
+    };
+
     void readoutPage(uintptr_t pageAddress, size_t pageSize, int64_t readoutCount)
     {
       // Read out to file
@@ -517,25 +538,39 @@ class ProgramDmaBench: public Program
 
       // Data error checking
       if (!mOptions.noErrorCheck) {
-        auto getDataGeneratorCounterFromPage = [&]{
-          switch (mCardType) {
-            case CardType::Crorc:
-              return get32bitFromPage(pageAddress, 0);
-            case CardType::Cru:
-              return get32bitFromPage(pageAddress, 23);
-            default: throw std::runtime_error("Error checking unsupported for this card type");
-          }
-        };
 
-        if (mDataGeneratorCounter == -1) {
-          // First page initializes the counter
-          mDataGeneratorCounter = getDataGeneratorCounterFromPage();
+        // Get link ID if needed
+        int linkId = 0; // Use 0 for non-CRU cards
+        if (mCardType == CardType::Cru) {
+          linkId = Cru::DataFormat::getLinkId(reinterpret_cast<const char*>(pageAddress));
+          if (linkId >= mLinkCounters.size()) {
+            BOOST_THROW_EXCEPTION(Exception()
+              << ErrorInfo::Message("Link ID from superpage out of range")
+              << ErrorInfo::Index(linkId));
+          }
         }
 
-        bool hasError = checkErrors(pageAddress, pageSize, readoutCount);
+        // First received page initializes the counter
+        if (mLinkCounters[linkId] == LINK_COUNTER_INITIAL_VALUE) {
+          mLinkCounters[linkId] = getDataGeneratorCounterFromPage(pageAddress);
+        }
+
+        // Check for errors
+        bool hasError = true;
+        switch (mCardType) {
+          case CardType::Crorc:
+            hasError = checkErrorsCrorc(pageAddress, pageSize, readoutCount, linkId);
+            break;
+          case CardType::Cru:
+            hasError = checkErrorsCru(pageAddress, pageSize, readoutCount, linkId);
+            break;
+          default:
+            throw std::runtime_error("Error checking unsupported for this card type");
+        }
+
         if (hasError && !mOptions.noResyncCounter) {
           // Resync the counter
-          mDataGeneratorCounter = getDataGeneratorCounterFromPage();
+          mLinkCounters[linkId] = getDataGeneratorCounterFromPage(pageAddress);
         }
       }
 
@@ -545,39 +580,40 @@ class ProgramDmaBench: public Program
       }
     }
 
-    bool checkErrorsCru(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber)
+    bool checkErrorsCru(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
     {
-      auto counter = mDataGeneratorCounter;
+      uint64_t counter = mLinkCounters[linkId];
       // Get stuff from the header
-      auto words = get32bitFromPage(pageAddress, 4); // Amount of 256 bit words in DMA page
-      auto wordsBytes = words * 256 / 8;
+      auto words256 = Cru::DataFormat::getEventSize(reinterpret_cast<const char*>(pageAddress)); // Amount of 256 bit words in DMA page
+      auto wordsBytes = words256 * (256 / 8);
 
-      if (words < 2 || wordsBytes > pageSize) {
+      if (words256 < 2 || wordsBytes > pageSize) {
         // Report error
         mErrorCount++;
         if (mErrorCount < MAX_RECORDED_ERRORS) {
-          mErrorStream << b::format("event:%d cnt:%d size out of range\n") % eventNumber % counter;
+          mErrorStream << b::format("event:%1% l:%2% cnt:%3% words:%4% size:%5% words out of range\n") % eventNumber
+            % linkId % counter % words256 % pageSize;
         }
         return false;
       }
 
-      mDataGeneratorCounter += words - 2;
-
       auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
-      constexpr uint32_t HEADER_WORDS = 2; // We skip the 2 header words
+      constexpr size_t HEADER_WORDS_256 = Cru::DataFormat::getHeaderSizeWords(); // We skip the header
 
-      for (uint32_t i = 0; (i + HEADER_WORDS) < words; ++i) {
-        constexpr uint32_t INTS_PER_WORD = 8; // Each word should contain 8 identical 32-bit integers
-        for (uint32_t j = 0; j < INTS_PER_WORD; ++j) {
+      mLinkCounters[linkId] += words256 - HEADER_WORDS_256;
+
+      for (uint32_t i = 0; (i + HEADER_WORDS_256) < words256; ++i) {
+        constexpr uint32_t INTS_PER_WORD_256 = 8; // Each word should contain 8 identical 32-bit integers
+        for (uint32_t j = 0; j < INTS_PER_WORD_256; ++j) {
           uint32_t expectedValue = counter + i;
-          uint32_t actualValue = page[(i + HEADER_WORDS) * INTS_PER_WORD + j];
+          uint32_t actualValue = page[(i + HEADER_WORDS_256) * INTS_PER_WORD_256 + j];
 
           if (actualValue != expectedValue) {
             // Report error
             mErrorCount++;
             if (mErrorCount < MAX_RECORDED_ERRORS) {
-              mErrorStream << b::format("event:%d i:%d cnt:%d exp:0x%x val:0x%x\n")
-                % eventNumber % i % counter % expectedValue % actualValue;
+              mErrorStream << b::format("event:%d l:%d i:%d cnt:%d exp:0x%x val:0x%x\n")
+                % eventNumber % linkId % i % counter % expectedValue % actualValue;
             }
             return true;
           }
@@ -625,10 +661,10 @@ class ProgramDmaBench: public Program
        }
     }
 
-    bool checkErrorsCrorc(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber)
+    bool checkErrorsCrorc(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
     {
-      auto counter = mDataGeneratorCounter;
-      mDataGeneratorCounter++;
+      uint64_t counter = mLinkCounters[linkId];
+      mLinkCounters[linkId]++;
 
       auto check = [&](auto patternFunction) {
         auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
@@ -663,19 +699,6 @@ class ProgramDmaBench: public Program
       BOOST_THROW_EXCEPTION(Exception()
           << ErrorInfo::Message("Unsupported pattern for C-RORC error checking")
           << ErrorInfo::GeneratorPattern(mOptions.generatorPattern));
-    }
-
-    /// Checks and reports errors
-    bool checkErrors(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber)
-    {
-      switch (mCardType) {
-        case CardType::Crorc:
-          return checkErrorsCrorc(pageAddress, pageSize, eventNumber);
-        case CardType::Cru:
-          return checkErrorsCru(pageAddress, pageSize, eventNumber);
-        default:
-          throw std::runtime_error("Error checking unsupported for this card type");
-      }
     }
 
     void resetPage(uintptr_t pageAddress, size_t pageSize)
@@ -891,7 +914,6 @@ class ProgramDmaBench: public Program
     std::atomic<uint64_t> mPushCount { 0 };
     std::atomic<uint64_t> mReadoutCount { 0 };
     int64_t mErrorCount = 0;
-    int64_t mDataGeneratorCounter = -1;
     size_t mSuperpageSize = 0;
     size_t mMaxSuperpages = 0;
     size_t mPagesPerSuperpage = 0;
@@ -930,7 +952,12 @@ class ProgramDmaBench: public Program
 
     InfoLogger mLogger;
 
+    std::set<uint32_t> mLinkMask;
+
     std::shared_ptr<DmaChannelInterface> mChannel;
+
+    /// Page counters per link. Indexed by link ID.
+    std::array<std::atomic<uint64_t>, MAX_LINKS> mLinkCounters;
 };
 
 int main(int argc, char** argv)

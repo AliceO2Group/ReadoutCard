@@ -39,6 +39,19 @@ uint32_t getEventSize(const char* data)
   return Utilities::getBits(getWord(data, 3), 4, 4+12-1);
 }
 
+/// Get header size in bytes
+constexpr size_t getHeaderSize()
+{
+  // Two 256-bit words = 64 bytes
+  return 64;
+}
+
+/// Get header size in 256-bit words
+constexpr size_t getHeaderSizeWords()
+{
+  return 2;
+}
+
 } // namespace DataFormat
 } // namespace Cru
 } // namespace roc
