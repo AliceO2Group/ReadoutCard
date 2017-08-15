@@ -63,7 +63,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra -fPIC")
 
 set(MODULE_NAME "ReadoutCard")
 
-link_o2_subproject(Common)
 link_o2_subproject(InfoLogger)
 
 O2_SETUP(NAME ${MODULE_NAME})
