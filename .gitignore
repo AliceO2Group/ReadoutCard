@@ -2,3 +2,4 @@ build
 .idea
 .project
 .cproject
+cmake-build-*

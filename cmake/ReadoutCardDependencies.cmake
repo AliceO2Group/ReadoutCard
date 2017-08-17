@@ -17,6 +17,7 @@ find_package(Boost 1.56
   )
 find_package(Git QUIET)
 find_package(Common REQUIRED)
+find_package(InfoLogger REQUIRED)
 
 # Python
 find_package(PythonLibs 2.7)
@@ -52,14 +53,15 @@ o2_define_bucket(
   ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
-  InfoLogger
   ${rt_lib}
   pthread
   ${Common_LIBRARIES}
+  ${InfoLogger_LIBRARIES}
 
   SYSTEMINCLUDE_DIRECTORIES
   ${Boost_INCLUDE_DIR}
   ${Common_INCLUDE_DIRS}
+  ${InfoLogger_INCLUDE_DIRS}
 )
 
 o2_define_bucket(
@@ -82,8 +84,8 @@ o2_define_bucket(
   DEPENDENCIES
   ${DIM_LIBRARY}
 
-    SYSTEMINCLUDE_DIRECTORIES
-    ${DIM_INCLUDE_DIRS}
+  SYSTEMINCLUDE_DIRECTORIES
+  ${DIM_INCLUDE_DIRS}
 )
 
 o2_define_bucket(

@@ -24,7 +24,6 @@ project(ReadoutCard)
 # Load some basic macros which are needed later on
 include(O2Utils)
 include(ReadoutCardDependencies)
-include(O2)
 
 # Set the default build type to "RelWithDebInfo"
 if(NOT CMAKE_BUILD_TYPE)
@@ -62,8 +61,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra -fPIC")
 ####################################
 
 set(MODULE_NAME "ReadoutCard")
-
-link_o2_subproject(InfoLogger)
 
 O2_SETUP(NAME ${MODULE_NAME})
 
@@ -190,7 +187,7 @@ endif()
 
 add_subdirectory(doc)
 
-set(CTEST_TESTING_TIMEOUT 15)
+enable_testing()
 
 set(TEST_SRCS
   test/TestBarAccessor.cxx
@@ -210,17 +207,9 @@ set(TEST_SRCS
 O2_GENERATE_TESTS(
  MODULE_LIBRARY_NAME ${LIBRARY_NAME}
  BUCKET_NAME ${BUCKET_NAME}
- TIMEOUT 30
+ TIMEOUT 15
  TEST_SRCS ${TEST_SRCS}
 )
-
-# TODO RECONSIDER THE THINGS BELOW AFTER EXTRACTION TO ITS OWN REPO
-# Make sure we tell the topdir CMakeLists that we exist (if build from topdir)
-get_directory_property(hasParent PARENT_DIRECTORY)
-if(hasParent)
-    set(PROJECT_${PROJECT_NAME} true PARENT_SCOPE)
-endif()
-include(PackageConfigurator)
 
 # Install the hugetlbfs script separately, because it's not a compiled target
 install(
