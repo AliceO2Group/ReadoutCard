@@ -52,7 +52,8 @@ class ProgramListCards: public Program
         try {
           Parameters params = Parameters::makeParameters(card.pciAddress, 0);
           // Temporary (hopefully) workaround, because DmaChannel requires a buffer when initializing
-          params.setBufferParameters(buffer_parameters::File{"/dev/shm/rorc_channel_utility_dummy_buffer", 4*1024});
+          params.setBufferParameters(buffer_parameters::File{"/dev/hugepages/rorc_channel_utility_dummy_buffer",
+            2*1024*1024});
           firmware = ChannelFactory().getDmaChannel(params)->getFirmwareInfo().value_or("n/a");
         }
         catch (const Exception& e) {
