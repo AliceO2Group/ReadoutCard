@@ -38,60 +38,58 @@ class BarAccessor
     /// \param busAddress Superpage PCI bus address
     void pushSuperpageDescriptor(uint32_t link, uint32_t pages, uintptr_t busAddress)
     {
-      auto offset = Registers::LINK_SUPERPAGE_OFFSET * link;
-
       // Set superpage address. These writes are buffered on the firmware side.
-      mBar->writeRegister(offset + Registers::LINK_BASE_SUPERPAGE_ADDRESS_HIGH,
+      mBar->writeRegister(Registers::LINK_SUPERPAGE_ADDRESS_HIGH.get(link).index,
           Utilities::getUpper32Bits(busAddress));
-      mBar->writeRegister(offset + Registers::LINK_BASE_SUPERPAGE_ADDRESS_LOW,
+      mBar->writeRegister(Registers::LINK_SUPERPAGE_ADDRESS_LOW.get(link).index,
           Utilities::getLower32Bits(busAddress));
       // Set superpage size. This write signals the push of the descriptor into the link's FIFO.
-      mBar->writeRegister(offset + Registers::LINK_BASE_SUPERPAGE_SIZE, pages);
+      mBar->writeRegister(Registers::LINK_SUPERPAGE_SIZE.get(link).index, pages);
     }
 
     /// Get amount of superpages pushed by a link
     /// \param link Link number
     uint32_t getSuperpageCount(uint32_t link)
     {
-      return mBar->readRegister(Registers::LINK_SUPERPAGE_OFFSET * link + Registers::LINK_BASE_SUPERPAGES_PUSHED);
+      return mBar->readRegister(Registers::LINK_SUPERPAGES_PUSHED.get(link).index);
     }
 
     void setDataEmulatorEnabled(bool enabled) const
     {
-      mBar->writeRegister(Registers::DMA_CONTROL, enabled ? 0x1 : 0x0);
-      uint32_t bits = mBar->readRegister(Registers::DATA_GENERATOR_CONTROL);
+      mBar->writeRegister(Registers::DMA_CONTROL.index, enabled ? 0x1 : 0x0);
+      uint32_t bits = mBar->readRegister(Registers::DATA_GENERATOR_CONTROL.index);
       setDataGeneratorEnableBits(bits, enabled);
-      mBar->writeRegister(Registers::DATA_GENERATOR_CONTROL, bits);
+      mBar->writeRegister(Registers::DATA_GENERATOR_CONTROL.index, bits);
     }
 
     void resetDataGeneratorCounter() const
     {
-      mBar->writeRegister(Registers::RESET_CONTROL, 0x2);
+      mBar->writeRegister(Registers::RESET_CONTROL.index, 0x2);
     }
 
     void resetCard() const
     {
-      mBar->writeRegister(Registers::RESET_CONTROL, 0x1);
+      mBar->writeRegister(Registers::RESET_CONTROL.index, 0x1);
     }
 
     void setDataGeneratorPattern(GeneratorPattern::type pattern, size_t size, bool randomEnabled)
     {
-      uint32_t bits = mBar->readRegister(Registers::DATA_GENERATOR_CONTROL);
+      uint32_t bits = mBar->readRegister(Registers::DATA_GENERATOR_CONTROL.index);
       setDataGeneratorPatternBits(bits, pattern);
       setDataGeneratorSizeBits(bits, size);
       setDataGeneratorRandomSizeBits(bits, randomEnabled);
-      mBar->writeRegister(Registers::DATA_GENERATOR_CONTROL, bits);
+      mBar->writeRegister(Registers::DATA_GENERATOR_CONTROL.index, bits);
     }
 
     void dataGeneratorInjectError()
     {
-      mBar->writeRegister(Registers::DATA_GENERATOR_CONTROL, Registers::DATA_GENERATOR_CONTROL_CMD_INJECT_ERROR);
+      mBar->writeRegister(Registers::DATA_GENERATOR_CONTROL.index, Registers::DATA_GENERATOR_CONTROL_CMD_INJECT_ERROR);
     }
 
     uint32_t getSerialNumber() const
     {
       assertBarIndex(2, "Can only get serial number from BAR 2");
-      auto serial = mBar->readRegister(Registers::SERIAL_NUMBER);
+      auto serial = mBar->readRegister(Registers::SERIAL_NUMBER.index);
       if (serial == 0xFfffFfff) {
         BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("CRU reported invalid serial number 0xffffffff, "
             "a fatal error may have occurred"));
@@ -104,7 +102,7 @@ class BarAccessor
     {
       assertBarIndex(2, "Can only get temperature from BAR 2");
       // Only use lower 10 bits
-      return mBar->readRegister(Registers::TEMPERATURE) & 0x3ff;
+      return mBar->readRegister(Registers::TEMPERATURE.index) & 0x3ff;
     }
 
     /// Converts a value from the CRU's temperature register and converts it to a °C double value.
@@ -136,37 +134,37 @@ class BarAccessor
     uint32_t getFirmwareCompileInfo()
     {
       assertBarIndex(0, "Can only get firmware compile info from BAR 0");
-      return mBar->readRegister(Registers::FIRMWARE_COMPILE_INFO);
+      return mBar->readRegister(Registers::FIRMWARE_COMPILE_INFO.index);
     }
 
     uint32_t getFirmwareGitHash()
     {
       assertBarIndex(2, "Can only get git hash from BAR 2");
-      return mBar->readRegister(Registers::FIRMWARE_GIT_HASH);
+      return mBar->readRegister(Registers::FIRMWARE_GIT_HASH.index);
     }
 
     uint32_t getFirmwareDateEpoch()
     {
       assertBarIndex(2, "Can only get firmware epoch from BAR 2");
-      return mBar->readRegister(Registers::FIRMWARE_EPOCH);
+      return mBar->readRegister(Registers::FIRMWARE_EPOCH.index);
     }
 
     uint32_t getFirmwareDate()
     {
       assertBarIndex(2, "Can only get firmware date from BAR 2");
-      return mBar->readRegister(Registers::FIRMWARE_DATE);
+      return mBar->readRegister(Registers::FIRMWARE_DATE.index);
     }
 
     uint32_t getFirmwareTime()
     {
       assertBarIndex(2, "Can only get firmware time from BAR 2");
-      return mBar->readRegister(Registers::FIRMWARE_TIME);
+      return mBar->readRegister(Registers::FIRMWARE_TIME.index);
     }
 
     FirmwareFeatures getFirmwareFeatures()
     {
       assertBarIndex(0, "Can only get firmware features from BAR 0");
-      return convertToFirmwareFeatures(mBar->readRegister(Registers::FIRMWARE_FEATURES));
+      return convertToFirmwareFeatures(mBar->readRegister(Registers::FIRMWARE_FEATURES.index));
     }
 
     static FirmwareFeatures convertToFirmwareFeatures(uint32_t reg)
