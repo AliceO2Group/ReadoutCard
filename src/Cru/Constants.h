@@ -17,7 +17,7 @@ namespace Cru
 static constexpr int MAX_SUPERPAGE_DESCRIPTORS = 32;
 
 /// Maximum amount of available links
-static constexpr int MAX_LINKS = 24;
+static constexpr int MAX_LINKS = 32;
 
 /// DMA page length in bytes
 /// Note: the CRU has a firmware defined fixed page size
