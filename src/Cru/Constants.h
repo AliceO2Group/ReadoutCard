@@ -56,7 +56,7 @@ static constexpr IntervalRegister LINK_SUPERPAGES_PUSHED(0x800, SUPERPAGES_PUSHE
 ///   0b10 -> 0xa5a5a5a5
 ///   0b11 -> 0x12345678
 /// Bit 3: set to inject error
-static constexpr Register DATA_GENERATOR_CONTROL(0x420/4);
+static constexpr Register DATA_GENERATOR_CONTROL(0x420);
 
 /// Command to write into DATA_GENERATOR_CONTROL to inject an error
 static constexpr uint32_t DATA_GENERATOR_CONTROL_CMD_INJECT_ERROR = 0x8;
@@ -79,10 +79,10 @@ static constexpr Register FIRMWARE_FEATURES(0x41c);
 /// Reset control register
 /// * Write a 1 to reset the card
 /// * Write a 2 to reset data generator counter
-static constexpr Register RESET_CONTROL(0x400/4);
+static constexpr Register RESET_CONTROL(0x400);
 
 /// A debug register. The lower 8 bits of this register can be written to and read back from freely.
-static constexpr Register DEBUG_READ_WRITE(0x410/4);
+static constexpr Register DEBUG_READ_WRITE(0x410);
 
 /// Temperature control & read register
 /// Must be accessed on BAR 2

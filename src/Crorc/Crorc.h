@@ -48,6 +48,7 @@ class Crorc
 
     /// Arms DDL
     /// \param resetMask The reset mask. See the RORC_RESET_* macros in rorc.h
+    /// \param diuConfig DIU configuration
     void armDdl(int resetMask, const DiuConfig& diuConfig);
 
     /// Arms C-RORC data generator
