@@ -1,5 +1,5 @@
-/// \file REGISTER.h
-/// \brief Definition of the REGISTER struct.
+/// \file Register.h
+/// \brief Definition of the Register struct.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
@@ -38,7 +38,7 @@ struct IntervalRegister
     {
     }
 
-    /// \param Index of the register
+    /// \param index of the register
     Register get(int index) const
     {
         return Register(base + interval * index);

@@ -40,7 +40,8 @@ class ChannelFactory
 
     /// Get an object to access a BAR with the given card ID and channel number.
     /// Passing 'DUMMY_SERIAL_NUMBER' as serial number returns a dummy implementation
-    /// \param parameters Parameters for the channel
+    /// \param cardId ID of the card
+    /// \param channel Channel number to open
     BarSharedPtr getBar(const Parameters::CardIdType& cardId, const Parameters::ChannelNumberType& channel)
     {
       return getBar(Parameters::makeParameters(cardId, channel));
