@@ -52,4 +52,7 @@ echo ""
 echo "Hugepages:"
 hugeadm --pool-list
 echo ""
-echo "Note: use 'echo [number] > /sys/kernel/mm/hugepages/hugepages-[size]/nr_hugepages' to allocate hugepages manually"
+echo "Use 'echo [number] > /sys/kernel/mm/hugepages/hugepages-[size]/nr_hugepages' to allocate hugepages manually"
+echo "Or set a number in the following conf files and run the script again:"
+echo "  echo [number] > $HUGEPAGES_2M_CONF"
+echo "  echo [number] > $HUGEPAGES_1G_CONF"
