@@ -3,7 +3,7 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "CommandLineUtilities/Program.h"
+#include "Common/Program.h"
 #include <chrono>
 #include <iostream>
 #include <functional>
@@ -16,7 +16,7 @@
 #include <InfoLogger/InfoLogger.hxx>
 #include <dim/dis.hxx>
 #include "AliceLowlevelFrontend.h"
-#include "ExceptionInternal.h"
+#include "AlfException.h"
 #include "folly/ProducerConsumerQueue.h"
 #include "ReadoutCard/Parameters.h"
 #include "ReadoutCard/ChannelFactory.h"
@@ -193,7 +193,7 @@ class CommandQueue
     folly::ProducerConsumerQueue<CommandVariant> mQueue {512};
 };
 
-class ProgramAliceLowlevelFrontendServer: public Program
+class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
 {
   public:
 
@@ -204,18 +204,17 @@ class ProgramAliceLowlevelFrontendServer: public Program
 
     virtual void addOptions(b::program_options::options_description& options) override
     {
-      Options::addOptionSerialNumber(options);
+      options.add_options()("--serial", b::program_options::value<int>(&mSerialNumber), "Card serial number");
     }
 
     virtual void run(const b::program_options::variables_map& map) override
     {
       // Get DIM DNS node from environment
       if (getenv(std::string("DIM_DNS_NODE").c_str()) == nullptr) {
-        BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Environment variable 'DIM_DNS_NODE' not set"));
+        BOOST_THROW_EXCEPTION(AlfException() << ErrorInfo::Message("Environment variable 'DIM_DNS_NODE' not set"));
       }
 
       // Get card channel for register access
-      mSerialNumber = Options::getOptionSerialNumber(map);
       auto bar0 = ChannelFactory().getBar(Parameters::makeParameters(mSerialNumber, 0));
       auto bar2 = ChannelFactory().getBar(Parameters::makeParameters(mSerialNumber, 2));
 
@@ -281,7 +280,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
     static void checkAddress(uint64_t address)
     {
       if (address < 0x1e8 || address > 0x1fc) {
-        BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Address out of range"));
+        BOOST_THROW_EXCEPTION(AlfException() << ErrorInfo::Message("Address out of range"));
       }
     }
 
@@ -304,7 +303,7 @@ class ProgramAliceLowlevelFrontendServer: public Program
       std::vector<std::string> params = split(parameter, ",");
 
       if (params.size() != 2) {
-        BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Write RPC call did not have 2 parameters"));
+        BOOST_THROW_EXCEPTION(AlfException() << ErrorInfo::Message("Write RPC call did not have 2 parameters"));
       }
 
       auto address = b::lexical_cast<uint64_t>(params[0]);

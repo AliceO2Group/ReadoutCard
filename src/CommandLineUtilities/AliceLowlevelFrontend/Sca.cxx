@@ -4,7 +4,7 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "Sca.h"
-#include "ExceptionInternal.h"
+#include "AlfException.h"
 #include "Utilities/Util.h"
 
 // TODO Sort out magic numbers
@@ -100,7 +100,7 @@ void Sca::checkError(uint32_t command)
 
   for (int flag = 0; flag < 7; ++flag) {
     if (Utilities::getBit(command & 0xff, flag) == 1) {
-      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(toString(flag)));
+      BOOST_THROW_EXCEPTION(AlfException() << ErrorInfo::Message(toString(flag)));
     }
   }
 }
@@ -169,7 +169,7 @@ void Sca::waitOnBusyClear()
       return;
     }
   }
-  BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Exceeded timeout on busy wait"));
+  BOOST_THROW_EXCEPTION(AlfException() << ErrorInfo::Message("Exceeded timeout on busy wait"));
 }
 
 

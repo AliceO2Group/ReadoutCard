@@ -15,7 +15,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/format.hpp>
-#include "ExceptionInternal.h"
+#include "AlfException.h"
 
 namespace AliceO2 {
 namespace roc {
@@ -75,8 +75,7 @@ inline bool isFail(const std::string& string)
 inline std::string stripPrefix(const std::string& string)
 {
   if (string.length() < PREFIX_LENGTH) {
-    BOOST_THROW_EXCEPTION(AliceO2::roc::Exception()
-      << AliceO2::roc::ErrorInfo::Message("string too short to contain prefix"));
+    BOOST_THROW_EXCEPTION(AlfException() << ErrorInfo::Message("string too short to contain prefix"));
   }
   return string.substr(PREFIX_LENGTH);
 }
@@ -99,7 +98,7 @@ class DimRpcInfoWrapper
       auto string = std::string(mRpcInfo->getString());
       if (isFail(string)) {
         BOOST_THROW_EXCEPTION(
-          AliceO2::roc::Exception() << AliceO2::roc::ErrorInfo::Message("ALF server failure" + string));
+          AlfException() << ErrorInfo::Message("ALF server failure" + string));
       }
       return string;
     }

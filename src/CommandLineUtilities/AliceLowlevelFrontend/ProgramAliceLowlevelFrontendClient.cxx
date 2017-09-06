@@ -8,7 +8,7 @@
 #include <thread>
 #include <dim/dic.hxx>
 #include "AliceLowlevelFrontend.h"
-#include "ExceptionInternal.h"
+#include "AlfException.h"
 #include "ServiceNames.h"
 
 using std::cout;
@@ -56,9 +56,7 @@ class ProgramAliceLowlevelFrontendClient: public Program
     {
       // Get DIM DNS node from environment
       if (getenv(std::string("DIM_DNS_NODE").c_str()) == nullptr) {
-        BOOST_THROW_EXCEPTION(
-            AliceO2::roc::Exception()
-                << AliceO2::roc::ErrorInfo::Message("Environment variable 'DIM_DNS_NODE' not set"));
+        BOOST_THROW_EXCEPTION(Alf::AlfException() << Alf::ErrorInfo::Message("Environment variable 'DIM_DNS_NODE' not set"));
       }
 
       // Get program options
