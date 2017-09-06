@@ -11,7 +11,6 @@
 #include <boost/format.hpp>
 #include <cstdint>
 #include "ReadoutCard/CardType.h"
-#include "RorcStatusCode.h"
 
 using namespace AliceO2::roc;
 namespace b = boost;
@@ -111,11 +110,6 @@ std::string to_string(const ErrorInfo::LoopbackMode& e)
 std::string to_string(const ErrorInfo::ResetLevel& e)
 {
   return toStringHelper("ReadoutCard reset level", e.value(), ResetLevel::toString(e.value()));
-}
-
-std::string to_string(const ErrorInfo::StatusCode& e)
-{
-  return toStringHelper("ReadoutCard C API status code", e.value(), StatusCode::getString(e.value()));
 }
 
 std::string to_string(const ErrorInfo::CardType& e)

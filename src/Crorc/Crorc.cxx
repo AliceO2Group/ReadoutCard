@@ -25,17 +25,6 @@ using std::this_thread::sleep_for;
 namespace b = boost;
 namespace chrono = std::chrono;
 
-/// Throws the given exception if the given status code is not equal to RORC_STATUS_OK
-#define THROW_IF_BAD_STATUS(_status_code, _exception) \
-  if (_status_code != Rorc::RORC_STATUS_OK) { \
-    BOOST_THROW_EXCEPTION((_exception)); \
-  }
-
-/// Adds errinfo using the given status code and error message
-#define ADD_ERRINFO(_status_code, _err_message) \
-    << ErrorInfo::Message(_err_message) \
-    << ErrorInfo::StatusCode(_status_code)
-
 namespace
 {
 int logi2(unsigned int number)
@@ -165,6 +154,7 @@ void eraseBlock(RegisterReadWriteInterface& bar0, uint32_t address)
   checkStatus(bar0);
 }
 
+/// Currently unused, but we'll keep it as "documentation"
 void writeWord(RegisterReadWriteInterface& bar0, uint32_t address, int value)
 {
   writeStatusSleep(bar0, address);

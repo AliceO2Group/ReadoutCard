@@ -77,7 +77,6 @@ DEFINE_ERRINFO(SharedLockFile, std::string);
 DEFINE_ERRINFO(SharedObjectName, std::string);
 DEFINE_ERRINFO(SharedStateFile, std::string);
 DEFINE_ERRINFO(SiuCommand, int);
-DEFINE_ERRINFO(StatusCode, int);
 DEFINE_ERRINFO(String, std::string);
 DEFINE_ERRINFO(StwExpected, std::string);
 DEFINE_ERRINFO(StwReceived, std::string);
@@ -107,6 +106,5 @@ std::string to_string(const AliceO2::roc::ErrorInfo::PciIds& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::PossibleCauses& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::ReadyFifoStatus& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::ResetLevel& e);
-std::string to_string(const AliceO2::roc::ErrorInfo::StatusCode& e);
 
 }

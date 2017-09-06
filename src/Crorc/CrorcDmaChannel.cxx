@@ -13,7 +13,6 @@
 #include <boost/format.hpp>
 #include "ChannelPaths.h"
 #include "Crorc/Constants.h"
-#include "RorcStatusCode.h"
 #include "Utilities/SmartPointer.h"
 
 namespace b = boost;
