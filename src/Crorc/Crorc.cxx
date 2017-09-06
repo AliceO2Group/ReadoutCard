@@ -1,7 +1,9 @@
 /// \file Crorc.cxx
 /// \brief Implementation of low level C-RORC functions
 ///
-/// This scary looking file is a work in progress translation of the low-level C interface
+/// This scary looking file is a work in progress translation of the old C interface.
+/// It contains functions that do the nitty-gritty low-level communication with the C-RORC.
+/// Much of it is not fully understood.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
@@ -389,24 +391,12 @@ void Crorc::stopDataReceiver()
   }
 }
 
-/* ddlSendCommand sends one command to the given link.
- * Parameters: dev      pointer to roc device. It defines the link
- *                      where the command will be sent
- *             dest     command destination: 0 RORC, 1 DIU, 2 SIU, 4 FEE.
- *                      if -1 then the full command is in the
- *                      command field
- *             command  command code
- *             transid  transaction id
- *             param    command parameter,
- *                      or the full command if dest == -1
- *             time     if > 0 then test if command can be sent and
- *                      wait as many cycles if necessary.
- *
- * Returns:
- *    RORC_STATUS_OK   (0)     if command sent
- *    RORC_TIMEOUT     (-64)   if the command can not be sent in timeout.
- *    RORC_LINK_NOT_ON (-4)    if destination > 1 and the link is not on
- */
+/// Sends one command to the given link.
+/// \param dest Command destination: 0 RORC, 1 DIU, 2 SIU, 4 FEE. If -1 then the full command is in the command field.
+/// \param command Command code
+/// \param transid Transaction ID
+/// \param param Command parameter, or the full command if dest == -1
+/// \param time If > 0 then test if command can be sent and wait as many cycles if necessary.
 void Crorc::ddlSendCommand(int dest, uint32_t command, int transid, uint32_t param, long long int time)
 {
   uint32_t com;
@@ -438,17 +428,9 @@ void Crorc::ddlSendCommand(int dest, uint32_t command, int transid, uint32_t par
   putCommandRegister(com);
 }
 
+/// Checks whether status mail box or register is not empty in timeout
+/// \param timeout  Number of check cycles
 void Crorc::ddlWaitStatus(long long int timeout)
-
-/* Checks whether status mail box or register is not empty in timeout
- *
- * Parameters: prorc    pointer to pRORC device
- *             timeout  # of check cycles
- *
- * Returns:    # of executed cycles
- *
-*/
-
 {
   for (int i = 0; i < timeout; ++i) {
     if (checkRxStatus()) {
@@ -458,10 +440,9 @@ void Crorc::ddlWaitStatus(long long int timeout)
   BOOST_THROW_EXCEPTION(TimeoutException() << ErrorInfo::Message("Timed out waiting on DDL"));
 }
 
+/// Call ddlWaitStatus() before this routine if status timeout is needed
 StWord Crorc::ddlReadStatus()
 {
-  /* call ddlWaitStatus() before this routine
-     if status timeout is needed */
   StWord stw;
   stw.stw = read(Rorc::C_DSR);
   //  printf("ddlReadStatus: status = %08lx\n", stw.stw);
@@ -470,7 +451,7 @@ StWord Crorc::ddlReadStatus()
 
 StWord Crorc::ddlReadDiu(int transid, long long int time)
 {
-  /* prepare and send DDL command */
+  /// Prepare and send DDL command
   int destination = Ddl::Destination::DIU;
   ddlSendCommand(destination, Rorc::RandCIFST, transid, 0, time);
   ddlWaitStatus(time);
@@ -478,8 +459,8 @@ StWord Crorc::ddlReadDiu(int transid, long long int time)
   if (stw.part.code != Rorc::IFSTW || stw.part.trid != transid || stw.part.dest != destination) {
     BOOST_THROW_EXCEPTION(
         Exception() << ErrorInfo::Message("Unexpected DIU STW (not IFSTW)")
-            << ErrorInfo::StwExpected(b::str(b::format("0x00000%x%x%x") % transid % Rorc::IFSTW % destination))
-            << ErrorInfo::StwReceived(b::str(b::format("0x%08lx") % stw.stw)));
+            << ErrorInfo::StwExpected((b::format("0x00000%x%x%x") % transid % Rorc::IFSTW % destination).str())
+            << ErrorInfo::StwReceived((b::format("0x%08lx") % stw.stw).str()));
   }
 
   stw = ddlReadCTSTW(transid, destination, time); // XXX Not sure why we do this...
@@ -493,26 +474,26 @@ StWord Crorc::ddlReadCTSTW(int transid, int destination, long long int time){
       || stw.part.trid != transid || stw.part.dest != destination) {
     BOOST_THROW_EXCEPTION(
         Exception() << ErrorInfo::Message("Unexpected STW (not CTSTW)")
-        << ErrorInfo::StwExpected(b::str(b::format("0x00000%x%x%x") % transid % Rorc::CTSTW % destination))
-        << ErrorInfo::StwReceived(b::str(b::format("0x%08lx") % stw.stw)));
+        << ErrorInfo::StwExpected((b::format("0x00000%x%x%x") % transid % Rorc::CTSTW % destination).str())
+        << ErrorInfo::StwReceived((b::format("0x%08lx") % stw.stw).str()));
   }
   return stw;
 }
 
 StWord Crorc::ddlReadSiu(int transid, long long int time)
 {
-  /* prepare and send DDL command */
+  // prepare and send DDL command
   int destination = Ddl::Destination::SIU;
   ddlSendCommand(destination, Rorc::RandCIFST, transid, 0, time);
 
-  /* read and check the answer */
+  // read and check the answer
   ddlWaitStatus(time);
   StWord stw = ddlReadStatus();
   if (stw.part.code != Rorc::IFSTW || stw.part.trid != transid || stw.part.dest != destination) {
     BOOST_THROW_EXCEPTION(
         Exception() << ErrorInfo::Message("Unexpected SIU STW (not IFSTW)")
-            << ErrorInfo::StwExpected(b::str(b::format("0x00000%x%x%x") % transid % Rorc::IFSTW % destination))
-            << ErrorInfo::StwReceived(b::str(b::format("0x%08lx") % stw.stw)));
+            << ErrorInfo::StwExpected((b::format("0x00000%x%x%x") % transid % Rorc::IFSTW % destination).str())
+            << ErrorInfo::StwReceived((b::format("0x%08lx") % stw.stw).str()));
   }
 
   stw = ddlReadStatus();
@@ -520,14 +501,15 @@ StWord Crorc::ddlReadSiu(int transid, long long int time)
       || stw.part.trid != transid || stw.part.dest != destination) {
     BOOST_THROW_EXCEPTION(
         Exception() << ErrorInfo::Message("Unexpected SIU STW (not CTSTW)")
-            << ErrorInfo::StwExpected(b::str(b::format("0x00000%x%x%x") % transid % Rorc::CTSTW % destination))
-            << ErrorInfo::StwReceived(b::str(b::format("0x%08lx") % stw.stw)));
+            << ErrorInfo::StwExpected((b::format("0x00000%x%x%x") % transid % Rorc::CTSTW % destination).str())
+            << ErrorInfo::StwReceived((b::format("0x%08lx") % stw.stw).str()));
   }
   return stw;
 }
 
-/// Interpret DIU or SIU IFSTW
-void ddlInterpretIFSTW(uint32_t ifstw)
+/// Interpret DIU or SIU IFSTW to user readable messages
+/// Unused, kept for now as "documentation"
+std::vector<std::string> ddlInterpretIFSTW(uint32_t ifstw)
 {
   using namespace Ddl;
   using Table = std::vector<std::pair<uint32_t, const char*>>;
@@ -624,15 +606,14 @@ void ddlInterpretIFSTW(uint32_t ifstw)
     }
     checkTableExclusive(mask(status, SIUSTMASK), portTable);
   }
+
+  return messages;
 }
 
+/// Tries to reset the SIU.
+/// \param cycle Number of status checks
+/// \param time Number of cycles to wait for command sending and replies
 void Crorc::ddlResetSiu(int cycle, long long int time)
-/* ddlResetSiu tries to reset the SIU.
- *             print  # if != 0 then print link status
- *             cycle  # of status checks
- *             time # of cycles to wait for command sending and replies
- * Returns:    SIU status word or -1 if no status word can be read
- */
 {
   ddlSendCommand(Ddl::Destination::DIU, Ddl::SRST, 0,  0, time);
   ddlWaitStatus(time);
@@ -677,6 +658,7 @@ void Crorc::ddlResetSiu(int cycle, long long int time)
   BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Failed to reset SIU"));
 }
 
+/// Sends a reset command
 void Crorc::resetCommand(int option, const DiuConfig& diuConfig)
 {
   uint32_t command = 0;
@@ -708,9 +690,8 @@ void Crorc::resetCommand(int option, const DiuConfig& diuConfig)
   }
 }
 
-/* try to empty D-RORC's data FIFOs
-               empty_time:  time-out value in usecs
- */
+/// Try to empty D-RORC's data FIFOs
+/// \param timeoutMicroseconds Time-out value in usecs
 void Crorc::emptyDataFifos(int timeoutMicroseconds)
 {
   auto endTime = chrono::steady_clock::now() + chrono::microseconds(timeoutMicroseconds);
@@ -840,13 +821,13 @@ void Crorc::startDataReceiver(uintptr_t readyFifoBusAddress)
 StWord Crorc::ddlSetSiuLoopBack(const DiuConfig& diuConfig){
   long long int timeout = diuConfig.pciLoopPerUsec * Ddl::RESPONSE_TIME;
 
-  /* check SIU fw version */
+  // Check SIU fw version
   ddlSendCommand(Ddl::Destination::SIU, Ddl::IFLOOP, 0, 0, timeout);
   ddlWaitStatus(timeout);
 
   StWord stword = ddlReadStatus();
   if (stword.part.code == Rorc::ILCMD){
-    /* illegal command => old version => send TSTMODE for loopback */
+    // Illegal command => old version => send TSTMODE for loopback
     ddlSendCommand(Ddl::Destination::SIU, Ddl::TSTMODE, 0, 0, timeout);
     ddlWaitStatus(timeout);
   }
@@ -855,13 +836,13 @@ StWord Crorc::ddlSetSiuLoopBack(const DiuConfig& diuConfig){
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Error setting SIU loopback"));
   }
 
-  /* SIU loopback command accepted => check SIU loopback status */
+  // SIU loopback command accepted => check SIU loopback status
   stword = ddlReadSiu(0, timeout);
   if (stword.stw & Siu::LBMOD) {
     return stword; // SIU loopback set
   }
 
-  /* SIU loopback not set => set it */
+  // SIU loopback not set => set it
   ddlSendCommand(Ddl::Destination::SIU, Ddl::IFLOOP, 0, 0, timeout);
 
   ddlWaitStatus(timeout);
@@ -907,7 +888,7 @@ void Crorc::setLoopbackOn(){
 
 void Crorc::setLoopbackOff()
 {
-  // switches off both loopback and stop_on_error
+  // Switches off both loopback and stop_on_error
   if (isLoopbackOn()) {
     toggleLoopback();
   }

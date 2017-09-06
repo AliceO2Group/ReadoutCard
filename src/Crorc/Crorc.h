@@ -8,6 +8,7 @@
 #include <atomic>
 #include <iostream>
 #include <string>
+#include <vector>
 #include <boost/optional.hpp>
 #include "ReadoutCard/ParameterTypes/GeneratorPattern.h"
 #include "ReadoutCard/RegisterReadWriteInterface.h"
@@ -182,7 +183,7 @@ class Crorc
     StWord ddlReadCTSTW(int transid, int destination, long long int time);
     void emptyDataFifos(int timeoutMicroseconds);
     StWord ddlSetSiuLoopBack(const DiuConfig& diuConfig);
-    void ddlInterpretIFSTW(uint32_t ifstw);
+    std::vector<std::string> ddlInterpretIFSTW(uint32_t ifstw);
 };
 
 } // namespace Crorc
