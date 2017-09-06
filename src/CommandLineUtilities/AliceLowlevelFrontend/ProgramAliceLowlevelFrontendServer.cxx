@@ -204,7 +204,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
 
     virtual void addOptions(b::program_options::options_description& options) override
     {
-      options.add_options()("--serial", b::program_options::value<int>(&mSerialNumber), "Card serial number");
+      options.add_options()("serial", b::program_options::value<int>(&mSerialNumber), "Card serial number");
     }
 
     virtual void run(const b::program_options::variables_map& map) override
