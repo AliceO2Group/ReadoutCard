@@ -54,6 +54,8 @@ class BarAccessor
       return mBar->readRegister(Registers::LINK_SUPERPAGES_PUSHED.get(link).index);
     }
 
+    /// Enables the data emulator
+    /// \param enabled true for enabled
     void setDataEmulatorEnabled(bool enabled) const
     {
       mBar->writeRegister(Registers::DMA_CONTROL.index, enabled ? 0x1 : 0x0);
@@ -62,16 +64,22 @@ class BarAccessor
       mBar->writeRegister(Registers::DATA_GENERATOR_CONTROL.index, bits);
     }
 
+    /// Resets the data generator counter
     void resetDataGeneratorCounter() const
     {
       mBar->writeRegister(Registers::RESET_CONTROL.index, 0x2);
     }
 
+    /// Performs a general reset of the card
     void resetCard() const
     {
       mBar->writeRegister(Registers::RESET_CONTROL.index, 0x1);
     }
 
+    /// Sets the pattern for the card's internal data generator
+    /// \param pattern Data generator pattern
+    /// \param size Size in bytes
+    /// \param randomEnabled Give true to enable random data size. In this case, the given size is the maximum size (?)
     void setDataGeneratorPattern(GeneratorPattern::type pattern, size_t size, bool randomEnabled)
     {
       uint32_t bits = mBar->readRegister(Registers::DATA_GENERATOR_CONTROL.index);
@@ -81,11 +89,15 @@ class BarAccessor
       mBar->writeRegister(Registers::DATA_GENERATOR_CONTROL.index, bits);
     }
 
+    /// Injects a single error into the generated data stream
     void dataGeneratorInjectError()
     {
       mBar->writeRegister(Registers::DATA_GENERATOR_CONTROL.index, Registers::DATA_GENERATOR_CONTROL_CMD_INJECT_ERROR);
     }
 
+    /// Gets the serial number from the card.
+    /// Note that not all firmwares have a serial number. You should make sure this firmware feature is enabled before
+    /// calling this function, or the card may crash. See getFirmwareFeatures().
     uint32_t getSerialNumber() const
     {
       assertBarIndex(2, "Can only get serial number from BAR 2");
@@ -161,6 +173,7 @@ class BarAccessor
       return mBar->readRegister(Registers::FIRMWARE_TIME.index);
     }
 
+    /// Get the enabled features for the card's firmware.
     FirmwareFeatures getFirmwareFeatures()
     {
       assertBarIndex(0, "Can only get firmware features from BAR 0");
@@ -190,6 +203,9 @@ class BarAccessor
       return features;
     }
 
+    /// Sets the bits for the data generator pattern in the given integer
+    /// \param bits Integer with bits to set
+    /// \param pattern Pattern to set
     static void setDataGeneratorPatternBits(uint32_t& bits, GeneratorPattern::type pattern)
     {
       switch (pattern) {
@@ -211,6 +227,9 @@ class BarAccessor
       }
     }
 
+    /// Sets the bits for the data generator size in the given integer
+    /// \param bits Integer with bits to set
+    /// \param size Size to set
     static void setDataGeneratorSizeBits(uint32_t& bits, size_t size)
     {
       if (!Utilities::isMultiple(size, 32ul)) {
@@ -231,34 +250,24 @@ class BarAccessor
       bits += sizeValue;
     }
 
+    /// Sets the bits for the data generator enabled in the given integer
+    /// \param bits Integer with bits to set
+    /// \param enabled Generator enabled or not
     static void setDataGeneratorEnableBits(uint32_t& bits, bool enabled)
     {
       Utilities::setBit(bits, 0, enabled);
     }
 
+    /// Sets the bits for the data generator random size in the given integer
+    /// \param bits Integer with bits to set
+    /// \param enabled Random enabled or not
     static void setDataGeneratorRandomSizeBits(uint32_t& bits, bool enabled)
     {
       Utilities::setBit(bits, 16, enabled);
     }
 
-
-//    uint8_t getDebugReadWriteRegister()
-//    {
-//      return mPdaBar->barRead<uint8_t>(toByteAddress(Registers::DEBUG_READ_WRITE));
-//    }
-//
-//    void setDebugReadWriteRegister(uint8_t value)
-//    {
-//      return mPdaBar->barWrite<uint8_t>(toByteAddress(Registers::DEBUG_READ_WRITE), value);
-//    }
-
   private:
-    /// Convert an index to a byte address
-    size_t toByteAddress(size_t address32) const
-    {
-      return address32 * 4;
-    }
-
+    /// Checks if this is the correct BAR. Used to check for BAR 2 for special functions.
     void assertBarIndex(int index, std::string message) const
     {
       if (mBar->getIndex() != index) {
