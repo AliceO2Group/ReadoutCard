@@ -80,6 +80,7 @@ set(SRCS
   src/ParameterTypes/ResetLevel.cxx
   src/ParameterTypes/ReadoutMode.cxx
   src/Utilities/MemoryMaps.cxx
+  src/Utilities/Numa.cxx
   src/CommandLineUtilities/AliceLowlevelFrontend/Sca.cxx
   src/CommandLineUtilities/AliceLowlevelFrontend/ServiceNames.cxx
   src/CommandLineUtilities/Common.cxx
