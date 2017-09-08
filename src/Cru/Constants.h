@@ -63,17 +63,14 @@ static constexpr uint32_t DATA_GENERATOR_CONTROL_CMD_INJECT_ERROR = 0x8;
 
 /// Board serial number
 /// Must be accessed on BAR 2
-/// Byte address: 0x20002c
-static constexpr Register SERIAL_NUMBER(524299);
+static constexpr Register SERIAL_NUMBER(0x20002c);
 
 /// Register containing compilation info of the firmware
 /// Can be used as a sort of version number
-/// Byte address: 0x280
-static constexpr Register FIRMWARE_COMPILE_INFO(160);
+static constexpr Register FIRMWARE_COMPILE_INFO(0x280);
 
 /// Register containing compilation info of the firmware
 /// Can be used as a sort of version number
-/// Byte address: 0x280
 static constexpr Register FIRMWARE_FEATURES(0x41c);
 
 /// Reset control register
@@ -85,30 +82,25 @@ static constexpr Register RESET_CONTROL(0x400);
 static constexpr Register DEBUG_READ_WRITE(0x410);
 
 /// Temperature control & read register
-/// Must be accessed on BAR 2
 /// The lower 10 bits contain the temperature value
-/// Byte address: 0x200028
-static constexpr Register TEMPERATURE(524298);
+/// Must be accessed on BAR 2
+static constexpr Register TEMPERATURE(0x200028);
 
 /// Register containing the firmware Git hash
 /// Must be accessed on BAR 2
-/// Byte address: 0x4
-static constexpr Register FIRMWARE_GIT_HASH(1);
+static constexpr Register FIRMWARE_GIT_HASH(0x4);
 
 /// Register containing the compilation date/time in seconds since Unix epoch
 /// Must be accessed on BAR 2
-/// Byte address: 0x1c
-static constexpr Register FIRMWARE_EPOCH(7);
+static constexpr Register FIRMWARE_EPOCH(0x1c);
 
 /// Register containing the compilation date/time in seconds since Unix epoch
 /// Must be accessed on BAR 2
-/// Byte address: 0x20
-static constexpr Register FIRMWARE_DATE(8);
+static constexpr Register FIRMWARE_DATE(0x20);
 
 /// Register containing the compilation date/time in seconds since Unix epoch
 /// Must be accessed on BAR 2
-/// Byte address: 0x24
-static constexpr Register FIRMWARE_TIME(9);
+static constexpr Register FIRMWARE_TIME(0x24);
 
 } // namespace Cru
 } // namespace Registers
