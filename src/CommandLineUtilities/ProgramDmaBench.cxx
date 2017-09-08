@@ -268,8 +268,7 @@ class ProgramDmaBench: public Program
       // Note that we can force unlock because we know for sure this process is not holding the lock. If we did not know
       // this, it would be very dangerous to force the lock.
       params.setForcedUnlockEnabled(true);
-      mLinkMask = Parameters::linkMaskFromString(mOptions.links);
-      params.setLinkMask(mLinkMask);
+      params.setLinkMask(Parameters::linkMaskFromString(mOptions.links));
 
       mInfinitePages = (mOptions.maxBytes <= 0);
       mMaxPages = mOptions.maxBytes / mPageSize;
@@ -365,6 +364,7 @@ class ProgramDmaBench: public Program
         }
       }
 
+      std::atomic<bool> mDmaLoopBreak {false};
       auto isStopDma = [&]{ return mDmaLoopBreak.load(std::memory_order_relaxed); };
 
       // Thread for low priority tasks
@@ -372,7 +372,19 @@ class ProgramDmaBench: public Program
         try {
           auto next = std::chrono::steady_clock::now();
           while (!isStopDma()) {
-            lowPriorityTasks();
+            // Handle a SIGINT abort
+            if (isSigInt()) {
+              // We want to finish the readout cleanly if possible, so we stop pushing and try to wait a bit until the
+              // queue is empty
+              mDmaLoopBreak = true;
+              return;
+            }
+
+            // Status display updates
+            // Wait until the DMA has really started before printing our table to avoid messy output
+            if (!mOptions.noDisplay && mPushCount.load(std::memory_order_relaxed) != 0) {
+              updateStatusDisplay();
+            }
             next += LOW_PRIORITY_INTERVAL;
             std::this_thread::sleep_until(next);
           }
@@ -621,31 +633,6 @@ class ProgramDmaBench: public Program
       }
       return false;
 
-//      auto check = [&](auto patternFunction) {
-//        for (uint32_t i = START; i < pageSize32; i += PATTERN_STRIDE)
-//        {
-//          uint32_t expectedValue = patternFunction(i);
-//          uint32_t actualValue = page[i];
-//          if (actualValue != expectedValue) {
-//            // Report error
-//            mErrorCount++;
-//            if (mErrorCount < MAX_RECORDED_ERRORS) {
-//              mErrorStream << b::format("event:%d i:%d cnt:%d exp:0x%x val:0x%x\n")
-//                  % eventNumber % i % counter % expectedValue % actualValue;
-//            }
-//            return true;
-//          }
-//        }
-//        return false;
-//      };
-//
-//      switch (mOptions.generatorPattern) {
-//        case GeneratorPattern::Incremental: return check([&](uint32_t i) { return counter * 256 + i / 8; });
-//        case GeneratorPattern::Alternating: return check([&](uint32_t)   { return 0xa5a5a5a5; });
-//        case GeneratorPattern::Constant:    return check([&](uint32_t)   { return 0x12345678; });
-//        default: ;
-//      }
-
       BOOST_THROW_EXCEPTION(Exception()
           << ErrorInfo::Message("Unsupported pattern for CRU error checking")
           << ErrorInfo::GeneratorPattern(mOptions.generatorPattern));
@@ -707,23 +694,6 @@ class ProgramDmaBench: public Program
       auto pageSize32 = pageSize / sizeof(uint32_t);
       for (size_t i = 0; i < pageSize32; i++) {
         page[i] = BUFFER_DEFAULT_VALUE;
-      }
-    }
-
-    void lowPriorityTasks()
-    {
-      // Handle a SIGINT abort
-      if (isSigInt()) {
-        // We want to finish the readout cleanly if possible, so we stop pushing and try to wait a bit until the
-        // queue is empty
-        mDmaLoopBreak = true;
-        return;
-      }
-
-      // Status display updates
-      // Wait until the DMA has really started before printing our table to avoid messy output
-      if (!mOptions.noDisplay && mPushCount.load(std::memory_order_relaxed) != 0) {
-        updateStatusDisplay();
       }
     }
 
@@ -909,16 +879,53 @@ class ProgramDmaBench: public Program
         size_t dataGeneratorSize;
     } mOptions;
 
-    std::atomic<bool> mDmaLoopBreak {false};
-    bool mInfinitePages = false;
+    /// The DMA channel
+    std::shared_ptr<DmaChannelInterface> mChannel;
+
+    /// The type of the card we're using
+    CardType::type mCardType;
+
+    /// Page counters per link. Indexed by link ID.
+    std::array<std::atomic<uint64_t>, MAX_LINKS> mLinkCounters;
+
+    /// Amount of superpages pushed
     std::atomic<uint64_t> mPushCount { 0 };
+
+    /// Amount of superpages read out
     std::atomic<uint64_t> mReadoutCount { 0 };
+
+    /// Total amount of errors encountered
     int64_t mErrorCount = 0;
+
+    /// Keep on pushing until we're explicitly stopped
+    bool mInfinitePages = false;
+
+    /// Size of superpages
     size_t mSuperpageSize = 0;
+
+    /// Maximum amount of superpages
     size_t mMaxSuperpages = 0;
+
+    /// Amount of DMA pages per superpage
     size_t mPagesPerSuperpage = 0;
 
+    /// Maximum size of pages
+    size_t mPageSize;
+
+    /// Maximum amount of pages to transfer
+    size_t mMaxPages;
+
+    /// The size of the channel DMA buffer
+    size_t mBufferSize;
+
+    /// The base address of the channel DMA buffer
+    uintptr_t mBufferBaseAddress;
+
+    /// The memory mapped file that contains the channel DMA buffer
     std::unique_ptr<MemoryMappedFile> mMemoryMappedFile;
+
+    /// Object for BAR throughput testing
+    std::unique_ptr<BarHammer> mBarHammer;
 
     /// Stream for file readout, only opened if enabled by the --file program options
     std::ofstream mReadoutStream;
@@ -926,11 +933,8 @@ class ProgramDmaBench: public Program
     /// Stream for error output
     std::ostringstream mErrorStream;
 
-    struct RunTime
-    {
-        TimePoint start; ///< Start of run time
-        TimePoint end; ///< End of run time
-    } mRunTime;
+    /// InfoLogger instance
+    InfoLogger mLogger;
 
     /// Was the header printed?
     bool mHeaderPrinted = false;
@@ -938,26 +942,11 @@ class ProgramDmaBench: public Program
     /// Indicates the display must add a newline to the table
     bool mDisplayUpdateNewline;
 
-    size_t mPageSize;
-
-    size_t mMaxPages;
-
-    std::unique_ptr<BarHammer> mBarHammer;
-
-    size_t mBufferSize;
-
-    uintptr_t mBufferBaseAddress;
-
-    CardType::type mCardType;
-
-    InfoLogger mLogger;
-
-    std::set<uint32_t> mLinkMask;
-
-    std::shared_ptr<DmaChannelInterface> mChannel;
-
-    /// Page counters per link. Indexed by link ID.
-    std::array<std::atomic<uint64_t>, MAX_LINKS> mLinkCounters;
+    struct RunTime
+    {
+        TimePoint start; ///< Start of run time
+        TimePoint end; ///< End of run time
+    } mRunTime;
 };
 
 int main(int argc, char** argv)
