@@ -569,8 +569,8 @@ class ProgramDmaBench: public Program
         }
 
         if (hasError && !mOptions.noResyncCounter) {
-          // Resync the counter
-          mLinkCounters[linkId] = getDataGeneratorCounterFromPage(pageAddress);
+          // There was an error, so we resync the counter on the next page
+          mLinkCounters[linkId] = LINK_COUNTER_INITIAL_VALUE;
         }
       }
 
