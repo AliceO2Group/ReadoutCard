@@ -9,6 +9,7 @@
 #include "CommandLineUtilities/Program.h"
 #include "RocPciDevice.h"
 #include "ReadoutCard/ChannelFactory.h"
+#include "ReadoutCard/MemoryMappedFile.h"
 #include <boost/format.hpp>
 
 using namespace AliceO2::roc::CommandLineUtilities;
@@ -52,8 +53,8 @@ class ProgramListCards: public Program
         try {
           Parameters params = Parameters::makeParameters(card.pciAddress, 0);
           // Temporary (hopefully) workaround, because DmaChannel requires a buffer when initializing
-          params.setBufferParameters(buffer_parameters::File{"/dev/hugepages/rorc_channel_utility_dummy_buffer",
-            2*1024*1024});
+          MemoryMappedFile file("/dev/hugepages/rorc_channel_utility_dummy_buffer", 2*1024*1024, true);
+          params.setBufferParameters(buffer_parameters::Memory{file.getAddress(), file.getSize()});
           firmware = ChannelFactory().getDmaChannel(params)->getFirmwareInfo().value_or("n/a");
         }
         catch (const Exception& e) {
