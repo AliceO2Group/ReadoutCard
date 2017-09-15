@@ -207,7 +207,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
       options.add_options()("serial", b::program_options::value<int>(&mSerialNumber), "Card serial number");
     }
 
-    virtual void run(const b::program_options::variables_map& map) override
+    virtual void run(const b::program_options::variables_map&) override
     {
       // Get DIM DNS node from environment
       if (getenv(std::string("DIM_DNS_NODE").c_str()) == nullptr) {
@@ -353,17 +353,16 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
     static std::string scaRead(const std::string&, ChannelSharedPtr bar2)
     {
       getInfoLogger() << "SCA_READ" << endm;
-      //auto params = split(parameter, ",");
       auto result = Sca(*bar2, bar2->getCardType()).read();
-      return (b::format("%u,%u") % result.data % result.command).str();
+      return (b::format("0x%x,0x%x") % result.data % result.command).str();
     }
 
     static std::string scaWrite(const std::string& parameter, ChannelSharedPtr bar2)
     {
       getInfoLogger() << "SCA_WRITE: '" << parameter << "'" << endm;
       auto params = split(parameter, ",");
-      auto data = b::lexical_cast<uint32_t>(params.at(0));
-      auto command = b::lexical_cast<uint32_t>(params.at(1));
+      auto command = convertHexString(params.at(0));
+      auto data = convertHexString(params.at(1));
       Sca(*bar2, bar2->getCardType()).write(command, data);
       return "";
     }
@@ -372,15 +371,15 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
     {
       getInfoLogger() << "SCA_GPIO_READ" << endm;
       auto result = Sca(*bar2, bar2->getCardType()).gpioRead();
-      return (b::format("%u") % result.data).str();
+      return (b::format("0x%x") % result.data).str();
     }
 
     static std::string scaGpioWrite(const std::string& parameter, ChannelSharedPtr bar2)
     {
       getInfoLogger() << "SCA_GPIO_WRITE: '" << parameter << "'" << endm;
-      auto data = b::lexical_cast<uint32_t>(parameter);
-      auto result = Sca(*bar2, bar2->getCardType()).gpioWrite(data);
-      return (b::format("%u") % result.data).str();
+      auto data = convertHexString(parameter);
+      Sca(*bar2, bar2->getCardType()).gpioWrite(data);
+      return "";
     }
 
     int mSerialNumber = 0;

@@ -25,6 +25,16 @@ namespace Alf {
 /// Length of the success/failure prefix that's returned in RPC calls
 constexpr size_t PREFIX_LENGTH = 8;
 
+/// Converts a 32-bit hex number string (possibly with 0x prefix)
+inline uint32_t convertHexString(const std::string& string)
+{
+  uint64_t n = std::stoul(string, nullptr, 16);
+  if (n > std::numeric_limits<uint32_t>::max()) {
+    BOOST_THROW_EXCEPTION(std::out_of_range("Parameter does not fit in 32-bit unsigned int"));
+  }
+  return n;
+}
+
 /// We use this in a few places because DIM insists on non-const char*
 inline std::vector<char> toCharBuffer(const std::string& string, bool addTerminator = true)
 {
@@ -161,7 +171,7 @@ class RegisterReadRpc: DimRpcInfoWrapper
 
     uint32_t readRegister(uint64_t registerAddress)
     {
-      setString(std::to_string(registerAddress));
+      setString((boost::format("%u") % registerAddress).str());
       return boost::lexical_cast<uint32_t>(stripPrefix(getString()));
     }
 };
@@ -176,8 +186,7 @@ class RegisterWriteRpc: DimRpcInfoWrapper
 
     void writeRegister(uint64_t registerAddress, uint32_t registerValue)
     {
-      auto string = std::to_string(registerAddress) + ',' + std::to_string(registerValue);
-      setString(string);
+      setString((boost::format("%u,%u") % registerAddress % registerValue).str());
       getString();
     }
 };
@@ -192,8 +201,7 @@ class RegisterWriteBlockRpc: DimRpcInfoWrapper
 
     void writeRegister(uint64_t registerAddress, uint32_t registerValue)
     {
-      auto string = std::to_string(registerAddress) + ',' + std::to_string(registerValue);
-      setString(string);
+      setString((boost::format("%u,%u") % registerAddress % registerValue).str());
       getString();
     }
 };
@@ -223,8 +231,7 @@ class ScaWriteRpc: DimRpcInfoWrapper
 
     std::string write(uint32_t command, uint32_t data)
     {
-      auto string = std::to_string(data) + ',' + std::to_string(command);
-      setString(string);
+      setString((boost::format("0x%x,0x%x") % command % data).str());
       return stripPrefix(getString());
     }
 };
@@ -239,7 +246,7 @@ class ScaGpioWriteRpc: DimRpcInfoWrapper
 
     std::string write(uint32_t data)
     {
-      setString(std::to_string(data));
+      setString((boost::format("0x%x") % data).str());
       return stripPrefix(getString());
     }
 };
