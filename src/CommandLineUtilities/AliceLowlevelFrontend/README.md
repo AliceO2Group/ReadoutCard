@@ -17,9 +17,10 @@ Some of the services are RPC calls.
 * When the argument must contain multiple values, they must be comma-separated.
 * The return string will contain an 8-byte prefix indicating success or failure "success:" or "failure:",
   optionally followed by a return value or error message.
-* Numbers and addresses are all in base-10.
+* Numbers and addresses are all in base-16. A '0x' prefix for numbers is accepted, but unnecessary for the parameters. 
+  The '0x' prefix is omitted for return values.
 
-For example: a register write call could have the argument string "504,42" meaning write value 42 to address 504.
+For example: a register write call could have the argument string "0x504,0x4" meaning write value 0x42 to address 0x4.
 The return string could be "success:" or "failure:Address out of range".
 
 ## Service description
@@ -41,14 +42,37 @@ A basic read from the SCA
 * Service type: RPC call
 * Service name: SCA_READ
 * Parameters: empty
-* Return: SCA data, SCA command
+* Return: SCA command, SCA data
 
 #### SCA write
 A basic write to the SCA
 * Service type: RPC call
 * Service name: SCA_WRITE
-* Parameters: SCA data, SCA command
+* Parameters: SCA command, SCA data
 * Return: empty
+
+#### SCA write sequence
+Write a sequence of values to the SCA
+* Service type: RPC call
+* Service name: SCA_SEQUENCE_WRITE
+* Parameters: A sequence of pairs of SCA command and data. The pairs are separated by semicolon, the command and data by 
+    comma: 
+    ~~~
+    [command 0],[data 0];[command 1],[data 1]; ... 
+    ~~~
+    For example:
+    ~~~
+    10,11;20,21;30,31
+    ~~~
+* Return: A sequence of SCA read return values corresponding to the commands from the input sequence:
+    ~~~
+    [value 0];[value 1]; ...
+    ~~~
+    For example:
+    ~~~
+    42;123;555
+    ~~~
+    
 
 #### SCA GPIO read
 Read the GPIO pins

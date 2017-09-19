@@ -28,8 +28,8 @@ class Sca
 
     struct ReadResult
     {
-        uint32_t data;
         uint32_t command;
+        uint32_t data;
     };
 
     Sca(RegisterReadWriteInterface& bar2, CardType::type cardType);

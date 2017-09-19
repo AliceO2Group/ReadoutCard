@@ -52,6 +52,12 @@ inline void setDataString(const std::string& string, DimObject& dimObject, bool 
   dimObject.setData(buffer.data(), buffer.size());
 }
 
+template <typename DimObject>
+inline void setDataBuffer(std::vector<char>& buffer, DimObject& dimObject)
+{
+  dimObject.setData(buffer.data(), buffer.size());
+}
+
 inline std::string successPrefix()
 {
   return "success:";
@@ -98,7 +104,7 @@ class DimRpcInfoWrapper
     {
     }
 
-    void setString(std::string string)
+    void setString(const std::string& string)
     {
       setDataString(string, getDimRpcInfo());
     }
@@ -111,6 +117,15 @@ class DimRpcInfoWrapper
           AlfException() << ErrorInfo::Message("ALF server failure" + string));
       }
       return string;
+    }
+
+    template <typename T>
+    std::vector<T> getBlob()
+    {
+      auto data = reinterpret_cast<T*>(mRpcInfo->getData());
+      auto size = mRpcInfo->getSize();
+      std::vector<T> buffer(data, data + (size / sizeof(T)));
+      return buffer;
     }
 
     DimRpcInfo& getDimRpcInfo() const {
@@ -171,8 +186,8 @@ class RegisterReadRpc: DimRpcInfoWrapper
 
     uint32_t readRegister(uint64_t registerAddress)
     {
-      setString((boost::format("%u") % registerAddress).str());
-      return boost::lexical_cast<uint32_t>(stripPrefix(getString()));
+      setString((boost::format("0x%x") % registerAddress).str());
+      return convertHexString(stripPrefix(getString()));
     }
 };
 
@@ -186,22 +201,7 @@ class RegisterWriteRpc: DimRpcInfoWrapper
 
     void writeRegister(uint64_t registerAddress, uint32_t registerValue)
     {
-      setString((boost::format("%u,%u") % registerAddress % registerValue).str());
-      getString();
-    }
-};
-
-class RegisterWriteBlockRpc: DimRpcInfoWrapper
-{
-  public:
-    RegisterWriteBlockRpc(const std::string& serviceName)
-        : DimRpcInfoWrapper(serviceName)
-    {
-    }
-
-    void writeRegister(uint64_t registerAddress, uint32_t registerValue)
-    {
-      setString((boost::format("%u,%u") % registerAddress % registerValue).str());
+      setString((boost::format("0x%x,0x%x") % registerAddress % registerValue).str());
       getString();
     }
 };
@@ -266,6 +266,32 @@ class ScaGpioReadRpc: DimRpcInfoWrapper
     }
 };
 
+class ScaWriteSequence: DimRpcInfoWrapper
+{
+  public:
+    ScaWriteSequence(const std::string& serviceName)
+      : DimRpcInfoWrapper(serviceName)
+    {
+    }
+
+    std::string write(const std::string& buffer)
+    {
+      setString(buffer);
+      return getString();
+    }
+
+    std::string write(const std::vector<std::pair<uint32_t, uint32_t>>& sequence)
+    {
+      std::stringstream buffer;
+      for (size_t i = 0; i < sequence.size(); ++i) {
+        buffer << sequence[i].first << ',' << sequence[i].second;
+        if (i + 1 < sequence.size()) {
+          buffer << ';';
+        }
+      }
+      return write(buffer.str());
+    }
+};
 
 class StringRpcServer: public DimRpc
 {

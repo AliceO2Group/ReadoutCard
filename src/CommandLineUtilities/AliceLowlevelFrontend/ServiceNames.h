@@ -26,6 +26,7 @@ class ServiceNames
     std::string publishStartCommandRpc() const;
     std::string publishStopCommandRpc() const;
     std::string scaWrite() const;
+    std::string scaWriteSequence() const;
     std::string scaRead() const;
     std::string scaGpioWrite() const;
     std::string scaGpioRead() const;

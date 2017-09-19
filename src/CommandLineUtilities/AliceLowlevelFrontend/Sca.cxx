@@ -71,7 +71,7 @@ auto Sca::read() -> ReadResult
   auto command = barRead(Registers::READ_COMMAND);
 //  printf("Sca::read   DATA=0x%x   CH=0x%x   TR=0x%x   CMD=0x%x\n", data, command >> 24, (command >> 16) & 0xff, command & 0xff);
   checkError(command);
-  return { data, command };
+  return { command, data };
 }
 
 void Sca::checkError(uint32_t command)

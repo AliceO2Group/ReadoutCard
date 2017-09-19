@@ -12,12 +12,14 @@
 #include <mutex>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/tokenizer.hpp>
 #include <boost/variant.hpp>
 #include <InfoLogger/InfoLogger.hxx>
 #include <dim/dis.hxx>
 #include "AliceLowlevelFrontend.h"
 #include "AlfException.h"
 #include "folly/ProducerConsumerQueue.h"
+#include "Utilities/Util.h"
 #include "ReadoutCard/Parameters.h"
 #include "ReadoutCard/ChannelFactory.h"
 #include "Sca.h"
@@ -243,6 +245,8 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
         [&](auto parameter){return scaRead(parameter, bar2);});
       auto serverScaWrite = makeServer(names.scaWrite(),
         [&](auto parameter){return scaWrite(parameter, bar2);});
+      auto serverScaWriteSequence = makeServer(names.scaWriteSequence(),
+        [&](auto parameter){return scaBlobWrite(parameter, bar2);});
       auto serverScaGpioRead = makeServer(names.scaGpioRead(),
         [&](auto parameter){return scaGpioRead(parameter, bar2);});
       auto serverScaGpioWrite = makeServer(names.scaGpioWrite(),
@@ -287,14 +291,14 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
     /// RPC handler for register reads
     static std::string registerRead(const std::string& parameter, ChannelSharedPtr channel)
     {
-      auto address = b::lexical_cast<uint64_t>(parameter);
+      auto address = convertHexString(parameter);
       checkAddress(address);
 
       uint32_t value = channel->readRegister(address / 4);
 
       // getInfoLogger() << "READ   " << Common::makeRegisterString(address, value) << endm;
 
-      return std::to_string(value);
+      return (b::format("0x%x") % value).str();
     }
 
     /// RPC handler for register writes
@@ -306,8 +310,8 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
         BOOST_THROW_EXCEPTION(AlfException() << ErrorInfo::Message("Write RPC call did not have 2 parameters"));
       }
 
-      auto address = b::lexical_cast<uint64_t>(params[0]);
-      auto value = b::lexical_cast<uint32_t>(params[1]);
+      auto address = convertHexString(params[0]);;
+      auto value = convertHexString(params[1]);;
       checkAddress(address);
 
       // getInfoLogger() << "WRITE  " << Common::makeRegisterString(address, value) << endm;
@@ -354,7 +358,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
     {
       getInfoLogger() << "SCA_READ" << endm;
       auto result = Sca(*bar2, bar2->getCardType()).read();
-      return (b::format("0x%x,0x%x") % result.data % result.command).str();
+      return (b::format("0x%x,0x%x") % result.command % result.data).str();
     }
 
     static std::string scaWrite(const std::string& parameter, ChannelSharedPtr bar2)
@@ -380,6 +384,37 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
       auto data = convertHexString(parameter);
       Sca(*bar2, bar2->getCardType()).gpioWrite(data);
       return "";
+    }
+
+    static std::string scaBlobWrite(const std::string& parameter, ChannelSharedPtr bar2)
+    {
+      getInfoLogger() << "SCA_BLOB_WRITE size=" << parameter.size() << " bytes" << endm;
+
+      // We first split on ; to get the pairs of SCA command and SCA data
+      // Since this can be an enormous list of pairs, we walk through it using the tokenizer
+      auto commandDataPairs = split(parameter, ";");
+      using tokenizer = boost::tokenizer<boost::char_separator<char>>;
+      boost::char_separator<char> sep(";", "", boost::drop_empty_tokens); // Drop ";" delimiters, keep none
+      std::stringstream resultBuffer;
+      auto sca = Sca(*bar2, bar2->getCardType());
+      for (std::string token : tokenizer(parameter, sep)) {
+        // Walk through the tokens, these should be the pairs. The pairs are comma-separated, so we split those.
+        std::vector<std::string> pair = split(token, ",");
+        if (pair.size() != 2) {
+          BOOST_THROW_EXCEPTION(AlfException() << ErrorInfo::Message("SCA command-data pair not formatted correctly"));
+        }
+        auto command = convertHexString(pair[0]);
+        auto data = convertHexString(pair[1]);
+        sca.write(command, data);
+        auto result = sca.read();
+        getInfoLogger() << (b::format("cmd=0x%x data=0x%x result=0x%x") % command % data % result.data).str() << endm;
+        resultBuffer << std::hex << result.data << ';';
+      }
+      auto result = resultBuffer.str();
+      if (result.size() > 0) {
+        result.pop_back(); // Pop the last ';'
+      }
+      return result;
     }
 
     int mSerialNumber = 0;

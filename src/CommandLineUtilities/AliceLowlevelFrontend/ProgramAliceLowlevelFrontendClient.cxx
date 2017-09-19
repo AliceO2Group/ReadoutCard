@@ -71,6 +71,7 @@ class ProgramAliceLowlevelFrontendClient: public Program
       Alf::ScaWriteRpc scaWriteRpc(names.scaWrite());
       Alf::ScaGpioReadRpc scaGpioReadRpc(names.scaGpioRead());
       Alf::ScaGpioWriteRpc scaGpioWriteRpc(names.scaGpioWrite());
+      Alf::ScaWriteSequence scaWriteSequence(names.scaWriteSequence());
       Alf::PublishRpc publishRpc(names.publishStartCommandRpc());
 
       publishRpc.publish("ALF/TEST/1", 1.0, {0x1fc});
@@ -83,21 +84,29 @@ class ProgramAliceLowlevelFrontendClient: public Program
         cout << "  result: " << scaGpioReadRpc.read() << endl;
       }
 
-//      for (int i = 0; i < 10; ++i) {
-//        auto transactionId = i + 0x10000;
-//        cout << "SCA write" << endl;
-//        cout << "  result: " << scaWriteRpc.write(0xffff + transactionId, i) << endl;
-//        cout << "SCA read" << endl;
-//        cout << "  result: " << scaReadRpc.read() << endl;
-//      }
-
-      cout << "1k writes to 0x1fc..." << endl;
-      for (int i = 0; i < 1000; ++i) {
-        readRpc.readRegister(0x1fc);
+      {
+        cout << "1k writes to 0x1fc..." << endl;
+        for (int i = 0; i < 1000; ++i) {
+          readRpc.readRegister(0x1fc);
+        }
+        cout << "Done!" << endl;
       }
-      cout << "Done!" << endl;
 
-      while (!isSigInt())
+      {
+        size_t numInts = 4;
+        cout << "Writing blob of " << numInts << " pairs of 32-bit ints..." << endl;
+        std::vector<std::pair<uint32_t, uint32_t>> buffer(numInts);
+        for (size_t i = 0; i < buffer.size(); ++i) {
+          buffer[i] = {i * 2, i * 2 + 1};
+        }
+
+        std::string result = scaWriteSequence.write(buffer);
+        cout << "Done!" << endl;
+        cout << "Got result: \n";
+        cout << "  " << result << '\n';
+      }
+
+      while (false)//!isSigInt())
       {
         cout << "-------------------------------------\n";
         cout << "Temperature   = " << gTemperature << endl;
