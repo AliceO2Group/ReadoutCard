@@ -286,7 +286,7 @@ class ScaWriteSequence: DimRpcInfoWrapper
       for (size_t i = 0; i < sequence.size(); ++i) {
         buffer << sequence[i].first << ',' << sequence[i].second;
         if (i + 1 < sequence.size()) {
-          buffer << ';';
+          buffer << '\n';
         }
       }
       return write(buffer.str());

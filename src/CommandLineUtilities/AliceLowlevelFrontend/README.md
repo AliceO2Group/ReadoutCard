@@ -55,22 +55,22 @@ A basic write to the SCA
 Write a sequence of values to the SCA
 * Service type: RPC call
 * Service name: SCA_SEQUENCE_WRITE
-* Parameters: A sequence of pairs of SCA command and data. The pairs are separated by semicolon, the command and data by 
+* Parameters: A sequence of pairs of SCA command and data. The pairs are separated by newline, the command and data by 
     comma: 
     ~~~
-    [command 0],[data 0];[command 1],[data 1]; ... 
+    "[command 0],[data 0]\n[command 1],[data 1]\n[etc.]" 
     ~~~
     For example:
     ~~~
-    10,11;20,21;30,31
+    "10,11\n20,21\n30,31"
     ~~~
 * Return: A sequence of SCA read return values corresponding to the commands from the input sequence:
     ~~~
-    [value 0];[value 1]; ...
+    "[value 0]\n[value 1]\n[etc.]"
     ~~~
     For example:
     ~~~
-    42;123;555
+    "42\n123\n555"
     ~~~
     If an SCA error occurred, the sequence of return values will go up to that point.
     If another type of error occurred (such as a formatting error), it will return a failure string. 

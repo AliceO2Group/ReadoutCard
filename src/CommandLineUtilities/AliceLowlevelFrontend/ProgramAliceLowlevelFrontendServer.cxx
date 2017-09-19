@@ -390,11 +390,10 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
     {
       getInfoLogger() << "SCA_BLOB_WRITE size=" << parameter.size() << " bytes" << endm;
 
-      // We first split on ; to get the pairs of SCA command and SCA data
+      // We first split on \n to get the pairs of SCA command and SCA data
       // Since this can be an enormous list of pairs, we walk through it using the tokenizer
-      auto commandDataPairs = split(parameter, ";");
       using tokenizer = boost::tokenizer<boost::char_separator<char>>;
-      boost::char_separator<char> sep(";", "", boost::drop_empty_tokens); // Drop ";" delimiters, keep none
+      boost::char_separator<char> sep("\n", "", boost::drop_empty_tokens); // Drop '\n' delimiters, keep none
       std::stringstream resultBuffer;
       auto sca = Sca(*bar2, bar2->getCardType());
 
@@ -411,7 +410,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
           sca.write(command, data);
           auto result = sca.read();
           getInfoLogger() << (b::format("cmd=0x%x data=0x%x result=0x%x") % command % data % result.data).str() << endm;
-          resultBuffer << std::hex << result.data << ';';
+          resultBuffer << std::hex << result.data << '\n';
         } catch (const ScaException& e) {
           // If an SCA error occurs, we stop executing the sequence of commands and return the results as far as we got
           // them
