@@ -72,6 +72,8 @@ Write a sequence of values to the SCA
     ~~~
     42;123;555
     ~~~
+    If an SCA error occurred, the sequence of return values will go up to that point.
+    If another type of error occurred (such as a formatting error), it will return a failure string. 
     
 
 #### SCA GPIO read

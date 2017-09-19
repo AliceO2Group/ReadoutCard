@@ -13,8 +13,8 @@ namespace roc {
 namespace CommandLineUtilities {
 namespace Alf {
 
-//// RORC exception definitions
 struct AlfException : AliceO2::Common::Exception {};
+struct ScaException : AliceO2::Common::Exception {};
 
 namespace ErrorInfo
 {

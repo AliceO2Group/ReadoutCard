@@ -100,7 +100,7 @@ void Sca::checkError(uint32_t command)
 
   for (int flag = 0; flag < 7; ++flag) {
     if (Utilities::getBit(command & 0xff, flag) == 1) {
-      BOOST_THROW_EXCEPTION(AlfException() << ErrorInfo::Message(toString(flag)));
+      BOOST_THROW_EXCEPTION(ScaException() << ErrorInfo::Message(toString(flag)));
     }
   }
 }
@@ -169,7 +169,7 @@ void Sca::waitOnBusyClear()
       return;
     }
   }
-  BOOST_THROW_EXCEPTION(AlfException() << ErrorInfo::Message("Exceeded timeout on busy wait"));
+  BOOST_THROW_EXCEPTION(ScaException() << ErrorInfo::Message("Exceeded timeout on busy wait"));
 }
 
 

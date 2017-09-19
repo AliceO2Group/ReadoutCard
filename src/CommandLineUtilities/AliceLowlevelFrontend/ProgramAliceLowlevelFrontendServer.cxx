@@ -397,19 +397,28 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
       boost::char_separator<char> sep(";", "", boost::drop_empty_tokens); // Drop ";" delimiters, keep none
       std::stringstream resultBuffer;
       auto sca = Sca(*bar2, bar2->getCardType());
+
       for (std::string token : tokenizer(parameter, sep)) {
         // Walk through the tokens, these should be the pairs. The pairs are comma-separated, so we split those.
         std::vector<std::string> pair = split(token, ",");
         if (pair.size() != 2) {
-          BOOST_THROW_EXCEPTION(AlfException() << ErrorInfo::Message("SCA command-data pair not formatted correctly"));
+          BOOST_THROW_EXCEPTION(
+            AlfException() << ErrorInfo::Message("SCA command-data pair not formatted correctly"));
         }
         auto command = convertHexString(pair[0]);
         auto data = convertHexString(pair[1]);
-        sca.write(command, data);
-        auto result = sca.read();
-        getInfoLogger() << (b::format("cmd=0x%x data=0x%x result=0x%x") % command % data % result.data).str() << endm;
-        resultBuffer << std::hex << result.data << ';';
+        try {
+          sca.write(command, data);
+          auto result = sca.read();
+          getInfoLogger() << (b::format("cmd=0x%x data=0x%x result=0x%x") % command % data % result.data).str() << endm;
+          resultBuffer << std::hex << result.data << ';';
+        } catch (const ScaException& e) {
+          // If an SCA error occurs, we stop executing the sequence of commands and return the results as far as we got
+          // them
+          break;
+        }
       }
+
       auto result = resultBuffer.str();
       if (result.size() > 0) {
         result.pop_back(); // Pop the last ';'
