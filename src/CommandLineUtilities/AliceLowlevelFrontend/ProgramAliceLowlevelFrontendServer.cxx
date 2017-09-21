@@ -398,23 +398,30 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
       auto sca = Sca(*bar2, bar2->getCardType());
 
       for (std::string token : tokenizer(parameter, sep)) {
-        // Walk through the tokens, these should be the pairs. The pairs are comma-separated, so we split those.
-        std::vector<std::string> pair = split(token, ",");
-        if (pair.size() != 2) {
-          BOOST_THROW_EXCEPTION(
-            AlfException() << ErrorInfo::Message("SCA command-data pair not formatted correctly"));
-        }
-        auto command = convertHexString(pair[0]);
-        auto data = convertHexString(pair[1]);
-        try {
-          sca.write(command, data);
-          auto result = sca.read();
-          getInfoLogger() << (b::format("cmd=0x%x data=0x%x result=0x%x") % command % data % result.data).str() << endm;
-          resultBuffer << std::hex << result.data << '\n';
-        } catch (const ScaException& e) {
-          // If an SCA error occurs, we stop executing the sequence of commands and return the results as far as we got
-          // them
-          break;
+        // Walk through the tokens, these should be the pairs (or comments).
+        if (token.find('#') == 0) {
+          // We have a comment, skip this token
+          continue;
+        } else {
+          // The pairs are comma-separated, so we split them.
+          std::vector<std::string> pair = split(token, ",");
+          if (pair.size() != 2) {
+            BOOST_THROW_EXCEPTION(
+              AlfException() << ErrorInfo::Message("SCA command-data pair not formatted correctly"));
+          }
+          auto command = convertHexString(pair[0]);
+          auto data = convertHexString(pair[1]);
+          try {
+            sca.write(command, data);
+            auto result = sca.read();
+            getInfoLogger() << (b::format("cmd=0x%x data=0x%x result=0x%x") % command % data % result.data).str()
+              << endm;
+            resultBuffer << std::hex << result.data << '\n';
+          } catch (const ScaException &e) {
+            // If an SCA error occurs, we stop executing the sequence of commands and return the results as far as we got
+            // them
+            break;
+          }
         }
       }
 

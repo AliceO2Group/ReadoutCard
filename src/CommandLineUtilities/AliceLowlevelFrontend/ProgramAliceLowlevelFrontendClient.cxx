@@ -106,6 +106,14 @@ class ProgramAliceLowlevelFrontendClient: public Program
         cout << "  " << result << '\n';
       }
 
+      {
+        cout << "Writing blob with comments..." << endl;
+        std::string result = scaWriteSequence.write("# Hello!\n11,22\n33,44\n# Bye!");
+        cout << "Done!" << endl;
+        cout << "Got result: \n";
+        cout << "  " << result << '\n';
+      }
+
       while (false)//!isSigInt())
       {
         cout << "-------------------------------------\n";

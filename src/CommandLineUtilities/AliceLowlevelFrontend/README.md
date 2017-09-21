@@ -54,7 +54,7 @@ A basic write to the SCA
 #### SCA write sequence
 Write a sequence of values to the SCA
 * Service type: RPC call
-* Service name: SCA_SEQUENCE_WRITE
+* Service name: SCA_WRITE_SEQUENCE
 * Parameters: A sequence of pairs of SCA command and data. The pairs are separated by newline, the command and data by 
     comma: 
     ~~~
@@ -64,6 +64,10 @@ Write a sequence of values to the SCA
     ~~~
     "10,11\n20,21\n30,31"
     ~~~
+    Comment lines are allowed, they must start with a `#`. For example:
+    ~~~
+    "# Hello!\n11,22\n33,44\n# Bye!"
+    ~~~ 
 * Return: A sequence of SCA read return values corresponding to the commands from the input sequence:
     ~~~
     "[value 0]\n[value 1]\n[etc.]"
