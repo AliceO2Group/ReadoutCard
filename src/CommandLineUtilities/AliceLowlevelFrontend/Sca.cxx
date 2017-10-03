@@ -4,6 +4,7 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "Sca.h"
+#include <chrono>
 #include <vector>
 #include "AlfException.h"
 #include "Utilities/Util.h"
@@ -32,7 +33,8 @@ constexpr int CRU = 0;
 constexpr int OTHER = 0;
 }
 
-constexpr int MAX_BUSY_ITERATIONS = 10000;
+constexpr auto BUSY_TIMEOUT = std::chrono::milliseconds(10);
+constexpr auto CHANNEL_BUSY_TIMEOUT = std::chrono::milliseconds(10);
 
 Sca::Sca(RegisterReadWriteInterface &bar2, CardType::type cardType) : bar2(bar2),
   offset((cardType == CardType::Crorc) ? Offset::CRORC : (cardType == CardType::Cru) ? Offset::CRU : Offset::OTHER)
@@ -71,13 +73,15 @@ auto Sca::read() -> ReadResult
   auto data = barRead(Registers::READ_DATA);
   auto command = barRead(Registers::READ_COMMAND);
 //  printf("Sca::read   DATA=0x%x   CH=0x%x   TR=0x%x   CMD=0x%x\n", data, command >> 24, (command >> 16) & 0xff, command & 0xff);
-  for (int i = 0; i < MAX_BUSY_ITERATIONS; ++i) {
+
+  auto endTime = std::chrono::steady_clock::now() + CHANNEL_BUSY_TIMEOUT;
+  while (std::chrono::steady_clock::now() < endTime){
     if (!isChannelBusy(command)) {
-      break;
+      checkError(command);
+      return { command, data };
     }
   }
-  checkError(command);
-  return { command, data };
+  BOOST_THROW_EXCEPTION(ScaException() << ErrorInfo::Message("Exceeded timeout on channel busy wait"));
 }
 
 bool Sca::isChannelBusy(uint32_t command)
@@ -192,7 +196,8 @@ void Sca::executeCommand()
 
 void Sca::waitOnBusyClear()
 {
-  for (int i = 0; i < MAX_BUSY_ITERATIONS; ++i) {
+  auto endTime = std::chrono::steady_clock::now() + BUSY_TIMEOUT;
+  while (std::chrono::steady_clock::now() < endTime){
     if (barRead(Registers::BUSY) == 0) {
       return;
     }
