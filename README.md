@@ -5,19 +5,19 @@ Table of Contents
 ===================
 1. [Introduction](#introduction)
 2. [Usage](#usage)
-  1. [DMA channels](#usage-dma-channels)
-  2. [BAR interface](#usage-bar-interface)
-  3. [Dummy implementation](#usage-dummy-implementation)
-  4. [Utility programs](#usage-utility-programs)
-  5. [Exceptions](#usage-exceptions)
-  6. [Python interface](#usage-python-interface)
+  1. [DMA channels](#dma-channels)
+  2. [BAR interface](#bar-interface)
+  3. [Dummy implementation](#dummy-implementation)
+  4. [Utility programs](#utility-programs)
+  5. [Exceptions](#exceptions)
+  6. [Python interface](#python-interface)
 3. [Installation](#installation)
 4. [Implementation notes](#implementation-notes)
 5. [Known issues](#known-issues)
-6. [ALICE Low-level Front-end (ALF) DIM Server](#alf)
+6. [ALICE Low-level Front-end (ALF) DIM Server](#alice-low-level-front-end-alf-dim-server)
 
 
-Introduction  <div id='introduction'/>
+Introduction
 ===================
 The ReadoutCard module* is a C++ library that provides a high-level interface for accessing and controlling 
 high-performance data acquisition PCIe cards.
@@ -68,7 +68,7 @@ For information on how to configure the IOMMU and hugepages for the purposes of 
 see the "Installation" section.
 
 
-Usage  <div id='usage'/>
+Usage
 ===================
 For a simple usage example, see the program in `src/Example.cxx`.
 For high-performance readout, the benchmark program `src/CommandLineUtilities/ProgramDmaBench.cxx` may be more
@@ -207,7 +207,7 @@ Note: depending on your environment, you may have to be in the same directory as
 it.
 You can also set the PYTHONPATH environment variable to the directory containing the libReadoutCard.so file.
 
-Installation  <div id='installation'/>
+Installation
 ===================
 Install the dependencies below and follow the instructions for building the FLP prototype.
 
@@ -275,7 +275,7 @@ Either use the script roc-setup-hugetlbfs.sh (located in the src directory), or 
 To enable the IOMMU, add `iommu=on` to the kernel boot parameters.
 
 
-Implementation notes  <div id='implementation-notes'/>
+Implementation notes
 ===================
 Channel classes
 -------------------
@@ -312,7 +312,7 @@ physical memory, which may be very difficult to allocate. With an SGL, we can us
 The regions can also presented in userspace as contiguous memory, thanks to the magic of the MMU.   
 
 
-Known issues  <div id='known-issues'/>
+Known issues
 ===================
 C-RORC concurrent channels
 -------------------
@@ -328,7 +328,7 @@ users to create/read/write files.
 Also, the PDA kernel module must be inserted as root in any case.
 
 
-ALICE Low-level Front-end (ALF) DIM Server  <div id='alf'/>
+ALICE Low-level Front-end (ALF) DIM Server
 ===================
 The utilities contain a DIM server for DCS control of the cards 
 For more information, see the dedicated readme at `src/CommandLineUtilities/AliceLowlevelFrontend/README.md`
