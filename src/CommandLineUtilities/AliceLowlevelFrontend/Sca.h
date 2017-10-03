@@ -48,6 +48,7 @@ class Sca
     void executeCommand();
     void waitOnBusyClear();
     void checkError(uint32_t command);
+    bool isChannelBusy(uint32_t command);
 
     /// Interface for BAR 2
     RegisterReadWriteInterface& bar2;

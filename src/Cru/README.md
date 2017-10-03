@@ -21,4 +21,4 @@ Describes which features may or may not be enabled on the CRU, since some firmwa
 Contains a preliminary description of the CRU's data format.
 ##### CruBar
 Implementation of `BarInterface`. In the future, this class may impose restrictions on reads and writes, but currently 
-it allows everything.  
+it allows everything.

@@ -4,6 +4,7 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "Sca.h"
+#include <vector>
 #include "AlfException.h"
 #include "Utilities/Util.h"
 
@@ -70,38 +71,65 @@ auto Sca::read() -> ReadResult
   auto data = barRead(Registers::READ_DATA);
   auto command = barRead(Registers::READ_COMMAND);
 //  printf("Sca::read   DATA=0x%x   CH=0x%x   TR=0x%x   CMD=0x%x\n", data, command >> 24, (command >> 16) & 0xff, command & 0xff);
+  for (int i = 0; i < MAX_BUSY_ITERATIONS; ++i) {
+    if (!isChannelBusy(command)) {
+      break;
+    }
+  }
   checkError(command);
   return { command, data };
 }
 
+bool Sca::isChannelBusy(uint32_t command)
+{
+  return (command & 0xff) == 0x40;
+}
+
 void Sca::checkError(uint32_t command)
 {
+  uint32_t errorCode = command & 0xff;
+
   auto toString = [&](int flag){
     switch (flag) {
       case 1:
-        return "Invalid channel request";
+        return "invalid channel request";
       case 2:
-        return "Invalid command request";
+        return "invalid command request";
       case 3:
-        return "Invalid transaction number";
+        return "invalid transaction number";
       case 4:
-        return "Invalid length";
+        return "invalid length";
       case 5:
-        return "Channel not enabled";
+        return "channel not enabled";
       case 6:
-        return "Channel busy";
+        return "channel busy";
       case 7:
-        return "Channel busy";
+        return "channel busy";
       case 0:
       default:
-        return "Generic error flag";
+        return "generic error flag";
     }
   };
 
+  // Check which error bits are enabled
+  std::vector<int> flags;
   for (int flag = 0; flag < 7; ++flag) {
-    if (Utilities::getBit(command & 0xff, flag) == 1) {
-      BOOST_THROW_EXCEPTION(ScaException() << ErrorInfo::Message(toString(flag)));
+    if (Utilities::getBit(errorCode, flag) == 1) {
+      flags.push_back(flag);
     }
+  }
+
+  // Turn into an error message
+  if (!flags.empty()) {
+    std::stringstream stream;
+    stream << "error code 0x" << errorCode << ": ";
+    for (int i = 0; i < flags.size(); ++i) {
+      stream << toString(flags[i]);
+      if (i < flags.size()) {
+        stream << ", ";
+      }
+    }
+    BOOST_THROW_EXCEPTION(ScaException() << ErrorInfo::Message(stream.str()));
   }
 }
 
