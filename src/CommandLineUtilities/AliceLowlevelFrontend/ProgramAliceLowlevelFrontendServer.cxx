@@ -220,7 +220,12 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
       auto bar0 = ChannelFactory().getBar(Parameters::makeParameters(mSerialNumber, 0));
       auto bar2 = ChannelFactory().getBar(Parameters::makeParameters(mSerialNumber, 2));
 
-      Sca(*bar2, bar2->getCardType()).initialize();
+      try {
+        Sca(*bar2, bar2->getCardType()).initialize();
+      }
+      catch (const ScaException& e) {
+        getInfoLogger() << "ScaException: " << e.what() << endm;
+      }
 
       DimServer::start("ALF");
 
