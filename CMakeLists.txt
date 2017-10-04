@@ -161,6 +161,12 @@ if(ALICEO2_READOUTCARD_PDA_ENABLED)
         MODULE_LIBRARY_NAME ${LIBRARY_NAME}
         BUCKET_NAME o2_readoutcard_dim
    )
+    O2_GENERATE_EXECUTABLE(
+      EXE_NAME roc-alf-sca-write-seq
+      SOURCES src/CommandLineUtilities/AliceLowlevelFrontend/ProgramAlfScaWriteSequence.cxx
+      MODULE_LIBRARY_NAME ${LIBRARY_NAME}
+      BUCKET_NAME o2_readoutcard_dim
+    )
    O2_GENERATE_EXECUTABLE(
         EXE_NAME roc-alf-server
         SOURCES src/CommandLineUtilities/AliceLowlevelFrontend/ProgramAliceLowlevelFrontendServer.cxx
