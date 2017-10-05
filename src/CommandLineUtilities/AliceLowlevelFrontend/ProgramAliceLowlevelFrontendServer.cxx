@@ -20,7 +20,6 @@
 #include "AlfException.h"
 #include "folly/ProducerConsumerQueue.h"
 #include "Utilities/Util.h"
-#include "ReadoutCard/Parameters.h"
 #include "ReadoutCard/ChannelFactory.h"
 #include "Sca.h"
 #include "ServiceNames.h"
