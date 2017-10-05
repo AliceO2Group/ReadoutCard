@@ -91,7 +91,7 @@ void CruDmaChannel::deviceStartDma()
 
   if (mFeatures.dataSelection) {
     // Something with selecting the data source... [insert link to documentation here]
-    mPdaBar2.writeRegister(0x8000020 / 4, 1);
+    getBar2().setDataSource(Cru::Registers::DATA_SOURCE_SELECT_INTERNAL);
   }
 
   for (auto &link : mLinks) {

@@ -19,13 +19,6 @@ namespace Alf {
 class Sca
 {
   public:
-//    struct WriteCommand
-//    {
-//        uint8_t command;
-//        uint8_t transaction;
-//        uint8_t channel;
-//    };
-
     struct ReadResult
     {
         uint32_t command;

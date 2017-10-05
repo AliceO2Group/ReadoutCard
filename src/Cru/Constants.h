@@ -56,7 +56,16 @@ static constexpr IntervalRegister LINK_SUPERPAGES_PUSHED(0x800, SUPERPAGES_PUSHE
 ///   0b10 -> 0xa5a5a5a5
 ///   0b11 -> 0x12345678
 /// Bit 3: set to inject error
-static constexpr Register DATA_GENERATOR_CONTROL(0x420);
+static constexpr Register DATA_GENERATOR_CONTROL(0x600);
+
+/// Selection of data source
+/// 0x0 -> GBT
+/// 0x1 -> Internal data generator
+/// 0x2 -> Pattern generator
+static constexpr Register DATA_SOURCE_SELECT(0x700);
+static constexpr uint32_t DATA_SOURCE_SELECT_GBT = 0x0;
+static constexpr uint32_t DATA_SOURCE_SELECT_INTERNAL = 0x1;
+static constexpr uint32_t DATA_SOURCE_SELECT_PATTERN = 0x2;
 
 /// Command to write into DATA_GENERATOR_CONTROL to inject an error
 static constexpr uint32_t DATA_GENERATOR_CONTROL_CMD_INJECT_ERROR = 0x8;

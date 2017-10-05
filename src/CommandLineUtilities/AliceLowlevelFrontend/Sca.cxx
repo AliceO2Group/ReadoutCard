@@ -18,18 +18,19 @@ namespace CommandLineUtilities {
 namespace Alf {
 
 namespace Registers {
-constexpr Register WRITE_DATA(0x20);
-constexpr Register WRITE_COMMAND(0x24);
-constexpr Register CONTROL(0x28);
-constexpr Register READ_DATA(0x30);
-constexpr Register READ_COMMAND(0x34);
-constexpr Register READ_BUSY(0x38);
-constexpr Register READ_TIME(0x3c);
+constexpr size_t BASE_INDEX = 0x4224000 / 4;
+constexpr int WRITE_DATA(0x20 / 4);
+constexpr int WRITE_COMMAND(0x24 / 4);
+constexpr int CONTROL(0x28 / 4);
+constexpr int READ_DATA(0x30 / 4);
+constexpr int READ_COMMAND(0x34 / 4);
+constexpr int READ_BUSY(0x38 / 4);
+constexpr int READ_TIME(0x3c / 4);
 } // namespace Registers
 
 namespace Offset {
 constexpr int CRORC = 0;
-constexpr int CRU = 0x4224000;
+constexpr int CRU = 0;
 constexpr int OTHER = 0;
 }
 
@@ -49,26 +50,30 @@ void Sca::initialize()
 
 void Sca::init()
 {
-  barWrite(Registers::CONTROL.index, 0x1);
+  barWrite(Registers::CONTROL, 0x1);
   waitOnBusyClear();
-  barWrite(Registers::CONTROL.index, 0x2);
+  barWrite(Registers::CONTROL, 0x2);
   waitOnBusyClear();
-  barWrite(Registers::CONTROL.index, 0x1);
+  barWrite(Registers::CONTROL, 0x1);
   waitOnBusyClear();
-  barWrite(Registers::CONTROL.index, 0x0);
+  barWrite(Registers::CONTROL, 0x0);
 }
 
 void Sca::write(uint32_t command, uint32_t data)
 {
-  barWrite(Registers::WRITE_DATA.index, data);
-  barWrite(Registers::WRITE_COMMAND.index, command);
+  barWrite(Registers::WRITE_DATA, data);
+  barWrite(Registers::WRITE_COMMAND, command);
   executeCommand();
+//  auto time = barRead(Registers::TIME) * 4;
+//  printf("Sca::write  DATA=0x%x   CH=0x%x   TR=0x%x   CMD=0x%x   TIME(ns)=%u\n", data, command >> 24, (command >> 16) & 0xff,
+//    command & 0xff, time);
 }
 
 auto Sca::read() -> ReadResult
 {
-  auto data = barRead(Registers::READ_DATA.index);
-  auto command = barRead(Registers::READ_COMMAND.index);
+  auto data = barRead(Registers::READ_DATA);
+  auto command = barRead(Registers::READ_COMMAND);
+//  printf("Sca::read   DATA=0x%x   CH=0x%x   TR=0x%x   CMD=0x%x\n", data, command >> 24, (command >> 16) & 0xff, command & 0xff);
 
   auto endTime = std::chrono::steady_clock::now() + CHANNEL_BUSY_TIMEOUT;
   while (std::chrono::steady_clock::now() < endTime){
@@ -185,8 +190,8 @@ uint32_t Sca::barRead(int index)
 
 void Sca::executeCommand()
 {
-  barWrite(Registers::CONTROL.index, 0x4);
-  barWrite(Registers::CONTROL.index, 0x0);
+  barWrite(Registers::CONTROL, 0x4);
+  barWrite(Registers::CONTROL, 0x0);
   waitOnBusyClear();
 }
 
@@ -194,7 +199,7 @@ void Sca::waitOnBusyClear()
 {
   auto endTime = std::chrono::steady_clock::now() + BUSY_TIMEOUT;
   while (std::chrono::steady_clock::now() < endTime){
-    if (Utilities::getBit(barRead(Registers::READ_BUSY.index), 1) == 0) {
+    if (barRead(Registers::READ_BUSY) == 0) {
       return;
     }
   }

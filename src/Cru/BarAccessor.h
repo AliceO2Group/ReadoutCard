@@ -95,6 +95,12 @@ class BarAccessor
       mBar->writeRegister(Registers::DATA_GENERATOR_CONTROL.index, Registers::DATA_GENERATOR_CONTROL_CMD_INJECT_ERROR);
     }
 
+    /// Sets the data source for the DMA
+    void setDataSource(uint32_t source)
+    {
+      mBar->writeRegister(Registers::DATA_SOURCE_SELECT.index, source);
+    }
+
     /// Gets the serial number from the card.
     /// Note that not all firmwares have a serial number. You should make sure this firmware feature is enabled before
     /// calling this function, or the card may crash. See getFirmwareFeatures().
