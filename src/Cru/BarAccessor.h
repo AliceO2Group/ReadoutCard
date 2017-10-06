@@ -92,7 +92,8 @@ class BarAccessor
     /// Injects a single error into the generated data stream
     void dataGeneratorInjectError()
     {
-      mBar->writeRegister(Registers::DATA_GENERATOR_CONTROL.index, Registers::DATA_GENERATOR_CONTROL_CMD_INJECT_ERROR);
+      mBar->writeRegister(Registers::DATA_GENERATOR_INJECT_ERROR.index,
+        Registers::DATA_GENERATOR_CONTROL_INJECT_ERROR_CMD);
     }
 
     /// Sets the data source for the DMA

@@ -67,8 +67,10 @@ static constexpr uint32_t DATA_SOURCE_SELECT_GBT = 0x0;
 static constexpr uint32_t DATA_SOURCE_SELECT_INTERNAL = 0x1;
 static constexpr uint32_t DATA_SOURCE_SELECT_PATTERN = 0x2;
 
-/// Command to write into DATA_GENERATOR_CONTROL to inject an error
-static constexpr uint32_t DATA_GENERATOR_CONTROL_CMD_INJECT_ERROR = 0x8;
+/// Register for error injection
+/// Not sure how it works...
+static constexpr Register DATA_GENERATOR_INJECT_ERROR(0x608);
+static constexpr uint32_t DATA_GENERATOR_CONTROL_INJECT_ERROR_CMD = 0x1;
 
 /// Board serial number
 /// Must be accessed on BAR 2
