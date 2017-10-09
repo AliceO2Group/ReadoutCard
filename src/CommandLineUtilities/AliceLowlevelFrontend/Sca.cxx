@@ -30,7 +30,7 @@ constexpr int READ_TIME(0x3c / 4);
 
 namespace Offset {
 constexpr int CRORC = 0;
-constexpr int CRU = BASE_INDEX;
+constexpr int CRU = Registers::BASE_INDEX;
 constexpr int OTHER = 0;
 }
 
