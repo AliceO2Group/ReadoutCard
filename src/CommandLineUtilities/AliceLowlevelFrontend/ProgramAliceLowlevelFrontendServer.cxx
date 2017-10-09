@@ -415,6 +415,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
           }
           auto command = convertHexString(pair[0]);
           auto data = convertHexString(pair[1]);
+
           try {
             sca.write(command, data);
             auto result = sca.read();
@@ -423,7 +424,8 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
             resultBuffer << std::hex << result.data << '\n';
           } catch (const ScaException &e) {
             // If an SCA error occurs, we stop executing the sequence of commands and return the results as far as we got
-            // them
+            // them, plus the error message.
+            resultBuffer << e.what();
             break;
           }
         }

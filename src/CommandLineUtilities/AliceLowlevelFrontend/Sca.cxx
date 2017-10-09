@@ -63,10 +63,11 @@ void Sca::write(uint32_t command, uint32_t data)
 {
   barWrite(Registers::WRITE_DATA, data);
   barWrite(Registers::WRITE_COMMAND, command);
+  auto transactionId = (command >> 16) & 0xff;
+  if (transactionId == 0x0 || transactionId == 0xff) {
+    BOOST_THROW_EXCEPTION(ScaException() << ErrorInfo::Message("Invalid transaction ID"));
+  }
   executeCommand();
-//  auto time = barRead(Registers::TIME) * 4;
-//  printf("Sca::write  DATA=0x%x   CH=0x%x   TR=0x%x   CMD=0x%x   TIME(ns)=%u\n", data, command >> 24, (command >> 16) & 0xff,
-//    command & 0xff, time);
 }
 
 auto Sca::read() -> ReadResult

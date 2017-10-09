@@ -76,7 +76,7 @@ Write a sequence of values to the SCA
     ~~~
     "42\n123\n555"
     ~~~
-    If an SCA error occurred, the sequence of return values will go up to that point.
+    If an SCA error occurred, the sequence of return values will go up to that point, plus the error message
     If another type of error occurred (such as a formatting error), it will return a failure string. 
     
 
