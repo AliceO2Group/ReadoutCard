@@ -77,7 +77,7 @@ auto Sca::read() -> ReadResult
 
   auto endTime = std::chrono::steady_clock::now() + CHANNEL_BUSY_TIMEOUT;
   while (std::chrono::steady_clock::now() < endTime){
-    if (!isChannelBusy(command)) {
+    if (!isChannelBusy(barRead(Registers::READ_COMMAND))) {
       checkError(command);
       return { command, data };
     }
@@ -199,7 +199,7 @@ void Sca::waitOnBusyClear()
 {
   auto endTime = std::chrono::steady_clock::now() + BUSY_TIMEOUT;
   while (std::chrono::steady_clock::now() < endTime){
-    if (barRead(Registers::READ_BUSY) == 0) {
+    if ((((barRead(Registers::READ_BUSY)) >> 31) & 0x1) == 0) {
       return;
     }
   }
