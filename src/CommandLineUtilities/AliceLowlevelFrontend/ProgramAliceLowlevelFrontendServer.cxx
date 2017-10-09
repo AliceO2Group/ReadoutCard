@@ -431,11 +431,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
         }
       }
 
-      auto result = resultBuffer.str();
-      if (result.size() > 0) {
-        result.pop_back(); // Pop the last ';'
-      }
-      return result;
+      return resultBuffer.str();
     }
 
     int mSerialNumber = 0;
