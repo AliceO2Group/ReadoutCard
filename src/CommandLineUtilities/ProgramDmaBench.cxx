@@ -70,6 +70,13 @@ constexpr int64_t MAX_RECORDED_ERRORS = 10000;
 constexpr auto endm = InfoLogger::endm;
 } // Anonymous namespace
 
+
+/// This class handles command-line DMA benchmarking.
+/// It has grown far beyond its original design, accumulating more and more options and extensions.
+/// Ideally, this would be split up into multiple classes.
+/// For example, the core DMA tasks should be extracted into a separate, generic DMA class and this benchmark class
+/// would provide all the command-line options and handling around that.
+/// The error checking should be functions defined by the data format, but this is "in progress" for now.
 class ProgramDmaBench: public Program
 {
   public:
@@ -118,18 +125,18 @@ class ProgramDmaBench: public Program
           ("no-errorcheck",
               po::bool_switch(&mOptions.noErrorCheck),
               "Skip error checking")
-          ("no-resync",
-              po::bool_switch(&mOptions.noResyncCounter),
-              "Disable counter resync")
-          ("no-temperature",
-              po::bool_switch(&mOptions.noTemperature),
-              "No temperature readout")
           ("no-display",
               po::bool_switch(&mOptions.noDisplay),
               "Disable command-line display")
+          ("no-resync",
+              po::bool_switch(&mOptions.noResyncCounter),
+              "Disable counter resync")
           ("no-rm-pages-file",
               po::bool_switch(&mOptions.noRemovePagesFile),
               "Don't remove the file used for pages after benchmark completes")
+          ("no-temperature",
+              po::bool_switch(&mOptions.noTemperature),
+              "No temperature readout")
           ("page-reset",
               po::bool_switch(&mOptions.pageReset),
               "Reset page to default values after readout (slow)");
@@ -158,8 +165,6 @@ class ProgramDmaBench: public Program
               po::value<std::string>(&mOptions.fileOutputPathBin),
               "Read out to given file in binary format (only contains raw data from pages)")
           ;
-
-      Options::addOptionsChannelParameters(options);
     }
 
     virtual void run(const po::variables_map& map)
@@ -199,34 +204,28 @@ class ProgramDmaBench: public Program
         mOptions.readoutMode = ReadoutMode::fromString(mOptions.readoutModeString);
       }
 
-      // Create buffer
+      // Log IOMMU status
+      mLogger << "IOMMU " << (AliceO2::Common::Iommu::isEnabled() ? "enabled" : "not enabled") << endm;
+
+      // Create channel buffer
       {
         constexpr size_t SIZE_2MiB = 2*1024*1024;
         constexpr size_t SIZE_1GiB = 1*1024*1024*1024;
         HugePageType hugePageType;
         size_t hugePageSize;
 
+        // To use hugepages, the buffer size must be a multiple of 2 MiB (or 1 GiB, but we cover that with 2 MiB anyway)
         if (!Utilities::isMultiple(mBufferSize, SIZE_2MiB)) {
           throw ParameterException() << ErrorInfo::Message("Buffer size not a multiple of 2 MiB");
         }
 
+        // Check which hugepage size we should use
         if (Utilities::isMultiple(mBufferSize, SIZE_1GiB)) {
           hugePageType = HugePageType::SIZE_1GB;
           hugePageSize = SIZE_1GiB;
         } else {
           hugePageType = HugePageType::SIZE_2MB;
           hugePageSize = SIZE_2MiB;
-        }
-
-        if (!AliceO2::Common::Iommu::isEnabled()) {
-          if (!Utilities::isMultiple(hugePageSize, mSuperpageSize)) {
-            BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("IOMMU not enabled & hugepage size is "
-                "not a multiple of superpage size. Superpages may cross hugepage boundaries and cause invalid PCIe "
-                "memory accesses"));
-          }
-          mLogger << "IOMMU not enabled" << endm;
-        } else {
-          mLogger << "IOMMU enabled" << endm;
         }
 
         if (mBufferSize < mSuperpageSize) {
