@@ -122,4 +122,19 @@ std::string to_string(const ErrorInfo::PciAddress& e)
   return toStringHelper("ReadoutCard PCI address", e.value().toString());
 }
 
+std::string to_string(const ErrorInfo::CardId& e)
+{
+  std::string message;
+  if (auto serialMaybe = boost::get<int>(&e.value())) {
+    message = std::to_string(*serialMaybe);
+  } else if (auto addressMaybe = boost::get<PciAddress>(&e.value())) {
+    auto address = *addressMaybe;
+    message = address.toString();
+  } else {
+    message = "unknown";
+  }
+  return toStringHelper("ReadoutCard PCI address", message);
+}
+
+
 } // namespace boost

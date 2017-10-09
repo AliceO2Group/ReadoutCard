@@ -4,6 +4,7 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "ReadoutCard/CardType.h"
+#include "ReadoutCard/ChannelFactory.h"
 #include "Factory/ChannelFactoryUtils.h"
 #include <map>
 #include <memory>
@@ -16,7 +17,6 @@
 #include <string>
 
 using namespace ::AliceO2::roc;
-using namespace ::AliceO2::roc::CardTypeTag;
 
 namespace {
 
@@ -29,21 +29,15 @@ struct DummyImpl : public TestInterface {};
 struct CrorcImpl : public TestInterface {};
 struct CruImpl : public TestInterface {};
 
-// Helper function for deducing template arguments
-template<class ...Args>
-std::shared_ptr<TestInterface> _callMake(CardType::type cardType, Args&&... args)
-{
-  return FactoryHelper::_make_impl::Make<std::shared_ptr<TestInterface>, 0, Args...>::make(cardType,
-      std::forward<Args>(args)...);
-}
-
 // Helper function for calling the factory make function
-std::shared_ptr<TestInterface> callMake(CardType::type cardType)
+std::unique_ptr<TestInterface> callMake()
 {
-  return _callMake(cardType,
-      DummyTag, []{ return std::make_shared<DummyImpl>(); },
-      CrorcTag, []{ return std::make_shared<CrorcImpl>(); },
-      CruTag,   []{ return std::make_shared<CruImpl>(); });
+  auto parameters = Parameters::makeParameters(ChannelFactory::getDummySerialNumber(), 0);
+  return ChannelFactoryUtils::channelFactoryHelper<TestInterface>(parameters, ChannelFactory::getDummySerialNumber(), {
+      {CardType::Dummy, []{ return std::make_unique<DummyImpl>(); }},
+      {CardType::Crorc, []{ return std::make_unique<CrorcImpl>(); }},
+      {CardType::Cru,   []{ return std::make_unique<CruImpl>(); }}
+    });
 }
 
 // This tests if the FactoryHelper::make() function maps to the expected types.
@@ -51,9 +45,7 @@ std::shared_ptr<TestInterface> callMake(CardType::type cardType)
 // we test only part of its implementation.
 BOOST_AUTO_TEST_CASE(ChannelFactoryHelperTest)
 {
-  BOOST_CHECK(nullptr != dynamic_cast<DummyImpl*>(callMake(CardType::Dummy).get()));
-  BOOST_CHECK(nullptr != dynamic_cast<CrorcImpl*>(callMake(CardType::Crorc).get()));
-  BOOST_CHECK(nullptr != dynamic_cast<CruImpl*>(callMake(CardType::Cru).get()));
+  BOOST_CHECK(nullptr != dynamic_cast<DummyImpl*>(callMake().get()));
 }
 
 } // Anonymous namespace

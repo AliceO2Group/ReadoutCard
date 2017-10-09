@@ -14,6 +14,7 @@
 #include "ReadoutCard/Exception.h"
 #include "ReadoutCard/PciId.h"
 #include "ReadoutCard/CardType.h"
+#include "ReadoutCard/Parameters.h"
 #include "ReadoutCard/ParameterTypes/PciAddress.h"
 #include "ReadoutCard/ParameterTypes/ResetLevel.h"
 #include "ReadoutCard/ParameterTypes/GeneratorPattern.h"
@@ -34,6 +35,7 @@ using FilesystemType = AliceO2::Common::ErrorInfo::FilesystemType;
 DEFINE_ERRINFO(Address, uintptr_t);
 DEFINE_ERRINFO(BarIndex, size_t);
 DEFINE_ERRINFO(BarSize, size_t);
+DEFINE_ERRINFO(CardId, ::AliceO2::roc::Parameters::CardIdType);
 DEFINE_ERRINFO(CardType, ::AliceO2::roc::CardType::type);
 DEFINE_ERRINFO(ChannelNumber, int);
 DEFINE_ERRINFO(DdlResetMask, std::string);
@@ -97,6 +99,7 @@ void addPossibleCauses(boost::exception& exception, const std::vector<std::strin
 namespace boost {
 
 // These functions convert the errinfos to strings for diagnostic messages
+std::string to_string(const AliceO2::roc::ErrorInfo::CardId& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::CardType& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::Message& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::LoopbackMode& e);

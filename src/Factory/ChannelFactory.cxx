@@ -19,7 +19,7 @@
 namespace AliceO2 {
 namespace roc {
 
-using namespace FactoryHelper;
+using namespace ChannelFactoryUtils;
 using namespace CardTypeTag;
 
 ChannelFactory::ChannelFactory()
@@ -32,24 +32,24 @@ ChannelFactory::~ChannelFactory()
 
 auto ChannelFactory::getDmaChannel(const Parameters &params) -> DmaChannelSharedPtr
 {
-  return makeChannel<DmaChannelInterface>(params, getDummySerialNumber()
-    , DummyTag, [&]{ return std::make_shared<DummyDmaChannel>(params); }
+  return channelFactoryHelper<DmaChannelInterface>(params, getDummySerialNumber(), {
+    {CardType::Dummy, [&]{ return std::make_unique<DummyDmaChannel>(params); }},
 #ifdef ALICEO2_READOUTCARD_PDA_ENABLED
-    , CrorcTag, [&]{ return std::make_shared<CrorcDmaChannel>(params); }
-    , CruTag,   [&]{ return std::make_shared<CruDmaChannel>(params); }
+    {CardType::Crorc, [&]{ return std::make_unique<CrorcDmaChannel>(params); }},
+    {CardType::Cru,   [&]{ return std::make_unique<CruDmaChannel>(params); }}
 #endif
-    );
+  });
 }
 
 auto ChannelFactory::getBar(const Parameters &params) -> BarSharedPtr
 {
-  return makeChannel<BarInterface>(params, getDummySerialNumber()
-    , DummyTag, [&]{ return std::make_shared<DummyBar>(params); }
+  return channelFactoryHelper<BarInterface>(params, getDummySerialNumber(), {
+    {CardType::Dummy, [&]{ return std::make_unique<DummyBar>(params); }},
 #ifdef ALICEO2_READOUTCARD_PDA_ENABLED
-    , CrorcTag, [&]{ return std::make_shared<CrorcBar>(params); }
-    , CruTag,   [&]{ return std::make_shared<CruBar>(params); }
+    {CardType::Crorc, [&]{ return std::make_unique<CrorcBar>(params); }},
+    {CardType::Cru,   [&]{ return std::make_unique<CruBar>(params); }}
 #endif
-    );
+  });
 }
 
 } // namespace roc
