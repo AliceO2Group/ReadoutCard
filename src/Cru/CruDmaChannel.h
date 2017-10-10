@@ -52,23 +52,26 @@ class CruDmaChannel final : public DmaChannelPdaBase
 
   private:
 
-    /// Max amount of superpages per link
+    /// Max amount of superpages per link.
+    /// This is determined by the firmware capabilities.
     static constexpr size_t LINK_QUEUE_CAPACITY = Cru::MAX_SUPERPAGE_DESCRIPTORS;
 
-    /// Max amount of superpages in the ready queue
+    /// Max amount of superpages in the ready queue.
+    /// This is an arbitrary size, can easily be increased if more headroom is needed.
     static constexpr size_t READY_QUEUE_CAPACITY = 32;
 
     /// Queue for one link
     using SuperpageQueue = boost::circular_buffer<Superpage>;
 
     /// Index into mLinks
-    using LinkIndex = uint8_t;
+    using LinkIndex = uint32_t;
     static_assert(std::numeric_limits<LinkIndex>::max() >= Cru::MAX_LINKS, "");
 
     /// ID for a link
-    using LinkId = uint8_t;
+    using LinkId = uint32_t;
     static_assert(std::numeric_limits<LinkId>::max() >= Cru::MAX_LINKS, "");
 
+    /// Struct for keeping track of one link's counter and superpages
     struct Link
     {
         /// The link's FEE ID
@@ -114,6 +117,7 @@ class CruDmaChannel final : public DmaChannelPdaBase
     /// To keep track of how many slots are available in the link queues (in mLinks) in total
     size_t mLinkQueuesTotalAvailable;
 
+    /// Queue for superpages that have been transferred and are waiting for popping by the user
     SuperpageQueue mReadyQueue { READY_QUEUE_CAPACITY };
 
     // These variables are configuration parameters

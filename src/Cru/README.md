@@ -1,5 +1,7 @@
 # `src/Cru`
 This directory contains the classes related to the CRU (Common Readout Unit) driver backend.
+For information on the way the CRU's DMA engine works, the registers, etc., see the documentation attached to the 
+following repository: https://gitlab.cern.ch/alice-cru/pciedma
 
 The core of the driver is formed by the classes:
 ##### Constants

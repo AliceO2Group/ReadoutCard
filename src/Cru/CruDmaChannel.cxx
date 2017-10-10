@@ -74,7 +74,7 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
 }
 
 auto CruDmaChannel::allowedChannels() -> AllowedChannels {
-  // We have only one DMA channel per CRU
+  // We have only one DMA channel per CRU endpoint
   return {0};
 }
 
