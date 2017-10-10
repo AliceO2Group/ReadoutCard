@@ -76,41 +76,53 @@ instructive.
 
 DMA channels
 -------------------
-Clients can acquire a lock on a DMA channel by instantiating a *DmaChannelInterface* implementation through 
-the *ChannelFactory* class. Once this object is constructed, it will provide exclusive access to the DMA channel.
+Clients can acquire a lock on a DMA channel by instantiating a `DmaChannelInterface` implementation through 
+the `ChannelFactory` class. Once this object is constructed, it will provide exclusive access to the DMA channel.
 
-The user will need to specify parameters for the channel by passing an instance of the *Parameters* 
+The user will need to specify parameters for the channel by passing an instance of the `Parameters` 
 class to the factory function. 
-The most important parameters are the card ID (either a serial number or a PCI address), and the BAR channel number.
-The serial number and PCI address (as well as additional information) can be listed using the `roc-list-cards` utility.
-See the *Parameters* class's setter functions for more information about the options available.
+The most important parameters are the card ID (either a serial number or a PCI address), the channel number, and the
+buffer parameters.
+The serial number and PCI address (as well as additional information) can be listed using the `roc-list-cards` 
+utility.
+The buffer parameters specify which region of memory, or which file to map, to use as DMA buffer.
+See the `Parameters` class's setter functions for more information about the options available.
 
+Once a DMA channel has acquired the lock, clients can call `startDma()` and start pushing superpages to the driver's
+transfer queue.
+The user can check how many superpage slots are still available with `getTransferQueueAvailable()`.
+For reasons of performance and simplicity, the driver operates in the user's thread and thus depends on the user calling `fillSuperpages()` periodically.
+This function will start data transfers, and users can check for arrived superpages using `getReadyQueueSize()`.
+If one or more superpage have arrived, they can be inspected and popped using the `getSuperpage()` and 
+`popSuperpage()` functions.
+
+DMA can be paused and resumed at any time using `stopDma()` and `startDma()` 
+
+## Note for when bad things happen
 The driver uses some files in shared memory:
 * `/dev/shm/alice_o2/rorc/[PCI address]/channel_[channel number]/fifo` - For card FIFOs
 * `/dev/shm/alice_o2/rorc/[PCI address]/channel_[channel number]/.lock` - For locking channels
 * `/dev/shm/sem.alice_o2_rorc_[PCI address]_channel_[channel number].mutex` - For locking channels
 * `/var/lib/hugetlbfs/global/pagesize-[page size]/rorc-dma-bench_id=[PCI address]_chan_[channel number]` - For card benchmark DMA buffers
 
-If the process crashes badly, it may be necessary to clean up the mutex manually, either by deleting with `rm` or by 
-using the `roc-channel-cleanup` utility. There is also the possibility of automatic cleanup by setting forced unlocking
-enabled using the `setForcedUnlockEnabled()` function of the *Parameters* class. However, this option should be used with
-caution. See the function's documentation for more information about the risks.
+If the process crashes badly (such as with a segfault), it may be necessary to clean up the mutex manually, either by
+deleting with `rm` or by using the `roc-channel-cleanup` utility. 
+There is also the possibility of automatic cleanup by setting forced unlocking enabled using the
+`setForcedUnlockEnabled()` function of the `Parameters` class. 
+However, this option should be used with caution. 
+See the function's documentation for more information about the risks.
 
-Once a DMA channel has acquired the lock, clients can:
-* Start and stop DMA
-* Push and read pages
-* Read and write registers of the BAR channel
 
 BAR interface
 -------------------
-Users can also get a limited-access object (implementing *BarInterface*) from the *ChannelFactory*. 
+Users can also get a limited-access object (implementing `BarInterface`) from the `ChannelFactory`. 
 It is restricted to reading and writing registers to the BAR. 
 Currently, there are no limits imposed on which registers are allowed to be read from and written to, so it is still a
 "dangerous" interface. But in the future, protections may be added.
 
 Dummy implementation
 -------------------
-The ChannelFactory can instantiate a dummy object if the serial number -1 is passed to its functions.
+The `ChannelFactory` can instantiate a dummy object if the serial number -1 is passed to its functions.
 This dummy object may at some point provide a mock DMA transfer, but currently it does not do anything.
  
 If PDA is not available (see 'Dependencies') the factory will **always** instantiate a dummy object.
@@ -279,11 +291,11 @@ Implementation notes
 ===================
 Channel classes
 -------------------
-The DmaChannelInterface is implemented using multiple classes.
-DmaChannelBase takes care of locking and provides default implementations for utility methods.
-DmaChannelPdaBase uses PDA to take care of memory mapping, registering the DMA buffer with the IOMMU, 
+The `DmaChannelInterface` is implemented using multiple classes.
+`DmaChannelBase` takes care of locking and provides default implementations for utility methods.
+`DmaChannelPdaBase` uses PDA to take care of memory mapping, registering the DMA buffer with the IOMMU, 
 creating scatter-gather lists and PDA related initialization.
-Finally, CrorcDmaChannel and CruDmaChannel take care of device-specific implementation details for the C-RORC and
+Finally, `CrorcDmaChannel` and `CruDmaChannel` take care of device-specific implementation details for the C-RORC and
 CRU respectively.
 
 Enums
