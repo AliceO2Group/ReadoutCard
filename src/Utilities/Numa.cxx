@@ -1,4 +1,4 @@
-/// \file MemoryMaps.cxx
+/// \file Numa.cxx
 /// \brief Implementation of functions for inspecting the process's memory mappings
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)

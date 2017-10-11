@@ -27,6 +27,8 @@ class MemoryMappedFile
 
     size_t getSize() const;
 
+    std::string getFileName() const;
+
   private:
     void map(const std::string& fileName, size_t fileSize);
 

@@ -55,6 +55,11 @@ size_t MemoryMappedFile::getSize() const
   return mInternal->mappedRegion.get_size();
 }
 
+std::string MemoryMappedFile::getFileName() const
+{
+  return mInternal->fileName;
+}
+
 void MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
 {
   try {

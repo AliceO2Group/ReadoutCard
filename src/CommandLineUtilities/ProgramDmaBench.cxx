@@ -32,6 +32,7 @@
 #include "ReadoutCard/ChannelFactory.h"
 #include "ReadoutCard/MemoryMappedFile.h"
 #include "ReadoutCard/Parameters.h"
+#include "Utilities/Hugetlbfs.h"
 #include "Utilities/SmartPointer.h"
 #include "Utilities/Util.h"
 
@@ -151,9 +152,6 @@ class ProgramDmaBench: public Program
           ("readout-mode",
               po::value<std::string>(&mOptions.readoutModeString),
               "Set readout mode [CONTINUOUS]")
-          ("reset",
-              po::bool_switch(&mOptions.resetChannel),
-              "Reset channel during initialization")
           ("superpage-size",
               SuffixOption<size_t>::make(&mSuperpageSize)->default_value("1Mi"),
               "Superpage size in bytes. Note that it can't be larger than the buffer. If the IOMMU is not enabled, the "
@@ -209,51 +207,17 @@ class ProgramDmaBench: public Program
 
       // Create channel buffer
       {
-        constexpr size_t SIZE_2MiB = 2*1024*1024;
-        constexpr size_t SIZE_1GiB = 1*1024*1024*1024;
-        HugePageType hugePageType;
-        size_t hugePageSize;
-
-        // To use hugepages, the buffer size must be a multiple of 2 MiB (or 1 GiB, but we cover that with 2 MiB anyway)
-        if (!Utilities::isMultiple(mBufferSize, SIZE_2MiB)) {
-          throw ParameterException() << ErrorInfo::Message("Buffer size not a multiple of 2 MiB");
-        }
-
-        // Check which hugepage size we should use
-        if (Utilities::isMultiple(mBufferSize, SIZE_1GiB)) {
-          hugePageType = HugePageType::SIZE_1GB;
-          hugePageSize = SIZE_1GiB;
-        } else {
-          hugePageType = HugePageType::SIZE_2MB;
-          hugePageSize = SIZE_2MiB;
-        }
-
         if (mBufferSize < mSuperpageSize) {
           throw ParameterException() << ErrorInfo::Message("Buffer size smaller than superpage size");
         }
 
-        auto createBuffer = [&](HugePageType hugePageType) {
-          // Create buffer file
-          std::string bufferFilePath = b::str(
-              b::format("/var/lib/hugetlbfs/global/pagesize-%s/roc-bench-dma_id=%s_chan=%s_pages")
-                  % (hugePageType == HugePageType::SIZE_2MB ? "2MB" : "1GB") % map["id"].as<std::string>()
-                  % mOptions.dmaChannel);
-          Utilities::resetSmartPtr(mMemoryMappedFile, bufferFilePath, mBufferSize, !mOptions.noRemovePagesFile);
-          mBufferBaseAddress = reinterpret_cast<uintptr_t>(mMemoryMappedFile->getAddress());
-          mLogger << "Using buffer file path: " << bufferFilePath << endm;
-        };
+        std::string bufferName = (b::format("roc-bench-dma_id=%s_chan=%s_pages") % map["id"].as<std::string>()
+            % mOptions.dmaChannel).str();
+        Utilities::HugepageType hugepageType;
+        mMemoryMappedFile = Utilities::tryMapFile(mBufferSize, bufferName, !mOptions.noRemovePagesFile, &hugepageType);
 
-        if (hugePageType == HugePageType::SIZE_1GB) {
-          try {
-            createBuffer(HugePageType::SIZE_1GB);
-          }
-          catch (const MemoryMapException&) {
-            mLogger << "Failed to allocate buffer with 1GiB hugepages, falling back to 2MiB hugepages" << endm;
-          }
-        }
-        if (!mMemoryMappedFile) {
-          createBuffer(HugePageType::SIZE_2MB);
-        }
+        mBufferBaseAddress = reinterpret_cast<uintptr_t>(mMemoryMappedFile->getAddress());
+        mLogger << "Using buffer file path: " << mMemoryMappedFile->getFileName() << endm;
       }
 
       // Set up channel parameters
@@ -312,13 +276,7 @@ class ProgramDmaBench: public Program
       mLogger << "Card NUMA node: " << mChannel->getNumaNode() << endm;
       mLogger << "Card firmware info: " << mChannel->getFirmwareInfo().value_or("unknown") << endm;
 
-      if (mOptions.resetChannel) {
-        mLogger << "Resetting channel" << endm;
-        mChannel->resetChannel(ResetLevel::Internal);
-      }
-
       mLogger << "Starting benchmark" << endm;
-
       mChannel->startDma();
 
       if (mOptions.barHammer) {
@@ -848,11 +806,6 @@ class ProgramDmaBench: public Program
             length = std::chrono::milliseconds(Utilities::getRandRange(PAUSE_LENGTH_MIN, PAUSE_LENGTH_MAX));
           }
         }
-    };
-
-    enum class HugePageType
-    {
-       SIZE_2MB, SIZE_1GB
     };
 
     /// Program options
