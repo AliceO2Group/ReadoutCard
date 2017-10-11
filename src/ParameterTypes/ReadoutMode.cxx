@@ -10,7 +10,7 @@ namespace AliceO2 {
 namespace roc {
 namespace {
 
-static const auto converter = Utilities::makeEnumConverter<ReadoutMode::type>({
+static const auto converter = Utilities::makeEnumConverter<ReadoutMode::type>("ReadoutMode", {
   { ReadoutMode::Continuous, "CONTINUOUS" },
 });
 

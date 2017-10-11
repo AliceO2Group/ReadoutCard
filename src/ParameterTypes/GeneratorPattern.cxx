@@ -10,7 +10,7 @@ namespace AliceO2 {
 namespace roc {
 namespace {
 
-static const auto converter = Utilities::makeEnumConverter<GeneratorPattern::type>({
+static const auto converter = Utilities::makeEnumConverter<GeneratorPattern::type>("GeneratorPattern", {
   { GeneratorPattern::Alternating,  "ALTERNATING" },
   { GeneratorPattern::Constant,     "CONSTANT" },
   { GeneratorPattern::Decremental,  "DECREMENTAL" },

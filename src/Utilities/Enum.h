@@ -18,6 +18,7 @@ namespace Utilities {
 template <typename Enum>
 struct EnumConverter
 {
+    const std::string typeName;
     const std::vector<std::pair<Enum, std::string>> mapping;
 
     std::string toString(Enum e) const
@@ -27,7 +28,7 @@ struct EnumConverter
           return pair.second;
         }
       }
-      BOOST_THROW_EXCEPTION(std::runtime_error("Invalid conversion"));
+      BOOST_THROW_EXCEPTION(std::runtime_error("Failed to convert " + typeName + " enum to string"));
     }
 
     Enum fromString(const std::string& string) const
@@ -38,14 +39,14 @@ struct EnumConverter
           return pair.first;
         }
       }
-      BOOST_THROW_EXCEPTION(std::runtime_error("Invalid conversion"));
+      BOOST_THROW_EXCEPTION(std::runtime_error("Failed to convert string to " + typeName + " enum"));
     }
 };
 
 template <typename Enum>
-EnumConverter<Enum> makeEnumConverter(std::vector<std::pair<Enum, std::string>> mapping)
+EnumConverter<Enum> makeEnumConverter(std::string typeName, std::vector<std::pair<Enum, std::string>> mapping)
 {
-  return EnumConverter<Enum>{mapping};
+  return EnumConverter<Enum>{typeName, mapping};
 }
 
 

@@ -48,21 +48,18 @@ class ProgramAliceLowlevelFrontendClient: public Program
 
     virtual void addOptions(boost::program_options::options_description& options) override
     {
-      Options::addOptionSerialNumber(options);
+      options.add_options()("serial", boost::program_options::value<int>(&mSerialNumber), "Card serial number");
     }
 
-    virtual void run(const boost::program_options::variables_map& map) override
+    virtual void run(const boost::program_options::variables_map&) override
     {
       // Get DIM DNS node from environment
       if (getenv(std::string("DIM_DNS_NODE").c_str()) == nullptr) {
         BOOST_THROW_EXCEPTION(Alf::AlfException() << Alf::ErrorInfo::Message("Environment variable 'DIM_DNS_NODE' not set"));
       }
 
-      // Get program options
-      int serialNumber = Options::getOptionSerialNumber(map);
-
       // Initialize DIM objects
-      Alf::ServiceNames names(serialNumber);
+      Alf::ServiceNames names(mSerialNumber);
       TemperatureInfo alfTestInt(names.temperature());
       Alf::RegisterReadRpc readRpc(names.registerReadRpc());
       Alf::RegisterWriteRpc writeRpc(names.registerWriteRpc());
@@ -139,6 +136,8 @@ class ProgramAliceLowlevelFrontendClient: public Program
       publishStopRpc.stop("ALF/TEST/1");
       publishStopRpc.stop("ALF/TEST/2");
     }
+
+    int mSerialNumber;
 };
 } // Anonymous namespace
 

@@ -110,9 +110,10 @@ class ProgramDmaBench: public Program
               "if buffer size is a multiple of 1 GiB, will try to use GiB hugepages")
           ("dma-channel",
               po::value<int>(&mOptions.dmaChannel)->default_value(0),
-              "DMA channel selection (note: C-RORC has channels 0 to 5, CRU only 0)");
-      Options::addOptionGeneratorEnabled(options);
-      options.add_options()
+              "DMA channel selection (note: C-RORC has channels 0 to 5, CRU only 0)")
+          ("generator",
+              po::value<bool>(&mOptions.generatorEnabled)->default_value(true),
+              "Enable data generator")
           ("generator-size",
               SuffixOption<size_t>::make(&mOptions.dataGeneratorSize)->default_value("0"),
               "Data generator data size. 0 will use internal driver default.");
@@ -120,9 +121,10 @@ class ProgramDmaBench: public Program
       options.add_options()
           ("links",
               po::value<std::string>(&mOptions.links)->default_value("0"),
-              "Links to open. A comma separated list of integers or ranges, e.g. '0,2,5-10'");
-      Options::addOptionGeneratorLoopback(options);
-      options.add_options()
+              "Links to open. A comma separated list of integers or ranges, e.g. '0,2,5-10'")
+          ("loopback",
+              po::value<std::string>(&mOptions.loopbackModeString)->default_value("INTERNAL"),
+              "Generator loopback mode [NONE, INTERNAL, DIU, SIU]")
           ("no-errorcheck",
               po::bool_switch(&mOptions.noErrorCheck),
               "Skip error checking")
@@ -140,9 +142,10 @@ class ProgramDmaBench: public Program
               "No temperature readout")
           ("page-reset",
               po::bool_switch(&mOptions.pageReset),
-              "Reset page to default values after readout (slow)");
-      Options::addOptionPageSize(options);
-      options.add_options()
+              "Reset page to default values after readout (slow)")
+          ("page-size",
+              SuffixOption<size_t>::make(&mOptions.dmaPageSize)->default_value("8Ki"),
+              "Card DMA page size")
           ("pattern",
               po::value<std::string>(&mOptions.generatorPatternString)->default_value("INCREMENTAL"),
               "Error check with given pattern [INCREMENTAL, ALTERNATING, CONSTANT, RANDOM]")
@@ -161,8 +164,7 @@ class ProgramDmaBench: public Program
               "Read out to given file in ASCII format")
           ("to-file-bin",
               po::value<std::string>(&mOptions.fileOutputPathBin),
-              "Read out to given file in binary format (only contains raw data from pages)")
-          ;
+              "Read out to given file in binary format (only contains raw data from pages)");
     }
 
     virtual void run(const po::variables_map& map)
@@ -171,9 +173,13 @@ class ProgramDmaBench: public Program
         i = LINK_COUNTER_INITIAL_VALUE;
       }
 
-      auto params = Options::getOptionsParameterMap(map);
-      auto cardId = Options::getOptionCardId(map);
       mLogger << "DMA channel: " << mOptions.dmaChannel << endm;
+
+      auto cardId = Options::getOptionCardId(map);
+      auto params = Parameters::makeParameters(cardId, mOptions.dmaChannel);
+      params.setDmaPageSize(mOptions.dmaPageSize);
+      params.setGeneratorEnabled(mOptions.generatorEnabled);
+      params.setGeneratorLoopback(LoopbackMode::fromString(mOptions.loopbackModeString));
 
       // Handle file output options
       {
@@ -830,7 +836,10 @@ class ProgramDmaBench: public Program
         GeneratorPattern::type generatorPattern = GeneratorPattern::Incremental;
         b::optional<ReadoutMode::type> readoutMode;
         std::string links;
+        bool generatorEnabled = false;
         size_t dataGeneratorSize;
+        size_t dmaPageSize;
+        std::string loopbackModeString;
     } mOptions;
 
     /// The DMA channel

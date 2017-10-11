@@ -1,50 +1,37 @@
 /// \file Options.h
 /// \brief Definition of functions for the ReadoutCard utilities to handle program options
 ///
+/// The idea is that similar options which appear across multiple utilities, should be handled in a standardized way.
+///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #pragma once
 
 #include <boost/program_options.hpp>
-#include <boost/exception/all.hpp>
-#include <boost/exception/diagnostic_information.hpp>
-#include <iostream>
 #include "ReadoutCard/Exception.h"
 #include "ReadoutCard/Parameters.h"
 #include "ReadoutCard/ParameterTypes/GeneratorPattern.h"
 #include "ReadoutCard/ParameterTypes/ResetLevel.h"
-#include "ReadoutCard/ParameterTypes/LoopbackMode.h"
 
 namespace AliceO2 {
 namespace roc {
 namespace CommandLineUtilities {
 namespace Options {
 
-// Helper functions to add & get certain options in a standardized way
-void addOptionHelp(boost::program_options::options_description& optionsDescription);
-void addOptionRegisterAddress(boost::program_options::options_description& optionsDescription);
-void addOptionRegisterValue(boost::program_options::options_description& optionsDescription);
-void addOptionRegisterRange(boost::program_options::options_description& optionsDescription);
-void addOptionChannel(boost::program_options::options_description& optionsDescription);
-void addOptionSerialNumber(boost::program_options::options_description& optionsDescription);
-void addOptionResetLevel(boost::program_options::options_description& optionsDescription);
-void addOptionCardId(boost::program_options::options_description& optionsDescription);
-void addOptionsChannelParameters(boost::program_options::options_description& optionsDescription);
-void addOptionPageSize(boost::program_options::options_description& optionsDescription);
-void addOptionGeneratorEnabled(boost::program_options::options_description& optionsDescription);
-void addOptionGeneratorLoopback(boost::program_options::options_description& optionsDescription);
+void addOptionHelp(boost::program_options::options_description& options);
+void addOptionRegisterAddress(boost::program_options::options_description& options);
+void addOptionRegisterValue(boost::program_options::options_description& options);
+void addOptionRegisterRange(boost::program_options::options_description& options);
+void addOptionChannel(boost::program_options::options_description& options);
+void addOptionResetLevel(boost::program_options::options_description& options);
+void addOptionCardId(boost::program_options::options_description& options);
 
-int getOptionRegisterAddress(const boost::program_options::variables_map& variablesMap);
-int getOptionRegisterValue(const boost::program_options::variables_map& variablesMap);
-int getOptionChannel(const boost::program_options::variables_map& variablesMap);
-int getOptionSerialNumber(const boost::program_options::variables_map& variablesMap);
-ResetLevel::type getOptionResetLevel(const boost::program_options::variables_map& variablesMap);
-Parameters::CardIdType getOptionCardId(const boost::program_options::variables_map& variablesMap);
-//size_t void getOptionPageSize(const boost::program_options::variables_map& variablesMap);
-//bool getOptionGeneratorEnabled(const boost::program_options::variables_map& variablesMap);
-//LoopbackMode::type getOptionGeneratorLoopback(const boost::program_options::variables_map& variablesMap);
-int getOptionRegisterRange(const boost::program_options::variables_map& variablesMap);
-Parameters getOptionsParameterMap(const boost::program_options::variables_map& variablesMap);
+int getOptionRegisterAddress(const boost::program_options::variables_map& map);
+int getOptionRegisterValue(const boost::program_options::variables_map& map);
+int getOptionChannel(const boost::program_options::variables_map& map);
+ResetLevel::type getOptionResetLevel(const boost::program_options::variables_map& map);
+Parameters::CardIdType getOptionCardId(const boost::program_options::variables_map& map);
+int getOptionRegisterRange(const boost::program_options::variables_map& map);
 
 } // namespace Options
 } // namespace CommandLineUtilities

@@ -33,14 +33,16 @@ class ProgramAlfScaWriteSequence: public Program
 
     virtual void addOptions(boost::program_options::options_description& options) override
     {
-      Options::addOptionSerialNumber(options);
-      options.add_options()("file", boost::program_options::value<std::string>(&mFilePath)->required(),
-        "Path to command sequence file");
-      options.add_options()("out", boost::program_options::value<std::string>(&mOutFilePath),
-        "Path to output file. If not specified, will output to stdout");
+      options.add_options()
+        ("serial", boost::program_options::value<int>(&mSerialNumber),
+          "Card serial number");
+        ("file", boost::program_options::value<std::string>(&mFilePath)->required(),
+          "Path to command sequence file");
+        ("out", boost::program_options::value<std::string>(&mOutFilePath),
+          "Path to output file. If not specified, will output to stdout");
     }
 
-    virtual void run(const boost::program_options::variables_map& map) override
+    virtual void run(const boost::program_options::variables_map&) override
     {
       // Get DIM DNS node from environment
       if (getenv(std::string("DIM_DNS_NODE").c_str()) == nullptr) {
@@ -48,11 +50,8 @@ class ProgramAlfScaWriteSequence: public Program
           Alf::AlfException() << Alf::ErrorInfo::Message("Environment variable 'DIM_DNS_NODE' not set"));
       }
 
-      // Get program options
-      int serialNumber = Options::getOptionSerialNumber(map);
-
       // Initialize DIM objects
-      Alf::ServiceNames names(serialNumber);
+      Alf::ServiceNames names(mSerialNumber);
       Alf::ScaWriteSequence scaWriteSequence(names.scaWriteSequence());
 
       // Read file
@@ -76,6 +75,7 @@ class ProgramAlfScaWriteSequence: public Program
   private:
     std::string mFilePath;
     std::string mOutFilePath;
+    int mSerialNumber;
 };
 } // Anonymous namespace
 

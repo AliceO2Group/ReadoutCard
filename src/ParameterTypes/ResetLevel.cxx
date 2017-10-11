@@ -10,7 +10,7 @@ namespace AliceO2 {
 namespace roc {
 namespace {
 
-static const auto converter = Utilities::makeEnumConverter<ResetLevel::type>({
+static const auto converter = Utilities::makeEnumConverter<ResetLevel::type>("ResetLevel", {
   { ResetLevel::Nothing,        "NOTHING" },
   { ResetLevel::Internal,       "INTERNAL" },
   { ResetLevel::InternalDiu,    "INTERNAL_DIU" },

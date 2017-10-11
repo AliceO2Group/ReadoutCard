@@ -10,7 +10,7 @@ namespace AliceO2 {
 namespace roc {
 namespace {
 
-static const auto converter = Utilities::makeEnumConverter<CardType::type>({
+static const auto converter = Utilities::makeEnumConverter<CardType::type>("CardType", {
   { CardType::Unknown, "UNKNOWN" },
   { CardType::Crorc,   "CRORC" },
   { CardType::Cru,     "CRU" },

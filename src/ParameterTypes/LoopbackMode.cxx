@@ -10,7 +10,7 @@ namespace AliceO2 {
 namespace roc {
 namespace {
 
-static const auto converter = Utilities::makeEnumConverter<LoopbackMode::type>({
+static const auto converter = Utilities::makeEnumConverter<LoopbackMode::type>("LoopbackMode", {
   { LoopbackMode::None, "NONE" },
   { LoopbackMode::Internal, "INTERNAL" },
   { LoopbackMode::Diu, "DIU" },

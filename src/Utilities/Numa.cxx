@@ -24,12 +24,12 @@ std::string getPciSysfsDirectory(const PciAddress& pciAddress)
 
 std::string slurp(std::string filePath)
 {
-        std::ifstream ifstream;
-        ifstream.open(filePath, std::ifstream::in);
-        std::stringstream stringstream;
-        stringstream << ifstream.rdbuf();
-        ifstream.close();
-        return stringstream.str();
+  std::ifstream ifstream;
+  ifstream.open(filePath, std::ifstream::in);
+  std::stringstream stringstream;
+  stringstream << ifstream.rdbuf();
+  ifstream.close();
+  return stringstream.str();
 }
 
 } // Anonymous namespace
@@ -40,8 +40,8 @@ int getNumaNode(const PciAddress& pciAddress)
   string.pop_back(); // Pop the newline character, it messes up conversion
   int result = 0;
   if (!b::conversion::try_lexical_convert<int>(string, result)) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Failed to get numa node")
-        << ErrorInfo::PciAddress(pciAddress));
+    BOOST_THROW_EXCEPTION(
+        Exception() << ErrorInfo::Message("Failed to get numa node") << ErrorInfo::PciAddress(pciAddress));
   }
   return result;
 }
