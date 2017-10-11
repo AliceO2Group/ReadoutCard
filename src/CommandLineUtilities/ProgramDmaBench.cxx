@@ -173,7 +173,7 @@ class ProgramDmaBench: public Program
         i = LINK_COUNTER_INITIAL_VALUE;
       }
 
-      mLogger << "DMA channel: " << mOptions.dmaChannel << endm;
+      getLogger() << "DMA channel: " << mOptions.dmaChannel << endm;
 
       auto cardId = Options::getOptionCardId(map);
       auto params = Parameters::makeParameters(cardId, mOptions.dmaChannel);
@@ -209,7 +209,7 @@ class ProgramDmaBench: public Program
       }
 
       // Log IOMMU status
-      mLogger << "IOMMU " << (AliceO2::Common::Iommu::isEnabled() ? "enabled" : "not enabled") << endm;
+      getLogger() << "IOMMU " << (AliceO2::Common::Iommu::isEnabled() ? "enabled" : "not enabled") << endm;
 
       // Create channel buffer
       {
@@ -223,7 +223,7 @@ class ProgramDmaBench: public Program
         mMemoryMappedFile = Utilities::tryMapFile(mBufferSize, bufferName, !mOptions.noRemovePagesFile, &hugepageType);
 
         mBufferBaseAddress = reinterpret_cast<uintptr_t>(mMemoryMappedFile->getAddress());
-        mLogger << "Using buffer file path: " << mMemoryMappedFile->getFileName() << endm;
+        getLogger() << "Using buffer file path: " << mMemoryMappedFile->getFileName() << endm;
       }
 
       // Set up channel parameters
@@ -252,18 +252,18 @@ class ProgramDmaBench: public Program
 
       mMaxSuperpages = mBufferSize / mSuperpageSize;
       mPagesPerSuperpage = mSuperpageSize / mPageSize;
-      mLogger << "Buffer size: " << mBufferSize << endm;
-      mLogger << "Superpage size: " << mSuperpageSize << endm;
-      mLogger << "Superpages in buffer: " << mMaxSuperpages << endm;
-      mLogger << "Page size: " << mPageSize << endm;
-      mLogger << "Page limit: " << mMaxPages << endm;
-      mLogger << "Pages per superpage: " << mPagesPerSuperpage << endm;
+      getLogger() << "Buffer size: " << mBufferSize << endm;
+      getLogger() << "Superpage size: " << mSuperpageSize << endm;
+      getLogger() << "Superpages in buffer: " << mMaxSuperpages << endm;
+      getLogger() << "Page size: " << mPageSize << endm;
+      getLogger() << "Page limit: " << mMaxPages << endm;
+      getLogger() << "Pages per superpage: " << mPagesPerSuperpage << endm;
 
       if (mOptions.dataGeneratorSize != 0) {
         params.setGeneratorDataSize(mOptions.dataGeneratorSize);
-        mLogger << "Generator data size: " << mOptions.dataGeneratorSize << endm;
+        getLogger() << "Generator data size: " << mOptions.dataGeneratorSize << endm;
       } else {
-        mLogger << "Generator data size: <internal default>"  << endm;
+        getLogger() << "Generator data size: <internal default>"  << endm;
       }
 
       // Get DMA channel object
@@ -271,18 +271,18 @@ class ProgramDmaBench: public Program
         mChannel = ChannelFactory().getDmaChannel(params);
       }
       catch (const FileLockException& e) {
-        mLogger << InfoLogger::Error << "Another process is holding the channel lock (no automatic cleanup possible)"
+        getLogger() << InfoLogger::Error << "Another process is holding the channel lock (no automatic cleanup possible)"
             << endm;
         throw;
       }
 
       mCardType = mChannel->getCardType();
-      mLogger << "Card type: " << CardType::toString(mChannel->getCardType()) << endm;
-      mLogger << "Card PCI address: " << mChannel->getPciAddress().toString() << endm;
-      mLogger << "Card NUMA node: " << mChannel->getNumaNode() << endm;
-      mLogger << "Card firmware info: " << mChannel->getFirmwareInfo().value_or("unknown") << endm;
+      getLogger() << "Card type: " << CardType::toString(mChannel->getCardType()) << endm;
+      getLogger() << "Card PCI address: " << mChannel->getPciAddress().toString() << endm;
+      getLogger() << "Card NUMA node: " << mChannel->getNumaNode() << endm;
+      getLogger() << "Card firmware info: " << mChannel->getFirmwareInfo().value_or("unknown") << endm;
 
-      mLogger << "Starting benchmark" << endm;
+      getLogger() << "Starting benchmark" << endm;
       mChannel->startDma();
 
       if (mOptions.barHammer) {
@@ -308,7 +308,7 @@ class ProgramDmaBench: public Program
       outputErrors();
       outputStats();
 
-      mLogger << "Benchmark complete" << endm;
+      getLogger() << "Benchmark complete" << endm;
     }
 
   private:
@@ -484,7 +484,7 @@ class ProgramDmaBench: public Program
         }
       }
       std::cout << "\n\n";
-      mLogger << "Popped " << popped << " excess pages" << endm;
+      getLogger() << "Popped " << popped << " excess pages" << endm;
     }
 
     uint32_t get32bitFromPage(uintptr_t pageAddress, size_t index)
@@ -895,9 +895,6 @@ class ProgramDmaBench: public Program
 
     /// Stream for error output
     std::ostringstream mErrorStream;
-
-    /// InfoLogger instance
-    InfoLogger mLogger;
 
     /// Was the header printed?
     bool mHeaderPrinted = false;

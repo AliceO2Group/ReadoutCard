@@ -14,6 +14,8 @@ namespace AliceO2 {
 namespace roc {
 namespace CommandLineUtilities {
 
+/// This class is for benchmarking the BAR. It "hammers" the BAR with repeated writes.
+/// It will store the amount of writes since the start, which can be used to calculate "throughput".
 class BarHammer : public AliceO2::Common::BasicThread
 {
   public:
