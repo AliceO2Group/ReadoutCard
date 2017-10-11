@@ -85,6 +85,14 @@ class DmaChannelInterface
     /// Sets the InfoLogger log level for this channel
     virtual void setLogLevel(InfoLogger::InfoLogger::Severity severity) = 0;
 
+    /// Get the PCI address of this DMA channel
+    /// Note: dummy card will always return 0:0.0
+    virtual PciAddress getPciAddress() = 0;
+
+    /// Get the NUMA node of this DMA channel
+    /// The node number is retrieved from the `/sys/bus/pci/devices/[PCI address]/numa_node` sysfs file
+    /// Note: dummy card will always return 0
+    virtual int getNumaNode() = 0;
 
     // Optional features
 

@@ -308,7 +308,9 @@ class ProgramDmaBench: public Program
 
       mCardType = mChannel->getCardType();
       mLogger << "Card type: " << CardType::toString(mChannel->getCardType()) << endm;
-      mLogger << "Firmware info: " << mChannel->getFirmwareInfo().value_or("unknown") << endm;
+      mLogger << "Card PCI address: " << mChannel->getPciAddress().toString() << endm;
+      mLogger << "Card NUMA node: " << mChannel->getNumaNode() << endm;
+      mLogger << "Card firmware info: " << mChannel->getFirmwareInfo().value_or("unknown") << endm;
 
       if (mOptions.resetChannel) {
         mLogger << "Resetting channel" << endm;

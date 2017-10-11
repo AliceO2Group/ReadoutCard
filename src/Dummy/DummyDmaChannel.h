@@ -42,6 +42,8 @@ class DummyDmaChannel final : public DmaChannelBase
     virtual void startDma() override;
     virtual void stopDma() override;
     virtual CardType::type getCardType() override;
+    virtual PciAddress getPciAddress() override;
+    virtual int getNumaNode() override;
 
   private:
     using Queue = boost::circular_buffer<Superpage>;

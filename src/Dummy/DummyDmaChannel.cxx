@@ -145,5 +145,16 @@ boost::optional<float> DummyDmaChannel::getTemperature()
   return {distribution(engine)};
 }
 
+
+PciAddress DummyDmaChannel::getPciAddress()
+{
+  return PciAddress(0,0,0);
+}
+
+int DummyDmaChannel::getNumaNode()
+{
+  return 0;
+}
+
 } // namespace roc
 } // namespace AliceO2

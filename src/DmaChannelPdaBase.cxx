@@ -7,6 +7,7 @@
 #include <boost/filesystem/path.hpp>
 #include "Common/Iommu.h"
 #include "Utilities/MemoryMaps.h"
+#include "Utilities/Numa.h"
 #include "Utilities/SmartPointer.h"
 #include "Utilities/Util.h"
 #include "Visitor.h"
@@ -150,6 +151,16 @@ void DmaChannelPdaBase::checkSuperpage(const Superpage& superpage)
     BOOST_THROW_EXCEPTION(Exception()
         << ErrorInfo::Message("Superpage offset not 32-bit aligned"));
   }
+}
+
+PciAddress DmaChannelPdaBase::getPciAddress()
+{
+  return getCardDescriptor().pciAddress;
+}
+
+int DmaChannelPdaBase::getNumaNode()
+{
+  return Utilities::getNumaNode(getPciAddress());
 }
 
 } // namespace roc

@@ -36,6 +36,8 @@ class DmaChannelPdaBase: public DmaChannelBase
     virtual void startDma() final override;
     virtual void stopDma() final override;
     void resetChannel(ResetLevel::type resetLevel) final override;
+    virtual PciAddress getPciAddress() final override;
+    virtual int getNumaNode() final override;
 
   protected:
 
