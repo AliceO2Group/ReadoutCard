@@ -37,6 +37,7 @@ std::string slurp(std::string filePath)
 int getNumaNode(const PciAddress& pciAddress)
 {
   auto string = slurp((b::format("%s/numa_node") % getPciSysfsDirectory(pciAddress)).str());
+  string.pop_back(); // Pop the newline character, it messes up conversion
   int result = 0;
   if (!b::conversion::try_lexical_convert<int>(string, result)) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Failed to get numa node")
