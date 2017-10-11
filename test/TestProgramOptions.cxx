@@ -21,13 +21,10 @@ BOOST_AUTO_TEST_CASE(UtilOptions)
   // Our mock options
   std::vector<const char*> args = {
       "/test",
+      "--channel=0",
       "--address=0x100",
-      "--range=200",
       "--value=0x250",
-      "--page-size=300",
-      "--generator=true",
-      "--loopback=INTERNAL",
-      "--serial=500",
+      "--range=200",
   };
 
   // Add option descriptions
@@ -36,8 +33,6 @@ BOOST_AUTO_TEST_CASE(UtilOptions)
   addOptionRegisterAddress(od);
   addOptionRegisterValue(od);
   addOptionRegisterRange(od);
-  addOptionsChannelParameters(od);
-  addOptionSerialNumber(od);
 
   // Parse options
   po::variables_map vm;
@@ -45,13 +40,9 @@ BOOST_AUTO_TEST_CASE(UtilOptions)
   po::notify(vm);
 
   // Check results
+  BOOST_CHECK_MESSAGE(getOptionChannel(vm) == 0, "channel");
   BOOST_CHECK_MESSAGE(getOptionRegisterAddress(vm) == 0x100, "register address");
   BOOST_CHECK_MESSAGE(getOptionRegisterRange(vm) == 200, "register range");
   BOOST_CHECK_MESSAGE(getOptionRegisterValue(vm) == 0x250, "register value");
-  auto map = getOptionsParameterMap(vm);
-  BOOST_CHECK_MESSAGE(map.getDmaPageSizeRequired() == 300l * 1024l, "dma page size");
-  BOOST_CHECK_MESSAGE(map.getGeneratorEnabledRequired() == true, "generator enable");
-  BOOST_CHECK_MESSAGE(map.getGeneratorLoopbackRequired() == AliceO2::roc::LoopbackMode::Internal, "generator loopback mode");
-  BOOST_CHECK_MESSAGE(getOptionSerialNumber(vm) == 500, "serial number");
 }
 
