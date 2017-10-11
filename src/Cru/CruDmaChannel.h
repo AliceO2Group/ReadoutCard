@@ -53,7 +53,7 @@ class CruDmaChannel final : public DmaChannelPdaBase
   private:
 
     /// Max amount of superpages per link.
-    /// This is determined by the firmware capabilities.
+    /// This may not exceed the limit determined by the firmware capabilities.
     static constexpr size_t LINK_QUEUE_CAPACITY = Cru::MAX_SUPERPAGE_DESCRIPTORS;
 
     /// Max amount of superpages in the ready queue.
@@ -65,11 +65,9 @@ class CruDmaChannel final : public DmaChannelPdaBase
 
     /// Index into mLinks
     using LinkIndex = uint32_t;
-    static_assert(std::numeric_limits<LinkIndex>::max() >= Cru::MAX_LINKS, "");
 
     /// ID for a link
     using LinkId = uint32_t;
-    static_assert(std::numeric_limits<LinkId>::max() >= Cru::MAX_LINKS, "");
 
     /// Struct for keeping track of one link's counter and superpages
     struct Link

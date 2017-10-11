@@ -20,8 +20,6 @@ namespace roc {
 class ChannelFactory
 {
   public:
-    // static constexpr int DUMMY_SERIAL_NUMBER = -1; ///< Deprecated, use getDummySerialNumber() instead
-
     using DmaChannelSharedPtr = std::shared_ptr<DmaChannelInterface>;
     using BarSharedPtr = std::shared_ptr<BarInterface>;
 

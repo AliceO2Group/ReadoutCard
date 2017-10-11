@@ -15,11 +15,11 @@ namespace roc
 namespace Cru
 {
 
-/// Amount of available superpage descriptors
-static constexpr int MAX_SUPERPAGE_DESCRIPTORS = 32;
-
 /// Maximum amount of available links
 static constexpr int MAX_LINKS = 32;
+
+/// Amount of available superpage descriptors per link
+static constexpr int MAX_SUPERPAGE_DESCRIPTORS = 128;
 
 /// DMA page length in bytes
 /// Note: the CRU has a firmware defined fixed page size
