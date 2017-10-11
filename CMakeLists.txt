@@ -79,6 +79,7 @@ set(SRCS
   src/ParameterTypes/PciAddress.cxx
   src/ParameterTypes/ResetLevel.cxx
   src/ParameterTypes/ReadoutMode.cxx
+  src/Utilities/Hugetlbfs.cxx
   src/Utilities/MemoryMaps.cxx
   src/Utilities/Numa.cxx
   src/CommandLineUtilities/AliceLowlevelFrontend/Sca.cxx
