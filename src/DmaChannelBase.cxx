@@ -14,6 +14,18 @@
 
 namespace AliceO2 {
 namespace roc {
+namespace {
+void checkParameters(const Parameters& parameters)
+{
+  // Generator enabled is not allowed in conjunction with none loopback mode
+  auto enabled = parameters.getGeneratorEnabled();
+  auto loopback = parameters.getGeneratorLoopback();
+  if (enabled && loopback && (*enabled && (*loopback == LoopbackMode::None))) {
+    BOOST_THROW_EXCEPTION(
+        InvalidParameterException() << ErrorInfo::Message("Generator enabled but 'None' loopback mode specified"));
+  }
+}
+} // Anonymous namespace
 
 namespace b = boost;
 namespace bfs = boost::filesystem;
@@ -41,6 +53,9 @@ DmaChannelBase::DmaChannelBase(CardDescriptor cardDescriptor, const Parameters& 
 
   // Check the channel number is allowed
   checkChannelNumber(allowedChannels);
+
+  // Do some basic Parameters validity checks
+  checkParameters(parameters);
 
   // Create parent directories
   auto paths = getPaths();

@@ -123,6 +123,7 @@ class Parameters
     ///
     /// If enabled, the card will generate data internally.
     /// The format and content of this data is controlled by the other generator parameters.
+    /// 'None' loopback mode is not allowed in conjunction with the data generator (see setGeneratorLoopback()).
     ///
     /// \param value The value to set
     /// \return Reference to this object for chaining calls
