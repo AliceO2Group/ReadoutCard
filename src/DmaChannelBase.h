@@ -108,9 +108,6 @@ class DmaChannelBase: public DmaChannelInterface
     /// Check if the channel number is valid
     void checkChannelNumber(const AllowedChannels& allowedChannels);
 
-    /// Check if the channel number is valid
-    void checkParameters(const AllowedChannels& allowedChannels);
-
     /// Type of the card
     const CardDescriptor mCardDescriptor;
 
