@@ -67,7 +67,7 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
   }
 
   getReadyFifoUser()->reset();
-  mDmaBufferUserspace = getPdaDmaBuffer().getScatterGatherList().at(0).addressUser;
+  mDmaBufferUserspace = getBufferProvider().getAddress();
 }
 
 auto CrorcDmaChannel::allowedChannels() -> AllowedChannels {

@@ -7,6 +7,7 @@
 #include <chrono>
 #include <random>
 #include "ReadoutCard/ChannelFactory.h"
+#include "Visitor.h"
 
 namespace AliceO2 {
 namespace roc {
@@ -28,6 +29,16 @@ DummyDmaChannel::DummyDmaChannel(const Parameters& params)
 {
   getLogger() << "DummyDmaChannel::DummyDmaChannel(channel:" << params.getChannelNumberRequired() << ")"
       << InfoLogger::InfoLogger::endm;
+
+  if (auto bufferParameters = params.getBufferParameters()) {
+    // Create appropriate BufferProvider subclass
+    Visitor::apply(*bufferParameters,
+        [&](buffer_parameters::Memory parameters){ mBufferSize = parameters.size; },
+        [&](buffer_parameters::File parameters){ mBufferSize = parameters.size; },
+        [&](buffer_parameters::Null){ mBufferSize = 0; });
+  } else {
+    BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("DmaChannel requires buffer_parameters"));
+  }
 }
 
 DummyDmaChannel::~DummyDmaChannel()
@@ -88,7 +99,7 @@ void DummyDmaChannel::pushSuperpage(Superpage superpage)
                             << ErrorInfo::Message("Could not enqueue superpage, size not a multiple of 32 KiB"));
   }
 
-  if ((superpage.getOffset() + superpage.getSize()) > getBufferProvider().getSize()) {
+  if ((superpage.getOffset() + superpage.getSize()) > mBufferSize) {
     BOOST_THROW_EXCEPTION(Exception()
                             << ErrorInfo::Message("Superpage out of range"));
   }

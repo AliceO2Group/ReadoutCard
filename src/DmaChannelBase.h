@@ -82,11 +82,6 @@ class DmaChannelBase: public DmaChannelInterface
       return {getCardDescriptor().pciAddress, getChannelNumber()};
     }
 
-    const BufferProvider& getBufferProvider()
-    {
-      return *mBufferProvider;
-    }
-
     void log(const std::string& message, boost::optional<InfoLogger::InfoLogger::Severity> severity = boost::none);
 
     InfoLogger::InfoLogger& getLogger()
@@ -116,9 +111,6 @@ class DmaChannelBase: public DmaChannelInterface
 
     /// Lock that guards against both inter- and intra-process ownership
     std::unique_ptr<Interprocess::Lock> mInterprocessLock;
-
-    /// Contains addresses & size of the buffer
-    std::unique_ptr<BufferProvider> mBufferProvider;
 
     /// InfoLogger instance
     InfoLogger::InfoLogger mLogger;

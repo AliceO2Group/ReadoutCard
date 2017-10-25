@@ -6,6 +6,7 @@
 #pragma once
 
 #include <boost/scoped_ptr.hpp>
+#include "DmaBufferProvider/DmaBufferProviderInterface.h"
 #include "DmaChannelBase.h"
 #include "PageAddress.h"
 #include "Pda/PdaBar.h"
@@ -91,9 +92,9 @@ class DmaChannelPdaBase: public DmaChannelBase
     /// Function for getting the bus address that corresponds to the user address + given offset
     uintptr_t getBusOffsetAddress(size_t offset);
 
-    const Pda::PdaDmaBuffer& getPdaDmaBuffer() const
+    const DmaBufferProviderInterface& getBufferProvider() const
     {
-      return *(mPdaDmaBuffer.get());
+      return *(mBufferProvider.get());
     }
 
     const RocPciDevice& getRocPciDevice() const
@@ -102,15 +103,14 @@ class DmaChannelPdaBase: public DmaChannelBase
     }
 
   private:
+    /// Contains addresses & size of the buffer
+    std::unique_ptr<DmaBufferProviderInterface> mBufferProvider;
 
     /// Current state of the DMA
     DmaState::type mDmaState;
 
     /// PDA device objects
     boost::scoped_ptr<RocPciDevice> mRocPciDevice;
-
-    /// PDA DMABuffer object for the pages
-    boost::scoped_ptr<Pda::PdaDmaBuffer> mPdaDmaBuffer;
 };
 
 } // namespace roc

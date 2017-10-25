@@ -50,6 +50,7 @@ class DummyDmaChannel final : public DmaChannelBase
 
     Queue mTransferQueue;
     Queue mReadyQueue;
+    size_t mBufferSize;
 };
 
 } // namespace roc
