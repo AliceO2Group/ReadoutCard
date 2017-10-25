@@ -50,7 +50,7 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
     // Create and register the buffer
     // Note: if resizing the file fails, we might've accidentally put the file in a hugetlbfs mount with 1 GB page size
     constexpr auto FIFO_SIZE = sizeof(ReadyFifo);
-    Utilities::resetSmartPtr(mBufferFifoFile, getPaths().fifo(), FIFO_SIZE);
+    Utilities::resetSmartPtr(mBufferFifoFile, getPaths().fifo(), FIFO_SIZE, true);
     Utilities::resetSmartPtr(mPdaDmaBufferFifo, getRocPciDevice().getPciDevice(), mBufferFifoFile->getAddress(),
         FIFO_SIZE, getPdaDmaBufferIndexFifo(getChannelNumber()), false);// note the 'false' at the end specifies non-hugepage memory
 
