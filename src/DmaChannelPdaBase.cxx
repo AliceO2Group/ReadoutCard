@@ -71,7 +71,8 @@ DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
   }
 
   // Check memory mappings if it's hugepage
-  {
+  if (getBufferProvider().getSize() > 0) {
+    // Non-null buffer
     bool checked = false;
     const auto maps = Utilities::getMemoryMaps();
     for (const auto& map : maps) {
