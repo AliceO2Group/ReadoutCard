@@ -7,6 +7,7 @@
 #include <iostream>
 #include "BufferProviderFile.h"
 #include "BufferProviderMemory.h"
+#include "BufferProviderNull.h"
 #include "ChannelPaths.h"
 #include "Common/System.h"
 #include "Utilities/SmartPointer.h"
@@ -87,7 +88,8 @@ DmaChannelBase::DmaChannelBase(CardDescriptor cardDescriptor, const Parameters& 
     // Create appropriate BufferProvider subclass
     mBufferProvider = Visitor::apply<std::unique_ptr<BufferProvider>>(*bufferParameters,
         [&](buffer_parameters::Memory parameters){ return std::make_unique<BufferProviderMemory>(parameters); },
-        [&](buffer_parameters::File parameters){ return std::make_unique<BufferProviderFile>(parameters); });
+        [&](buffer_parameters::File parameters){ return std::make_unique<BufferProviderFile>(parameters); },
+        [&](buffer_parameters::Null){ return std::make_unique<BufferProviderNull>(); });
   } else {
     BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("DmaChannel requires buffer_parameters"));
   }

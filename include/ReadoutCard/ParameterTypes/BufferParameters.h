@@ -26,6 +26,11 @@ struct File
     size_t size; ///< Size of shared memory file
 };
 
+/// Buffer parameters to instantiate DmaChannel without data transfer, e.g. for testing purposes.
+struct Null
+{
+};
+
 } // namespace buffer_parameters
 } // namespace roc
 } // namespace AliceO2

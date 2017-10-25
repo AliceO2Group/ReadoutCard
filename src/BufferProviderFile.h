@@ -1,5 +1,5 @@
-/// \file BufferProvider.h
-/// \brief Definition of the BufferProvider class.
+/// \file BufferProviderFile.h
+/// \brief Definition of the BufferProviderFile class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 

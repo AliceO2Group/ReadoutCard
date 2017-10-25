@@ -35,9 +35,7 @@ class ProgramReset: public Program
       int channelNumber = Options::getOptionChannel(map);
 
       auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
-      // Temporary (hopefully) workaround, because DmaChannel requires a buffer when initializing
-      AliceO2::roc::MemoryMappedFile file("/dev/hugepages/rorc_channel_utility_dummy_buffer", 2*1024*1024, true);
-      params.setBufferParameters(AliceO2::roc::buffer_parameters::Memory{file.getAddress(), file.getSize()});
+      params.setBufferParameters(AliceO2::roc::buffer_parameters::Null());
       auto channel = AliceO2::roc::ChannelFactory().getDmaChannel(params);
       channel->resetChannel(resetLevel);
     }
