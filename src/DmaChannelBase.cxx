@@ -5,8 +5,6 @@
 
 #include "DmaChannelBase.h"
 #include <iostream>
-#include "BufferProviderFile.h"
-#include "BufferProviderMemory.h"
 #include "ChannelPaths.h"
 #include "Common/System.h"
 #include "Utilities/SmartPointer.h"
@@ -82,15 +80,6 @@ DmaChannelBase::DmaChannelBase(CardDescriptor cardDescriptor, const Parameters& 
     }
   }
   log("Acquired DMA channel lock", InfoLogger::InfoLogger::Debug);
-
-  if (auto bufferParameters = parameters.getBufferParameters()) {
-    // Create appropriate BufferProvider subclass
-    mBufferProvider = Visitor::apply<std::unique_ptr<BufferProvider>>(*bufferParameters,
-        [&](buffer_parameters::Memory parameters){ return std::make_unique<BufferProviderMemory>(parameters); },
-        [&](buffer_parameters::File parameters){ return std::make_unique<BufferProviderFile>(parameters); });
-  } else {
-    BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("DmaChannel requires buffer_parameters"));
-  }
 }
 
 DmaChannelBase::~DmaChannelBase()

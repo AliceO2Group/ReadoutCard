@@ -42,8 +42,9 @@ class Parameters
 
     // Types for parameter values
 
-    /// Type for buffer parameters. It can hold either Memory or File buffer parameters.
-    using BufferParametersType = boost::variant<buffer_parameters::Memory, buffer_parameters::File>;
+    /// Type for buffer parameters. It can hold Memory, File or Null buffer parameters.
+    using BufferParametersType = boost::variant<buffer_parameters::Memory, buffer_parameters::File,
+        buffer_parameters::Null>;
 
     /// Type for the CardId parameter. It can hold either a serial number or PciAddress.
     using CardIdType = boost::variant<int, ::AliceO2::roc::PciAddress>;
@@ -191,6 +192,9 @@ class Parameters
     /// It is recommended to use hugepages for the buffer to increase contiguousness, for example by opening a
     /// MemoryMappedFile in a hugetlbfs filesystem.
     /// See the README.md file for more information about hugepages.
+    ///
+    /// There is also a BufferParameters::Null option, which can be used to instantiate the DmaChannel without
+    /// initiating data transfer, e.g. for testing purposes.
     ///
     /// Required parameter for the C-RORC and CRU drivers.
     ///

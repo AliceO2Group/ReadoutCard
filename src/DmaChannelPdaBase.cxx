@@ -10,6 +10,9 @@
 #include "Utilities/Numa.h"
 #include "Utilities/SmartPointer.h"
 #include "Utilities/Util.h"
+#include "DmaBufferProvider/PdaDmaBufferProvider.h"
+#include "DmaBufferProvider/FilePdaDmaBufferProvider.h"
+#include "DmaBufferProvider/NullDmaBufferProvider.h"
 #include "Visitor.h"
 
 namespace AliceO2 {
@@ -32,14 +35,32 @@ DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
   // Initialize PDA & DMA objects
   Utilities::resetSmartPtr(mRocPciDevice, getCardDescriptor().pciAddress);
 
-  // Register user's page data buffer
-  log("Initializing memory-mapped DMA buffer", InfoLogger::InfoLogger::Debug);
-  Utilities::resetSmartPtr(mPdaDmaBuffer, mRocPciDevice->getPciDevice(), getBufferProvider().getAddress(),
-      getBufferProvider().getSize(), getPdaDmaBufferIndexPages(getChannelNumber(), 0));
+  // Create/register buffer
+  if (auto bufferParameters = parameters.getBufferParameters()) {
+    // Create appropriate BufferProvider subclass
+    auto bufferId = getPdaDmaBufferIndexPages(getChannelNumber(), 0);
+    mBufferProvider = Visitor::apply<std::unique_ptr<DmaBufferProviderInterface>>(*bufferParameters,
+        [&](buffer_parameters::Memory parameters){
+          log("Initializing with DMA buffer from memory region", InfoLogger::InfoLogger::Debug);
+          return std::make_unique<PdaDmaBufferProvider>(mRocPciDevice->getPciDevice(), parameters.address,
+            parameters.size, bufferId, true);
+        },
+        [&](buffer_parameters::File parameters){
+          log("Initializing with DMA buffer from memory-mapped file", InfoLogger::InfoLogger::Debug);
+          return std::make_unique<FilePdaDmaBufferProvider>(mRocPciDevice->getPciDevice(), parameters.path,
+            parameters.size, bufferId, true);
+        },
+        [&](buffer_parameters::Null){
+          log("Initializing with null DMA buffer", InfoLogger::InfoLogger::Debug);
+          return std::make_unique<NullDmaBufferProvider>();
+        });
+  } else {
+    BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("DmaChannel requires buffer_parameters"));
+  }
 
   // Check if scatter-gather list is not suspicious
   {
-    auto listSize = mPdaDmaBuffer->getScatterGatherList().size();
+    auto listSize = mBufferProvider->getScatterGatherListSize();
     auto hugePageMinSize = 1024*1024*2; // 2 MiB, the smallest hugepage size
     auto bufferSize = getBufferProvider().getSize();
     log(std::string("Scatter-gather list size: ") + std::to_string(listSize));
@@ -52,7 +73,8 @@ DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
   }
 
   // Check memory mappings if it's hugepage
-  {
+  if (getBufferProvider().getSize() > 0) {
+    // Non-null buffer
     bool checked = false;
     const auto maps = Utilities::getMemoryMaps();
     for (const auto& map : maps) {
@@ -128,7 +150,7 @@ void DmaChannelPdaBase::resetChannel(ResetLevel::type resetLevel)
 
 uintptr_t DmaChannelPdaBase::getBusOffsetAddress(size_t offset)
 {
-  return getPdaDmaBuffer().getBusOffsetAddress(offset);
+  return getBufferProvider().getBusOffsetAddress(offset);
 }
 
 void DmaChannelPdaBase::checkSuperpage(const Superpage& superpage)

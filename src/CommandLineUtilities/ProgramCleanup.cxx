@@ -44,6 +44,7 @@ class ProgramCleanup: public Program
       cout << "### Attempting cleanup...\n";
       auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
       params.setForcedUnlockEnabled(mForceCleanup);
+      params.setBufferParameters(buffer_parameters::Null());
       auto channel = ChannelFactory().getDmaChannel(params);
       cout << "### Done!\n";
     }
