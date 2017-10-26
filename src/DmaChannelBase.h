@@ -11,7 +11,6 @@
 #include <mutex>
 #include <boost/optional.hpp>
 #include <InfoLogger/InfoLogger.hxx>
-#include "BufferProvider.h"
 #include "CardDescriptor.h"
 #include "ChannelPaths.h"
 #include "InterprocessLock.h"

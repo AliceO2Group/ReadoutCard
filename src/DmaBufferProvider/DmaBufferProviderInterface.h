@@ -12,7 +12,7 @@
 namespace AliceO2 {
 namespace roc {
 
-/// Base class for objects that provides addresses and offsets for buffers (typically DMA buffers)
+/// Interface class for providing a DMA buffer with scatter-gather list.
 class DmaBufferProviderInterface
 {
   public:
@@ -35,7 +35,7 @@ class DmaBufferProviderInterface
     /// Get userspace address of an entry of the scatter-gather list
     virtual uintptr_t getScatterGatherEntryAddress(int index) const = 0;
 
-    /// Function for getting the bus address that corresponds to the user address + given offset
+    /// Gets the bus address that corresponds to the userspace address + given offset
     virtual uintptr_t getBusOffsetAddress(size_t offset) const = 0;
 };
 

@@ -8,7 +8,6 @@
 #include <boost/scoped_ptr.hpp>
 #include "DmaBufferProvider/DmaBufferProviderInterface.h"
 #include "DmaChannelBase.h"
-#include "PageAddress.h"
 #include "Pda/PdaBar.h"
 #include "Pda/PdaDmaBuffer.h"
 #include "ReadoutCard/DmaChannelInterface.h"

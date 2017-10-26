@@ -5,9 +5,6 @@
 
 #include "DmaChannelBase.h"
 #include <iostream>
-#include "BufferProviderFile.h"
-#include "BufferProviderMemory.h"
-#include "BufferProviderNull.h"
 #include "ChannelPaths.h"
 #include "Common/System.h"
 #include "Utilities/SmartPointer.h"

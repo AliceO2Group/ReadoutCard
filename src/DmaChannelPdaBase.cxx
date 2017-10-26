@@ -36,20 +36,22 @@ DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
   Utilities::resetSmartPtr(mRocPciDevice, getCardDescriptor().pciAddress);
 
   // Create/register buffer
-  log("Initializing memory-mapped DMA buffer", InfoLogger::InfoLogger::Debug);
   if (auto bufferParameters = parameters.getBufferParameters()) {
     // Create appropriate BufferProvider subclass
     auto bufferId = getPdaDmaBufferIndexPages(getChannelNumber(), 0);
     mBufferProvider = Visitor::apply<std::unique_ptr<DmaBufferProviderInterface>>(*bufferParameters,
         [&](buffer_parameters::Memory parameters){
+          log("Initializing with DMA buffer from memory region", InfoLogger::InfoLogger::Debug);
           return std::make_unique<PdaDmaBufferProvider>(mRocPciDevice->getPciDevice(), parameters.address,
             parameters.size, bufferId, true);
         },
         [&](buffer_parameters::File parameters){
+          log("Initializing with DMA buffer from memory-mapped file", InfoLogger::InfoLogger::Debug);
           return std::make_unique<FilePdaDmaBufferProvider>(mRocPciDevice->getPciDevice(), parameters.path,
             parameters.size, bufferId, true);
         },
         [&](buffer_parameters::Null){
+          log("Initializing with null DMA buffer", InfoLogger::InfoLogger::Debug);
           return std::make_unique<NullDmaBufferProvider>();
         });
   } else {

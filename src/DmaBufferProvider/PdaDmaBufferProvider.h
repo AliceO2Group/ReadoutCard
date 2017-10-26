@@ -15,7 +15,7 @@
 namespace AliceO2 {
 namespace roc {
 
-/// Base class for objects that provides addresses and offsets for buffers (typically DMA buffers)
+/// Implementation of the DmaBufferProviderInterface for in-memory DMA buffers registered with PDA
 class PdaDmaBufferProvider : public DmaBufferProviderInterface
 {
   public:

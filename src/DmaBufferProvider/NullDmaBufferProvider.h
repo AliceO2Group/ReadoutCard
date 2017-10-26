@@ -16,7 +16,7 @@
 namespace AliceO2 {
 namespace roc {
 
-/// Base class for objects that provides addresses and offsets for buffers (typically DMA buffers)
+/// Implementation of the DmaBufferProviderInterface for a zero-size "null" or "dummy" buffer
 class NullDmaBufferProvider : public DmaBufferProviderInterface
 {
   public:
@@ -41,19 +41,19 @@ class NullDmaBufferProvider : public DmaBufferProviderInterface
     }
 
     /// Get size of an entry of the scatter-gather list
-    virtual size_t getScatterGatherEntrySize(int index) const
+    virtual size_t getScatterGatherEntrySize(int) const
     {
       BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("No scatter-gather list provided"));
     }
 
     /// Get userspace address of an entry of the scatter-gather list
-    virtual uintptr_t getScatterGatherEntryAddress(int index) const
+    virtual uintptr_t getScatterGatherEntryAddress(int) const
     {
       BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("No scatter-gather list provided"));
     }
 
     /// Function for getting the bus address that corresponds to the user address + given offset
-    virtual uintptr_t getBusOffsetAddress(size_t offset) const
+    virtual uintptr_t getBusOffsetAddress(size_t) const
     {
       BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("No bus addresses provided"));
     }
