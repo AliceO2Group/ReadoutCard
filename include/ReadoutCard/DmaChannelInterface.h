@@ -112,6 +112,10 @@ class DmaChannelInterface
     /// Gets firmware version information
     /// \return A string containing firmware version information if available, else an empty optional
     virtual boost::optional<std::string> getFirmwareInfo() = 0;
+
+    /// Gets card unique ID, such as an FPGA chip ID in the case of the CRU
+    /// \return A string containing the unique ID
+    virtual boost::optional<std::string> getCardId() = 0;
 };
 
 } // namespace roc
