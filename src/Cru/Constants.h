@@ -115,11 +115,11 @@ static constexpr Register FIRMWARE_TIME(0x24);
 
 /// Register containing the first part of the Arria 10 chip ID
 /// Must be accessed on BAR 2
-static constexpr Register FPGA_CHIP_ID_1(0x00200018);
+static constexpr Register FPGA_CHIP_ID_1(0x00200038);
 
 /// Register containing the second part of the Arria 10 chip ID
 /// Must be accessed on BAR 2
-static constexpr Register FPGA_CHIP_ID_2(0x0020001c);
+static constexpr Register FPGA_CHIP_ID_2(0x0020003c);
 
 } // namespace Cru
 } // namespace Registers
