@@ -180,6 +180,18 @@ class BarAccessor
       return mBar->readRegister(Registers::FIRMWARE_TIME.index);
     }
 
+    uint32_t getFpgaChipId1()
+    {
+      assertBarIndex(2, "Can only get FPGA chip ID from BAR 2");
+      return mBar->readRegister(Registers::FPGA_CHIP_ID_1.index);
+    }
+
+    uint32_t getFpgaChipId2()
+    {
+      assertBarIndex(2, "Can only get FPGA chip ID from BAR 2");
+      return mBar->readRegister(Registers::FPGA_CHIP_ID_2.index);
+    }
+
     /// Get the enabled features for the card's firmware.
     FirmwareFeatures getFirmwareFeatures()
     {
@@ -199,6 +211,7 @@ class BarAccessor
         features.temperature = enabled(17);
         features.serial = enabled(18);
         features.firmwareInfo = enabled(19);
+        features.chipId = false;
       } else {
         // Integrated firmware
         features.standalone = false;
@@ -206,6 +219,7 @@ class BarAccessor
         features.dataSelection = true;
         features.serial = true;
         features.firmwareInfo = true;
+        features.chipId = true;
       }
       return features;
     }

@@ -20,6 +20,9 @@ struct FirmwareFeatures
 
     /// Is the temperature sensor enabled?
     bool temperature = false;
+
+    /// Is the Arria 10 FPGA chip ID available?
+    bool chipId = false;
 };
 
 } // namespace roc

@@ -39,8 +39,8 @@ class ProgramListCards: public Program
 
       auto formatHeader = "  %-3s %-6s %-10s %-11s %-11s %-8s %-15s\n";
       auto formatRow = "  %-3s %-6s %-10s 0x%-9s 0x%-9s %-8s %-15s\n";
-      auto header = boost::str(boost::format(formatHeader)
-          % "#" % "Type" % "PCI Addr" % "Vendor ID" % "Device ID" % "Serial" % "FW Version");
+      auto header = (boost::format(formatHeader)
+          % "#" % "Type" % "PCI Addr" % "Vendor ID" % "Device ID" % "Serial" % "FW Version" % "Card ID").str();
       auto lineFat = std::string(header.length(), '=') + '\n';
       auto lineThin = std::string(header.length(), '-') + '\n';
 
@@ -49,11 +49,14 @@ class ProgramListCards: public Program
       int i = 0;
       for (const auto& card : cardsFound) {
         // Try to figure out the firmware version
-        std::string firmware = "n/a";
+        const std::string na = "n/a";
+        std::string firmware = na;
+        std::string cardId = na;
         try {
           Parameters params = Parameters::makeParameters(card.pciAddress, 0);
           params.setBufferParameters(buffer_parameters::Null());
-          firmware = ChannelFactory().getDmaChannel(params)->getFirmwareInfo().value_or("n/a");
+          firmware = ChannelFactory().getDmaChannel(params)->getFirmwareInfo().value_or(na);
+          cardId = ChannelFactory().getDmaChannel(params)->getCardId().value_or(na);
         }
         catch (const Exception& e) {
           if (isVerbose()) {
@@ -63,12 +66,15 @@ class ProgramListCards: public Program
 
         auto format = boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciAddress.toString()
             % card.pciId.vendor % card.pciId.device;
+
         if (auto serial = card.serialNumber) {
           format % serial.get();
         } else {
           format % "n/a";
         }
-        format % firmware;
+
+        format % firmware % cardId;
+
         table << format;
         i++;
       }

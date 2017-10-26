@@ -41,7 +41,7 @@ class CruDmaChannel final : public DmaChannelPdaBase
     virtual boost::optional<int32_t> getSerial() override;
     virtual boost::optional<float> getTemperature() override;
     virtual boost::optional<std::string> getFirmwareInfo() override;
-
+    virtual boost::optional<std::string> getCardId() override;
     AllowedChannels allowedChannels();
 
   protected:

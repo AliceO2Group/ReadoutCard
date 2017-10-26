@@ -51,6 +51,12 @@ class DmaChannelBase: public DmaChannelInterface
       return {};
     }
 
+    /// Default implementation for optional function
+    virtual boost::optional<std::string> getCardId() override
+    {
+      return {};
+    }
+
   protected:
     /// Namespace for enum describing the initialization state of the shared data
     struct InitializationState
