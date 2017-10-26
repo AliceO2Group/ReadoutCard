@@ -129,7 +129,7 @@ void Sca::checkError(uint32_t command)
   if (!flags.empty()) {
     std::stringstream stream;
     stream << "error code 0x" << errorCode << ": ";
-    for (int i = 0; i < flags.size(); ++i) {
+    for (size_t i = 0; i < flags.size(); ++i) {
       stream << toString(flags[i]);
       if (i < flags.size()) {
         stream << ", ";

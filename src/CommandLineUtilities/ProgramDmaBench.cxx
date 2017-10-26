@@ -517,7 +517,7 @@ class ProgramDmaBench: public Program
       if (!mOptions.noErrorCheck) {
 
         // Get link ID if needed
-        int linkId = 0; // Use 0 for non-CRU cards
+        uint32_t linkId = 0; // Use 0 for non-CRU cards
         if (mCardType == CardType::Cru) {
           linkId = Cru::DataFormat::getLinkId(reinterpret_cast<const char*>(pageAddress));
           if (linkId >= mLinkCounters.size()) {
