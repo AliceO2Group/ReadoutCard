@@ -15,10 +15,12 @@
 #include <stdexcept>
 #include <thread>
 #include <boost/circular_buffer.hpp>
+#include <boost/exception/diagnostic_information.hpp>
 #include <boost/interprocess/sync/named_mutex.hpp>
 #include <boost/format.hpp>
-#include <boost/exception/diagnostic_information.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/lexical_cast/try_lexical_convert.hpp>
+#include <boost/tokenizer.hpp>
 #include "BarHammer.h"
 #include "CommandLineUtilities/Common.h"
 #include "CommandLineUtilities/Options.h"
@@ -69,6 +71,8 @@ auto READOUT_ERRORS_PATH = "readout_errors.txt";
 constexpr int64_t MAX_RECORDED_ERRORS = 10000;
 /// End InfoLogger message alias
 constexpr auto endm = InfoLogger::endm;
+/// We use steady clock because otherwise system clock changes could affect the running of the program
+using TimePoint = std::chrono::steady_clock::time_point;
 } // Anonymous namespace
 
 
@@ -159,6 +163,9 @@ class ProgramDmaBench: public Program
               SuffixOption<size_t>::make(&mSuperpageSize)->default_value("1Mi"),
               "Superpage size in bytes. Note that it can't be larger than the buffer. If the IOMMU is not enabled, the "
               "hugepage size must be a multiple of the superpage size")
+          ("time",
+              po::value<std::string>(&mOptions.timeLimitString),
+              "Time limit for benchmark. Any combination of [n]h, [n]m, & [n]s. For example: '5h30m', '10s', '1s2h3m'.")
           ("to-file-ascii",
               po::value<std::string>(&mOptions.fileOutputPathAscii),
               "Read out to given file in ASCII format")
@@ -294,6 +301,10 @@ class ProgramDmaBench: public Program
         mBarHammer->start(ChannelFactory().getBar(Parameters::makeParameters(cardId, 0)));
       }
 
+      if (!mOptions.timeLimitString.empty()) {
+        mTimeLimitOptional = convertTimeString(mOptions.timeLimitString);
+      }
+
       mRunTime.start = std::chrono::steady_clock::now();
       dmaLoop();
       mRunTime.end = std::chrono::steady_clock::now();
@@ -343,6 +354,14 @@ class ProgramDmaBench: public Program
               // queue is empty
               mDmaLoopBreak = true;
               return;
+            }
+
+            // If there's a time limit, check it
+            if (auto limit = mTimeLimitOptional) {
+              if (std::chrono::steady_clock::now() >= limit) {
+                mDmaLoopBreak = true;
+                return;
+              }
             }
 
             // Status display updates
@@ -790,7 +809,40 @@ class ProgramDmaBench: public Program
       }
     }
 
-    using TimePoint = std::chrono::steady_clock::time_point;
+    TimePoint convertTimeString(std::string input)
+    {
+      uint64_t seconds = 0;
+      uint64_t minutes = 0;
+      uint64_t hours = 0;
+
+      boost::char_separator<char> separators("", "hms"); // Keep the hms separators
+      boost::tokenizer<boost::char_separator<char>> tokenizer(input, separators);
+      std::vector<std::string> tokens(tokenizer.begin(), tokenizer.end());
+
+      if ((tokens.size() % 2) != 0) {
+        BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("Malformed time limit string"));
+      }
+
+      for (size_t i = 0; i < tokens.size(); i += 2) {
+        uint64_t number;
+        if (!boost::conversion::try_lexical_convert<uint64_t>(tokens[i], number)) {
+          BOOST_THROW_EXCEPTION(ParameterException()
+              << ErrorInfo::Message("Malformed time limit string; failed to parse number"));
+        }
+
+        auto unit = tokens[i+1];
+        if (unit == "h") {
+          hours = number;
+        } else if (unit == "m") {
+          minutes = number;
+        } else if (unit == "s") {
+          minutes = seconds;
+        }
+      }
+
+      return std::chrono::steady_clock::now() + std::chrono::hours(hours) + std::chrono::minutes(minutes)
+          + std::chrono::seconds(seconds);
+    }
 
     struct RandomPauses
     {
@@ -840,6 +892,7 @@ class ProgramDmaBench: public Program
         size_t dataGeneratorSize;
         size_t dmaPageSize;
         std::string loopbackModeString;
+        std::string timeLimitString;
     } mOptions;
 
     /// The DMA channel
@@ -901,6 +954,9 @@ class ProgramDmaBench: public Program
 
     /// Indicates the display must add a newline to the table
     bool mDisplayUpdateNewline;
+
+    /// Optional time limit
+    boost::optional<TimePoint> mTimeLimitOptional;
 
     struct RunTime
     {
