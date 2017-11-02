@@ -278,8 +278,8 @@ class ProgramDmaBench: public Program
         mChannel = ChannelFactory().getDmaChannel(params);
       }
       catch (const FileLockException& e) {
-        getLogger() << InfoLogger::Error << "Another process is holding the channel lock (no automatic cleanup possible)"
-            << endm;
+        getLogger() << InfoLogger::Error
+          << "Another process is holding the channel lock (no automatic cleanup possible)" << endm;
         throw;
       }
 
@@ -295,7 +295,7 @@ class ProgramDmaBench: public Program
       if (mOptions.barHammer) {
         if (mChannel->getCardType() != CardType::Cru) {
           BOOST_THROW_EXCEPTION(ParameterException()
-              << ErrorInfo::Message("BarHammer option currently only supported for CRU\n"));
+              << ErrorInfo::Message("BarHammer option currently only supported for CRU"));
         }
         Utilities::resetSmartPtr(mBarHammer);
         mBarHammer->start(ChannelFactory().getBar(Parameters::makeParameters(cardId, 0)));
@@ -303,6 +303,7 @@ class ProgramDmaBench: public Program
 
       if (!mOptions.timeLimitString.empty()) {
         mTimeLimitOptional = convertTimeString(mOptions.timeLimitString);
+        getLogger() << "Time limit: " << mOptions.timeLimitString << endm;
       }
 
       mRunTime.start = std::chrono::steady_clock::now();
@@ -819,7 +820,7 @@ class ProgramDmaBench: public Program
       boost::tokenizer<boost::char_separator<char>> tokenizer(input, separators);
       std::vector<std::string> tokens(tokenizer.begin(), tokenizer.end());
 
-      if ((tokens.size() % 2) != 0) {
+      if (((tokens.size() % 2) != 0) || (tokens.size() > 6)) {
         BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("Malformed time limit string"));
       }
 
@@ -836,7 +837,10 @@ class ProgramDmaBench: public Program
         } else if (unit == "m") {
           minutes = number;
         } else if (unit == "s") {
-          minutes = seconds;
+          seconds = number;
+        } else {
+          BOOST_THROW_EXCEPTION(ParameterException()
+            << ErrorInfo::Message("Malformed time limit string; unrecognized time unit"));
         }
       }
 
