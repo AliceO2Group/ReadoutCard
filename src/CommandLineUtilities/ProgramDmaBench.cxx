@@ -311,7 +311,7 @@ class ProgramDmaBench: public Program
         auto limit = convertTimeString(mOptions.timeLimitString);
         mTimeLimitOptional = std::chrono::steady_clock::now() + std::chrono::hours(limit.hours)
           + std::chrono::minutes(limit.minutes) + std::chrono::seconds(limit.seconds);
-        getLogger() << (b::format("Time limit: %1%h%2%m%3%s") % limit.hours % limit.minutes % limit.seconds).str()
+        getLogger() << (b::format("Time limit: %1%h %2%m %3%s") % limit.hours % limit.minutes % limit.seconds).str()
           << endm;
       }
 
