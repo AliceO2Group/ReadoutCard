@@ -73,6 +73,12 @@ constexpr int64_t MAX_RECORDED_ERRORS = 10000;
 constexpr auto endm = InfoLogger::endm;
 /// We use steady clock because otherwise system clock changes could affect the running of the program
 using TimePoint = std::chrono::steady_clock::time_point;
+/// Struct used for benchmark time limit
+struct TimeLimit {
+    uint64_t seconds = 0;
+    uint64_t minutes = 0;
+    uint64_t hours = 0;
+};
 } // Anonymous namespace
 
 
@@ -302,8 +308,11 @@ class ProgramDmaBench: public Program
       }
 
       if (!mOptions.timeLimitString.empty()) {
-        mTimeLimitOptional = convertTimeString(mOptions.timeLimitString);
-        getLogger() << "Time limit: " << mOptions.timeLimitString << endm;
+        auto limit = convertTimeString(mOptions.timeLimitString);
+        mTimeLimitOptional = std::chrono::steady_clock::now() + std::chrono::hours(limit.hours)
+          + std::chrono::minutes(limit.minutes) + std::chrono::seconds(limit.seconds);
+        getLogger() << (b::format("Time limit: %1%h%2%m%3%s") % limit.hours % limit.minutes % limit.seconds).str()
+          << endm;
       }
 
       mRunTime.start = std::chrono::steady_clock::now();
@@ -810,11 +819,9 @@ class ProgramDmaBench: public Program
       }
     }
 
-    TimePoint convertTimeString(std::string input)
+    TimeLimit convertTimeString(std::string input)
     {
-      uint64_t seconds = 0;
-      uint64_t minutes = 0;
-      uint64_t hours = 0;
+      TimeLimit limit;
 
       boost::char_separator<char> separators("", "hms"); // Keep the hms separators
       boost::tokenizer<boost::char_separator<char>> tokenizer(input, separators);
@@ -833,19 +840,18 @@ class ProgramDmaBench: public Program
 
         auto unit = tokens[i+1];
         if (unit == "h") {
-          hours = number;
+          limit.hours = number;
         } else if (unit == "m") {
-          minutes = number;
+          limit.minutes = number;
         } else if (unit == "s") {
-          seconds = number;
+          limit.seconds = number;
         } else {
           BOOST_THROW_EXCEPTION(ParameterException()
             << ErrorInfo::Message("Malformed time limit string; unrecognized time unit"));
         }
       }
 
-      return std::chrono::steady_clock::now() + std::chrono::hours(hours) + std::chrono::minutes(minutes)
-          + std::chrono::seconds(seconds);
+      return limit;
     }
 
     struct RandomPauses
