@@ -31,12 +31,12 @@ namespace
 
 uint32_t getLinkId(const char* data)
 {
-  return Utilities::getBits(getWord(data, 2), 4, 4+8-1);
+  return Utilities::getBits(getWord(data, 1), 8, 15);
 }
 
 uint32_t getEventSize(const char* data)
 {
-  return Utilities::getBits(getWord(data, 3), 4, 4+12-1);
+  return Utilities::getBits(getWord(data, 2), 8, 23);
 }
 
 /// Get header size in bytes
