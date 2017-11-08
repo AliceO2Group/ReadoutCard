@@ -30,8 +30,10 @@ void freeUnusedChannelBuffers()
   for (auto& entry : boost::make_iterator_range(bfs::directory_iterator(pciPath), {})) {
     auto filename = entry.path().filename().string();
     std::cout << "ENTRY = " << entry << " - " << filename << std::endl;
+    auto pciAddress = filename.substr(5); // Remove leading '0000:'
 
-    if (auto address = PciAddress::fromString(filename)) {
+    if (PciAddress::fromString(pciAddress)) {
+      // This is a valid PCI address
       std::string dmaPath("/sys/bus/pci/drivers/uio_pci_dma/" + filename + "/dma/");
       for (auto& entry : boost::make_iterator_range(bfs::directory_iterator(dmaPath), {})) {
         auto filename = entry.path().filename().string();
@@ -51,16 +53,6 @@ void freeUnusedChannelBuffers()
         }
       }
     }
-
-//    auto mapPath = entry + "/dma/map";
-
-//    auto lsResult = AliceO2::Common::System::executeCommand("ls /sys/bus/pci/drivers/uio_pci_dma/*/dma/*/map");
-//    auto fuserResult = AliceO2::Common::System::executeCommand(
-//      "fuser /sys/bus/pci/drivers/uio_pci_dma/0000\:42\:00.0/dma/*/map");
-
-//    if (isInUse(mapPath)) {
-//      bfs::remove(mapPath);
-//    }
   }
 }
 
