@@ -34,6 +34,7 @@
 #include "ReadoutCard/ChannelFactory.h"
 #include "ReadoutCard/MemoryMappedFile.h"
 #include "ReadoutCard/Parameters.h"
+#include "ReadoutCard/ReadoutCard.h"
 #include "Utilities/Hugetlbfs.h"
 #include "Utilities/SmartPointer.h"
 #include "Utilities/Util.h"
@@ -226,6 +227,8 @@ class ProgramDmaBench: public Program
 
       // Create channel buffer
       {
+        freeUnusedChannelBuffers();
+
         if (mBufferSize < mSuperpageSize) {
           throw ParameterException() << ErrorInfo::Message("Buffer size smaller than superpage size");
         }
