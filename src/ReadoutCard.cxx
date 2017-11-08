@@ -36,11 +36,11 @@ void freeUnusedChannelBuffers()
 
       if (PciAddress::fromString(pciAddress)) {
         // This is a valid PCI address
-        std::string dmaPath("/sys/bus/pci/drivers/uio_pci_dma/" + filename + "/dma/");
+        std::string dmaPath("/sys/bus/pci/drivers/uio_pci_dma/" + filename + "/dma");
         for (auto &entry : boost::make_iterator_range(bfs::directory_iterator(dmaPath), {})) {
-          auto filename = entry.path().filename().string();
+          auto bufferId = entry.path().filename().string();
           if (bfs::is_directory(entry)) {
-            std::cout << "    DMA dir = " << entry << " - " << filename << std::endl;
+            std::cout << "    DMA dir = " << entry << " - " << bufferId << std::endl;
 
             // TODO fuser & echo filename into /dma/[filename]/free
             std::string mapPath = dmaPath + "/map";
@@ -50,7 +50,8 @@ void freeUnusedChannelBuffers()
 
             if (fuserResult.empty()) {
               // No process is using it, we can free the buffer!
-              auto fuserResult = AliceO2::Common::System::executeCommand("echo " + filename + " > " + freePath);
+              std::cout << "Freeing buffer '" + freePath + "'" << std::endl;
+              auto fuserResult = AliceO2::Common::System::executeCommand("echo " + bufferId + " > " + freePath);
             }
           }
         }
