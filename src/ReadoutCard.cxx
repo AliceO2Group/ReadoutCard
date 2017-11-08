@@ -36,15 +36,15 @@ void freeUnusedChannelBuffers()
 
       if (PciAddress::fromString(pciAddress)) {
         // This is a valid PCI address
-        std::string dmaPath("/sys/bus/pci/drivers/uio_pci_dma/" + filename + "/dma");
+        std::string dmaPath("/sys/bus/pci/drivers/uio_pci_dma/" + filename + "/dma/");
         for (auto &entry : boost::make_iterator_range(bfs::directory_iterator(dmaPath), {})) {
           auto bufferId = entry.path().filename().string();
           if (bfs::is_directory(entry)) {
             std::cout << "    DMA dir = " << entry << " - " << bufferId << std::endl;
 
             // TODO fuser & echo filename into /dma/[filename]/free
-            std::string mapPath = dmaPath + "/map";
-            std::string freePath = dmaPath + "/free";
+            std::string mapPath = dmaPath + bufferId + "/map";
+            std::string freePath = dmaPath + bufferId + "/free";
             auto fuserResult = AliceO2::Common::System::executeCommand("fuser " + mapPath);
             fuserResult.pop_back(); // Get rid of trailing newline
 
