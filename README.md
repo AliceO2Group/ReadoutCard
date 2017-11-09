@@ -109,8 +109,14 @@ If the process crashes badly (such as with a segfault), it may be necessary to c
 deleting with `rm` or by using the `roc-channel-cleanup` utility. 
 There is also the possibility of automatic cleanup by setting forced unlocking enabled using the
 `setForcedUnlockEnabled()` function of the `Parameters` class. 
-However, this option should be used with caution. 
+However, this option should be used with caution.
 See the function's documentation for more information about the risks.
+
+A crash may leave a channel buffer registered with PDA, which then keeps its shared-memory file handle open in the
+kernel module. If another channel buffer is registered with the same channel, this old one will be cleaned up
+automatically by the driver. However, in memory-constrained environments, it may not be possible to allocate a new
+channel buffer. In such cases, one can call the driver::initialize() or driver::freeUnusedChannelBuffers() functions 
+(see the Driver.h header), which will perform necessary cleanups.
 
 
 BAR interface
