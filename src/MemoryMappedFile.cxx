@@ -72,6 +72,14 @@ void MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
       }
     }
 
+    // Check the file exists
+    {
+      if (bfs::exists(fileName) && (bfs::file_size(fileName) != fileSize)) {
+        BOOST_THROW_EXCEPTION(MemoryMapException()
+            << ErrorInfo::Message("File already exists, but mismatching file size. Resizing dangerous."));
+      }
+    }
+
     // Similar operation to calling "touch" command, making sure the file exists
     try {
       std::ofstream ofs(fileName.c_str(), std::ios::app);
