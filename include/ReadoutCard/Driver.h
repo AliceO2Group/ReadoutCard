@@ -14,6 +14,7 @@ void initialize();
 /// kernel module. If another channel buffer is registered with the same channel, this old one will be cleaned up
 /// automatically by the driver. However, in memory-constrained environments, it may not be possible to allocate a new
 /// channel buffer. In such cases, this function will come in handy.
+/// Note that root or pda group permissions are required.
 void freeUnusedChannelBuffers();
 
 } // namespace driver
