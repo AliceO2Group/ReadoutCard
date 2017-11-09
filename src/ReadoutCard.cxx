@@ -44,10 +44,9 @@ void freeUnusedChannelBuffers()
 
             // TODO fuser & echo filename into /dma/[filename]/free
             std::string mapPath = dmaPath + bufferId + "/map";
-            std::string freePath = dmaPath + bufferId + "/free";
+            std::string freePath = dmaPath + "/free";
             auto fuserResult = AliceO2::Common::System::executeCommand("fuser " + mapPath);
-            fuserResult.pop_back(); // Get rid of trailing newline
-
+            std::cout << "fuser = '" << fuserResult << "'" << std::endl;
             if (fuserResult.empty()) {
               // No process is using it, we can free the buffer!
               std::cout << "Freeing buffer '" + freePath + "'" << std::endl;
