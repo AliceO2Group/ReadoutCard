@@ -69,6 +69,7 @@ set(SRCS
   src/Factory/ChannelFactory.cxx
   src/DmaChannelBase.cxx
   src/ChannelPaths.cxx
+  src/Driver.cxx
   src/Dummy/DummyDmaChannel.cxx
   src/Dummy/DummyBar.cxx
   src/ExceptionInternal.cxx
@@ -79,7 +80,6 @@ set(SRCS
   src/ParameterTypes/PciAddress.cxx
   src/ParameterTypes/ResetLevel.cxx
   src/ParameterTypes/ReadoutMode.cxx
-  src/ReadoutCard.cxx
   src/Utilities/Hugetlbfs.cxx
   src/Utilities/MemoryMaps.cxx
   src/Utilities/Numa.cxx

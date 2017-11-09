@@ -3,6 +3,7 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
+#include "ReadoutCard/ReadoutCard.h"
 #include "ReadoutCard/ChannelFactory.h"
 #include "Dummy/DummyDmaChannel.h"
 #include "Dummy/DummyBar.h"
@@ -32,6 +33,7 @@ ChannelFactory::~ChannelFactory()
 
 auto ChannelFactory::getDmaChannel(const Parameters &params) -> DmaChannelSharedPtr
 {
+  driver::freeUnusedChannelBuffers();
   return channelFactoryHelper<DmaChannelInterface>(params, getDummySerialNumber(), {
     {CardType::Dummy, [&]{ return std::make_unique<DummyDmaChannel>(params); }},
 #ifdef ALICEO2_READOUTCARD_PDA_ENABLED

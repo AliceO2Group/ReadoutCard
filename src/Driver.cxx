@@ -1,19 +1,22 @@
-/// \file ReadoutCard.h
+/// \file Driver.h
 /// \brief Implementation of global functions for the ReadoutCard module
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "ReadoutCard/ReadoutCard.h"
+#include "ReadoutCard/Driver.h"
 #include <boost/filesystem.hpp>
 #include <boost/range/iterator_range.hpp>
 #include <Common/System.h>
+#include <InfoLogger/InfoLogger.hxx>
+#include "ReadoutCard/ParameterTypes/PciAddress.h"
 
 namespace AliceO2 {
 namespace roc {
+namespace driver {
 namespace {
 }
 
-void initializeDriver()
+void initialize()
 {
   freeUnusedChannelBuffers();
 }
@@ -25,13 +28,13 @@ void initializeDriver()
 void freeUnusedChannelBuffers()
 {
   namespace bfs = boost::filesystem;
+  InfoLogger::InfoLogger logger;
 
-  bfs::path pciPath("/sys/bus/pci/drivers/uio_pci_dma/");
+  std::string pciPath = "/sys/bus/pci/drivers/uio_pci_dma/";
   for (auto& entry : boost::make_iterator_range(bfs::directory_iterator(pciPath), {})) {
     auto filename = entry.path().filename().string();
     if (filename.size() == 12) {
       // The PCI directory names are 12 characters long
-      std::cout << "ENTRY = " << entry << " - " << filename << std::endl;
       auto pciAddress = filename.substr(5); // Remove leading '0000:'
 
       if (PciAddress::fromString(pciAddress)) {
@@ -40,16 +43,12 @@ void freeUnusedChannelBuffers()
         for (auto &entry : boost::make_iterator_range(bfs::directory_iterator(dmaPath), {})) {
           auto bufferId = entry.path().filename().string();
           if (bfs::is_directory(entry)) {
-            std::cout << "    DMA dir = " << entry << " - " << bufferId << std::endl;
-
-            // TODO fuser & echo filename into /dma/[filename]/free
             std::string mapPath = dmaPath + bufferId + "/map";
             std::string freePath = dmaPath + "/free";
             auto fuserResult = AliceO2::Common::System::executeCommand("fuser " + mapPath);
-            std::cout << "fuser = '" << fuserResult << "'" << std::endl;
             if (fuserResult.empty()) {
               // No process is using it, we can free the buffer!
-              std::cout << "Freeing buffer '" + freePath + "'" << std::endl;
+              logger << "Freeing PDA buffer '" + freePath + "'" << InfoLogger::InfoLogger::endm;
               auto fuserResult = AliceO2::Common::System::executeCommand("echo " + bufferId + " > " + freePath);
             }
           }
@@ -59,5 +58,6 @@ void freeUnusedChannelBuffers()
   }
 }
 
+} // namespace driver
 } // namespace roc
 } // namespace AliceO2

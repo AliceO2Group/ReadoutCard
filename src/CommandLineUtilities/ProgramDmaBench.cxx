@@ -227,7 +227,7 @@ class ProgramDmaBench: public Program
 
       // Create channel buffer
       {
-        freeUnusedChannelBuffers();
+        driver::freeUnusedChannelBuffers();
 
         if (mBufferSize < mSuperpageSize) {
           throw ParameterException() << ErrorInfo::Message("Buffer size smaller than superpage size");
