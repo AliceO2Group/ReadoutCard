@@ -48,7 +48,7 @@ void freeUnusedChannelBuffers()
             auto fuserResult = AliceO2::Common::System::executeCommand("fuser " + mapPath);
             if (fuserResult.empty()) {
               // No process is using it, we can free the buffer!
-              logger << "Freeing PDA buffer '" + freePath + "'" << InfoLogger::InfoLogger::endm;
+              logger << "Freeing PDA buffer '" + mapPath + "'" << InfoLogger::InfoLogger::endm;
               auto fuserResult = AliceO2::Common::System::executeCommand("echo " + bufferId + " > " + freePath);
             }
           }
