@@ -608,40 +608,48 @@ class ProgramDmaBench: public Program
 
       auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
       constexpr size_t HEADER_WORDS_256 = Cru::DataFormat::getHeaderSizeWords(); // We skip the header
+      auto payload = reinterpret_cast<const volatile uint32_t*>(pageAddress + Cru::DataFormat::getHeaderSize());
 
       mLinkCounters[linkId] += words256 - HEADER_WORDS_256;
 
-      for (uint32_t i = 0; (i + HEADER_WORDS_256) < words256; ++i) {
-        constexpr uint32_t INTS_PER_WORD_256 = 8; // Each word should contain 8 identical 32-bit integers
-        for (uint32_t j = 0; j < INTS_PER_WORD_256; ++j) {
-          uint32_t expectedValue = counter + i;
-          uint32_t actualValue = page[(i + HEADER_WORDS_256) * INTS_PER_WORD_256 + j];
+      // Every 256 bit words is built as follows:
+      // 32 bits (0x0) + 16 bits (0x0) + 16 bit lower counter + 32 bit counter+1 + 32 bit counter+2 + ...
 
-          if (actualValue != expectedValue) {
-            // Report error
-            mErrorCount++;
-            if (mErrorCount < MAX_RECORDED_ERRORS) {
-              mErrorStream << b::format("event:%d l:%d i:%d cnt:%d exp:0x%x val:0x%x\n")
-                % eventNumber % linkId % i % counter % expectedValue % actualValue;
-            }
-            return true;
-          }
+      bool foundError = false;
+      auto checkValue = [&](uint32_t i, uint32_t counter, uint32_t expectedValue, uint32_t actualValue) {
+        if (expectedValue != actualValue) {
+          foundError = true;
+          addError(eventNumber, linkId, i, counter, expectedValue, actualValue);
         }
+      };
+
+      // First 32 bits are 0
+      checkValue(0, counter, 0x0, payload[0]);
+      // Upper 16 bits of second 32 bits are 0
+      checkValue(1, counter, 0x0, payload[1] && 0xffff0000);
+      // Lower 16 bits of second 32 bits contain truncated counter
+      checkValue(1, counter, counter && 0xffff, payload[1] && 0xffff);
+      // Rest of the 32 bit words contain counters
+      for (uint32_t i = 2; (i + HEADER_WORDS_256) < words256; ++i) {
+        checkValue(i, counter, counter + i, payload[i]);
       }
-      return false;
+
+      if (foundError) {
+        return true;
+      }
 
       BOOST_THROW_EXCEPTION(Exception()
           << ErrorInfo::Message("Unsupported pattern for CRU error checking")
           << ErrorInfo::GeneratorPattern(mOptions.generatorPattern));
     }
 
-    void addError(int64_t eventNumber, int index, uint32_t generatorCounter, uint32_t expectedValue,
+    void addError(int64_t eventNumber, int linkId, int index, uint32_t generatorCounter, uint32_t expectedValue,
         uint32_t actualValue)
     {
       mErrorCount++;
        if (mErrorCount < MAX_RECORDED_ERRORS) {
-         mErrorStream << b::format("event:%d i:%d cnt:%d exp:0x%x val:0x%x\n")
-             % eventNumber % index % generatorCounter % expectedValue % actualValue;
+         mErrorStream << b::format("event:%d link:%d i:%d cnt:%d exp:0x%x val:0x%x\n")
+             % eventNumber % linkId % index % generatorCounter % expectedValue % actualValue;
        }
     }
 
@@ -655,7 +663,7 @@ class ProgramDmaBench: public Program
         auto pageSize32 = pageSize / sizeof(int32_t);
 
         if (page[0] != counter) {
-          addError(eventNumber, 0, counter, counter, page[0]);
+          addError(eventNumber, linkId, 0, counter, counter, page[0]);
         }
 
         // We skip the SDH
@@ -663,7 +671,7 @@ class ProgramDmaBench: public Program
           uint32_t expectedValue = patternFunction(i);
           uint32_t actualValue = page[i];
           if (actualValue != expectedValue) {
-            addError(eventNumber, i, counter, expectedValue, actualValue);
+            addError(eventNumber, linkId, i, counter, expectedValue, actualValue);
             return true;
           }
         }
