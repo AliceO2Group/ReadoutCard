@@ -609,8 +609,9 @@ class ProgramDmaBench: public Program
       auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
       constexpr size_t HEADER_WORDS_256 = Cru::DataFormat::getHeaderSizeWords(); // We skip the header
       auto payload = reinterpret_cast<const volatile uint32_t*>(pageAddress + Cru::DataFormat::getHeaderSize());
+      auto payloadWords256 = words256 - HEADER_WORDS_256;
 
-      mLinkCounters[linkId] += words256 - HEADER_WORDS_256;
+      mLinkCounters[linkId] += payloadWords256;
 
       // Every 256 bit words is built as follows:
       // 32 bits (0x0) + 16 bits (0x0) + 16 bit lower counter + 32 bit counter+1 + 32 bit counter+2 + ...
@@ -628,7 +629,7 @@ class ProgramDmaBench: public Program
       // Upper 16 bits of second 32 bits are 0
       checkValue(1, counter, 0x0, payload[1] && 0xffff0000);
       // Lower 16 bits of second 32 bits contain truncated counter
-      checkValue(1, counter, counter && 0xffff, payload[1] && 0xffff);
+      checkValue(1, counter, counter & 0xffff, payload[1] & 0xffff);
       // Rest of the 32 bit words contain counters
       for (uint32_t i = 2; (i + HEADER_WORDS_256) < words256; ++i) {
         checkValue(i, counter, counter + i, payload[i]);
