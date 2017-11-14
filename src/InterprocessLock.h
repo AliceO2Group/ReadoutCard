@@ -31,7 +31,7 @@ class Lock
     using FileLock = std::unique_lock<FileMutex>;
     using NamedLock = std::unique_lock<NamedMutex>;
 
-    Lock(const boost::filesystem::path& lockFilePath, const std::string& namedMutexName)
+    Lock(const boost::filesystem::path& lockFilePath, const std::string& namedMutexName, bool waitOnLock = false)
     {
       Common::System::touchFile(lockFilePath.string());
 
@@ -41,20 +41,20 @@ class Lock
       }
       catch (const boost::interprocess::interprocess_exception& e) {
         BOOST_THROW_EXCEPTION(LockException()
-            << ErrorInfo::Message(e.what())
-            << ErrorInfo::SharedLockFile(lockFilePath.string())
-            << ErrorInfo::NamedMutexName(namedMutexName)
-            << ErrorInfo::PossibleCauses({"Invalid lock file path"}));
+          << ErrorInfo::Message(e.what())
+          << ErrorInfo::SharedLockFile(lockFilePath.string())
+          << ErrorInfo::NamedMutexName(namedMutexName)
+          << ErrorInfo::PossibleCauses({"Invalid lock file path"}));
       }
       try {
         Utilities::resetSmartPtr(mNamedMutex, boost::interprocess::open_or_create, namedMutexName.c_str());
       }
       catch (const boost::interprocess::interprocess_exception& e) {
         BOOST_THROW_EXCEPTION(LockException()
-            << ErrorInfo::Message(e.what())
-            << ErrorInfo::SharedLockFile(lockFilePath.string())
-            << ErrorInfo::NamedMutexName(namedMutexName)
-            << ErrorInfo::PossibleCauses({"Invalid mutex name (note: it should be a name, not a path)"}));
+          << ErrorInfo::Message(e.what())
+          << ErrorInfo::SharedLockFile(lockFilePath.string())
+          << ErrorInfo::NamedMutexName(namedMutexName)
+          << ErrorInfo::PossibleCauses({"Invalid mutex name (note: it should be a name, not a path)"}));
       }
 
       // Initialize locks
@@ -62,22 +62,33 @@ class Lock
       mNamedLock = NamedLock(*mNamedMutex.get(), std::defer_lock);
 
       // Attempt to lock mutexes
-      int result = std::try_lock(mFileLock, mNamedLock);
-      if (result == 0) {
-        // First lock failed
-        BOOST_THROW_EXCEPTION(FileLockException()
+      if (waitOnLock) {
+        // Waits on lock to become available
+        try {
+          std::lock(mFileLock, mNamedLock);
+        } catch (const std::exception& e) {
+          BOOST_THROW_EXCEPTION(e); // Rethrow with line number info
+        }
+      } else {
+        // Fails immediately if lock is not available
+        int result = std::try_lock(mFileLock, mNamedLock);
+        if (result == 0) {
+          // First lock failed
+          BOOST_THROW_EXCEPTION(FileLockException()
             << ErrorInfo::Message("Failed to acquire file lock")
             << ErrorInfo::SharedLockFile(lockFilePath.string())
             << ErrorInfo::NamedMutexName(namedMutexName));
-      } else if (result == 1) {
-        // Second lock failed
-        BOOST_THROW_EXCEPTION(NamedMutexLockException()
+        } else if (result == 1) {
+          // Second lock failed
+          BOOST_THROW_EXCEPTION(NamedMutexLockException()
             << ErrorInfo::Message("Failed to acquire named mutex only; file lock was successfully acquired")
             << ErrorInfo::SharedLockFile(lockFilePath.string())
             << ErrorInfo::NamedMutexName(namedMutexName)
             << ErrorInfo::PossibleCauses({
-                "Named mutex is owned by other thread in current process",
-                "Previous Interprocess::Lock on same objects was not cleanly destroyed"}));
+              "Named mutex is owned by other thread in current process",
+              "Previous Interprocess::Lock on same objects was not cleanly destroyed"
+            }));
+        }
       }
     }
 

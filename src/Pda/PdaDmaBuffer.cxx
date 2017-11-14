@@ -4,26 +4,26 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "PdaDmaBuffer.h"
-#include <boost/interprocess/sync/scoped_lock.hpp>
-#include <boost/interprocess/sync/named_mutex.hpp>
 #include <pda.h>
+#include <InfoLogger/InfoLogger.hxx>
 #include "ExceptionInternal.h"
+#include "InterprocessLock.h"
 
 namespace AliceO2 {
 namespace roc {
 namespace Pda {
 namespace {
-using Mutex = boost::interprocess::named_mutex;
-using Lock = boost::interprocess::scoped_lock<Mutex>;
 auto MUTEX_NAME = "AliceO2_roc_Pda_PdaDmaBuffer_Mutex";
+auto LOCK_FILE_PATH = "AliceO2_roc_Pda_PdaDmaBuffer_Mutex";
+
+
 } // Anonymous namespace
 
 PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAddress, size_t userBufferSize,
     int dmaBufferId, bool requireHugepage) : mPciDevice(pciDevice)
 {
-  // Safeguard against PDA kernel module deadlocks
-  Mutex mutex {boost::interprocess::open_or_create, MUTEX_NAME};
-  Lock lock {mutex};
+  // Safeguard against PDA kernel module deadlocks, since it does not like parallel buffer registration
+  Interprocess::Lock {LOCK_FILE_PATH, MUTEX_NAME, true};
 
   try {
     // Tell PDA we're using our already allocated userspace buffer.
@@ -102,11 +102,15 @@ PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAd
 
 PdaDmaBuffer::~PdaDmaBuffer()
 {
-  // Safeguard against PDA kernel module deadlocks
-  Mutex mutex {boost::interprocess::open_or_create, MUTEX_NAME};
-  Lock lock {mutex};
-
-  PciDevice_deleteDMABuffer(mPciDevice.get(), mDmaBuffer);
+  // Safeguard against PDA kernel module deadlocks, since it does not like parallel buffer registration
+  // NOTE: not sure if necessary for deregistration as well
+  try {
+    Interprocess::Lock {LOCK_FILE_PATH, MUTEX_NAME, true};
+    PciDevice_deleteDMABuffer(mPciDevice.get(), mDmaBuffer);
+  } catch (std::exception& e) {
+    // Nothing to be done?
+    InfoLogger::InfoLogger() << "PdaDmaBuffer::~PdaDmaBuffer() failed: " << e.what() << InfoLogger::InfoLogger::endm;
+  }
 }
 
 uintptr_t PdaDmaBuffer::getBusOffsetAddress(size_t offset) const
