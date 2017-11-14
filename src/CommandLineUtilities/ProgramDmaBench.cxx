@@ -599,8 +599,8 @@ class ProgramDmaBench: public Program
     {
       const uint64_t counter = mLinkCounters[linkId];
       // Get stuff from the header
-      auto words256 = Cru::DataFormat::getEventSize(reinterpret_cast<const char*>(pageAddress)); // Amount of 256 bit words in DMA page
-      auto wordsBytes = words256 * (256 / 8);
+      const auto words256 = Cru::DataFormat::getEventSize(reinterpret_cast<const char*>(pageAddress)); // Amount of 256 bit words in DMA page
+      const auto wordsBytes = words256 * (256 / 8);
 
       if (words256 < 2 || wordsBytes > pageSize) {
         // Report error
@@ -612,10 +612,9 @@ class ProgramDmaBench: public Program
         return false;
       }
 
-      auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
       constexpr size_t HEADER_WORDS_256 = Cru::DataFormat::getHeaderSizeWords(); // We skip the header
-      auto payload = reinterpret_cast<const volatile uint32_t*>(pageAddress + Cru::DataFormat::getHeaderSize());
-      auto payloadWords256 = words256 - HEADER_WORDS_256;
+      const auto payload = reinterpret_cast<const volatile uint32_t*>(pageAddress + Cru::DataFormat::getHeaderSize());
+      const auto payloadWords256 = words256 - HEADER_WORDS_256;
 
       mLinkCounters[linkId] += payloadWords256 * 6;
 
@@ -768,17 +767,20 @@ class ProgramDmaBench: public Program
        double bytes = double(mReadoutCount.load()) * mPageSize;
        double GB = bytes / (1000 * 1000 * 1000);
        double GBs = GB / runTime;
+       double GiB = bytes / (1024 * 1024 * 1024);
+       double GiBs = GiB / runTime;
        double Gbs = GBs * 8;
 
        auto put = [&](auto label, auto value) { cout << b::format("  %-10s  %-10s\n") % label % value; };
        cout << '\n';
        put("Seconds", runTime);
-       put("Pages", mReadoutCount.load());
+       put("Superpages", mReadoutCount.load());
        if (bytes > 0.00001) {
          put("Bytes", bytes);
          put("GB", GB);
          put("GB/s", GBs);
          put("Gb/s", Gbs);
+         put("GiB/s", GiBs);
          if (mOptions.noErrorCheck) {
            put("Errors", "n/a");
          } else {
