@@ -532,8 +532,12 @@ class ProgramDmaBench: public Program
       switch (mCardType) {
         case CardType::Crorc:
           return get32bitFromPage(pageAddress, 0);
-        case CardType::Cru:
-          return get32bitFromPage(pageAddress, 23);
+        case CardType::Cru: {
+          //return get32bitFromPage(pageAddress, Cru::DataFormat::getHeaderSize() / sizeof(uint32_t) + 2) - 1;
+          // First payload word is empty, second is half empty. So we use the third and count one back.
+          auto payload = reinterpret_cast<const volatile uint32_t *>(pageAddress + Cru::DataFormat::getHeaderSize());
+          return payload[2] - 1;
+        }
         default: throw std::runtime_error("Error checking unsupported for this card type");
       }
     };
@@ -561,7 +565,9 @@ class ProgramDmaBench: public Program
 
         // First received page initializes the counter
         if (mLinkCounters[linkId] == LINK_COUNTER_INITIAL_VALUE) {
-          mLinkCounters[linkId] = getDataGeneratorCounterFromPage(pageAddress);
+          auto counter = getDataGeneratorCounterFromPage(pageAddress);
+          mErrorStream << b::format("resync counter for e:%d l:%d cnt:%d\n") % readoutCount % linkId % counter;
+          mLinkCounters[linkId] = counter;
         }
 
         // Check for errors
@@ -591,7 +597,7 @@ class ProgramDmaBench: public Program
 
     bool checkErrorsCru(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
     {
-      uint64_t counter = mLinkCounters[linkId];
+      const uint64_t counter = mLinkCounters[linkId];
       // Get stuff from the header
       auto words256 = Cru::DataFormat::getEventSize(reinterpret_cast<const char*>(pageAddress)); // Amount of 256 bit words in DMA page
       auto wordsBytes = words256 * (256 / 8);
@@ -611,37 +617,35 @@ class ProgramDmaBench: public Program
       auto payload = reinterpret_cast<const volatile uint32_t*>(pageAddress + Cru::DataFormat::getHeaderSize());
       auto payloadWords256 = words256 - HEADER_WORDS_256;
 
-      mLinkCounters[linkId] += payloadWords256;
+      mLinkCounters[linkId] += payloadWords256 * 6;
 
       // Every 256 bit words is built as follows:
       // 32 bits (0x0) + 16 bits (0x0) + 16 bit lower counter + 32 bit counter+1 + 32 bit counter+2 + ...
 
       bool foundError = false;
-      auto checkValue = [&](uint32_t i, uint32_t counter, uint32_t expectedValue, uint32_t actualValue) {
+      auto checkValue = [&](uint32_t i, uint32_t expectedValue, uint32_t actualValue) {
         if (expectedValue != actualValue) {
           foundError = true;
           addError(eventNumber, linkId, i, counter, expectedValue, actualValue);
         }
       };
 
-      // First 32 bits are 0
-      checkValue(0, counter, 0x0, payload[0]);
-      // Upper 16 bits of second 32 bits are 0
-      checkValue(1, counter, 0x0, payload[1] && 0xffff0000);
-      // Lower 16 bits of second 32 bits contain truncated counter
-      checkValue(1, counter, counter & 0xffff, payload[1] & 0xffff);
-      // Rest of the 32 bit words contain counters
-      for (uint32_t i = 2; (i + HEADER_WORDS_256) < words256; ++i) {
-        checkValue(i, counter, counter + i, payload[i]);
+      // Check per 256 bit word
+      for (uint32_t i = 0; i < payloadWords256; ++i) {
+        uint32_t offset = counter + i * 6; // 6 32-bit data words per 256-bit word
+        uint32_t word32 = i * 8; // 8 32-bit data words per 256-bit word
+
+        checkValue(word32 + 0, 0x0, payload[word32 + 0]); // First 32 bits are 0
+        checkValue(word32 + 1, (offset + 0) & 0xffff, payload[word32 + 1]); // Upper 16 bits 0, lower 16 bits truncated counter
+        checkValue(word32 + 2, offset + 1, payload[word32 + 2]);
+        checkValue(word32 + 3, offset + 2, payload[word32 + 3]);
+        checkValue(word32 + 4, 0x0, payload[word32 + 4]); // Another 0-padded word
+        checkValue(word32 + 5, (offset + 3) & 0xffff, payload[word32 + 5]); // Upper 16 bits 0, lower 16 bits truncated counter
+        checkValue(word32 + 6, offset + 4, payload[word32 + 6]);
+        checkValue(word32 + 7, offset + 5, payload[word32 + 7]);
       }
 
-      if (foundError) {
-        return true;
-      }
-
-      BOOST_THROW_EXCEPTION(Exception()
-          << ErrorInfo::Message("Unsupported pattern for CRU error checking")
-          << ErrorInfo::GeneratorPattern(mOptions.generatorPattern));
+      return foundError;
     }
 
     void addError(int64_t eventNumber, int linkId, int index, uint32_t generatorCounter, uint32_t expectedValue,
@@ -649,8 +653,8 @@ class ProgramDmaBench: public Program
     {
       mErrorCount++;
        if (mErrorCount < MAX_RECORDED_ERRORS) {
-         mErrorStream << b::format("event:%d link:%d i:%d cnt:%d exp:0x%x val:0x%x\n")
-             % eventNumber % linkId % index % generatorCounter % expectedValue % actualValue;
+         mErrorStream << b::format("event:%d link:%d cnt:%d i:%d exp:%d val:%d\n")
+             % eventNumber % linkId % generatorCounter % index % expectedValue % actualValue;
        }
     }
 
