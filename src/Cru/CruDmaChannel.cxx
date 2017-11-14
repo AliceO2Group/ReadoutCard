@@ -89,7 +89,7 @@ void CruDmaChannel::deviceStartDma()
   initCru();
   setBufferReady();
 
-  if (mFeatures.dataSelection) {
+  if ((mLoopbackMode == LoopbackMode::Internal) && mFeatures.dataSelection) {
     // Something with selecting the data source... [insert link to documentation here]
     getBar2().setDataSource(Cru::Registers::DATA_SOURCE_SELECT_INTERNAL);
   }
