@@ -58,7 +58,7 @@ class CruDmaChannel final : public DmaChannelPdaBase
 
     /// Max amount of superpages in the ready queue.
     /// This is an arbitrary size, can easily be increased if more headroom is needed.
-    static constexpr size_t READY_QUEUE_CAPACITY = 32;
+    static constexpr size_t READY_QUEUE_CAPACITY = Cru::MAX_SUPERPAGE_DESCRIPTORS * Cru::MAX_LINKS;
 
     /// Queue for one link
     using SuperpageQueue = boost::circular_buffer<Superpage>;
