@@ -13,7 +13,6 @@
 #include "Cru/BarAccessor.h"
 #include "Cru/FirmwareFeatures.h"
 #include "ReadoutCard/Parameters.h"
-#include "SuperpageQueue.h"
 
 namespace AliceO2 {
 namespace roc {
