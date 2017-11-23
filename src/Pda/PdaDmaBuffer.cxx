@@ -14,7 +14,7 @@ namespace roc {
 namespace Pda {
 namespace {
 auto MUTEX_NAME = "AliceO2_roc_Pda_PdaDmaBuffer_Mutex";
-auto LOCK_FILE_PATH = "AliceO2_roc_Pda_PdaDmaBuffer_Mutex";
+auto LOCK_FILE_PATH = "/dev/shm/alice_o2/rorc/AliceO2_roc_Pda_PdaDmaBuffer.lock";
 
 
 } // Anonymous namespace
