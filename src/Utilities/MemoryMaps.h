@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_SRC_READOUTCARD_UTILITIES_MEMORYMAPS_H_
+#define ALICEO2_SRC_READOUTCARD_UTILITIES_MEMORYMAPS_H_
 
 #include <cstddef>
 #include <cstdint>
@@ -28,3 +29,5 @@ std::vector<MemoryMap> getMemoryMaps();
 } // namespace Util
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_SRC_READOUTCARD_UTILITIES_MEMORYMAPS_H_

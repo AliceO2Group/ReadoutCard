@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_SRC_READOUTCARD_BARINTERFACEBASE_H_
+#define ALICEO2_SRC_READOUTCARD_BARINTERFACEBASE_H_
 
 #include <memory>
 #include "RocPciDevice.h"
@@ -56,3 +57,5 @@ class BarInterfaceBase: public BarInterface
 
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_SRC_READOUTCARD_BARINTERFACEBASE_H_

@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_SRC_READOUTCARD_CRORC_CRORCBAR_H_
+#define ALICEO2_SRC_READOUTCARD_CRORC_CRORCBAR_H_
 
 #include "BarInterfaceBase.h"
 
@@ -27,3 +28,5 @@ class CrorcBar final : public BarInterfaceBase
 
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_SRC_READOUTCARD_CRORC_CRORCBAR_H_

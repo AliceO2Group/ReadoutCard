@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_SRC_READOUTCARD_DMABUFFERPROVIDER_PDADMABUFFERPROVIDER_H_
+#define ALICEO2_SRC_READOUTCARD_DMABUFFERPROVIDER_PDADMABUFFERPROVIDER_H_
 
 #include <cstddef>
 #include <cstdint>
@@ -73,3 +74,5 @@ class PdaDmaBufferProvider : public DmaBufferProviderInterface
 
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_SRC_READOUTCARD_DMABUFFERPROVIDER_PDADMABUFFERPROVIDER_H_

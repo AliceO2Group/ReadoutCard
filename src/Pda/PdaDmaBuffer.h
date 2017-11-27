@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_SRC_READOUTCARD_PDA_PDADMABUFFER_H_
+#define ALICEO2_SRC_READOUTCARD_PDA_PDADMABUFFER_H_
 
 #include <vector>
 #include <pda.h>
@@ -55,3 +56,5 @@ class PdaDmaBuffer
 } // namespace Pda
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_SRC_READOUTCARD_PDA_PDADMABUFFER_H_

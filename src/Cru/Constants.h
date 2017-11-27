@@ -3,8 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_READOUTCARD_CRU_CONSTANTS
-#define ALICEO2_READOUTCARD_CRU_CONSTANTS
+#ifndef ALICEO2_READOUTCARD_CRU_CONSTANTS_H_
+#define ALICEO2_READOUTCARD_CRU_CONSTANTS_H_
 
 #include "Register.h"
 
@@ -126,4 +126,4 @@ static constexpr Register FPGA_CHIP_ID_2(0x0020003c);
 } // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_READOUTCARD_CRU_CONSTANTS
+#endif // ALICEO2_READOUTCARD_CRU_CONSTANTS_H_

@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_READOUTCARD_CRU_CRUDMACHANNEL_H_
+#define ALICEO2_READOUTCARD_CRU_CRUDMACHANNEL_H_
 
 #include "DmaChannelPdaBase.h"
 #include <memory>
@@ -152,3 +153,5 @@ class CruDmaChannel final : public DmaChannelPdaBase
 
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_READOUTCARD_CRU_CRUDMACHANNEL_H_

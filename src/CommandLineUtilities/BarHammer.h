@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_READOUTCARD_BARHAMMER_H
+#define ALICEO2_READOUTCARD_BARHAMMER_H
 
 #include <atomic>
 #include "Common/BasicThread.h"
@@ -55,3 +56,5 @@ class BarHammer : public AliceO2::Common::BasicThread
 } // namespace CommandLineUtilities
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_READOUTCARD_BARHAMMER_H

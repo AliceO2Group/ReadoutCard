@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_SRC_READOUTCARD_DUMMY_DUMMYBAR_H_
+#define ALICEO2_SRC_READOUTCARD_DUMMY_DUMMYBAR_H_
 
 #include "ReadoutCard/BarInterface.h"
 #include <array>
@@ -46,3 +47,5 @@ class DummyBar final : public BarInterface
 
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_SRC_READOUTCARD_DUMMY_DUMMYBAR_H_

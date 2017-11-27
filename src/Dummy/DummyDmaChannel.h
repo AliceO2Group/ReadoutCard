@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_SRC_READOUTCARD_DUMMY_DUMMYDMACHANNEL_H_
+#define ALICEO2_SRC_READOUTCARD_DUMMY_DUMMYDMACHANNEL_H_
 
 #include <array>
 #include <boost/scoped_ptr.hpp>
@@ -55,3 +56,5 @@ class DummyDmaChannel final : public DmaChannelBase
 
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_SRC_READOUTCARD_DUMMY_DUMMYDMACHANNEL_H_

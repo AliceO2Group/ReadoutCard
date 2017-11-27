@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_READOUTCARD_COMMON_H
+#define ALICEO2_READOUTCARD_COMMON_H
 
 #include <boost/program_options.hpp>
 
@@ -28,3 +29,5 @@ std::string makeRegisterString(int address, uint32_t value);
 } // namespace CommandLineUtilities
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_READOUTCARD_COMMON_H

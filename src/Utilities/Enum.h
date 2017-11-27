@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_SRC_READOUTCARD_UTILITIES_ENUM_H_
+#define ALICEO2_SRC_READOUTCARD_UTILITIES_ENUM_H_
 
 #include <stdexcept>
 #include <utility>
@@ -53,3 +54,5 @@ EnumConverter<Enum> makeEnumConverter(std::string typeName, std::vector<std::pai
 } // namespace Util
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_SRC_READOUTCARD_UTILITIES_ENUM_H_

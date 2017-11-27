@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_READOUTCARD_CRU_CRUBAR_H_
+#define ALICEO2_READOUTCARD_CRU_CRUBAR_H_
 
 #include "BarInterfaceBase.h"
 
@@ -27,3 +28,5 @@ class CruBar final : public BarInterfaceBase
 
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_READOUTCARD_CRU_CRUBAR_H_

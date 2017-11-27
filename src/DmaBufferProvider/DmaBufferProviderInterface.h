@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_SRC_READOUTCARD_DMABUFFERPROVIDER_DMABUFFERPROVIDERINTERFACE_H_
+#define ALICEO2_SRC_READOUTCARD_DMABUFFERPROVIDER_DMABUFFERPROVIDERINTERFACE_H_
 
 #include <cstddef>
 #include <cstdint>
@@ -41,3 +42,5 @@ class DmaBufferProviderInterface
 
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_SRC_READOUTCARD_DMABUFFERPROVIDER_DMABUFFERPROVIDERINTERFACE_H_

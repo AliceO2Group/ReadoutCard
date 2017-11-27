@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_READOUTCARD_CRU_BARACCESSOR_H_
+#define ALICEO2_READOUTCARD_CRU_BARACCESSOR_H_
 
 #include <cstddef>
 #include <boost/optional/optional.hpp>
@@ -302,3 +303,5 @@ class BarAccessor
 } // namespace Cru
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_READOUTCARD_CRU_BARACCESSOR_H_

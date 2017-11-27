@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_SRC_READOUTCARD_ROCPCIDEVICE_H_
+#define ALICEO2_SRC_READOUTCARD_ROCPCIDEVICE_H_
 
 #include <memory>
 #include <string>
@@ -82,3 +83,5 @@ class RocPciDevice
 
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_SRC_READOUTCARD_ROCPCIDEVICE_H_

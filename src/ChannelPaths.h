@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_SRC_READOUTCARD_CHANNELPATHS_H_
+#define ALICEO2_SRC_READOUTCARD_CHANNELPATHS_H_
 
 #include <string>
 #include "ReadoutCard/ParameterTypes/PciAddress.h"
@@ -43,3 +44,5 @@ class ChannelPaths
 
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_SRC_READOUTCARD_CHANNELPATHS_H_

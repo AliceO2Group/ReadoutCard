@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_SRC_READOUTCARD_DMACHANNELPDABASE_H_
+#define ALICEO2_SRC_READOUTCARD_DMACHANNELPDABASE_H_
 
 #include <boost/scoped_ptr.hpp>
 #include "DmaBufferProvider/DmaBufferProviderInterface.h"
@@ -114,3 +115,5 @@ class DmaChannelPdaBase: public DmaChannelBase
 
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_SRC_READOUTCARD_DMACHANNELPDABASE_H_

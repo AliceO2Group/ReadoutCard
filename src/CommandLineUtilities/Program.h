@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_READOUTCARD_PROGRAM_H
+#define ALICEO2_READOUTCARD_PROGRAM_H
 
 #include <atomic>
 #include <boost/program_options.hpp>
@@ -49,3 +50,5 @@ class Program : public AliceO2::Common::Program
 } // namespace CommandLineUtilities
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_READOUTCARD_PROGRAM_H

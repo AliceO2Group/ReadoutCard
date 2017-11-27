@@ -5,7 +5,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_READOUTCARD_OPTIONS_H
+#define ALICEO2_READOUTCARD_OPTIONS_H
 
 #include <boost/program_options.hpp>
 #include "ReadoutCard/Exception.h"
@@ -37,3 +38,5 @@ int getOptionRegisterRange(const boost::program_options::variables_map& map);
 } // namespace CommandLineUtilities
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_READOUTCARD_OPTIONS_H

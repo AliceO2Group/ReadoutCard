@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_SRC_READOUTCARD_PDA_PDADEVICE_H_
+#define ALICEO2_SRC_READOUTCARD_PDA_PDADEVICE_H_
 
 #include <memory>
 #include <string>
@@ -100,3 +101,5 @@ class PdaDevice
 } // namespace Pda
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_SRC_READOUTCARD_PDA_PDADEVICE_H_

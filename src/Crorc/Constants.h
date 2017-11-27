@@ -3,7 +3,8 @@
 /// Based on ddl_def.h and rorc.h
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_SRC_READOUTCARD_CRORC_CONSTANTS_H_
+#define ALICEO2_SRC_READOUTCARD_CRORC_CONSTANTS_H_
 
 namespace AliceO2
 {
@@ -332,3 +333,5 @@ constexpr int POR    = 0x00000000; ///< SIU in Power On Reset state
 } // namespace Siu
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_SRC_READOUTCARD_CRORC_CONSTANTS_H_

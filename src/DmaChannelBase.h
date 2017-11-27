@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_SRC_READOUTCARD_DMACHANNELBASE_H_
+#define ALICEO2_SRC_READOUTCARD_DMACHANNELBASE_H_
 
 #include <set>
 #include <vector>
@@ -126,3 +127,5 @@ class DmaChannelBase: public DmaChannelInterface
 
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_SRC_READOUTCARD_DMACHANNELBASE_H_

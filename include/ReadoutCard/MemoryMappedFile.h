@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_INCLUDE_READOUTCARD_MEMORYMAPPEDFILE_H_
+#define ALICEO2_INCLUDE_READOUTCARD_MEMORYMAPPEDFILE_H_
 
 #include <string>
 #include <memory>
@@ -37,3 +38,5 @@ class MemoryMappedFile
 
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_INCLUDE_READOUTCARD_MEMORYMAPPEDFILE_H_

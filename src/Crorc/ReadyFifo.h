@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_SRC_READOUTCARD_CRORC_READYFIFO_H_
+#define ALICEO2_SRC_READOUTCARD_CRORC_READYFIFO_H_
 
 #include <cstdint>
 #include <array>
@@ -58,3 +59,4 @@ static_assert(sizeof(ReadyFifo) == (READYFIFO_ENTRIES * sizeof(ReadyFifo::Entry)
 } // namespace roc
 } // namespace AliceO2
 
+#endif // ALICEO2_SRC_READOUTCARD_CRORC_READYFIFO_H_

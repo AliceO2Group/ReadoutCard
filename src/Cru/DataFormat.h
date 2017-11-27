@@ -3,8 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_READOUTCARD_CRU_DATAFORMAT
-#define ALICEO2_READOUTCARD_CRU_DATAFORMAT
+#ifndef ALICEO2_READOUTCARD_CRU_DATAFORMAT_H_
+#define ALICEO2_READOUTCARD_CRU_DATAFORMAT_H_
 
 #include <cstddef>
 #include <cstdint>
@@ -57,4 +57,4 @@ constexpr size_t getHeaderSizeWords()
 } // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_READOUTCARD_CRU_DATAFORMAT
+#endif // ALICEO2_READOUTCARD_CRU_DATAFORMAT_H_

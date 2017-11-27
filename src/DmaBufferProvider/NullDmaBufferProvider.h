@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_SRC_READOUTCARD_DMABUFFERPROVIDER_NULLDMABUFFERPROVIDER_H_
+#define ALICEO2_SRC_READOUTCARD_DMABUFFERPROVIDER_NULLDMABUFFERPROVIDER_H_
 
 #include "DmaBufferProvider/DmaBufferProviderInterface.h"
 #include <cstddef>
@@ -61,3 +62,5 @@ class NullDmaBufferProvider : public DmaBufferProviderInterface
 
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_SRC_READOUTCARD_DMABUFFERPROVIDER_NULLDMABUFFERPROVIDER_H_

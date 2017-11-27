@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_SRC_READOUTCARD_CRORC_CRORC_H_
+#define ALICEO2_SRC_READOUTCARD_CRORC_CRORC_H_
 
 #include <atomic>
 #include <iostream>
@@ -190,3 +191,5 @@ class Crorc
 } // namespace Crorc
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_SRC_READOUTCARD_CRORC_CRORC_H_

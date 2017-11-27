@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_SRC_READOUTCARD_CRORC_CRORCDMACHANNEL_H_
+#define ALICEO2_SRC_READOUTCARD_CRORC_CRORCDMACHANNEL_H_
 
 #include <mutex>
 #include <unordered_map>
@@ -201,3 +202,5 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
 
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_SRC_READOUTCARD_CRORC_CRORCDMACHANNEL_H_

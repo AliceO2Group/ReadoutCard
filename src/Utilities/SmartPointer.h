@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_SRC_READOUTCARD_UTILITIES_SMARTPOINTER_H_
+#define ALICEO2_SRC_READOUTCARD_UTILITIES_SMARTPOINTER_H_
 
 namespace AliceO2 {
 namespace roc {
@@ -19,3 +20,5 @@ void resetSmartPtr(SmartPtr& ptr, Args&&... args)
 } // namespace Util
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_SRC_READOUTCARD_UTILITIES_SMARTPOINTER_H_

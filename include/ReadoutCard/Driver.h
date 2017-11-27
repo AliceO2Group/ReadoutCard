@@ -3,6 +3,9 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
+#ifndef ALICEO2_INCLUDE_READOUTCARD_DRIVER_H_
+#define ALICEO2_INCLUDE_READOUTCARD_DRIVER_H_
+
 namespace AliceO2 {
 namespace roc {
 namespace driver {
@@ -20,3 +23,5 @@ void freeUnusedChannelBuffers();
 } // namespace driver
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_INCLUDE_READOUTCARD_DRIVER_H_

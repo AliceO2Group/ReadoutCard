@@ -1,5 +1,11 @@
-#ifndef ALICEO2_READOUTCARD_SRC_FIRMWAREFEATURES_H
-#define ALICEO2_READOUTCARD_SRC_FIRMWAREFEATURES_H
+/// \file FirmwareFeatures.h
+/// \brief Definition of the FirmwareFeatures struct
+///
+/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+
+
+#ifndef ALICEO2_READOUTCARD_CRU_FIRMWAREFEATURES_H_
+#define ALICEO2_READOUTCARD_CRU_FIRMWAREFEATURES_H_
 
 namespace AliceO2 {
 namespace roc {
@@ -28,4 +34,4 @@ struct FirmwareFeatures
 } // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_READOUTCARD_SRC_FIRMWAREFEATURES_H
+#endif // ALICEO2_READOUTCARD_CRU_FIRMWAREFEATURES_H_

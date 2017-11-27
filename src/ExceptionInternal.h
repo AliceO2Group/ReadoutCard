@@ -3,7 +3,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#pragma once
+#ifndef ALICEO2_SRC_READOUTCARD_EXCEPTIONINTERNAL_H_
+#define ALICEO2_SRC_READOUTCARD_EXCEPTIONINTERNAL_H_
 
 #include <stdexcept>
 #include <string>
@@ -111,3 +112,5 @@ std::string to_string(const AliceO2::roc::ErrorInfo::ReadyFifoStatus& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::ResetLevel& e);
 
 }
+
+#endif // ALICEO2_SRC_READOUTCARD_EXCEPTIONINTERNAL_H_
