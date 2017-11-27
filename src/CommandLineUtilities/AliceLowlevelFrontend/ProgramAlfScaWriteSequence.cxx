@@ -35,9 +35,9 @@ class ProgramAlfScaWriteSequence: public Program
     {
       options.add_options()
         ("serial", boost::program_options::value<int>(&mSerialNumber),
-          "Card serial number");
+          "Card serial number")
         ("file", boost::program_options::value<std::string>(&mFilePath)->required(),
-          "Path to command sequence file");
+          "Path to command sequence file")
         ("out", boost::program_options::value<std::string>(&mOutFilePath),
           "Path to output file. If not specified, will output to stdout");
     }
