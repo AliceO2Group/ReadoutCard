@@ -8,7 +8,7 @@
 
 #include <mutex>
 #include <unordered_map>
-#include <boost/circular_buffer_fwd.hpp>
+#include <boost/circular_buffer.hpp>
 #include <boost/scoped_ptr.hpp>
 #include "DmaChannelPdaBase.h"
 #include "Crorc.h"
@@ -55,14 +55,17 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
     virtual void deviceResetChannel(ResetLevel::type resetLevel) override;
 
   private:
-    /// Limits the number of superpages allowed in the queue
-    static constexpr size_t MAX_SUPERPAGES = 32;
-
     /// Firmware FIFO Size
-    static constexpr size_t FIFO_QUEUE_MAX = READYFIFO_ENTRIES;
+    static constexpr size_t TRANSFER_QUEUE_CAPACITY = READYFIFO_ENTRIES;
 
-    using SuperpageQueueType = SuperpageQueue<MAX_SUPERPAGES>;
-    using SuperpageQueueEntry = SuperpageQueueType::SuperpageQueueEntry;
+    /// Max amount of superpages in the ready queue (i.e. finished transfer).
+    /// This is an arbitrary size, can easily be increased if more headroom is needed.
+    static constexpr size_t READY_QUEUE_CAPACITY = READYFIFO_ENTRIES;
+
+    /// Minimum number of superpages needed to bootstrap DMA
+    static constexpr size_t DMA_START_REQUIRED_SUPERPAGES = READYFIFO_ENTRIES;
+
+    using SuperpageQueue = boost::circular_buffer<Superpage>;
 
     /// Namespace for enum describing the status of a page's arrival
     struct DataArrivalStatus
@@ -75,8 +78,6 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
         };
     };
 
-    uintptr_t getNextSuperpageBusAddress(const SuperpageQueueEntry& superpage);
-
     /// C-RORC function helper
     Crorc::Crorc getCrorc()
     {
@@ -86,11 +87,6 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
     ReadyFifo* getReadyFifoUser()
     {
       return reinterpret_cast<ReadyFifo*>(mReadyFifoAddressUser);
-    }
-
-    ReadyFifo* getReadyFifoBus()
-    {
-      return reinterpret_cast<ReadyFifo*>(mReadyFifoAddressBus);
     }
 
     /// Enables data receiving in the RORC
@@ -107,17 +103,14 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
     /// Check if data has arrived
     DataArrivalStatus::type dataArrived(int index);
 
-    /// Starts pending DMA with given superpage for the initial pages
-    void startPendingDma(SuperpageQueueEntry& superpage);
-
-    /// Push a page into a superpage
-    void pushIntoSuperpage(SuperpageQueueEntry& superpage);
-
     /// Get front index of FIFO
     int getFifoFront() const
     {
       return (mFifoBack + mFifoSize) % READYFIFO_ENTRIES;
     };
+
+    /// Starts pending DMA with given superpage for the initial pages
+    void startPendingDma();
 
     /// BAR 0 is needed for DMA engine interaction and various other functions
     Pda::PdaBar mPdaBar;
@@ -143,8 +136,11 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
     /// Amount of elements in the firmware FIFO
     int mFifoSize = 0;
 
-    /// Queue for superpages
-    SuperpageQueueType mSuperpageQueue;
+    /// Queue for superpages that are pushed to the firmware FIFO
+    SuperpageQueue mTransferQueue {TRANSFER_QUEUE_CAPACITY};
+
+    /// Queue for superpages that are filled
+    SuperpageQueue mReadyQueue {READY_QUEUE_CAPACITY};
 
     /// Address of DMA buffer in userspace
     uintptr_t mDmaBufferUserspace = 0;
