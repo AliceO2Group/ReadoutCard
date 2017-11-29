@@ -1,6 +1,17 @@
 /// \file ProgramAliceLowlevelFrontendServer.cxx
 /// \brief Utility that starts the ALICE Lowlevel Frontend (ALF) DIM server
 ///
+/// This file contains a bunch of classes that together form the server part of ALF.
+/// It is single-threaded, because an earlier multi-threaded implementation ran into strange locking issues with DIM's
+/// thread, and it was determined that it would cost less time to rewrite than to debug.
+///
+/// The idea is that the DIM thread calls the RPC handler functions of the ProgramAliceLowlevelFrontendServer class.
+/// These handlers then, depending on the RPC:
+/// a) Execute the request immediately (such as for register reads and writes)
+/// b) Put a corresponding command object in a lock-free thread-safe queue (such as for publish start/stop commands),
+///    the mCommandQueue. The main thread of ProgramAliceLowlevelFrontendServer periodically takes commands from this
+///    queue and handles them.
+///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "Common/Program.h"
@@ -65,8 +76,19 @@ static std::vector<T> lexicalCastVector(const std::vector<U>& items)
 struct ServiceDescription
 {
     std::string dnsName;
-    std::vector<uintptr_t> addresses;
     std::chrono::milliseconds interval;
+
+    struct Register
+    {
+        std::vector<uintptr_t> addresses;
+    };
+
+    struct Sca
+    {
+        std::vector<std::pair<uint32_t, uint32_t>> commandDataPairs;
+    };
+
+    boost::variant<Register, Sca> type;
 };
 
 /// Class that handles adding/removing publishers
@@ -101,7 +123,7 @@ class PublisherRegistry
       for (auto& kv: mServices) {
         auto& service = *kv.second;
         if (service.nextUpdate < now) {
-          service.updateRegisterValues(*mChannel.get());
+          service.updateValues(*mChannel.get());
           service.advanceUpdateTime();
           if (service.nextUpdate < next) {
             next = service.nextUpdate;
@@ -120,15 +142,27 @@ class PublisherRegistry
         {
           mDescription = description;
           nextUpdate = std::chrono::steady_clock::now();
-          registerValues.resize(mDescription.addresses.size());
+
+          Visitor::apply(mDescription.type,
+            [&](const ServiceDescription::Register& type){
+              registerValues.resize(type.addresses.size());
+
+              getInfoLogger() << "Starting publisher '" << mDescription.dnsName << "' with "
+                << type.addresses.size() << " address(es) at interval "
+                << mDescription.interval.count() << "ms" << endm;
+            },
+            [&](const ServiceDescription::Sca& type){
+              registerValues.resize(1); // SCA publisher only publishes 1 value
+
+              getInfoLogger() << "Starting SCA publisher '" << mDescription.dnsName << "' with "
+                << type.commandDataPairs.size() << " commands(s) at interval "
+                << mDescription.interval.count() << "ms" << endm;
+            }
+          );
 
           auto format = (b::format("I:%1%") % registerValues.size()).str();
           dimService = std::make_unique<DimService>(mDescription.dnsName.c_str(), format.c_str(), registerValues.data(),
             registerValues.size());
-
-          getInfoLogger() << "Starting publisher '" << mDescription.dnsName << "' with "
-            << mDescription.addresses.size() << " address(es) at interval "
-            << mDescription.interval.count() << "ms" << endm;
         }
 
         ~Service()
@@ -136,15 +170,34 @@ class PublisherRegistry
           getInfoLogger() << "Stopping publisher '" << mDescription.dnsName << "'" << endm;
         }
 
-        void updateRegisterValues(RegisterReadWriteInterface& channel)
+        void updateValues(BarInterface& channel)
         {
           getInfoLogger() << "Updating '" << mDescription.dnsName << "':" << endm;
-          for (size_t i = 0; i < mDescription.addresses.size(); ++i) {
-            auto index = mDescription.addresses[i] / 4;
-            auto value = channel.readRegister(index);
-            getInfoLogger() << "  " << mDescription.addresses[i] << " = " << value << endm;
-            registerValues.at(i) = channel.readRegister(index);
-          }
+
+          Visitor::apply(mDescription.type,
+            [&](const ServiceDescription::Register& type){
+              for (size_t i = 0; i < type.addresses.size(); ++i) {
+                auto index = type.addresses[i] / 4;
+                auto value = channel.readRegister(index);
+                getInfoLogger() << "  " << type.addresses[i] << " = " << value << endm;
+                registerValues.at(i) = channel.readRegister(index);
+              }
+            },
+            [&](const ServiceDescription::Sca& type){
+              auto sca = Sca(channel, channel.getCardType());
+
+              for (size_t i = 0; i < type.commandDataPairs.size(); ++i) {
+                const auto& pair = type.commandDataPairs[i];
+                sca.write(pair.first, pair.second);
+                if (i+1 == type.commandDataPairs.size()) {
+                  // Last one, we do a read. This result is published.
+                  auto result = sca.read();
+                  registerValues.at(0) = channel.readRegister(result.data);
+                }
+              }
+            }
+          );
+
           dimService->updateService();
         }
 
@@ -278,6 +331,8 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
         }
 
         publisherRegistry.loop();
+
+        // Dummy service. Temporary.
         mTemperature = double((std::rand() % 100) + 400) / 10.0;
         temperatureService.updateService(mTemperature);
       }
@@ -338,7 +393,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
       auto params = split(parameter, ";");
 
       ServiceDescription description;
-      description.addresses = lexicalCastVector<uintptr_t >(split(params.at(1), ","));
+      description.type = ServiceDescription::Register{lexicalCastVector<uintptr_t >(split(params.at(1), ","))};
       description.dnsName = params.at(0);
       description.interval = std::chrono::milliseconds(int64_t(b::lexical_cast<double>(params.at(2)) * 1000.0));
 
@@ -358,6 +413,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
       return "";
     }
 
+    /// RPC handler for SCA read commands
     static std::string scaRead(const std::string&, ChannelSharedPtr bar2)
     {
       getInfoLogger() << "SCA_READ" << endm;
@@ -365,6 +421,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
       return (b::format("0x%x,0x%x") % result.command % result.data).str();
     }
 
+    /// RPC handler for SCA write commands
     static std::string scaWrite(const std::string& parameter, ChannelSharedPtr bar2)
     {
       getInfoLogger() << "SCA_WRITE: '" << parameter << "'" << endm;
@@ -375,6 +432,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
       return "";
     }
 
+    /// RPC handler for SCA GPIO read commands
     static std::string scaGpioRead(const std::string&, ChannelSharedPtr bar2)
     {
       getInfoLogger() << "SCA_GPIO_READ" << endm;
@@ -382,6 +440,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
       return (b::format("0x%x") % result.data).str();
     }
 
+    /// RPC handler for SCA GPIO write commands
     static std::string scaGpioWrite(const std::string& parameter, ChannelSharedPtr bar2)
     {
       getInfoLogger() << "SCA_GPIO_WRITE: '" << parameter << "'" << endm;
@@ -390,6 +449,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
       return "";
     }
 
+    /// RPC handler for SCA blob write commands (sequence of commands)
     static std::string scaBlobWrite(const std::string& parameter, ChannelSharedPtr bar2)
     {
       getInfoLogger() << "SCA_BLOB_WRITE size=" << parameter.size() << " bytes" << endm;
