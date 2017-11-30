@@ -69,9 +69,12 @@ class ProgramAliceLowlevelFrontendClient: public Program
       Alf::ScaGpioWriteRpc scaGpioWriteRpc(names.scaGpioWrite());
       Alf::ScaWriteSequence scaWriteSequence(names.scaWriteSequence());
       Alf::PublishRpc publishRpc(names.publishStartCommandRpc());
+      Alf::PublishScaRpc publishScaRpc(names.publishScaStartCommandRpc());
 
       publishRpc.publish("ALF/TEST/1", 1.0, {0x1fc});
       publishRpc.publish("ALF/TEST/2", 3.0, {0x100, 0x104, 0x108});
+
+      publishScaRpc.publish("ALF/TEST/SCA_1", 1.0, {{0x0, 0x1}, {0x10, 0x11}});
 
       for (int i = 0; i < 10; ++i) {
         cout << "SCA GPIO write '" << i << "'" << endl;
@@ -135,6 +138,7 @@ class ProgramAliceLowlevelFrontendClient: public Program
       Alf::PublishStopRpc publishStopRpc(names.publishStopCommandRpc());
       publishStopRpc.stop("ALF/TEST/1");
       publishStopRpc.stop("ALF/TEST/2");
+      publishStopRpc.stop("ALF/TEST/SCA_1");
     }
 
     int mSerialNumber;
