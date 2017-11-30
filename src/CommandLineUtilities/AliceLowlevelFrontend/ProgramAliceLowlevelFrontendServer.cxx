@@ -184,13 +184,21 @@ class PublisherRegistry
               }
             },
             [&](const ServiceDescription::ScaSequence& type){
+              std::fill(registerValues.begin(), registerValues.end(), 0); // Reset array in case of aborts
               auto sca = Sca(channel, channel.getCardType());
               for (size_t i = 0; i < type.commandDataPairs.size(); ++i) {
-                const auto& pair = type.commandDataPairs[i];
-                sca.write(pair);
-                auto result = sca.read();
-                registerValues[i*2] = result.command;
-                registerValues[i*2 + 1] = result.data;
+                try {
+                  const auto& pair = type.commandDataPairs[i];
+                  sca.write(pair);
+                  auto result = sca.read();
+                  registerValues[i*2] = result.command;
+                  registerValues[i*2 + 1] = result.data;
+                } catch (const ScaException &e) {
+                  // If an SCA error occurs, we stop executing the sequence of commands and set the error value
+                  registerValues[i*2] = 0xffffffff;
+                  registerValues[i*2 + 1] = 0xffffffff;
+                  break;
+                }
               }
             }
           );

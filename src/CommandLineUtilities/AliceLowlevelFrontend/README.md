@@ -36,7 +36,8 @@ Values are published as array of 32 bit unsigned integers.
 
 #### Publish SCA
 Starts a service under a DNS name, that executes and publishes the results of the given SCA write sequence at the 
-specified interval. Values are published as array of 32 bit unsigned integers. 
+specified interval. Values are published as array of 32 bit unsigned integers.
+If an error occurred, the corresponding result will be set to 0xffffffff and the rest of the sequence is aborted. 
 * Service type: RPC call
 * Service name: PUBLISH_SCA_START
 * Parameters: DNS name to publish at, comma-separated register addresses, interval in seconds
