@@ -25,10 +25,20 @@ class Sca
         uint32_t data;
     };
 
+    struct CommandData
+    {
+        uint32_t command;
+        uint32_t data;
+    };
+
     Sca(RegisterReadWriteInterface& bar2, CardType::type cardType);
 
     void initialize();
     void write(uint32_t command, uint32_t data);
+    void write(CommandData commandData)
+    {
+        write(commandData.command, commandData.data);
+    }
     ReadResult read();
     ReadResult gpioRead();
     ReadResult gpioWrite(uint32_t data);

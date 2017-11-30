@@ -24,6 +24,7 @@ class ServiceNames
     std::string registerReadRpc() const;
     std::string registerWriteRpc() const;
     std::string publishStartCommandRpc() const;
+    std::string publishScaStartCommandRpc() const;
     std::string publishStopCommandRpc() const;
     std::string scaWrite() const;
     std::string scaWriteSequence() const;

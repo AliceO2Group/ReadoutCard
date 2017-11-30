@@ -25,6 +25,30 @@ The return string could be "success:" or "failure:Address out of range".
 
 ## Service description
 
+#### Publish registers
+Starts a service under a DNS name, that publishes the contents of the given register addresses at the specified 
+interval.
+Values are published as array of 32 bit unsigned integers. 
+* Service type: RPC call
+* Service name: PUBLISH_START
+* Parameters: DNS name to publish at, comma-separated register addresses, interval in seconds
+* Return: empty
+
+#### Publish SCA
+Starts a service under a DNS name, that executes and publishes the results of the given SCA write sequence at the 
+specified interval. Values are published as array of 32 bit unsigned integers. 
+* Service type: RPC call
+* Service name: PUBLISH_SCA_START
+* Parameters: DNS name to publish at, comma-separated register addresses, interval in seconds
+* Return: empty
+
+#### Publish stop
+Stops a publishing service (either regular or SCA) registered under the given DNS name.
+* Service type: RPC call
+* Service name: PUBLISH_STOP
+* Parameters: DNS name
+* Return: empty
+
 #### Register read
 * Service type: RPC call
 * Service name: REGISTER_READ

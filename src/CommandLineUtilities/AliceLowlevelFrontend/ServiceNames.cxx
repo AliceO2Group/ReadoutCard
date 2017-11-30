@@ -20,6 +20,7 @@ std::string ServiceNames::_function() const \
 DEFSERVICENAME(registerReadRpc, "REGISTER_READ")
 DEFSERVICENAME(registerWriteRpc, "REGISTER_WRITE")
 DEFSERVICENAME(publishStartCommandRpc, "PUBLISH_SERVICE")
+DEFSERVICENAME(publishScaStartCommandRpc, "PUBLISH_SCA_SERVICE")
 DEFSERVICENAME(publishStopCommandRpc, "PUBLISH_SERVICE_STOP")
 DEFSERVICENAME(scaRead, "SCA_READ")
 DEFSERVICENAME(scaWrite, "SCA_WRITE")
