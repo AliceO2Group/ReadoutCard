@@ -16,6 +16,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/format.hpp>
 #include "AlfException.h"
+#include "Sca.h"
 
 namespace AliceO2 {
 namespace roc {
@@ -156,6 +157,31 @@ class PublishRpc : DimRpcInfoWrapper
       }
       stream << ';' << frequency;
       printf("Publish: %s\n", stream.str().c_str());
+      setString(stream.str());
+      getString();
+    }
+};
+
+class PublishScaRpc : DimRpcInfoWrapper
+{
+  public:
+    PublishScaRpc(const std::string& serviceName)
+      : DimRpcInfoWrapper(serviceName)
+    {
+    }
+
+    void publish(std::string dnsName, double frequency, const std::vector<Sca::CommandData>& commandDataPairs)
+    {
+      std::ostringstream stream;
+      stream << dnsName << ';';
+      for (size_t i = 0; i < commandDataPairs.size(); ++i) {
+        stream << commandDataPairs[i].command << ',' << commandDataPairs[i].data;
+        if ((i + 1) < commandDataPairs.size()) {
+          stream << '\n';
+        }
+      }
+      stream << ';' << frequency;
+      printf("Publish SCA: %s\n", stream.str().c_str());
       setString(stream.str());
       getString();
     }
