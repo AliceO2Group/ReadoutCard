@@ -22,7 +22,7 @@ Some of the services are RPC calls.
   The '0x' prefix is omitted for return values.
 
 For example: a register write call could have the argument string "0x504\n0x4" meaning write value 0x42 to address 0x4.
-The return string could be "success:" or "failure:Address out of range".
+The return string could be "success\n" or "failure\nAddress out of range".
 
 #### REGISTER_READ
 * Service type: RPC call
