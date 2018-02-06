@@ -85,10 +85,10 @@ class StringRpcServer: public DimRpc
 };
 
 /// Splits a string
-static std::vector<std::string> split(const std::string& string, const char* separators)
+static std::vector<std::string> split(const std::string& string, std::string separators)
 {
   std::vector<std::string> split;
-  b::split(split, string, b::is_any_of(separators));
+  b::split(split, string, b::is_any_of(separators.c_str()));
   return split;
 }
 
@@ -203,6 +203,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
       } catch (const Exception& exception) {
         getLogger() << "Failed to get devices: " << exception.what() << endm;
       }
+      // Add dummy card
       cardsFound.push_back(
         CardDescriptor{CardType::Dummy, ChannelFactory::getDummySerialNumber(), {"dummy", "dummy"}, {0, 0, 0}});
 
@@ -375,7 +376,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
     /// Publish updated values
     void serviceUpdate(Service& service)
     {
-      getLogger() << "Updating '" << service.description.dnsName << "':" << endm;
+      getLogger() << "Updating '" << service.description.dnsName << "'" << endm;
 
       Visitor::apply(service.description.type,
         [&](const ServiceDescription::Register& type){
@@ -383,7 +384,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
           for (size_t i = 0; i < type.addresses.size(); ++i) {
             auto index = type.addresses[i] / 4;
             auto value = bar0.readRegister(index);
-            service.registerValues.at(i) = bar0.readRegister(index);
+            service.registerValues.at(i) = value;
           }
         },
         [&](const ServiceDescription::ScaSequence& type){
@@ -435,34 +436,24 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
       checkAddress(address);
 
       uint32_t value = channel->readRegister(address / 4);
-
       getLogger() << "READ   " << Common::makeRegisterString(address, value) << endm;
-
       return (b::format("0x%x") % value).str();
     }
 
     /// RPC handler for register writes
     static std::string registerWrite(const std::string& parameter, BarSharedPtr channel)
     {
-      std::vector<std::string> params = split(parameter, argumentSeparator().c_str());
+      std::vector<std::string> params = split(parameter, argumentSeparator());
 
       if (params.size() != 2) {
         BOOST_THROW_EXCEPTION(AlfException() << ErrorInfo::Message("Write RPC call did not have 2 parameters"));
       }
 
-      auto address = convertHexString(params[0]);;
-      auto value = convertHexString(params[1]);;
+      auto address = convertHexString(params.at(0));;
+      auto value = convertHexString(params.at(1));;
       checkAddress(address);
 
       getLogger() << "WRITE  " << Common::makeRegisterString(address, value) << endm;
-
-      if (address == 0x1f4) {
-        // This is to the command register, we need to wait until the card indicates it's not busy before sending a
-        // command
-        while (!isSigInt() && (channel->readRegister(0x1f0 / 4) & 0x80000000)) {
-        }
-      }
-
       channel->writeRegister(address / 4, value);
       return "";
     }
@@ -472,18 +463,27 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
       LinkInfo linkInfo)
     {
       getLogger() << "PUBLISH_REGISTERS_START: '" << parameter << "'" << endm;
-      auto params = split(parameter, argumentSeparator().c_str());
 
-      size_t args = 2;
+      auto params = split(parameter, argumentSeparator());
+      auto dnsName = params.at(0);
+      auto interval = params.at(1);
+
+      if (params.size() < 3) {
+        BOOST_THROW_EXCEPTION(AlfException()
+          << ErrorInfo::Message("Not enough parameters given"));
+      }
+
+      // Convert register string sequence to binary format
+      size_t skip = 2; // First two arguments don't go in the array
       std::vector<uintptr_t> registers;
-      for (size_t i = 0; (i + args) < params.size(); ++i) {
-        registers.push_back(b::lexical_cast<uintptr_t >(i + args));
+      for (size_t i = 0; (i + skip) < params.size(); ++i) {
+        registers.push_back(b::lexical_cast<uintptr_t >(i + skip));
       }
 
       auto command = std::make_unique<CommandQueue::Command>();
       command->start = true;
-      command->description.dnsName = ServiceNames(linkInfo.serial, linkInfo.link).publishRegistersSubdir(params.at(0));
-      command->description.interval = std::chrono::milliseconds(int64_t(b::lexical_cast<double>(params.at(1)) * 1000.0));
+      command->description.dnsName = ServiceNames(linkInfo.serial, linkInfo.link).publishRegistersSubdir(dnsName);
+      command->description.interval = std::chrono::milliseconds(int64_t(b::lexical_cast<double>(interval) * 1000.0));
       command->description.type = ServiceDescription::Register{std::move(registers)};
       command->description.linkInfo = linkInfo;
 
@@ -497,31 +497,28 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
     {
       getLogger() << "PUBLISH_SCA_SEQUENCE_START: '" << parameter << "'" << endm;
 
-      auto params = split(parameter, argumentSeparator().c_str());
+      auto params = split(parameter, argumentSeparator());
+      auto dnsName = params.at(0);
+      auto interval = params.at(1);
 
       if (params.size() < 3) {
         BOOST_THROW_EXCEPTION(AlfException()
           << ErrorInfo::Message("Not enough parameters given"));
       }
 
-      size_t args = 2; // Number of args to skip for the array
-      std::vector<uintptr_t> registers;
-      for (size_t i = args; (i + args) < params.size(); ++i) {
-        registers.push_back(b::lexical_cast<uintptr_t >(i));
-      }
-
       // Convert command-data pair string sequence to binary format
+      size_t skip = 2; // Number of arguments to skip for the array
       ServiceDescription::ScaSequence sca;
-      sca.commandDataPairs.resize(params.size() - args);
-      for (size_t i = 0; (i + args) < params.size(); ++i) {
-        sca.commandDataPairs[i] = stringToScaCommandDataPair(params[i + args]);
+      sca.commandDataPairs.resize(params.size() - skip);
+      for (size_t i = 0; (i + skip) < params.size(); ++i) {
+        sca.commandDataPairs[i] = stringToScaCommandDataPair(params[i + skip]);
       }
 
       auto command = std::make_unique<CommandQueue::Command>();
       command->start = true;
       command->description.type = sca;
-      command->description.dnsName = ServiceNames(linkInfo.serial, linkInfo.link).publishScaSequenceSubdir(params.at(0));
-      command->description.interval = std::chrono::milliseconds(int64_t(b::lexical_cast<double>(params.at(1)) * 1000.0));
+      command->description.dnsName = ServiceNames(linkInfo.serial, linkInfo.link).publishScaSequenceSubdir(dnsName);
+      command->description.interval = std::chrono::milliseconds(int64_t(b::lexical_cast<double>(interval) * 1000.0));
       command->description.linkInfo = linkInfo;
 
       tryAddToQueue(*queue, std::move(command));
@@ -574,7 +571,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
     static std::string scaWrite(const std::string& parameter, BarSharedPtr bar2, LinkInfo linkInfo)
     {
       getLogger() << "SCA_WRITE: '" << parameter << "'" << endm;
-      auto params = split(parameter, argumentSeparator().c_str());
+      auto params = split(parameter, scaPairSeparator());
       auto command = convertHexString(params.at(0));
       auto data = convertHexString(params.at(1));
       Sca(*bar2, bar2->getCardType(), linkInfo.link).write(command, data);
@@ -601,23 +598,19 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
     /// RPC handler for SCA blob write commands (sequence of commands)
     static std::string scaBlobWrite(const std::string& parameter, BarSharedPtr bar2, LinkInfo linkInfo)
     {
-      getLogger() << "SCA_BLOB_WRITE size=" << parameter.size() << " bytes" << endm;
+      getLogger() << "SCA_SEQUENCE size=" << parameter.size() << " bytes" << endm;
 
       // We first split on \n to get the pairs of SCA command and SCA data
-      // Since this can be an enormous list of pairs, we walk through it using the tokenizer
-      using tokenizer = boost::tokenizer<boost::char_separator<char>>;
-      // Drop '\n' delimiters, keep none
-      boost::char_separator<char> sep(argumentSeparator().c_str(), "", boost::drop_empty_tokens);
+      auto lines = split(parameter, argumentSeparator());
       std::stringstream resultBuffer;
       auto sca = Sca(*bar2, bar2->getCardType(), linkInfo.link);
 
-      for (const std::string& token : tokenizer(parameter, sep)) {
+      for (const auto& line : lines) {
         // Walk through the tokens, these should be the pairs (or comments).
-        if (token.find('#') == 0) {
-          // We have a comment, skip this token
+        if (isLineComment(line)) {
           continue;
         } else {
-          auto commandData = stringToScaCommandDataPair(token);
+          auto commandData = stringToScaCommandDataPair(line);
           try {
             sca.write(commandData);
             auto result = sca.read();
@@ -627,6 +620,9 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
           } catch (const ScaException &e) {
             // If an SCA error occurs, we stop executing the sequence of commands and return the results as far as we got
             // them, plus the error message.
+            getLogger() << InfoLogger::InfoLogger::Error
+              << (b::format("SCA_SEQUENCE cmd=0x%x data=0x%x serial=%d link=%d error='%s'") % commandData.command
+                % commandData.data % linkInfo.serial % linkInfo.link % e.what()).str() << endm;
             resultBuffer << e.what();
             break;
           }
@@ -634,6 +630,11 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
       }
 
       return resultBuffer.str();
+    }
+
+    static bool isLineComment(const std::string& line)
+    {
+      return line.find('#') == 0;
     }
 
     static Sca::CommandData stringToScaCommandDataPair(const std::string& string)

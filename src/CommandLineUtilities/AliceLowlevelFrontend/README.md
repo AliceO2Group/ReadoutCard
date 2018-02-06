@@ -78,14 +78,14 @@ Write and read a sequence to the SCA
     If an SCA error occurred, the sequence of return values will go up to that point, plus the error message
     If another type of error occurred (such as a formatting error), it will return a failure string.
 
-#### SCA GPIO read
+#### SCA_GPIO_READ
 Read the GPIO pins
 * Service type: RPC call
 * Service name: SCA_GPIO_READ
 * Parameters: empty
 * Return: SCA data
 
-#### SCA GPIO write
+#### SCA_GPIO_WRITE
 Set enabled the selected GPIO pins
 * Service type: RPC call
 * Service name: SCA_GPIO_WRITE

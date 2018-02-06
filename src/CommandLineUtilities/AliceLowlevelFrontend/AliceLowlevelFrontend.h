@@ -102,7 +102,7 @@ inline bool isFail(const std::string& string)
 inline std::string stripPrefix(const std::string& string)
 {
   if (string.length() < PREFIX_LENGTH) {
-    printf("len=%ul  str=%s\n", string.length(), string.c_str());
+    printf("len=%lu  str=%s\n", string.length(), string.c_str());
     BOOST_THROW_EXCEPTION(AlfException() << ErrorInfo::Message("string too short to contain prefix"));
   }
   return string.substr(PREFIX_LENGTH);
@@ -247,7 +247,7 @@ class RegisterWriteRpc: DimRpcInfoWrapper
 
     void writeRegister(uint64_t registerAddress, uint32_t registerValue)
     {
-      setString((boost::format("0x%x,0x%x") % registerAddress % registerValue).str());
+      setString((boost::format("0x%x%s0x%x") % registerAddress % argumentSeparator() % registerValue).str());
       getString();
     }
 };
@@ -277,7 +277,7 @@ class ScaWriteRpc: DimRpcInfoWrapper
 
     std::string write(uint32_t command, uint32_t data)
     {
-      setString((boost::format("0x%x,0x%x") % command % data).str());
+      setString((boost::format("0x%x%s0x%x") % command % scaPairSeparator() % data).str());
       return stripPrefix(getString());
     }
 };
@@ -330,9 +330,9 @@ class ScaWriteSequence: DimRpcInfoWrapper
     {
       std::stringstream buffer;
       for (size_t i = 0; i < sequence.size(); ++i) {
-        buffer << sequence[i].first << ',' << sequence[i].second;
+        buffer << sequence[i].first << scaPairSeparator() << sequence[i].second;
         if (i + 1 < sequence.size()) {
-          buffer << '\n';
+          buffer << argumentSeparator();
         }
       }
       return write(buffer.str());
