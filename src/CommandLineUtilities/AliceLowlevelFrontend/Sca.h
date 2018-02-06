@@ -31,7 +31,10 @@ class Sca
         uint32_t data;
     };
 
-    Sca(RegisterReadWriteInterface& bar2, CardType::type cardType);
+    /// \param bar2 SCA is on BAR 2
+    /// \param cardType Needed to get offset for SCA registers
+    /// \param link Needed to get offset for SCA registers
+    Sca(RegisterReadWriteInterface& bar2, CardType::type cardType, int link);
 
     void initialize();
     void write(uint32_t command, uint32_t data);

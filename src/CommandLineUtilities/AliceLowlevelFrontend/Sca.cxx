@@ -28,18 +28,20 @@ constexpr int READ_BUSY(0x38 / 4);
 constexpr int READ_TIME(0x3c / 4);
 } // namespace Registers
 
-namespace Offset {
-constexpr int CRORC = 0;
-constexpr int CRU = Registers::BASE_INDEX;
-constexpr int OTHER = 0;
-}
-
 constexpr auto BUSY_TIMEOUT = std::chrono::milliseconds(10);
 constexpr auto CHANNEL_BUSY_TIMEOUT = std::chrono::milliseconds(10);
 
-Sca::Sca(RegisterReadWriteInterface &bar2, CardType::type cardType) : bar2(bar2),
-  offset((cardType == CardType::Crorc) ? Offset::CRORC : (cardType == CardType::Cru) ? Offset::CRU : Offset::OTHER)
+Sca::Sca(RegisterReadWriteInterface &bar2, CardType::type cardType, int link) : bar2(bar2)
 {
+  if (cardType == CardType::Cru) {
+    offset = 0x04224000 + link * 0x20000;
+  } else if (cardType == CardType::Crorc) {
+    offset = 0x1a0;
+  } else if (cardType == CardType::Dummy){
+    offset = 0;
+  } else {
+    throw std::runtime_error("Unknown card type, could not calculate SCA offset");
+  }
 }
 
 void Sca::initialize()

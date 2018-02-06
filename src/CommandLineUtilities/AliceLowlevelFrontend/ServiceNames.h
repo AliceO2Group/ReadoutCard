@@ -16,8 +16,8 @@ namespace Alf {
 class ServiceNames
 {
   public:
-    ServiceNames(int serialNumber)
-        : serial(serialNumber)
+    ServiceNames(int serialNumber, int link)
+        : serial(serialNumber), link(link)
     {
     }
 
@@ -36,6 +36,7 @@ class ServiceNames
   private:
     std::string format(std::string name) const;
     const int serial;
+    const int link;
 };
 
 } // namespace Alf

@@ -48,7 +48,9 @@ class ProgramAliceLowlevelFrontendClient: public Program
 
     virtual void addOptions(boost::program_options::options_description& options) override
     {
-      options.add_options()("serial", boost::program_options::value<int>(&mSerialNumber), "Card serial number");
+      options.add_options()
+        ("serial", boost::program_options::value<int>(&mSerialNumber), "Card serial number")
+        ("link", boost::program_options::value<int>(&mLink), "Link");
     }
 
     virtual void run(const boost::program_options::variables_map&) override
@@ -59,7 +61,7 @@ class ProgramAliceLowlevelFrontendClient: public Program
       }
 
       // Initialize DIM objects
-      Alf::ServiceNames names(mSerialNumber);
+      Alf::ServiceNames names(mSerialNumber, mLink);
       TemperatureInfo alfTestInt(names.temperature());
       Alf::RegisterReadRpc readRpc(names.registerReadRpc());
       Alf::RegisterWriteRpc writeRpc(names.registerWriteRpc());
@@ -142,6 +144,7 @@ class ProgramAliceLowlevelFrontendClient: public Program
     }
 
     int mSerialNumber;
+    int mLink;
 };
 } // Anonymous namespace
 
