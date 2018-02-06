@@ -23,15 +23,18 @@ class ServiceNames
 
     std::string registerReadRpc() const;
     std::string registerWriteRpc() const;
-    std::string publishStartCommandRpc() const;
-    std::string publishScaStartCommandRpc() const;
-    std::string publishStopCommandRpc() const;
     std::string scaWrite() const;
     std::string scaWriteSequence() const;
     std::string scaRead() const;
     std::string scaGpioWrite() const;
     std::string scaGpioRead() const;
     std::string temperature() const;
+    std::string publishRegistersStart() const;
+    std::string publishRegistersStop() const;
+    std::string publishScaSequenceStart() const;
+    std::string publishScaSequenceStop() const;
+    std::string publishRegistersSubdir(std::string name) const;
+    std::string publishScaSequenceSubdir(std::string name) const;
 
   private:
     std::string format(std::string name) const;

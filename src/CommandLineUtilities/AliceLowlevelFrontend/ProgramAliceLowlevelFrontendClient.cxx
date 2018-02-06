@@ -60,6 +60,8 @@ class ProgramAliceLowlevelFrontendClient: public Program
         BOOST_THROW_EXCEPTION(Alf::AlfException() << Alf::ErrorInfo::Message("Environment variable 'DIM_DNS_NODE' not set"));
       }
 
+      cout << "Using serial=" << mSerialNumber << " link=" << mLink << '\n';
+
       // Initialize DIM objects
       Alf::ServiceNames names(mSerialNumber, mLink);
       TemperatureInfo alfTestInt(names.temperature());
@@ -70,13 +72,12 @@ class ProgramAliceLowlevelFrontendClient: public Program
       Alf::ScaGpioReadRpc scaGpioReadRpc(names.scaGpioRead());
       Alf::ScaGpioWriteRpc scaGpioWriteRpc(names.scaGpioWrite());
       Alf::ScaWriteSequence scaWriteSequence(names.scaWriteSequence());
-      Alf::PublishRpc publishRpc(names.publishStartCommandRpc());
-      Alf::PublishScaRpc publishScaRpc(names.publishScaStartCommandRpc());
+      Alf::PublishRegistersStartRpc publishRpc(names.publishRegistersStart());
+      Alf::PublishScaSequenceStartRpc publishScaRpc(names.publishScaSequenceStart());
 
-      publishRpc.publish("ALF/TEST/1", 1.0, {0x1fc});
-      publishRpc.publish("ALF/TEST/2", 3.0, {0x100, 0x104, 0x108});
-
-      publishScaRpc.publish("ALF/TEST/SCA_1", 1.0, {{0x0, 0x1}, {0x10, 0x11}});
+      publishRpc.publish("TEST_1", 1.0, {0x1fc});
+      publishRpc.publish("TEST_2", 3.0, {0x100, 0x104, 0x108});
+      publishScaRpc.publish("TEST_3", 1.0, {{0x0, 0x1}, {0x10, 0x11}});
 
       for (int i = 0; i < 10; ++i) {
         cout << "SCA GPIO write '" << i << "'" << endl;
@@ -115,32 +116,33 @@ class ProgramAliceLowlevelFrontendClient: public Program
         cout << "  " << result << '\n';
       }
 
-      while (false)//!isSigInt())
+      while (!isSigInt())
       {
-        cout << "-------------------------------------\n";
-        cout << "Temperature   = " << gTemperature << endl;
-
-        int writes = 10; //std::rand() % 50;
-        cout << "Write   0x1f8 = 0x1 times " << writes << endl;
-        for (int i = 0; i < writes; ++i) {
-          writeRpc.writeRegister(0x1f8, 0x1);
-        }
-
-        cout << "Read    0x1fc = " << readRpc.readRegister(0x1fc) << endl;
-        cout << "Read    0x1ec = " << readRpc.readRegister(0x1ec) << endl;
-        cout << "Cmd     0x1f4 = 0x1" << endl;
-        writeRpc.writeRegister(0x1f4, 0x1);
-        cout << "Cmd     0x1f4 = 0x2" << endl;
-        writeRpc.writeRegister(0x1f4, 0x1);
-        cout << "Cmd     0x1f4 = 0x3" << endl;
-        writeRpc.writeRegister(0x1f4, 0x1);
+//        cout << "-------------------------------------\n";
+//        cout << "Temperature   = " << gTemperature << endl;
+//
+//        int writes = 10; //std::rand() % 50;
+//        cout << "Write   0x1f8 = 0x1 times " << writes << endl;
+//        for (int i = 0; i < writes; ++i) {
+//          writeRpc.writeRegister(0x1f8, 0x1);
+//        }
+//
+//        cout << "Read    0x1fc = " << readRpc.readRegister(0x1fc) << endl;
+//        cout << "Read    0x1ec = " << readRpc.readRegister(0x1ec) << endl;
+//        cout << "Cmd     0x1f4 = 0x1" << endl;
+//        writeRpc.writeRegister(0x1f4, 0x1);
+//        cout << "Cmd     0x1f4 = 0x2" << endl;
+//        writeRpc.writeRegister(0x1f4, 0x1);
+//        cout << "Cmd     0x1f4 = 0x3" << endl;
+//        writeRpc.writeRegister(0x1f4, 0x1);
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
       }
 
-      Alf::PublishStopRpc publishStopRpc(names.publishStopCommandRpc());
-      publishStopRpc.stop("ALF/TEST/1");
-      publishStopRpc.stop("ALF/TEST/2");
-      publishStopRpc.stop("ALF/TEST/SCA_1");
+      Alf::PublishRegistersStopRpc publishRegistersStopRpc(names.publishRegistersStop());
+      Alf::PublishScaSequenceStopRpc publishScaSequenceStopRpc(names.publishScaSequenceStop());
+      publishRegistersStopRpc.stop("TEST_1");
+      publishScaSequenceStopRpc.stop("TEST_2");
+      publishScaSequenceStopRpc.stop("TEST_3");
     }
 
     int mSerialNumber;

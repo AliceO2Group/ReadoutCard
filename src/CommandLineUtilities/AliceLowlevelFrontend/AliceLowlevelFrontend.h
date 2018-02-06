@@ -59,14 +59,24 @@ inline void setDataBuffer(std::vector<char>& buffer, DimObject& dimObject)
   dimObject.setData(buffer.data(), buffer.size());
 }
 
+inline std::string argumentSeparator()
+{
+  return "\n";
+}
+
+inline std::string scaPairSeparator()
+{
+  return ",";
+}
+
 inline std::string successPrefix()
 {
-  return "success:";
+  return "success" + argumentSeparator();
 }
 
 inline std::string failPrefix()
 {
-  return "failure:";
+  return "failure" + argumentSeparator();
 }
 
 inline std::string makeSuccessString(const std::string& string)
@@ -92,6 +102,7 @@ inline bool isFail(const std::string& string)
 inline std::string stripPrefix(const std::string& string)
 {
   if (string.length() < PREFIX_LENGTH) {
+    printf("len=%ul  str=%s\n", string.length(), string.c_str());
     BOOST_THROW_EXCEPTION(AlfException() << ErrorInfo::Message("string too short to contain prefix"));
   }
   return string.substr(PREFIX_LENGTH);
@@ -115,7 +126,7 @@ class DimRpcInfoWrapper
       auto string = std::string(mRpcInfo->getString());
       if (isFail(string)) {
         BOOST_THROW_EXCEPTION(
-          AlfException() << ErrorInfo::Message("ALF server failure" + string));
+          AlfException() << ErrorInfo::Message("ALF server failure: " + string));
       }
       return string;
     }
@@ -137,60 +148,69 @@ class DimRpcInfoWrapper
     std::unique_ptr<DimRpcInfo> mRpcInfo;
 };
 
-class PublishRpc : DimRpcInfoWrapper
+class PublishRegistersStartRpc : DimRpcInfoWrapper
 {
   public:
-    PublishRpc(const std::string& serviceName)
+    PublishRegistersStartRpc(const std::string& serviceName)
         : DimRpcInfoWrapper(serviceName)
     {
     }
 
-    void publish(std::string dnsName, double frequency, std::vector<size_t> addresses)
+    void publish(std::string dnsName, double interval, std::vector<size_t> addresses)
     {
       std::ostringstream stream;
-      stream << dnsName << ';';
+      auto sep = argumentSeparator();
+      stream << dnsName << sep << interval;
       for (size_t i = 0; i < addresses.size(); ++i) {
-        stream << addresses[i];
-        if ((i + 1) < addresses.size()) {
-          stream << ',';
-        }
+        stream << sep << addresses[i];
       }
-      stream << ';' << frequency;
       printf("Publish: %s\n", stream.str().c_str());
       setString(stream.str());
       getString();
     }
 };
 
-class PublishScaRpc : DimRpcInfoWrapper
+class PublishScaSequenceStartRpc : DimRpcInfoWrapper
 {
   public:
-    PublishScaRpc(const std::string& serviceName)
+    PublishScaSequenceStartRpc(const std::string& serviceName)
       : DimRpcInfoWrapper(serviceName)
     {
     }
 
-    void publish(std::string dnsName, double frequency, const std::vector<Sca::CommandData>& commandDataPairs)
+    void publish(std::string dnsName, double interval, const std::vector<Sca::CommandData>& commandDataPairs)
     {
       std::ostringstream stream;
-      stream << dnsName << ';';
+      auto sep = argumentSeparator();
+      stream << dnsName << sep << interval;
       for (size_t i = 0; i < commandDataPairs.size(); ++i) {
-        stream << commandDataPairs[i].command << ',' << commandDataPairs[i].data;
-        if ((i + 1) < commandDataPairs.size()) {
-          stream << '\n';
-        }
+        stream << sep << commandDataPairs[i].command << scaPairSeparator() << commandDataPairs[i].data;
       }
-      stream << ';' << frequency;
       printf("Publish SCA: %s\n", stream.str().c_str());
       setString(stream.str());
       getString();
     }
 };
 
-class PublishStopRpc: DimRpcInfoWrapper
+class PublishRegistersStopRpc: DimRpcInfoWrapper
 {
   public:
-    PublishStopRpc(const std::string &serviceName)
+    PublishRegistersStopRpc(const std::string &serviceName)
+      : DimRpcInfoWrapper(serviceName)
+    {
+    }
+
+    void stop(std::string dnsName)
+    {
+      setString(dnsName);
+      getString();
+    }
+};
+
+class PublishScaSequenceStopRpc: DimRpcInfoWrapper
+{
+  public:
+    PublishScaSequenceStopRpc(const std::string &serviceName)
       : DimRpcInfoWrapper(serviceName)
     {
     }
@@ -319,32 +339,6 @@ class ScaWriteSequence: DimRpcInfoWrapper
     }
 };
 
-class StringRpcServer: public DimRpc
-{
-  public:
-    using Callback = std::function<std::string(const std::string&)>;
-
-    StringRpcServer(const std::string& serviceName, Callback callback)
-        : DimRpc(serviceName.c_str(), "C", "C"), callback(callback)
-    {
-    }
-
-    StringRpcServer(const StringRpcServer& b) = delete;
-    StringRpcServer(StringRpcServer&& b) = delete;
-
-  private:
-    void rpcHandler() override
-    {
-      try {
-        auto returnValue = callback(std::string(getString()));
-        Alf::setDataString(Alf::makeSuccessString(returnValue), *this);
-      } catch (const std::exception& e) {
-        Alf::setDataString(Alf::makeFailString(e.what()), *this);
-      }
-    }
-
-    Callback callback;
-};
 
 } // namespace Alf
 } // namespace CommandLineUtilities

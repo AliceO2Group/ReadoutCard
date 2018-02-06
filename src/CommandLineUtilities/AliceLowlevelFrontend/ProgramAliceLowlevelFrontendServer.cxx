@@ -27,6 +27,7 @@
 #include <boost/variant.hpp>
 #include <InfoLogger/InfoLogger.hxx>
 #include <dim/dis.hxx>
+#include <ReadoutCard/Exception.h>
 #include "AliceLowlevelFrontend.h"
 #include "AlfException.h"
 #include "folly/ProducerConsumerQueue.h"
@@ -52,6 +53,36 @@ AliceO2::InfoLogger::InfoLogger& getLogger()
   static AliceO2::InfoLogger::InfoLogger logger;
   return logger;
 }
+
+class StringRpcServer: public DimRpc
+{
+  public:
+    using Callback = std::function<std::string(const std::string&)>;
+
+    StringRpcServer(const std::string& serviceName, Callback callback)
+      : DimRpc(serviceName.c_str(), "C", "C"), mCallback(callback), mServiceName(serviceName)
+    {
+    }
+
+    StringRpcServer(const StringRpcServer& b) = delete;
+    StringRpcServer(StringRpcServer&& b) = delete;
+
+  private:
+    void rpcHandler() override
+    {
+      try {
+        auto returnValue = mCallback(std::string(getString()));
+        Alf::setDataString(Alf::makeSuccessString(returnValue), *this);
+      } catch (const std::exception& e) {
+        getLogger() << InfoLogger::InfoLogger::Error << mServiceName << ": " << boost::diagnostic_information(e, true)
+          << endm;
+        Alf::setDataString(Alf::makeFailString(e.what()), *this);
+      }
+    }
+
+    Callback mCallback;
+    std::string mServiceName;
+};
 
 /// Splits a string
 static std::vector<std::string> split(const std::string& string, const char* separators)
@@ -118,38 +149,30 @@ struct Service
 class CommandQueue
 {
   public:
-    struct CommandPublishStart
+    struct Command
     {
+        bool start; ///< true starts service, false stops
         ServiceDescription description;
     };
 
-    struct CommandPublishStop
+    bool write(std::unique_ptr<Command> command)
     {
-        ServiceDescription description;
-    };
-
-    using CommandVariant = b::variant<CommandPublishStart, CommandPublishStop>;
-
-
-    template <class ...Args>
-    bool write(Args&&... recordArgs)
-    {
-      return mQueue.write(std::forward<Args>(recordArgs)...);
+      return mQueue.write(std::move(command));
     }
 
-    bool read(CommandVariant& command)
+    bool read(std::unique_ptr<Command>& command)
     {
       return mQueue.read(command);
     }
 
   private:
-    folly::ProducerConsumerQueue<CommandVariant> mQueue {512};
+    folly::ProducerConsumerQueue<std::unique_ptr<Command>> mQueue {512};
 };
 
 class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
 {
   public:
-    ProgramAliceLowlevelFrontendServer() : mCommandQueue(), mRpcServers(), mBars(), mServices()
+    ProgramAliceLowlevelFrontendServer() : mCommandQueue(std::make_shared<CommandQueue>()), mRpcServers(), mBars(), mServices()
     {
     }
 
@@ -174,9 +197,15 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
 
       getLogger() << "Finding cards" << endm;
 
-      std::vector<int> serialNumbers;
+      std::vector<CardDescriptor> cardsFound;
+      try {
+        cardsFound = AliceO2::roc::RocPciDevice::findSystemDevices();
+      } catch (const Exception& exception) {
+        getLogger() << "Failed to get devices: " << exception.what() << endm;
+      }
+      cardsFound.push_back(
+        CardDescriptor{CardType::Dummy, ChannelFactory::getDummySerialNumber(), {"dummy", "dummy"}, {0, 0, 0}});
 
-      auto cardsFound = AliceO2::roc::RocPciDevice::findSystemDevices();
       for (auto card : cardsFound) {
         int serial;
         if (auto serialMaybe = card.serialNumber) {
@@ -198,6 +227,8 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
           links = {0, 1, 2, 3, 4, 5, 6};
         } else if (card.cardType == CardType::Crorc) {
           links = {0};
+        } else if (card.cardType == CardType::Dummy) {
+          links = {0, 42};
         }
 
         for (auto link : links) {
@@ -225,6 +256,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
           // job
           auto& servers = mRpcServers[serial][link];
           auto commandQueue = mCommandQueue; // Copy for lambda capture
+
           // Register RPCs
           servers.push_back(makeServer(names.registerReadRpc(),
             [bar0](auto parameter){
@@ -232,6 +264,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
           servers.push_back(makeServer(names.registerWriteRpc(),
             [bar0](auto parameter){
               return registerWrite(parameter, bar0);}));
+
           // SCA RPCs
           servers.push_back(makeServer(names.scaRead(),
             [bar2, linkInfo](auto parameter){
@@ -248,16 +281,22 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
           servers.push_back(makeServer(names.scaGpioWrite(),
             [bar2, linkInfo](auto parameter){
               return scaGpioWrite(parameter, bar2, linkInfo);}));
-          // Publish RPCs
-          servers.push_back(makeServer(names.publishStartCommandRpc(),
+
+          // Publish registers RPCs
+          servers.push_back(makeServer(names.publishRegistersStart(),
             [commandQueue, linkInfo](auto parameter){
-              return publishStartCommand(parameter, commandQueue, linkInfo);}));
-          servers.push_back(makeServer(names.publishScaStartCommandRpc(),
+              return publishRegistersStart(parameter, commandQueue, linkInfo);}));
+          servers.push_back(makeServer(names.publishRegistersStop(),
             [commandQueue, linkInfo](auto parameter){
-              return publishScaStartCommand(parameter, commandQueue, linkInfo);}));
-          servers.push_back(makeServer(names.publishStopCommandRpc(),
+              return publishRegistersStop(parameter, commandQueue, linkInfo);}));
+
+          // Publish SCA sequence RPCs
+          servers.push_back(makeServer(names.publishScaSequenceStart(),
             [commandQueue, linkInfo](auto parameter){
-              return publishStopCommand(parameter, commandQueue, linkInfo);}));
+              return publishScaSequenceStart(parameter, commandQueue, linkInfo);}));
+          servers.push_back(makeServer(names.publishScaSequenceStop(),
+            [commandQueue, linkInfo](auto parameter){
+              return publishScaSequenceStop(parameter, commandQueue, linkInfo);}));
         }
       }
 
@@ -265,24 +304,19 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
       {
         {
           // Take care of publishing commands from the queue
-          CommandQueue::CommandVariant command;
+          std::unique_ptr<CommandQueue::Command> command;
           while (mCommandQueue->read(command)) {
-            Visitor::apply(command,
-                [&](const CommandQueue::CommandPublishStart& command){
-                  serviceAdd(command.description);
-                },
-                [&](const CommandQueue::CommandPublishStop& command){
-                  serviceRemove(command.description.dnsName);
-                }
-            );
+            if (command->start) {
+              serviceAdd(command->description);
+            } else {
+              serviceRemove(command->description.dnsName);
+            }
           }
         }
 
         // Update service(s) and sleep until next update is needed
-
         auto now = std::chrono::steady_clock::now();
         std::chrono::steady_clock::time_point next = now + std::chrono::seconds(1); // We wait a max of 1 second
-
         for (auto& kv: mServices) {
           auto& service = *kv.second;
           if (service.nextUpdate < now) {
@@ -296,12 +330,6 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
     }
 
   private:
-
-    const std::map<int, BarSharedPtr>& getBars(int serial)
-    {
-      return mBars.at(serial);
-    }
-
     /// Add service
     void serviceAdd(const ServiceDescription& serviceDescription)
     {
@@ -317,7 +345,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
         [&](const ServiceDescription::Register& type){
           service->registerValues.resize(type.addresses.size());
 
-          getLogger() << "Starting publisher '" << service->description.dnsName << "' with "
+          getLogger() << "Starting register publisher '" << service->description.dnsName << "' with "
             << type.addresses.size() << " address(es) at interval "
             << service->description.interval.count() << "ms" << endm;
         },
@@ -355,7 +383,6 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
           for (size_t i = 0; i < type.addresses.size(); ++i) {
             auto index = type.addresses[i] / 4;
             auto value = bar0.readRegister(index);
-            getLogger() << "  " << type.addresses[i] << " = " << value << endm;
             service.registerValues.at(i) = bar0.readRegister(index);
           }
         },
@@ -392,9 +419,9 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
     }
 
     /// Try to add a command to the queue
-    static bool tryAddToQueue(CommandQueue& queue, const CommandQueue::CommandVariant& command)
+    static bool tryAddToQueue(CommandQueue& queue, std::unique_ptr<CommandQueue::Command> command)
     {
-      if (!queue.write(command)) {
+      if (!queue.write(std::move(command))) {
         getLogger() << "  command queue was full!" << endm;
         return false;
       }
@@ -417,7 +444,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
     /// RPC handler for register writes
     static std::string registerWrite(const std::string& parameter, BarSharedPtr channel)
     {
-      std::vector<std::string> params = split(parameter, ",");
+      std::vector<std::string> params = split(parameter, argumentSeparator().c_str());
 
       if (params.size() != 2) {
         BOOST_THROW_EXCEPTION(AlfException() << ErrorInfo::Message("Write RPC call did not have 2 parameters"));
@@ -441,61 +468,97 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
     }
 
     /// RPC handler for publish commands
-    static std::string publishStartCommand(const std::string& parameter, std::shared_ptr<CommandQueue> queue,
+    static std::string publishRegistersStart(const std::string& parameter, std::shared_ptr<CommandQueue> queue,
       LinkInfo linkInfo)
     {
-      getLogger() << "Received publish command: '" << parameter << "'" << endm;
-      auto params = split(parameter, ";");
+      getLogger() << "PUBLISH_REGISTERS_START: '" << parameter << "'" << endm;
+      auto params = split(parameter, argumentSeparator().c_str());
 
-      ServiceDescription description;
-      description.dnsName = params.at(0);
-      description.interval = std::chrono::milliseconds(int64_t(b::lexical_cast<double>(params.at(2)) * 1000.0));
-      description.type = ServiceDescription::Register{lexicalCastVector<uintptr_t >(split(params.at(1), ","))};
-      description.linkInfo = linkInfo;
+      size_t args = 2;
+      std::vector<uintptr_t> registers;
+      for (size_t i = 0; (i + args) < params.size(); ++i) {
+        registers.push_back(b::lexical_cast<uintptr_t >(i + args));
+      }
 
-      tryAddToQueue(*queue, CommandQueue::CommandPublishStart{description});
+      auto command = std::make_unique<CommandQueue::Command>();
+      command->start = true;
+      command->description.dnsName = ServiceNames(linkInfo.serial, linkInfo.link).publishRegistersSubdir(params.at(0));
+      command->description.interval = std::chrono::milliseconds(int64_t(b::lexical_cast<double>(params.at(1)) * 1000.0));
+      command->description.type = ServiceDescription::Register{std::move(registers)};
+      command->description.linkInfo = linkInfo;
+
+      tryAddToQueue(*queue, std::move(command));
       return "";
     }
 
     /// RPC handler for SCA publish commands
-    static std::string publishScaStartCommand(const std::string& parameter, std::shared_ptr<CommandQueue> queue,
+    static std::string publishScaSequenceStart(const std::string& parameter, std::shared_ptr<CommandQueue> queue,
       LinkInfo linkInfo)
     {
-      getLogger() << "Received SCA publish command: '" << parameter << "'" << endm;
+      getLogger() << "PUBLISH_SCA_SEQUENCE_START: '" << parameter << "'" << endm;
 
-      auto params = split(parameter, ";");
+      auto params = split(parameter, argumentSeparator().c_str());
+
+      if (params.size() < 3) {
+        BOOST_THROW_EXCEPTION(AlfException()
+          << ErrorInfo::Message("Not enough parameters given"));
+      }
+
+      size_t args = 2; // Number of args to skip for the array
+      std::vector<uintptr_t> registers;
+      for (size_t i = args; (i + args) < params.size(); ++i) {
+        registers.push_back(b::lexical_cast<uintptr_t >(i));
+      }
 
       // Convert command-data pair string sequence to binary format
       ServiceDescription::ScaSequence sca;
-      auto commandDataPairStrings = split(params.at(1), "\n");
-      sca.commandDataPairs.resize(commandDataPairStrings.size());
-      for (size_t i = 0; i < commandDataPairStrings.size(); ++i) {
-        sca.commandDataPairs[i] = stringToScaCommandDataPair(commandDataPairStrings[i]);
+      sca.commandDataPairs.resize(params.size() - args);
+      for (size_t i = 0; (i + args) < params.size(); ++i) {
+        sca.commandDataPairs[i] = stringToScaCommandDataPair(params[i + args]);
       }
 
-      ServiceDescription description;
-      description.type = sca;
-      description.dnsName = params.at(0);
-      description.interval = std::chrono::milliseconds(int64_t(b::lexical_cast<double>(params.at(2)) * 1000.0));
-      description.linkInfo = linkInfo;
+      auto command = std::make_unique<CommandQueue::Command>();
+      command->start = true;
+      command->description.type = sca;
+      command->description.dnsName = ServiceNames(linkInfo.serial, linkInfo.link).publishScaSequenceSubdir(params.at(0));
+      command->description.interval = std::chrono::milliseconds(int64_t(b::lexical_cast<double>(params.at(1)) * 1000.0));
+      command->description.linkInfo = linkInfo;
 
-      tryAddToQueue(*queue, CommandQueue::CommandPublishStart{description});
+      tryAddToQueue(*queue, std::move(command));
       return "";
     }
 
     /// RPC handler for publish stop commands
-    static std::string publishStopCommand(const std::string& parameter, std::shared_ptr<CommandQueue> queue,
+    static std::string publishRegistersStop(const std::string& parameter, std::shared_ptr<CommandQueue> queue,
       LinkInfo linkInfo)
     {
-      getLogger() << "Received stop command: '" << parameter << "'" << endm;
+      getLogger() << "PUBLISH_REGISTERS_STOP: '" << parameter << "'" << endm;
 
-      ServiceDescription description;
-      description.type = ServiceDescription::Register();
-      description.dnsName = parameter;
-      description.interval = std::chrono::milliseconds(0);
-      description.linkInfo = linkInfo;
+      auto command = std::make_unique<CommandQueue::Command>();
+      command->start = false;
+      command->description.type = ServiceDescription::Register();
+      command->description.dnsName = ServiceNames(linkInfo.serial, linkInfo.link).publishRegistersSubdir(parameter);
+      command->description.interval = std::chrono::milliseconds(0);
+      command->description.linkInfo = linkInfo;
 
-      tryAddToQueue(*queue, CommandQueue::CommandPublishStop{description});
+      tryAddToQueue(*queue, std::move(command));
+      return "";
+    }
+
+    /// RPC handler for SCA publish stop commands
+    static std::string publishScaSequenceStop(const std::string& parameter, std::shared_ptr<CommandQueue> queue,
+      LinkInfo linkInfo)
+    {
+      getLogger() << "PUBLISH_SCA_SEQUENCE_STOP: '" << parameter << "'" << endm;
+
+      auto command = std::make_unique<CommandQueue::Command>();
+      command->start = false;
+      command->description.type = ServiceDescription::Register();
+      command->description.dnsName = ServiceNames(linkInfo.serial, linkInfo.link).publishScaSequenceSubdir(parameter);
+      command->description.interval = std::chrono::milliseconds(0);
+      command->description.linkInfo = linkInfo;
+
+      tryAddToQueue(*queue, std::move(command));
       return "";
     }
 
@@ -511,7 +574,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
     static std::string scaWrite(const std::string& parameter, BarSharedPtr bar2, LinkInfo linkInfo)
     {
       getLogger() << "SCA_WRITE: '" << parameter << "'" << endm;
-      auto params = split(parameter, ",");
+      auto params = split(parameter, argumentSeparator().c_str());
       auto command = convertHexString(params.at(0));
       auto data = convertHexString(params.at(1));
       Sca(*bar2, bar2->getCardType(), linkInfo.link).write(command, data);
@@ -543,7 +606,8 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
       // We first split on \n to get the pairs of SCA command and SCA data
       // Since this can be an enormous list of pairs, we walk through it using the tokenizer
       using tokenizer = boost::tokenizer<boost::char_separator<char>>;
-      boost::char_separator<char> sep("\n", "", boost::drop_empty_tokens); // Drop '\n' delimiters, keep none
+      // Drop '\n' delimiters, keep none
+      boost::char_separator<char> sep(argumentSeparator().c_str(), "", boost::drop_empty_tokens);
       std::stringstream resultBuffer;
       auto sca = Sca(*bar2, bar2->getCardType(), linkInfo.link);
 
@@ -575,8 +639,10 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
     static Sca::CommandData stringToScaCommandDataPair(const std::string& string)
     {
       // The pairs are comma-separated, so we split them.
-      std::vector<std::string> pair = split(string, ",");
+      std::vector<std::string> pair = split(string, scaPairSeparator().c_str());
       if (pair.size() != 2) {
+        getLogger() << "SCA command-data pair not formatted correctly: parts=" << pair.size() << " str='" << string <<
+          "'" << endm;
         BOOST_THROW_EXCEPTION(
           AlfException() << ErrorInfo::Message("SCA command-data pair not formatted correctly"));
       }
