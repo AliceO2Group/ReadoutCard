@@ -54,7 +54,7 @@ class ProgramAlfScaWriteSequence: public Program
 
       // Initialize DIM objects
       Alf::ServiceNames names(mSerialNumber, mLink);
-      Alf::ScaWriteSequence scaWriteSequence(names.scaWriteSequence());
+      Alf::ScaWriteSequence scaWriteSequence(names.scaSequence());
 
       // Read file
       std::ifstream file(mFilePath);

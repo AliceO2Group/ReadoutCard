@@ -24,7 +24,7 @@ class ServiceNames
     std::string registerReadRpc() const;
     std::string registerWriteRpc() const;
     std::string scaWrite() const;
-    std::string scaWriteSequence() const;
+    std::string scaSequence() const;
     std::string scaRead() const;
     std::string scaGpioWrite() const;
     std::string scaGpioRead() const;

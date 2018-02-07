@@ -273,7 +273,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
           servers.push_back(makeServer(names.scaWrite(),
             [bar2, linkInfo](auto parameter){
               return scaWrite(parameter, bar2, linkInfo);}));
-          servers.push_back(makeServer(names.scaWriteSequence(),
+          servers.push_back(makeServer(names.scaSequence(),
             [bar2, linkInfo](auto parameter){
               return scaBlobWrite(parameter, bar2, linkInfo);}));
           servers.push_back(makeServer(names.scaGpioRead(),

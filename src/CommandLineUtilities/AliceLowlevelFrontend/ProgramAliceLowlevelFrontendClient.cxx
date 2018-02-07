@@ -73,7 +73,7 @@ class ProgramAliceLowlevelFrontendClient: public Program
       Alf::ScaWriteRpc scaWriteRpc(names.scaWrite());
       Alf::ScaGpioReadRpc scaGpioReadRpc(names.scaGpioRead());
       Alf::ScaGpioWriteRpc scaGpioWriteRpc(names.scaGpioWrite());
-      Alf::ScaWriteSequence scaWriteSequence(names.scaWriteSequence());
+      Alf::ScaWriteSequence scaWriteSequence(names.scaSequence());
       Alf::PublishRegistersStartRpc publishRegistersStartRpc(names.publishRegistersStart());
       Alf::PublishRegistersStopRpc publishRegistersStopRpc(names.publishRegistersStop());
       Alf::PublishScaSequenceStartRpc publishScaSequenceStartRpc(names.publishScaSequenceStart());
