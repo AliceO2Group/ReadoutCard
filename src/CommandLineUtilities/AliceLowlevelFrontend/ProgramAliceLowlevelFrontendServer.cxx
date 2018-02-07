@@ -229,7 +229,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
         } else if (card.cardType == CardType::Crorc) {
           links = {0};
         } else if (card.cardType == CardType::Dummy) {
-          links = {0, 42};
+          links = {0};
         }
 
         for (auto link : links) {
