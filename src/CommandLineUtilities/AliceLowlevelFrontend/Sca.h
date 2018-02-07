@@ -57,10 +57,10 @@ class Sca
     bool isChannelBusy(uint32_t command);
 
     /// Interface for BAR 2
-    RegisterReadWriteInterface& bar2;
+    RegisterReadWriteInterface& mBar2;
 
     /// Offset for the registers. May differ per card
-    int offset;
+    int mOffset;
 };
 
 
