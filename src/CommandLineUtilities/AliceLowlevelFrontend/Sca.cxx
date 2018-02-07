@@ -50,7 +50,7 @@ Sca::Sca(RegisterReadWriteInterface &bar2, CardType::type cardType, int link) : 
   } else if (cardType == CardType::Crorc) {
     setOffset(Registers::CRORC_BASE_INDEX, Registers::CRORC_LINK_OFFSET, Registers::CRORC_MAX_LINKS);
   } else if (cardType == CardType::Dummy){
-    setOffset(0, 0x100, 6);
+    setOffset(0, 0x100, 43);
   } else {
     throw std::runtime_error("Unknown card type, could not calculate SCA offset");
   }
