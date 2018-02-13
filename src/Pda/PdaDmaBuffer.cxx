@@ -8,22 +8,17 @@
 #include <InfoLogger/InfoLogger.hxx>
 #include "ExceptionInternal.h"
 #include "InterprocessLock.h"
+#include "Pda/PdaLock.h"
 
 namespace AliceO2 {
 namespace roc {
 namespace Pda {
-namespace {
-auto MUTEX_NAME = "AliceO2_roc_Pda_PdaDmaBuffer_Mutex";
-auto LOCK_FILE_PATH = "/dev/shm/alice_o2/rorc/AliceO2_roc_Pda_PdaDmaBuffer.lock";
-
-
-} // Anonymous namespace
 
 PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAddress, size_t userBufferSize,
     int dmaBufferId, bool requireHugepage) : mPciDevice(pciDevice)
 {
   // Safeguard against PDA kernel module deadlocks, since it does not like parallel buffer registration
-  Interprocess::Lock lock {LOCK_FILE_PATH, MUTEX_NAME, true};
+  PdaLock lock();
 
   try {
     // Tell PDA we're using our already allocated userspace buffer.
@@ -105,7 +100,7 @@ PdaDmaBuffer::~PdaDmaBuffer()
   // Safeguard against PDA kernel module deadlocks, since it does not like parallel buffer registration
   // NOTE: not sure if necessary for deregistration as well
   try {
-    Interprocess::Lock lock {LOCK_FILE_PATH, MUTEX_NAME, true};
+    PdaLock lock();
     PciDevice_deleteDMABuffer(mPciDevice.get(), mDmaBuffer);
   } catch (std::exception& e) {
     // Nothing to be done?

@@ -9,6 +9,7 @@
 #include <Common/System.h>
 #include <InfoLogger/InfoLogger.hxx>
 #include "ReadoutCard/ParameterTypes/PciAddress.h"
+#include "Pda/PdaLock.h"
 
 namespace AliceO2 {
 namespace roc {
@@ -35,6 +36,7 @@ void freeUnusedChannelBuffers()
 {
   namespace bfs = boost::filesystem;
   InfoLogger::InfoLogger logger;
+  Pda::PdaLock lock(); // We're messing around with PDA buffers so we need this
 
   try {
     std::string pciPath = "/sys/bus/pci/drivers/uio_pci_dma/";
