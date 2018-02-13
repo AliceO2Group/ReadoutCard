@@ -18,7 +18,7 @@ PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAd
     int dmaBufferId, bool requireHugepage) : mPciDevice(pciDevice)
 {
   // Safeguard against PDA kernel module deadlocks, since it does not like parallel buffer registration
-  PdaLock lock();
+  Pda::PdaLock lock{};
 
   try {
     // Tell PDA we're using our already allocated userspace buffer.
@@ -100,7 +100,7 @@ PdaDmaBuffer::~PdaDmaBuffer()
   // Safeguard against PDA kernel module deadlocks, since it does not like parallel buffer registration
   // NOTE: not sure if necessary for deregistration as well
   try {
-    PdaLock lock();
+    Pda::PdaLock lock{};
     PciDevice_deleteDMABuffer(mPciDevice.get(), mDmaBuffer);
   } catch (std::exception& e) {
     // Nothing to be done?

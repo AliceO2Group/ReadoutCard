@@ -17,8 +17,14 @@ namespace Pda {
 /// Just hope nobody else uses PDA in parallel.
 class PdaLock
 {
-    PdaLock() : mLock("/dev/shm/alice_o2/rorc/AliceO2_roc_Pda_PdaDmaBuffer.lock", "AliceO2_roc_Pda_PdaDmaBuffer_Mutex",
-      true)
+  public:
+
+    /// Be careful you don't use it like this:
+    ///   Pda::PdaLock lock()
+    /// But rather like this:
+    ///   Pda::PdaLock lock{}
+    PdaLock(bool wait = true) : mLock("/dev/shm/alice_o2/rorc/AliceO2_roc_Pda_PdaDmaBuffer.lock",
+      "AliceO2_roc_Pda_PdaDmaBuffer_Mutex", wait)
     {
     }
 
