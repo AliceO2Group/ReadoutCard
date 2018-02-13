@@ -235,14 +235,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
         for (auto link : links) {
           getLogger() << "Initializing link " << link << endm;
           LinkInfo linkInfo {serial, link};
-          // Initialize SCA
-          try {
-            Sca(*bar2, bar2->getCardType(), link).initialize();
-          }
-          catch (const ScaException &e) {
-            getLogger() << "ScaException: " << e.what() << endm;
-          }
-
+          
           // Object for generating DNS names
           Alf::ServiceNames names(serial, link);
 
