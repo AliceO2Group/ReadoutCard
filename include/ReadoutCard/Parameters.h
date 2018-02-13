@@ -149,9 +149,9 @@ class Parameters
     /// Controls the routing of the generated data.
     /// Supported loopback modes:
     /// * C-RORC: all modes
-    /// * CRU: internal loopback only
+    /// * CRU: internal, none (=external)
     ///
-    /// If not set, the driver will default to internal loopback (LoopbackMode::Rorc).
+    /// If not set, the driver will default to internal loopback.
     ///
     /// \param value The value to set
     /// \return Reference to this object for chaining calls

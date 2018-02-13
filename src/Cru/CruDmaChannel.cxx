@@ -39,11 +39,9 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
     }
   }
 
-  if (auto enabled = parameters.getGeneratorEnabled()) {
-    if (enabled.get() == false) {
-      BOOST_THROW_EXCEPTION(CruException()
-          << ErrorInfo::Message("CRU currently only supports operation with data generator"));
-    }
+  if (mLoopbackMode == LoopbackMode::Diu || mLoopbackMode == LoopbackMode::Siu) {
+    BOOST_THROW_EXCEPTION(CruException() << ErrorInfo::Message("CRU does not support given loopback mode")
+      << ErrorInfo::LoopbackMode(mLoopbackMode));
   }
 
   if (mFeatures.standalone) {
@@ -89,9 +87,28 @@ void CruDmaChannel::deviceStartDma()
   initCru();
   setBufferReady();
 
-  if ((mLoopbackMode == LoopbackMode::Internal) && mFeatures.dataSelection) {
-    // Something with selecting the data source... [insert link to documentation here]
-    getBar().setDataSource(Cru::Registers::DATA_SOURCE_SELECT_INTERNAL);
+  if (mGeneratorEnabled) {
+    if (mLoopbackMode == LoopbackMode::Internal) {
+      if (mFeatures.dataSelection) {
+        getBar().setDataSource(Cru::Registers::DATA_SOURCE_SELECT_INTERNAL);
+      } else {
+        log("Did not set internal data source, feature not supported by firmware", InfoLogger::InfoLogger::Warning);
+      }
+    } else {
+      BOOST_THROW_EXCEPTION(CruException()
+        << ErrorInfo::Message("CRU only supports 'Internal' loopback for data generator"));
+    }
+  } else {
+    if (mLoopbackMode == LoopbackMode::None) {
+      if (mFeatures.dataSelection) {
+        getBar().setDataSource(Cru::Registers::DATA_SOURCE_SELECT_GBT);
+      } else {
+        log("Did not set GBT data source, feature not supported by firmware", InfoLogger::InfoLogger::Warning);
+      }
+    } else {
+      BOOST_THROW_EXCEPTION(CruException()
+        << ErrorInfo::Message("CRU only supports 'None' loopback when operating without data generator"));
+    }
   }
 
   for (auto &link : mLinks) {
