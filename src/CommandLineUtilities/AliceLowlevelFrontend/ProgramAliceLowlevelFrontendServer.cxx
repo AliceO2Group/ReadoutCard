@@ -2,15 +2,15 @@
 /// \brief Utility that starts the ALICE Lowlevel Frontend (ALF) DIM server
 ///
 /// This file contains a bunch of classes that together form the server part of ALF.
-/// It is single-threaded, because an earlier multi-threaded implementation ran into strange locking issues with DIM's
-/// thread, and it was determined that it would cost less time to rewrite than to debug.
 ///
 /// The idea is that the DIM thread calls the RPC handler functions of the ProgramAliceLowlevelFrontendServer class.
 /// These handlers then, depending on the RPC:
-/// a) Execute the request immediately (such as for register reads and writes)
-/// b) Put a corresponding command object in a lock-free thread-safe queue (such as for publish start/stop commands),
-///    the mCommandQueue. The main thread of ProgramAliceLowlevelFrontendServer periodically takes commands from this
-///    queue and handles them.
+///   a) Execute the request immediately (such as for register reads and writes)
+///   b) Put a corresponding command object in a lock-free thread-safe queue (such as for publish start/stop commands),
+///      the mCommandQueue. The main thread of ProgramAliceLowlevelFrontendServer periodically takes commands from this
+///      queue and handles them by starting or stopping a publish service.
+///
+/// Decoupling the DIM thread from the main thread was necessary to prevent strange DIM locking issues on exit.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
@@ -145,7 +145,7 @@ struct Service
     std::unique_ptr<DimService> dimService;
 };
 
-///
+/// Thread-safe queue for commands
 class CommandQueue
 {
   public:
@@ -235,7 +235,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
         for (auto link : links) {
           getLogger() << "Initializing link " << link << endm;
           LinkInfo linkInfo {serial, link};
-          
+
           // Object for generating DNS names
           Alf::ServiceNames names(serial, link);
 
@@ -422,6 +422,40 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
       return true;
     }
 
+    static bool isLineComment(const std::string& line)
+    {
+      return line.find('#') == 0;
+    }
+
+    template <typename Iter>
+    static std::vector<Sca::CommandData> linesToCommandDataVector(Iter begin, Iter end)
+    {
+      std::vector<Sca::CommandData> pairs;
+      for (Iter i = begin; i != end; ++i) {
+        const std::string& line = *i;
+        if (!isLineComment(line)) {
+          pairs.push_back(stringToScaCommandDataPair(line));
+        }
+      }
+      return pairs;
+    }
+
+    static Sca::CommandData stringToScaCommandDataPair(const std::string& string)
+    {
+      // The pairs are comma-separated, so we split them.
+      std::vector<std::string> pair = split(string, scaPairSeparator().c_str());
+      if (pair.size() != 2) {
+        getLogger() << "SCA command-data pair not formatted correctly: parts=" << pair.size() << " str='" << string <<
+          "'" << endm;
+        BOOST_THROW_EXCEPTION(
+          AlfException() << ErrorInfo::Message("SCA command-data pair not formatted correctly"));
+      }
+      Sca::CommandData commandData;
+      commandData.command = convertHexString(pair[0]);
+      commandData.data = convertHexString(pair[1]);
+      return commandData;
+    };
+
     /// RPC handler for register reads
     static std::string registerRead(const std::string& parameter, BarSharedPtr channel)
     {
@@ -502,14 +536,11 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
       // Convert command-data pair string sequence to binary format
       size_t skip = 2; // Number of arguments to skip for the array
       ServiceDescription::ScaSequence sca;
-      sca.commandDataPairs.resize(params.size() - skip);
-      for (size_t i = 0; (i + skip) < params.size(); ++i) {
-        sca.commandDataPairs[i] = stringToScaCommandDataPair(params[i + skip]);
-      }
+      sca.commandDataPairs = linesToCommandDataVector(params.begin() + skip, params.end());
 
       auto command = std::make_unique<CommandQueue::Command>();
       command->start = true;
-      command->description.type = sca;
+      command->description.type = std::move(sca);
       command->description.dnsName = ServiceNames(linkInfo.serial, linkInfo.link).publishScaSequenceSubdir(dnsName);
       command->description.interval = std::chrono::milliseconds(int64_t(b::lexical_cast<double>(interval) * 1000.0));
       command->description.linkInfo = linkInfo;
@@ -593,58 +624,33 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
     {
       getLogger() << "SCA_SEQUENCE size=" << parameter.size() << " bytes" << endm;
 
-      // We first split on \n to get the pairs of SCA command and SCA data
+      // We split on \n to get the pairs of SCA command and SCA data
       auto lines = split(parameter, argumentSeparator());
+      auto commandDataPairs = linesToCommandDataVector(lines.begin(), lines.end());
+
       std::stringstream resultBuffer;
       auto sca = Sca(*bar2, bar2->getCardType(), linkInfo.link);
 
-      for (const auto& line : lines) {
-        // Walk through the tokens, these should be the pairs (or comments).
-        if (isLineComment(line)) {
-          continue;
-        } else {
-          auto commandData = stringToScaCommandDataPair(line);
-          try {
-            sca.write(commandData);
-            auto result = sca.read();
-            getLogger() << (b::format("cmd=0x%x data=0x%x result=0x%x") % commandData.command % commandData.data %
-              result.data).str() << endm;
-            resultBuffer << std::hex << result.data << '\n';
-          } catch (const ScaException &e) {
-            // If an SCA error occurs, we stop executing the sequence of commands and return the results as far as we got
-            // them, plus the error message.
-            getLogger() << InfoLogger::InfoLogger::Error
-              << (b::format("SCA_SEQUENCE cmd=0x%x data=0x%x serial=%d link=%d error='%s'") % commandData.command
-                % commandData.data % linkInfo.serial % linkInfo.link % e.what()).str() << endm;
-            resultBuffer << e.what();
-            break;
-          }
+      for (const auto& commandData : commandDataPairs) {
+        try {
+          sca.write(commandData);
+          auto result = sca.read();
+          getLogger() << (b::format("cmd=0x%x data=0x%x result=0x%x") % commandData.command % commandData.data %
+            result.data).str() << endm;
+          resultBuffer << std::hex << result.data << '\n';
+        } catch (const ScaException &e) {
+          // If an SCA error occurs, we stop executing the sequence of commands and return the results as far as we got
+          // them, plus the error message.
+          getLogger() << InfoLogger::InfoLogger::Error
+            << (b::format("SCA_SEQUENCE cmd=0x%x data=0x%x serial=%d link=%d error='%s'") % commandData.command
+              % commandData.data % linkInfo.serial % linkInfo.link % e.what()).str() << endm;
+          resultBuffer << e.what();
+          break;
         }
       }
 
       return resultBuffer.str();
     }
-
-    static bool isLineComment(const std::string& line)
-    {
-      return line.find('#') == 0;
-    }
-
-    static Sca::CommandData stringToScaCommandDataPair(const std::string& string)
-    {
-      // The pairs are comma-separated, so we split them.
-      std::vector<std::string> pair = split(string, scaPairSeparator().c_str());
-      if (pair.size() != 2) {
-        getLogger() << "SCA command-data pair not formatted correctly: parts=" << pair.size() << " str='" << string <<
-          "'" << endm;
-        BOOST_THROW_EXCEPTION(
-          AlfException() << ErrorInfo::Message("SCA command-data pair not formatted correctly"));
-      }
-      Sca::CommandData commandData;
-      commandData.command = convertHexString(pair[0]);
-      commandData.data = convertHexString(pair[1]);
-      return commandData;
-    };
 
     /// Command queue for passing commands from DIM RPC calls (which are in separate threads) to the main program loop
     std::shared_ptr<CommandQueue> mCommandQueue;
