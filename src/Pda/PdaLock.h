@@ -23,8 +23,7 @@ class PdaLock
     ///   Pda::PdaLock lock()
     /// But rather like this:
     ///   Pda::PdaLock lock{}
-    PdaLock(bool wait = true) : mLock("/dev/shm/alice_o2/rorc/AliceO2_roc_Pda_PdaDmaBuffer.lock",
-      "AliceO2_roc_Pda_PdaDmaBuffer_Mutex", wait)
+    PdaLock(bool wait = true) : mLock("/dev/shm/AliceO2_RoC_Pda.lock", "AliceO2_RoC_Pda_Mutex", wait)
     {
     }
 
