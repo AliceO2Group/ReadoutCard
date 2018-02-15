@@ -103,6 +103,12 @@ class BarAccessor
       mBar->writeRegister(Registers::DATA_SOURCE_SELECT.index, source);
     }
 
+    /// Set links
+    void setLinksEnabled(uint32_t mask)
+    {
+      mBar->writeRegister(Registers::LINKS_ENABLE.index, mask);
+    }
+
     /// Gets the serial number from the card.
     /// Note that not all firmwares have a serial number. You should make sure this firmware feature is enabled before
     /// calling this function, or the card may crash. See getFirmwareFeatures().

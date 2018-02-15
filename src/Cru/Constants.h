@@ -49,6 +49,10 @@ static constexpr uintptr_t SUPERPAGES_PUSHED_INTERVAL = 0x4;
 /// Amount of completely pushed superpages
 static constexpr IntervalRegister LINK_SUPERPAGES_PUSHED(0x800, SUPERPAGES_PUSHED_INTERVAL);
 
+/// Enable/disable links
+/// Every bit represents a link. Set a bit to 1 to disable a link.
+static constexpr Register LINKS_ENABLE = 0x604;
+
 /// Configuration register for data generator
 /// Bit 0: set to start data generator
 /// Bits [2:1] determine the data generator pattern

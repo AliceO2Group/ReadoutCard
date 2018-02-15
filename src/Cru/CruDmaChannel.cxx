@@ -90,9 +90,20 @@ CruDmaChannel::~CruDmaChannel()
 void CruDmaChannel::deviceStartDma()
 {
   resetCru();
-  initCru();
-  setBufferReady();
 
+  // Enable links
+  uint32_t mask = 0xFfffFfff;
+  for (const auto& link : mLinks) {
+    Utilities::setBit(mask, link.id, false);
+  }
+  getBar().setLinksEnabled(mask);
+
+  // Set data generator pattern
+  if (mGeneratorEnabled) {
+    getBar().setDataGeneratorPattern(mGeneratorPattern, mGeneratorDataSize, mGeneratorDataSizeRandomEnabled);
+  }
+
+  // Set data source
   if (mGeneratorEnabled) {
     if (mLoopbackMode == LoopbackMode::Internal) {
       if (mFeatures.dataSelection) {
@@ -117,13 +128,16 @@ void CruDmaChannel::deviceStartDma()
     }
   }
 
+  // Initialize link queues
   for (auto &link : mLinks) {
     link.queue.clear();
     link.superpageCounter = 0;
   }
   mReadyQueue.clear();
-
   mLinkQueuesTotalAvailable = LINK_QUEUE_CAPACITY * mLinks.size();
+
+  // Start DMA
+  setBufferReady();
 }
 
 /// Set buffer to ready
@@ -174,14 +188,6 @@ void CruDmaChannel::resetCru()
   std::this_thread::sleep_for(100ms);
   getBar().resetCard();
   std::this_thread::sleep_for(100ms);
-}
-
-void CruDmaChannel::initCru()
-{
-  // Set data generator pattern
-  if (mGeneratorEnabled) {
-    getBar().setDataGeneratorPattern(mGeneratorPattern, mGeneratorDataSize, mGeneratorDataSizeRandomEnabled);
-  }
 }
 
 auto CruDmaChannel::getNextLinkIndex() -> LinkIndex

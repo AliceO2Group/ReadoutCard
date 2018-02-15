@@ -82,7 +82,6 @@ class CruDmaChannel final : public DmaChannelPdaBase
         SuperpageQueue queue {LINK_QUEUE_CAPACITY};
     };
 
-    void initCru();
     void resetCru();
     void setBufferReady();
     void setBufferNonReady();
