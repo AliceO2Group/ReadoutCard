@@ -326,10 +326,9 @@ class ProgramDmaBench: public Program
         mBarHammer->join();
       }
 
-      std::cout << "\n";
+      std::cout << "\n\n";
       mChannel->stopDma();
       int popped = freeExcessPages(10ms);
-      std::cout << "\n";
       getLogger() << "Popped " << popped << " remaining superpages" << endm;
 
       outputErrors();
