@@ -514,21 +514,19 @@ class ProgramDmaBench: public Program
       return mReadoutCount.fetch_add(1, std::memory_order_relaxed);
     }
 
-    /// Free the pages that were pushed in excess
+    /// Free the pages that remain after stopping DMA (these may not be filled)
     int freeExcessPages(std::chrono::milliseconds timeout)
     {
-      // First deal with the remaining filled superpages
       auto start = std::chrono::steady_clock::now();
       int popped = 0;
       while ((std::chrono::steady_clock::now() - start) < timeout) {
-        if (mChannel->getReadyQueueSize() > 0) {
+        auto size = mChannel->getReadyQueueSize();
+        for (int i = 0; i < size; ++i) {
           auto superpage = mChannel->getSuperpage();
-          if (superpage.isFilled()) {
-            readoutPage(mBufferBaseAddress + superpage.getOffset(), superpage.getSize(), fetchAddReadoutCount());
-            mChannel->popSuperpage();
-            popped++;
-          }
+          readoutPage(mBufferBaseAddress + superpage.getOffset(), superpage.getSize(), fetchAddReadoutCount());
+          mChannel->popSuperpage();
         }
+        popped += size;
       }
       return popped;
     }
