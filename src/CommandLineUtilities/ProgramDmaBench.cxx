@@ -56,10 +56,6 @@ constexpr auto LINK_COUNTER_INITIAL_VALUE = std::numeric_limits<uint64_t>::max()
 constexpr auto MAX_LINKS = 32;
 /// Interval for low priority thread (display updates, etc)
 constexpr auto LOW_PRIORITY_INTERVAL = 10ms;
-/// Resting time if push thread has nothing to do
-constexpr auto RESTING_TIME_PUSH_THREAD = 1us;
-/// Resting time if readout thread has nothing to do
-constexpr auto RESTING_TIME_READOUT_THREAD = 10us;
 /// Buffer value to reset to
 constexpr uint32_t BUFFER_DEFAULT_VALUE = 0xCcccCccc;
 /// Fields: Time(hour:minute:second), Pages pushed, Pages read, Errors, °C
@@ -160,6 +156,12 @@ class ProgramDmaBench: public Program
           ("pattern",
               po::value<std::string>(&mOptions.generatorPatternString)->default_value("INCREMENTAL"),
               "Error check with given pattern [INCREMENTAL, ALTERNATING, CONSTANT, RANDOM]")
+          ("pause-push",
+              po::value<uint64_t>(&mOptions.pausePush)->default_value(1),
+              "Push thread pause time in microseconds if no work can be done")
+          ("pause-read",
+              po::value<uint64_t>(&mOptions.pauseRead)->default_value(10),
+              "Readout thread pause time in microseconds if no work can be done")
           ("random-pause",
               po::bool_switch(&mOptions.randomPause),
               "Randomly pause readout")
@@ -458,7 +460,7 @@ class ProgramDmaBench: public Program
             }
 
             if (shouldRest) {
-              std::this_thread::sleep_for(RESTING_TIME_PUSH_THREAD);
+              std::this_thread::sleep_for(std::chrono::microseconds(mOptions.pausePush));
             }
           }
         }
@@ -497,7 +499,7 @@ class ProgramDmaBench: public Program
             }
           } else {
             // No superpages available to read out, so have a nap
-            std::this_thread::sleep_for(RESTING_TIME_READOUT_THREAD);
+            std::this_thread::sleep_for(std::chrono::microseconds(mOptions.pauseRead));
           }
         }
       }
@@ -931,6 +933,8 @@ class ProgramDmaBench: public Program
         size_t dmaPageSize;
         std::string loopbackModeString;
         std::string timeLimitString;
+        uint64_t pausePush;
+        uint64_t pauseRead;
     } mOptions;
 
     /// The DMA channel
