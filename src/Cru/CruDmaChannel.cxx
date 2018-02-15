@@ -79,6 +79,9 @@ auto CruDmaChannel::allowedChannels() -> AllowedChannels {
 CruDmaChannel::~CruDmaChannel()
 {
   setBufferNonReady();
+  if (mReadyQueue.size() > 0) {
+    getLogger() << "Remaining superpages in the ready queue: " << mReadyQueue.size() << InfoLogger::InfoLogger::endm;
+  }
 }
 
 void CruDmaChannel::deviceStartDma()
@@ -136,6 +139,14 @@ void CruDmaChannel::setBufferNonReady()
 void CruDmaChannel::deviceStopDma()
 {
   setBufferNonReady();
+  for (auto& link : mLinks) {
+    size_t size = link.queue.size();
+    for (size_t i = 0; i < size; ++i) {
+      transferSuperpageFromLinkToReady(link);
+    }
+    assert(link.queue.empty());
+  }
+  assert(mLinkQueuesTotalAvailable == LINK_QUEUE_CAPACITY * mLinks.size());
 }
 
 void CruDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)
@@ -203,9 +214,7 @@ void CruDmaChannel::pushSuperpage(Superpage superpage)
   }
 
   // Once we've confirmed the link has a slot available, we push the superpage
-  mLinkQueuesTotalAvailable--;
-  link.queue.push_back(superpage);
-
+  pushSuperpageToLink(link, superpage);
   auto maxPages = superpage.getSize() / Cru::DMA_PAGE_SIZE;
   auto busAddress = getBusOffsetAddress(superpage.getOffset());
   getBar().pushSuperpageDescriptor(link.id, maxPages, busAddress);
@@ -227,6 +236,22 @@ auto CruDmaChannel::popSuperpage() -> Superpage
   auto superpage = mReadyQueue.front();
   mReadyQueue.pop_front();
   return superpage;
+}
+
+void CruDmaChannel::pushSuperpageToLink(Link& link, const Superpage& superpage)
+{
+  mLinkQueuesTotalAvailable--;
+  link.queue.push_back(superpage);
+}
+
+void CruDmaChannel::transferSuperpageFromLinkToReady(Link& link)
+{
+  link.queue.front().ready = true;
+  link.queue.front().received = link.queue.front().size;
+  mReadyQueue.push_back(link.queue.front());
+  mLinkQueuesTotalAvailable++;
+  link.queue.pop_front();
+  link.superpageCounter++;
 }
 
 void CruDmaChannel::fillSuperpages()
@@ -255,12 +280,7 @@ void CruDmaChannel::fillSuperpages()
         }
 
         // Front superpage has arrived
-        link.queue.front().ready = true;
-        link.queue.front().received = link.queue.front().size;
-        mReadyQueue.push_back(link.queue.front());
-        mLinkQueuesTotalAvailable++;
-        link.queue.pop_front();
-        link.superpageCounter++;
+        transferSuperpageFromLinkToReady(link);
       }
     }
   }

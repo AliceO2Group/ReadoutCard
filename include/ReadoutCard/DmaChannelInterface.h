@@ -30,10 +30,6 @@ class DmaChannelInterface
     /// Call this before pushing pages. May become unneeded in the future.
     virtual void startDma() = 0;
 
-    /// Stops DMA for the given channel
-    /// Called automatically on channel closure.
-    virtual void stopDma() = 0;
-
     /// Resets the channel. Requires the DMA to be stopped.
     /// \param resetLevel The depth of the reset
     virtual void resetChannel(ResetLevel::type resetLevel) = 0;
@@ -77,6 +73,11 @@ class DmaChannelInterface
     /// Gets the amount of superpages currently in the "ready queue". If there is more than one available, the front
     /// superpage can be inspected with getSuperpage() or popped with popSuperpage().
     virtual int getReadyQueueSize() = 0;
+
+    /// Stops DMA for the given channel.
+    /// Called automatically on channel closure.
+    /// This moves any remaining superpages to the "ready queue", even if they are not filled.
+    virtual void stopDma() = 0;
 
     /// Returns the type of the card this DmaChannelInterface is controlling
     /// \return The card type

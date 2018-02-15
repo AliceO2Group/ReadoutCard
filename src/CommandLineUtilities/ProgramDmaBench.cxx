@@ -344,7 +344,11 @@ class ProgramDmaBench: public Program
       }
 
       // Lock-free queues. Usable size is (size-1), so we add 1
+      /// Queue for passing filled superpages from the push thread to the readout thread
       folly::ProducerConsumerQueue<size_t> readoutQueue {static_cast<uint32_t>(mMaxSuperpages) + 1};
+      /// Queue for free superpages. This starts out as full, then the readout thread consumes them. When superpages
+      /// arrive, they are passed via the readoutQueue to the readout thread. When the readout thread is done with it,
+      /// it is put back in the freeQueue.
       folly::ProducerConsumerQueue<size_t> freeQueue {static_cast<uint32_t>(mMaxSuperpages) + 1};
       for (size_t i = 0; i < mMaxSuperpages; ++i) {
         size_t offset = i * mSuperpageSize;
@@ -481,7 +485,7 @@ class ProgramDmaBench: public Program
             // Read out pages
             int pages = mSuperpageSize / mPageSize;
             for (int i = 0; i < pages; ++i) {
-              auto readoutCount = mReadoutCount.fetch_add(1, std::memory_order_relaxed);
+              auto readoutCount = fetchAddReadoutCount();
               readoutPage(mBufferBaseAddress + offset + i * mPageSize, mPageSize, readoutCount);
             }
 
@@ -501,22 +505,32 @@ class ProgramDmaBench: public Program
       lowPriorityFuture.get();
     }
 
+    /// Atomically fetch and increment the readout count. We do this because it is accessed by multiple threads.
+    /// Although there is currently only one writer at a time and a regular increment probably would be OK.
+    uint64_t fetchAddReadoutCount()
+    {
+      return mReadoutCount.fetch_add(1, std::memory_order_relaxed);
+    }
+
     /// Free the pages that were pushed in excess
     void freeExcessPages(std::chrono::milliseconds timeout)
     {
+      // First deal with the remaining filled superpages
       auto start = std::chrono::steady_clock::now();
       int popped = 0;
       while ((std::chrono::steady_clock::now() - start) < timeout) {
         if (mChannel->getReadyQueueSize() > 0) {
           auto superpage = mChannel->getSuperpage();
           if (superpage.isFilled()) {
+            readoutPage(mBufferBaseAddress + superpage.getOffset(), superpage.getSize(), fetchAddReadoutCount());
             mChannel->popSuperpage();
             popped += superpage.getReceived() / mPageSize;
           }
         }
       }
+
       std::cout << "\n\n";
-      getLogger() << "Popped " << popped << " excess pages" << endm;
+      getLogger() << "Popped " << popped << " excess filled pages" << endm;
     }
 
     uint32_t get32bitFromPage(uintptr_t pageAddress, size_t index)
@@ -545,9 +559,7 @@ class ProgramDmaBench: public Program
     void readoutPage(uintptr_t pageAddress, size_t pageSize, int64_t readoutCount)
     {
       // Read out to file
-      if (mOptions.fileOutputAscii || mOptions.fileOutputBin) {
-        printToFile(pageAddress, pageSize, readoutCount);
-      }
+      printToFile(pageAddress, pageSize, readoutCount);
 
       // Data error checking
       if (!mOptions.noErrorCheck) {
@@ -815,6 +827,7 @@ class ProgramDmaBench: public Program
       }
     }
 
+    /// Prints the page to a file in ASCII or binary format if such output is enabled
     void printToFile(uintptr_t pageAddress, size_t pageSize, int64_t pageNumber)
     {
       auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);

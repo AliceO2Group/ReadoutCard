@@ -100,6 +100,12 @@ class CruDmaChannel final : public DmaChannelPdaBase
     /// Gets index of next link to push
     LinkIndex getNextLinkIndex();
 
+    /// Push a superpage to a link
+    void pushSuperpageToLink(Link& link, const Superpage& superpage);
+
+    /// Mark the front superpage of a link ready and transfer it to the ready queue
+    void transferSuperpageFromLinkToReady(Link& link);
+
     /// BAR 0 is needed for DMA engine interaction and various other functions
     Pda::PdaBar mPdaBar;
 
