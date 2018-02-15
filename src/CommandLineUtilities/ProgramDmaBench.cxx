@@ -326,12 +326,14 @@ class ProgramDmaBench: public Program
         mBarHammer->join();
       }
 
-      freeExcessPages(10ms);
+      std::cout << "\n";
       mChannel->stopDma();
+      int popped = freeExcessPages(10ms);
+      std::cout << "\n";
+      getLogger() << "Popped " << popped << " remaining superpages" << endm;
 
       outputErrors();
       outputStats();
-
       getLogger() << "Benchmark complete" << endm;
     }
 
@@ -513,7 +515,7 @@ class ProgramDmaBench: public Program
     }
 
     /// Free the pages that were pushed in excess
-    void freeExcessPages(std::chrono::milliseconds timeout)
+    int freeExcessPages(std::chrono::milliseconds timeout)
     {
       // First deal with the remaining filled superpages
       auto start = std::chrono::steady_clock::now();
@@ -524,13 +526,11 @@ class ProgramDmaBench: public Program
           if (superpage.isFilled()) {
             readoutPage(mBufferBaseAddress + superpage.getOffset(), superpage.getSize(), fetchAddReadoutCount());
             mChannel->popSuperpage();
-            popped += superpage.getReceived() / mPageSize;
+            popped++;
           }
         }
       }
-
-      std::cout << "\n\n";
-      getLogger() << "Popped " << popped << " excess filled pages" << endm;
+      return popped;
     }
 
     uint32_t get32bitFromPage(uintptr_t pageAddress, size_t index)
