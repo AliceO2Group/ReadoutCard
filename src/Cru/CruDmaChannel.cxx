@@ -9,6 +9,7 @@
 #include "ExceptionInternal.h"
 
 using namespace std::literals;
+using boost::format;
 
 namespace AliceO2
 {
@@ -45,18 +46,20 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
   }
 
   if (mFeatures.standalone) {
-    auto logFeature = [&](auto name, bool enabled) { if (!enabled) { getLogger() << " " << name; }};
-    getLogger() << "Standalone firmware features disabled:";
+    std::stringstream stream;
+    auto logFeature = [&](auto name, bool enabled) { if (!enabled) { stream << " " << name; }};
+    stream << "Standalone firmware features disabled:";
     logFeature("firmware-info", mFeatures.firmwareInfo);
     logFeature("serial-number", mFeatures.serial);
     logFeature("temperature", mFeatures.temperature);
     logFeature("data-selection", mFeatures.dataSelection);
-    getLogger() << InfoLogger::InfoLogger::endm;
+    log(stream.str());
   }
 
   // Insert links
   {
-    getLogger() << "Enabling link(s): ";
+    std::stringstream stream;
+    stream << "Enabling link(s): ";
     auto linkMask = parameters.getLinkMask().value_or(Parameters::LinkMaskType{0});
     mLinks.reserve(linkMask.size());
     for (uint32_t id : linkMask) {
@@ -64,10 +67,10 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
         BOOST_THROW_EXCEPTION(InvalidLinkId() << ErrorInfo::Message("CRU does not support given link ID")
           << ErrorInfo::LinkId(id));
       }
-      getLogger() << id << " ";
+      stream << id << " ";
       mLinks.push_back({static_cast<LinkId>(id)});
     }
-    getLogger() << InfoLogger::InfoLogger::endm;
+    log(stream.str());
   }
 }
 
@@ -80,7 +83,7 @@ CruDmaChannel::~CruDmaChannel()
 {
   setBufferNonReady();
   if (mReadyQueue.size() > 0) {
-    getLogger() << "Remaining superpages in the ready queue: " << mReadyQueue.size() << InfoLogger::InfoLogger::endm;
+    log((format("Remaining superpages in the ready queue: %1%") % mReadyQueue.size()).str());
   }
 }
 
@@ -139,14 +142,17 @@ void CruDmaChannel::setBufferNonReady()
 void CruDmaChannel::deviceStopDma()
 {
   setBufferNonReady();
+  int moved = 0;
   for (auto& link : mLinks) {
     size_t size = link.queue.size();
     for (size_t i = 0; i < size; ++i) {
       transferSuperpageFromLinkToReady(link);
+      moved++;
     }
     assert(link.queue.empty());
   }
   assert(mLinkQueuesTotalAvailable == LINK_QUEUE_CAPACITY * mLinks.size());
+  log((format("Moved %1% remaining superpages to ready queue") % moved).str());
 }
 
 void CruDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)
@@ -265,11 +271,12 @@ void CruDmaChannel::fillSuperpages()
     if (available) {
       uint32_t amountAvailable = superpageCount - link.superpageCounter;
       if (amountAvailable > link.queue.size()) {
-        getLogger() << InfoLogger::InfoLogger::Error
-          << "FATAL: Firmware reported more superpages available (" << amountAvailable <<
+        std::stringstream stream;
+        stream << "FATAL: Firmware reported more superpages available (" << amountAvailable <<
           ") than should be present in FIFO (" << link.queue.size() << "); "
           << link.superpageCounter << " superpages received from link " << int(link.id) << " according to driver, "
-          << superpageCount << " pushed according to firmware" << InfoLogger::InfoLogger::endm;
+          << superpageCount << " pushed according to firmware";
+        log(stream.str(), InfoLogger::InfoLogger::Error);
         BOOST_THROW_EXCEPTION(Exception()
             << ErrorInfo::Message("FATAL: Firmware reported more superpages available than should be present in FIFO"));
       }
