@@ -36,6 +36,8 @@ class ProgramAlfScaWriteSequence: public Program
       options.add_options()
         ("serial", boost::program_options::value<int>(&mSerialNumber),
           "Card serial number")
+        ("link", boost::program_options::value<int>(&mLink),
+          "Link")
         ("file", boost::program_options::value<std::string>(&mFilePath)->required(),
           "Path to command sequence file")
         ("out", boost::program_options::value<std::string>(&mOutFilePath),
@@ -51,8 +53,8 @@ class ProgramAlfScaWriteSequence: public Program
       }
 
       // Initialize DIM objects
-      Alf::ServiceNames names(mSerialNumber);
-      Alf::ScaWriteSequence scaWriteSequence(names.scaWriteSequence());
+      Alf::ServiceNames names(mSerialNumber, mLink);
+      Alf::ScaWriteSequence scaWriteSequence(names.scaSequence());
 
       // Read file
       std::ifstream file(mFilePath);
@@ -76,6 +78,7 @@ class ProgramAlfScaWriteSequence: public Program
     std::string mFilePath;
     std::string mOutFilePath;
     int mSerialNumber;
+    int mLink;
 };
 } // Anonymous namespace
 

@@ -18,28 +18,42 @@ namespace CommandLineUtilities {
 namespace Alf {
 
 namespace Registers {
-constexpr size_t BASE_INDEX = 0x4224000 / 4;
-constexpr int WRITE_DATA(0x20 / 4);
-constexpr int WRITE_COMMAND(0x24 / 4);
-constexpr int CONTROL(0x28 / 4);
-constexpr int READ_DATA(0x30 / 4);
-constexpr int READ_COMMAND(0x34 / 4);
-constexpr int READ_BUSY(0x38 / 4);
-constexpr int READ_TIME(0x3c / 4);
+constexpr int CRU_BASE_INDEX = 0x4224000 / 4;
+constexpr int CRU_LINK_OFFSET = 0x20000 / 4;
+constexpr int CRU_MAX_LINKS = 7;
+constexpr int CRORC_BASE_INDEX = 0x30 / 4;
+constexpr int CRORC_LINK_OFFSET = 0x50 / 4;
+constexpr int CRORC_MAX_LINKS = 2;
+constexpr int WRITE_DATA = 0x20 / 4;
+constexpr int WRITE_COMMAND = 0x24 / 4;
+constexpr int CONTROL = 0x28 / 4;
+constexpr int READ_DATA = 0x30 / 4;
+constexpr int READ_COMMAND = 0x34 / 4;
+constexpr int READ_BUSY = 0x38 / 4;
+constexpr int READ_TIME = 0x3c / 4;
 } // namespace Registers
-
-namespace Offset {
-constexpr int CRORC = 0;
-constexpr int CRU = Registers::BASE_INDEX;
-constexpr int OTHER = 0;
-}
 
 constexpr auto BUSY_TIMEOUT = std::chrono::milliseconds(10);
 constexpr auto CHANNEL_BUSY_TIMEOUT = std::chrono::milliseconds(10);
 
-Sca::Sca(RegisterReadWriteInterface &bar2, CardType::type cardType) : bar2(bar2),
-  offset((cardType == CardType::Crorc) ? Offset::CRORC : (cardType == CardType::Cru) ? Offset::CRU : Offset::OTHER)
+Sca::Sca(RegisterReadWriteInterface &bar2, CardType::type cardType, int link) : mBar2(bar2)
 {
+  auto setOffset = [&](auto base, auto offset, auto maxLinks) {
+    if (link >= maxLinks ) {
+      BOOST_THROW_EXCEPTION(ScaException() << ErrorInfo::Message("Maximum link number exceeded"));
+    }
+    mOffset = base + link * offset;
+  };
+
+  if (cardType == CardType::Cru) {
+    setOffset(Registers::CRU_BASE_INDEX, Registers::CRU_LINK_OFFSET, Registers::CRU_MAX_LINKS);
+  } else if (cardType == CardType::Crorc) {
+    setOffset(Registers::CRORC_BASE_INDEX, Registers::CRORC_LINK_OFFSET, Registers::CRORC_MAX_LINKS);
+  } else if (cardType == CardType::Dummy){
+    setOffset(0, 0x100, 1);
+  } else {
+    throw std::runtime_error("Unknown card type, could not calculate SCA offset");
+  }
 }
 
 void Sca::initialize()
@@ -181,12 +195,12 @@ auto Sca::gpioRead() -> ReadResult
 
 void Sca::barWrite(int index, uint32_t data)
 {
-  bar2.writeRegister(index + offset, data);
+  mBar2.writeRegister(index + mOffset, data);
 }
 
 uint32_t Sca::barRead(int index)
 {
-  return bar2.readRegister(index + offset);
+  return mBar2.readRegister(index + mOffset);
 }
 
 void Sca::executeCommand()
