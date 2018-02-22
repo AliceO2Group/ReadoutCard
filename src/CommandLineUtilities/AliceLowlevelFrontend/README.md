@@ -95,7 +95,7 @@ Set enabled the selected GPIO pins
 
 #### PUBLISH_REGISTERS_START
 Starts a service that publishes the contents of the given register addresses at the specified interval. 
-Values are published as array of 32 bit unsigned integers.
+Values are published as newline separated integers.
 The service will have the DNS name: `ALF/SERIAL_[serial number]/LINK_[link]/PUBLISH_REGISTERS/[service name]`.
 * Service type: RPC call
 * Parameters:
@@ -113,14 +113,14 @@ Stops a service started with PUBLISH_REGISTERS_START.
 
 #### PUBLISH_SCA_SEQUENCE_START
 Starts a service that executes and publishes the results of the given SCA sequence at the specified interval. 
-Values are published as array of 32 bit unsigned integers (for format, see SCA_SEQUENCE).
+Values are published in the same format as the SCA_SEQUENCE return format.
 If an error occurred, the corresponding result will be set to 0xffffffff and the rest of the sequence is aborted.
 The service will have the DNS name: `ALF/SERIAL_[serial number]/LINK_[link]/PUBLISH_SCA_SEQUENCE/[service name]`.
 * Service type: RPC call
 * Parameters:
   * Service name
   * Interval in seconds. The server supports intervals with millisecond precision
-  * SCA sequence (for format, see SCA_SEQUENCE)
+  * SCA sequence (for format, see SCA_SEQUENCE parameter format)
 * Return: empty
 
 #### PUBLISH_SCA_SEQUENCE_STOP

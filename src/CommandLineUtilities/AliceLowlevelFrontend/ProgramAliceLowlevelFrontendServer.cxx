@@ -14,6 +14,9 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
+#define __STDC_WANT_LIB_EXT1__ 1
+#include <string>
+
 #include "Common/Program.h"
 #include "CommandLineUtilities/Common.h"
 #include <chrono>
@@ -103,6 +106,16 @@ static std::vector<T> lexicalCastVector(const std::vector<U>& items)
   return result;
 }
 
+size_t strlenMax(char* string, size_t max)
+{
+  for (size_t i = 0; i < max; ++i) {
+    if (string[i] == '\0') {
+      return i;
+    }
+  };
+  return max;
+}
+
 struct LinkInfo
 {
     int serial;
@@ -141,8 +154,8 @@ struct Service
 
     ServiceDescription description;
     std::chrono::steady_clock::time_point nextUpdate;
-    std::vector<uint32_t> registerValues;
     std::unique_ptr<DimService> dimService;
+    std::vector<char> buffer; ///< Needed for DIM
 };
 
 /// Thread-safe queue for commands
@@ -337,25 +350,24 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
       service->nextUpdate = std::chrono::steady_clock::now();
       Visitor::apply(service->description.type,
         [&](const ServiceDescription::Register& type){
-          service->registerValues.resize(type.addresses.size());
-
+          // Estimate max needed size. I'm not sure DIM can handle reallocations of this buffer, so we avoid that...
+          service->buffer.resize(type.addresses.size()*20 + 512);
           getLogger() << "Starting register publisher '" << service->description.dnsName << "' with "
             << type.addresses.size() << " address(es) at interval "
             << service->description.interval.count() << "ms" << endm;
         },
         [&](const ServiceDescription::ScaSequence& type){
-          service->registerValues.resize(type.commandDataPairs.size() * 2); // Two result 32-bit integers per pair
-
+          // Estimate max needed size. I'm not sure DIM can handle reallocations of this buffer, so we avoid that...
+          service->buffer.resize(type.commandDataPairs.size()*20 + 512);
           getLogger() << "Starting SCA publisher '" << service->description.dnsName << "' with "
             << type.commandDataPairs.size() << " commands(s) at interval "
             << service->description.interval.count() << "ms" << endm;
         }
       );
 
-      auto format = (b::format("I:%1%") % service->registerValues.size()).str();
-      service->dimService = std::make_unique<DimService>(service->description.dnsName.c_str(), format.c_str(),
-        service->registerValues.data(), service->registerValues.size());
-
+      std::fill(service->buffer.begin(), service->buffer.end(), '\0');
+      service->dimService = std::make_unique<DimService>(service->description.dnsName.c_str(), "C",
+        service->buffer.data(), strlenMax(service->buffer.data(), service->buffer.size()));
       mServices.insert(std::make_pair(serviceDescription.dnsName, std::move(service)));
     }
 
@@ -371,37 +383,30 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
     {
       getLogger() << "Updating '" << service.description.dnsName << "'" << endm;
 
+      std::string result;
+
       Visitor::apply(service.description.type,
         [&](const ServiceDescription::Register& type){
+          std::stringstream ss;
           auto& bar0 = *(mBars.at(service.description.linkInfo.serial).at(0));
           for (size_t i = 0; i < type.addresses.size(); ++i) {
             auto index = type.addresses[i] / 4;
             auto value = bar0.readRegister(index);
-            service.registerValues.at(i) = value;
+            ss << std::hex << value << '\n';
           }
+          result = ss.str();
         },
         [&](const ServiceDescription::ScaSequence& type){
           auto& bar2 = *(mBars.at(service.description.linkInfo.serial).at(2));
-          std::fill(service.registerValues.begin(), service.registerValues.end(), 0); // Reset array in case of aborts
           auto sca = Sca(bar2, bar2.getCardType(), service.description.linkInfo.link);
-          for (size_t i = 0; i < type.commandDataPairs.size(); ++i) {
-            try {
-              const auto& pair = type.commandDataPairs[i];
-              sca.write(pair);
-              auto result = sca.read();
-              service.registerValues[i*2] = result.command;
-              service.registerValues[i*2 + 1] = result.data;
-            } catch (const ScaException &e) {
-              // If an SCA error occurs, we stop executing the sequence of commands and set the error value
-              service.registerValues[i*2] = 0xffffffff;
-              service.registerValues[i*2 + 1] = 0xffffffff;
-              break;
-            }
-          }
+          result = writeScaSequence(type.commandDataPairs, sca, service.description.linkInfo);
         }
       );
 
-      service.dimService->updateService();
+      // Reset and copy into the persistent buffer because I don't trust DIM with the non-persistent std::string
+      std::fill(service.buffer.begin(), service.buffer.end(), '\0');
+      std::copy(result.begin(), result.end(), service.buffer.begin());
+      service.dimService->updateService(service.buffer.data(), result.size() + 1);
     }
 
     /// Checks if the address is in range
@@ -455,6 +460,31 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
       commandData.data = convertHexString(pair[1]);
       return commandData;
     };
+
+    /// Writes an SCA sequence and returns a string of the read results separated by newline
+    static std::string writeScaSequence(const std::vector<Sca::CommandData>& commandDataPairs, Sca& sca,
+      LinkInfo linkInfo)
+    {
+      std::stringstream resultBuffer;
+      for (const auto& commandData : commandDataPairs) {
+        try {
+          sca.write(commandData);
+          auto result = sca.read();
+          getLogger() << (b::format("cmd=0x%x data=0x%x result=0x%x") % commandData.command % commandData.data %
+            result.data).str() << endm;
+          resultBuffer << std::hex << result.data << '\n';
+        } catch (const ScaException &e) {
+          // If an SCA error occurs, we stop executing the sequence of commands and return the results as far as we got
+          // them, plus the error message.
+          getLogger() << InfoLogger::InfoLogger::Error
+            << (b::format("SCA_SEQUENCE cmd=0x%x data=0x%x serial=%d link=%d error='%s'") % commandData.command
+              % commandData.data % linkInfo.serial % linkInfo.link % e.what()).str() << endm;
+          resultBuffer << e.what();
+          break;
+        }
+      }
+      return resultBuffer.str();
+    }
 
     /// RPC handler for register reads
     static std::string registerRead(const std::string& parameter, BarSharedPtr channel)
@@ -627,29 +657,8 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
       // We split on \n to get the pairs of SCA command and SCA data
       auto lines = split(parameter, argumentSeparator());
       auto commandDataPairs = linesToCommandDataVector(lines.begin(), lines.end());
-
-      std::stringstream resultBuffer;
       auto sca = Sca(*bar2, bar2->getCardType(), linkInfo.link);
-
-      for (const auto& commandData : commandDataPairs) {
-        try {
-          sca.write(commandData);
-          auto result = sca.read();
-          getLogger() << (b::format("cmd=0x%x data=0x%x result=0x%x") % commandData.command % commandData.data %
-            result.data).str() << endm;
-          resultBuffer << std::hex << result.data << '\n';
-        } catch (const ScaException &e) {
-          // If an SCA error occurs, we stop executing the sequence of commands and return the results as far as we got
-          // them, plus the error message.
-          getLogger() << InfoLogger::InfoLogger::Error
-            << (b::format("SCA_SEQUENCE cmd=0x%x data=0x%x serial=%d link=%d error='%s'") % commandData.command
-              % commandData.data % linkInfo.serial % linkInfo.link % e.what()).str() << endm;
-          resultBuffer << e.what();
-          break;
-        }
-      }
-
-      return resultBuffer.str();
+      return writeScaSequence(commandDataPairs, sca, linkInfo);
     }
 
     /// Command queue for passing commands from DIM RPC calls (which are in separate threads) to the main program loop
