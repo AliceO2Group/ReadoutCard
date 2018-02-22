@@ -472,7 +472,7 @@ class ProgramAliceLowlevelFrontendServer: public AliceO2::Common::Program
           auto result = sca.read();
           getLogger() << (b::format("cmd=0x%x data=0x%x result=0x%x") % commandData.command % commandData.data %
             result.data).str() << endm;
-          resultBuffer << std::hex << result.data << '\n';
+          resultBuffer << std::hex << commandData.command << ',' << result.data << '\n';
         } catch (const ScaException &e) {
           // If an SCA error occurs, we stop executing the sequence of commands and return the results as far as we got
           // them, plus the error message.

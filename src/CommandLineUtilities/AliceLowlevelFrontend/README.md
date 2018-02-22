@@ -4,12 +4,13 @@ DIM server for DCS control of the cards
 
 # Usage
 `DIM_DNS_NODE=mydimdns roc-alf-server`
+
 ALF will automatically scan the system for cards.
 
 
 # Services
-
 Service names are organized by card serial number:
+
 `ALF/SERIAL_[serial number]/LINK_[link]/[service name]`
 
 ## RPC calls
@@ -67,15 +68,16 @@ Write and read a sequence to the SCA
     ~~~
     "# Hello!\n11,22\n33,44\n# Bye!"
     ~~~
-* Return: A sequence of SCA read return values corresponding to the commands from the input sequence:
+* Return: A sequence of pairs of SCA command (coming from the input) and corresponding SCA read return values.
+    The pairs are separated by newline, the command and data by comma: 
     ~~~
-    "[value 0]\n[value 1]\n[etc.]"
+    "[command 0],[value 0]\n[command 1],[value 1]\n[etc.]"
     ~~~
     For example:
     ~~~
-    "42\n123\n555"
+    "10,42\n20,123\n30,555"
     ~~~
-    If an SCA error occurred, the sequence of return values will go up to that point, plus the error message
+    If an SCA error occurred, the sequence of return values will go up to that point, plus the error message.
     If another type of error occurred (such as a formatting error), it will return a failure string.
 
 #### SCA_GPIO_READ
