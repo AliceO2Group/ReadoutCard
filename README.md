@@ -52,7 +52,7 @@ The roc-dma-bench program uses hugepages to ensure the buffer's memory is more c
 list is small.
 
 But hugepages have to be allocated in advance. And they're not really needed with the IOMMU enabled 
-(note: performance impact of using the IOMMU has not been measured).
+(note: the IOMMU has an impact on DMA throughput and CPU usage).
 With an enabled IOMMU, the ReadoutCard library will be able to present any user-allocated buffer that was registered
 with the channel as a contiguous address space to the card, simplifying DMA buffer management.
 
