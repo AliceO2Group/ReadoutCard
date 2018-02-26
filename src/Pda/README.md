@@ -31,3 +31,7 @@ For example, in `PdaDmaBuffer.cxx`, one of the exceptions presents the message:
 *"Scatter-gather node smaller than 2 MiB (minimum hugepage size. This means the IOMMU is off and the buffer is not 
 backed by hugepages - an unsupported buffer configuration."*
 While this is helpful in the context of the way it is used in ReadoutCard, it may not apply in different situations.
+
+## Locking
+If multiple DMA buffers are concurrently created/destroyed, the PDA kernel module will lock up, requiring a reboot.  
+To prevent this from happening, the global lock `PdaLock` is used in `PdaDmaBuffer.cxx` and `Driver.cxx`.

@@ -100,10 +100,10 @@ DMA can be paused and resumed at any time using `stopDma()` and `startDma()`
 
 ## Note for when bad things happen
 The driver uses some files in shared memory:
-* `/dev/shm/alice_o2/rorc/[PCI address]/channel_[channel number]/fifo` - For card FIFOs
-* `/dev/shm/alice_o2/rorc/[PCI address]/channel_[channel number]/.lock` - For locking channels
-* `/dev/shm/sem.alice_o2_rorc_[PCI address]_channel_[channel number].mutex` - For locking channels
-* `/var/lib/hugetlbfs/global/pagesize-[page size]/rorc-dma-bench_id=[PCI address]_chan_[channel number]` - For card benchmark DMA buffers
+* `/dev/shm/AliceO2_RoC_[PCI address]_Channel_[channel number]_fifo` - For card FIFOs
+* `/dev/shm/AliceO2_RoC_[PCI address]_Channel_[channel number].lock` - For locking channels
+* `/dev/shm/sem.AliceO2_RoC_[PCI address]_Channel_[channel number]_Mutex` - For locking channels
+* `/var/lib/hugetlbfs/global/pagesize-[page size]/roc-dma-bench_id=[PCI address]_chan_[channel number]` - For roc-bench-dma buffers
 
 If the process crashes badly (such as with a segfault), it may be necessary to clean up the mutex manually, either by
 deleting with `rm` or by using the `roc-channel-cleanup` utility. 
@@ -186,8 +186,11 @@ Resets a card channel
 
 ### roc-run-script
 *Deprecated, see section "Python interface"*
-
 Run a Python script that can use a simple interface to use the library.
+
+### roc-setup-hugetlbfs
+Setup hugetlbfs directories & mounts. If using hugepages, should be run once per boot.
+
 
 
 Exceptions
@@ -256,7 +259,7 @@ If PDA is not detected on the system, only a dummy implementation of the interfa
   
 4. Optionally, insert kernel module. If the utilities are run as root, PDA will do this automatically.
   ~~~
-  modprobe uio\_pci\_dma
+  modprobe uio_pci_dma
   ~~~
 
 ### Hugepages
@@ -340,10 +343,8 @@ The issue has occurred on Dell R720 servers.
 
 Permissions
 -------------------
-The library must be run either by root users, or users part of the group 'pda'. In case of 'pda' group users, make sure
-the `/dev/shm/alice_o2` and `/mnt/hugetlbfs/alice_o2` directories have sufficient permissions that allow those 
-users to create/read/write files.
-Also, the PDA kernel module must be inserted as root in any case.
+The library must be run either by root users, or users part of the group 'pda'.
+The PDA kernel module must be inserted as root in any case.
 
 
 ALICE Low-level Front-end (ALF) DIM Server

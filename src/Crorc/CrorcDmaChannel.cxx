@@ -81,6 +81,8 @@ CrorcDmaChannel::~CrorcDmaChannel()
 
 void CrorcDmaChannel::deviceStartDma()
 {
+  // With the C-RORC, we can't start DMA until we have enough memory to cover 128 DMA pages (which should be covered by
+  // 1 superpage). So we set the "pending DMA start" state and actually start once a superpage has been pushed.
   log("DMA start deferred until superpage available");
 
   mFifoBack = 0;
@@ -285,6 +287,7 @@ void CrorcDmaChannel::pushSuperpage(Superpage superpage)
   if (!Utilities::isMultiple(superpage.getSize(), MIN_SIZE)) {
     BOOST_THROW_EXCEPTION(CrorcException()
         << ErrorInfo::Message("Could not enqueue superpage, C-RORC backend requires superpage size multiple of 1 MiB"));
+    // We require 1 MiB because this fits 128 8KiB DMA pages (see deviceStartDma() for why we need that)
   }
 
   SuperpageQueueEntry entry;
