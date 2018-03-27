@@ -89,8 +89,6 @@ CruDmaChannel::~CruDmaChannel()
 
 void CruDmaChannel::deviceStartDma()
 {
-  resetCru();
-
   // Enable links
   uint32_t mask = 0xFfffFfff;
   for (const auto& link : mLinks) {
@@ -127,6 +125,9 @@ void CruDmaChannel::deviceStartDma()
         << ErrorInfo::Message("CRU only supports 'None' loopback when operating without data generator"));
     }
   }
+
+  // Reset CRU (should be done after link mask set)
+  resetCru();
 
   // Initialize link queues
   for (auto &link : mLinks) {
