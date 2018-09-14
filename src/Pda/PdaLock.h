@@ -7,6 +7,7 @@
 #define ALICEO2_SRC_READOUTCARD_PDA_PDALOCK_H_
 
 #include "InterprocessLock.h"
+#include "boost/filesystem.hpp"
 
 namespace AliceO2 {
 namespace roc {
@@ -25,6 +26,12 @@ class PdaLock
     ///   Pda::PdaLock lock{}
     PdaLock(bool wait = true) : mLock("/dev/shm/AliceO2_RoC_Pda.lock", "AliceO2_RoC_Pda_Mutex", wait)
     {
+    }
+
+    ~PdaLock()
+    {
+      boost::filesystem::remove("/dev/shm/AliceO2_RoC_Pda.lock");
+      boost::filesystem::remove("/dev/shm/sem.AliceO2_RoC_Pda_Mutex");
     }
 
   private:
