@@ -3,6 +3,7 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
+#include <boost/filesystem.hpp>
 #include "DmaChannelBase.h"
 #include <iostream>
 #include "ChannelPaths.h"
@@ -85,6 +86,11 @@ DmaChannelBase::DmaChannelBase(CardDescriptor cardDescriptor, const Parameters& 
 DmaChannelBase::~DmaChannelBase()
 {
   log("Releasing DMA channel lock", InfoLogger::InfoLogger::Debug);
+
+  std::string channelLockPath = "/dev/shm/AliceO2_RoC_" + std::string(getCardDescriptor().pciAddress.toString()) + "_Channel_" + std::to_string((int) getChannelNumber ()) + ".lock";
+  std::string channelMutexPath = "/dev/shm/sem.AliceO2_RoC_" + std::string(getCardDescriptor().pciAddress.toString()) + "_Channel_" + std::to_string((int) getChannelNumber ()) + "_Mutex";
+  bfs::remove(channelLockPath);
+  bfs::remove(channelMutexPath);
 }
 
 void DmaChannelBase::log(const std::string& message, boost::optional<InfoLogger::InfoLogger::Severity> severity)
