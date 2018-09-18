@@ -171,7 +171,7 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
     const bool mUseFeeAddress;
 
     /// Gives the type of loopback
-    const LoopbackMode::type mLoopbackMode;
+    LoopbackMode::type mLoopbackMode;
 
     /// Enables the data generator
     const bool mGeneratorEnabled;

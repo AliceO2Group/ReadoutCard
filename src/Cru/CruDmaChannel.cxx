@@ -22,7 +22,7 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
       mPdaBar2(getRocPciDevice().getPciDevice(), 2), // Initialize BAR 2
       mFeatures(getBar().getFirmwareFeatures()), // Get which features of the firmware are enabled
       mInitialResetLevel(ResetLevel::Internal), // It's good to reset at least the card channel in general
-      mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)), // Internal loopback by default
+      mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::None)), // No loopback by default
       mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)), // Use data generator by default
       mGeneratorPattern(parameters.getGeneratorPattern().get_value_or(GeneratorPattern::Incremental)), //
       mGeneratorDataSizeRandomEnabled(parameters.getGeneratorRandomSizeEnabled().get_value_or(false)), //
@@ -71,6 +71,12 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
       mLinks.push_back({static_cast<LinkId>(id)});
     }
     log(stream.str());
+  }
+  
+  // If the Generator is enabled and no LoopbackMode was specified, fallback to Internal
+  if (mGeneratorEnabled && mLoopbackMode == LoopbackMode::None) {
+    log("No loopback mode specified; defaulting to 'Internal'", InfoLogger::InfoLogger::Info);
+    mLoopbackMode = LoopbackMode::Internal;
   }
 }
 
