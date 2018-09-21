@@ -196,6 +196,11 @@ class ProgramDmaBench: public Program
       params.setDmaPageSize(mOptions.dmaPageSize);
       params.setGeneratorEnabled(mOptions.generatorEnabled);
       params.setGeneratorLoopback(LoopbackMode::fromString(mOptions.loopbackModeString));
+      // If the Generator is enabled and no LoopbackMode was specified, fallback to Internal
+      if (params.getGeneratorEnabled() && params.getGeneratorLoopback() == LoopbackMode::None) {
+        getLogger() << "No loopback mode value specified, defaulting to 'Internal'" << endm;
+        params.setGeneratorLoopback(LoopbackMode::Internal);
+      }
 
       // Handle file output options
       {

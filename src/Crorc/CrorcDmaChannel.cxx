@@ -33,7 +33,7 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
     mInitialResetLevel(ResetLevel::Internal), // It's good to reset at least the card channel in general
     mNoRDYRX(true), // Not sure
     mUseFeeAddress(false), // Not sure
-    mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)), // Internal loopback by default
+    mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::None)), // No loopback by default
     mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)), // Use data generator by default
     mGeneratorPattern(parameters.getGeneratorPattern().get_value_or(GeneratorPattern::Incremental)), //
     mGeneratorMaximumEvents(0), // Infinite events
@@ -64,6 +64,11 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
     }
     mReadyFifoAddressUser = entry.addressUser;
     mReadyFifoAddressBus = entry.addressBus;
+  }
+  // If the Generator is enabled and no LoopbackMode was specified, fallback to Internal
+  if (mGeneratorEnabled && mLoopbackMode == LoopbackMode::None) {
+    log("No loopback mode specified; defaulting to 'Internal'", InfoLogger::InfoLogger::Info);
+    mLoopbackMode = LoopbackMode::Internal;
   }
 
   getReadyFifoUser()->reset();
