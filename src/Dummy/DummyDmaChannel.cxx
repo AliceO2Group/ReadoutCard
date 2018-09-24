@@ -24,7 +24,7 @@ constexpr size_t READY_QUEUE_SIZE = 32;
 constexpr auto endm = InfoLogger::InfoLogger::StreamOps::endm;
 
 DummyDmaChannel::DummyDmaChannel(const Parameters& params)
-    : DmaChannelBase(makeDummyDescriptor(), params, { 0, 1, 2, 3, 4, 5, 6, 7 }),
+    : DmaChannelBase(makeDummyDescriptor(), const_cast<Parameters&>(params), { 0, 1, 2, 3, 4, 5, 6, 7 }),
       mTransferQueue(TRANSFER_QUEUE_SIZE), mReadyQueue(READY_QUEUE_SIZE)
 {
   getLogger() << "DummyDmaChannel::DummyDmaChannel(channel:" << params.getChannelNumberRequired() << ")"

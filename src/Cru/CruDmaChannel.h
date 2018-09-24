@@ -126,34 +126,34 @@ class CruDmaChannel final : public DmaChannelPdaBase
     // These variables are configuration parameters
 
     /// Reset level on initialization of channel
-    ResetLevel::type mInitialResetLevel;
+    const ResetLevel::type mInitialResetLevel;
 
     /// Gives the type of loopback
-    LoopbackMode::type mLoopbackMode;
+    const LoopbackMode::type mLoopbackMode;
 
     /// Enables the data generator
-    bool mGeneratorEnabled;
+    const bool mGeneratorEnabled;
 
     /// Data pattern for the data generator
-    GeneratorPattern::type mGeneratorPattern;
+    const GeneratorPattern::type mGeneratorPattern;
 
     /// Random data size
-    bool mGeneratorDataSizeRandomEnabled;
+    const bool mGeneratorDataSizeRandomEnabled;
 
     /// Maximum number of events
-    int mGeneratorMaximumEvents;
+    const int mGeneratorMaximumEvents;
 
     /// Initial value of the first data in a data block
-    uint32_t mGeneratorInitialValue;
+    const uint32_t mGeneratorInitialValue;
 
     /// Sets the second word of each fragment when the data generator is used
-    uint32_t mGeneratorInitialWord;
+    const uint32_t mGeneratorInitialWord;
 
     /// Random seed parameter in case the data generator is set to produce random data
-    int mGeneratorSeed;
+    const int mGeneratorSeed;
 
     /// Length of data written to each page
-    size_t mGeneratorDataSize;
+    const size_t mGeneratorDataSize;
 };
 
 } // namespace roc

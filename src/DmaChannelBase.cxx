@@ -13,18 +13,6 @@
 
 namespace AliceO2 {
 namespace roc {
-namespace {
-void checkParameters(const Parameters& parameters)
-{
-  // Generator enabled is not allowed in conjunction with none loopback mode
-  auto enabled = parameters.getGeneratorEnabled();
-  auto loopback = parameters.getGeneratorLoopback();
-  if (enabled && loopback && (*enabled && (*loopback == LoopbackMode::None))) {
-    BOOST_THROW_EXCEPTION(
-        InvalidParameterException() << ErrorInfo::Message("Generator enabled but 'None' loopback mode specified"));
-  }
-}
-} // Anonymous namespace
 
 namespace b = boost;
 namespace bfs = boost::filesystem;
@@ -42,7 +30,25 @@ void DmaChannelBase::checkChannelNumber(const AllowedChannels& allowedChannels)
   }
 }
 
-DmaChannelBase::DmaChannelBase(CardDescriptor cardDescriptor, const Parameters& parameters,
+void DmaChannelBase::checkParameters(Parameters& parameters)
+{
+  // Generator enabled is not allowed in conjunction with none loopback mode: default to Internal
+  auto enabled = parameters.getGeneratorEnabled();
+  auto loopback = parameters.getGeneratorLoopback();
+  if (enabled && loopback && (*enabled && (*loopback == LoopbackMode::None))) {
+    log("Generator enabled, defaulting to LoopbackMode = Internal", InfoLogger::InfoLogger::Debug);
+    parameters.setGeneratorLoopback(LoopbackMode::Internal);
+  }
+
+  // Generator disabled. Loopback mode should be set to None
+  if (enabled && loopback && (!*enabled && (*loopback != LoopbackMode::None))){
+    log("Generator disabled, defaulting to LoopbackMode = None", InfoLogger::InfoLogger::Debug);
+    parameters.setGeneratorLoopback(LoopbackMode::None);
+  }
+}
+
+
+DmaChannelBase::DmaChannelBase(CardDescriptor cardDescriptor, Parameters& parameters,
     const AllowedChannels& allowedChannels)
     : mCardDescriptor(cardDescriptor), mChannelNumber(parameters.getChannelNumberRequired())
 {
