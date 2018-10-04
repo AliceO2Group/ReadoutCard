@@ -119,6 +119,7 @@ if(ALICEO2_READOUTCARD_PDA_ENABLED)
     src/Pda/PdaDevice.cxx
     src/Pda/PdaDmaBuffer.cxx
     src/RocPciDevice.cxx
+    src/Swt/Swt.cxx
   )
   if(PYTHONLIBS_FOUND)
     list(APPEND SRCS
@@ -147,6 +148,7 @@ build_util_exec(roc-reset CommandLineUtilities/ProgramReset.cxx)
 build_util_exec(roc-reg-read CommandLineUtilities/ProgramRegisterRead.cxx)
 build_util_exec(roc-reg-read-range CommandLineUtilities/ProgramRegisterReadRange)
 build_util_exec(roc-reg-write CommandLineUtilities/ProgramRegisterWrite.cxx)
+build_util_exec(roc-bar-stress CommandLineUtilities/ProgramBarStress.cxx)
 
 if(ALICEO2_READOUTCARD_PDA_ENABLED)
   build_util_exec(roc-channel-cleanup CommandLineUtilities/ProgramCleanup.cxx)
