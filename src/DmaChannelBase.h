@@ -36,7 +36,7 @@ class DmaChannelBase: public DmaChannelInterface
     /// \param cardDescriptor Card descriptor
     /// \param parameters Parameters of the channel
     /// \param allowedChannels Channels allowed by this card type
-    DmaChannelBase(CardDescriptor cardDescriptor, const Parameters& parameters,
+    DmaChannelBase(CardDescriptor cardDescriptor, Parameters& parameters,
         const AllowedChannels& allowedChannels);
     virtual ~DmaChannelBase();
 
@@ -108,6 +108,9 @@ class DmaChannelBase: public DmaChannelInterface
   private:
     /// Check if the channel number is valid
     void checkChannelNumber(const AllowedChannels& allowedChannels);
+
+    /// Check the validity of basic parameters
+    void checkParameters(Parameters& parameters);
 
     /// Type of the card
     const CardDescriptor mCardDescriptor;

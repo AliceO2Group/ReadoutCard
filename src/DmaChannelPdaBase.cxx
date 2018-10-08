@@ -30,7 +30,7 @@ CardDescriptor createCardDescriptor(const Parameters& parameters)
 
 DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
     const AllowedChannels& allowedChannels)
-    : DmaChannelBase(createCardDescriptor(parameters), parameters, allowedChannels), mDmaState(DmaState::STOPPED)
+    : DmaChannelBase(createCardDescriptor(parameters), const_cast<Parameters&>(parameters), allowedChannels), mDmaState(DmaState::STOPPED)
 {
   // Initialize PDA & DMA objects
   Utilities::resetSmartPtr(mRocPciDevice, getCardDescriptor().pciAddress);
