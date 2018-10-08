@@ -3,7 +3,7 @@ if(APPLE)
     set(boost_python_component "")
 else()
     set(rt_lib "rt")
-    set(boost_python_component "python")
+    set(boost_python_component "python27")
 endif()
 
 find_package(Boost 1.56
@@ -88,12 +88,16 @@ o2_define_bucket(
   ${DIM_INCLUDE_DIRS}
 )
 
+# Build the variable name for the path to boost python
+string(TOUPPER ${boost_python_component} upper)
+set(temp "Boost_${upper}_LIBRARY")
+
 o2_define_bucket(
   NAME
   o2_readoutcard_python
 
   DEPENDENCIES
-  ${Boost_PYTHON_LIBRARY}
+  ${${temp}}
   ${PYTHON_LIBRARIES}
 
   SYSTEMINCLUDE_DIRECTORIES
