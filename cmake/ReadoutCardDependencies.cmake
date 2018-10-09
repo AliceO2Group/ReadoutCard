@@ -91,7 +91,7 @@ o2_define_bucket(
 # Build the variable name for the path to boost python
 set(boost_python_dep "")
 if(boost_python_component)
-    if (boost_python_component NOT STREQUAL "")
+    if (NOT boost_python_component STREQUAL "")
         string(TOUPPER ${boost_python_component} upper)
         set(temp "Boost_${upper}_LIBRARY")
         set(boost_python_dep ${${temp}})
