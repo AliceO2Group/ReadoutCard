@@ -31,19 +31,21 @@ namespace
 
 uint32_t getLinkId(const char* data)
 {
-  return Utilities::getBits(getWord(data, 2), 8, 15);
+  return Utilities::getBits(getWord(data, 3), 0, 7); //bits #[96-103] from RDH
 }
 
 uint32_t getEventSize(const char* data)
 {
-  return Utilities::getBits(getWord(data, 3), 8, 23);
+  return Utilities::getBits(getWord(data, 2), 16, 31); //bits #[80-95] from RDH
 }
+
+//TODO: Add getOffset (pointer to the beginning of the next dma page)
 
 /// Get header size in bytes
 constexpr size_t getHeaderSize()
 {
   // Two 256-bit words = 64 bytes
-  return 64;
+  return 0x40;
 }
 
 /// Get header size in 256-bit words
