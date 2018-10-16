@@ -99,7 +99,7 @@ static constexpr Register DEBUG_READ_WRITE(0x410);
 /// Temperature control & read register
 /// The lower 10 bits contain the temperature value
 /// Must be accessed on BAR 2
-static constexpr Register TEMPERATURE(0x200028);
+static constexpr Register TEMPERATURE(0x00010008);
 
 /// Register containing the firmware Git hash
 /// Must be accessed on BAR 2
