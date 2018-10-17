@@ -59,9 +59,9 @@ constexpr auto LOW_PRIORITY_INTERVAL = 10ms;
 /// Buffer value to reset to
 constexpr uint32_t BUFFER_DEFAULT_VALUE = 0xCcccCccc;
 /// Fields: Time(hour:minute:second), Pages pushed, Pages read, Errors, °C
-const std::string PROGRESS_FORMAT_HEADER("  %-8s   %-12s  %-12s  %-12s  %-12s %-5.1f");
+const std::string PROGRESS_FORMAT_HEADER("  %-8s   %-12s  %-12s  %-12s  %-5.1f");
 /// Fields: Time(hour:minute:second), Pages pushed, Pages read, Errors, °C
-const std::string PROGRESS_FORMAT("  %02s:%02s:%02s   %-12s  %-12s  %-12s  %-12s %-5.1f");
+const std::string PROGRESS_FORMAT("  %02s:%02s:%02s   %-12s  %-12s  %-12s  %-5.1f");
 /// Path for error log
 auto READOUT_ERRORS_PATH = "readout_errors.txt";
 /// Max amount of errors that are recorded into the error stream
@@ -537,14 +537,14 @@ class ProgramDmaBench: public Program
       return value;
     }
 
-    uint32_t getDataGeneratorCounterFromPage(uintptr_t pageAddress)
+    uint32_t getDataGeneratorCounterFromPage(uintptr_t pageAddress, size_t headerSize)
     {
       switch (mCardType) {
         case CardType::Crorc:
           return get32bitFromPage(pageAddress, 0);
         case CardType::Cru: {
           // Grab the first payload word as the counter's beginning
-          auto payload = reinterpret_cast<const volatile uint32_t *>(pageAddress + Cru::DataFormat::getHeaderSize());
+          auto payload = reinterpret_cast<const volatile uint32_t *>(pageAddress + headerSize);
           return payload[0];
         }
         default: throw std::runtime_error("Error checking unsupported for this card type");
@@ -577,7 +577,7 @@ class ProgramDmaBench: public Program
             hasError = checkErrorsCrorc(pageAddress, pageSize, readoutCount, linkId);
             break;
           case CardType::Cru:
-            hasError = checkErrorsCru(pageAddress, pageSize, readoutCount, linkId);
+            hasError = checkErrorsCru(pageAddress, pageSize, readoutCount, linkId, mOptions.loopbackModeString);
             break;
           default:
             throw std::runtime_error("Error checking unsupported for this card type");
@@ -595,15 +595,75 @@ class ProgramDmaBench: public Program
       }
     }
 
-    bool checkErrorsCru(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
+    bool checkErrorsCru(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId, std::string loopbackMode)
+    {
+      if (loopbackMode == "NONE")
+        return checkErrorsCruDdg(pageAddress, pageSize, eventNumber, linkId);
+      else if (loopbackMode == "INTERNAL")
+        return checkErrorsCruInternal(pageAddress, pageSize, eventNumber, linkId);
+      else
+        throw std::runtime_error("Loopback Mode not supported");
+    }
+ 
+    bool checkErrorsCruInternal(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
+    {
+      // pcie internal pattern
+      // Every 256-bit word is built as follows:
+      // 32 bits counter + 32 bits counter + 32-bit counter + 32 bit counter
+      // 32 bits counter + 32 bits counter + 32-bit counter + 32 bit counter
+      
+      // Get counter value only if page is valid...
+      if (mLinkCounters[linkId] == LINK_COUNTER_INITIAL_VALUE) {
+        auto counter = getDataGeneratorCounterFromPage(pageAddress, 0x0); // no header!
+        mErrorStream << b::format("resync counter for e:%d l:%d cnt:%x\n") % eventNumber % linkId % counter;
+        mLinkCounters[linkId] = counter;
+      }
+      
+      const uint32_t counter = mLinkCounters[linkId];
+
+      bool foundError = false;
+      auto checkValue = [&](uint32_t i, uint32_t expectedValue, uint32_t actualValue) {
+        if (expectedValue != actualValue) {
+          foundError = true;
+          addError(eventNumber, linkId, i, counter, expectedValue, actualValue, pageSize);
+        }
+      };
+
+      const auto payload = reinterpret_cast<const volatile uint32_t*> (pageAddress);
+
+      // Check iterating through 256-bit words
+      uint32_t offset = (counter % (0x100000000)); // mod 0xffffffff + 1
+      uint32_t i = 0;
+
+      while ((i*4) < pageSize) { //this is indexing, it has nothing to do with iterating step
+        uint32_t word32 = i; // 32-bit word pointer
+
+        checkValue(word32 + 0, offset, payload[word32 + 0]); //32-bit counter
+        checkValue(word32 + 1, offset, payload[word32 + 1]); //32-bit counter
+        checkValue(word32 + 2, offset, payload[word32 + 2]); //32-bit counter 
+        checkValue(word32 + 3, offset, payload[word32 + 3]); //32-bit counter
+        checkValue(word32 + 4, offset, payload[word32 + 4]); //32-bit counter
+        checkValue(word32 + 5, offset, payload[word32 + 5]); //32-bit counter
+        checkValue(word32 + 6, offset, payload[word32 + 6]); //32-bit counter 
+        checkValue(word32 + 7, offset, payload[word32 + 7]); //32-bit counter 
+
+        offset = (offset+1) % (0x100000000); //Increase counter by 1 - mod 0xffffffff + 1
+        i += 8; // 8 = expected 2*sizeof(uint32_t);
+      }
+      
+      mLinkCounters[linkId] = offset;
+      return foundError;
+    }
+
+    bool checkErrorsCruDdg(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
     {
       // Get memsize from the header
       const auto memBytes = Cru::DataFormat::getEventSize(reinterpret_cast<const char*>(pageAddress)); // Memory size [RDH, Payload]
 
       if (memBytes < 40 || memBytes > pageSize) {
         // Report RDH error
-        mRdhErrorCount++;
-        if (mRdhErrorCount < MAX_RECORDED_ERRORS) {
+        mErrorCount++;
+        if (mErrorCount < MAX_RECORDED_ERRORS) {
           mErrorStream << b::format("[RDHERR]\tevent:%1% l:%2% payloadBytes:%3% size:%4% words out of range\n") % eventNumber
             % linkId % memBytes % pageSize;
         }
@@ -612,7 +672,7 @@ class ProgramDmaBench: public Program
 
       // Get counter value only if page is valid...
       if (mLinkCounters[linkId] == LINK_COUNTER_INITIAL_VALUE) {
-        auto counter = getDataGeneratorCounterFromPage(pageAddress);
+        auto counter = getDataGeneratorCounterFromPage(pageAddress, Cru::DataFormat::getHeaderSize());
         mErrorStream << b::format("resync counter for e:%d l:%d cnt:%x\n") % eventNumber % linkId % counter;
         mLinkCounters[linkId] = counter;
       }
@@ -622,10 +682,6 @@ class ProgramDmaBench: public Program
       const auto payload = reinterpret_cast<const volatile uint32_t*>(pageAddress + Cru::DataFormat::getHeaderSize()); 
       const auto payloadBytes = memBytes - Cru::DataFormat::getHeaderSize();
       
-      // Every 256-bit word is built as follows:
-      // 32 bits counter + 32 bits counter + 16 lsb counter + 32 bit 0
-      // 32 bits (counter + 1) + 32 bits (counter + 1) + 16 lsb (counter + 1) + 32 bit 0
-
       bool foundError = false;
       auto checkValue = [&](uint32_t i, uint32_t expectedValue, uint32_t actualValue) {
         if (expectedValue != actualValue) {
@@ -637,6 +693,12 @@ class ProgramDmaBench: public Program
       // Check iterating through 256-bit words
       uint32_t offset = (counter % (0x100000000)); // mod 0xffffffff + 1
       uint32_t i = 0;
+
+      // ddg pattern
+      // Every 256-bit word is built as follows:
+      // 32 bits counter       + 32 bits counter       + 16 lsb counter       + 32 bit 0
+      // 32 bits (counter + 1) + 32 bits (counter + 1) + 16 lsb (counter + 1) + 32 bit 0
+
       while ((i*4) < payloadBytes) {
         uint32_t word32 = i; // 32-bit word pointer
 
@@ -648,7 +710,6 @@ class ProgramDmaBench: public Program
         offset = (offset+1) % (0x100000000); //Increase counter by 1 - mod 0xffffffff + 1
         i += 4; // 4 = expected sizeof(uint32_t);
       }
-
       mLinkCounters[linkId] = offset;
       return foundError;
     }
@@ -731,7 +792,6 @@ class ProgramDmaBench: public Program
        format % mReadoutCount.load(std::memory_order_relaxed);
 
        mOptions.noErrorCheck ? format % "n/a" : format % mErrorCount; // Errors
-       mOptions.noErrorCheck ? format % "n/a" : format % mRdhErrorCount; // Errors
 
        if (mOptions.noTemperature) {
          format % "n/a";
@@ -761,8 +821,8 @@ class ProgramDmaBench: public Program
 
      void printStatusHeader()
      {
-       auto line1 = b::format(PROGRESS_FORMAT_HEADER) % "Time" % "Pushed" % "Read" % "Errors" % "RDH Errors" % "°C";
-       auto line2 = b::format(PROGRESS_FORMAT) % "00" % "00" % "00" % '-' % '-' % '-' % '-' % '-';
+       auto line1 = b::format(PROGRESS_FORMAT_HEADER) % "Time" % "Pushed" % "Read" % "Errors" % "°C";
+       auto line2 = b::format(PROGRESS_FORMAT) % "00" % "00" % "00" % '-' % '-' % '-' % '-';
        cout << '\n' << line1;
        cout << '\n' << line2;
      }
@@ -792,7 +852,6 @@ class ProgramDmaBench: public Program
            put("Errors", "n/a");
          } else {
            put("Errors", mErrorCount);
-           put("RDH Errors", mRdhErrorCount);
          }
        }
 
@@ -953,9 +1012,6 @@ class ProgramDmaBench: public Program
 
     /// Total amount of errors encountered
     int64_t mErrorCount = 0;
-
-    /// Total amount of RDH errors encountered
-    int64_t mRdhErrorCount = 0;
 
     /// Keep on pushing until we're explicitly stopped
     bool mInfinitePages = false;
