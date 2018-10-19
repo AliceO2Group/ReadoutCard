@@ -111,19 +111,19 @@ static constexpr Register FIRMWARE_EPOCH(0x1c);
 
 /// Register containing the compilation date/time in seconds since Unix epoch
 /// Must be accessed on BAR 2
-static constexpr Register FIRMWARE_DATE(0x20);
+static constexpr Register FIRMWARE_DATE(0x08);
 
 /// Register containing the compilation date/time in seconds since Unix epoch
 /// Must be accessed on BAR 2
-static constexpr Register FIRMWARE_TIME(0x24);
+static constexpr Register FIRMWARE_TIME(0x0c);
 
 /// Register containing the first part of the Arria 10 chip ID
 /// Must be accessed on BAR 2
-static constexpr Register FPGA_CHIP_ID_1(0x00200038);
+static constexpr Register FPGA_CHIP_HIGH(0x00010014);
 
 /// Register containing the second part of the Arria 10 chip ID
 /// Must be accessed on BAR 2
-static constexpr Register FPGA_CHIP_ID_2(0x0020003c);
+static constexpr Register FPGA_CHIP_LOW(0x00010018);
 
 } // namespace Cru
 } // namespace Registers

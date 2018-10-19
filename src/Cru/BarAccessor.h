@@ -187,16 +187,16 @@ class BarAccessor
       return mBar->readRegister(Registers::FIRMWARE_TIME.index);
     }
 
-    uint32_t getFpgaChipId1()
+    uint32_t getFpgaChipHigh()
     {
       assertBarIndex(2, "Can only get FPGA chip ID from BAR 2");
-      return mBar->readRegister(Registers::FPGA_CHIP_ID_1.index);
+      return mBar->readRegister(Registers::FPGA_CHIP_HIGH.index);
     }
 
-    uint32_t getFpgaChipId2()
+    uint32_t getFpgaChipLow()
     {
       assertBarIndex(2, "Can only get FPGA chip ID from BAR 2");
-      return mBar->readRegister(Registers::FPGA_CHIP_ID_2.index);
+      return mBar->readRegister(Registers::FPGA_CHIP_LOW.index);
     }
 
     /// Get the enabled features for the card's firmware.

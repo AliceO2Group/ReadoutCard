@@ -351,7 +351,7 @@ boost::optional<std::string> CruDmaChannel::getFirmwareInfo()
 boost::optional<std::string> CruDmaChannel::getCardId()
 {
   if (mFeatures.chipId) {
-    return (boost::format("%08x-%08x") % getBar2().getFpgaChipId1() % getBar2().getFpgaChipId2()).str();
+    return (boost::format("%08x-%08x") % getBar2().getFpgaChipHigh() % getBar2().getFpgaChipLow()).str();
   } else {
     return {};
   }
