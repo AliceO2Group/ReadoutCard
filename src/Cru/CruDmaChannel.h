@@ -2,6 +2,7 @@
 /// \brief Definition of the CruDmaChannel class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
 #ifndef ALICEO2_READOUTCARD_CRU_CRUDMACHANNEL_H_
 #define ALICEO2_READOUTCARD_CRU_CRUDMACHANNEL_H_
@@ -11,7 +12,7 @@
 #include <deque>
 //#define BOOST_CB_ENABLE_DEBUG 1
 #include <boost/circular_buffer.hpp>
-#include "Cru/BarAccessor.h"
+#include "Cru/CruBar.h"
 #include "Cru/FirmwareFeatures.h"
 #include "ReadoutCard/Parameters.h"
 
@@ -86,14 +87,14 @@ class CruDmaChannel final : public DmaChannelPdaBase
     void setBufferReady();
     void setBufferNonReady();
 
-    Cru::BarAccessor getBar()
+    auto getBar()
     {
-      return Cru::BarAccessor(&mPdaBar);
+      return cruBar.get();
     }
 
-    Cru::BarAccessor getBar2()
-    {
-      return Cru::BarAccessor(&mPdaBar2);
+    auto getBar2()
+    { 
+      return cruBar2.get();
     }
 
     /// Gets index of next link to push
@@ -106,13 +107,13 @@ class CruDmaChannel final : public DmaChannelPdaBase
     void transferSuperpageFromLinkToReady(Link& link);
 
     /// BAR 0 is needed for DMA engine interaction and various other functions
-    Pda::PdaBar mPdaBar;
+    std::shared_ptr<CruBar> cruBar;
 
     /// BAR 2 is needed to read serial number, temperature, etc.
-    Pda::PdaBar mPdaBar2;
+    std::shared_ptr<CruBar> cruBar2;
 
     /// Features of the firmware
-    const FirmwareFeatures mFeatures;
+    FirmwareFeatures mFeatures;
 
     /// Vector of objects representing links
     std::vector<Link> mLinks;

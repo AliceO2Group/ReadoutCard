@@ -92,6 +92,26 @@ class PdaBar : public BarInterface
       return mBarLength;
     }
 
+    virtual boost::optional<int32_t> getSerial() override
+    {
+      return {};
+    }
+    
+    virtual boost::optional<float> getTemperature() override
+    {
+      return {};
+    }
+
+    virtual boost::optional<std::string> getFirmwareInfo() override
+    {
+      return {};
+    }
+
+    virtual boost::optional<std::string> getCardId() override
+    {
+      return {};
+    }
+
   private:
     template<typename T>
     bool isInRange(size_t offset) const

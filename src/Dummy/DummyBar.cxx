@@ -6,7 +6,7 @@
 #include "DummyBar.h"
 #include <iostream>
 
-using std::cout;
+// using std::cout;
 
 namespace AliceO2 {
 namespace roc {

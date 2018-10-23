@@ -2,6 +2,7 @@
 /// \brief Utility that lists the ReadoutCard devices on the system
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
 #include <iostream>
 #include <sstream>
@@ -37,8 +38,8 @@ class ProgramListCards: public Program
 
       std::ostringstream table;
 
-      auto formatHeader = "  %-3s %-6s %-10s %-11s %-11s %-8s %-15s %-17s\n";
-      auto formatRow = "  %-3s %-6s %-10s 0x%-9s 0x%-9s %-8s %-15s %-17s\n";
+      auto formatHeader = "  %-3s %-6s %-10s %-11s %-11s %-8s %-25s %-17s\n";
+      auto formatRow = "  %-3s %-6s %-10s 0x%-9s 0x%-9s %-8s %-25s %-17s\n";
       auto header = (boost::format(formatHeader)
           % "#" % "Type" % "PCI Addr" % "Vendor ID" % "Device ID" % "Serial" % "FW Version" % "Card ID").str();
       auto lineFat = std::string(header.length(), '=') + '\n';
@@ -53,10 +54,10 @@ class ProgramListCards: public Program
         std::string firmware = na;
         std::string cardId = na;
         try {
-          Parameters params = Parameters::makeParameters(card.pciAddress, 0);
+          Parameters params = Parameters::makeParameters(card.pciAddress, 2);
           params.setBufferParameters(buffer_parameters::Null());
-          firmware = ChannelFactory().getDmaChannel(params)->getFirmwareInfo().value_or(na);
-          cardId = ChannelFactory().getDmaChannel(params)->getCardId().value_or(na);
+          firmware = ChannelFactory().getBar(params)->getFirmwareInfo().value_or(na);
+          cardId = ChannelFactory().getBar(params)->getCardId().value_or(na);
         }
         catch (const Exception& e) {
           if (isVerbose()) {

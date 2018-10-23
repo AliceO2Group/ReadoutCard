@@ -2,16 +2,19 @@
 /// \brief Definition of the CrorcBar class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
 #ifndef ALICEO2_SRC_READOUTCARD_CRORC_CRORCBAR_H_
 #define ALICEO2_SRC_READOUTCARD_CRORC_CRORCBAR_H_
 
 #include "BarInterfaceBase.h"
+#include "Crorc.h"
+#include "Crorc/Constants.h"
+#include "Utilities/Util.h"
 
 namespace AliceO2 {
 namespace roc {
 
-/// TODO Currently a placeholder
 class CrorcBar final : public BarInterfaceBase
 {
   public:
@@ -24,6 +27,11 @@ class CrorcBar final : public BarInterfaceBase
     {
       return CardType::Crorc;
     }
+
+    virtual boost::optional<int32_t> getSerial() override;
+    virtual boost::optional<float> getTemperature() override;
+    virtual boost::optional<std::string> getFirmwareInfo() override;
+    virtual boost::optional<std::string> getCardId() override;
 };
 
 } // namespace roc

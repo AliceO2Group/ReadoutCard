@@ -2,6 +2,7 @@
 /// \brief Implementation of the RocPciDevice class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
 #include "RocPciDevice.h"
 
@@ -12,10 +13,12 @@
 #include <functional>
 #include <iostream>
 #include "Crorc/Crorc.h"
-#include "Cru/BarAccessor.h"
+#include "Cru/CruBar.h"
 #include "Pda/PdaBar.h"
 #include "Pda/PdaDevice.h"
+#include "ReadoutCard/ChannelFactory.h"
 #include "ReadoutCard/Exception.h"
+#include "ReadoutCard/Parameters.h"
 #include "Utilities/SmartPointer.h"
 
 namespace AliceO2 {
@@ -206,13 +209,9 @@ void RocPciDevice::printDeviceInfo(std::ostream& ostream)
 
 boost::optional<int32_t> cruGetSerial(Pda::PdaDevice::PdaPciDevice pciDevice)
 {
-  Pda::PdaBar pdaBar0(pciDevice, 0); // Must use BAR 0 to check if serial number is available
-  Pda::PdaBar pdaBar2(pciDevice, 2); // Must use BAR 2 to access serial number
-  if (Cru::BarAccessor(&pdaBar0).getFirmwareFeatures().serial) {
-    return Cru::BarAccessor(&pdaBar2).getSerialNumber();
-  } else {
-    return {};
-  }
+  std::shared_ptr<Pda::PdaBar> pdaBar2;
+  Utilities::resetSmartPtr(pdaBar2, pciDevice, 2);
+  return CruBar(pdaBar2).getSerial();
 }
 
 boost::optional<int32_t> crorcGetSerial(Pda::PdaDevice::PdaPciDevice pciDevice)

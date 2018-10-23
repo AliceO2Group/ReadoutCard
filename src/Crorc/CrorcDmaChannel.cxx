@@ -2,6 +2,7 @@
 /// \brief Implementation of the CrorcDmaChannel class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
 #include "CrorcDmaChannel.h"
 #include <iostream>
@@ -13,6 +14,7 @@
 #include <boost/format.hpp>
 #include "ChannelPaths.h"
 #include "Crorc/Constants.h"
+#include "ReadoutCard/ChannelFactory.h"
 #include "Utilities/SmartPointer.h"
 
 namespace b = boost;
@@ -27,8 +29,8 @@ namespace roc {
 
 CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
     : DmaChannelPdaBase(parameters, allowedChannels()), //
-    mPdaBar(getRocPciDevice().getPciDevice(), getChannelNumber()), // Initialize main DMA channel BAR
-    mPdaBar2(getRocPciDevice().getPciDevice(), 2), // Initialize BAR 2
+    //mPdaBar(getRocPciDevice().getPciDevice(), getChannelNumber()), // Initialize main DMA channel BAR
+    //mPdaBar2(getRocPciDevice().getPciDevice(), 2), // Initialize BAR 2
     mPageSize(parameters.getDmaPageSize().get_value_or(8*1024)), // 8 kB default for uniformity with CRU
     mInitialResetLevel(ResetLevel::Internal), // It's good to reset at least the card channel in general
     mNoRDYRX(true), // Not sure
@@ -44,6 +46,14 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
     mUseContinuousReadout(parameters.getReadoutMode().is_initialized() ?
             parameters.getReadoutModeRequired() == ReadoutMode::Continuous : false)
 {
+  // Prep for BARs
+  auto parameters2 = parameters;
+  parameters2.setChannelNumber(2);
+  auto bar = ChannelFactory().getBar(parameters);
+  auto bar2 = ChannelFactory().getBar(parameters2);
+  crorcBar = std::move(std::dynamic_pointer_cast<CrorcBar> (bar)); // Initialize bar0
+  crorcBar2 = std::move(std::dynamic_pointer_cast<CrorcBar> (bar2)); // Initalize bar2
+
   // Create and register our ReadyFIFO buffer
   log("Initializing ReadyFIFO DMA buffer", InfoLogger::InfoLogger::Debug);
   {
@@ -101,7 +111,7 @@ void CrorcDmaChannel::startPendingDma(SuperpageQueueEntry& entry)
 
   if (mUseContinuousReadout) {
     log("Initializing continuous readout");
-    Crorc::Crorc::initReadoutContinuous(mPdaBar2);
+    Crorc::Crorc::initReadoutContinuous(*(getBar2()));
   }
 
   // Find DIU version, required for armDdl()
@@ -165,7 +175,7 @@ void CrorcDmaChannel::startPendingDma(SuperpageQueueEntry& entry)
 
   if (mUseContinuousReadout) {
     log("Starting continuous readout");
-    Crorc::Crorc::startReadoutContinuous(mPdaBar2);
+    Crorc::Crorc::startReadoutContinuous(*(getBar2()));
   }
 }
 
@@ -437,29 +447,12 @@ CardType::type CrorcDmaChannel::getCardType()
 
 boost::optional<int32_t> CrorcDmaChannel::getSerial()
 {
-  return Crorc::getSerial(mPdaBar);
+  return getBar2()->getSerial();
 }
 
 boost::optional<std::string> CrorcDmaChannel::getFirmwareInfo()
 {
-  uint32_t version = mPdaBar.readRegister(Rorc::RFID);
-  auto bits = [&](int lsb, int msb) { return Utilities::getBits(version, lsb, msb); };
-
-  uint32_t reserved = bits(24, 31);
-  uint32_t major = bits(20, 23);
-  uint32_t minor = bits(13, 19);
-  uint32_t year = bits(9, 12) + 2000;
-  uint32_t month = bits(5, 8);
-  uint32_t day = bits(0, 4);
-
-  if (reserved != 0x2) {
-    BOOST_THROW_EXCEPTION(CrorcException()
-        << ErrorInfo::Message("Static field of version register did not equal 0x2"));
-  }
-
-  std::ostringstream stream;
-  stream << major << '.' << minor << ':' << year << '-' << month << '-' << day;
-  return stream.str();
+  return getBar2()->getFirmwareInfo();
 }
 
 } // namespace roc
