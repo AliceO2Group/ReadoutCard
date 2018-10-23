@@ -41,6 +41,26 @@ class DummyBar final : public BarInterface
       return CardType::Dummy;
     }
 
+    virtual boost::optional<int32_t> getSerial() override
+    {
+      return {};
+    }
+    
+    virtual boost::optional<float> getTemperature() override
+    {
+      return {};
+    }
+
+    virtual boost::optional<std::string> getFirmwareInfo() override
+    {
+      return {};
+    }
+
+    virtual boost::optional<std::string> getCardId() override
+    {
+      return {};
+    }
+
   private:
     int mBarIndex;
 };

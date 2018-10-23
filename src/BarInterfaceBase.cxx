@@ -2,6 +2,7 @@
 /// \brief Implementation of the BarInterfaceBase class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
 #include "BarInterfaceBase.h"
 #include "Utilities/SmartPointer.h"
@@ -20,6 +21,12 @@ BarInterfaceBase::BarInterfaceBase(const Parameters& parameters)
   }
   Utilities::resetSmartPtr(mPdaBar, mRocPciDevice->getPciDevice(), mBarIndex);
 }
+
+BarInterfaceBase::BarInterfaceBase(std::shared_ptr<Pda::PdaBar> bar)
+{
+  mPdaBar = std::move(bar);
+}
+
 
 BarInterfaceBase::~BarInterfaceBase()
 {

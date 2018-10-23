@@ -10,6 +10,7 @@
 #include "ReadoutCard/CardType.h"
 #include "ReadoutCard/RegisterReadWriteInterface.h"
 #include "ReadoutCard/Parameters.h"
+#include "boost/optional.hpp"
 
 namespace AliceO2 {
 namespace roc {
@@ -38,6 +39,15 @@ class BarInterface: public virtual RegisterReadWriteInterface
     /// Returns the type of the card
     /// \return The card type
     virtual CardType::type getCardType() = 0;
+
+    virtual boost::optional<int32_t> getSerial() = 0;
+
+    virtual boost::optional<float> getTemperature() = 0;
+
+    virtual boost::optional<std::string> getFirmwareInfo() = 0;
+
+    virtual boost::optional<std::string> getCardId() = 0;
+
 };
 
 } // namespace roc

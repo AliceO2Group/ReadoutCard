@@ -2,6 +2,7 @@
 /// \brief Definition of the CrorcDmaChannel class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
 #ifndef ALICEO2_SRC_READOUTCARD_CRORC_CRORCDMACHANNEL_H_
 #define ALICEO2_SRC_READOUTCARD_CRORC_CRORCDMACHANNEL_H_
@@ -12,6 +13,7 @@
 #include <boost/scoped_ptr.hpp>
 #include "DmaChannelPdaBase.h"
 #include "Crorc.h"
+#include "CrorcBar.h"
 #include "ReadoutCard/Parameters.h"
 #include "ReadyFifo.h"
 #include "SuperpageQueue.h"
@@ -80,7 +82,7 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
     /// C-RORC function helper
     Crorc::Crorc getCrorc()
     {
-      return {mPdaBar};
+      return {*(getBar())};
     }
 
     ReadyFifo* getReadyFifoUser()
@@ -119,11 +121,21 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
       return (mFifoBack + mFifoSize) % READYFIFO_ENTRIES;
     };
 
+    CrorcBar* getBar()
+    {
+      return crorcBar.get();
+    }
+
+    CrorcBar* getBar2()
+    { 
+      return crorcBar2.get();
+    }
+
     /// BAR 0 is needed for DMA engine interaction and various other functions
-    Pda::PdaBar mPdaBar;
+    std::shared_ptr<CrorcBar> crorcBar;
 
     /// BAR 2 is needed for configuration
-    Pda::PdaBar mPdaBar2;
+    std::shared_ptr<CrorcBar> crorcBar2;
 
     /// Memory mapped file for the ReadyFIFO
     boost::scoped_ptr<MemoryMappedFile> mBufferFifoFile;

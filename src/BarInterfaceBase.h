@@ -2,6 +2,7 @@
 /// \brief Definition of the BarInterfaceBase class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
 #ifndef ALICEO2_SRC_READOUTCARD_BARINTERFACEBASE_H_
 #define ALICEO2_SRC_READOUTCARD_BARINTERFACEBASE_H_
@@ -21,6 +22,7 @@ class BarInterfaceBase: public BarInterface
   public:
 
     BarInterfaceBase(const Parameters& parameters);
+    BarInterfaceBase(std::shared_ptr<Pda::PdaBar> bar);
     virtual ~BarInterfaceBase();
 
     virtual uint32_t readRegister(int index) override;
@@ -36,6 +38,25 @@ class BarInterfaceBase: public BarInterface
       return mPdaBar->getSize();
     }
 
+    /// Default implementation for optional function
+    virtual boost::optional<float> getTemperature() override
+    {
+      return {};
+    }
+
+    /// Default implementation for optional function
+    virtual boost::optional<std::string> getFirmwareInfo() override
+    {
+      return {};
+    }
+
+    /// Default implementation for optional function
+    virtual boost::optional<std::string> getCardId() override
+    {
+      return {};
+    }
+
+
   protected:
     /// BAR index
     int mBarIndex;
@@ -43,8 +64,11 @@ class BarInterfaceBase: public BarInterface
     /// PDA device objects
     std::unique_ptr<RocPciDevice> mRocPciDevice;
 
-    /// PDA BAR object
-    std::unique_ptr<Pda::PdaBar> mPdaBar;
+    /// PDA BAR object ptr
+    std::shared_ptr<Pda::PdaBar> mPdaBar;
+
+    // PDA BAR object
+    Pda::PdaBar mlPdaBar;
 
   private:
     /// Inheriting classes must implement this to check whether a given read is safe.

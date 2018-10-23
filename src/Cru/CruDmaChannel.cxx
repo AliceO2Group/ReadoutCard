@@ -2,11 +2,13 @@
 /// \brief Implementation of the CruDmaChannel class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
 #include "CruDmaChannel.h"
 #include <thread>
 #include <boost/format.hpp>
 #include "ExceptionInternal.h"
+#include "ReadoutCard/ChannelFactory.h"
 
 using namespace std::literals;
 using boost::format;
@@ -18,9 +20,6 @@ namespace roc
 
 CruDmaChannel::CruDmaChannel(const Parameters& parameters)
     : DmaChannelPdaBase(parameters, allowedChannels()), //
-      mPdaBar(getRocPciDevice().getPciDevice(), 0), // Initialize BAR 0
-      mPdaBar2(getRocPciDevice().getPciDevice(), 2), // Initialize BAR 2
-      mFeatures(getBar().getFirmwareFeatures()), // Get which features of the firmware are enabled
       mInitialResetLevel(ResetLevel::Internal), // It's good to reset at least the card channel in general
       mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)), // Internal loopback by default
       mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)), // Use data generator by default
@@ -32,6 +31,16 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
       mGeneratorSeed(0), // Presumably for random patterns, incremental doesn't really need it
       mGeneratorDataSize(parameters.getGeneratorDataSize().get_value_or(Cru::DMA_PAGE_SIZE)) // Can use page size
 {
+
+  // Prep for BARs
+  auto parameters2 = parameters;
+  parameters2.setChannelNumber(2);
+  auto bar = ChannelFactory().getBar(parameters);
+  auto bar2 = ChannelFactory().getBar(parameters2);
+  cruBar = std::move(std::dynamic_pointer_cast<CruBar> (bar)); // Initialize BAR 0
+  cruBar2 = std::move(std::dynamic_pointer_cast<CruBar> (bar2)); // Initialize BAR 2
+  mFeatures = getBar()->getFirmwareFeatures(); // Get which features of the firmware are enabled
+  
   if (auto pageSize = parameters.getDmaPageSize()) {
     if (pageSize.get() != Cru::DMA_PAGE_SIZE) {
       BOOST_THROW_EXCEPTION(CruException()
@@ -94,18 +103,18 @@ void CruDmaChannel::deviceStartDma()
   for (const auto& link : mLinks) {
     Utilities::setBit(mask, link.id, false);
   }
-  getBar().setLinksEnabled(mask);
+  getBar()->setLinksEnabled(mask);
 
   // Set data generator pattern
   if (mGeneratorEnabled) {
-    getBar().setDataGeneratorPattern(mGeneratorPattern, mGeneratorDataSize, mGeneratorDataSizeRandomEnabled);
+    getBar()->setDataGeneratorPattern(mGeneratorPattern, mGeneratorDataSize, mGeneratorDataSizeRandomEnabled);
   }
 
   // Set data source
   if (mGeneratorEnabled) {
     if (mLoopbackMode == LoopbackMode::Internal) {
       if (mFeatures.dataSelection) {
-        getBar().setDataSource(Cru::Registers::DATA_SOURCE_SELECT_INTERNAL);
+        getBar()->setDataSource(Cru::Registers::DATA_SOURCE_SELECT_INTERNAL);
       } else {
         log("Did not set internal data source, feature not supported by firmware", InfoLogger::InfoLogger::Warning);
       }
@@ -116,7 +125,7 @@ void CruDmaChannel::deviceStartDma()
   } else {
     if (mLoopbackMode == LoopbackMode::None) {
       if (mFeatures.dataSelection) {
-        getBar().setDataSource(Cru::Registers::DATA_SOURCE_SELECT_GBT);
+        getBar()->setDataSource(Cru::Registers::DATA_SOURCE_SELECT_GBT);
       } else {
         log("Did not set GBT data source, feature not supported by firmware", InfoLogger::InfoLogger::Warning);
       }
@@ -144,14 +153,14 @@ void CruDmaChannel::deviceStartDma()
 /// Set buffer to ready
 void CruDmaChannel::setBufferReady()
 {
-  getBar().setDataEmulatorEnabled(true);
+  getBar()->setDataEmulatorEnabled(true);
   std::this_thread::sleep_for(10ms);
 }
 
 /// Set buffer to non-ready
 void CruDmaChannel::setBufferNonReady()
 {
-  getBar().setDataEmulatorEnabled(false);
+  getBar()->setDataEmulatorEnabled(false);
 }
 
 void CruDmaChannel::deviceStopDma()
@@ -185,9 +194,9 @@ CardType::type CruDmaChannel::getCardType()
 
 void CruDmaChannel::resetCru()
 {
-  getBar().resetDataGeneratorCounter();
+  getBar()->resetDataGeneratorCounter();
   std::this_thread::sleep_for(100ms);
-  getBar().resetCard();
+  getBar()->resetCard();
   std::this_thread::sleep_for(100ms);
 }
 
@@ -230,7 +239,7 @@ void CruDmaChannel::pushSuperpage(Superpage superpage)
   pushSuperpageToLink(link, superpage);
   auto maxPages = superpage.getSize() / Cru::DMA_PAGE_SIZE;
   auto busAddress = getBusOffsetAddress(superpage.getOffset());
-  getBar().pushSuperpageDescriptor(link.id, maxPages, busAddress);
+  getBar()->pushSuperpageDescriptor(link.id, maxPages, busAddress);
 }
 
 auto CruDmaChannel::getSuperpage() -> Superpage
@@ -273,7 +282,7 @@ void CruDmaChannel::fillSuperpages()
   const auto size = mLinks.size();
   for (LinkIndex linkIndex = 0; linkIndex < size; ++linkIndex) {
     auto& link = mLinks[linkIndex];
-    uint32_t superpageCount = getBar().getSuperpageCount(link.id);
+    uint32_t superpageCount = getBar()->getSuperpageCount(link.id);
     auto available = superpageCount > link.superpageCounter;
     if (available) {
       uint32_t amountAvailable = superpageCount - link.superpageCounter;
@@ -313,7 +322,7 @@ int CruDmaChannel::getReadyQueueSize()
 bool CruDmaChannel::injectError()
 {
   if (mGeneratorEnabled) {
-    getBar().dataGeneratorInjectError();
+    getBar()->dataGeneratorInjectError();
     return true;
   } else {
     return false;
@@ -322,39 +331,34 @@ bool CruDmaChannel::injectError()
 
 boost::optional<int32_t> CruDmaChannel::getSerial()
 {
-  if (mFeatures.serial) {
-    return getBar2().getSerialNumber();
-  } else {
+  if (mFeatures.serial)
+    return getBar2()->getSerial();
+  else
     return {};
-  }
 }
 
 boost::optional<float> CruDmaChannel::getTemperature()
 {
-  if (mFeatures.temperature) {
-    return getBar2().getTemperatureCelsius();
-  } else {
+  if (mFeatures.temperature)
+    return getBar2()->getTemperature();
+  else
     return {};
-  }
 }
 
 boost::optional<std::string> CruDmaChannel::getFirmwareInfo()
 {
-  if (mFeatures.firmwareInfo) {
-    return (boost::format("%x-%x-%x") % getBar2().getFirmwareDate() % getBar2().getFirmwareTime()
-        % getBar2().getFirmwareGitHash()).str();
-  } else {
+  if (mFeatures.firmwareInfo)
+    return getBar2()->getFirmwareInfo();
+  else
     return {};
-  }
 }
 
 boost::optional<std::string> CruDmaChannel::getCardId()
 {
-  if (mFeatures.chipId) {
-    return (boost::format("%08x-%08x") % getBar2().getFpgaChipHigh() % getBar2().getFpgaChipLow()).str();
-  } else {
+  if (mFeatures.chipId)
+    return getBar2()->getCardId();
+  else 
     return {};
-  }
 }
 
 
