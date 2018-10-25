@@ -27,6 +27,9 @@ static constexpr size_t DMA_PAGE_SIZE = 8 * 1024;
 
 namespace Registers
 {
+
+///*** bar0 ***///
+
 /// Control register for the data emulator
 /// * bit 0: Flow control
 static constexpr Register DMA_CONTROL(0x200);
@@ -96,6 +99,9 @@ static constexpr Register RESET_CONTROL(0x400);
 /// A debug register. The lower 8 bits of this register can be written to and read back from freely.
 static constexpr Register DEBUG_READ_WRITE(0x410);
 
+
+///*** bar2 ***///
+
 /// Temperature control & read register
 /// The lower 10 bits contain the temperature value
 /// Must be accessed on BAR 2
@@ -111,11 +117,11 @@ static constexpr Register FIRMWARE_EPOCH(0x1c);
 
 /// Register containing the compilation date/time in seconds since Unix epoch
 /// Must be accessed on BAR 2
-static constexpr Register FIRMWARE_DATE(0x08);
+static constexpr Register FIRMWARE_DATE(0x00000008);
 
 /// Register containing the compilation date/time in seconds since Unix epoch
 /// Must be accessed on BAR 2
-static constexpr Register FIRMWARE_TIME(0x0c);
+static constexpr Register FIRMWARE_TIME(0x0000000c);
 
 /// Register containing the first part of the Arria 10 chip ID
 /// Must be accessed on BAR 2
