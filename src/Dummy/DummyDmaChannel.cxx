@@ -14,7 +14,7 @@ namespace roc {
 namespace {
 CardDescriptor makeDummyDescriptor()
 {
-  return {CardType::Dummy, ChannelFactory::getDummySerialNumber(), PciId {"dummy", "dummy"}, PciAddress {0,0,0}};
+  return {CardType::Dummy, ChannelFactory::getDummySerialNumber(), PciId {"dummy", "dummy"}, PciAddress {0,0,0}, -1};
 }
 
 constexpr size_t TRANSFER_QUEUE_SIZE = 16;

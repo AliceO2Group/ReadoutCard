@@ -21,6 +21,7 @@ struct CardDescriptor
     boost::optional<int> serialNumber;
     PciId pciId;
     PciAddress pciAddress;
+    int32_t numaNode;
 };
 
 } // namespace roc
