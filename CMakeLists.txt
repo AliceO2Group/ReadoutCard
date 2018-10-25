@@ -55,6 +55,12 @@ ENDIF ()
 # Add compiler flags for warnings and (more importantly) fPIC and debug symbols
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra -fPIC")
 
+# Populate the Cru/Constants.h file with the register addresses contained in CRU/cru_table.py
+execute_process(COMMAND python ${CMAKE_BASE_DIR}/src/Cru/cru_constants_populate.py
+  STATUS status)
+IF(NOT "${status}" EQUAL "0")
+  MESSAGE(WARNING "Couldn't update CRU Register Addresses")
+ENDIF()
 
 ####################################
 # Module, library and executable definition
