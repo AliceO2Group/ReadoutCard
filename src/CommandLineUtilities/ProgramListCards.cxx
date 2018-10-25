@@ -38,10 +38,10 @@ class ProgramListCards: public Program
 
       std::ostringstream table;
 
-      auto formatHeader = "  %-3s %-6s %-10s %-11s %-11s %-8s %-25s %-17s\n";
-      auto formatRow = "  %-3s %-6s %-10s 0x%-9s 0x%-9s %-8s %-25s %-17s\n";
+      auto formatHeader = "  %-3s %-6s %-10s %-11s %-11s %-5s %-8s %-25s %-17s\n";
+      auto formatRow = "  %-3s %-6s %-10s 0x%-9s 0x%-9s %-5s %-8s %-25s %-17s\n";
       auto header = (boost::format(formatHeader)
-          % "#" % "Type" % "PCI Addr" % "Vendor ID" % "Device ID" % "Serial" % "FW Version" % "Card ID").str();
+          % "#" % "Type" % "PCI Addr" % "Vendor ID" % "Device ID" % "NUMA" % "Serial" % "FW Version" % "Card ID").str();
       auto lineFat = std::string(header.length(), '=') + '\n';
       auto lineThin = std::string(header.length(), '-') + '\n';
 
@@ -53,6 +53,7 @@ class ProgramListCards: public Program
         const std::string na = "n/a";
         std::string firmware = na;
         std::string cardId = na;
+        std::string numaNode = std::to_string(card.numaNode);
         try {
           Parameters params = Parameters::makeParameters(card.pciAddress, 2);
           params.setBufferParameters(buffer_parameters::Null());
@@ -66,7 +67,7 @@ class ProgramListCards: public Program
         }
 
         auto format = boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciAddress.toString()
-            % card.pciId.vendor % card.pciId.device;
+            % card.pciId.vendor % card.pciId.device % card.numaNode;
 
         if (auto serial = card.serialNumber) {
           format % serial.get();

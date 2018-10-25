@@ -53,7 +53,7 @@ PciAddress addressFromDevice(Pda::PdaDevice::PdaPciDevice pciDevice){
 }
 
 CardDescriptor defaultDescriptor() {
-  return {CardType::Unknown, -1, {"unknown", "unknown"}, PciAddress(0,0,0)};
+  return {CardType::Unknown, -1, {"unknown", "unknown"}, PciAddress(0,0,0), -1};
 }
 } // Anonymous namespace
 
@@ -65,7 +65,7 @@ void RocPciDevice::initWithSerial(int serialNumber)
       for (auto& pciDevice : mPdaDevice->getPciDevices(mPdaDevice)) {
         if (type.getSerial(pciDevice) == serialNumber) {
           Utilities::resetSmartPtr(mPciDevice, pciDevice);
-          mDescriptor = CardDescriptor{type.cardType, serialNumber, type.pciId, addressFromDevice(pciDevice)};
+          mDescriptor = CardDescriptor{type.cardType, serialNumber, type.pciId, addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice.get())};
           return;
         }
       }
@@ -87,7 +87,7 @@ void RocPciDevice::initWithAddress(const PciAddress& address)
       for (const auto& pciDevice : mPdaDevice->getPciDevices(mPdaDevice)) {
         if (addressFromDevice(pciDevice) == address) {
           Utilities::resetSmartPtr(mPciDevice, pciDevice);
-          mDescriptor = CardDescriptor { type.cardType, type.getSerial(pciDevice), type.pciId, address };
+          mDescriptor = CardDescriptor { type.cardType, type.getSerial(pciDevice), type.pciId, address, PciDevice_getNumaNode(pciDevice.get())};
           return;
         }
       }
@@ -132,7 +132,7 @@ std::vector<CardDescriptor> RocPciDevice::findSystemDevices()
   for (const auto& type : deviceTypes) {
     for (const auto& pciDevice : Pda::PdaDevice::getPciDevices(type.pciId)) {
       cards.push_back(CardDescriptor{type.cardType, type.getSerial(pciDevice), type.pciId,
-        addressFromDevice(pciDevice)});
+        addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice.get())});
     }
   }
   return cards;
@@ -146,7 +146,7 @@ std::vector<CardDescriptor> RocPciDevice::findSystemDevices(int serialNumber)
       for (const auto& pciDevice : Pda::PdaDevice::getPciDevices(type.pciId)) {
         if (type.getSerial(pciDevice) == serialNumber) {
           cards.push_back(CardDescriptor{type.cardType, type.getSerial(pciDevice), type.pciId,
-                  addressFromDevice(pciDevice)});
+                  addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice.get())});
         }
       }
     }
@@ -166,7 +166,7 @@ std::vector<CardDescriptor> RocPciDevice::findSystemDevices(const PciAddress& ad
     for (const auto& type : deviceTypes) {
       for (const auto& pciDevice : Pda::PdaDevice::getPciDevices(type.pciId)) {
         if (addressFromDevice(pciDevice) == address) {
-          cards.push_back(CardDescriptor{type.cardType, type.getSerial(pciDevice), type.pciId, address});
+          cards.push_back(CardDescriptor{type.cardType, type.getSerial(pciDevice), type.pciId, address, PciDevice_getNumaNode(pciDevice.get())});
         }
       }
     }
