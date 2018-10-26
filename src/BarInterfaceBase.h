@@ -39,6 +39,12 @@ class BarInterfaceBase: public BarInterface
     }
 
     /// Default implementation for optional function
+    virtual boost::optional<int32_t> getSerial() override
+    {
+      return {};
+    }
+
+    /// Default implementation for optional function
     virtual boost::optional<float> getTemperature() override
     {
       return {};
@@ -55,6 +61,37 @@ class BarInterfaceBase: public BarInterface
     {
       return {};
     }
+
+    /// Default implementation for optional function
+    virtual int32_t getDroppedPackets() override
+    {
+      return 0;
+    }
+ 
+    /// Default implementation for optional function
+    virtual uint32_t getCTPClock() override
+    {
+      return 0;
+    }
+    
+    /// Default implementation for optional function
+    virtual uint32_t getLocalClock() override
+    {
+      return 0;
+    }
+    
+    /// Default implementation for optional function
+    virtual int32_t getLinksPerWrapper(uint32_t wrapper) override
+    {
+      return 0;
+    }
+    /// Default implementation for optional function
+    virtual int32_t getLinks() override
+    {
+      return 0;
+    }
+
+
 
 
   protected:
@@ -73,10 +110,10 @@ class BarInterfaceBase: public BarInterface
   private:
     /// Inheriting classes must implement this to check whether a given read is safe.
     /// If it is not safe, it should throw an UnsafeReadAccess exception
-    virtual void checkReadSafe(int index) = 0;
+    //virtual void checkReadSafe(int index) = 0;
     /// Inheriting classes must implement this to check whether a given write is safe.
     /// If it is not safe, it should throw an UnsafeWriteAccess exception
-    virtual void checkWriteSafe(int index, uint32_t value) = 0;
+    //virtual void checkWriteSafe(int index, uint32_t value) = 0;
 };
 
 } // namespace roc

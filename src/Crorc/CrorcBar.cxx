@@ -18,23 +18,9 @@ CrorcBar::~CrorcBar()
 {
 }
 
-void CrorcBar::checkReadSafe(int)
-{
-}
-
-void CrorcBar::checkWriteSafe(int, uint32_t)
-{
-}
-
 boost::optional<int32_t> CrorcBar::getSerial()
 {
   return Crorc::getSerial(*(mPdaBar.get()));
-}
-
-
-boost::optional<float> CrorcBar::getTemperature()
-{
-   return {};
 }
 
 boost::optional<std::string> CrorcBar::getFirmwareInfo()
@@ -58,13 +44,6 @@ boost::optional<std::string> CrorcBar::getFirmwareInfo()
   stream << major << '.' << minor << ':' << year << '-' << month << '-' << day;
   return stream.str();
 }
-
-boost::optional<std::string> CrorcBar::getCardId()
-{
-   return {};
-}
-
-
 
 } // namespace roc
 } // namespace AliceO2

@@ -1,12 +1,19 @@
 import fileinput
 import re
 import cru_table as table
+import os
 
+#'':'NUM_DROPPED_PACKETS'
 roc_regs = {'add_bsp_hkeeping_tempstat':'TEMPERATURE',
 'add_bsp_info_builddate':'FIRMWARE_DATE',
 'add_bsp_info_buildtime':'FIRMWARE_TIME',
 'add_bsp_hkeeping_chipid_low':'FPGA_CHIP_LOW',
-'add_bsp_hkeeping_chipid_high':'FPGA_CHIP_HIGH'}
+'add_bsp_hkeeping_chipid_high':'FPGA_CHIP_HIGH',
+'add_ttc_clkgen_ttc240freq':'CTP_CLOCK',
+'add_ttc_clkgen_lcl240freq':'LOCAL_CLOCK',
+'add_gbt_wrapper0':'WRAPPER0',
+'add_gbt_wrapper1':'WRAPPER1'}
+
 
 # e.g. 'TEMPERATURE':0x00010008
 to_replace = {}

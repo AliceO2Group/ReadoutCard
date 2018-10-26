@@ -12,6 +12,7 @@ namespace AliceO2 {
 namespace roc {
 
 DummyBar::DummyBar(const Parameters& parameters)
+  : BarInterfaceBase(parameters)
 {
   mBarIndex = parameters.getChannelNumberRequired();
   auto id = parameters.getCardIdRequired();

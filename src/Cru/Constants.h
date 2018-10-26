@@ -131,6 +131,27 @@ static constexpr Register FPGA_CHIP_HIGH(0x00010014);
 /// Must be accessed on BAR 2
 static constexpr Register FPGA_CHIP_LOW(0x00010018);
 
+// Register containing the number of dropped packets
+// Must be accessed on BAR 2
+//not yet in cru_tables.py//
+static constexpr Register NUM_DROPPED_PACKETS(0x0060001C);
+
+// Register containing the CTP Clock's value
+// Must be accessed on BAR 2
+static constexpr Register CTP_CLOCK(0x00240000);
+
+// Register containing the Local Clock's value
+// Must be accessed on BAR 2
+static constexpr Register LOCAL_CLOCK(0x00240004);
+
+// Wrapper 0's base address
+// Must be accessed on BAR 2
+static constexpr Register WRAPPER0(0x00400000);
+
+// Wrapper 1's base address
+// Must be accessed on BAR 2
+static constexpr Register WRAPPER1(0x00500000);
+
 } // namespace Cru
 } // namespace Registers
 } // namespace roc

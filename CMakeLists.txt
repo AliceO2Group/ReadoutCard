@@ -56,8 +56,9 @@ ENDIF ()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra -fPIC")
 
 # Populate the Cru/Constants.h file with the register addresses contained in CRU/cru_table.py
-execute_process(COMMAND python ${CMAKE_BASE_DIR}/src/Cru/cru_constants_populate.py
-  STATUS status)
+execute_process(COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/src/Cru/cru_constants_populate.py
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/Cru
+  RESULT_VARIABLE status)
 IF(NOT "${status}" EQUAL "0")
   MESSAGE(WARNING "Couldn't update CRU Register Addresses")
 ENDIF()
@@ -162,6 +163,7 @@ if(ALICEO2_READOUTCARD_PDA_ENABLED)
   build_util_exec(roc-flash CommandLineUtilities/ProgramFlash.cxx)
   build_util_exec(roc-flash-read CommandLineUtilities/ProgramFlashRead.cxx)
   build_util_exec(roc-list-cards CommandLineUtilities/ProgramListCards.cxx)
+  build_util_exec(roc-metrics CommandLineUtilities/ProgramMetrics.cxx)
   #build_util_exec(roc-sanity-check CommandLineUtilities/ProgramSanityCheck.cxx)
 
   if(DIM_FOUND)

@@ -20,8 +20,8 @@ class CrorcBar final : public BarInterfaceBase
   public:
     CrorcBar(const Parameters& parameters);
     virtual ~CrorcBar();
-    virtual void checkReadSafe(int index) override;
-    virtual void checkWriteSafe(int index, uint32_t value) override;
+    //virtual void checkReadSafe(int index) override;
+    //virtual void checkWriteSafe(int index, uint32_t value) override;
 
     virtual CardType::type getCardType() override
     {
@@ -29,9 +29,7 @@ class CrorcBar final : public BarInterfaceBase
     }
 
     virtual boost::optional<int32_t> getSerial() override;
-    virtual boost::optional<float> getTemperature() override;
     virtual boost::optional<std::string> getFirmwareInfo() override;
-    virtual boost::optional<std::string> getCardId() override;
 };
 
 } // namespace roc
