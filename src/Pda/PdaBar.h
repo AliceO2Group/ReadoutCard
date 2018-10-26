@@ -112,6 +112,31 @@ class PdaBar : public BarInterface
       return {};
     }
 
+    virtual int32_t getDroppedPackets() override
+    {
+      return -1;
+    }
+ 
+    virtual uint32_t getCTPClock() override
+    {
+      return 0;
+    }
+    
+    virtual uint32_t getLocalClock() override
+    {
+      return 0;
+    }
+    
+    virtual int32_t getLinksPerWrapper(uint32_t wrapper) override
+    {
+      return 0;
+    }
+ 
+    virtual int32_t getLinks() override
+    {
+      return 0;
+    }
+
   private:
     template<typename T>
     bool isInRange(size_t offset) const

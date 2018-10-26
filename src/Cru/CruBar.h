@@ -25,8 +25,8 @@ class CruBar final : public BarInterfaceBase
     CruBar(const Parameters& parameters);
     CruBar(std::shared_ptr<Pda::PdaBar> bar);
     virtual ~CruBar();
-    virtual void checkReadSafe(int index) override;
-    virtual void checkWriteSafe(int index, uint32_t value) override;
+    //virtual void checkReadSafe(int index) override;
+    //virtual void checkWriteSafe(int index, uint32_t value) override;
 
     virtual CardType::type getCardType() override
     {
@@ -37,6 +37,13 @@ class CruBar final : public BarInterfaceBase
     virtual boost::optional<float> getTemperature() override;
     virtual boost::optional<std::string> getFirmwareInfo() override;
     virtual boost::optional<std::string> getCardId() override;
+    virtual int32_t getDroppedPackets() override;
+    virtual uint32_t getCTPClock() override;
+    virtual uint32_t getLocalClock() override;
+    virtual int32_t getLinksPerWrapper(uint32_t wrapper) override;
+    virtual int32_t getLinks() override;
+
+
 
     void pushSuperpageDescriptor(uint32_t link, uint32_t pages, uintptr_t busAddress);
     uint32_t getSuperpageCount(uint32_t link);
@@ -56,7 +63,7 @@ class CruBar final : public BarInterfaceBase
     static void setDataGeneratorSizeBits(uint32_t& bits, size_t size);
     static void setDataGeneratorEnableBits(uint32_t& bits, bool enabled);
     static void setDataGeneratorRandomSizeBits(uint32_t& bits, bool enabled);
-    
+
   private:
     uint32_t getSerialNumber() const;
     uint32_t getTemperatureRaw() const;

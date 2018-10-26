@@ -6,7 +6,7 @@
 #ifndef ALICEO2_SRC_READOUTCARD_DUMMY_DUMMYBAR_H_
 #define ALICEO2_SRC_READOUTCARD_DUMMY_DUMMYBAR_H_
 
-#include "ReadoutCard/BarInterface.h"
+#include "BarInterfaceBase.h"
 #include <array>
 
 namespace AliceO2 {
@@ -17,7 +17,7 @@ namespace roc {
 /// implementation are not met (this mainly concerns the PDA driver library).
 /// In the future, a dummy implementation could be a simulated card. Currently, methods of this implementation do
 /// nothing besides print which method was called. Returned values are static and should not be used.
-class DummyBar final : public BarInterface
+class DummyBar final : public BarInterfaceBase
 {
   public:
 
@@ -39,26 +39,6 @@ class DummyBar final : public BarInterface
     virtual CardType::type getCardType() override
     {
       return CardType::Dummy;
-    }
-
-    virtual boost::optional<int32_t> getSerial() override
-    {
-      return {};
-    }
-    
-    virtual boost::optional<float> getTemperature() override
-    {
-      return {};
-    }
-
-    virtual boost::optional<std::string> getFirmwareInfo() override
-    {
-      return {};
-    }
-
-    virtual boost::optional<std::string> getCardId() override
-    {
-      return {};
     }
 
   private:

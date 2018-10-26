@@ -6,6 +6,7 @@
 
 #include "CruBar.h"
 #include "boost/format.hpp"
+#include "Utilities/Util.h"
 
 namespace AliceO2 {
 namespace roc {
@@ -27,13 +28,13 @@ CruBar::~CruBar()
 {
 }
 
-void CruBar::CruBar::checkReadSafe(int)
+/*void CruBar::CruBar::checkReadSafe(int)
 {
 }
 
 void CruBar::CruBar::checkWriteSafe(int, uint32_t)
 {
-}
+}*/
 
 boost::optional<int32_t> CruBar::getSerial()
 {
@@ -135,6 +136,54 @@ void CruBar::setLinksEnabled(uint32_t mask)
 FirmwareFeatures CruBar::getFirmwareFeatures()
 {
   return mFeatures;
+}
+
+/// Get number of dropped packets
+int32_t CruBar::getDroppedPackets()
+{
+  return mPdaBar->readRegister(Cru::Registers::NUM_DROPPED_PACKETS.index);
+}
+
+// Get CTP clock (Hz)
+uint32_t CruBar::getCTPClock()
+{
+  return mPdaBar->readRegister(Cru::Registers::CTP_CLOCK.index);
+}
+
+// Get local clock (Hz)
+uint32_t CruBar::getLocalClock()
+{
+  return mPdaBar->readRegister(Cru::Registers::LOCAL_CLOCK.index);
+}
+
+// Get total # of links per wrapper
+int32_t CruBar::getLinks()
+{
+  int32_t links = 0;
+  uint32_t regread = 0x0;
+  regread = mPdaBar->readRegister((Cru::Registers::WRAPPER0.address + 0x4) / 4);
+  links += Utilities::getBits(regread, 24, 31);
+  regread = mPdaBar->readRegister((Cru::Registers::WRAPPER1.address + 0x4) / 4);
+  links += Utilities::getBits(regread, 24, 31);
+
+  return links;
+
+}
+
+
+// Get # of links per wrapper
+int32_t CruBar::getLinksPerWrapper(uint32_t wrapper)
+{
+  uint32_t regread = 0x0;
+  if (wrapper == 0)
+    regread = mPdaBar->readRegister((Cru::Registers::WRAPPER0.address + 0x4) / 4);
+  else if (wrapper == 1)
+    regread = mPdaBar->readRegister((Cru::Registers::WRAPPER1.address + 0x4) / 4);
+  else
+    return 0;
+
+  return Utilities::getBits(regread, 24, 31);
+
 }
 
 /// Gets the serial number from the card.
