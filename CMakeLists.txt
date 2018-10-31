@@ -202,7 +202,6 @@ enable_testing()
 set(TEST_SRCS
   test/TestChannelFactoryUtils.cxx
   test/TestChannelPaths.cxx
-  test/TestCruBar.cxx
   test/TestCruDataFormat.cxx
   test/TestEnums.cxx
   test/TestInterprocessLock.cxx
@@ -213,6 +212,11 @@ set(TEST_SRCS
   test/TestRorcException.cxx
   test/TestSuperpageQueue.cxx
 )
+
+if(ALICEO2_READOUTCARD_PDA_ENABLED)
+  list(APPEND TEST_SRCS
+    test/TestCruBar.cxx)
+endif()
 
 O2_GENERATE_TESTS(
  MODULE_LIBRARY_NAME ${LIBRARY_NAME}
