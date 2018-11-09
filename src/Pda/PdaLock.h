@@ -24,14 +24,12 @@ class PdaLock
     ///   Pda::PdaLock lock()
     /// But rather like this:
     ///   Pda::PdaLock lock{}
-    PdaLock(bool wait = true) : mLock("/dev/shm/AliceO2_RoC_Pda.lock", "AliceO2_RoC_Pda_Mutex", wait)
+    PdaLock(bool waitOnLock = true) : mLock("Alice_O2_RoC_PDA_lock", waitOnLock)
     {
     }
 
     ~PdaLock()
     {
-      boost::filesystem::remove("/dev/shm/AliceO2_RoC_Pda.lock");
-      boost::filesystem::remove("/dev/shm/sem.AliceO2_RoC_Pda_Mutex");
     }
 
   private:

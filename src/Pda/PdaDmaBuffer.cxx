@@ -2,6 +2,7 @@
 /// \brief Implementation of the PdaDmaBuffer class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
 #include "PdaDmaBuffer.h"
 #include <pda.h>
@@ -18,7 +19,12 @@ PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAd
     int dmaBufferId, bool requireHugepage) : mPciDevice(pciDevice)
 {
   // Safeguard against PDA kernel module deadlocks, since it does not like parallel buffer registration
-  Pda::PdaLock lock{};
+  try {
+    Pda::PdaLock lock{};
+  } catch (const LockException& e) {
+    InfoLogger::InfoLogger() << "Failed to acquire PDA lock" << e.what() << InfoLogger::InfoLogger::endm;
+    throw;
+  }
 
   try {
     // Tell PDA we're using our already allocated userspace buffer.
@@ -101,6 +107,12 @@ PdaDmaBuffer::~PdaDmaBuffer()
   // NOTE: not sure if necessary for deregistration as well
   try {
     Pda::PdaLock lock{};
+  } catch (const LockException& e) {
+    InfoLogger::InfoLogger() << "Failed to acquire PDA lock" << e.what() << InfoLogger::InfoLogger::endm;
+    throw;
+  }
+
+  try {
     PciDevice_deleteDMABuffer(mPciDevice.get(), mDmaBuffer);
   } catch (std::exception& e) {
     // Nothing to be done?

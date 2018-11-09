@@ -32,6 +32,7 @@ int getOptionRegisterValue(const boost::program_options::variables_map& map);
 int getOptionChannel(const boost::program_options::variables_map& map);
 ResetLevel::type getOptionResetLevel(const boost::program_options::variables_map& map);
 Parameters::CardIdType getOptionCardId(const boost::program_options::variables_map& map);
+std::string getOptionCardIdString(const boost::program_options::variables_map& map);
 int getOptionRegisterRange(const boost::program_options::variables_map& map);
 
 } // namespace Options

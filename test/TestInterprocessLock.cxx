@@ -3,6 +3,7 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
+//TODO: Update this for the socket lock
 #define BOOST_TEST_MODULE RORC_TestFileSharedObject
 #define BOOST_TEST_MAIN
 #define BOOST_TEST_DYN_LINK

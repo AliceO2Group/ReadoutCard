@@ -15,6 +15,7 @@
 #include "CardDescriptor.h"
 #include "ChannelPaths.h"
 #include "InterprocessLock.h"
+#include "Pda/PdaLock.h"
 #include "ReadoutCard/DmaChannelInterface.h"
 #include "ReadoutCard/Exception.h"
 #include "ReadoutCard/Parameters.h"
@@ -111,6 +112,9 @@ class DmaChannelBase: public DmaChannelInterface
 
     /// Check the validity of basic parameters
     void checkParameters(Parameters& parameters);
+
+    /// Free device's PDA Channel Buffer
+    void freeUnusedChannelBuffer();
 
     /// Type of the card
     const CardDescriptor mCardDescriptor;

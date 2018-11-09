@@ -9,7 +9,6 @@
 #include <boost/exception/diagnostic_information.hpp>
 #include "ReadoutCard/ChannelFactory.h"
 #include "ReadoutCard/Exception.h"
-#include "ReadoutCard/Driver.h"
 #include "ReadoutCard/MemoryMappedFile.h"
 
 using std::cout;
@@ -19,8 +18,7 @@ using namespace AliceO2;
 int main(int, char**)
 {
   try {
-    roc::driver::initialize();
-
+    
     // Get the DMA channel object
     cout << "\n### Acquiring DMA channel object" << endl;
 

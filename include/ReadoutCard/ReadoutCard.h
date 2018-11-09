@@ -7,7 +7,6 @@
 #include "ReadoutCard/CardType.h"
 #include "ReadoutCard/ChannelFactory.h"
 #include "ReadoutCard/DmaChannelInterface.h"
-#include "ReadoutCard/Driver.h"
 #include "ReadoutCard/Exception.h"
 #include "ReadoutCard/Parameters.h"
 #include "ReadoutCard/RegisterReadWriteInterface.h"
