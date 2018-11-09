@@ -18,8 +18,8 @@
 #include "Utilities/SmartPointer.h"
 
 namespace b = boost;
-namespace bip = boost::interprocess;
-namespace bfs = boost::filesystem;
+//namespace bip = boost::interprocess;
+//namespace bfs = boost::filesystem;
 using std::cout;
 using std::endl;
 using namespace std::literals;

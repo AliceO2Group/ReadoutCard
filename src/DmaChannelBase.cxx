@@ -2,11 +2,12 @@
 /// \brief Implementation of the DmaChannelBase class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
 #include <boost/filesystem.hpp>
 #include "DmaChannelBase.h"
 #include <iostream>
-#include "ChannelPaths.h"
+//#include "ChannelPaths.h"
 #include "Common/System.h"
 #include "Utilities/SmartPointer.h"
 #include "Visitor.h"
@@ -47,6 +48,48 @@ void DmaChannelBase::checkParameters(Parameters& parameters)
   }
 }
 
+void DmaChannelBase::freeUnusedChannelBuffer()
+{
+  namespace bfs = boost::filesystem;
+  InfoLogger::InfoLogger logger;
+ 
+  try {
+    Pda::PdaLock lock{}; // We're messing around with PDA buffers so we need this even though we hold the DMA lock
+  } catch (const LockException& exception) {
+    log("Failed to acquire PDA lock", InfoLogger::InfoLogger::Debug);
+    throw;
+  }
+
+  try {
+    std::string pciPath = "/sys/bus/pci/drivers/uio_pci_dma/";
+    if (boost::filesystem::exists(pciPath)) {
+      for (auto &entry : boost::make_iterator_range(bfs::directory_iterator(pciPath), {})) {
+        auto filename = entry.path().filename().string();
+        if (filename.size() == 12) {
+          // The PCI directory names are 12 characters long
+          auto pciAddress = filename.substr(5); // Remove leading '0000:'
+
+          if (PciAddress::fromString(pciAddress) && (pciAddress == mCardDescriptor.pciAddress.toString())) {
+            // This is a valid PCI address and it's *ours*
+            std::string dmaPath("/sys/bus/pci/drivers/uio_pci_dma/" + filename + "/dma");
+            for (auto &entry : boost::make_iterator_range(bfs::directory_iterator(dmaPath), {})) {
+              auto bufferId = entry.path().filename().string();
+              if (bfs::is_directory(entry)) {
+                std::string mapPath = dmaPath + "/" + bufferId + "/map";
+                std::string freePath = dmaPath + "/free";
+                                logger << "Freeing PDA buffer '" + mapPath + "'" << InfoLogger::InfoLogger::endm;
+                AliceO2::Common::System::executeCommand("echo " + bufferId + " > " + freePath);
+              }
+            }
+          }
+        }
+      }
+    }
+  } catch (const boost::filesystem::filesystem_error &e) {
+    logger << "Failed to free buffers: " << e.what() << InfoLogger::InfoLogger::endm;
+    throw;
+  }
+}
 
 DmaChannelBase::DmaChannelBase(CardDescriptor cardDescriptor, Parameters& parameters,
     const AllowedChannels& allowedChannels)
@@ -62,41 +105,24 @@ DmaChannelBase::DmaChannelBase(CardDescriptor cardDescriptor, Parameters& parame
   // Do some basic Parameters validity checks
   checkParameters(parameters);
 
-  // Create parent directories
-  auto paths = getPaths();
-  for (const auto& p : {paths.fifo(), paths.lock()}) {
-    Common::System::makeParentDirectories(p);
+  //try to acquire lock
+  log("Acquiring DMA channel lock", InfoLogger::InfoLogger::Debug);
+  try{
+    Utilities::resetSmartPtr(mInterprocessLock, "Alice_O2_RoC_DMA_" + cardDescriptor.pciAddress.toString() +"_lock");
+  }
+  catch (const LockException& exception) {
+    log("Failed to acquire DMA channel lock", InfoLogger::InfoLogger::Debug);
+    throw;
   }
 
-  // Get lock
-  log("Acquiring DMA channel lock", InfoLogger::InfoLogger::Debug);
-  try {
-    Utilities::resetSmartPtr(mInterprocessLock, paths.lock(), paths.namedMutex());
-  }
-  catch (const NamedMutexLockException& exception) {
-    if (parameters.getForcedUnlockEnabled().get_value_or(false)) {
-      log("Failed to acquire DMA channel mutex. Forced unlock enabled - attempting cleanup and retry",
-          InfoLogger::InfoLogger::Warning);
-      // The user has indicated to the driver that it is safe to force the unlock. We do it by deleting the lock.
-      boost::interprocess::named_mutex::remove(paths.namedMutex().c_str());
-      // Try again...
-      Utilities::resetSmartPtr(mInterprocessLock, paths.lock(), paths.namedMutex());
-    } else {
-      log("Failed to acquire DMA channel lock", InfoLogger::InfoLogger::Debug);
-      throw;
-    }
-  }
   log("Acquired DMA channel lock", InfoLogger::InfoLogger::Debug);
+
+  freeUnusedChannelBuffer();
 }
 
 DmaChannelBase::~DmaChannelBase()
 {
   log("Releasing DMA channel lock", InfoLogger::InfoLogger::Debug);
-
-  std::string channelLockPath = "/dev/shm/AliceO2_RoC_" + std::string(getCardDescriptor().pciAddress.toString()) + "_Channel_" + std::to_string((int) getChannelNumber ()) + ".lock";
-  std::string channelMutexPath = "/dev/shm/sem.AliceO2_RoC_" + std::string(getCardDescriptor().pciAddress.toString()) + "_Channel_" + std::to_string((int) getChannelNumber ()) + "_Mutex";
-  bfs::remove(channelLockPath);
-  bfs::remove(channelMutexPath);
 }
 
 void DmaChannelBase::log(const std::string& message, boost::optional<InfoLogger::InfoLogger::Severity> severity)

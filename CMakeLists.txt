@@ -76,7 +76,6 @@ set(SRCS
   src/Factory/ChannelFactory.cxx
   src/DmaChannelBase.cxx
   src/ChannelPaths.cxx
-  src/Driver.cxx
   src/Dummy/DummyDmaChannel.cxx
   src/Dummy/DummyBar.cxx
   src/ExceptionInternal.cxx
@@ -212,7 +211,7 @@ set(TEST_SRCS
   test/TestChannelPaths.cxx
   test/TestCruDataFormat.cxx
   test/TestEnums.cxx
-  test/TestInterprocessLock.cxx
+  #test/TestInterprocessLock.cxx
   test/TestMemoryMappedFile.cxx
   test/TestParameters.cxx
   test/TestPciAddress.cxx

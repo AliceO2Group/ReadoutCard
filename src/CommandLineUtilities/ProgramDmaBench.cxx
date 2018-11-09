@@ -2,6 +2,7 @@
 ///
 /// \brief Utility that tests ReadoutCard DMA performance
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
 
 #include <chrono>
@@ -35,6 +36,7 @@
 #include "ReadoutCard/MemoryMappedFile.h"
 #include "ReadoutCard/Parameters.h"
 #include "ReadoutCard/ReadoutCard.h"
+#include "time.h"
 #include "Utilities/Hugetlbfs.h"
 #include "Utilities/SmartPointer.h"
 #include "Utilities/Util.h"
@@ -229,14 +231,16 @@ class ProgramDmaBench: public Program
 
       // Create channel buffer
       {
-        driver::freeUnusedChannelBuffers();
-
         if (mBufferSize < mSuperpageSize) {
           throw ParameterException() << ErrorInfo::Message("Buffer size smaller than superpage size");
         }
 
-        std::string bufferName = (b::format("roc-bench-dma_id=%s_chan=%s_pages") % map["id"].as<std::string>()
-            % mOptions.dmaChannel).str();
+        // Add time to the buffer's filename. This way we guard our buffer from being overwritten by another process
+        // as this is before the DMA Channel initialization and no lock protection is in place.
+        std::string bufferName = (b::format("roc-bench-dma_id=%s_chan=%s_%s_pages") % map["id"].as<std::string>()
+            % mOptions.dmaChannel
+            % time(0)).str();
+
         Utilities::HugepageType hugepageType;
         mMemoryMappedFile = Utilities::tryMapFile(mBufferSize, bufferName, !mOptions.noRemovePagesFile, &hugepageType);
 

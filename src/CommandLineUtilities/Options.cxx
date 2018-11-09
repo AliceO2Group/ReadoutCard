@@ -202,6 +202,11 @@ Parameters::CardIdType getOptionCardId(const po::variables_map& map)
   return Parameters::cardIdFromString(string);
 }
 
+std::string getOptionCardIdString(const po::variables_map& map)
+{
+  return getOption(option::cardId, map);
+}
+
 } // namespace Options
 } // namespace Util
 } // namespace roc
