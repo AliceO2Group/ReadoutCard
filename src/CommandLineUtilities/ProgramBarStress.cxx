@@ -27,7 +27,7 @@ class ProgramBarStress: public Program
   virtual Description getDescription()
   {
     return {"Bar Stress", "Stress the Bar Accessor", 
-      "roc-bar-stress --pci-address 42:00.0 --channel 0 --cycles 100000 --print-freq 10000 --errorcheck"};
+      "roc-bar-stress --pci-address 42:00.0 --gbt-link 0 --cycles 100000 --print-freq 10000 --errorcheck"};
   }
 
   virtual void addOptions(boost::program_options::options_description& options)
