@@ -27,34 +27,34 @@ class Lock
       :mSocketName(socketLockName)
     {
 
-      if ((socketFd = socket(AF_UNIX, SOCK_DGRAM, 0)) < 0) {
+      if ((mSocketFd = socket(AF_UNIX, SOCK_DGRAM, 0)) < 0) {
         BOOST_THROW_EXCEPTION(LockException()
           << ErrorInfo::PossibleCauses({"Couldn't create socket fd"}));
       }
 
-      memset (&serverAddress, 0, sizeof(serverAddress));
-      serverAddress.sun_family = AF_UNIX;
-      strcpy(serverAddress.sun_path, socketLockName.c_str());
-      serverAddress.sun_path[0] = 0; //this makes the unix domain socket *abstract*
+      memset (&mServerAddress, 0, sizeof(mServerAddress));
+      mServerAddress.sun_family = AF_UNIX;
+      strcpy(mServerAddress.sun_path, socketLockName.c_str());
+      mServerAddress.sun_path[0] = 0; //this makes the unix domain socket *abstract*
 
       if (waitOnLock) { //retry until timeout
         const auto start = std::chrono::steady_clock::now();
         auto timeExceeded = [&]() { return ((std::chrono::steady_clock::now() - start) > std::chrono::seconds(LOCK_TIMEOUT)); };
 
-        while (bind(socketFd,
-              (const struct sockaddr *) &serverAddress,
-              addressLength) < 0 && !timeExceeded()) {}
+        while (bind(mSocketFd,
+              (const struct sockaddr *) &mServerAddress,
+              mAddressLength) < 0 && !timeExceeded()) {}
 
         if (timeExceeded()) { //we timed out
-          close(socketFd);
+          close(mSocketFd);
           BOOST_THROW_EXCEPTION(LockException()
               << ErrorInfo::PossibleCauses({"Bind to socket timed out"}));
         }
       } else { //exit immediately after bind error
-        if (bind(socketFd,
-              (const struct sockaddr *) &serverAddress,
-              addressLength) < 0) {
-          close(socketFd);
+        if (bind(mSocketFd,
+              (const struct sockaddr *) &mServerAddress,
+              mAddressLength) < 0) {
+          close(mSocketFd);
           BOOST_THROW_EXCEPTION(LockException()
               << ErrorInfo::PossibleCauses({"Couldn't bind to socket"}));
         }
@@ -63,13 +63,13 @@ class Lock
 
     ~Lock()
     {
-      close(socketFd);
+      close(mSocketFd);
     }
 
   private:
-    int socketFd;
-    struct sockaddr_un serverAddress;
-    socklen_t addressLength = sizeof(struct sockaddr_un);
+    int mSocketFd;
+    struct sockaddr_un mServerAddress;
+    socklen_t mAddressLength = sizeof(struct sockaddr_un);
     std::string mSocketName;
 };
 
