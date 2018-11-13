@@ -61,9 +61,9 @@ constexpr auto LOW_PRIORITY_INTERVAL = 10ms;
 /// Buffer value to reset to
 constexpr uint32_t BUFFER_DEFAULT_VALUE = 0xCcccCccc;
 /// Fields: Time(hour:minute:second), Pages pushed, Pages read, Errors, °C
-const std::string PROGRESS_FORMAT_HEADER("  %-8s   %-12s  %-12s  %-12s  %-5.1f");
+const std::string PROGRESS_FORMAT_HEADER("  %-8s   %-12s  %-12s %-18s  %-12s  %-5.1f");
 /// Fields: Time(hour:minute:second), Pages pushed, Pages read, Errors, °C
-const std::string PROGRESS_FORMAT("  %02s:%02s:%02s   %-12s  %-12s  %-12s  %-5.1f");
+const std::string PROGRESS_FORMAT("  %02s:%02s:%02s   %-12s  %-12s  %-18s  %-12s  %-5.1f");
 /// Path for error log
 auto READOUT_ERRORS_PATH = "readout_errors.txt";
 /// Max amount of errors that are recorded into the error stream
@@ -795,6 +795,12 @@ class ProgramDmaBench: public Program
        format % mPushCount.load(std::memory_order_relaxed);
        format % mReadoutCount.load(std::memory_order_relaxed);
 
+       double runTime = std::chrono::duration<double>(steady_clock::now() - mRunTime.start).count();
+       double bytes = double(mReadoutCount.load()) * mPageSize;
+       double Gb = bytes * 8 / (1000 * 1000 * 1000);
+       double Gbps = Gb / runTime;
+       format % Gbps;
+       
        mOptions.noErrorCheck ? format % "n/a" : format % mErrorCount; // Errors
 
        if (mOptions.noTemperature) {
@@ -825,8 +831,8 @@ class ProgramDmaBench: public Program
 
      void printStatusHeader()
      {
-       auto line1 = b::format(PROGRESS_FORMAT_HEADER) % "Time" % "Pushed" % "Read" % "Errors" % "°C";
-       auto line2 = b::format(PROGRESS_FORMAT) % "00" % "00" % "00" % '-' % '-' % '-' % '-';
+       auto line1 = b::format(PROGRESS_FORMAT_HEADER) % "Time" % "Pushed" % "Read" % "Throughput (Gbps)" % "Errors" % "°C";
+       auto line2 = b::format(PROGRESS_FORMAT) % "00" % "00" % "00" % '-' % '-' % '-' % '-' % '-';
        cout << '\n' << line1;
        cout << '\n' << line2;
      }
