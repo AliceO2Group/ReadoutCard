@@ -54,6 +54,8 @@ namespace po = boost::program_options;
 namespace {
 /// Initial value for link counters
 constexpr auto DATA_COUNTER_INITIAL_VALUE = std::numeric_limits<uint32_t>::max();
+/// Initial value for link packet counters
+constexpr auto PACKET_COUNTER_INITIAL_VALUE = std::numeric_limits<uint32_t>::max();
 /// Maximum supported links
 constexpr auto MAX_LINKS = 32;
 /// Interval for low priority thread (display updates, etc)
@@ -189,6 +191,10 @@ class ProgramDmaBench: public Program
     {
       for (auto& i : mDataGeneratorCounters) {
         i = DATA_COUNTER_INITIAL_VALUE;
+      }
+
+      for (auto&i : mPacketCounters) {
+        i = PACKET_COUNTER_INITIAL_VALUE;
       }
 
       getLogger() << "DMA channel: " << mOptions.dmaChannel << endm;
@@ -527,8 +533,18 @@ class ProgramDmaBench: public Program
       int popped = 0;
       while ((std::chrono::steady_clock::now() - start) < timeout) {
         auto size = mChannel->getReadyQueueSize();
-        for (int i = 0; i < size; ++i)
-          mChannel->popSuperpage();
+        for (int i = 0; i < size; ++i) {
+          auto superpage = mChannel->popSuperpage();
+          if (mOptions.loopbackModeString == "NONE") { //if it's ddg
+            int pages = mSuperpageSize / mPageSize;
+            for (int i = 0; i < pages; ++i) {
+              auto readoutCount = fetchAddReadoutCount();
+              readoutPage(mBufferBaseAddress + superpage.getOffset() + i * mPageSize, mPageSize, readoutCount);
+            }
+          }
+          std::cout << "[popped superpage " << i << " ], size= " << superpage.getSize() << " received= " << superpage.getReceived() << " isFilled=" << superpage.isFilled() << " isReady=" << 
+            superpage.isReady() << std::endl;
+        }
         popped += size;
       }
       return popped;
@@ -591,6 +607,7 @@ class ProgramDmaBench: public Program
         if (hasError && !mOptions.noResyncCounter) {
           // There was an error, so we resync the counter on the next page
           mDataGeneratorCounters[linkId] = DATA_COUNTER_INITIAL_VALUE;
+          mPacketCounters[linkId] = PACKET_COUNTER_INITIAL_VALUE;
         }
       }
 
@@ -672,7 +689,27 @@ class ProgramDmaBench: public Program
           mErrorStream << b::format("[RDHERR]\tevent:%1% l:%2% payloadBytes:%3% size:%4% words out of range\n") % eventNumber
             % linkId % memBytes % pageSize;
         }
-        return false;
+        return true;
+      }
+
+      // check link's packet counter here
+      const auto packetCounter = Cru::DataFormat::getPacketCounter(reinterpret_cast<const char*>(pageAddress));
+
+      if (mPacketCounters[linkId] == PACKET_COUNTER_INITIAL_VALUE) {
+        mErrorStream << b::format("resync packet counter for e:%d l:%d packet_cnt:%x mpacket_cnt:%x\n") % eventNumber % linkId % packetCounter % 
+          mPacketCounters[linkId];
+        mPacketCounters[linkId] = packetCounter;
+      } else if (((mPacketCounters[linkId] + 1) % 0x100) != packetCounter) { //packetCounter is 8bits long
+        // log packet counter error
+        mErrorCount++;
+        if (mErrorCount < MAX_RECORDED_ERRORS) {
+          mErrorStream << b::format("[RDHERR]\tevent:%1% l:%2% payloadBytes:%3% size:%4% packet_cnt:%5% mpacket_cnt:%6% unexpected packet counter\n")
+            % eventNumber % linkId % memBytes % pageSize % packetCounter % mPacketCounters[linkId];
+        }
+        return true;
+      } else {
+        //mErrorStream << b::format("packet_cnt:%x mpacket_cnt:%x\n") % packetCounter % mPacketCounters[linkId];
+        mPacketCounters[linkId] = packetCounter; // same as = (mPacketCounters + 1) % 0x100
       }
 
       // Get counter value only if page is valid...
@@ -1013,6 +1050,9 @@ class ProgramDmaBench: public Program
 
     /// Page counters per link. Indexed by link ID.
     std::array<std::atomic<uint32_t>, MAX_LINKS> mDataGeneratorCounters;
+
+    // Packet counter per link
+    std::array<std::atomic<uint32_t>, MAX_LINKS> mPacketCounters;
 
     // Keep these as DMA page counters for better granularity
     /// Amount of DMA pages pushed

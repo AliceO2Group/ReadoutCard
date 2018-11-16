@@ -168,15 +168,20 @@ void CruDmaChannel::deviceStopDma()
   setBufferNonReady();
   int moved = 0;
   for (auto& link : mLinks) {
-    size_t size = link.queue.size();
-    for (size_t i = 0; i < size; ++i) {
+    int32_t superpageCount = getBar()->getSuperpageCount(link.id);
+    uint32_t amountAvailable = superpageCount - link.superpageCounter;
+    //log((format("superpageCount %1% amountAvailable %2%") % superpageCount % amountAvailable).str());
+    for (uint32_t i = 0; i < (amountAvailable + 1); ++i) {
+      if (mReadyQueue.size() >= READY_QUEUE_CAPACITY) {
+        break;
+      }
       transferSuperpageFromLinkToReady(link);
       moved++;
     }
     assert(link.queue.empty());
   }
   assert(mLinkQueuesTotalAvailable == LINK_QUEUE_CAPACITY * mLinks.size());
-  log((format("Moved %1% remaining superpages to ready queue") % moved).str());
+  log((format("Moved %1% remaining superpage(s) to ready queue") % moved).str());
 }
 
 void CruDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)

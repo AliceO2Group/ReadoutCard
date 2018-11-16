@@ -39,7 +39,12 @@ uint32_t getEventSize(const char* data)
   return Utilities::getBits(getWord(data, 2), 16, 31); //bits #[80-95] from RDH
 }
 
-//TODO: Add getOffset (pointer to the beginning of the next dma page)
+uint32_t getPacketCounter(const char* data)
+{
+  return Utilities::getBits(getWord(data, 3), 8, 15); //bits #[104-111] from RDH
+}
+
+////TODO: Add getOffset (pointer to the beginning of the next dma page)
 
 /// Get header size in bytes
 constexpr size_t getHeaderSize()
