@@ -159,10 +159,10 @@ void CrorcDmaChannel::startPendingDma(SuperpageQueueEntry& entry)
     log("Initial pages not arrived", InfoLogger::InfoLogger::Warning);
   }
 
-  entry.superpage.received += READYFIFO_ENTRIES * mPageSize;
+  entry.superpage.setReceived(entry.superpage.getReceived() + READYFIFO_ENTRIES * mPageSize);
 
   if (entry.superpage.getReceived() == entry.superpage.getSize()) {
-    entry.superpage.ready = true;
+    entry.superpage.setReady(true);
     mSuperpageQueue.moveFromArrivalsToFilledQueue();
   }
 
@@ -305,7 +305,7 @@ void CrorcDmaChannel::pushSuperpage(Superpage superpage)
   entry.maxPages = superpage.getSize() / mPageSize;
   entry.pushedPages = 0;
   entry.superpage = superpage;
-  entry.superpage.received = 0;
+  entry.superpage.setReceived(0);
 
   mSuperpageQueue.addToQueue(entry);
 }
@@ -366,17 +366,17 @@ void CrorcDmaChannel::fillSuperpages()
         };
 
         uint32_t length = getReadyFifoUser()->entries[mFifoBack].getSize();
-        auto pageAddress = mDmaBufferUserspace + entry.superpage.getOffset() + entry.superpage.received;
+        auto pageAddress = mDmaBufferUserspace + entry.superpage.getOffset() + entry.superpage.getReceived();
         writeSdhEventSize(pageAddress, length);
 
         resetDescriptor(mFifoBack);
         mFifoSize--;
         mFifoBack = (mFifoBack + 1) % READYFIFO_ENTRIES;
-        entry.superpage.received += mPageSize;
+        entry.superpage.setReceived(entry.superpage.getReceived() + mPageSize);
 
         if (entry.superpage.isFilled()) {
           // Move superpage to filled queue
-          entry.superpage.ready = true;
+          entry.superpage.setReady(true);
           mSuperpageQueue.moveFromArrivalsToFilledQueue();
         }
       } else {

@@ -135,8 +135,8 @@ void DummyDmaChannel::fillSuperpages()
     if (mReadyQueue.full()) {
       break;
     }
-    mTransferQueue.front().ready = true;
-    mTransferQueue.front().received = mTransferQueue.front().size;
+    mTransferQueue.front().setReady(true);
+    mTransferQueue.front().setReceived(mTransferQueue.front().getSize());
     mReadyQueue.push_back(mTransferQueue.front());
     mTransferQueue.pop_front();
   }

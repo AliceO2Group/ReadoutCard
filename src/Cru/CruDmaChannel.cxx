@@ -237,9 +237,9 @@ void CruDmaChannel::pushSuperpage(Superpage superpage)
 
   // Once we've confirmed the link has a slot available, we push the superpage
   pushSuperpageToLink(link, superpage);
-  auto maxPages = superpage.getSize() / Cru::DMA_PAGE_SIZE;
+  auto dmaPages = superpage.getSize() / Cru::DMA_PAGE_SIZE;
   auto busAddress = getBusOffsetAddress(superpage.getOffset());
-  getBar()->pushSuperpageDescriptor(link.id, maxPages, busAddress);
+  getBar()->pushSuperpageDescriptor(link.id, dmaPages, busAddress);
 }
 
 auto CruDmaChannel::getSuperpage() -> Superpage
@@ -268,8 +268,8 @@ void CruDmaChannel::pushSuperpageToLink(Link& link, const Superpage& superpage)
 
 void CruDmaChannel::transferSuperpageFromLinkToReady(Link& link)
 {
-  link.queue.front().ready = true;
-  link.queue.front().received = link.queue.front().size;
+  link.queue.front().setReady(true);
+  link.queue.front().setReceived(link.queue.front().getSize());
   mReadyQueue.push_back(link.queue.front());
   mLinkQueuesTotalAvailable++;
   link.queue.pop_front();

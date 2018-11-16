@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(Lifecycle)
     // So we can remove it from the pushing & arrivals queues
     BOOST_CHECK(queue.removeFromPushingQueue() == id);
     // Then we move from arrivals to filled...
-    entry.superpage.ready = true;
+    entry.superpage.setReady(true);
     BOOST_CHECK(queue.moveFromArrivalsToFilledQueue() == id);
     // Finally, we remove it from the filled queue
     BOOST_CHECK(queue.removeFromFilledQueue().busAddress == i);

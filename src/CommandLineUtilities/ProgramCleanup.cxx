@@ -30,8 +30,8 @@ class ProgramCleanup: public Program
     {
       Options::addOptionCardId(options);
       Options::addOptionChannel(options);
-      options.add_options()("force",po::bool_switch(&mForceCleanup),
-          "Force cleanup of shared state files if normal cleanup fails");
+      //options.add_options()("force",po::bool_switch(&mForceCleanup),
+       //   "Force cleanup of shared state files if normal cleanup fails");
     }
 
     virtual void run(const boost::program_options::variables_map& map)
@@ -43,14 +43,14 @@ class ProgramCleanup: public Program
       // It will not succeed if the channel was not initialized properly before the running of this program.
       cout << "### Attempting cleanup...\n";
       auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
-      params.setForcedUnlockEnabled(mForceCleanup);
+      //params.setForcedUnlockEnabled(mForceCleanup);
       params.setBufferParameters(buffer_parameters::Null());
       auto channel = ChannelFactory().getDmaChannel(params);
       cout << "### Done!\n";
     }
 
   private:
-    bool mForceCleanup;
+    //bool mForceCleanup;
 };
 } // Anonymous namespace
 

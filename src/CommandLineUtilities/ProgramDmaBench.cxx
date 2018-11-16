@@ -430,8 +430,10 @@ class ProgramDmaBench: public Program
             if (mChannel->getTransferQueueAvailable() != 0) {
               while (mChannel->getTransferQueueAvailable() != 0) {
                 Superpage superpage;
-                if (freeQueue.read(superpage.offset)) {
-                  superpage.size = mSuperpageSize;
+                size_t offsetRead;
+                if (freeQueue.read(offsetRead)) {
+                  superpage.setSize(mSuperpageSize);
+                  superpage.setOffset(offsetRead);
                   mChannel->pushSuperpage(superpage);
                 } else {
                   // No free pages available, so take a little break
