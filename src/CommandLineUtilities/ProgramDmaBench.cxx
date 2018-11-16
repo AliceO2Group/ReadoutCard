@@ -258,9 +258,6 @@ class ProgramDmaBench: public Program
       params.setGeneratorPattern(mOptions.generatorPattern);
       params.setBufferParameters(buffer_parameters::Memory { mMemoryMappedFile->getAddress(),
           mMemoryMappedFile->getSize() });
-      // Note that we can force unlock because we know for sure this process is not holding the lock. If we did not know
-      // this, it would be very dangerous to force the lock.
-      params.setForcedUnlockEnabled(true);
       params.setLinkMask(Parameters::linkMaskFromString(mOptions.links));
 
       mInfinitePages = (mOptions.maxBytes <= 0);
