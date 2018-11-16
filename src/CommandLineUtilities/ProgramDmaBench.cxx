@@ -53,7 +53,7 @@ namespace po = boost::program_options;
 
 namespace {
 /// Initial value for link counters
-constexpr auto LINK_COUNTER_INITIAL_VALUE = std::numeric_limits<uint32_t>::max();
+constexpr auto DATA_COUNTER_INITIAL_VALUE = std::numeric_limits<uint32_t>::max();
 /// Maximum supported links
 constexpr auto MAX_LINKS = 32;
 /// Interval for low priority thread (display updates, etc)
@@ -187,8 +187,8 @@ class ProgramDmaBench: public Program
 
     virtual void run(const po::variables_map& map)
     {
-      for (auto& i : mLinkCounters) {
-        i = LINK_COUNTER_INITIAL_VALUE;
+      for (auto& i : mDataGeneratorCounters) {
+        i = DATA_COUNTER_INITIAL_VALUE;
       }
 
       getLogger() << "DMA channel: " << mOptions.dmaChannel << endm;
@@ -197,6 +197,8 @@ class ProgramDmaBench: public Program
       auto params = Parameters::makeParameters(cardId, mOptions.dmaChannel);
       params.setDmaPageSize(mOptions.dmaPageSize);
       params.setGeneratorEnabled(mOptions.generatorEnabled);
+      if (!mOptions.generatorEnabled) // if generator is not enabled, force loopbackMode=NONE for proper errorchecking
+        mOptions.loopbackModeString = "NONE";
       params.setGeneratorLoopback(LoopbackMode::fromString(mOptions.loopbackModeString));
 
       // Handle file output options
@@ -292,7 +294,7 @@ class ProgramDmaBench: public Program
       try {
         mChannel = ChannelFactory().getDmaChannel(params);
       }
-      catch (const FileLockException& e) {
+      catch (const LockException& e) {
         getLogger() << InfoLogger::Error
           << "Another process is holding the channel lock (no automatic cleanup possible)" << endm;
         throw;
@@ -407,12 +409,12 @@ class ProgramDmaBench: public Program
       auto pushFuture = std::async(std::launch::async, [&]{
         try {
           RandomPauses pauses;
-          int currentSuperpagePagesCounted = 0;
+          int currentPagesCounted = 0;
 
           while (!isStopDma()) {
             // Check if we need to stop in the case of a page limit
             if (!mInfinitePages && mPushCount.load(std::memory_order_relaxed) >= mMaxPages
-                && (currentSuperpagePagesCounted == 0)) {
+                && (currentPagesCounted == 0)) {
               break;
             }
             if (mOptions.randomPause) {
@@ -447,14 +449,14 @@ class ProgramDmaBench: public Program
               auto superpage = mChannel->getSuperpage();
               // We do partial updates of the mPushCount because we can have very large superpages, which would otherwise
               // cause hiccups in the display
-              int pages = superpage.received / mPageSize;
-              int pagesToCount = pages - currentSuperpagePagesCounted;
+              int pages = superpage.getReceived() / mPageSize;
+              int pagesToCount = pages - currentPagesCounted;
               mPushCount.fetch_add(pagesToCount, std::memory_order_relaxed);
-              currentSuperpagePagesCounted += pagesToCount;
+              currentPagesCounted += pagesToCount;
 
               if (superpage.isReady() && readoutQueue.write(superpage.getOffset())) {
                 // Move full superpage to readout queue
-                currentSuperpagePagesCounted = 0;
+                currentPagesCounted = 0;
                 mChannel->popSuperpage();
               } else {
                 // Readout is backed up, so rest a while
@@ -567,7 +569,7 @@ class ProgramDmaBench: public Program
         uint32_t linkId = 0; // Use 0 for non-CRU cards
         if (mCardType == CardType::Cru) {
           linkId = Cru::DataFormat::getLinkId(reinterpret_cast<const char*>(pageAddress));
-          if (linkId >= mLinkCounters.size()) {
+          if (linkId >= mDataGeneratorCounters.size()) {
             BOOST_THROW_EXCEPTION(Exception()
               << ErrorInfo::Message("Link ID from superpage out of range")
               << ErrorInfo::Index(linkId));
@@ -589,7 +591,7 @@ class ProgramDmaBench: public Program
 
         if (hasError && !mOptions.noResyncCounter) {
           // There was an error, so we resync the counter on the next page
-          mLinkCounters[linkId] = LINK_COUNTER_INITIAL_VALUE;
+          mDataGeneratorCounters[linkId] = DATA_COUNTER_INITIAL_VALUE;
         }
       }
 
@@ -616,27 +618,27 @@ class ProgramDmaBench: public Program
       // 32 bits counter + 32 bits counter + 32-bit counter + 32 bit counter
       // 32 bits counter + 32 bits counter + 32-bit counter + 32 bit counter
       
-      // Get counter value only if page is valid...
-      if (mLinkCounters[linkId] == LINK_COUNTER_INITIAL_VALUE) {
-        auto counter = getDataGeneratorCounterFromPage(pageAddress, 0x0); // no header!
-        mErrorStream << b::format("resync counter for e:%d l:%d cnt:%x\n") % eventNumber % linkId % counter;
-        mLinkCounters[linkId] = counter;
+      // Get dataCounter value only if page is valid...
+      if (mDataGeneratorCounters[linkId] == DATA_COUNTER_INITIAL_VALUE) {
+        auto dataCounter = getDataGeneratorCounterFromPage(pageAddress, 0x0); // no header!
+        mErrorStream << b::format("resync dataCounter for e:%d l:%d cnt:%x\n") % eventNumber % linkId % dataCounter;
+        mDataGeneratorCounters[linkId] = dataCounter;
       }
       
-      const uint32_t counter = mLinkCounters[linkId];
+      const uint32_t dataCounter = mDataGeneratorCounters[linkId];
 
       bool foundError = false;
       auto checkValue = [&](uint32_t i, uint32_t expectedValue, uint32_t actualValue) {
         if (expectedValue != actualValue) {
           foundError = true;
-          addError(eventNumber, linkId, i, counter, expectedValue, actualValue, pageSize);
+          addError(eventNumber, linkId, i, dataCounter, expectedValue, actualValue, pageSize);
         }
       };
 
       const auto payload = reinterpret_cast<const volatile uint32_t*> (pageAddress);
 
       // Check iterating through 256-bit words
-      uint32_t offset = (counter % (0x100000000)); // mod 0xffffffff + 1
+      uint32_t offset = (dataCounter % (0x100000000)); // mod 0xffffffff + 1
       uint32_t i = 0;
 
       while ((i*4) < pageSize) { //this is indexing, it has nothing to do with iterating step
@@ -651,11 +653,11 @@ class ProgramDmaBench: public Program
         checkValue(word32 + 6, offset, payload[word32 + 6]); //32-bit counter 
         checkValue(word32 + 7, offset, payload[word32 + 7]); //32-bit counter 
 
-        offset = (offset+1) % (0x100000000); //Increase counter by 1 - mod 0xffffffff + 1
+        offset = (offset+1) % (0x100000000); //Increase dataCounter by 1 - mod 0xffffffff + 1
         i += 8; // 8 = expected 2*sizeof(uint32_t);
       }
       
-      mLinkCounters[linkId] = offset;
+      mDataGeneratorCounters[linkId] = offset;
       return foundError;
     }
 
@@ -675,12 +677,12 @@ class ProgramDmaBench: public Program
       }
 
       // Get counter value only if page is valid...
-      if (mLinkCounters[linkId] == LINK_COUNTER_INITIAL_VALUE) {
-        auto counter = getDataGeneratorCounterFromPage(pageAddress, Cru::DataFormat::getHeaderSize());
-        mErrorStream << b::format("resync counter for e:%d l:%d cnt:%x\n") % eventNumber % linkId % counter;
-        mLinkCounters[linkId] = counter;
+      const auto dataCounter = getDataGeneratorCounterFromPage(pageAddress, Cru::DataFormat::getHeaderSize());
+      if (mDataGeneratorCounters[linkId] == DATA_COUNTER_INITIAL_VALUE) {
+        mErrorStream << b::format("resync counter for e:%d l:%d cnt:%x\n") % eventNumber % linkId % dataCounter;
+        mDataGeneratorCounters[linkId] = dataCounter;
       }
-      const uint32_t counter = mLinkCounters[linkId];
+      //const uint32_t dataCounter = mDataGeneratorCounters[linkId];
 
       //skip the header -> address + 0x40
       const auto payload = reinterpret_cast<const volatile uint32_t*>(pageAddress + Cru::DataFormat::getHeaderSize()); 
@@ -690,12 +692,12 @@ class ProgramDmaBench: public Program
       auto checkValue = [&](uint32_t i, uint32_t expectedValue, uint32_t actualValue) {
         if (expectedValue != actualValue) {
           foundError = true;
-          addError(eventNumber, linkId, i, counter, expectedValue, actualValue, payloadBytes);
+          addError(eventNumber, linkId, i, dataCounter, expectedValue, actualValue, payloadBytes);
         }
       };
 
       // Check iterating through 256-bit words
-      uint32_t offset = (counter % (0x100000000)); // mod 0xffffffff + 1
+      uint32_t offset = (dataCounter % (0x100000000)); // mod 0xffffffff + 1
       uint32_t i = 0;
 
       // ddg pattern
@@ -714,7 +716,7 @@ class ProgramDmaBench: public Program
         offset = (offset+1) % (0x100000000); //Increase counter by 1 - mod 0xffffffff + 1
         i += 4; // 4 = expected sizeof(uint32_t);
       }
-      mLinkCounters[linkId] = offset;
+      mDataGeneratorCounters[linkId] = offset;
       return foundError;
     }
 
@@ -730,8 +732,8 @@ class ProgramDmaBench: public Program
 
     bool checkErrorsCrorc(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
     {
-      uint64_t counter = mLinkCounters[linkId];
-      mLinkCounters[linkId]++;
+      uint64_t counter = mDataGeneratorCounters[linkId];
+      mDataGeneratorCounters[linkId]++;
 
       auto check = [&](auto patternFunction) {
         auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
@@ -792,8 +794,8 @@ class ProgramDmaBench: public Program
 
        auto format = b::format(PROGRESS_FORMAT);
        format % hour % minute % second; // Time
-       format % mPushCount.load(std::memory_order_relaxed);
-       format % mReadoutCount.load(std::memory_order_relaxed);
+       format % (mPushCount.load(std::memory_order_relaxed) / mPagesPerSuperpage);
+       format % (mReadoutCount.load(std::memory_order_relaxed) / mPagesPerSuperpage);
 
        double runTime = std::chrono::duration<double>(steady_clock::now() - mRunTime.start).count();
        double bytes = double(mReadoutCount.load()) * mPageSize;
@@ -851,7 +853,8 @@ class ProgramDmaBench: public Program
        auto put = [&](auto label, auto value) { cout << b::format("  %-10s  %-10s\n") % label % value; };
        cout << '\n';
        put("Seconds", runTime);
-       put("Superpages", mReadoutCount.load());
+       put("Superpages", mReadoutCount.load()/mPagesPerSuperpage);
+       put("DMA Pages", mReadoutCount.load());
        if (bytes > 0.00001) {
          put("Bytes", bytes);
          put("GB", GB);
@@ -1010,14 +1013,13 @@ class ProgramDmaBench: public Program
     CardType::type mCardType;
 
     /// Page counters per link. Indexed by link ID.
-    std::array<std::atomic<uint32_t>, MAX_LINKS> mLinkCounters;
+    std::array<std::atomic<uint32_t>, MAX_LINKS> mDataGeneratorCounters;
 
-    /// Amount of superpages pushed
+    // Keep these as DMA page counters for better granularity
+    /// Amount of DMA pages pushed
     std::atomic<uint64_t> mPushCount { 0 };
 
-    //Kostas TODO: I'm under the impression this counter
-    //             actually refers to dma pages...
-    /// Amount of superpages read out 
+    // Amount of DMA pages read out
     std::atomic<uint64_t> mReadoutCount { 0 };
 
     /// Total amount of errors encountered
