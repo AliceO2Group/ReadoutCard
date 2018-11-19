@@ -73,9 +73,6 @@ class Parameters
     /// Type for the readout mode parameter
     using ReadoutModeType = ReadoutMode::type;
 
-    /// Type for the forced unlock enabled parameter
-    using ForcedUnlockEnabledType = bool;
-
     /// Type for the link mask parameter
     using LinkMaskType = std::set<uint32_t>;
 
@@ -210,28 +207,6 @@ class Parameters
     /// \return Reference to this object for chaining calls
     auto setReadoutMode(ReadoutModeType value) -> Parameters&;
 
-    /// Sets the ForcedUnlockEnabled parameter
-    ///
-    /// The channel uses two locks to enforce DMA channel exclusivity: a file lock (which is cleaned up automatically on/
-    /// a process exit) and a mutex (which remains locked in the case of a crash).
-    ///
-    /// Normally, when the mutex is left locked because of a crash, it must be cleaned up manually through
-    /// administrative action before the channel can be acquired again.
-    /// But in some cases, it can be safe to clean up the lock automatically.
-    /// For example, when the file lock is unlocked, the mutex is not, and the user process knows for sure it is not
-    /// holding the mutex itself.
-    ///
-    /// When this parameter is set to true, the channel will assume that it's safe to force the mutex.
-    /// The channel will first try to acquire the channel lock normally.
-    /// If it fails to acquire the mutex, it will forcibly clean up and acquire the lock.
-    /// A warning will be logged when the forced acquire is used.
-    ///
-    /// Note that this is a dangerous operation that can cause the system to crash if the assumption does not hold.
-    ///
-    /// \param value The value to set
-    /// \return Reference to this object for chaining calls
-    auto setForcedUnlockEnabled(ForcedUnlockEnabledType value) -> Parameters&;
-
     /// Sets the LinkMask parameter
     ///
     /// The BAR channel may transfer data from multiple links.
@@ -290,10 +265,6 @@ class Parameters
     /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
     auto getReadoutMode() const -> boost::optional<ReadoutModeType>;
 
-    /// Gets the ForcedUnlockEnabled parameter
-    /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
-    auto getForcedUnlockEnabled() const -> boost::optional<ForcedUnlockEnabledType>;
-
     /// Gets the LinkMask parameter
     /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
     auto getLinkMask() const -> boost::optional<LinkMaskType>;
@@ -350,11 +321,6 @@ class Parameters
     /// \exception ParameterException The parameter was not present
     /// \return The value
     auto getReadoutModeRequired() const -> ReadoutModeType;
-
-    /// Gets the ForcedUnlockEnabled parameter
-    /// \exception ParameterException The parameter was not present
-    /// \return The value
-    auto getForcedUnlockEnabledRequired() const -> ForcedUnlockEnabledType;
 
     /// Gets the LinkMask parameter
     /// \exception ParameterException The parameter was not present

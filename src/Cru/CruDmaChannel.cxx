@@ -168,15 +168,20 @@ void CruDmaChannel::deviceStopDma()
   setBufferNonReady();
   int moved = 0;
   for (auto& link : mLinks) {
-    size_t size = link.queue.size();
-    for (size_t i = 0; i < size; ++i) {
+    int32_t superpageCount = getBar()->getSuperpageCount(link.id);
+    uint32_t amountAvailable = superpageCount - link.superpageCounter;
+    //log((format("superpageCount %1% amountAvailable %2%") % superpageCount % amountAvailable).str());
+    for (uint32_t i = 0; i < (amountAvailable + 1); ++i) {
+      if (mReadyQueue.size() >= READY_QUEUE_CAPACITY) {
+        break;
+      }
       transferSuperpageFromLinkToReady(link);
       moved++;
     }
     assert(link.queue.empty());
   }
   assert(mLinkQueuesTotalAvailable == LINK_QUEUE_CAPACITY * mLinks.size());
-  log((format("Moved %1% remaining superpages to ready queue") % moved).str());
+  log((format("Moved %1% remaining superpage(s) to ready queue") % moved).str());
 }
 
 void CruDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)
@@ -237,9 +242,9 @@ void CruDmaChannel::pushSuperpage(Superpage superpage)
 
   // Once we've confirmed the link has a slot available, we push the superpage
   pushSuperpageToLink(link, superpage);
-  auto maxPages = superpage.getSize() / Cru::DMA_PAGE_SIZE;
+  auto dmaPages = superpage.getSize() / Cru::DMA_PAGE_SIZE;
   auto busAddress = getBusOffsetAddress(superpage.getOffset());
-  getBar()->pushSuperpageDescriptor(link.id, maxPages, busAddress);
+  getBar()->pushSuperpageDescriptor(link.id, dmaPages, busAddress);
 }
 
 auto CruDmaChannel::getSuperpage() -> Superpage
@@ -268,8 +273,8 @@ void CruDmaChannel::pushSuperpageToLink(Link& link, const Superpage& superpage)
 
 void CruDmaChannel::transferSuperpageFromLinkToReady(Link& link)
 {
-  link.queue.front().ready = true;
-  link.queue.front().received = link.queue.front().size;
+  link.queue.front().setReady(true);
+  link.queue.front().setReceived(link.queue.front().getSize());
   mReadyQueue.push_back(link.queue.front());
   mLinkQueuesTotalAvailable++;
   link.queue.pop_front();

@@ -72,7 +72,7 @@ int main(int, char**)
       auto superpage = channel->getSuperpage();
       if (superpage.isReady()) {
         channel->popSuperpage();
-        cout << "Superpage " << (superpage.offset / superpageSize) << " arrived\n";
+        cout << "Superpage " << (superpage.getOffset() / superpageSize) << " arrived\n";
       }
 
       // Give the CPU some resting time
