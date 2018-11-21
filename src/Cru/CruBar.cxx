@@ -4,25 +4,51 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
+#include <bitset>
+#include <chrono>
+#include <fstream>
+#include <iostream>
+#include <thread>
 #include "CruBar.h"
+#include "Gbt.h"
+#include "I2c.h"
+#include "Ttc.h"
+#include "DatapathWrapper.h"
 #include "boost/format.hpp"
 #include "Utilities/Util.h"
 
 namespace AliceO2 {
 namespace roc {
 
+using Link = Cru::Link;
+
 CruBar::CruBar(const Parameters& parameters)
-    : BarInterfaceBase(parameters)
+    : BarInterfaceBase(parameters),
+      mClock(parameters.getClock().get_value_or(Clock::Local)),
+      mDatapathMode(parameters.getDatapathMode().get_value_or(DatapathMode::Packet)),
+      mDownstreamData(parameters.getDownstreamData().get_value_or(DownstreamData::Ctp)),
+      mGbtMode(parameters.getGbtMode().get_value_or(GbtMode::Gbt)),
+      mGbtMux(parameters.getGbtMux().get_value_or(GbtMux::Ttc)),
+      mLinkMask(parameters.getLinkMask().get_value_or(std::set<uint32_t>{0})),
+      mGbtMuxMap(parameters.getGbtMuxMap().get_value_or(std::map<uint32_t, GbtMux::type>{}))
 {
-  if (mPdaBar->getIndex() == 0)
-    mFeatures = parseFirmwareFeatures();
+  if (getIndex() == 0) {
+    mFeatures = parseFirmwareFeatures(); 
+  }
+
+  if (parameters.getGeneratorLoopback() == LoopbackMode::type::Internal) {
+    mLoopback = 0x1;
+  } else {//default to "NONE"
+    mLoopback = 0x0;
+  }
 }
+
 CruBar::CruBar(std::shared_ptr<Pda::PdaBar> bar)
     : BarInterfaceBase(bar)
 {
-  if (mPdaBar->getIndex() == 0)
+  if (getIndex() == 0)
     mFeatures = parseFirmwareFeatures();
-} 
+}
  
 CruBar::~CruBar()
 {
@@ -57,6 +83,11 @@ boost::optional<std::string> CruBar::getCardId()
   return (boost::format("%08x-%08x") % getFpgaChipHigh() % getFpgaChipLow()).str();
 }
 
+/*void CruBar::checkParameters()
+{
+  //TODO
+}*/
+
 /// Push a superpage into the FIFO of a link
 /// \param link Link number
 /// \param pages Amount of 8 kiB pages in superpage
@@ -64,41 +95,41 @@ boost::optional<std::string> CruBar::getCardId()
 void CruBar::pushSuperpageDescriptor(uint32_t link, uint32_t pages, uintptr_t busAddress)
 {
   // Set superpage address. These writes are buffered on the firmware side.
-  mPdaBar->writeRegister(Cru::Registers::LINK_SUPERPAGE_ADDRESS_HIGH.get(link).index,
+  writeRegister(Cru::Registers::LINK_SUPERPAGE_ADDRESS_HIGH.get(link).index,
       Utilities::getUpper32Bits(busAddress));
-  mPdaBar->writeRegister(Cru::Registers::LINK_SUPERPAGE_ADDRESS_LOW.get(link).index,
+  writeRegister(Cru::Registers::LINK_SUPERPAGE_ADDRESS_LOW.get(link).index,
       Utilities::getLower32Bits(busAddress));
   // Set superpage size. This write signals the push of the descriptor into the link's FIFO.
-  mPdaBar->writeRegister(Cru::Registers::LINK_SUPERPAGE_SIZE.get(link).index, pages);
+  writeRegister(Cru::Registers::LINK_SUPERPAGE_SIZE.get(link).index, pages);
 }
 
 /// Get amount of superpages pushed by a link
 /// \param link Link number
 uint32_t CruBar::getSuperpageCount(uint32_t link)
 {
-  return mPdaBar->readRegister(Cru::Registers::LINK_SUPERPAGES_PUSHED.get(link).index);
+  return readRegister(Cru::Registers::LINK_SUPERPAGES_PUSHED.get(link).index);
 }
 
 /// Enables the data emulator
 /// \param enabled true for enabled
-void CruBar::setDataEmulatorEnabled(bool enabled) const
+void CruBar::setDataEmulatorEnabled(bool enabled)
 {
-  mPdaBar->writeRegister(Cru::Registers::DMA_CONTROL.index, enabled ? 0x1 : 0x0);
-  uint32_t bits = mPdaBar->readRegister(Cru::Registers::DATA_GENERATOR_CONTROL.index);
+  writeRegister(Cru::Registers::DMA_CONTROL.index, enabled ? 0x1 : 0x0);
+  uint32_t bits = readRegister(Cru::Registers::DATA_GENERATOR_CONTROL.index);
   setDataGeneratorEnableBits(bits, enabled);
-  mPdaBar->writeRegister(Cru::Registers::DATA_GENERATOR_CONTROL.index, bits);
+  writeRegister(Cru::Registers::DATA_GENERATOR_CONTROL.index, bits);
 }
 
 /// Resets the data generator counter
-void CruBar::resetDataGeneratorCounter() const
+void CruBar::resetDataGeneratorCounter()
 {
-  mPdaBar->writeRegister(Cru::Registers::RESET_CONTROL.index, 0x2);
+  writeRegister(Cru::Registers::RESET_CONTROL.index, 0x2);
 }
 
 /// Performs a general reset of the card
-void CruBar::resetCard() const
+void CruBar::resetCard()
 {
-  mPdaBar->writeRegister(Cru::Registers::RESET_CONTROL.index, 0x1);
+  writeRegister(Cru::Registers::RESET_CONTROL.index, 0x1);
 }
 
 /// Sets the pattern for the card's internal data generator
@@ -107,30 +138,24 @@ void CruBar::resetCard() const
 /// \param randomEnabled Give true to enable random data size. In this case, the given size is the maximum size (?)
 void CruBar::setDataGeneratorPattern(GeneratorPattern::type pattern, size_t size, bool randomEnabled)
 {
-  uint32_t bits = mPdaBar->readRegister(Cru::Registers::DATA_GENERATOR_CONTROL.index);
+  uint32_t bits = readRegister(Cru::Registers::DATA_GENERATOR_CONTROL.index);
   setDataGeneratorPatternBits(bits, pattern);
   setDataGeneratorSizeBits(bits, size);
   setDataGeneratorRandomSizeBits(bits, randomEnabled);
-  mPdaBar->writeRegister(Cru::Registers::DATA_GENERATOR_CONTROL.index, bits);
+  writeRegister(Cru::Registers::DATA_GENERATOR_CONTROL.index, bits);
 }
 
 /// Injects a single error into the generated data stream
 void CruBar::dataGeneratorInjectError()
 {
-  mPdaBar->writeRegister(Cru::Registers::DATA_GENERATOR_INJECT_ERROR.index,
+  writeRegister(Cru::Registers::DATA_GENERATOR_INJECT_ERROR.index,
       Cru::Registers::DATA_GENERATOR_CONTROL_INJECT_ERROR_CMD);
 }
 
 /// Sets the data source for the DMA
 void CruBar::setDataSource(uint32_t source)
 {
-  mPdaBar->writeRegister(Cru::Registers::DATA_SOURCE_SELECT.index, source);
-}
-
-/// Set links
-void CruBar::setLinksEnabled(uint32_t mask)
-{
-  mPdaBar->writeRegister(Cru::Registers::LINKS_ENABLE.index, mask);
+  writeRegister(Cru::Registers::DATA_SOURCE_SELECT.index, source);
 }
 
 FirmwareFeatures CruBar::getFirmwareFeatures()
@@ -141,19 +166,19 @@ FirmwareFeatures CruBar::getFirmwareFeatures()
 /// Get number of dropped packets
 int32_t CruBar::getDroppedPackets()
 {
-  return mPdaBar->readRegister(Cru::Registers::NUM_DROPPED_PACKETS.index);
+  return readRegister(Cru::Registers::NUM_DROPPED_PACKETS.index);
 }
 
 // Get CTP clock (Hz)
 uint32_t CruBar::getCTPClock()
 {
-  return mPdaBar->readRegister(Cru::Registers::CTP_CLOCK.index);
+  return readRegister(Cru::Registers::CTP_CLOCK.index);
 }
 
 // Get local clock (Hz)
 uint32_t CruBar::getLocalClock()
 {
-  return mPdaBar->readRegister(Cru::Registers::LOCAL_CLOCK.index);
+  return readRegister(Cru::Registers::LOCAL_CLOCK.index);
 }
 
 // Get total # of links per wrapper
@@ -161,24 +186,22 @@ int32_t CruBar::getLinks()
 {
   int32_t links = 0;
   uint32_t regread = 0x0;
-  regread = mPdaBar->readRegister((Cru::Registers::WRAPPER0.address + 0x4) / 4);
+  regread = readRegister((Cru::Registers::WRAPPER0.address + 0x4) / 4);
   links += Utilities::getBits(regread, 24, 31);
-  regread = mPdaBar->readRegister((Cru::Registers::WRAPPER1.address + 0x4) / 4);
+  regread = readRegister((Cru::Registers::WRAPPER1.address + 0x4) / 4);
   links += Utilities::getBits(regread, 24, 31);
 
   return links;
-
 }
 
-
 // Get # of links per wrapper
-int32_t CruBar::getLinksPerWrapper(uint32_t wrapper)
+int32_t CruBar::getLinksPerWrapper(int wrapper)
 {
   uint32_t regread = 0x0;
   if (wrapper == 0)
-    regread = mPdaBar->readRegister((Cru::Registers::WRAPPER0.address + 0x4) / 4);
+    regread = readRegister((Cru::Registers::WRAPPER0.address + 0x4) / 4);
   else if (wrapper == 1)
-    regread = mPdaBar->readRegister((Cru::Registers::WRAPPER1.address + 0x4) / 4);
+    regread = readRegister((Cru::Registers::WRAPPER1.address + 0x4) / 4);
   else
     return 0;
 
@@ -189,10 +212,10 @@ int32_t CruBar::getLinksPerWrapper(uint32_t wrapper)
 /// Gets the serial number from the card.
 /// Note that not all firmwares have a serial number. You should make sure this firmware feature is enabled before
 /// calling this function, or the card may crash. See parseFirmwareFeatures().
-uint32_t CruBar::getSerialNumber() const
+uint32_t CruBar::getSerialNumber()
 {
   assertBarIndex(2, "Can only get serial number from BAR 2");
-  auto serial = mPdaBar->readRegister(Cru::Registers::SERIAL_NUMBER.index);
+  auto serial = readRegister(Cru::Registers::SERIAL_NUMBER.index);
   if (serial == 0xFfffFfff) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("CRU reported invalid serial number 0xffffffff, "
           "a fatal error may have occurred"));
@@ -201,17 +224,17 @@ uint32_t CruBar::getSerialNumber() const
 }
 
 /// Get raw data from the temperature register
-uint32_t CruBar::getTemperatureRaw() const
+uint32_t CruBar::getTemperatureRaw()
 {
   assertBarIndex(2, "Can only get temperature from BAR 2");
   // Only use lower 10 bits
-  return mPdaBar->readRegister(Cru::Registers::TEMPERATURE.index) & 0x3ff;
+  return readRegister(Cru::Registers::TEMPERATURE.index) & 0x3ff;
 }
 
 /// Converts a value from the CRU's temperature register and converts it to a °C double value.
 /// \param registerValue Value of the temperature register to convert
 /// \return Temperature value in °C or nothing if the registerValue was invalid
-boost::optional<float> CruBar::convertTemperatureRaw(uint32_t registerValue) const
+boost::optional<float> CruBar::convertTemperatureRaw(uint32_t registerValue)
 {
   /// It's a 10 bit register, so: 2^10 - 1
   constexpr uint32_t REGISTER_MAX_VALUE = 1023;
@@ -229,7 +252,7 @@ boost::optional<float> CruBar::convertTemperatureRaw(uint32_t registerValue) con
 
 /// Gets the temperature in °C, or nothing if the temperature value was invalid.
 /// \return Temperature value in °C or nothing if the temperature value was invalid
-boost::optional<float> CruBar::getTemperatureCelsius() const
+boost::optional<float> CruBar::getTemperatureCelsius()
 {
   return convertTemperatureRaw(getTemperatureRaw());
 }
@@ -237,50 +260,50 @@ boost::optional<float> CruBar::getTemperatureCelsius() const
 uint32_t CruBar::getFirmwareCompileInfo()
 {
   assertBarIndex(0, "Can only get firmware compile info from BAR 0");
-  return mPdaBar->readRegister(Cru::Registers::FIRMWARE_COMPILE_INFO.index);
+  return readRegister(Cru::Registers::FIRMWARE_COMPILE_INFO.index);
 }
 
 uint32_t CruBar::getFirmwareGitHash()
 {
   assertBarIndex(2, "Can only get git hash from BAR 2");
-  return mPdaBar->readRegister(Cru::Registers::FIRMWARE_GIT_HASH.index);
+  return readRegister(Cru::Registers::FIRMWARE_GIT_HASH.index);
 }
 
 uint32_t CruBar::getFirmwareDateEpoch()
 {
   assertBarIndex(2, "Can only get firmware epoch from BAR 2");
-  return mPdaBar->readRegister(Cru::Registers::FIRMWARE_EPOCH.index);
+  return readRegister(Cru::Registers::FIRMWARE_EPOCH.index);
 }
 
 uint32_t CruBar::getFirmwareDate()
 {
   assertBarIndex(2, "Can only get firmware date from BAR 2");
-  return mPdaBar->readRegister(Cru::Registers::FIRMWARE_DATE.index);
+  return readRegister(Cru::Registers::FIRMWARE_DATE.index);
 }
 
 uint32_t CruBar::getFirmwareTime()
 {
   assertBarIndex(2, "Can only get firmware time from BAR 2");
-  return mPdaBar->readRegister(Cru::Registers::FIRMWARE_TIME.index);
+  return readRegister(Cru::Registers::FIRMWARE_TIME.index);
 }
 
 uint32_t CruBar::getFpgaChipHigh()
 {
   assertBarIndex(2, "Can only get FPGA chip ID from BAR 2");
-  return mPdaBar->readRegister(Cru::Registers::FPGA_CHIP_HIGH.index);
+  return readRegister(Cru::Registers::FPGA_CHIP_HIGH.index);
 }
 
 uint32_t CruBar::getFpgaChipLow()
 {
   assertBarIndex(2, "Can only get FPGA chip ID from BAR 2");
-  return mPdaBar->readRegister(Cru::Registers::FPGA_CHIP_LOW.index);
+  return readRegister(Cru::Registers::FPGA_CHIP_LOW.index);
 }
 
 /// Get the enabled features for the card's firmware.
 FirmwareFeatures CruBar::parseFirmwareFeatures()
 {
   assertBarIndex(0, "Can only get firmware features from BAR 0");
-  return convertToFirmwareFeatures(mPdaBar->readRegister(Cru::Registers::FIRMWARE_FEATURES.index));
+  return convertToFirmwareFeatures(readRegister(Cru::Registers::FIRMWARE_FEATURES.index));
 }
 
 FirmwareFeatures CruBar::convertToFirmwareFeatures(uint32_t reg)
@@ -369,6 +392,150 @@ void CruBar::setDataGeneratorEnableBits(uint32_t& bits, bool enabled)
 void CruBar::setDataGeneratorRandomSizeBits(uint32_t& bits, bool enabled)
 {
   Utilities::setBit(bits, 16, enabled);
+}
+
+/// Configures the CRU according to the parameters passed on init
+void CruBar::configure()
+{
+
+  //TODO: Call check_parameters() before continuing
+
+  bool ponUpstream = false;
+  uint32_t onuAddress = 0xbadcafe;
+
+  setWrapperCount();
+  mLinkList = populateLinkList();
+  //for (auto const& link: mLinkList)
+  //  std::cout << "link: " << link.id << std::endl;
+  
+  //getDdgBurstLength(); // Not needed yet
+  
+  Ttc ttc = Ttc(mPdaBar);
+
+  std::cout << "Setting the clock" << std::endl;
+  ttc.setClock(mClock);
+
+  std::cout << "Calibrating TTC" << std::endl;
+  ttc.calibrateTtc();
+  if (ponUpstream) {
+    ttc.resetFpll();
+    ttc.configurePonTx(onuAddress);
+  }
+
+  std::cout << "Setting Downstream Data" << std::endl;
+  ttc.selectDownstreamData(mDownstreamData);
+
+  Gbt gbt = Gbt(mPdaBar, mLinkList, mWrapperCount);
+
+  std::cout << "Setting GBT MUX" << std::endl;
+  for (auto const& link: mLinkList)
+    gbt.setMux(link, link.gbtMux); //TODO: per link
+
+  std::cout << "Calibrating GBT" << std::endl;
+  gbt.calibrateGbt();
+  std::cout << "Configuring GBT" << std::endl;
+  for (auto const& link: mLinkList) {
+    gbt.setInternalDataGenerator(link, 0);
+    gbt.setTxMode(link, Cru::Registers::GBT_MODE_GBT); //TX is always GBT
+    gbt.setRxMode(link, mGbtMode);                     //RX may also be WB
+    gbt.setLoopback(link, mLoopback);
+  }
+
+  /* BSP */
+  disableDataTaking();
+
+  DatapathWrapper datapathWrapper = DatapathWrapper(mPdaBar);
+  // Disable all links
+  datapathWrapper.setLinksEnabled(0, 0x0);
+  datapathWrapper.setLinksEnabled(1, 0x0);
+
+  std::cout << "Enabling links and setting datapath mode" << std::endl;
+  for (auto const& link: mLinkList) { 
+    datapathWrapper.setLinkEnabled(link);
+    datapathWrapper.setDatapathMode(link, mDatapathMode);
+  }
+
+  std::cout << "Setting Packet Arbitration and Flow Control" << std::endl;
+  datapathWrapper.setPacketArbitration(mWrapperCount, 0);
+  datapathWrapper.setFlowControl(0);
+
+  std::cout << "CRU configuration done." << std::endl;
+}
+
+/// Sets the mWrapperCount variable
+void CruBar::setWrapperCount()
+{
+  int wrapperCount = 0;
+
+  /* Read the clock counter; If it's running increase the count */
+  for (int i=0 ; i<2; i++){
+    uint32_t address = Cru::getWrapperBaseAddress(i) + Cru::Registers::GBT_WRAPPER_GREGS.address + 
+      Cru::Registers::GBT_WRAPPER_CLOCK_COUNTER.address;
+    uint32_t reg11a = readRegister(address/4);
+    uint32_t reg11b = readRegister(address/4);
+
+    if (reg11a != reg11b) {
+      wrapperCount += 1;
+    }
+  }
+  mWrapperCount = wrapperCount;
+}
+
+/// Returns a LinkList populated by the Links specified in mLinkMask
+std::vector<Link> CruBar::populateLinkList()
+{
+  std::vector<Link> links;
+  for (int wrapper = 0; wrapper<mWrapperCount; wrapper++){
+    uint32_t address = Cru::getWrapperBaseAddress(wrapper) + Cru::Registers::GBT_WRAPPER_CONF0.address;
+    uint32_t wrapperConfig = readRegister(address/4);
+
+    for(int bank=0; bank<6; bank++) {
+      int dwrapper = (bank < 2) ? 0 : 1;
+      int lpbLSB = (4 * bank) + 4;
+      int lpbMSB = lpbLSB + 4 - 1;
+      int linksPerBank = Utilities::getBits(wrapperConfig, lpbLSB, lpbMSB);
+      if (linksPerBank == 0) {
+        break;
+      }
+      for(int link=0; link<linksPerBank; link++) {
+        if (mLinkMask.find(link + bank * linksPerBank) == mLinkMask.end()) {
+          continue;
+        }
+        
+        GbtMux::type gbtMux = mGbtMux;
+        auto gbtMuxMapElement = mGbtMuxMap.find(link + bank * linksPerBank);
+        if (gbtMuxMapElement != mGbtMuxMap.end()) {
+          gbtMux = gbtMuxMapElement->second;
+        }
+
+        int dwrapperIndex = link + (bank%2) * 6;
+        uint32_t baseAddress = Cru::getXcvrRegisterAddress(wrapper, bank, link);
+        Link new_link = {
+          dwrapper, 
+          wrapper,
+          bank,
+          (uint32_t) link,
+          (uint32_t) dwrapperIndex,
+          baseAddress,
+          gbtMux
+        };
+
+        links.push_back(new_link);
+      }
+    }
+  }
+  return links;
+}
+
+int CruBar::getDdgBurstLength()
+{
+  uint32_t burst = (((readRegister(Cru::Registers::DDG_CTRL0.address) ) >> 20)/4 ) & 0xff;
+  return Utilities::getWidth(burst);
+}
+
+void CruBar::disableDataTaking()
+{
+  modifyRegister(Cru::Registers::BSP_USER_CONTROL.index, 0, 1, 0x0);
 }
 
 } // namespace roc

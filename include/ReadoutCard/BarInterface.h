@@ -53,11 +53,12 @@ class BarInterface: public virtual RegisterReadWriteInterface
     virtual uint32_t getCTPClock() = 0;
     
     virtual uint32_t getLocalClock() = 0;
-    
+
     virtual int32_t getLinks() = 0;
 
-    virtual int32_t getLinksPerWrapper(uint32_t wrapper) = 0;
+    virtual int32_t getLinksPerWrapper(int wrapper) = 0;
 
+    virtual void configure() = 0;
 };
 
 } // namespace roc

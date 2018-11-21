@@ -18,6 +18,13 @@
 #include "ReadoutCard/ParameterTypes/PciAddress.h"
 #include "ReadoutCard/ParameterTypes/ReadoutMode.h"
 
+// CRU Specific
+#include "ReadoutCard/ParameterTypes/Clock.h"
+#include "ReadoutCard/ParameterTypes/DatapathMode.h"
+#include "ReadoutCard/ParameterTypes/DownstreamData.h"
+#include "ReadoutCard/ParameterTypes/GbtMode.h"
+#include "ReadoutCard/ParameterTypes/GbtMux.h"
+
 namespace AliceO2 {
 namespace roc {
 
@@ -75,6 +82,15 @@ class Parameters
 
     /// Type for the link mask parameter
     using LinkMaskType = std::set<uint32_t>;
+
+    /// Type for the gbt mux map parameter
+    using GbtMuxMapType = std::map<uint32_t, GbtMux::type>;
+
+    using ClockType = Clock::type;
+    using DatapathModeType = DatapathMode::type;
+    using DownstreamDataType = DownstreamData::type;
+    using GbtMuxType = GbtMux::type;
+    using GbtModeType = GbtMode::type;
 
 
     // Setters
@@ -222,8 +238,61 @@ class Parameters
     /// \return Reference to this object for chaining calls
     auto setLinkMask(LinkMaskType value) -> Parameters&;
 
+    /// Sets the Clock Parameter
+    ///
+    /// The Clock parameter refers to the selection of the TTC or Local clock for the CRU configuration
+    ///
+    /// \param value The value to set
+    /// \return Reference to this object for chaining calls
+    auto setClock(ClockType value) -> Parameters&;
 
-    // Non-throwing getters
+
+    /// Sets the DatapathMode Parameter
+    ///
+    /// The Datapath Mode parameter refers to the selection of the Datapath Mode for the CRU configuration
+    /// The Datapath Mode may be PACKET or CONTINUOUS
+    ///
+    /// \param value The value to set
+    /// \return Reference to this object for chaining calls
+    auto setDatapathMode(DatapathModeType value) -> Parameters&;
+
+    /// Sets the DownstreamData Parameter
+    ///
+    /// The Downstream Data parameter refers to the selection of the Downstream Data for the CRU configuration
+    /// The Downstream Data may be CTP, PATTERN or MIDTRG
+    ///
+    /// \param value The value to set
+    /// \return Reference to this object for chaining calls
+    auto setDownstreamData(DownstreamDataType value) -> Parameters&;
+   
+    /// Sets the GbtMode Parameter
+    ///
+    /// The GBT Mode parameter refers to the selection of the GBT Mode for the CRU configuration
+    /// The GBT Mode may be GBT or WB
+    ///
+    /// \param value The value to set
+    /// \return Reference to this object for chaining calls
+    auto setGbtMode(GbtModeType value) -> Parameters&;
+    
+    /// Sets the GbtMux Parameter
+    ///
+    /// The GBT Mux parameter refers to the selection of the GBT Mux for the CRU configuration
+    /// The GBT Mux may be TTC, DDG or SC
+    ///
+    /// \param value The value to set
+    /// \return Reference to this object for chaining calls 
+    auto setGbtMux(GbtMuxType value) -> Parameters&;
+
+    /// Sets the GbtMuxMap Parameter
+    ///
+    /// The Gbt Mux Map parameter refers to the mapping of GBT Mux selection per link
+    ///
+    /// \param value The value to set
+    /// \return Reference to this object for chaining calls 
+    auto setGbtMuxMap(GbtMuxMapType value) -> Parameters&;
+
+
+    // on-throwing getters
 
     /// Gets the CardId parameter
     /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
@@ -269,6 +338,29 @@ class Parameters
     /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
     auto getLinkMask() const -> boost::optional<LinkMaskType>;
 
+    /// Gets the Clock Parameter
+    /// \return The value
+    auto getClock() const -> boost::optional<ClockType>;
+
+    /// Gets the DatapathMode Parameter
+    /// \return The value
+    auto getDatapathMode() const -> boost::optional<DatapathModeType>;
+
+    /// Gets the DownstreamData Parameter
+    /// \return The value
+    auto getDownstreamData() const -> boost::optional<DownstreamDataType>;
+
+    /// Gets the GbtMode Parameter
+    /// \return The value
+    auto getGbtMode() const -> boost::optional<GbtModeType>;
+
+    /// Gets the GbtMux Parameter
+    /// \return The value
+    auto getGbtMux() const -> boost::optional<GbtMuxType>;
+
+    /// Gets the GbtMuxMap Parameter
+    /// \return The value
+    auto getGbtMuxMap() const -> boost::optional<GbtMuxMapType>;
 
     // Throwing getters
 
@@ -326,13 +418,42 @@ class Parameters
     /// \exception ParameterException The parameter was not present
     /// \return The value
     auto getLinkMaskRequired() const -> LinkMaskType;
+    
+    /// Gets the Clock Parameter
+    /// \exception ParameterException The parameter was not present
+    /// \return The value
+    auto getClockRequired() const -> ClockType;
 
+    /// Gets the DatapathMode Parameter
+    /// \exception ParameterException The parameter was not present
+    /// \return The value
+    auto getDatapathModeRequired() const -> DatapathModeType;
+
+    /// Gets the DownstreamData Parameter
+    /// \exception ParameterException The parameter was not present
+    /// \return The value
+    auto getDownstreamDataRequired() const -> DownstreamDataType;
+
+    /// Gets the GbtMode Parameter
+    /// \exception ParameterException The parameter was not present
+    /// \return The value
+    auto getGbtModeRequired() const -> GbtModeType;
+
+    /// Gets the GbtMux Parameter
+    /// \exception ParameterException The parameter was not present
+    /// \return The value
+    auto getGbtMuxRequired() const -> GbtMuxType;
+
+    /// Gets the GbtMuxMap Parameter
+    /// \exception ParameterException The parameter was not present
+    /// \return The value
+    auto getGbtMuxMapRequired() const -> GbtMuxMapType;
 
     // Helper functions
 
     /// Convenience function to make a Parameters object with card ID and channel number, since these are the most
     /// frequently used parameters
-    static Parameters makeParameters(CardIdType cardId, ChannelNumberType channel)
+    static Parameters makeParameters(CardIdType cardId, ChannelNumberType channel = 0)
     {
       return Parameters().setCardId(cardId).setChannelNumber(channel);
     }

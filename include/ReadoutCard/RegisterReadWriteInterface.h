@@ -29,6 +29,14 @@ class RegisterReadWriteInterface
     /// \param value The value to be written into the register
     /// \throw May throw an UnsafeWriteAccess exception
     virtual void writeRegister(int index, uint32_t value) = 0;
+
+    /// Modifies a BAR register
+    /// \param index The index of the register
+    /// \param position The position where the value will be written
+    /// \param width The width of the value to be written 
+    /// \param value The value to be written into the register
+    /// \throw May throw an UnsafeWriteAccess exception
+    virtual void modifyRegister(int index, int position, int width, uint32_t value) = 0;
 };
 
 } // namespace roc

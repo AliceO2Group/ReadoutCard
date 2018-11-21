@@ -2,11 +2,14 @@
 /// \brief Definition of various useful utilities that don't really belong anywhere in particular
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
 #ifndef ALICEO2_SRC_READOUTCARD_UTILITIES_UTIL_H_
 #define ALICEO2_SRC_READOUTCARD_UTILITIES_UTIL_H_
 
 #include <cstdint>
+#include <iostream>
+#include <bitset>
 
 namespace AliceO2 {
 namespace roc {
@@ -45,9 +48,26 @@ void setBit(T& bits, int index, bool value)
 }
 
 template <typename T>
+void setBits(T& bits, int index, int width, uint32_t value)
+{
+  uint32_t mask = ~(~T(0)<<width) << index;
+  bits = (bits & ~mask) | (value << index);
+}
+
+template <typename T>
 T getBits(T x, int lsb, int msb) {
   assert(lsb < msb);
   return (x >> lsb) & ~(~T(0) << (msb - lsb + T(1)));
+}
+
+template <typename T>
+int getWidth(T x) {
+  int length = 0;
+  while (x & T(1)) {
+    length += 1;
+    x >>= 1; // !
+  }
+  return length;
 }
 
 /// Offset a pointer by a given amount of bytes

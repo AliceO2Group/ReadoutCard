@@ -4,3 +4,5 @@ build
 .cproject
 cmake-build-*
 *.swp
+*.swo
+*.pyc

@@ -11,9 +11,9 @@
 namespace AliceO2 {
 namespace roc {
 
-DummyBar::DummyBar(const Parameters& parameters)
+DummyBar::DummyBar(const Parameters& /*parameters*/)
 {
-  mBarIndex = parameters.getChannelNumberRequired();
+/*  mBarIndex = parameters.getChannelNumberRequired();
   auto id = parameters.getCardIdRequired();
 
 //  cout << "DummyBar::DummyBar(";
@@ -24,7 +24,7 @@ DummyBar::DummyBar(const Parameters& parameters)
 //    cout << "address:" << address->toString() << ", ";
   }
 
-//  cout << "BAR:" << mBarIndex << ")\n";
+//  cout << "BAR:" << mBarIndex << ")\n";*/
 }
 
 DummyBar::~DummyBar()
@@ -32,16 +32,27 @@ DummyBar::~DummyBar()
 //  cout << "DummyBar::~DummyBar()\n";
 }
 
-uint32_t DummyBar::readRegister(int index)
+uint32_t DummyBar::readRegister(int /*index*/)
 {
 //  cout << "DummyBar::readRegister(" << index << ")\n";
   return 0;
 }
 
-void DummyBar::writeRegister(int index, uint32_t value)
+void DummyBar::writeRegister(int /*index*/, uint32_t /*value*/)
 {
 //  cout << "DummyBar::writeRegister(index:" << index << ", value:" << value << ")\n";
 }
 
+void DummyBar::modifyRegister(int /*index*/, int /*position*/, int /*width*/, uint32_t /*value*/)
+{
+//  cout << "DummyBar::modifyRegister(index:" << index << ", position:" << position ",
+//  width " << width ", value:" << value << ")\n";
+}
+
+void DummyBar::configure()
+{
+  std::cout << "Configure unavailable for dummy interfaces" << std::endl;
+}
+    
 } // namespace roc
 } // namespace AliceO2

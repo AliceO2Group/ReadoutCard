@@ -99,11 +99,11 @@ CruDmaChannel::~CruDmaChannel()
 void CruDmaChannel::deviceStartDma()
 {
   // Enable links
-  uint32_t mask = 0xFfffFfff;
+  /*uint32_t mask = 0xFfffFfff;
   for (const auto& link : mLinks) {
     Utilities::setBit(mask, link.id, false);
   }
-  getBar()->setLinksEnabled(mask);
+  getBar()->setLinksEnabled(mask);*/ //is this not outdated?
 
   // Set data generator pattern
   if (mGeneratorEnabled) {
@@ -336,36 +336,39 @@ bool CruDmaChannel::injectError()
 
 boost::optional<int32_t> CruDmaChannel::getSerial()
 {
-  if (mFeatures.serial)
+  if (mFeatures.serial) {
     return getBar2()->getSerial();
-  else
+  } else {
     return {};
+  }
 }
 
 boost::optional<float> CruDmaChannel::getTemperature()
 {
-  if (mFeatures.temperature)
+  if (mFeatures.temperature){
     return getBar2()->getTemperature();
-  else
+  } else {
     return {};
+  }
 }
 
 boost::optional<std::string> CruDmaChannel::getFirmwareInfo()
 {
-  if (mFeatures.firmwareInfo)
+  if (mFeatures.firmwareInfo) {
     return getBar2()->getFirmwareInfo();
-  else
+  } else {
     return {};
+  }
 }
 
 boost::optional<std::string> CruDmaChannel::getCardId()
 {
-  if (mFeatures.chipId)
+  if (mFeatures.chipId) {
     return getBar2()->getCardId();
-  else 
+  } else  {
     return {};
+  }
 }
-
 
 } // namespace roc
 } // namespace AliceO2

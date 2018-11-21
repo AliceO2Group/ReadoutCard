@@ -27,6 +27,7 @@ class BarInterfaceBase: public BarInterface
 
     virtual uint32_t readRegister(int index) override;
     virtual void writeRegister(int index, uint32_t value) override;
+    virtual void modifyRegister(int index, int position, int width, uint32_t value) override;
 
     virtual int getIndex() const override
     {
@@ -81,19 +82,23 @@ class BarInterfaceBase: public BarInterface
     }
     
     /// Default implementation for optional function
-    virtual int32_t getLinksPerWrapper(uint32_t wrapper) override
-    {
-      return 0;
-    }
-    /// Default implementation for optional function
     virtual int32_t getLinks() override
     {
       return 0;
     }
+    
+    /// Default implementation for optional function
+    virtual int32_t getLinksPerWrapper(int /*wrapper*/) override
+    {
+      return 0;
+    }
 
-
-
-
+    /// Default implementation for optional function
+    void configure() override
+    {
+      std::cout << "Configure is unavailable for this interface" << std::endl;
+    }
+   
   protected:
     /// BAR index
     int mBarIndex;
@@ -103,9 +108,6 @@ class BarInterfaceBase: public BarInterface
 
     /// PDA BAR object ptr
     std::shared_ptr<Pda::PdaBar> mPdaBar;
-
-    // PDA BAR object
-    Pda::PdaBar mlPdaBar;
 
   private:
     /// Inheriting classes must implement this to check whether a given read is safe.
