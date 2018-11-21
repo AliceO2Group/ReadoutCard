@@ -83,6 +83,7 @@ find_package(DIM)
 ####################################
 
 set(SRCS
+  #src/CardConfigurator.cxx
   src/CardType.cxx
   src/Factory/ChannelFactory.cxx
   src/DmaChannelBase.cxx
@@ -92,6 +93,11 @@ set(SRCS
   src/ExceptionInternal.cxx
   src/MemoryMappedFile.cxx
   src/Parameters.cxx
+  src/ParameterTypes/Clock.cxx
+  src/ParameterTypes/DatapathMode.cxx
+  src/ParameterTypes/DownstreamData.cxx
+  src/ParameterTypes/GbtMode.cxx
+  src/ParameterTypes/GbtMux.cxx
   src/ParameterTypes/GeneratorPattern.cxx
   src/ParameterTypes/LoopbackMode.cxx
   src/ParameterTypes/PciAddress.cxx
@@ -111,11 +117,17 @@ if(PDA_FOUND)
   list(APPEND SRCS
     src/DmaChannelPdaBase.cxx
     src/BarInterfaceBase.cxx
+    src/CardConfigurator.cxx
     src/Crorc/Crorc.cxx
     src/Crorc/CrorcDmaChannel.cxx
     src/Crorc/CrorcBar.cxx
+    src/Cru/Common.cxx
     src/Cru/CruDmaChannel.cxx
     src/Cru/CruBar.cxx
+    src/Cru/DatapathWrapper.cxx
+    src/Cru/Gbt.cxx
+    src/Cru/I2c.cxx
+    src/Cru/Ttc.cxx
     src/Pda/PdaBar.cxx
     src/Pda/PdaDevice.cxx
     src/Pda/PdaDmaBuffer.cxx
@@ -181,6 +193,7 @@ set(EXE_NAMES
 if(PDA_FOUND)
   list(APPEND EXE_SRCS
     ProgramBarStress.cxx
+    ProgramConfig.cxx
     ProgramCleanup.cxx
     ../Example.cxx
     ProgramFlash.cxx
@@ -190,6 +203,7 @@ if(PDA_FOUND)
   )
   list(APPEND EXE_NAMES
     roc-bar-stress
+    roc-config
     roc-channel-cleanup
     roc-example
     roc-flash

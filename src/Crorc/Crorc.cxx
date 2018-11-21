@@ -157,13 +157,13 @@ void eraseBlock(RegisterReadWriteInterface& bar0, uint32_t address)
 }
 
 /// Currently unused, but we'll keep it as "documentation"
-void writeWord(RegisterReadWriteInterface& bar0, uint32_t address, int value)
+/*void writeWord(RegisterReadWriteInterface& bar0, uint32_t address, int value)
 {
   writeStatusSleep(bar0, address);
   writeStatusSleep(bar0, MAGIC_VALUE_9);
   writeStatusSleep(bar0, value);
   checkStatus(bar0);
-}
+}*/
 
 /// Reads a 16-bit flash word and writes it into the given buffer
 void readWord(RegisterReadWriteInterface& bar0, uint32_t address, char *data)

@@ -44,5 +44,10 @@ void BarInterfaceBase::writeRegister(int index, uint32_t value)
   mPdaBar->writeRegister(index, value);
 }
 
+void BarInterfaceBase::modifyRegister(int index, int position, int width, uint32_t value)
+{
+  mPdaBar->modifyRegister(index, position, width, value);
+}
+
 } // namespace roc
 } // namespace AliceO2

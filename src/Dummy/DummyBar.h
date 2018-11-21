@@ -25,6 +25,7 @@ class DummyBar : public BarInterface
     virtual ~DummyBar();
     virtual uint32_t readRegister(int index) override;
     virtual void writeRegister(int index, uint32_t value) override;
+    virtual void modifyRegister(int index, int position, int width, uint32_t value) override;
 
     virtual int getIndex() const override
     {
@@ -80,12 +81,14 @@ class DummyBar : public BarInterface
     {
       return 0;
     }
- 
-    virtual int32_t getLinksPerWrapper(uint32_t) override
+
+    virtual int32_t getLinksPerWrapper(int /*wrapper*/) override
     {
       return 0;
     }
-  
+
+    void configure() override;
+
   private:
     int mBarIndex;
 };

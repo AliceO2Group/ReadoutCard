@@ -109,7 +109,8 @@ PdaDmaBuffer::~PdaDmaBuffer()
     Pda::PdaLock lock{};
   } catch (const LockException& e) {
     InfoLogger::InfoLogger() << "Failed to acquire PDA lock" << e.what() << InfoLogger::InfoLogger::endm;
-    throw;
+    assert(false);
+    //throw; (changed to assert(false) to get rid of the warning)
   }
 
   try {

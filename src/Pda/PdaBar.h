@@ -13,6 +13,7 @@
 #ifndef NDEBUG
 # include <boost/type_index.hpp>
 #endif
+#include "Utilities/Util.h"
 
 namespace AliceO2 {
 namespace roc {
@@ -34,6 +35,13 @@ class PdaBar : public BarInterface
     virtual void writeRegister(int index, uint32_t value)
     {
       barWrite<uint32_t>(index * sizeof(uint32_t), value);
+    }
+
+    virtual void modifyRegister(int index, int position, int width, uint32_t value)
+    {
+      uint32_t regValue = barRead<uint32_t>(index * sizeof(uint32_t));
+      Utilities::setBits(regValue, position, width, value);
+      barWrite<uint32_t>(index * sizeof(uint32_t), regValue);
     }
 
     virtual int getIndex() const override
@@ -126,17 +134,22 @@ class PdaBar : public BarInterface
     {
       return 0;
     }
-    
-    virtual int32_t getLinksPerWrapper(uint32_t wrapper) override
-    {
-      return 0;
-    }
- 
+
     virtual int32_t getLinks() override
     {
       return 0;
     }
 
+    virtual int32_t getLinksPerWrapper(int /*wrapper*/) override
+    {
+      return 0;
+    }
+
+    void configure() override
+    {
+      std::cout << "Configure invalid through the PDA BAR" << std::endl;
+    }
+    
   private:
     template<typename T>
     bool isInRange(size_t offset) const
