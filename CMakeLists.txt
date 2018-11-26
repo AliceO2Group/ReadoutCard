@@ -157,51 +157,83 @@ target_compile_features(ReadoutCard PUBLIC cxx_std_14)
 # Executables
 ####################################
 
-function(build_util_exec execname filename)
-  add_executable(${execname} src/CommandLineUtilities/${filename})
-  target_include_directories(${execname}
-    PRIVATE
-      ${CMAKE_CURRENT_SOURCE_DIR}/src
-  )
-  target_link_libraries(${execname}
-    PRIVATE
-      ReadoutCard
-      Boost::program_options
-  )
-endfunction()
+set(EXE_SRCS
+  ProgramDmaBench.cxx
+  ProgramReset.cxx
+  ProgramRegisterRead.cxx
+  ProgramRegisterReadRange
+  ProgramRegisterWrite.cxx
+)
 
-build_util_exec(roc-bench-dma ProgramDmaBench.cxx)
-build_util_exec(roc-reset ProgramReset.cxx)
-build_util_exec(roc-reg-read ProgramRegisterRead.cxx)
-build_util_exec(roc-reg-read-range ProgramRegisterReadRange)
-build_util_exec(roc-reg-write ProgramRegisterWrite.cxx)
+set(EXE_NAMES
+  roc-bench-dma
+  roc-reset
+  roc-reg-read
+  roc-reg-read-range
+  roc-reg-write
+)
 
 if(PDA_FOUND)
-  build_util_exec(roc-bar-stress ProgramBarStress.cxx)
-  build_util_exec(roc-channel-cleanup ProgramCleanup.cxx)
-  build_util_exec(roc-example ../Example.cxx)
-  build_util_exec(roc-flash ProgramFlash.cxx)
-  build_util_exec(roc-flash-read ProgramFlashRead.cxx)
-  build_util_exec(roc-list-cards ProgramListCards.cxx)
-  build_util_exec(roc-metrics ProgramMetrics.cxx)
+  list(APPEND EXE_SRCS
+    ProgramBarStress.cxx
+    ProgramCleanup.cxx
+    ../Example.cxx
+    ProgramFlashRead.cxx
+    ProgramListCards.cxx
+    ProgramMetrics.cxx
+  )
+  list(APPEND EXE_NAMES
+    roc-bar-stress
+    roc-channel-cleanup
+    roc-example
+    roc-flash
+    roc-flash-read
+    roc-list-cards
+    roc-metrics
+  )
 
   if(DIM_FOUND)
-    build_util_exec(roc-alf-client AliceLowlevelFrontend/ProgramAliceLowlevelFrontendClient.cxx)
-    target_link_libraries(roc-alf-client PRIVATE dim::dim)
-    build_util_exec(roc-alf-sca-write-seq AliceLowlevelFrontend/ProgramAlfScaWriteSequence.cxx)
-    target_link_libraries(roc-alf-sca-write-seq PRIVATE dim::dim)
-    build_util_exec(roc-alf-server AliceLowlevelFrontend/ProgramAliceLowlevelFrontendServer.cxx)
-    target_link_libraries(roc-alf-server PRIVATE dim::dim)
+    list(APPEND EXE_SRCS
+      AliceLowlevelFrontend/ProgramAliceLowlevelFrontendClient.cxx
+      AliceLowlevelFrontend/ProgramAlfScaWriteSequence.cxx
+      AliceLowlevelFrontend/ProgramAliceLowlevelFrontendServer.cxx
+    )
+    list(APPEND EXE_NAMES
+      roc-alf-client
+      roc-alf-sca-write-seq
+      roc-alf-server
+    )
   else()
     message(INFO "DIM not found, ALF client & server will not be built")
   endif()
 
   if(Python2_FOUND)
-    build_util_exec(roc-run-script ProgramRunScript.cxx)
+    list(APPEND EXE_SRCS ProgramRunScript.cxx)
+    list(APPEND EXE_NAMES roc-run-script)
   else()
     message(INFO "PythonLibs not found, 'roc-run-script' utility will not be built")
   endif()
 endif()
+
+
+list(LENGTH EXE_SRCS count)
+math(EXPR count "${count}-1")
+foreach(i RANGE ${count})
+  list(GET EXE_SRCS ${i} src)
+  list(GET EXE_NAMES ${i} name)
+  add_executable(${name} src/CommandLineUtilities/${src})
+  target_include_directories(${name}
+    PRIVATE
+      ${CMAKE_CURRENT_SOURCE_DIR}/src
+  )
+  target_link_libraries(${name}
+    PRIVATE
+      ReadoutCard
+      Boost::program_options
+      $<$<STREQUAL:${name},roc-alf-*>:dim::dim>
+  )
+endforeach()
+
 
 ####################################
 # Tests
