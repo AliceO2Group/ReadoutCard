@@ -230,8 +230,10 @@ foreach(i RANGE ${count})
     PRIVATE
       ReadoutCard
       Boost::program_options
-      $<$<STREQUAL:${name},roc-alf-*>:dim::dim>
   )
+  if (${src} MATCHES "^AliceLowlevelFrontend.*")
+    target_link_libraries(${name} PRIVATE dim::dim)
+  endif()
 endforeach()
 
 
