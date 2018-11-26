@@ -1,0 +1,17 @@
+@PACKAGE_INIT@
+
+get_filename_component(ReadoutCard_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+include(CMakeFindDependencyMacro)
+
+set(Common_CMAKE_DIR @Common_DIR@)
+set(InfoLogger_CMAKE_DIR @InfoLogger_DIR@)
+
+find_dependency(Common CONFIG REQUIRED HINTS ${Common_CMAKE_DIR})
+find_dependency(InfoLogger CONFIG REQUIRED HINTS ${InfoLogger_CMAKE_DIR})
+find_dependency(Boost)
+
+if(NOT TARGET AliceO2::ReadoutCard)
+  include("${ReadoutCard_CMAKE_DIR}/ReadoutCardTargets.cmake")
+endif()
+
+message(STATUS "ReadoutCard ${ReadoutCard_VERSION} found")

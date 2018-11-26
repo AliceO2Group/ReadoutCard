@@ -26,4 +26,16 @@ include(FindPackageHandleStandardArgs)
 # if all listed variables are TRUE
 find_package_handle_standard_args(DIM DEFAULT_MSG DIM_LIBRARY DIM_INCLUDE_DIR)
 
-mark_as_advanced(DIM_INCLUDE_DIR DIM_LIBRARY)
+if(${DIM_FOUND})
+    message(STATUS "DIM found : ${DIM_LIBRARY}")
+    mark_as_advanced(DIM_INCLUDE_DIR DIM_LIBRARY)
+
+    # add target
+    if(NOT TARGET dim::dim)
+        add_library(dim::dim INTERFACE IMPORTED)
+        set_target_properties(dim::dim PROPERTIES
+          INTERFACE_INCLUDE_DIRECTORIES "${DIM_INCLUDE_DIR}"
+          INTERFACE_LINK_LIBRARIES "${DIM_LIBRARY}"
+        )
+    endif()
+endif()

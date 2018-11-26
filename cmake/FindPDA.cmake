@@ -23,4 +23,16 @@ include(FindPackageHandleStandardArgs)
 # if all listed variables are TRUE
 find_package_handle_standard_args(PDA DEFAULT_MSG PDA_LIBRARY PDA_INCLUDE_DIR)
 
-mark_as_advanced(PDA_INCLUDE_DIR PDA_LIBRARY)
+if(${PDA_FOUND})
+    message(STATUS "PDA found : ${PDA_LIBRARIES}")
+    mark_as_advanced(PDA_INCLUDE_DIR PDA_LIBRARY)
+
+    # add target
+    if(NOT TARGET pda::pda)
+        add_library(pda::pda INTERFACE IMPORTED)
+        set_target_properties(pda::pda PROPERTIES
+          INTERFACE_INCLUDE_DIRECTORIES "${PDA_INCLUDE_DIR}"
+          INTERFACE_LINK_LIBRARIES "${PDA_LIBRARY}"
+        )
+    endif()
+endif()
