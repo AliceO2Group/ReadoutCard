@@ -57,10 +57,9 @@ ENDIF()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
-if(APPLE)
-  set(boost_python_component "")
-else()
+if(NOT APPLE)
   set(boost_python_component "python27")
+  find_package(Python2 2.7 COMPONENTS Development)
 endif()
 
 find_package(Boost 1.56
@@ -78,7 +77,6 @@ find_package(Common REQUIRED)
 find_package(InfoLogger REQUIRED)
 find_package(PDA)
 find_package(DIM)
-find_package(Python2 2.7 COMPONENTS Development)
 
 ####################################
 # Module, library and executable definition
