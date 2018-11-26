@@ -135,7 +135,6 @@ target_include_directories(ReadoutCard
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
-    $<$<BOOL:${PDA_FOUND}>:${${PDA_INCLUDE_DIRS}}>
 )
 
 # Link targets
@@ -149,7 +148,6 @@ target_link_libraries(ReadoutCard
     $<$<BOOL:${PDA_FOUND}>:pda::pda>
     Boost::filesystem
     Boost::system
-    rt
     pthread
 )
 
