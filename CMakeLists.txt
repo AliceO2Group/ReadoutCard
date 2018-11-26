@@ -149,6 +149,11 @@ target_link_libraries(ReadoutCard
     pthread
 )
 
+target_compile_definitions(ReadoutCard
+  PRIVATE
+    $<$<BOOL:${PDA_FOUND}>:ALICEO2_READOUTCARD_PDA_ENABLED>
+)
+
 # Use C++14
 target_compile_features(ReadoutCard PUBLIC cxx_std_14)
 
