@@ -886,11 +886,13 @@ class ProgramDmaBench: public Program
        double GiBs = GiB / runTime;
        double Gbs = GBs * 8;
 
-       auto put = [&](auto label, auto value) { cout << b::format("  %-10s  %-10s\n") % label % value; };
+       auto put = [&](auto label, auto value) { cout << b::format("  %-24s  %-10s\n") % label % value; };
        cout << '\n';
        put("Seconds", runTime);
        put("Superpages", mReadoutCount.load()/mPagesPerSuperpage);
+       put("Superpage Latency(s)", runTime/(mReadoutCount.load()/mPagesPerSuperpage));
        put("DMA Pages", mReadoutCount.load());
+       put("DMA Page Latency(s)", runTime/mReadoutCount.load());
        if (bytes > 0.00001) {
          put("Bytes", bytes);
          put("GB", GB);
