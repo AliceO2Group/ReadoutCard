@@ -183,6 +183,7 @@ if(PDA_FOUND)
     ProgramBarStress.cxx
     ProgramCleanup.cxx
     ../Example.cxx
+    ProgramFlash.cxx
     ProgramFlashRead.cxx
     ProgramListCards.cxx
     ProgramMetrics.cxx
@@ -198,12 +199,12 @@ if(PDA_FOUND)
   )
 
   if(DIM_FOUND)
-    list(APPEND DIM_EXE_SRCS
+    list(APPEND EXE_SRCS
       AliceLowlevelFrontend/ProgramAliceLowlevelFrontendClient.cxx
       AliceLowlevelFrontend/ProgramAlfScaWriteSequence.cxx
       AliceLowlevelFrontend/ProgramAliceLowlevelFrontendServer.cxx
     )
-    list(APPEND DIM_EXE_NAMES
+    list(APPEND EXE_NAMES
       roc-alf-client
       roc-alf-sca-write-seq
       roc-alf-server
@@ -221,14 +222,11 @@ if(PDA_FOUND)
 endif()
 
 
-list(APPEND ALL_EXE_SRCS ${EXE_SRCS} ${DIM_EXE_SRCS})
-list(APPEND ALL_EXE_NAMES ${EXE_NAMES} ${DIM_EXE_NAMES})
-
-list(LENGTH ALL_EXE_SRCS count)
+list(LENGTH EXE_SRCS count)
 math(EXPR count "${count}-1")
 foreach(i RANGE ${count})
-  list(GET ALL_EXE_SRCS ${i} src)
-  list(GET ALL_EXE_NAMES ${i} name)
+  list(GET EXE_SRCS ${i} src)
+  list(GET EXE_NAMES ${i} name)
   add_executable(${name} src/CommandLineUtilities/${src})
   target_include_directories(${name}
     PRIVATE
