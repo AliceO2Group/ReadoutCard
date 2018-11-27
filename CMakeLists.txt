@@ -13,7 +13,7 @@ endif()
 
 # Define project
 project(ReadoutCard
-  VERSION 0.0.0
+  VERSION 0.9.2
   DESCRIPTION "O2 ReadoutCard library"
   LANGUAGES C CXX
 )
@@ -310,7 +310,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 endif()
 unset(isSystemDir)
 
-# Install library
+# Install library and executables
 install(TARGETS ReadoutCard ${EXE_NAMES}
   EXPORT ReadoutCardTargets
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
