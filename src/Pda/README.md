@@ -18,10 +18,10 @@ After registration, the buffer and SGL are exposed through the files: `./[buffer
 
 These files are memory-mapped by the PDA userspace library.
 
-In the case of a crash, the userspace component may not be able to do the freeing. This means the kernel module will
-hang onto the buffer, and the associated memory. This can be a real problem in memory-constrained environments.
-The function `freeUnusedChannelBuffers()` in `Driver.h` takes care of this by detecting unused buffers and freeing them 
-by writing the buffer ID into the `./free` file.
+In the case of a crash, the userspace component may not be able to do the freeing. This means the kernel module will hang onto
+the buffer, and the associated memory. This can be a real problem in memory-constrained environments.  The function
+`freeUnusedChannelBuffer()`, implemented for every Class derived from `DmaChannelBase`, takes care of this by detecting unused
+buffers and freeing them by writing the buffer ID into the `./free` file.
 
 ## Separation
 There are plans to split this part off into a separate library, which ReadoutCard would then depend on.
@@ -34,4 +34,4 @@ While this is helpful in the context of the way it is used in ReadoutCard, it ma
 
 ## Locking
 If multiple DMA buffers are concurrently created/destroyed, the PDA kernel module will lock up, requiring a reboot.  
-To prevent this from happening, the global lock `PdaLock` is used in `PdaDmaBuffer.cxx` and `Driver.cxx`.
+To prevent this from happening, the global lock `PdaLock` is used in `PdaDmaBuffer.cxx`.
