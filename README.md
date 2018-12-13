@@ -21,7 +21,7 @@ Table of Contents
 
 Introduction
 ===================
-The ReadoutCard module* is a C++ library that provides a high-level interface for accessing and controlling 
+The ReadoutCard module`*` is a C++ library that provides a high-level interface for accessing and controlling 
 high-performance data acquisition PCIe cards.
 
 Included in the library are several supporting command-line utilities for listing cards, accessing registers, 
@@ -100,31 +100,10 @@ If one or more superpage have arrived, they can be inspected and popped using th
 
 DMA can be paused and resumed at any time using `stopDma()` and `startDma()` 
 
-## Note for when bad things happen
-The driver uses some files in shared memory:
-* `/dev/shm/AliceO2_RoC_[PCI address]_Channel_[channel number]_fifo` - For card FIFOs
-* `/dev/shm/AliceO2_RoC_[PCI address]_Channel_[channel number].lock` - For locking channels
-* `/dev/shm/sem.AliceO2_RoC_[PCI address]_Channel_[channel number]_Mutex` - For locking channels
-* `/var/lib/hugetlbfs/global/pagesize-[page size]/roc-dma-bench_id=[PCI address]_chan_[channel number]` - For roc-bench-dma buffers
-
-If the process crashes badly (such as with a segfault), it may be necessary to clean up the mutex manually, either by
-deleting with `rm` or by using the `roc-channel-cleanup` utility. 
-There is also the possibility of automatic cleanup by setting forced unlocking enabled using the
-`setForcedUnlockEnabled()` function of the `Parameters` class. 
-However, this option should be used with caution.
-See the function's documentation for more information about the risks.
-
-A crash may leave a channel buffer registered with PDA, which then keeps its shared-memory file handle open in the
-kernel module. If another channel buffer is registered with the same channel, this old one will be cleaned up
-automatically by the driver. However, in memory-constrained environments, it may not be possible to allocate a new
-channel buffer. In such cases, one can call the driver::initialize() or driver::freeUnusedChannelBuffers() functions 
-(see the Driver.h header), which will perform necessary cleanups.
-
-
 BAR interface
 -------------------
 Users can also get a limited-access object (implementing `BarInterface`) from the `ChannelFactory`. 
-It is restricted to reading and writing registers to the BAR. 
+This provides an interface to reading and writing registers to the BAR.
 Currently, there are no limits imposed on which registers are allowed to be read from and written to, so it is still a
 "dangerous" interface. But in the future, protections may be added.
 
@@ -145,6 +124,9 @@ Most programs will also provide more detailed output when given the `--verbose` 
 ### roc-alf-client & rorc-alf-server
 See section "ALICE Low-level Front-end"
 
+### roc-bar-stress
+Tool to stress BAR accesses and evaluate performance.
+
 ### roc-bench-dma
 DMA throughput and stress-testing benchmarks.
 It may use files in these directories for DMA buffers: 
@@ -156,6 +138,9 @@ They can be inspected manually if needed, e.g. with hexdump: `hexdump -e '"%07_a
 ### roc-channel-cleanup
 In the event of a serious crash, such as a segfault, it may be necessary to clean up and reset a channel.
 See section "Channel ownership lock" for more details.
+
+### roc-config
+Configures the CRU.
 
 ### roc-example
 The compiled example of `src/Example.cxx`
@@ -176,7 +161,10 @@ Currently only supports the C-RORC.
 
 ### roc-list-cards
 Lists the readout cards present on the system, along with their type, PCI address, vendor ID, device ID, serial number, 
-and firmware version.    
+and firmware version.
+
+### roc-metrics
+Outputs metrics for the ReadoutCards.
 
 ### roc-reg-[read, read-range, write]
 Writes and reads registers to/from a card's BAR. 
@@ -268,7 +256,7 @@ If PDA is not detected on the system, only a dummy implementation of the interfa
 At some point, we should probably use kernel boot parameters to allocate hugepages, or use some boot-time script, but 
 until then, we must initialize and allocate manually.
 
-Either use the script roc-setup-hugetlbfs.sh (located in the src directory), or do manually:
+Either use the script `roc-setup-hugetlbfs.sh` (located in the src directory), or do manually:
 
 1. Install hugetlbfs (will already be installed on most systems)
   ~~~
@@ -294,8 +282,27 @@ Either use the script roc-setup-hugetlbfs.sh (located in the src directory), or 
   hugeadm --pool-list
   ~~~
 
+Note that after every reboot it is necessary to run the `roc-setup-hugetlbfs.sh` script again or repeat the previous manual steps.
+
+Configuration
+-------------------
 ### IOMMU
 To enable the IOMMU, add `iommu=on` to the kernel boot parameters.
+
+### memlimit
+DMA buffer registration involves a system call called mlock(2). This locks memory areas in the RAM so that they don't get paged
+to swap. Linux users have to abide to a global limit, which can be seen by running `ulimit -l`.
+
+Lift that limit for the pda group by adding the following in `/etc/security/limits.conf`:
+
+~~~
+@pda hard memlock unlimited
+@pda soft memlock unlimited
+~~~
+
+### Permissions
+The library must be run either by root users, or users part of the group 'pda'.
+The PDA kernel module must be inserted as root in any case.
 
 
 Implementation notes
@@ -324,7 +331,6 @@ Shared memory usage
 -------------------
 Shared memory is used in several places:
 * C-RORC's FIFO (card updates status of DMA transfers in here)
-* For locks and mutexes (inter & intra process channel lock)
 * DMA buffers (as destination for DMA transfers)
 
 Scatter-gather lists
@@ -342,12 +348,6 @@ C-RORC concurrent channels
 On certain machines, initializing multiple C-RORC channels concurrently has led to hard lockups.
 The cause is unknown, but adding acpi=off to the Linux boot options fixed the issue.
 The issue has occurred on Dell R720 servers.
-
-Permissions
--------------------
-The library must be run either by root users, or users part of the group 'pda'.
-The PDA kernel module must be inserted as root in any case.
-
 
 ALICE Low-level Front-end (ALF) DIM Server
 ===================
