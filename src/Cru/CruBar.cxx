@@ -412,11 +412,11 @@ void CruBar::configure()
   
   Ttc ttc = Ttc(mPdaBar);
 
-  std::cout << "Setting the clock" << std::endl;
-  ttc.setClock(mClock);
-
   std::cout << "Calibrating TTC" << std::endl;
   ttc.calibrateTtc();
+  
+  std::cout << "Setting the clock" << std::endl;
+  ttc.setClock(mClock);
   if (ponUpstream) {
     ttc.resetFpll();
     ttc.configurePonTx(onuAddress);
