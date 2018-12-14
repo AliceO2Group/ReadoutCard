@@ -8,6 +8,7 @@
 
 #include <string>
 #include <memory>
+#include "InterprocessLock.h"
 
 namespace AliceO2 {
 namespace roc {
@@ -20,7 +21,7 @@ class MemoryMappedFile
   public:
     MemoryMappedFile();
 
-    MemoryMappedFile(const std::string& fileName, size_t fileSize, bool deleteFileOnDestruction = false);
+    MemoryMappedFile(const std::string& fileName, size_t fileSize, bool deleteFileOnDestruction = false, bool lockMap = true);
 
     ~MemoryMappedFile();
 
@@ -34,6 +35,8 @@ class MemoryMappedFile
     void map(const std::string& fileName, size_t fileSize);
 
     std::unique_ptr<MemoryMappedFileInternal> mInternal;
+
+    std::unique_ptr<Interprocess::Lock> mInterprocessLock;
 };
 
 } // namespace roc
