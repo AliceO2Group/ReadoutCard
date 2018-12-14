@@ -98,7 +98,7 @@ void MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
     try {
       std::ofstream ofs(fileName.c_str(), std::ios::app);
     }
-    catch (const boost::exception& e) {
+    catch (const std::exception& e) {
       BOOST_THROW_EXCEPTION(MemoryMapException()
           << ErrorInfo::Message(std::string("Failed to open memory map file: ") + e.what()));
     }
@@ -107,7 +107,7 @@ void MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
     try {
       bfs::resize_file(fileName.c_str(), fileSize);
     }
-    catch (const boost::exception& e) {
+    catch (const std::exception& e) {
       BOOST_THROW_EXCEPTION(MemoryMapException()
           << ErrorInfo::Message(std::string("Failed to resize memory map file: ") + e.what())
           << ErrorInfo::PossibleCauses({
@@ -120,7 +120,7 @@ void MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
     try {
       mInternal->fileMapping = bip::file_mapping(fileName.c_str(), bip::read_write);
       mInternal->mappedRegion = bip::mapped_region(mInternal->fileMapping, bip::read_write, 0, fileSize);
-    } catch (const boost::exception& e) {
+    } catch (const std::exception& e) {
       BOOST_THROW_EXCEPTION(MemoryMapException()
           << ErrorInfo::Message(std::string("Failed to memory map file: ") + e.what())
           << ErrorInfo::PossibleCauses({
