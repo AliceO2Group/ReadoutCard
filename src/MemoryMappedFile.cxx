@@ -9,6 +9,7 @@
 #include <boost/interprocess/file_mapping.hpp>
 #include <boost/interprocess/mapped_region.hpp>
 #include "ExceptionInternal.h"
+#include "Utilities/SmartPointer.h"
 
 namespace AliceO2 {
 namespace roc {
@@ -30,11 +31,24 @@ MemoryMappedFile::MemoryMappedFile()
   mInternal = std::make_unique<MemoryMappedFileInternal>();
 }
 
-MemoryMappedFile::MemoryMappedFile(const std::string& fileName, size_t fileSize, bool deleteFileOnDestruction)
+MemoryMappedFile::MemoryMappedFile(const std::string& fileName, size_t fileSize, bool deleteFileOnDestruction,
+    bool lockMap)
     : MemoryMappedFile()
 {
   mInternal->fileName = fileName;
   mInternal->deleteFileOnDestruction = deleteFileOnDestruction;
+
+  // Try to acquire the lock on the file
+  if (lockMap) {
+    try{
+      Utilities::resetSmartPtr(mInterprocessLock, "Alice_O2_RoC_MMF_" + fileName + "_lock");
+    }
+    catch (const boost::exception& e) {
+      BOOST_THROW_EXCEPTION(LockException()
+          << ErrorInfo::Message("Memory map file is locked by another process."));
+    }
+  }
+
   map(fileName, fileSize);
 }
 
@@ -84,7 +98,7 @@ void MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
     try {
       std::ofstream ofs(fileName.c_str(), std::ios::app);
     }
-    catch (const std::exception& e) {
+    catch (const boost::exception& e) {
       BOOST_THROW_EXCEPTION(MemoryMapException()
           << ErrorInfo::Message(std::string("Failed to open memory map file: ") + e.what()));
     }
@@ -93,7 +107,7 @@ void MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
     try {
       bfs::resize_file(fileName.c_str(), fileSize);
     }
-    catch (const std::exception& e) {
+    catch (const boost::exception& e) {
       BOOST_THROW_EXCEPTION(MemoryMapException()
           << ErrorInfo::Message(std::string("Failed to resize memory map file: ") + e.what())
           << ErrorInfo::PossibleCauses({
@@ -106,7 +120,7 @@ void MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
     try {
       mInternal->fileMapping = bip::file_mapping(fileName.c_str(), bip::read_write);
       mInternal->mappedRegion = bip::mapped_region(mInternal->fileMapping, bip::read_write, 0, fileSize);
-    } catch (const std::exception& e) {
+    } catch (const boost::exception& e) {
       BOOST_THROW_EXCEPTION(MemoryMapException()
           << ErrorInfo::Message(std::string("Failed to memory map file: ") + e.what())
           << ErrorInfo::PossibleCauses({
