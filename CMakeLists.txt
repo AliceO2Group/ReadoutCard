@@ -200,6 +200,7 @@ if(PDA_FOUND)
     ProgramFlashRead.cxx
     ProgramListCards.cxx
     ProgramMetrics.cxx
+    ProgramStatus.cxx
   )
   list(APPEND EXE_NAMES
     roc-bar-stress
@@ -210,6 +211,7 @@ if(PDA_FOUND)
     roc-flash-read
     roc-list-cards
     roc-metrics
+    roc-status
   )
 
   if(DIM_FOUND)

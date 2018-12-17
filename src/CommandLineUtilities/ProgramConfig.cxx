@@ -60,8 +60,6 @@ class ProgramConfig: public Program
   {
     auto cardId = Options::getOptionCardId(map);
 
-    //TODO: Add check for card type
-
     if (mOptions.configFile == "") {
       std::cout << "Configuring with command line arguments" << std::endl;
       auto params = Parameters::makeParameters(cardId, 2);
@@ -109,9 +107,5 @@ class ProgramConfig: public Program
 
 int main(int argc, char** argv)
 {
-  if (argc < 2){
-    std::cout << "Too few arguments" << std::endl;
-    return -1;
-  }
   return ProgramConfig().execute(argc, argv);
 }
