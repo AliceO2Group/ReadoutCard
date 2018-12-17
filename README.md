@@ -181,6 +181,9 @@ Run a Python script that can use a simple interface to use the library.
 ### roc-setup-hugetlbfs
 Setup hugetlbfs directories & mounts. If using hugepages, should be run once per boot.
 
+### roc-status
+Reports status of the card's configuration. Only argument is the card's PCI Address or serial number. Currently only implemented
+for the CRU.
 
 
 Exceptions
