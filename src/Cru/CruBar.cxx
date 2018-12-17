@@ -401,11 +401,12 @@ Cru::ReportInfo CruBar::report()
   mLinkList = populateLinkList(); 
   /*for (auto const& link: mLinkList)
     std::cout << "link: " << link.id << std::endl;*/
-  
+ 
+  // Update mLinkList
   Gbt gbt = Gbt(mPdaBar, mLinkList, mWrapperCount);
-  gbt.getGbtModes(); //updates mLinkList
-  gbt.getGbtMuxes(); //updates mLinkList
-  gbt.getLoopbacks(); //updates mLinkList
+  gbt.getGbtModes();
+  gbt.getGbtMuxes();
+  gbt.getLoopbacks();
 
   DatapathWrapper datapathWrapper = DatapathWrapper(mPdaBar);
 
@@ -493,8 +494,6 @@ void CruBar::configure()
   datapathWrapper.setFlowControl(0);
 
   std::cout << "CRU configuration done." << std::endl;
-
-  report();
 }
 
 /// Sets the mWrapperCount variable
