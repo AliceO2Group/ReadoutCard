@@ -71,6 +71,7 @@ class CruBar final : public BarInterfaceBase
 
     void setWrapperCount();
     void configure() override;
+    Cru::ReportInfo report();
 
   private:
     uint32_t getSerialNumber();

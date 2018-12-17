@@ -16,16 +16,18 @@ class I2c
 {
   public:
     I2c(uint32_t baseAddress, uint32_t chipAddress, 
-        std::vector<std::pair<uint32_t, uint32_t>> registerMap,
-        std::shared_ptr<Pda::PdaBar> pdaBar);
+        std::shared_ptr<Pda::PdaBar> pdaBar,
+        std::vector<std::pair<uint32_t, uint32_t>> registerMap = {});
     ~I2c();
 
     void resetI2c();
     void configurePll();
+    uint32_t getSelectedClock();
 
   private:
     //std::map<uint32_t, uint32_t> readRegisterMap(std::string file);
     void writeI2c(uint32_t address, uint32_t data);
+    uint32_t readI2c(uint32_t address);
     void waitForI2cReady();
 
     uint32_t mI2cConfig;
@@ -36,8 +38,8 @@ class I2c
     uint32_t mChipAddressStart = 0x00;
     uint32_t mChipAddressEnd = 0x7f;
     
-    std::vector<std::pair<uint32_t, uint32_t>> mRegisterMap;
     std::shared_ptr<Pda::PdaBar> mPdaBar;
+    std::vector<std::pair<uint32_t, uint32_t>> mRegisterMap;
 };
 
 } // namespace roc
