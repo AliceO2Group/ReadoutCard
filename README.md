@@ -8,8 +8,10 @@ Table of Contents
 1. [Introduction](#introduction)
 2. [Usage](#usage)
   * [DMA channels](#dma-channels)
+  * [Card Configurator](#card-configurator)
   * [BAR interface](#bar-interface)
   * [Dummy implementation](#dummy-implementation)
+  * [Parameters](#parameters-1)
   * [Utility programs](#utility-programs)
   * [Exceptions](#exceptions)
   * [Python interface](#python-interface)
@@ -88,7 +90,8 @@ buffer parameters.
 The serial number and PCI address (as well as additional information) can be listed using the `roc-list-cards` 
 utility.
 The buffer parameters specify which region of memory, or which file to map, to use as DMA buffer.
-See the `Parameters` class's setter functions for more information about the options available.
+See the `Parameters` class's setter functions for more information about the options available, or the
+[Parameters](#parameters-1) section of this README.
 
 Once a DMA channel has acquired the lock, clients can call `startDma()` and start pushing superpages to the driver's
 transfer queue.
@@ -98,7 +101,103 @@ This function will start data transfers, and users can check for arrived superpa
 If one or more superpage have arrived, they can be inspected and popped using the `getSuperpage()` and 
 `popSuperpage()` functions.
 
-DMA can be paused and resumed at any time using `stopDma()` and `startDma()` 
+DMA can be paused and resumed at any time using `stopDma()` and `startDma()`
+
+Card Configurator
+-------------------
+The `CardConfigurator` class offers an interface to configure the Readout Card (_currently only implemented for the CRU_). In
+order to configure the CRU one has to create a `CardConfigurator` object. The constructor can either be called with a list of
+parameters, or a path to a configuration file, specifying these parameters.
+
+### Parameters
+
+The `CardConfigurator` utilizes the `Parameters` class, the same class where Parameters are specified for DMA channels. For the
+Card Configurator, the parameters need to be initialized for the card on BAR2. The command that
+achieves that is `makeParameters(cardId, 2)`. Refer to the [Parameters](#parameters-1) section for more information.
+
+The Parameters that affect the configuration of the CRU and their possible values are as follows:
+
+`Clock (LOCAL | TTC)`
+
+`DatapathMode (PACKET | CONTINUOUS)`
+
+`DownstreamData (CTP | PATTERN | MIDTRG)`
+
+`GbtMode (GBT | WB)`
+
+`GbtMux (TTC | DDG | SC)`
+
+`GeneratorLoopback (NONE | INTERNAL)`
+
+To set any of the above parameters the usual template can be followed.
+
+```
+params.set[ParamName](Parameters::[ParamName]::fromString(paramValueString));
+params.set[ParamName](Parameters::[ParamName]::type::[paramValue]);
+```
+
+For example, to set the `Clock` one can use on of the following:
+
+```
+params.setClock(Parameters::Clock::fromString(clockString));
+params.setClock(Parameters::Clock::type::Local);
+```
+
+The above parameters will be set for the enabled links, as specified by the `LinkMask` parameter. See the [LinkMask](#linkmask) section
+for more info.
+
+### Configuration File
+
+The string containing the path to the configuration file has to start with "file:", otherwise the
+`CardConfigurator` will disregard it as invalid. Parameters are split between "global" and "per-link". 
+
+The "global" parameters are:
+
+```
+clock
+datapathmode
+loopback
+gbtmode
+downstreamdata
+```
+
+The "per link" parameters are
+```
+enabled
+gbtmux
+```
+
+The configuration file separates the parameter into three groups.
+
+1. `[cru]`
+
+    This parts concerns global (i.e. non-link specfic) cru configuration.
+
+2. `[links]`
+
+    This part refers to all the links. Configuration that goes in this group will be applied to all links, unless specifically
+    setting parameters for individual links in the next section. For example to enable all links with SC MUX by default:
+
+    ```
+    [links]
+    enabled=true
+    gbtmux=sc
+    ```
+
+3. `[link*]`
+
+    This part configures only the individual link and __overrides__ any previous parameters for the specific link. For example:
+    ```
+    [link4]
+    enabled=true
+    gbtmux=ttc
+    ```
+
+An example configuration file is provided with [roc_example.cfg](roc_example.cfg).
+
+---
+
+An example of using the `CardConfigurator`, with `Parameters` or a config file, can be found in [ProgramConfig.cxx](src/CommandLineUtilities/ProgramConfig.cxx)
 
 BAR interface
 -------------------
@@ -106,6 +205,41 @@ Users can also get a limited-access object (implementing `BarInterface`) from th
 This provides an interface to reading and writing registers to the BAR.
 Currently, there are no limits imposed on which registers are allowed to be read from and written to, so it is still a
 "dangerous" interface. But in the future, protections may be added.
+
+Parameters
+-------------------
+The `Parameters` class holds parameters used for the DMA Channel, the BAR and the Card Configurator. In order to instanciate a
+`Parameters` object one needs to specify at the minimum the card ID and the channel number (i.e. the BAR# to access on the CRU).
+(To be updated with CRORC. Please assume for now that everything below is CRU-specific.)
+
+### Card ID
+To make an instance of the `Parameters` class the card ID has to be passed to `makeParameters()` as a `Parameters::CardIdType` object. To construct this from a string one has to use the function `Parameters::cardIdFromString(cardIdString)`.
+
+### Channel Number
+The BAR to access. Normally DMA transactions are done through BAR0 and configuration and status reports are done through BAR2.
+Also needs to be passed to `makeParameters()` resulting in the following call:
+```
+Parameters params = Parameters::makeParameters(cardId, channelNumber);
+```
+
+### BufferParameters
+The parameters of the user-provided DMA buffer. Can be a memory address, or a file.
+
+```
+params.setBufferParameters(buffer_parameters::Memory {address, size});
+params.setBufferParameters(buffer_parameters::File {pathString, size});
+```
+
+### LinkMask 
+The link mask indicates which links to use. The `LinkMask` has to be set through a string that may contain comma separated
+integers or ranges. For example: `0,1,2,8-10` or `0-19,21-23`.
+
+```
+params.setLinkMask(LinkMaskFromString(linkMaskString));
+```
+
+### Other parameters
+Operations on all other parameters can be done through setter, getter and getterRequired() functions, as seen in [Parameters.h](include/ReadoutCard/Parameters.h)
 
 Dummy implementation
 -------------------
@@ -140,7 +274,7 @@ In the event of a serious crash, such as a segfault, it may be necessary to clea
 See section "Channel ownership lock" for more details.
 
 ### roc-config
-Configures the CRU.
+Configures the CRU. Uses the [Card Configurator](#card-configurator).
 
 ### roc-example
 The compiled example of `src/Example.cxx`
