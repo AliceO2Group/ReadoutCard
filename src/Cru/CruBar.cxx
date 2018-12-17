@@ -394,6 +394,39 @@ void CruBar::setDataGeneratorRandomSizeBits(uint32_t& bits, bool enabled)
   Utilities::setBit(bits, 16, enabled);
 }
 
+/// Reports the CRU status
+Cru::ReportInfo CruBar::report()
+{
+  setWrapperCount();
+  mLinkList = populateLinkList(); 
+  /*for (auto const& link: mLinkList)
+    std::cout << "link: " << link.id << std::endl;*/
+  
+  Gbt gbt = Gbt(mPdaBar, mLinkList, mWrapperCount);
+  gbt.getGbtModes(); //updates mLinkList
+  gbt.getGbtMuxes(); //updates mLinkList
+  gbt.getLoopbacks(); //updates mLinkList
+
+  DatapathWrapper datapathWrapper = DatapathWrapper(mPdaBar);
+
+  for (auto& link: mLinkList) {
+    link.datapathMode = datapathWrapper.getDatapathMode(link);
+    link.enabled = datapathWrapper.getLinkEnabled(link);
+  }
+
+  Ttc ttc = Ttc(mPdaBar);
+  uint32_t clock = ttc.getPllClock();
+  uint32_t downstreamData = ttc.getDownstreamData();
+
+  Cru::ReportInfo reportInfo = {
+    mLinkList,
+    clock,
+    downstreamData
+  };
+
+  return reportInfo;
+}
+
 /// Configures the CRU according to the parameters passed on init
 void CruBar::configure()
 {
@@ -429,7 +462,7 @@ void CruBar::configure()
 
   std::cout << "Setting GBT MUX" << std::endl;
   for (auto const& link: mLinkList)
-    gbt.setMux(link, link.gbtMux); //TODO: per link
+    gbt.setMux(link, link.gbtMux);
 
   std::cout << "Calibrating GBT" << std::endl;
   gbt.calibrateGbt();
@@ -460,6 +493,8 @@ void CruBar::configure()
   datapathWrapper.setFlowControl(0);
 
   std::cout << "CRU configuration done." << std::endl;
+
+  report();
 }
 
 /// Sets the mWrapperCount variable
@@ -498,10 +533,11 @@ std::vector<Link> CruBar::populateLinkList()
         break;
       }
       for(int link=0; link<linksPerBank; link++) {
-        if (mLinkMask.find(link + bank * linksPerBank) == mLinkMask.end()) {
+
+        if ((mLinkMask.find(link + bank * linksPerBank) == mLinkMask.end())) {
           continue;
         }
-        
+
         GbtMux::type gbtMux = mGbtMux;
         auto gbtMuxMapElement = mGbtMuxMap.find(link + bank * linksPerBank);
         if (gbtMuxMapElement != mGbtMuxMap.end()) {

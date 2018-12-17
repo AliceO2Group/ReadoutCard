@@ -17,8 +17,8 @@ struct DatapathMode
 {
     enum type
     {
-      Packet = Cru::Registers::GBT_PACKET,
       Continuous = Cru::Registers::GBT_CONTINUOUS,
+      Packet = Cru::Registers::GBT_PACKET,
     };
 
     /// Converts a DatapathMode to a string

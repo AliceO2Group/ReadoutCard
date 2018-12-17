@@ -17,13 +17,16 @@ class Gbt {
   using Link = Cru::Link;
 
   public: 
-    Gbt(std::shared_ptr<Pda::PdaBar> pdaBar, std::vector<Link> mLinkList, int wrapperCount);
+    Gbt(std::shared_ptr<Pda::PdaBar> pdaBar, std::vector<Link> &mLinkList, int wrapperCount);
     void setMux(Link link, uint32_t mux);
     void setInternalDataGenerator(Link link, uint32_t value);
     void setTxMode(Link link, uint32_t mode);
     void setRxMode(Link link, uint32_t mode);
     void setLoopback(Link link, uint32_t enabled);
     void calibrateGbt();
+    void getGbtModes();
+    void getGbtMuxes();
+    void getLoopbacks();
 
   private:
     uint32_t getSourceSelectAddress(Link link);
@@ -37,7 +40,7 @@ class Gbt {
     void rxcal();
 
     std::shared_ptr<Pda::PdaBar> mPdaBar;
-    std::vector<Link> mLinkList;
+    std::vector<Link> &mLinkList;
     int mWrapperCount;
 };
 } // namespace roc

@@ -14,16 +14,16 @@ namespace AliceO2 {
 namespace roc {
 
 I2c::I2c(uint32_t baseAddress, uint32_t chipAddress, 
-    std::vector<std::pair<uint32_t, uint32_t>> registerMap,
-    std::shared_ptr<Pda::PdaBar> pdaBar) 
+    std::shared_ptr<Pda::PdaBar> pdaBar,
+    std::vector<std::pair<uint32_t, uint32_t>> registerMap)
   : mI2cConfig(baseAddress),
     mI2cCommand(baseAddress + 0x4),
     mI2cData(baseAddress + 0x10),
     mChipAddress(chipAddress),
     mChipAddressStart(0x0),
     mChipAddressEnd(0x7f),
-    mRegisterMap(registerMap),
-    mPdaBar(pdaBar)
+    mPdaBar(pdaBar),
+    mRegisterMap(registerMap)
 {
 }
 
@@ -66,6 +66,14 @@ void I2c::configurePll()
     }
   }
   resetI2c();
+}
+
+uint32_t I2c::getSelectedClock()
+{
+  resetI2c();
+  writeI2c(0x0001, 0x5); //TODO: magic number
+  uint32_t clock = readI2c(0x2A) >> 1 & 0x3;
+  return clock;
 }
 
 /*std::map<uint32_t, uint32_t> I2c::readRegisterMap(std::string file)
@@ -113,6 +121,21 @@ void I2c::writeI2c(uint32_t address, uint32_t data)
   mPdaBar->writeRegister(mI2cCommand/4, 0x0);
 
   waitForI2cReady();
+}
+
+uint32_t I2c::readI2c(uint32_t address)
+{
+  uint32_t readCommand = (mChipAddress << 16) + (address << 8) + 0x0;
+  mPdaBar->writeRegister(mI2cConfig/4, readCommand);
+  
+  mPdaBar->writeRegister(mI2cCommand/4, 0x2);
+  mPdaBar->writeRegister(mI2cCommand/4, 0x0);
+
+  waitForI2cReady();
+  uint32_t readValue = mPdaBar->readRegister(mI2cData/4);
+  readValue &= 0xff;
+
+  return readValue;
 }
 
 void I2c::waitForI2cReady()

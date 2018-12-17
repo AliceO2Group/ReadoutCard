@@ -13,7 +13,7 @@ namespace roc {
 
 using Link = Cru::Link;
 
-Gbt::Gbt(std::shared_ptr<Pda::PdaBar> pdaBar, std::vector<Link> linkList, int wrapperCount) :
+Gbt::Gbt(std::shared_ptr<Pda::PdaBar> pdaBar, std::vector<Link> &linkList, int wrapperCount) :
   mPdaBar(pdaBar),
   mLinkList(linkList),
   mWrapperCount(wrapperCount)
@@ -64,6 +64,51 @@ void Gbt::calibrateGbt()
   cdrref(0);
   txcal();
   rxcal();
+}
+
+void Gbt::getGbtModes()
+{
+  for (auto& link: mLinkList) {
+    uint32_t rxControl = mPdaBar->readRegister(getRxControlAddress(link)/4);
+    if (((rxControl >> 8) & 0x1) == Cru::Registers::GBT_MODE_WB) { //TODO: Change with Constants
+      link.gbtRxMode = GbtMode::type::Wb;
+    } else {
+      link.gbtRxMode = GbtMode::type::Gbt;
+    }
+
+    uint32_t txControl = mPdaBar->readRegister(getTxControlAddress(link)/4);
+    if (((txControl >> 8) & 0x1) == Cru::Registers::GBT_MODE_WB) { //TODO: Change with Constants
+      link.gbtTxMode = GbtMode::type::Wb;
+    } else {
+      link.gbtTxMode = GbtMode::type::Gbt;
+    }
+  }
+}
+
+void Gbt::getGbtMuxes()
+{
+  for (auto& link: mLinkList) { uint32_t txMux = mPdaBar->readRegister((Cru::Registers::GBT_MUX_SELECT.address + link.bank * 4)/4);
+    txMux = (txMux >> (link.id*4)) & 0x3;
+    if (txMux == Cru::Registers::GBT_MUX_TTC) {
+      link.gbtMux = GbtMux::type::Ttc;
+    } else if (txMux == Cru::Registers::GBT_MUX_DDG) {
+      link.gbtMux = GbtMux::type::Ddg;
+    } else if (txMux == Cru::Registers::GBT_MUX_SC) {
+      link.gbtMux = GbtMux::type::Sc;
+    }
+  }
+}
+
+void Gbt::getLoopbacks()
+{
+  for (auto& link: mLinkList) {
+    uint32_t loopback = mPdaBar->readRegister(getSourceSelectAddress(link)/4);
+    if (((loopback >> 4) & 0x1) == 0x1) {
+      link.loopback = true;
+    } else {
+      link.loopback = false;
+    }
+  }
 }
 
 void Gbt::atxcal(uint32_t baseAddress)

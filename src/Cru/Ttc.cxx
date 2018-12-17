@@ -45,8 +45,8 @@ void Ttc::configurePlls(uint32_t clock)
     registerMap2 = getTtcClockRegisterMap();
   }
 
-  I2c p2 = I2c(Cru::Registers::SI5345_2.address, chipAddress, registerMap2, mPdaBar);
-  I2c p3 = I2c(Cru::Registers::SI5344.address, chipAddress, registerMap3, mPdaBar);
+  I2c p2 = I2c(Cru::Registers::SI5345_2.address, chipAddress, mPdaBar, registerMap2);
+  I2c p3 = I2c(Cru::Registers::SI5344.address, chipAddress, mPdaBar, registerMap3);
 
   p2.configurePll();
   p3.configurePll();
@@ -116,6 +116,20 @@ void Ttc::calibrateTtc()
 void Ttc::selectDownstreamData(uint32_t downstreamData)
 {
   mPdaBar->modifyRegister(Cru::Registers::TTC_DATA.index, 16, 2, downstreamData);
+}
+
+uint32_t Ttc::getDownstreamData()
+{
+  uint32_t downstreamData = mPdaBar->readRegister(Cru::Registers::TTC_DATA.index);
+  return (downstreamData >> 16) & 0x3;
+}
+
+uint32_t Ttc::getPllClock()
+{
+  uint32_t chipAddress = 0x68;
+  I2c p2 = I2c(Cru::Registers::SI5345_2.address, chipAddress, mPdaBar); // no register map for this
+  uint32_t clock = p2.getSelectedClock();
+  return clock;
 }
 
 // Currently unused by RoC

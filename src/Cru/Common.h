@@ -21,6 +21,17 @@ struct Link {
   uint32_t dwrapperId = 0xffffffff;
   uint32_t baseAddress;
   GbtMux::type gbtMux = GbtMux::type::Ttc;
+  GbtMode::type gbtTxMode = GbtMode::type::Gbt;
+  GbtMode::type gbtRxMode = GbtMode::type::Gbt;
+  bool loopback = false;
+  DatapathMode::type datapathMode = DatapathMode::type::Packet;
+  bool enabled = false;
+};
+
+struct ReportInfo {
+  std::vector<Link> linkList;
+  uint32_t ttcClock;
+  uint32_t downstreamData;
 };
 
 uint32_t getWrapperBaseAddress(int wrapper);
