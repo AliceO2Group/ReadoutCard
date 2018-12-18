@@ -8,7 +8,7 @@
 
 #include <string>
 #include <memory>
-#include "InterprocessLock.h"
+#include "ReadoutCard/InterprocessLock.h"
 
 namespace AliceO2 {
 namespace roc {
