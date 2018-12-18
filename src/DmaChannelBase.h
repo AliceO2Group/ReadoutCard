@@ -14,10 +14,10 @@
 #include <InfoLogger/InfoLogger.hxx>
 #include "CardDescriptor.h"
 #include "ChannelPaths.h"
-#include "InterprocessLock.h"
 #include "Pda/PdaLock.h"
 #include "ReadoutCard/DmaChannelInterface.h"
 #include "ReadoutCard/Exception.h"
+#include "ReadoutCard/InterprocessLock.h"
 #include "ReadoutCard/Parameters.h"
 #include "Utilities/Util.h"
 

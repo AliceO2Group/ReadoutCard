@@ -8,8 +8,8 @@
 #include <pda.h>
 #include <InfoLogger/InfoLogger.hxx>
 #include "ExceptionInternal.h"
-#include "InterprocessLock.h"
 #include "Pda/PdaLock.h"
+#include "ReadoutCard/InterprocessLock.h"
 
 namespace AliceO2 {
 namespace roc {

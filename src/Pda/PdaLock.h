@@ -6,8 +6,7 @@
 #ifndef ALICEO2_SRC_READOUTCARD_PDA_PDALOCK_H_
 #define ALICEO2_SRC_READOUTCARD_PDA_PDALOCK_H_
 
-#include "InterprocessLock.h"
-#include "boost/filesystem.hpp"
+#include "ReadoutCard/InterprocessLock.h"
 
 namespace AliceO2 {
 namespace roc {
