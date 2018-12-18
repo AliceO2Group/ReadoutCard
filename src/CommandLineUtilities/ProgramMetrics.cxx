@@ -41,9 +41,9 @@ class ProgramMetrics: public Program
 
     std::vector<CardDescriptor> cardsFound;
     if (mOptions.pciAddress != "-1")
-      cardsFound = AliceO2::roc::RocPciDevice::findSystemDevices(mOptions.pciAddress);
+      cardsFound = RocPciDevice::findSystemDevices(mOptions.pciAddress);
     else
-      cardsFound = AliceO2::roc::RocPciDevice::findSystemDevices();
+      cardsFound = RocPciDevice::findSystemDevices();
       
 
     std::ostringstream table;
