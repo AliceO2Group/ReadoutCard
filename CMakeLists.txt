@@ -250,6 +250,7 @@ foreach(i RANGE ${count})
     PRIVATE
       ReadoutCard
       Boost::program_options
+      $<$<BOOL:${PDA_FOUND}>:pda::pda>
   )
   if (${src} MATCHES "^AliceLowlevelFrontend.*")
     target_link_libraries(${name} PRIVATE dim::dim)
