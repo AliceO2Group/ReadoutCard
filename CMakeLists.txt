@@ -290,9 +290,10 @@ foreach (test ${TEST_SRCS})
       ${CMAKE_CURRENT_SOURCE_DIR}/src
   )
   target_link_libraries(${test_name}
-    PRIVATE 
+    PRIVATE
       ReadoutCard
       Boost::unit_test_framework
+      $<$<BOOL:${PDA_FOUND}>:pda::pda>
   )
   add_test(NAME ${test_name} COMMAND ${test_name})
   set_tests_properties(${test_name} PROPERTIES TIMEOUT 15)
