@@ -4,11 +4,12 @@
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
 #include <iostream>
-#include "ReadoutCard/ChannelFactory.h"
 #include "CardConfigurator.h"
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
 #include "Cru/CruBar.h"
+#include "ReadoutCard/ChannelFactory.h"
+#include "RocPciDevice.h"
 
 using namespace AliceO2::roc::CommandLineUtilities;
 using namespace AliceO2::roc;
@@ -22,8 +23,8 @@ class ProgramConfig: public Program
   virtual Description getDescription()
   {
     return {"Config", "Configure the CRU(s)", 
-      "roc-config -cfg roc.cfg\n"
-      "roc-config -pci-address 42:00.0 -link 0 -clock local -mode packet -loopback -mux ttc\n"};
+      "roc-config --config-file file:roc.cfg\n"
+      "roc-config --id 42:00.0 --links 0-23 --clock local --gbtmode packet --loopback INTERNAL -gbtmux ttc\n"};
   }
 
   virtual void addOptions(boost::program_options::options_description& options)
@@ -52,12 +53,39 @@ class ProgramConfig: public Program
        "Loopback mode [NONE, INTERNAL]")
       ("config-file",
        po::value<std::string>(&mOptions.configFile)->default_value(""),
-       "Configuration file [file:*.cfg]");
+       "Configuration file [file:*.cfg]")
+      ("config-all",
+       po::value<bool>(&mOptions.configAll)->default_value(false),
+       "Flag to configure all cards with default parameters on startup");
     Options::addOptionCardId(options);
   }
 
   virtual void run(const boost::program_options::variables_map& map) 
   {
+
+    // Configure all cards found - Normally used during boot
+    if (mOptions.configAll) {
+      std::cout << "Running RoC Configuration for all cards" << std::endl;
+      std::vector<CardDescriptor> cardsFound;
+      if(mOptions.configFile == "") {
+        std::cout << "A configuration file is necessary with the startup-config flag set" << std::endl;
+        return;
+      }
+
+      cardsFound = RocPciDevice::findSystemDevices();
+      for(auto const& card: cardsFound) {
+        std::cout << " __== " << card.pciAddress.toString() << " ==__ " << std::endl;
+        auto params = Parameters::makeParameters(card.pciAddress, 2);
+        try {
+          auto cardConfigurator = CardConfigurator(card.pciAddress, mOptions.configFile);
+        } catch(...) {
+          std::cout << "Something went badly reading the configuration file..." << std::endl;
+        }
+      }
+      return;
+    }
+
+    // Configure specific card
     auto cardId = Options::getOptionCardId(map);
 
     if (mOptions.configFile == "") {
@@ -88,6 +116,8 @@ class ProgramConfig: public Program
     } else {
       std::cout << "Configuration file path should start with 'file:'" << std::endl;
     }
+
+    return;
   }
   
   struct OptionsStruct 
@@ -100,6 +130,7 @@ class ProgramConfig: public Program
     std::string links = "0";
     std::string loopbackMode = "NONE";
     std::string configFile = "";
+    bool configAll= false;
   }mOptions;
 
   private:

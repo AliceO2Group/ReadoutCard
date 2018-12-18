@@ -7,6 +7,7 @@
 #ifndef ALICEO2_SRC_READOUTCARD_BARINTERFACEBASE_H_
 #define ALICEO2_SRC_READOUTCARD_BARINTERFACEBASE_H_
 
+#include <boost/optional/optional_io.hpp>
 #include <memory>
 #include "RocPciDevice.h"
 #include "Pda/PdaBar.h"
@@ -96,7 +97,7 @@ class BarInterfaceBase: public BarInterface
     /// Default implementation for optional function
     void configure() override
     {
-      std::cout << "Configure is unavailable for this interface" << std::endl;
+      std::cout << "Configure unavailable for interface" << std::endl;
     }
    
   protected:
