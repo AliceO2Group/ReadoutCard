@@ -470,8 +470,8 @@ void CruBar::configure()
   std::cout << "Configuring GBT" << std::endl;
   for (auto const& link: mLinkList) {
     gbt.setInternalDataGenerator(link, 0);
-    gbt.setTxMode(link, Cru::Registers::GBT_MODE_GBT); //TX is always GBT
-    gbt.setRxMode(link, mGbtMode);                     //RX may also be WB
+    gbt.setTxMode(link, Cru::GBT_MODE_GBT); //TX is always GBT
+    gbt.setRxMode(link, mGbtMode);          //RX may also be WB
     gbt.setLoopback(link, mLoopback);
   }
 

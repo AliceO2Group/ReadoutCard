@@ -7,7 +7,7 @@
 #define ALICEO2_INCLUDE_READOUTCARD_CRU_DOWNSTREAMDATA_H_
 
 #include <string>
-#include <Cru/Constants.h>
+#include "ReadoutCard/Cru.h"
 
 namespace AliceO2 {
 namespace roc {
@@ -17,13 +17,13 @@ struct DownstreamData
 {
     enum type
     {
-      Ctp = Cru::Registers::DATA_CTP,
-      Pattern = Cru::Registers::DATA_PATTERN,
-      Midtrg = Cru::Registers::DATA_MIDTRG,
+      Ctp = Cru::DATA_CTP,
+      Pattern = Cru::DATA_PATTERN,
+      Midtrg = Cru::DATA_MIDTRG,
     };
 
     /// Converts a DownstreamData to an int
-    static std::string toString(const DownstreamData::type& gbtMux);
+    static std::string toString(const DownstreamData::type& downstreamData);
 
     /// Converts a string to a DownstreamData
     static DownstreamData::type fromString(const std::string& string);

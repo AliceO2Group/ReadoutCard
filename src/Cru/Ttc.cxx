@@ -38,7 +38,7 @@ void Ttc::configurePlls(uint32_t clock)
   std::vector<std::pair<uint32_t, uint32_t>> registerMap2;
   std::vector<std::pair<uint32_t, uint32_t>> registerMap3 = getSi5344RegisterMap();
 
-  if (clock == Cru::Registers::CLOCK_LOCAL) {
+  if (clock == Cru::CLOCK_LOCAL) {
     registerMap2 = getLocalClockRegisterMap();
   } else {
     setRefGen(1);

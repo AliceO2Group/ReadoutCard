@@ -72,31 +72,31 @@ class ProgramStatus: public Program
 
     for (const auto& link : reportInfo.linkList) {
       int globalId = link.id + link.bank*6;
-      std::string gbtTxMode = (link.gbtTxMode == Cru::Registers::GBT_MODE_WB ? "WB" : "GBT");
-      std::string gbtRxMode = (link.gbtRxMode == Cru::Registers::GBT_MODE_WB ? "WB" : "GBT");
+      std::string gbtTxMode = (link.gbtTxMode == Cru::GBT_MODE_WB ? "WB" : "GBT");
+      std::string gbtRxMode = (link.gbtRxMode == Cru::GBT_MODE_WB ? "WB" : "GBT");
       std::string gbtTxRxMode = gbtTxMode + "/" + gbtRxMode;
       std::string loopback = (link.loopback == false ? "None" : "Enabled");
 
       std::string downstreamData;
-      if (reportInfo.downstreamData == Cru::Registers::DATA_CTP) {
+      if (reportInfo.downstreamData == Cru::DATA_CTP) {
         downstreamData = "CTP";
-      } else if (reportInfo.downstreamData == Cru::Registers::DATA_PATTERN) {
+      } else if (reportInfo.downstreamData == Cru::DATA_PATTERN) {
         downstreamData = "PATTERN";
-      } else if (reportInfo.downstreamData == Cru::Registers::DATA_MIDTRG) {
+      } else if (reportInfo.downstreamData == Cru::DATA_MIDTRG) {
         downstreamData = "MIDTRG";
       }
 
       std::string gbtMux;
-      if (link.gbtMux == Cru::Registers::GBT_MUX_TTC) {
+      if (link.gbtMux == Cru::GBT_MUX_TTC) {
         gbtMux = "TTC:" + downstreamData;
-      } else if (link.gbtMux == Cru::Registers::GBT_MUX_DDG) {
+      } else if (link.gbtMux == Cru::GBT_MUX_DDG) {
         gbtMux = "DDG";
-      } else if (link.gbtMux == Cru::Registers::GBT_MUX_SC) {
+      } else if (link.gbtMux == Cru::GBT_MUX_SC) {
         gbtMux = "SC";
       }
 
       std::string datapathMode; 
-      if (link.datapathMode == Cru::Registers::GBT_PACKET) {
+      if (link.datapathMode == Cru::GBT_PACKET) {
         datapathMode = "Packet";
       } else {
         datapathMode = "Continuous";

@@ -7,7 +7,7 @@
 #define ALICEO2_INCLUDE_READOUTCARD_CLOCK_H_
 
 #include <string>
-#include <Cru/Constants.h>
+#include "ReadoutCard/Cru.h"
 
 namespace AliceO2 {
 namespace roc {
@@ -17,8 +17,8 @@ struct Clock
 {
     enum type
     {
-      Local = Cru::Registers::CLOCK_LOCAL,
-      Ttc = Cru::Registers::CLOCK_TTC,
+      Local = Cru::CLOCK_LOCAL,
+      Ttc = Cru::CLOCK_TTC,
     };
 
     /// Converts a Clock to a string
