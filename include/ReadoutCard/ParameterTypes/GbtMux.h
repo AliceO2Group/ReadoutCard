@@ -7,7 +7,7 @@
 #define ALICEO2_INCLUDE_READOUTCARD_CRU_GBTMUX_H_
 
 #include <string>
-#include <Cru/Constants.h>
+#include "ReadoutCard/Cru.h"
 
 namespace AliceO2 {
 namespace roc {
@@ -17,9 +17,9 @@ struct GbtMux
 {
     enum type
     {
-      Ttc = Cru::Registers::GBT_MUX_TTC,
-      Ddg = Cru::Registers::GBT_MUX_DDG,
-      Sc = Cru::Registers::GBT_MUX_SC,
+      Ttc = Cru::GBT_MUX_TTC,
+      Ddg = Cru::GBT_MUX_DDG,
+      Sc = Cru::GBT_MUX_SC,
     };
 
     /// Converts a GbtMux to an int

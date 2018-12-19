@@ -7,7 +7,7 @@
 #define ALICEO2_INCLUDE_READOUTCARD_CRU_DATAPATHMODE_H_
 
 #include <string>
-#include <Cru/Constants.h>
+#include "ReadoutCard/Cru.h"
 
 namespace AliceO2 {
 namespace roc {
@@ -17,8 +17,8 @@ struct DatapathMode
 {
     enum type
     {
-      Continuous = Cru::Registers::GBT_CONTINUOUS,
-      Packet = Cru::Registers::GBT_PACKET,
+      Continuous = Cru::GBT_CONTINUOUS,
+      Packet = Cru::GBT_PACKET,
     };
 
     /// Converts a DatapathMode to a string

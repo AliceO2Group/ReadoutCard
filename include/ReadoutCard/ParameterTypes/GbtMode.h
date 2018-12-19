@@ -7,7 +7,7 @@
 #define ALICEO2_INCLUDE_READOUTCARD_CRU_GBTMODE_H_
 
 #include <string>
-#include <Cru/Constants.h>
+#include "ReadoutCard/Cru.h"
 
 namespace AliceO2 {
 namespace roc {
@@ -17,12 +17,12 @@ struct GbtMode
 {
     enum type
     {
-      Gbt = Cru::Registers::GBT_MODE_GBT,
-      Wb = Cru::Registers::GBT_MODE_WB,
+      Gbt = Cru::GBT_MODE_GBT,
+      Wb = Cru::GBT_MODE_WB,
     };
 
     /// Converts a GbtMode to an int
-    static std::string toString(const GbtMode::type& gbtMux);
+    static std::string toString(const GbtMode::type& gbtMode);
 
     /// Converts a string to a GbtMode
     static GbtMode::type fromString(const std::string& string);

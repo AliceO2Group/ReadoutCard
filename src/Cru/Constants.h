@@ -1,5 +1,5 @@
 /// \file Cru/Constants.h
-/// \brief Definitions of CRU related constants
+/// \brief Definitions of internal CRU related constants
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
@@ -7,6 +7,7 @@
 #ifndef ALICEO2_READOUTCARD_CRU_CONSTANTS_H_
 #define ALICEO2_READOUTCARD_CRU_CONSTANTS_H_
 
+#include "ReadoutCard/Cru.h"
 #include "Register.h"
 
 namespace AliceO2
@@ -153,13 +154,13 @@ static constexpr Register LOCAL_CLOCK(0x00240004);
 /// Register for locking the clock the the refclk 
 static constexpr Register LOCK_CLOCK_TO_REF(0x00220000);
 
-/// Register for modifying TTC parameters (e.g. Clock/Downstream Data)
+/// Register for modifying TTC parameters (CLOCK_/DATA_)
 static constexpr Register TTC_DATA(0x00200000);
-static constexpr uint32_t CLOCK_TTC(0x0);
+/*static constexpr uint32_t CLOCK_TTC(0x0);
 static constexpr uint32_t CLOCK_LOCAL(0x2);
 static constexpr uint32_t DATA_CTP(0x0);
 static constexpr uint32_t DATA_PATTERN(0x1);
-static constexpr uint32_t DATA_MIDTRG(0x2);
+static constexpr uint32_t DATA_MIDTRG(0x2);*/
 
 /// Registers used for TTC calibration
 static constexpr Register PON_WRAPPER_PLL(0x00224000);
@@ -192,9 +193,9 @@ static constexpr Register GBT_LINK_SOURCE_SELECT(0x00000038);
 
 /// Register for selecting the the GBT Multiplexer
 static constexpr Register GBT_MUX_SELECT(0x0000001c);
-static constexpr uint32_t GBT_MUX_TTC(0x0);
+/*static constexpr uint32_t GBT_MUX_TTC(0x0);
 static constexpr uint32_t GBT_MUX_DDG(0x1);
-static constexpr uint32_t GBT_MUX_SC(0x2);
+static constexpr uint32_t GBT_MUX_SC(0x2);*/
 
 /// GBT registers to get Link and Wrapper parameters (e.g. count/links per bank)
 static constexpr Register GBT_LINK_XCVR_OFFSET(0x00001000);
@@ -207,8 +208,8 @@ static constexpr Register GBT_BANK_FPLL(0x0000e000);
 /// Registers to set TX and RX GBT modes
 static constexpr Register GBT_LINK_TX_CONTROL_OFFSET(0x00000034);
 static constexpr Register GBT_LINK_RX_CONTROL_OFFSET(0x00000040);
-static constexpr uint32_t GBT_MODE_GBT(0x0);
-static constexpr uint32_t GBT_MODE_WB(0x1);
+/*static constexpr uint32_t GBT_MODE_GBT(0x0);
+static constexpr uint32_t GBT_MODE_WB(0x1);*/
 
 
 //** DATAPATH WRAPPER **//
@@ -231,8 +232,8 @@ static constexpr Register DWRAPPER_MUX_CONTROL(0x00000004);
 static constexpr Register DATAPATHLINK_OFFSET(0x00040000);
 static constexpr Register DATALINK_OFFSET(0x00001000);
 static constexpr Register DATALINK_CONTROL(0x00000000);
-static constexpr uint32_t GBT_PACKET(0x1);
-static constexpr uint32_t GBT_CONTINUOUS(0x0);
+/*static constexpr uint32_t GBT_PACKET(0x1); 
+static constexpr uint32_t GBT_CONTINUOUS(0x0);*/
 
 /// Registers to set the Flow Control
 static constexpr Register FLOW_CONTROL_OFFSET(0x000c0000);

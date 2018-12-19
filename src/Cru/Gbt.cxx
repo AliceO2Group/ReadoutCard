@@ -70,14 +70,14 @@ void Gbt::getGbtModes()
 {
   for (auto& link: mLinkList) {
     uint32_t rxControl = mPdaBar->readRegister(getRxControlAddress(link)/4);
-    if (((rxControl >> 8) & 0x1) == Cru::Registers::GBT_MODE_WB) { //TODO: Change with Constants
+    if (((rxControl >> 8) & 0x1) == Cru::GBT_MODE_WB) { //TODO: Change with Constants
       link.gbtRxMode = GbtMode::type::Wb;
     } else {
       link.gbtRxMode = GbtMode::type::Gbt;
     }
 
     uint32_t txControl = mPdaBar->readRegister(getTxControlAddress(link)/4);
-    if (((txControl >> 8) & 0x1) == Cru::Registers::GBT_MODE_WB) { //TODO: Change with Constants
+    if (((txControl >> 8) & 0x1) == Cru::GBT_MODE_WB) { //TODO: Change with Constants
       link.gbtTxMode = GbtMode::type::Wb;
     } else {
       link.gbtTxMode = GbtMode::type::Gbt;
@@ -89,11 +89,11 @@ void Gbt::getGbtMuxes()
 {
   for (auto& link: mLinkList) { uint32_t txMux = mPdaBar->readRegister((Cru::Registers::GBT_MUX_SELECT.address + link.bank * 4)/4);
     txMux = (txMux >> (link.id*4)) & 0x3;
-    if (txMux == Cru::Registers::GBT_MUX_TTC) {
+    if (txMux == Cru::GBT_MUX_TTC) {
       link.gbtMux = GbtMux::type::Ttc;
-    } else if (txMux == Cru::Registers::GBT_MUX_DDG) {
+    } else if (txMux == Cru::GBT_MUX_DDG) {
       link.gbtMux = GbtMux::type::Ddg;
-    } else if (txMux == Cru::Registers::GBT_MUX_SC) {
+    } else if (txMux == Cru::GBT_MUX_SC) {
       link.gbtMux = GbtMux::type::Sc;
     }
   }
