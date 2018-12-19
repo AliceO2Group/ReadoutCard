@@ -9,7 +9,6 @@
 
 #include <boost/exception/errinfo_errno.hpp>
 #include <chrono>
-#include "ExceptionInternal.h"
 #include <sys/socket.h>
 #include <sys/un.h>
 
@@ -29,8 +28,7 @@ class Lock
     {
 
       if ((mSocketFd = socket(AF_UNIX, SOCK_DGRAM, 0)) < 0) {
-        BOOST_THROW_EXCEPTION(LockException()
-          << ErrorInfo::PossibleCauses({"Couldn't create socket fd"}));
+        BOOST_THROW_EXCEPTION(std::runtime_error("Couldn't create abstract socket fd for InterprocessLock"));
       }
 
 
@@ -51,16 +49,14 @@ class Lock
 
         if (timeExceeded()) { //we timed out
           close(mSocketFd);
-          BOOST_THROW_EXCEPTION(LockException()
-              << ErrorInfo::PossibleCauses({"Bind to socket timed out"}));
+          BOOST_THROW_EXCEPTION(std::runtime_error("Bind to socket " + safeSocketLockName + " timed out"));
         }
       } else { //exit immediately after bind error
         if (bind(mSocketFd,
               (const struct sockaddr *) &mServerAddress,
               mAddressLength) < 0) {
           close(mSocketFd);
-          BOOST_THROW_EXCEPTION(LockException()
-              << ErrorInfo::PossibleCauses({"Couldn't bind to socket"}));
+          BOOST_THROW_EXCEPTION(std::runtime_error("Couldn't bind to socket " + safeSocketLockName));
         }
       }
     }

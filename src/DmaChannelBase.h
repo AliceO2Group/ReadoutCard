@@ -14,6 +14,7 @@
 #include <InfoLogger/InfoLogger.hxx>
 #include "CardDescriptor.h"
 #include "ChannelPaths.h"
+#include "ExceptionInternal.h"
 #include "Pda/PdaLock.h"
 #include "ReadoutCard/DmaChannelInterface.h"
 #include "ReadoutCard/Exception.h"
