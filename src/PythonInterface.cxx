@@ -40,6 +40,15 @@ Args:
     index: 32-bit aligned address of the register
     value: 32-bit value to write to the register)";
 
+/// Documentation for the register modify function
+auto sRegisterModifyDocString =
+R"(Modify the width# of bits value at given position of the 32-bit aligned address
+
+Args:
+    index: 32-bit aligned address of the register
+    position: position to modify (0-31)
+    width: number of bits to modify
+    value: width bits value to write at position (masked to width if more))";
 
 class BarChannel
 {
@@ -60,6 +69,11 @@ class BarChannel
       return mBarChannel->writeRegister(address / 4, value);
     }
 
+    void modify(uint32_t address, int position, int width, uint32_t value)
+    {
+      return mBarChannel->modifyRegister(address / 4, position, width, value);
+    }
+
   private:
     std::shared_ptr<AliceO2::roc::BarInterface> mBarChannel;
 };
@@ -73,6 +87,7 @@ BOOST_PYTHON_MODULE(libReadoutCard)
 
   class_<BarChannel>("BarChannel", init<std::string, int>(sInitDocString))
       .def("register_read", &BarChannel::read, sRegisterReadDocString)
-      .def("register_write", &BarChannel::write, sRegisterWriteDocString);
+      .def("register_write", &BarChannel::write, sRegisterWriteDocString)
+      .def("register_modify", &BarChannel::modify, sRegisterModifyDocString);
 }
 
