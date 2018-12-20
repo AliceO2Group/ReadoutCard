@@ -177,6 +177,7 @@ target_compile_features(ReadoutCard PUBLIC cxx_std_14)
 set(EXE_SRCS
   ProgramDmaBench.cxx
   ProgramReset.cxx
+  ProgramRegisterModify.cxx
   ProgramRegisterRead.cxx
   ProgramRegisterReadRange
   ProgramRegisterWrite.cxx
@@ -185,6 +186,7 @@ set(EXE_SRCS
 set(EXE_NAMES
   roc-bench-dma
   roc-reset
+  roc-reg-modify
   roc-reg-read
   roc-reg-read-range
   roc-reg-write
