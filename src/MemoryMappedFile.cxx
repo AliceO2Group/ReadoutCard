@@ -42,19 +42,18 @@ MemoryMappedFile::MemoryMappedFile(const std::string& fileName, size_t fileSize,
   if (lockMap) {
     try{
       Utilities::resetSmartPtr(mInterprocessLock, "Alice_O2_RoC_MMF_" + fileName + "_lock");
+      mMapAcquired = map(fileName, fileSize);
     }
     catch (const boost::exception& e) {
       BOOST_THROW_EXCEPTION(LockException()
           << ErrorInfo::Message("Memory map file is locked by another process."));
     }
   }
-
-  map(fileName, fileSize);
 }
 
 MemoryMappedFile::~MemoryMappedFile()
 {
-  if (mInternal->deleteFileOnDestruction) {
+  if (mInternal->deleteFileOnDestruction && mMapAcquired) {
     bfs::remove(mInternal->fileName);
   }
 }
@@ -74,7 +73,7 @@ std::string MemoryMappedFile::getFileName() const
   return mInternal->fileName;
 }
 
-void MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
+bool MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
 {
   try {
     // Check the directory exists
@@ -132,6 +131,8 @@ void MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
     e << ErrorInfo::FileName(fileName) << ErrorInfo::FileSize(fileSize);
     throw;
   }
+
+  return true;
 }
 
 } // namespace roc
