@@ -51,7 +51,7 @@ template <typename T>
 void setBits(T& bits, int index, int width, uint32_t value)
 {
   uint32_t mask = ~(~T(0)<<width) << index;
-  bits = (bits & ~mask) | (value << index);
+  bits = (bits & ~mask) | ((value << index) & mask);
 }
 
 template <typename T>
