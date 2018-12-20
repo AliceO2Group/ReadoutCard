@@ -32,11 +32,14 @@ class MemoryMappedFile
     std::string getFileName() const;
 
   private:
-    void map(const std::string& fileName, size_t fileSize);
+    bool map(const std::string& fileName, size_t fileSize);
 
     std::unique_ptr<MemoryMappedFileInternal> mInternal;
 
     std::unique_ptr<Interprocess::Lock> mInterprocessLock;
+
+    // Flag that shows if the map was succesful
+    bool mMapAcquired = false;
 };
 
 } // namespace roc
