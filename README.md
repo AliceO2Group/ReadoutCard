@@ -305,6 +305,9 @@ Writes and reads registers to/from a card's BAR.
 By convention, registers are 32-bit unsigned integers.
 Note that their addresses are given by byte address, and not as you would index an array of 32-bit integers.
 
+### roc-reg-modify
+Modifies certain bits of a card's register through the BAR.
+
 ### roc-reset
 Resets a card channel
 
@@ -345,11 +348,14 @@ bar = libReadoutCard.BarChannel("-1", 0) # Dummy channel
 bar.register_read(0)
 # Write 123 to register at index 0
 bar.register_write(0, 123)
+# Modify bits 3-5 to at index 0 to 0x101
+bar.register_modify(0, 3, 3, 0x101)
 
 # Print doc strings for more information
 print bar.__init__.__doc__
 print bar.register_read.__doc__
 print bar.register_write.__doc__
+print bar.register_modify.__doc__
 ~~~
 Note: depending on your environment, you may have to be in the same directory as the libReadoutCard.so file to import 
 it.
