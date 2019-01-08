@@ -131,8 +131,12 @@ std::vector<CardDescriptor> RocPciDevice::findSystemDevices()
   std::vector<CardDescriptor> cards;
   for (const auto& type : deviceTypes) {
     for (const auto& pciDevice : Pda::PdaDevice::getPciDevices(type.pciId)) {
+      try {
       cards.push_back(CardDescriptor{type.cardType, type.getSerial(pciDevice), type.pciId,
         addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice.get())});
+      } catch (boost::exception& e) {
+        std::cout << boost::diagnostic_information(e);
+      }
     }
   }
   return cards;
