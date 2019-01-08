@@ -1,7 +1,5 @@
 import fileinput
 import re
-import cru_table as table
-import os
 
 #'':'NUM_DROPPED_PACKETS'
 roc_regs = {'add_bsp_hkeeping_tempstat':'TEMPERATURE',
@@ -59,12 +57,40 @@ roc_regs = {'add_bsp_hkeeping_tempstat':'TEMPERATURE',
 # e.g. 'TEMPERATURE':0x00010008
 to_replace = {}
 
-for key0,value0 in roc_regs.iteritems():
-  for key,value in table.CRUADD.iteritems():
-    if (key0 == key):
-      to_replace[value0] = '0x' + str(format(value, '08x'))
+def string_between(string, before, after):
 
-print to_replace 
+  regex = before + "(.*)" + after 
+  ret = re.split(regex, string)
+  try:
+      return ret[1].strip() #remove whitespace
+  except IndexError:
+      return ''
+
+def parse_vhdl_hex(vhdl_lines, line):
+  to_add = string_between(line, ":=", "\+")
+  if (to_add != ''):
+    for tline in vhdl_lines:
+      if (to_add in tline):
+        return parse_vhdl_hex(vhdl_lines, tline) + int(re.sub("_", "", string_between(line, "[Xx]\"", "\"\s*;")), 16)
+    return 0
+  else:
+    try:
+      return int(re.sub("_", "", string_between(line, "[Xx]\"", "\"\s*;")), 16)
+    except ValueError:
+      return 0
+
+
+#create cru-fw table
+vhdl_file = open('pack_cru_core.vhd')
+vhdl_lines = vhdl_file.readlines()
+
+for (key, value) in roc_regs.iteritems():
+  for (i, line) in enumerate(vhdl_lines): #cru-fw regs here
+    if (re.search("constant " + key + "\s*:", line)): #line has reg info
+      ret = parse_vhdl_hex(vhdl_lines, line)
+      to_replace[value] = "0x" + hex(ret)[2:].zfill(8) #add leading zeros for readability
+
+print(to_replace)
 
 cfile = open('Constants.h')
 contents = cfile.readlines()
