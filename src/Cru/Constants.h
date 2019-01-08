@@ -34,25 +34,25 @@ namespace Registers
 
 /// Control register for the data emulator
 /// * bit 0: Flow control
-static constexpr Register DMA_CONTROL(0x200);
+static constexpr Register DMA_CONTROL(0x00000200);
 
 /// Interval for link BAR addresses
 static constexpr uintptr_t LINK_INTERVAL = 0x10;
 
 /// High address of superpage
-static constexpr IntervalRegister LINK_SUPERPAGE_ADDRESS_HIGH(0x204, LINK_INTERVAL);
+static constexpr IntervalRegister LINK_SUPERPAGE_ADDRESS_HIGH(0x00000204, LINK_INTERVAL);
 
 /// Low address of superpage
-static constexpr IntervalRegister LINK_SUPERPAGE_ADDRESS_LOW(0x208, LINK_INTERVAL);
+static constexpr IntervalRegister LINK_SUPERPAGE_ADDRESS_LOW(0x00000208, LINK_INTERVAL);
 
 /// Size of the superpage in 8KiB pages
-static constexpr IntervalRegister LINK_SUPERPAGE_SIZE(0x20c, LINK_INTERVAL);
+static constexpr IntervalRegister LINK_SUPERPAGE_SIZE(0x0000020c, LINK_INTERVAL);
 
 /// Interval for SUPERPAGES_PUSHED addresses
 static constexpr uintptr_t SUPERPAGES_PUSHED_INTERVAL = 0x4;
 
 /// Amount of completely pushed superpages
-static constexpr IntervalRegister LINK_SUPERPAGES_PUSHED(0x800, SUPERPAGES_PUSHED_INTERVAL);
+static constexpr IntervalRegister LINK_SUPERPAGES_PUSHED(0x00000800, SUPERPAGES_PUSHED_INTERVAL);
 
 /// Enable/disable links
 /// Every bit represents a link. Set a bit to 0 to disable a link.
@@ -65,29 +65,27 @@ static constexpr IntervalRegister LINK_SUPERPAGES_PUSHED(0x800, SUPERPAGES_PUSHE
 ///   0b10 -> 0xa5a5a5a5
 ///   0b11 -> 0x12345678
 /// Bit 3: set to inject error
-static constexpr Register DATA_GENERATOR_CONTROL(0x600);
+static constexpr Register DATA_GENERATOR_CONTROL(0x00000600);
+
+/// Register for error injection
+/// Not sure how it works...
+static constexpr Register DATA_GENERATOR_INJECT_ERROR(0x00000608);
+static constexpr uint32_t DATA_GENERATOR_CONTROL_INJECT_ERROR_CMD = 0x1;
 
 /// Selection of data source
 /// 0x0 -> GBT
 /// 0x1 -> Internal data generator
 /// This tells to the *dma* if the data is coming from the datapath wrapper or the internal generator
-static constexpr Register DATA_SOURCE_SELECT(0x700);
+static constexpr Register DATA_SOURCE_SELECT(0x00000700);
 static constexpr uint32_t DATA_SOURCE_SELECT_GBT = 0x0;
 static constexpr uint32_t DATA_SOURCE_SELECT_INTERNAL = 0x1;
-
-/// Register for error injection
-/// Not sure how it works...
-static constexpr Register DATA_GENERATOR_INJECT_ERROR(0x608);
-static constexpr uint32_t DATA_GENERATOR_CONTROL_INJECT_ERROR_CMD = 0x1;
 
 /// Reset control register
 /// * Write a 1 to reset the card
 /// * Write a 2 to reset data generator counter
-static constexpr Register RESET_CONTROL(0x400);
+static constexpr Register RESET_CONTROL(0x00000400);
 
-/// TODO: Doesn't exist anymore
-/// A debug register. The lower 8 bits of this register can be written to and read back from freely.
-static constexpr Register DEBUG_READ_WRITE(0x410);
+///*** bar2 ***///
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// Board serial number
@@ -101,8 +99,6 @@ static constexpr Register FIRMWARE_COMPILE_INFO(0x280);
 /// Register containing compilation info of the firmware
 /// Can be used as a sort of version number
 static constexpr Register FIRMWARE_FEATURES(0x41c);
-
-///*** bar2 ***///
 
 /// Temperature control & read register
 /// The lower 10 bits contain the temperature value
