@@ -33,7 +33,7 @@ class BarHammer : public AliceO2::Common::BasicThread
         uint32_t writeCounter = 0;
         while (!stopFlag->load(std::memory_order_relaxed)) {
           for (int i = 0; i < MULTIPLIER; ++i) {
-            channel->writeRegister(Cru::Registers::DEBUG_READ_WRITE.index, writeCounter);
+            //channel->writeRegister(Cru::Registers::DEBUG_READ_WRITE.index, writeCounter);
             writeCounter++;
           }
           hammerCount++;

@@ -2,7 +2,20 @@ import fileinput
 import re
 
 #'':'NUM_DROPPED_PACKETS'
-roc_regs = {'add_bsp_hkeeping_tempstat':'TEMPERATURE',
+roc_regs = {
+### bar0 ###
+'add_pcie_dma_ctrl':'DMA_CONTROL',
+'add_pcie_dma_desc_h':'LINK_SUPERPAGE_ADDRESS_HIGH',
+'add_pcie_dma_desc_l':'LINK_SUPERPAGE_ADDRESS_LOW',
+'add_pcie_dma_desc_sz':'LINK_SUPERPAGE_SIZE',
+'add_pcie_dma_spg0_ack':'LINK_SUPERPAGES_PUSHED',
+'add_pcie_dma_ddg_cfg0':'DATA_GENERATOR_CONTROL',
+'add_pcie_dma_ddg_cfg2':'DATA_GENERATOR_INJECT_ERROR',
+'add_pcie_dma_data_sel':'DATA_SOURCE_SELECT',
+'add_pcie_dma_rst':'RESET_CONTROL',
+
+### bar2 ###
+'add_bsp_hkeeping_tempstat':'TEMPERATURE',
 'add_bsp_info_builddate':'FIRMWARE_DATE',
 'add_bsp_info_buildtime':'FIRMWARE_TIME',
 'add_bsp_hkeeping_chipid_low':'FPGA_CHIP_LOW',
@@ -97,8 +110,11 @@ contents = cfile.readlines()
 
 for key,value in to_replace.iteritems():
   for (i, line) in enumerate(contents):
-    if (key in line):
+    if(re.search("\s+Register\s*" + key, line)):
       contents[i] = re.sub("\([^)]*\)", '(' + value + ')', line)
+    elif(re.search("\s+IntervalRegister\s*" + key, line)):
+      contents[i] = re.sub("\([^,]*\,", '(' + value + ',', line)
+
 
 cfile = open('Constants.h', 'w')
 cfile.writelines(contents)
