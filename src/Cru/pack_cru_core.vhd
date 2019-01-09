@@ -1,5 +1,3 @@
--- tag: v2.7.0
-
 -- 20180412 JB  Add adress definiion for add_gbt_link_mask_hi  =X"0000_0020"
 --                                       add_gbt_link_mask_med =X"0000_0024"
 --                                       add_gbt_link_mask_lo  =X"0000_0028"
@@ -317,65 +315,27 @@ constant add_userlogic_hbbcerror_offset	: unsigned(31 downto 0):=X"0000_0008";
 constant add_userlogic_errcntall_offset	: unsigned(31 downto 0):=X"0000_000C";
 
 --------------------------------------------------------------------------------
--- BAR 0 REGISTERs
+-- BAR 0 REGISTERs (DMA)
 --------------------------------------------------------------------------------
 constant add_pcie_dma_ctrl         : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0200";
-
-constant add_pcie_dma_desc0_h      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0204";
-constant add_pcie_dma_desc0_l      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0208";
-constant add_pcie_dma_desc0_wr     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_020c";
-constant add_pcie_dma_desc1_h      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0214";
-constant add_pcie_dma_desc1_l      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0218";
-constant add_pcie_dma_desc1_wr     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_021c";
-constant add_pcie_dma_desc2_h      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0224";
-constant add_pcie_dma_desc2_l      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0228";
-constant add_pcie_dma_desc2_wr     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_022c";
-constant add_pcie_dma_desc3_h      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0234";
-constant add_pcie_dma_desc3_l      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0238";
-constant add_pcie_dma_desc3_wr     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_023c";
-constant add_pcie_dma_desc4_h      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0244";
-constant add_pcie_dma_desc4_l      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0248";
-constant add_pcie_dma_desc4_wr     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_024c";
-constant add_pcie_dma_desc5_h      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0254";
-constant add_pcie_dma_desc5_l      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0258";
-constant add_pcie_dma_desc5_wr     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_025c";
-constant add_pcie_dma_desc6_h      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0264";
-constant add_pcie_dma_desc6_l      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0268";
-constant add_pcie_dma_desc6_wr     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_026c";
-constant add_pcie_dma_desc7_h      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0274";
-constant add_pcie_dma_desc7_l      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0278";
-constant add_pcie_dma_desc7_wr     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_027c";
-constant add_pcie_dma_desc8_h      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0284";
-constant add_pcie_dma_desc8_l      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0288";
-constant add_pcie_dma_desc8_wr     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_028c";
-constant add_pcie_dma_desc9_h      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0294";
-constant add_pcie_dma_desc9_l      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0298";
-constant add_pcie_dma_desc9_wr     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_029c";
-constant add_pcie_dma_desca_h      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_02a4";
-constant add_pcie_dma_desca_l      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_02a8";
-constant add_pcie_dma_desca_wr     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_02ac";
-constant add_pcie_dma_descb_h      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_02b4";
-constant add_pcie_dma_descb_l      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_02b8";
-constant add_pcie_dma_descb_wr     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_02bc";
-
+-- DESCRIPTOR SW -> CRU
+constant add_pcie_dma_desc_h       : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0204";
+constant add_pcie_dma_desc_l       : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0208";
+constant add_pcie_dma_desc_sz      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_020c";
+--
 constant add_pcie_dma_rst          : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0400";
 constant add_pcie_dma_ep_id        : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0500";
-constant add_pcie_dma_dbg          : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0c00";
-
+-- DDG
+constant add_pcie_dma_ddg_cfg0     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0600";
+constant add_pcie_dma_ddg_cfg1     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0604";
+constant add_pcie_dma_ddg_cfg2     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0608";
+constant add_pcie_dma_ddg_cfg3     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_060c";
+--
+constant add_pcie_dma_data_sel     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0700";
+-- SUPERPAGE REPORT CRU > SW
 constant add_pcie_dma_spg0_ack     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0800";
-constant add_pcie_dma_spg1_ack     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0804";
-constant add_pcie_dma_spg2_ack     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0808";
-constant add_pcie_dma_spg3_ack     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_080c";
-constant add_pcie_dma_spg4_ack     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0810";
-constant add_pcie_dma_spg5_ack     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0814";
-constant add_pcie_dma_spg6_ack     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0818";
-constant add_pcie_dma_spg7_ack     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_081c";
-constant add_pcie_dma_spg8_ack     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0820";
-constant add_pcie_dma_spg9_ack     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0824";
-constant add_pcie_dma_spga_ack     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0828";
-constant add_pcie_dma_spgb_ack     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_082c";
-
-
+--
+constant add_pcie_dma_dbg          : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0c00";
 
 
 -------------------------------------------------------------------------------
