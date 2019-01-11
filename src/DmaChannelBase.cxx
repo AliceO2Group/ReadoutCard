@@ -37,13 +37,13 @@ void DmaChannelBase::checkParameters(Parameters& parameters)
   auto enabled = parameters.getGeneratorEnabled();
   auto loopback = parameters.getGeneratorLoopback();
   if (enabled && loopback && (*enabled && (*loopback == LoopbackMode::None))) {
-    log("Generator enabled, defaulting to LoopbackMode = Internal", InfoLogger::InfoLogger::Debug);
+    log("Generator enabled, defaulting to LoopbackMode = Internal", InfoLogger::InfoLogger::Warning);
     parameters.setGeneratorLoopback(LoopbackMode::Internal);
   }
 
   // Generator disabled. Loopback mode should be set to None
   if (enabled && loopback && (!*enabled && (*loopback != LoopbackMode::None))){
-    log("Generator disabled, defaulting to LoopbackMode = None", InfoLogger::InfoLogger::Debug);
+    log("Generator disabled, defaulting to LoopbackMode = None", InfoLogger::InfoLogger::Warning);
     parameters.setGeneratorLoopback(LoopbackMode::None);
   }
 }

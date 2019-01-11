@@ -135,7 +135,7 @@ class ProgramDmaBench: public Program
               "Links to open. A comma separated list of integers or ranges, e.g. '0,2,5-10'")
           ("loopback",
               po::value<std::string>(&mOptions.loopbackModeString)->default_value("INTERNAL"),
-              "Generator loopback mode [NONE, INTERNAL, DIU, SIU]")
+              "Generator loopback mode [NONE, INTERNAL, DIU, SIU, DDG]")
           ("no-errorcheck",
               po::bool_switch(&mOptions.noErrorCheck),
               "Skip error checking")
@@ -619,12 +619,12 @@ class ProgramDmaBench: public Program
 
     bool checkErrorsCru(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId, std::string loopbackMode)
     {
-      if (loopbackMode == "NONE")
+      if (loopbackMode == "DDG")
         return checkErrorsCruDdg(pageAddress, pageSize, eventNumber, linkId);
       else if (loopbackMode == "INTERNAL")
         return checkErrorsCruInternal(pageAddress, pageSize, eventNumber, linkId);
       else
-        throw std::runtime_error("Loopback Mode not supported");
+        throw std::runtime_error("CRU error check: Loopback Mode not supported");
     }
  
     bool checkErrorsCruInternal(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
