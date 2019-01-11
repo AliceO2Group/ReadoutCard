@@ -4,9 +4,9 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#include "CruDmaChannel.h"
 #include <thread>
 #include <boost/format.hpp>
+#include "CruDmaChannel.h"
 #include "ExceptionInternal.h"
 #include "ReadoutCard/ChannelFactory.h"
 
@@ -21,7 +21,7 @@ namespace roc
 CruDmaChannel::CruDmaChannel(const Parameters& parameters)
     : DmaChannelPdaBase(parameters, allowedChannels()), //
       mInitialResetLevel(ResetLevel::Internal), // It's good to reset at least the card channel in general
-      mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)), // Internal loopback by default
+      mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)), // DG loopback mode by default
       mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)), // Use data generator by default
       mGeneratorPattern(parameters.getGeneratorPattern().get_value_or(GeneratorPattern::Incremental)), //
       mGeneratorDataSizeRandomEnabled(parameters.getGeneratorRandomSizeEnabled().get_value_or(false)), //
@@ -31,15 +31,6 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
       mGeneratorSeed(0), // Presumably for random patterns, incremental doesn't really need it
       mGeneratorDataSize(parameters.getGeneratorDataSize().get_value_or(Cru::DMA_PAGE_SIZE)) // Can use page size
 {
-
-  // Prep for BARs
-  auto parameters2 = parameters;
-  parameters2.setChannelNumber(2);
-  auto bar = ChannelFactory().getBar(parameters);
-  auto bar2 = ChannelFactory().getBar(parameters2);
-  cruBar = std::move(std::dynamic_pointer_cast<CruBar> (bar)); // Initialize BAR 0
-  cruBar2 = std::move(std::dynamic_pointer_cast<CruBar> (bar2)); // Initialize BAR 2
-  mFeatures = getBar()->getFirmwareFeatures(); // Get which features of the firmware are enabled
   
   if (auto pageSize = parameters.getDmaPageSize()) {
     if (pageSize.get() != Cru::DMA_PAGE_SIZE) {
@@ -49,10 +40,19 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
     }
   }
 
-  if (mLoopbackMode == LoopbackMode::Diu || mLoopbackMode == LoopbackMode::Siu) {
+  if (mLoopbackMode == LoopbackMode::Diu || mLoopbackMode == LoopbackMode::Siu) { 
     BOOST_THROW_EXCEPTION(CruException() << ErrorInfo::Message("CRU does not support given loopback mode")
       << ErrorInfo::LoopbackMode(mLoopbackMode));
   }
+
+  // Prep for BARs
+  auto parameters2 = parameters;
+  parameters2.setChannelNumber(2);
+  auto bar = ChannelFactory().getBar(parameters);
+  auto bar2 = ChannelFactory().getBar(parameters2);
+  cruBar = std::move(std::dynamic_pointer_cast<CruBar> (bar)); // Initialize BAR 0
+  cruBar2 = std::move(std::dynamic_pointer_cast<CruBar> (bar2)); // Initialize BAR 2
+  mFeatures = getBar()->getFirmwareFeatures(); // Get which features of the firmware are enabled
 
   if (mFeatures.standalone) {
     std::stringstream stream;
@@ -81,6 +81,10 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
     }
     log(stream.str());
   }
+
+  std::stringstream stream;
+  stream << "Generator enabled: " << mGeneratorEnabled << " | Loopback mode: " << LoopbackMode::toString(mLoopbackMode);
+  log(stream.str());
 }
 
 auto CruDmaChannel::allowedChannels() -> AllowedChannels {
@@ -98,41 +102,35 @@ CruDmaChannel::~CruDmaChannel()
 
 void CruDmaChannel::deviceStartDma()
 {
-  // Enable links
-  /*uint32_t mask = 0xFfffFfff;
-  for (const auto& link : mLinks) {
-    Utilities::setBit(mask, link.id, false);
-  }
-  getBar()->setLinksEnabled(mask);*/ //is this not outdated?
-
   // Set data generator pattern
   if (mGeneratorEnabled) {
     getBar()->setDataGeneratorPattern(mGeneratorPattern, mGeneratorDataSize, mGeneratorDataSizeRandomEnabled);
   }
 
   // Set data source
+  uint32_t dataSourceSelection = 0x0;
   if (mGeneratorEnabled) {
     if (mLoopbackMode == LoopbackMode::Internal) {
-      if (mFeatures.dataSelection) {
-        getBar()->setDataSource(Cru::Registers::DATA_SOURCE_SELECT_INTERNAL);
-      } else {
-        log("Did not set internal data source, feature not supported by firmware", InfoLogger::InfoLogger::Warning);
-      }
+      dataSourceSelection = Cru::Registers::DATA_SOURCE_SELECT_INTERNAL;
+    } else if (mLoopbackMode == LoopbackMode::Ddg) {
+      dataSourceSelection = Cru::Registers::DATA_SOURCE_SELECT_GBT;
     } else {
       BOOST_THROW_EXCEPTION(CruException()
-        << ErrorInfo::Message("CRU only supports 'Internal' loopback for data generator"));
+        << ErrorInfo::Message("CRU only support 'Internal' or 'Ddg' for data generator"));
     }
   } else {
     if (mLoopbackMode == LoopbackMode::None) {
-      if (mFeatures.dataSelection) {
-        getBar()->setDataSource(Cru::Registers::DATA_SOURCE_SELECT_GBT);
-      } else {
-        log("Did not set GBT data source, feature not supported by firmware", InfoLogger::InfoLogger::Warning);
-      }
+      dataSourceSelection = Cru::Registers::DATA_SOURCE_SELECT_GBT;
     } else {
       BOOST_THROW_EXCEPTION(CruException()
-        << ErrorInfo::Message("CRU only supports 'None' loopback when operating without data generator"));
+        << ErrorInfo::Message("CRU only supports 'None' loopback mode when operating without a data generator"));
     }
+  }
+
+  if (mFeatures.dataSelection) {
+    getBar()->setDataSource(dataSourceSelection);
+  } else {
+    log("Did not set data source, feature not supported by firmware", InfoLogger::InfoLogger::Warning);
   }
 
   // Reset CRU (should be done after link mask set)

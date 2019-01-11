@@ -15,6 +15,7 @@ static const auto converter = Utilities::makeEnumConverter<LoopbackMode::type>("
   { LoopbackMode::Internal, "INTERNAL" },
   { LoopbackMode::Diu, "DIU" },
   { LoopbackMode::Siu, "SIU" },
+  { LoopbackMode::Ddg, "DDG" },
 });
 
 } // Anonymous namespace

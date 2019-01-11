@@ -54,6 +54,12 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
   crorcBar = std::move(std::dynamic_pointer_cast<CrorcBar> (bar)); // Initialize bar0
   crorcBar2 = std::move(std::dynamic_pointer_cast<CrorcBar> (bar2)); // Initalize bar2
 
+  // Check that the loopback is valid. If not throw
+  if (mLoopbackMode == LoopbackMode::Ddg) {
+    BOOST_THROW_EXCEPTION(CruException() << ErrorInfo::Message("CRORC does not support given loopback mode")
+      << ErrorInfo::LoopbackMode(mLoopbackMode));
+  }
+  
   // Create and register our ReadyFIFO buffer
   log("Initializing ReadyFIFO DMA buffer", InfoLogger::InfoLogger::Debug);
   {
