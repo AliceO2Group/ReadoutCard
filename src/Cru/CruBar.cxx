@@ -36,9 +36,9 @@ CruBar::CruBar(const Parameters& parameters)
     mFeatures = parseFirmwareFeatures(); 
   }
 
-  if (parameters.getGeneratorLoopback() == LoopbackMode::type::Internal) {
+  if (parameters.getLinkLoopbackEnabled() == true) { // explicit true needed here
     mLoopback = 0x1;
-  } else {//default to "NONE"
+  } else { //default to disabled
     mLoopback = 0x0;
   }
 }
@@ -82,11 +82,6 @@ boost::optional<std::string> CruBar::getCardId()
 {
   return (boost::format("%08x-%08x") % getFpgaChipHigh() % getFpgaChipLow()).str();
 }
-
-/*void CruBar::checkParameters()
-{
-  //TODO
-}*/
 
 /// Push a superpage into the FIFO of a link
 /// \param link Link number
@@ -431,8 +426,6 @@ Cru::ReportInfo CruBar::report()
 /// Configures the CRU according to the parameters passed on init
 void CruBar::configure()
 {
-
-  //TODO: Call check_parameters() before continuing
 
   bool ponUpstream = false;
   uint32_t onuAddress = 0xbadcafe;
