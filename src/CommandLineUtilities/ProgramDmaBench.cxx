@@ -768,7 +768,7 @@ class ProgramDmaBench: public Program
 
     bool checkErrorsCrorc(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
     {
-      uint64_t counter = mDataGeneratorCounters[linkId];
+      uint64_t counter = mDataGeneratorCounters[linkId] + 1;
       mDataGeneratorCounters[linkId]++;
 
       auto check = [&](auto patternFunction) {
