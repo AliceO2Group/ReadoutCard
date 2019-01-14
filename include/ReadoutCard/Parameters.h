@@ -92,6 +92,7 @@ class Parameters
     using GbtMuxType = GbtMux::type;
     using GbtModeType = GbtMode::type;
 
+    using LinkLoopbackEnabledType = bool;
 
     // Setters
 
@@ -142,6 +143,14 @@ class Parameters
     /// \param value The value to set
     /// \return Reference to this object for chaining calls
     auto setGeneratorEnabled(GeneratorEnabledType value) -> Parameters&;
+
+    /// Sets the LinkLoopbackEnabled parameter
+    ///
+    /// If enabled the link is on loopback mode  enabling the use of the DDG.
+    ///
+    /// \param value The value to set
+    /// \return Reference to this object for chaining calls
+    auto setLinkLoopbackEnabled(LinkLoopbackEnabledType value) -> Parameters&;
 
     /// Sets the GeneratorDataSize parameter
     ///
@@ -310,6 +319,10 @@ class Parameters
     /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
     auto getGeneratorEnabled() const -> boost::optional<GeneratorEnabledType>;
 
+    /// Gets the LinkLoopbacknabled parameter
+    /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+    auto getLinkLoopbackEnabled() const -> boost::optional<LinkLoopbackEnabledType>;
+
     /// Gets the GeneratorDataSize parameter
     /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
     auto getGeneratorDataSize() const -> boost::optional<GeneratorDataSizeType>;
@@ -383,6 +396,11 @@ class Parameters
     /// \exception ParameterException The parameter was not present
     /// \return The value
     auto getGeneratorEnabledRequired() const -> GeneratorEnabledType;
+
+    /// Gets the LinkLoopbackEnabled parameter
+    /// \exception ParameterException The parameter was not present
+    /// \return The value
+    auto getLinkLoopbackEnabledRequired() const -> LinkLoopbackEnabledType;
 
     /// Gets the GeneratorDataSize parameter
     /// \exception ParameterException The parameter was not present

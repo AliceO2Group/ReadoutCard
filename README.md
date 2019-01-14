@@ -127,7 +127,7 @@ The Parameters that affect the configuration of the CRU and their possible value
 
 `GbtMux (TTC | DDG | SC)`
 
-`GeneratorLoopback (NONE | INTERNAL)`
+`LinkLoopbackEnabled (true | false)`
 
 To set any of the above parameters the usual template can be followed.
 

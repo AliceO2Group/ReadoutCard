@@ -48,12 +48,12 @@ class ProgramConfig: public Program
       ("links", 
        po::value<std::string>(&mOptions.links)->default_value("0"),
        "Links to enable")
-      ("loopback",
-       po::value<std::string>(&mOptions.loopbackMode)->default_value("NONE"),
-       "Loopback mode [NONE, INTERNAL]")
       ("config-file",
        po::value<std::string>(&mOptions.configFile)->default_value(""),
        "Configuration file [file:*.cfg]")
+      ("loopback",
+       po::value<bool>(&mOptions.linkLoopbackEnabled)->default_value(false),
+       "Flag to enable link loopback for DDG")
       ("config-all",
        po::value<bool>(&mOptions.configAll)->default_value(false),
        "Flag to configure all cards with default parameters on startup");
@@ -97,13 +97,7 @@ class ProgramConfig: public Program
       params.setDownstreamData(DownstreamData::fromString(mOptions.downstreamData));
       params.setGbtMode(GbtMode::fromString(mOptions.gbtMode));
       params.setGbtMux(GbtMux::fromString(mOptions.gbtMux));
-      params.setGeneratorLoopback(LoopbackMode::fromString(mOptions.loopbackMode));
-
-      if ((params.getGeneratorLoopbackRequired() != LoopbackMode::type::Internal) && 
-          (params.getGeneratorLoopbackRequired() != LoopbackMode::type::None)) {
-        std::cout << "Unsupported loopback mode; Defaulting to NONE" << std::endl;
-        params.setGeneratorLoopback(LoopbackMode::type::None);
-      }
+      params.setLinkLoopbackEnabled(mOptions.linkLoopbackEnabled);
 
       auto cardConfigurator = CardConfigurator(params);
     } else if (!strncmp(mOptions.configFile.c_str(), "file:", 5)) {
@@ -128,8 +122,8 @@ class ProgramConfig: public Program
     std::string gbtMode = "gbt";
     std::string gbtMux = "ttc";
     std::string links = "0";
-    std::string loopbackMode = "NONE";
     std::string configFile = "";
+    bool linkLoopbackEnabled = false;
     bool configAll= false;
   }mOptions;
 

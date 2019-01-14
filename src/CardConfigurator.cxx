@@ -36,7 +36,7 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
 
   Clock::type clock = Clock::type::Local;
   DatapathMode::type datapathMode = DatapathMode::type::Packet;
-  LoopbackMode::type loopback = LoopbackMode::type::None;
+  bool loopback = false;
   GbtMode::type gbtMode = GbtMode::type::Gbt;
   DownstreamData::type downstreamData = DownstreamData::type::Ctp;
 
@@ -86,16 +86,15 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
     }
 
     try {
-      parsedString = configFile.getValue<std::string>(globalGroup + ".loopback");
-      loopback = LoopbackMode::fromString(parsedString);
+      loopback = configFile.getValue<bool>(globalGroup + ".loopback");
     } catch(...) {
       std::cout << "Invalid or missing loopback property" << std::endl;
     }
   }
 
+  parameters.setLinkLoopbackEnabled(loopback);
   parameters.setClock(clock);
   parameters.setDatapathMode(datapathMode);
-  parameters.setGeneratorLoopback(loopback);
   parameters.setGbtMode(gbtMode);
   parameters.setDownstreamData(downstreamData);
 
