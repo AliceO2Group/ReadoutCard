@@ -52,10 +52,10 @@ class ProgramConfig: public Program
        po::value<std::string>(&mOptions.configFile)->default_value(""),
        "Configuration file [file:*.cfg]")
       ("loopback",
-       po::value<bool>(&mOptions.linkLoopbackEnabled)->default_value(false),
+       po::bool_switch(&mOptions.linkLoopbackEnabled),
        "Flag to enable link loopback for DDG")
       ("config-all",
-       po::value<bool>(&mOptions.configAll)->default_value(false),
+       po::bool_switch(&mOptions.configAll),
        "Flag to configure all cards with default parameters on startup");
     Options::addOptionCardId(options);
   }
