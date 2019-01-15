@@ -122,6 +122,12 @@ class ProgramDmaBench: public Program
           ("dma-channel",
               po::value<int>(&mOptions.dmaChannel)->default_value(0),
               "DMA channel selection (note: C-RORC has channels 0 to 5, CRU only 0)")
+          ("error-check-frequency",
+             po::value<uint64_t>(&mOptions.errorCheckFrequency)->default_value(1),
+             "Frequency of readout pages to check for errors")
+          ("fast-check",
+             po::bool_switch(&mOptions.fastCheckEnabled),
+             "Enable fast error checking")
           ("generator",
               po::value<bool>(&mOptions.generatorEnabled)->default_value(true),
               "Enable data generator")
@@ -286,6 +292,18 @@ class ProgramDmaBench: public Program
       getLogger() << "Page limit: " << mMaxPages << endm;
       getLogger() << "Pages per superpage: " << mPagesPerSuperpage << endm;
 
+      if(!mOptions.noErrorCheck) {
+        if (mOptions.errorCheckFrequency < 0x1 || mOptions.errorCheckFrequency > 0xff) {
+          throw ParameterException() << ErrorInfo::Message("Frequency of readout pages to fast check has to be in the range [1,255]");
+        }
+        mErrorCheckFrequency = mOptions.errorCheckFrequency;
+        getLogger() << "Error check frequency: " << mErrorCheckFrequency << " readout page(s)" << endm;
+        if (mOptions.fastCheckEnabled) {
+          mFastCheckEnabled = mOptions.fastCheckEnabled;
+          getLogger() << "Fast check enabled" << endm;
+        }
+      }
+     
       if (mOptions.dataGeneratorSize != 0) {
         params.setGeneratorDataSize(mOptions.dataGeneratorSize);
         getLogger() << "Generator data size: " << mOptions.dataGeneratorSize << endm;
@@ -619,12 +637,17 @@ class ProgramDmaBench: public Program
 
     bool checkErrorsCru(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId, std::string loopbackMode)
     {
-      if (loopbackMode == "DDG")
-        return checkErrorsCruDdg(pageAddress, pageSize, eventNumber, linkId);
-      else if (loopbackMode == "INTERNAL")
+      if (loopbackMode == "DDG") {
+        if (eventNumber % mErrorCheckFrequency == 0) {
+          return checkErrorsCruDdg(pageAddress, pageSize, eventNumber, linkId);
+        } else { //no check -> no error
+          return false;
+        }
+      } else if (loopbackMode == "INTERNAL") {
         return checkErrorsCruInternal(pageAddress, pageSize, eventNumber, linkId);
-      else
+      } else {
         throw std::runtime_error("CRU error check: Loopback Mode not supported");
+      }
     }
  
     bool checkErrorsCruInternal(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
@@ -699,7 +722,7 @@ class ProgramDmaBench: public Program
         mErrorStream << b::format("resync packet counter for e:%d l:%d packet_cnt:%x mpacket_cnt:%x\n") % eventNumber % linkId % packetCounter % 
           mPacketCounters[linkId];
         mPacketCounters[linkId] = packetCounter;
-      } else if (((mPacketCounters[linkId] + 1) % 0x100) != packetCounter) { //packetCounter is 8bits long
+      } else if (((mPacketCounters[linkId] + mErrorCheckFrequency) % 0x100) != packetCounter) { //packetCounter is 8bits long
         // log packet counter error
         mErrorCount++;
         if (mErrorCount < MAX_RECORDED_ERRORS) {
@@ -708,8 +731,13 @@ class ProgramDmaBench: public Program
         }
         return true;
       } else {
-        //mErrorStream << b::format("packet_cnt:%x mpacket_cnt:%x\n") % packetCounter % mPacketCounters[linkId];
-        mPacketCounters[linkId] = packetCounter; // same as = (mPacketCounters + 1) % 0x100
+        //mErrorStream << b::format("packet_cnt:%d mpacket_cnt:%d freq:%d en:%d\n") % packetCounter % mPacketCounters[linkId] % mErrorCheckFrequency % eventNumber;
+        mPacketCounters[linkId] = packetCounter; // same as = (mPacketCounters + mErrorCheckFrequency) % 0x100
+      }
+
+      // Skip data check if fast check enabled
+      if (mFastCheckEnabled) {
+        return false;
       }
 
       // Get counter value only if page is valid...
@@ -1017,6 +1045,8 @@ class ProgramDmaBench: public Program
     struct OptionsStruct {
         uint64_t maxBytes = 0; ///< Limit of bytes to push
         int dmaChannel = 0;
+        uint64_t errorCheckFrequency;
+        bool fastCheckEnabled;
         bool fileOutputAscii = false;
         bool fileOutputBin = false;
         bool resetChannel = false;
@@ -1110,6 +1140,12 @@ class ProgramDmaBench: public Program
 
     /// Optional time limit
     boost::optional<TimePoint> mTimeLimitOptional;
+
+    /// Flag to enable fast error checking
+    bool mFastCheckEnabled = false;
+
+    /// The frequency of readout pages to error check
+    uint64_t mErrorCheckFrequency = 1; 
 
     struct RunTime
     {
