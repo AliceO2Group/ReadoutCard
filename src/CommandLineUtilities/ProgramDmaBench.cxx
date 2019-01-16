@@ -347,7 +347,6 @@ class ProgramDmaBench: public Program
           << endm;
       }
 
-      mRunTime.start = std::chrono::steady_clock::now();
       dmaLoop();
       mRunTime.end = std::chrono::steady_clock::now();
 
@@ -414,6 +413,10 @@ class ProgramDmaBench: public Program
             // Status display updates
             // Wait until the DMA has really started before printing our table to avoid messy output
             if (!mOptions.noDisplay && mPushCount.load(std::memory_order_relaxed) != 0) {
+              if (!mRunTimeStarted) { // Start counting time when the first page arrives
+                mRunTime.start = std::chrono::steady_clock::now();
+                mRunTimeStarted = true;
+              }
               updateStatusDisplay();
             }
             next += LOW_PRIORITY_INTERVAL;
@@ -862,7 +865,7 @@ class ProgramDmaBench: public Program
        format % (mReadoutCount.load(std::memory_order_relaxed) / mPagesPerSuperpage);
 
        double runTime = std::chrono::duration<double>(steady_clock::now() - mRunTime.start).count();
-       double bytes = double(mReadoutCount.load()) * mPageSize;
+       double bytes = double(mReadoutCount.load(std::memory_order_relaxed)) * mPageSize;
        double Gb = bytes * 8 / (1000 * 1000 * 1000);
        double Gbps = Gb / runTime;
        format % Gbps;
@@ -1152,6 +1155,9 @@ class ProgramDmaBench: public Program
         TimePoint start; ///< Start of run time
         TimePoint end; ///< End of run time
     } mRunTime;
+
+    /// Flag that marks that runtime has started
+    bool mRunTimeStarted = false;
 };
 
 int main(int argc, char** argv)
