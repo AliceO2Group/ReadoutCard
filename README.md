@@ -146,6 +146,12 @@ params.setClock(Parameters::Clock::type::Local);
 The above parameters will be set for the enabled links, as specified by the `LinkMask` parameter. See the [LinkMask](#linkmask) section
 for more info.
 
+Note that for `LinkLoopbackEnabled` it is sufficient to do the following, as it is simply a boolean.
+
+```
+params.setLinkLoopbackEnabled(true);
+```
+
 ### Configuration File
 
 The string containing the path to the configuration file has to start with "file:", otherwise the
