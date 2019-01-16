@@ -103,6 +103,16 @@ If one or more superpage have arrived, they can be inspected and popped using th
 
 DMA can be paused and resumed at any time using `stopDma()` and `startDma()`
 
+### Data Source
+
+In order to set the data source for the CRU, the generator & loopback parameters for the CRU DMA Channel should now be used as follows:
+
+| `GeneratorEnabled` | `GeneratorLoopback` | Data Source |
+| ------------------ | ------------------- | ----------- |
+| `false`            | `None`              | FEE (GBT)   |
+| `true`             | `Ddg`               | DDG (GBT)   |
+| `true`             | `Internal`          | DG          |
+
 Card Configurator
 -------------------
 The `CardConfigurator` class offers an interface to configure the Readout Card (_currently only implemented for the CRU_). In
