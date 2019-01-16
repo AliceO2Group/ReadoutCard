@@ -124,7 +124,7 @@ class ProgramDmaBench: public Program
               "DMA channel selection (note: C-RORC has channels 0 to 5, CRU only 0)")
           ("error-check-frequency",
              po::value<uint64_t>(&mOptions.errorCheckFrequency)->default_value(1),
-             "Frequency of readout pages to check for errors")
+             "Frequency of dma pages to check for errors")
           ("fast-check",
              po::bool_switch(&mOptions.fastCheckEnabled),
              "Enable fast error checking")
@@ -294,10 +294,10 @@ class ProgramDmaBench: public Program
 
       if(!mOptions.noErrorCheck) {
         if (mOptions.errorCheckFrequency < 0x1 || mOptions.errorCheckFrequency > 0xff) {
-          throw ParameterException() << ErrorInfo::Message("Frequency of readout pages to fast check has to be in the range [1,255]");
+          throw ParameterException() << ErrorInfo::Message("Frequency of dma pages to fast check has to be in the range [1,255]");
         }
         mErrorCheckFrequency = mOptions.errorCheckFrequency;
-        getLogger() << "Error check frequency: " << mErrorCheckFrequency << " readout page(s)" << endm;
+        getLogger() << "Error check frequency: " << mErrorCheckFrequency << " dma page(s)" << endm;
         if (mOptions.fastCheckEnabled) {
           mFastCheckEnabled = mOptions.fastCheckEnabled;
           getLogger() << "Fast check enabled" << endm;
@@ -1144,7 +1144,7 @@ class ProgramDmaBench: public Program
     /// Flag to enable fast error checking
     bool mFastCheckEnabled = false;
 
-    /// The frequency of readout pages to error check
+    /// The frequency of dma pages to error check
     uint64_t mErrorCheckFrequency = 1; 
 
     struct RunTime
