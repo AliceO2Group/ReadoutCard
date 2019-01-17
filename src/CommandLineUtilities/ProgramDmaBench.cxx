@@ -56,6 +56,8 @@ namespace {
 constexpr auto DATA_COUNTER_INITIAL_VALUE = std::numeric_limits<uint32_t>::max();
 /// Initial value for link packet counters
 constexpr auto PACKET_COUNTER_INITIAL_VALUE = std::numeric_limits<uint32_t>::max();
+/// Initial value for link event counters
+constexpr auto EVENT_COUNTER_INITIAL_VALUE = std::numeric_limits<uint32_t>::max();
 /// Maximum supported links
 constexpr auto MAX_LINKS = 32;
 /// Interval for low priority thread (display updates, etc)
@@ -202,6 +204,11 @@ class ProgramDmaBench: public Program
       for (auto&i : mPacketCounters) {
         i = PACKET_COUNTER_INITIAL_VALUE;
       }
+
+      for (auto&i : mEventCounters) {
+        i = EVENT_COUNTER_INITIAL_VALUE;
+      }
+
 
       getLogger() << "DMA channel: " << mOptions.dmaChannel << endm;
 
@@ -641,7 +648,8 @@ class ProgramDmaBench: public Program
     bool checkErrorsCru(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId, std::string loopbackMode)
     {
       if (loopbackMode == "DDG") {
-        if (eventNumber % mErrorCheckFrequency == 0) {
+        mEventCounters[linkId] = (mEventCounters[linkId] + 1) % EVENT_COUNTER_INITIAL_VALUE;
+        if (mEventCounters[linkId] % mErrorCheckFrequency == 0) {
           return checkErrorsCruDdg(pageAddress, pageSize, eventNumber, linkId);
         } else { //no check -> no error
           return false;
@@ -722,15 +730,15 @@ class ProgramDmaBench: public Program
       const auto packetCounter = Cru::DataFormat::getPacketCounter(reinterpret_cast<const char*>(pageAddress));
 
       if (mPacketCounters[linkId] == PACKET_COUNTER_INITIAL_VALUE) {
-        mErrorStream << b::format("resync packet counter for e:%d l:%d packet_cnt:%x mpacket_cnt:%x\n") % eventNumber % linkId % packetCounter % 
-          mPacketCounters[linkId];
+        mErrorStream << b::format("resync packet counter for e:%d l:%d packet_cnt:%x mpacket_cnt:%x le:%d \n") % eventNumber % linkId % packetCounter % 
+          mPacketCounters[linkId] % mEventCounters[linkId];
         mPacketCounters[linkId] = packetCounter;
       } else if (((mPacketCounters[linkId] + mErrorCheckFrequency) % 0x100) != packetCounter) { //packetCounter is 8bits long
         // log packet counter error
         mErrorCount++;
         if (mErrorCount < MAX_RECORDED_ERRORS) {
-          mErrorStream << b::format("[RDHERR]\tevent:%1% l:%2% payloadBytes:%3% size:%4% packet_cnt:%5% mpacket_cnt:%6% unexpected packet counter\n")
-            % eventNumber % linkId % memBytes % pageSize % packetCounter % mPacketCounters[linkId];
+          mErrorStream << b::format("[RDHERR]\tevent:%1% l:%2% payloadBytes:%3% size:%4% packet_cnt:%5% mpacket_cnt:%6% levent:%7% unexpected packet counter\n")
+            % eventNumber % linkId % memBytes % pageSize % packetCounter % mPacketCounters[linkId] % mEventCounters[linkId];
         }
         return true;
       } else {
@@ -1088,6 +1096,9 @@ class ProgramDmaBench: public Program
 
     // Packet counter per link
     std::array<std::atomic<uint32_t>, MAX_LINKS> mPacketCounters;
+
+    // Event counter per link
+    std::array<std::atomic<uint32_t>, MAX_LINKS> mEventCounters;
 
     // Keep these as DMA page counters for better granularity
     /// Amount of DMA pages pushed
