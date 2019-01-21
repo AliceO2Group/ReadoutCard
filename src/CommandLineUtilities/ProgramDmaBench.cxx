@@ -626,7 +626,12 @@ class ProgramDmaBench: public Program
             hasError = checkErrorsCrorc(pageAddress, pageSize, readoutCount, linkId);
             break;
           case CardType::Cru:
-            hasError = checkErrorsCru(pageAddress, pageSize, readoutCount, linkId, mOptions.loopbackModeString);
+            mEventCounters[linkId] = (mEventCounters[linkId] + 1) % EVENT_COUNTER_INITIAL_VALUE;
+            if (mEventCounters[linkId] % mErrorCheckFrequency == 0) {
+              hasError = checkErrorsCru(pageAddress, pageSize, readoutCount, linkId, mOptions.loopbackModeString);
+            } else {
+              hasError = false;
+            }
             break;
           default:
             throw std::runtime_error("Error checking unsupported for this card type");
@@ -648,12 +653,7 @@ class ProgramDmaBench: public Program
     bool checkErrorsCru(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId, std::string loopbackMode)
     {
       if (loopbackMode == "DDG") {
-        mEventCounters[linkId] = (mEventCounters[linkId] + 1) % EVENT_COUNTER_INITIAL_VALUE;
-        if (mEventCounters[linkId] % mErrorCheckFrequency == 0) {
-          return checkErrorsCruDdg(pageAddress, pageSize, eventNumber, linkId);
-        } else { //no check -> no error
-          return false;
-        }
+        return checkErrorsCruDdg(pageAddress, pageSize, eventNumber, linkId);
       } else if (loopbackMode == "INTERNAL") {
         return checkErrorsCruInternal(pageAddress, pageSize, eventNumber, linkId);
       } else {
