@@ -563,7 +563,7 @@ class ProgramDmaBench: public Program
         auto size = mChannel->getReadyQueueSize();
         for (int i = 0; i < size; ++i) {
           auto superpage = mChannel->popSuperpage();
-          if (mOptions.loopbackModeString == "NONE") { //if it's ddg
+          if (mOptions.loopbackModeString == "NONE" || mOptions.loopbackModeString == "DDG") { // TODO: CRORC?
             int pages = mSuperpageSize / mPageSize;
             for (int i = 0; i < pages; ++i) {
               auto readoutCount = fetchAddReadoutCount();
