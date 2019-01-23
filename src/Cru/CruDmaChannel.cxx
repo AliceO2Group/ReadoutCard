@@ -96,7 +96,13 @@ CruDmaChannel::~CruDmaChannel()
 {
   setBufferNonReady();
   if (mReadyQueue.size() > 0) {
-    log((format("Remaining superpages in the ready queue: %1%") % mReadyQueue.size()).str()); }
+    log((format("Remaining superpages in the ready queue: %1%") % mReadyQueue.size()).str());
+  }
+
+  if (mLoopbackMode == LoopbackMode::Internal) {
+    resetDebugMode();
+  }
+
 }
 
 void CruDmaChannel::deviceStartDma()
@@ -110,6 +116,7 @@ void CruDmaChannel::deviceStartDma()
   uint32_t dataSourceSelection = 0x0;
   if (mGeneratorEnabled) {
     if (mLoopbackMode == LoopbackMode::Internal) {
+      enableDebugMode();
       dataSourceSelection = Cru::Registers::DATA_SOURCE_SELECT_INTERNAL;
     } else if (mLoopbackMode == LoopbackMode::Ddg) {
       dataSourceSelection = Cru::Registers::DATA_SOURCE_SELECT_GBT;
@@ -334,6 +341,19 @@ bool CruDmaChannel::injectError()
     return true;
   } else {
     return false;
+  }
+}
+
+void CruDmaChannel::enableDebugMode() {
+  if(!getBar()->getDebugModeEnabled()) {
+    getBar()->setDebugModeEnabled(true);
+    mDebugRegisterReset = true;
+  }
+}
+
+void CruDmaChannel::resetDebugMode() {
+  if (mDebugRegisterReset) {
+    getBar()->setDebugModeEnabled(false);
   }
 }
 
