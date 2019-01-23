@@ -49,8 +49,6 @@ class CruBar final : public BarInterfaceBase
     virtual int32_t getLinks() override;
     virtual int32_t getLinksPerWrapper(int wrapper) override;
 
-
-
     void pushSuperpageDescriptor(uint32_t link, uint32_t pages, uintptr_t busAddress);
     uint32_t getSuperpageCount(uint32_t link);
     void setDataEmulatorEnabled(bool enabled);
@@ -72,6 +70,9 @@ class CruBar final : public BarInterfaceBase
     void setWrapperCount();
     void configure() override;
     Cru::ReportInfo report();
+    
+    void enableDataTaking();
+    void disableDataTaking();
 
     void setDebugModeEnabled(bool enabled);
     bool getDebugModeEnabled();
@@ -89,7 +90,6 @@ class CruBar final : public BarInterfaceBase
     uint32_t getFpgaChipHigh();
     uint32_t getFpgaChipLow();
     std::vector<Link> populateLinkList();
-    void disableDataTaking();
     int getDdgBurstLength();
     //void checkParameters();
 

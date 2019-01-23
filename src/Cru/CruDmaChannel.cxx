@@ -152,6 +152,12 @@ void CruDmaChannel::deviceStartDma()
 
   // Start DMA
   setBufferReady();
+
+  // Enable data taking
+  if (dataSourceSelection == Cru::Registers::DATA_SOURCE_SELECT_GBT) {
+    getBar2()->disableDataTaking(); // Make sure we don't start from a bad state
+    getBar2()->enableDataTaking();
+  }
 }
 
 /// Set buffer to ready
@@ -170,6 +176,7 @@ void CruDmaChannel::setBufferNonReady()
 void CruDmaChannel::deviceStopDma()
 {
   setBufferNonReady();
+  getBar2()->disableDataTaking();
   int moved = 0;
   for (auto& link : mLinks) {
     int32_t superpageCount = getBar()->getSuperpageCount(link.id);
