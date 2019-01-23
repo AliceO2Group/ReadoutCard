@@ -144,6 +144,9 @@ class ProgramDmaBench: public Program
           ("loopback",
               po::value<std::string>(&mOptions.loopbackModeString)->default_value("INTERNAL"),
               "Generator loopback mode [NONE, INTERNAL, DIU, SIU, DDG]")
+          ("max-rdh-packetcount",
+             po::value<size_t>(&mOptions.maxRdhPacketCounter)->default_value(255),
+             "Maximum packet counter expected in the RDH")
           ("no-errorcheck",
               po::bool_switch(&mOptions.noErrorCheck),
               "Skip error checking")
@@ -309,6 +312,8 @@ class ProgramDmaBench: public Program
           mFastCheckEnabled = mOptions.fastCheckEnabled;
           getLogger() << "Fast check enabled" << endm;
         }
+        mMaxRdhPacketCounter = mOptions.maxRdhPacketCounter;
+        getLogger() << "Maximum RDH packet counter" << mMaxRdhPacketCounter << endm;
       }
      
       if (mOptions.dataGeneratorSize != 0) {
@@ -733,7 +738,7 @@ class ProgramDmaBench: public Program
         mErrorStream << b::format("resync packet counter for e:%d l:%d packet_cnt:%x mpacket_cnt:%x le:%d \n") % eventNumber % linkId % packetCounter % 
           mPacketCounters[linkId] % mEventCounters[linkId];
         mPacketCounters[linkId] = packetCounter;
-      } else if (((mPacketCounters[linkId] + mErrorCheckFrequency) % 0x100) != packetCounter) { //packetCounter is 8bits long
+      } else if (((mPacketCounters[linkId] + mErrorCheckFrequency) % (mMaxRdhPacketCounter + 1)) != packetCounter) { //packetCounter is 8bits long
         // log packet counter error
         mErrorCount++;
         if (mErrorCount < MAX_RECORDED_ERRORS) {
@@ -743,7 +748,7 @@ class ProgramDmaBench: public Program
         return true;
       } else {
         //mErrorStream << b::format("packet_cnt:%d mpacket_cnt:%d freq:%d en:%d\n") % packetCounter % mPacketCounters[linkId] % mErrorCheckFrequency % eventNumber;
-        mPacketCounters[linkId] = packetCounter; // same as = (mPacketCounters + mErrorCheckFrequency) % 0x100
+        mPacketCounters[linkId] = packetCounter; // same as = (mPacketCounters + mErrorCheckFrequency) % mMaxRdhPacketCounter
       }
 
       // Skip data check if fast check enabled
@@ -1083,6 +1088,7 @@ class ProgramDmaBench: public Program
         std::string timeLimitString;
         uint64_t pausePush;
         uint64_t pauseRead;
+        size_t maxRdhPacketCounter;
     } mOptions;
 
     /// The DMA channel
@@ -1169,6 +1175,9 @@ class ProgramDmaBench: public Program
 
     /// Flag that marks that runtime has started
     bool mRunTimeStarted = false;
+
+    /// The maximum value of the RDH Packet Counter
+    size_t mMaxRdhPacketCounter;
 };
 
 int main(int argc, char** argv)
