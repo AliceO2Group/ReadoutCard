@@ -561,6 +561,11 @@ int CruBar::getDdgBurstLength()
   return Utilities::getWidth(burst);
 }
 
+void CruBar::enableDataTaking()
+{
+  modifyRegister(Cru::Registers::BSP_USER_CONTROL.index, 0, 1, 0x1);
+}
+
 void CruBar::disableDataTaking()
 {
   modifyRegister(Cru::Registers::BSP_USER_CONTROL.index, 0, 1, 0x0);
