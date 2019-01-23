@@ -73,6 +73,9 @@ class CruBar final : public BarInterfaceBase
     void configure() override;
     Cru::ReportInfo report();
 
+    void setDebugModeEnabled(bool enabled);
+    bool getDebugModeEnabled();
+
   private:
     uint32_t getSerialNumber();
     uint32_t getTemperatureRaw();

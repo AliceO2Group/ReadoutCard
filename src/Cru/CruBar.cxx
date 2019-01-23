@@ -566,5 +566,24 @@ void CruBar::disableDataTaking()
   modifyRegister(Cru::Registers::BSP_USER_CONTROL.index, 0, 1, 0x0);
 }
 
+void CruBar::setDebugModeEnabled(bool enabled)
+{
+  if (enabled) {
+    writeRegister(Cru::Registers::DEBUG.index, 0x2);
+  } else {
+    writeRegister(Cru::Registers::DEBUG.index, 0x0);
+  }
+}
+
+bool CruBar::getDebugModeEnabled()
+{
+  uint32_t debugMode = readRegister(Cru::Registers::DEBUG.index);
+  if (debugMode == 0x0) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
 } // namespace roc
 } // namespace AliceO2

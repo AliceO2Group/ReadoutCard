@@ -106,6 +106,12 @@ class CruDmaChannel final : public DmaChannelPdaBase
     /// Mark the front superpage of a link ready and transfer it to the ready queue
     void transferSuperpageFromLinkToReady(Link& link);
 
+    /// Enable debug mode by writing to the appropriate CRU register
+    void enableDebugMode();
+
+    /// Reset debug mode to the state it was in prior to the start of execution
+    void resetDebugMode();
+
     /// BAR 0 is needed for DMA engine interaction and various other functions
     std::shared_ptr<CruBar> cruBar;
 
@@ -155,6 +161,9 @@ class CruDmaChannel final : public DmaChannelPdaBase
 
     /// Length of data written to each page
     const size_t mGeneratorDataSize;
+
+    /// Flag to know if we should reset the debug register after we fiddle with it
+    bool mDebugRegisterReset = false;
 };
 
 } // namespace roc
