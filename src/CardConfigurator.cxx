@@ -12,20 +12,29 @@
 namespace AliceO2 {
 namespace roc {
 
-CardConfigurator::CardConfigurator(Parameters::CardIdType cardId, std::string pathToConfigFile)
+CardConfigurator::CardConfigurator(Parameters::CardIdType cardId, std::string pathToConfigFile, bool forceConfigure)
 { 
   auto parameters = Parameters::makeParameters(cardId, 2); //have to make parameters for this case, bar2
   parseConfigFile(pathToConfigFile, parameters);
 
   auto bar2 = ChannelFactory().getBar(parameters);
-  bar2->configure();
+  if (forceConfigure) {
+    bar2->configure();
+  } else {
+    bar2->reconfigure();
+  }
 }
 
-CardConfigurator::CardConfigurator(Parameters& parameters)
+CardConfigurator::CardConfigurator(Parameters& parameters, bool forceConfigure)
 {
   auto bar2 = ChannelFactory().getBar(parameters);
-  bar2->configure();
+  if (forceConfigure) {
+    bar2->configure();
+  } else {
+    bar2->reconfigure();
+  }
 }
+
 
 /// pathToConfigFile: Has to start with "file:"
 void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters& parameters)
@@ -158,6 +167,5 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
   parameters.setLinkMask(linkMask);
   parameters.setGbtMuxMap(gbtMuxMap);
 }
-
 } // namespace roc
 } // namespace AliceO2

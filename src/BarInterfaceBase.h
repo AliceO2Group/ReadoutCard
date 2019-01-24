@@ -99,7 +99,12 @@ class BarInterfaceBase: public BarInterface
     {
       std::cout << "Configure unavailable for interface" << std::endl;
     }
-   
+     /// Default implementation for optional function
+    void reconfigure() override
+    {
+      std::cout << "Reonfigure unavailable for interface" << std::endl;
+    }
+
   protected:
     /// BAR index
     int mBarIndex;

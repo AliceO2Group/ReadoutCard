@@ -26,6 +26,25 @@ struct Link {
   bool loopback = false;
   DatapathMode::type datapathMode = DatapathMode::type::Packet;
   bool enabled = false;
+
+  bool operator== (const Link &dlink) const{
+    if (enabled == dlink.enabled) {
+    return (dwrapper == dlink.dwrapper &&
+      wrapper == dlink.wrapper &&
+      bank == dlink.bank &&
+      id == dlink.id &&
+      dwrapperId == dlink.dwrapperId &&
+      baseAddress == dlink.baseAddress &&
+      gbtMux == dlink.gbtMux &&
+      gbtTxMode == dlink.gbtTxMode &&
+      gbtRxMode == dlink.gbtRxMode &&
+      loopback == dlink.loopback &&
+      datapathMode == dlink.datapathMode &&
+      enabled == dlink.enabled);
+    } else {
+      return true;
+    }
+  }
 };
 
 struct ReportInfo {

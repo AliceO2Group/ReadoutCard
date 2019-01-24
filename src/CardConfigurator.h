@@ -15,8 +15,8 @@ namespace roc {
 class CardConfigurator
 {
   public:
-    CardConfigurator(Parameters::CardIdType cardId, std::string pathToConfigFile);
-    CardConfigurator(Parameters& parameters);
+    CardConfigurator(Parameters::CardIdType cardId, std::string pathToConfigFile, bool forceConfigure=false);
+    CardConfigurator(Parameters& parameters, bool forceConfigure=false);
 
   private:
     void parseConfigFile(std::string pathToConfigFile, Parameters& parameters);

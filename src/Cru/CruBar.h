@@ -69,6 +69,7 @@ class CruBar final : public BarInterfaceBase
 
     void setWrapperCount();
     void configure() override;
+    void reconfigure() override;
     Cru::ReportInfo report();
     
     void enableDataTaking();
@@ -86,7 +87,8 @@ class CruBar final : public BarInterfaceBase
     uint32_t getFirmwareTime();
     uint32_t getFpgaChipHigh();
     uint32_t getFpgaChipLow();
-    std::vector<Link> populateLinkList();
+    std::vector<Link> initializeLinkList(bool checkAll=false);
+    void populateLinkList(std::vector<Link> &linkList);
     int getDdgBurstLength();
     //void checkParameters();
 

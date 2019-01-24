@@ -392,20 +392,21 @@ void CruBar::setDataGeneratorRandomSizeBits(uint32_t& bits, bool enabled)
 /// Reports the CRU status
 Cru::ReportInfo CruBar::report()
 {
-  setWrapperCount();
-  mLinkList = populateLinkList(); 
+  // Check all links, not only those specified in mLinkMask
+  bool checkAll = true;
+  std::vector<Link> linkList = initializeLinkList(checkAll); 
   /*for (auto const& link: mLinkList)
     std::cout << "link: " << link.id << std::endl;*/
  
   // Update mLinkList
-  Gbt gbt = Gbt(mPdaBar, mLinkList, mWrapperCount);
+  Gbt gbt = Gbt(mPdaBar, linkList, mWrapperCount);
   gbt.getGbtModes();
   gbt.getGbtMuxes();
   gbt.getLoopbacks();
 
   DatapathWrapper datapathWrapper = DatapathWrapper(mPdaBar);
 
-  for (auto& link: mLinkList) {
+  for (auto& link: linkList) {
     link.datapathMode = datapathWrapper.getDatapathMode(link);
     link.enabled = datapathWrapper.getLinkEnabled(link);
   }
@@ -415,12 +416,29 @@ Cru::ReportInfo CruBar::report()
   uint32_t downstreamData = ttc.getDownstreamData();
 
   Cru::ReportInfo reportInfo = {
-    mLinkList,
+    linkList,
     clock,
     downstreamData
   };
 
   return reportInfo;
+}
+
+void CruBar::reconfigure()
+{
+  // Get current info
+  Cru::ReportInfo reportInfo = report();
+
+  populateLinkList(mLinkList);
+
+  if (static_cast<uint32_t>(mClock) == reportInfo.ttcClock && static_cast<uint32_t>(mDownstreamData) == reportInfo.downstreamData &&
+      std::equal(mLinkList.begin(), mLinkList.end(), reportInfo.linkList.begin())) {
+    std::cout << "No need to reconfigure further" << std::endl;
+    return;
+  } else {
+    std::cout << "Reconfiguring" << std::endl;
+    configure();
+  }
 }
 
 /// Configures the CRU according to the parameters passed on init
@@ -429,14 +447,12 @@ void CruBar::configure()
 
   bool ponUpstream = false;
   uint32_t onuAddress = 0xbadcafe;
+  
+  if (mLinkList.empty()) {
+    populateLinkList(mLinkList);
+  }
 
-  setWrapperCount();
-  mLinkList = populateLinkList();
-  //for (auto const& link: mLinkList)
-  //  std::cout << "link: " << link.id << std::endl;
-  
-  //getDdgBurstLength(); // Not needed yet
-  
+  /* TTC */
   Ttc ttc = Ttc(mPdaBar);
 
   std::cout << "Calibrating TTC" << std::endl;
@@ -452,21 +468,10 @@ void CruBar::configure()
   std::cout << "Setting Downstream Data" << std::endl;
   ttc.selectDownstreamData(mDownstreamData);
 
-  Gbt gbt = Gbt(mPdaBar, mLinkList, mWrapperCount);
-
-  std::cout << "Setting GBT MUX" << std::endl;
-  for (auto const& link: mLinkList)
-    gbt.setMux(link, link.gbtMux);
-
+  /* GBT */
   std::cout << "Calibrating GBT" << std::endl;
+  Gbt gbt = Gbt(mPdaBar, mLinkList, mWrapperCount);
   gbt.calibrateGbt();
-  std::cout << "Configuring GBT" << std::endl;
-  for (auto const& link: mLinkList) {
-    gbt.setInternalDataGenerator(link, 0);
-    gbt.setTxMode(link, Cru::GBT_MODE_GBT); //TX is always GBT
-    gbt.setRxMode(link, mGbtMode);          //RX may also be WB
-    gbt.setLoopback(link, mLoopback);
-  }
 
   /* BSP */
   disableDataTaking();
@@ -508,10 +513,13 @@ void CruBar::setWrapperCount()
   mWrapperCount = wrapperCount;
 }
 
-/// Returns a LinkList populated by the Links specified in mLinkMask
-std::vector<Link> CruBar::populateLinkList()
+/// Returns a LinkList initialized with the Links specified in mLinkMask
+std::vector<Link> CruBar::initializeLinkList(bool checkAll)
 {
   std::vector<Link> links;
+  if (mWrapperCount == 0) {
+    setWrapperCount();
+  }
   for (int wrapper = 0; wrapper<mWrapperCount; wrapper++){
     uint32_t address = Cru::getWrapperBaseAddress(wrapper) + Cru::Registers::GBT_WRAPPER_CONF0.address;
     uint32_t wrapperConfig = readRegister(address/4);
@@ -526,7 +534,7 @@ std::vector<Link> CruBar::populateLinkList()
       }
       for(int link=0; link<linksPerBank; link++) {
 
-        if ((mLinkMask.find(link + bank * linksPerBank) == mLinkMask.end())) {
+        if ((mLinkMask.find(link + bank * linksPerBank) == mLinkMask.end()) && !checkAll) {
           continue;
         }
 
@@ -553,6 +561,25 @@ std::vector<Link> CruBar::populateLinkList()
     }
   }
   return links;
+}
+
+void CruBar::populateLinkList(std::vector<Link> &linkList)
+{
+  linkList = initializeLinkList();
+
+  Gbt gbt = Gbt(mPdaBar, linkList, mWrapperCount);
+
+  std::cout << "Setting GBT MUX" << std::endl;
+  for (auto const& link: linkList)
+    gbt.setMux(link, link.gbtMux);
+
+  std::cout << "Configuring GBT" << std::endl;
+  for (auto const& link: linkList) {
+    gbt.setInternalDataGenerator(link, 0);
+    gbt.setTxMode(link, Cru::GBT_MODE_GBT); //TX is always GBT
+    gbt.setRxMode(link, mGbtMode);          //RX may also be WB
+    gbt.setLoopback(link, mLoopback);
+  }
 }
 
 int CruBar::getDdgBurstLength()

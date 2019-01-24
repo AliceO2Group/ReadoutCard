@@ -53,6 +53,10 @@ void DummyBar::configure()
 {
   std::cout << "Configure unavailable for dummy interfaces" << std::endl;
 }
-    
+
+void DummyBar::reconfigure()
+{
+  std::cout << "Reconfigure unavailable for dummy interfaces" << std::endl;
+}   
 } // namespace roc
 } // namespace AliceO2

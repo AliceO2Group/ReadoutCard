@@ -38,7 +38,7 @@ class ProgramStatus: public Program
     auto cardId = Options::getOptionCardId(map);
     auto params = Parameters::makeParameters(cardId, 2); //status available on BAR2 
     // We care for all of the links
-    params.setLinkMask(Parameters::linkMaskFromString("0-23"));
+    //params.setLinkMask(Parameters::linkMaskFromString("0-23"));
     auto bar2 = ChannelFactory().getBar(params);
 
     CardType::type cardType = bar2->getCardType();
