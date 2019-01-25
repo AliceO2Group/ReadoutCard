@@ -38,15 +38,20 @@ MemoryMappedFile::MemoryMappedFile(const std::string& fileName, size_t fileSize,
   mInternal->fileName = fileName;
   mInternal->deleteFileOnDestruction = deleteFileOnDestruction;
 
-  // Try to acquire the lock on the file
   if (lockMap) {
+    // Try to acquire the lock on the file
     try{
       Utilities::resetSmartPtr(mInterprocessLock, "Alice_O2_RoC_MMF_" + fileName + "_lock");
-      mMapAcquired = map(fileName, fileSize);
-    }
-    catch (const boost::exception& e) {
+    } catch (const boost::exception& e) {
       BOOST_THROW_EXCEPTION(LockException()
-          << ErrorInfo::Message("Memory map file is locked by another process."));
+          << ErrorInfo::Message("Couldn't lock Memory Mapped File; " + boost::diagnostic_information(e)));
+    }
+
+    try {
+      mMapAcquired = map(fileName, fileSize);
+    } catch (const boost::exception& e) {
+      BOOST_THROW_EXCEPTION(MemoryMapException()
+          << ErrorInfo::Message(boost::diagnostic_information(e)));
     }
   }
 }
