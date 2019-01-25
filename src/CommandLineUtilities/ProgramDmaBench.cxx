@@ -259,11 +259,8 @@ class ProgramDmaBench: public Program
           throw ParameterException() << ErrorInfo::Message("Buffer size smaller than superpage size");
         }
 
-        // Add time to the buffer's filename. This way we guard our buffer from being overwritten by another process
-        // as this is before the DMA Channel initialization and no lock protection is in place.
-        std::string bufferName = (b::format("roc-bench-dma_id=%s_chan=%s_%s_pages") % map["id"].as<std::string>()
-            % mOptions.dmaChannel
-            % time(0)).str();
+        std::string bufferName = (b::format("roc-bench-dma_id=%s_chan=%s_pages") % map["id"].as<std::string>()
+            % mOptions.dmaChannel).str();
 
         Utilities::HugepageType hugepageType;
         mMemoryMappedFile = Utilities::tryMapFile(mBufferSize, bufferName, !mOptions.noRemovePagesFile, &hugepageType);
