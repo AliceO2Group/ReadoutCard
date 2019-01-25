@@ -11,6 +11,7 @@
 #include <chrono>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <iostream>
 
 #define LOCK_TIMEOUT 5 //5 second timeout in case we wait for the lock (e.g PDA)
 #define UNIX_SOCK_NAME_LENGTH 104 //108 for most UNIXs, 104 for macOS
@@ -72,8 +73,11 @@ class Lock
       if (mSocketName.length() >= UNIX_SOCK_NAME_LENGTH) {
         std::string lockType = mSocketName.substr(0, 17); // isolate the class that created the lock
                                                           // Alice_O2_RoC_XYZ_*
-        std::size_t lockNameHash = std::hash<std::string>{} (mSocketName); // hash the mutable part
+        std::cout << "mSocketName: " << mSocketName << std::endl;
+        std::cout << "cstr: " << mSocketName.c_str() << std::endl;
+        std::size_t lockNameHash = std::hash<std::string>{} (mSocketName.c_str()); // hash the mutable part
         std::string safeLockName = lockType + std::to_string(lockNameHash) + "_lock"; // return conformant name
+        std::cout << "lockNameHash: " << lockNameHash << std::endl;
         return safeLockName;
       } else {
         return mSocketName;
