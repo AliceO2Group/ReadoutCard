@@ -59,6 +59,8 @@ class BarInterface: public virtual RegisterReadWriteInterface
     virtual int32_t getLinksPerWrapper(int wrapper) = 0;
 
     virtual void configure() = 0;
+    
+    virtual void reconfigure() = 0;
 };
 
 } // namespace roc

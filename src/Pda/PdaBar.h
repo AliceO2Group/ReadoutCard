@@ -150,6 +150,11 @@ class PdaBar : public BarInterface
       std::cout << "Configure invalid through the PDA BAR" << std::endl;
     }
     
+    void reconfigure() override
+    {
+      std::cout << "Reconfigure invalid through the PDA BAR" << std::endl;
+    }
+   
   private:
     template<typename T>
     bool isInRange(size_t offset) const

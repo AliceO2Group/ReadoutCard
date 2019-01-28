@@ -89,6 +89,7 @@ class DummyBar : public BarInterface
 
     void configure() override;
 
+    void reconfigure() override;
   private:
     int mBarIndex;
 };

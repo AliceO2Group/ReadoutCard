@@ -12,8 +12,8 @@ namespace AliceO2 {
 namespace roc {
 namespace Cru {
 
-static constexpr uint32_t CLOCK_TTC(0x0);
-static constexpr uint32_t CLOCK_LOCAL(0x2);
+static constexpr uint32_t CLOCK_TTC(0x1);
+static constexpr uint32_t CLOCK_LOCAL(0x0);
 
 static constexpr uint32_t DATA_CTP(0x0);
 static constexpr uint32_t DATA_PATTERN(0x1);

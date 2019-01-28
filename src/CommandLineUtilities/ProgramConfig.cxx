@@ -56,7 +56,10 @@ class ProgramConfig: public Program
        "Flag to enable link loopback for DDG")
       ("config-all",
        po::bool_switch(&mOptions.configAll),
-       "Flag to configure all cards with default parameters on startup");
+       "Flag to configure all cards with default parameters on startup")
+      ("force-config",
+       po::bool_switch(&mOptions.forceConfig),
+       "Flag to force configuration and not check if the configuration is already present");
     Options::addOptionCardId(options);
   }
 
@@ -77,7 +80,7 @@ class ProgramConfig: public Program
         std::cout << " __== " << card.pciAddress.toString() << " ==__ " << std::endl;
         auto params = Parameters::makeParameters(card.pciAddress, 2);
         try {
-          auto cardConfigurator = CardConfigurator(card.pciAddress, mOptions.configFile);
+          auto cardConfigurator = CardConfigurator(card.pciAddress, mOptions.configFile, mOptions.forceConfig);
         } catch(...) {
           std::cout << "Something went badly reading the configuration file..." << std::endl;
         }
@@ -99,11 +102,11 @@ class ProgramConfig: public Program
       params.setGbtMux(GbtMux::fromString(mOptions.gbtMux));
       params.setLinkLoopbackEnabled(mOptions.linkLoopbackEnabled);
 
-      auto cardConfigurator = CardConfigurator(params);
+      auto cardConfigurator = CardConfigurator(params, mOptions.forceConfig);
     } else if (!strncmp(mOptions.configFile.c_str(), "file:", 5)) {
       std::cout << "Configuring with config file" << std::endl;
       try {
-        auto cardConfigurator = CardConfigurator(cardId, mOptions.configFile);
+        auto cardConfigurator = CardConfigurator(cardId, mOptions.configFile, mOptions.forceConfig);
       } catch(...) {
         std::cout << "Something went badly reading the configuration file..." << std::endl;
       }
@@ -125,6 +128,7 @@ class ProgramConfig: public Program
     std::string configFile = "";
     bool linkLoopbackEnabled = false;
     bool configAll= false;
+    bool forceConfig = false;
   }mOptions;
 
   private:
