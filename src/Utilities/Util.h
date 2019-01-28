@@ -95,14 +95,6 @@ inline bool checkAlignment(void* address, uint64_t alignment)
   return (uint64_t(address) % alignment) == 0;
 }
 
-inline unsigned long hashDjb2(const char *str, size_t length) 
-{
-  unsigned long hash = 5381;
-  for (size_t i = 0; i < length; ++i)
-    hash = 33 * hash + (unsigned char)str[i];
-  return hash;
-}
-
 } // namespace Util
 } // namespace roc
 } // namespace AliceO2
