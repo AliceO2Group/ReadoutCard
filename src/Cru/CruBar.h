@@ -75,6 +75,10 @@ class CruBar final : public BarInterfaceBase
     void enableDataTaking();
     void disableDataTaking();
 
+
+    void setDebugModeEnabled(bool enabled);
+    bool getDebugModeEnabled();
+
   private:
     uint32_t getSerialNumber();
     uint32_t getTemperatureRaw();
@@ -89,6 +93,7 @@ class CruBar final : public BarInterfaceBase
     uint32_t getFpgaChipLow();
     std::vector<Link> initializeLinkList(bool checkAll=false);
     void populateLinkList(std::vector<Link> &linkList);
+
     int getDdgBurstLength();
     //void checkParameters();
 

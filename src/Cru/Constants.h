@@ -85,6 +85,11 @@ static constexpr uint32_t DATA_SOURCE_SELECT_INTERNAL = 0x1;
 /// * Write a 2 to reset data generator counter
 static constexpr Register RESET_CONTROL(0x00000400);
 
+/// Debug register
+/// * Write 0x2 to set debug mode
+/// * Write 0x0 to unset
+static constexpr Register DEBUG(0x00000c00);
+
 ///*** bar2 ***///
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
