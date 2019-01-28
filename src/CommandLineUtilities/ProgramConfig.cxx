@@ -107,8 +107,8 @@ class ProgramConfig: public Program
       std::cout << "Configuring with config file" << std::endl;
       try {
         auto cardConfigurator = CardConfigurator(cardId, mOptions.configFile, mOptions.forceConfig);
-      } catch(...) {
-        std::cout << "Something went badly reading the configuration file..." << std::endl;
+      } catch(std::runtime_error e) {
+        std::cout << "Something went badly reading the configuration file..." << e.what() << std::endl;
       }
     } else {
       std::cout << "Configuration file path should start with 'file:'" << std::endl;

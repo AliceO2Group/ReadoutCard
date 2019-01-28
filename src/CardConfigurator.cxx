@@ -7,7 +7,6 @@
 #include "Common/Configuration.h"
 #include "Cru/CruBar.h"
 #include "ReadoutCard/ChannelFactory.h"
-#include <iostream>
 
 namespace AliceO2 {
 namespace roc {
@@ -56,11 +55,10 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
       configFile.load(pathToConfigFile);
       //configFile.print(); //for debugging
     } else {
-      std::cout << "Configuration file or path invalid;" << std::endl;
-      throw;
+      throw std::runtime_error("Configuration or path invalid");
     }
-  } catch (std::exception &e) {
-    throw std::string(e.what());
+  } catch (std::string e) {
+    throw std::runtime_error(e);
   }
 
   //* Global *//
@@ -70,34 +68,34 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
       parsedString = configFile.getValue<std::string>(globalGroup + ".clock");
       clock = Clock::fromString(parsedString);
     } catch(...) {
-      std::cout << "Invalid or missing clock property" << std::endl;
+      throw std::runtime_error("Invalid or missing clock property");
     }
 
     try {
       parsedString = configFile.getValue<std::string>(globalGroup + ".datapathmode");
       datapathMode = DatapathMode::fromString(parsedString);
     } catch(...) {
-      std::cout << "Invalid or missing datapath mode property" << std::endl;
+      throw std::runtime_error("Invalid or missing datapath mode property");
     }
 
     try {
       parsedString = configFile.getValue<std::string>(globalGroup + ".gbtmode");
       gbtMode = GbtMode::fromString(parsedString);
     } catch(...) {
-      std::cout << "Invalid or missing gbtmode property" << std::endl;
+      throw("Invalid or missing gbtmode property");
     }
 
     try {
       parsedString = configFile.getValue<std::string>(globalGroup + ".downstreamdata");
       downstreamData = DownstreamData::fromString(parsedString);
     } catch(...) {
-      std::cout << "Invalid or missing downstreamdata property" << std::endl;
+      throw("Invalid or missing downstreamdata property");
     }
 
     try {
       loopback = configFile.getValue<bool>(globalGroup + ".loopback");
     } catch(...) {
-      std::cout << "Invalid or missing loopback property" << std::endl;
+      throw("Invalid or missing loopback property");
     }
   }
 
@@ -123,7 +121,7 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
           }
         }
       } catch (...) {
-        std::cout << "Invalid or missing enabled property for all links" << std::endl;
+        throw("Invalid or missing enabled property for all links");
       }
 
       try {
@@ -132,7 +130,7 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
           gbtMuxMap.insert(std::make_pair((uint32_t) i, GbtMux::fromString(gbtMux)));
         }
       } catch(...) {
-        std::cout << "Invalid or missing gbt mux property for all links" << std::endl;
+        throw("Invalid or missing gbt mux property for all links");
       }
       continue;
     }
@@ -149,7 +147,7 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
         linkMask.erase(linkIndex);
       }
     } catch(...) {
-      std::cout << "Invalid or missing enabled property for link: " << linkIndexString << std::endl;
+      throw("Invalid or missing enabled property for link: " + linkIndexString);
     }
 
     try {
@@ -160,7 +158,7 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
         gbtMuxMap.insert(std::make_pair(linkIndex, GbtMux::fromString(gbtMux)));
       }
     } catch(...) {
-      std::cout << "Invalid or missing gbt mux set for link: " << linkIndexString << std::endl;
+      throw("Invalid or missing gbt mux set for link: " + linkIndexString);
     }
   }
 
