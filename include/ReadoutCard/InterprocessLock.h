@@ -11,7 +11,6 @@
 #include <chrono>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <Utilities/Util.h>
 
 #define LOCK_TIMEOUT 5 //5 second timeout in case we wait for the lock (e.g PDA)
 #define UNIX_SOCK_NAME_LENGTH 104 //108 for most UNIXs, 104 for macOS
@@ -73,7 +72,7 @@ class Lock
       if (mSocketName.length() >= UNIX_SOCK_NAME_LENGTH) {
         std::string lockType = mSocketName.substr(0, 17); // isolate the class that created the lock
                                                           // Alice_O2_RoC_XYZ_*
-        unsigned long lockNameHash = Utilities::hashDjb2(mSocketName.c_str(), mSocketName.size()); // hash the mutable part
+        unsigned long lockNameHash = hashDjb2(mSocketName.c_str(), mSocketName.size()); // hash the mutable part
         std::string safeLockName = lockType + std::to_string(lockNameHash) + "_lock"; // return conformant name
         return safeLockName;
       } else {
@@ -81,6 +80,14 @@ class Lock
       }
     }
     
+    unsigned long hashDjb2(const char *str, size_t length) 
+    {
+      unsigned long hash = 5381;
+      for (size_t i = 0; i < length; ++i)
+        hash = 33 * hash + (unsigned char)str[i];
+      return hash;
+    }
+
     int mSocketFd;
     struct sockaddr_un mServerAddress;
     socklen_t mAddressLength = sizeof(struct sockaddr_un);
