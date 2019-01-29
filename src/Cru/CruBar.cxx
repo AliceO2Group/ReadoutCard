@@ -394,7 +394,7 @@ Cru::ReportInfo CruBar::report()
 {
   std::vector<Link> linkList = initializeLinkList(); 
   /*for (auto const& link: mLinkList)
-    std::cout << "link: " << link.id << std::endl;*/
+    mLogger << "link: " << link.id;*/
  
   // Update linkList
   Gbt gbt = Gbt(mPdaBar, linkList, mWrapperCount);
@@ -432,9 +432,9 @@ void CruBar::reconfigure()
   if (static_cast<uint32_t>(mClock) == reportInfo.ttcClock && 
       static_cast<uint32_t>(mDownstreamData) == reportInfo.downstreamData &&
       std::equal(mLinkList.begin(), mLinkList.end(), reportInfo.linkList.begin())) {
-    std::cout << "No need to reconfigure further" << std::endl;
+    log("No need to reconfigure further");
   } else {
-    std::cout << "Reconfiguring" << std::endl;
+    log("Reconfiguring");
     configure();
   }
 }
@@ -450,24 +450,24 @@ void CruBar::configure()
   }
 
   /* GBT */
-  std::cout << "Calibrating GBT" << std::endl;
+  log("Calibrating GBT");
   Gbt gbt = Gbt(mPdaBar, mLinkList, mWrapperCount);
   gbt.calibrateGbt();
 
   /* TTC */
   Ttc ttc = Ttc(mPdaBar);
 
-  std::cout << "Calibrating TTC" << std::endl;
+  log("Calibrating TTC");
   ttc.calibrateTtc();
   
-  std::cout << "Setting the clock" << std::endl;
+  log("Setting the clock");
   ttc.setClock(mClock);
   if (ponUpstream) {
     ttc.resetFpll();
     ttc.configurePonTx(onuAddress);
   }
 
-  std::cout << "Setting Downstream Data" << std::endl;
+  log("Setting downstream data");
   ttc.selectDownstreamData(mDownstreamData);
 
   /* BSP */
@@ -478,7 +478,7 @@ void CruBar::configure()
   datapathWrapper.setLinksEnabled(0, 0x0);
   datapathWrapper.setLinksEnabled(1, 0x0);
 
-  std::cout << "Enabling links and setting datapath mode" << std::endl;
+  log("Enabling links and setting datapath mode");
   for (auto const& link: mLinkList) { 
     if (link.enabled) {
       datapathWrapper.setLinkEnabled(link);
@@ -486,11 +486,11 @@ void CruBar::configure()
     }
   }
 
-  std::cout << "Setting Packet Arbitration and Flow Control" << std::endl;
+  log("Setting packet arbitration and flow control");
   datapathWrapper.setPacketArbitration(mWrapperCount, 0);
   datapathWrapper.setFlowControl(0);
 
-  std::cout << "CRU configuration done." << std::endl;
+  log("CRU configuration done.");
 }
 
 /// Sets the mWrapperCount variable
@@ -561,7 +561,7 @@ void CruBar::populateLinkList(std::vector<Link> &linkList)
 
   Gbt gbt = Gbt(mPdaBar, linkList, mWrapperCount);
 
-  std::cout << "Configuring GBT" << std::endl;
+  log("Configuring GBT");
   for (auto &link: linkList) {
     if (!(mLinkMask.find(link.globalId) == mLinkMask.end())) {
       link.enabled = true;
@@ -624,6 +624,7 @@ bool CruBar::getDebugModeEnabled()
     return true;
   }
 }
+
 
 } // namespace roc
 } // namespace AliceO2
