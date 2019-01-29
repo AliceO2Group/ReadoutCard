@@ -49,5 +49,12 @@ void BarInterfaceBase::modifyRegister(int index, int position, int width, uint32
   mPdaBar->modifyRegister(index, position, width, value);
 }
 
+void BarInterfaceBase::log(std::string logMessage, InfoLogger::InfoLogger::Severity logLevel)
+{
+  mLogger << logLevel;
+  mLogger << "[PCI ID: " << mRocPciDevice->getPciAddress().toString() << " | bar" << getIndex() << "] : " <<
+    logMessage << InfoLogger::InfoLogger::endm;
+}
+
 } // namespace roc
 } // namespace AliceO2
