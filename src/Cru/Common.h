@@ -9,6 +9,8 @@
 #include "Constants.h"
 #include "Pda/PdaBar.h"
 
+#include <iostream>
+
 namespace AliceO2 {
 namespace roc {
 namespace Cru {
@@ -19,6 +21,7 @@ struct Link {
   int bank = -1;
   uint32_t id = 0xffffffff;
   uint32_t dwrapperId = 0xffffffff;
+  uint32_t globalId = 0xffffffff;
   uint32_t baseAddress;
   GbtMux::type gbtMux = GbtMux::type::Ttc;
   GbtMode::type gbtTxMode = GbtMode::type::Gbt;
@@ -27,8 +30,10 @@ struct Link {
   DatapathMode::type datapathMode = DatapathMode::type::Packet;
   bool enabled = false;
 
-  bool operator== (const Link &dlink) const{
-    if (enabled == dlink.enabled) {
+  bool operator== (const Link &dlink) const {
+    if (enabled == dlink.enabled && enabled == false) {
+      return true;
+    } else { 
     return (dwrapper == dlink.dwrapper &&
       wrapper == dlink.wrapper &&
       bank == dlink.bank &&
@@ -41,8 +46,6 @@ struct Link {
       loopback == dlink.loopback &&
       datapathMode == dlink.datapathMode &&
       enabled == dlink.enabled);
-    } else {
-      return true;
     }
   }
 };
