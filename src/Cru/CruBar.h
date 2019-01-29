@@ -91,7 +91,7 @@ class CruBar final : public BarInterfaceBase
     uint32_t getFirmwareTime();
     uint32_t getFpgaChipHigh();
     uint32_t getFpgaChipLow();
-    std::vector<Link> initializeLinkList(bool checkAll=false);
+    std::vector<Link> initializeLinkList();
     void populateLinkList(std::vector<Link> &linkList);
 
     int getDdgBurstLength();

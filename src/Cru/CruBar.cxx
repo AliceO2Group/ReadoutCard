@@ -392,13 +392,11 @@ void CruBar::setDataGeneratorRandomSizeBits(uint32_t& bits, bool enabled)
 /// Reports the CRU status
 Cru::ReportInfo CruBar::report()
 {
-  // Check all links, not only those specified in mLinkMask
-  bool checkAll = true;
-  std::vector<Link> linkList = initializeLinkList(checkAll); 
+  std::vector<Link> linkList = initializeLinkList(); 
   /*for (auto const& link: mLinkList)
     std::cout << "link: " << link.id << std::endl;*/
  
-  // Update mLinkList
+  // Update linkList
   Gbt gbt = Gbt(mPdaBar, linkList, mWrapperCount);
   gbt.getGbtModes();
   gbt.getGbtMuxes();
@@ -431,10 +429,10 @@ void CruBar::reconfigure()
 
   populateLinkList(mLinkList);
 
-  if (static_cast<uint32_t>(mClock) == reportInfo.ttcClock && static_cast<uint32_t>(mDownstreamData) == reportInfo.downstreamData &&
+  if (static_cast<uint32_t>(mClock) == reportInfo.ttcClock && 
+      static_cast<uint32_t>(mDownstreamData) == reportInfo.downstreamData &&
       std::equal(mLinkList.begin(), mLinkList.end(), reportInfo.linkList.begin())) {
     std::cout << "No need to reconfigure further" << std::endl;
-    return;
   } else {
     std::cout << "Reconfiguring" << std::endl;
     configure();
@@ -444,13 +442,17 @@ void CruBar::reconfigure()
 /// Configures the CRU according to the parameters passed on init
 void CruBar::configure()
 {
-
   bool ponUpstream = false;
   uint32_t onuAddress = 0xbadcafe;
   
   if (mLinkList.empty()) {
     populateLinkList(mLinkList);
   }
+
+  /* GBT */
+  std::cout << "Calibrating GBT" << std::endl;
+  Gbt gbt = Gbt(mPdaBar, mLinkList, mWrapperCount);
+  gbt.calibrateGbt();
 
   /* TTC */
   Ttc ttc = Ttc(mPdaBar);
@@ -468,11 +470,6 @@ void CruBar::configure()
   std::cout << "Setting Downstream Data" << std::endl;
   ttc.selectDownstreamData(mDownstreamData);
 
-  /* GBT */
-  std::cout << "Calibrating GBT" << std::endl;
-  Gbt gbt = Gbt(mPdaBar, mLinkList, mWrapperCount);
-  gbt.calibrateGbt();
-
   /* BSP */
   disableDataTaking();
 
@@ -483,8 +480,10 @@ void CruBar::configure()
 
   std::cout << "Enabling links and setting datapath mode" << std::endl;
   for (auto const& link: mLinkList) { 
-    datapathWrapper.setLinkEnabled(link);
-    datapathWrapper.setDatapathMode(link, mDatapathMode);
+    if (link.enabled) {
+      datapathWrapper.setLinkEnabled(link);
+      datapathWrapper.setDatapathMode(link, mDatapathMode);
+    }
   }
 
   std::cout << "Setting Packet Arbitration and Flow Control" << std::endl;
@@ -513,8 +512,8 @@ void CruBar::setWrapperCount()
   mWrapperCount = wrapperCount;
 }
 
-/// Returns a LinkList initialized with the Links specified in mLinkMask
-std::vector<Link> CruBar::initializeLinkList(bool checkAll)
+/// Returns a LinkList with indexes and base addresses initialized
+std::vector<Link> CruBar::initializeLinkList()
 {
   std::vector<Link> links;
   if (mWrapperCount == 0) {
@@ -534,17 +533,8 @@ std::vector<Link> CruBar::initializeLinkList(bool checkAll)
       }
       for(int link=0; link<linksPerBank; link++) {
 
-        if ((mLinkMask.find(link + bank * linksPerBank) == mLinkMask.end()) && !checkAll) {
-          continue;
-        }
-
-        GbtMux::type gbtMux = mGbtMux;
-        auto gbtMuxMapElement = mGbtMuxMap.find(link + bank * linksPerBank);
-        if (gbtMuxMapElement != mGbtMuxMap.end()) {
-          gbtMux = gbtMuxMapElement->second;
-        }
-
-        int dwrapperIndex = link + (bank%2) * 6;
+        int dwrapperIndex = link + (bank%2) * linksPerBank;
+        int globalIndex = link + bank * linksPerBank;
         uint32_t baseAddress = Cru::getXcvrRegisterAddress(wrapper, bank, link);
         Link new_link = {
           dwrapper, 
@@ -552,8 +542,8 @@ std::vector<Link> CruBar::initializeLinkList(bool checkAll)
           bank,
           (uint32_t) link,
           (uint32_t) dwrapperIndex,
+          (uint32_t) globalIndex,
           baseAddress,
-          gbtMux
         };
 
         links.push_back(new_link);
@@ -563,22 +553,40 @@ std::vector<Link> CruBar::initializeLinkList(bool checkAll)
   return links;
 }
 
+/// Initializes and Populates the linkList with the GBT configuration parameters
+/// Also runs the corresponding configuration
 void CruBar::populateLinkList(std::vector<Link> &linkList)
 {
   linkList = initializeLinkList();
 
   Gbt gbt = Gbt(mPdaBar, linkList, mWrapperCount);
 
-  std::cout << "Setting GBT MUX" << std::endl;
-  for (auto const& link: linkList)
-    gbt.setMux(link, link.gbtMux);
-
   std::cout << "Configuring GBT" << std::endl;
-  for (auto const& link: linkList) {
-    gbt.setInternalDataGenerator(link, 0);
-    gbt.setTxMode(link, Cru::GBT_MODE_GBT); //TX is always GBT
-    gbt.setRxMode(link, mGbtMode);          //RX may also be WB
-    gbt.setLoopback(link, mLoopback);
+  for (auto &link: linkList) {
+    if (!(mLinkMask.find(link.globalId) == mLinkMask.end())) {
+      link.enabled = true;
+
+      gbt.setInternalDataGenerator(link, 0);
+      
+      link.gbtTxMode = GbtMode::Gbt;
+      gbt.setTxMode(link, link.gbtTxMode); //TX is always GBT
+
+      link.gbtRxMode = mGbtMode;
+      gbt.setRxMode(link, link.gbtRxMode); //RX may also be WB
+
+      link.loopback = mLoopback;
+      gbt.setLoopback(link, link.loopback);
+
+      auto gbtMuxMapElement = mGbtMuxMap.find(link.globalId);
+      if (gbtMuxMapElement != mGbtMuxMap.end()) { // Different MUXs per link
+        link.gbtMux = gbtMuxMapElement->second;
+      } else {                                    // Specific MUX not found
+        link.gbtMux = mGbtMux;
+      }
+      gbt.setMux(link, link.gbtMux);
+      
+      link.datapathMode = mDatapathMode;
+    }
   }
 }
 
