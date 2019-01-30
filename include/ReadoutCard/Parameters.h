@@ -16,6 +16,7 @@
 #include "ReadoutCard/ParameterTypes/GeneratorPattern.h"
 #include "ReadoutCard/ParameterTypes/LoopbackMode.h"
 #include "ReadoutCard/ParameterTypes/PciAddress.h"
+#include "ReadoutCard/ParameterTypes/PciSequenceNumber.h"
 #include "ReadoutCard/ParameterTypes/ReadoutMode.h"
 
 // CRU Specific
@@ -54,7 +55,7 @@ class Parameters
         buffer_parameters::Null>;
 
     /// Type for the CardId parameter. It can hold either a serial number or PciAddress.
-    using CardIdType = boost::variant<int, ::AliceO2::roc::PciAddress>;
+    using CardIdType = boost::variant<int, ::AliceO2::roc::PciAddress, ::AliceO2::roc::PciSequenceNumber>;
 
     /// Type for the ChannelNumber parameter
     using ChannelNumberType = int32_t;

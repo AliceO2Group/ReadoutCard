@@ -23,7 +23,8 @@ CardDescriptor createCardDescriptor(const Parameters& parameters)
 {
   return Visitor::apply<CardDescriptor>(parameters.getCardIdRequired(),
       [&](int serial) {return RocPciDevice(serial).getCardDescriptor();},
-      [&](const PciAddress& address) {return RocPciDevice(address).getCardDescriptor();});
+      [&](const PciAddress& address) {return RocPciDevice(address).getCardDescriptor();},
+      [&](const PciSequenceNumber& sequenceNumber) {return RocPciDevice(sequenceNumber).getCardDescriptor();});
 }
 
 }

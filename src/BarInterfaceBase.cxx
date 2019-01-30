@@ -18,6 +18,8 @@ BarInterfaceBase::BarInterfaceBase(const Parameters& parameters)
     Utilities::resetSmartPtr(mRocPciDevice, *serial);
   } else if (auto address = boost::get<PciAddress>(&id)) {
     Utilities::resetSmartPtr(mRocPciDevice, *address);
+  } else if (auto sequenceNumber = boost::get<PciSequenceNumber>(&id)) {
+    Utilities::resetSmartPtr(mRocPciDevice, *sequenceNumber);
   }
   Utilities::resetSmartPtr(mPdaBar, mRocPciDevice->getPciDevice(), mBarIndex);
 }

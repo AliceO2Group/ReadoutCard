@@ -100,6 +100,30 @@ void RocPciDevice::initWithAddress(const PciAddress& address)
   }
 }
 
+void RocPciDevice::initWithSequenceNumber(const PciSequenceNumber& sequenceNumber)
+{
+  int sequenceCounter = 0;
+  try {
+    for (const auto& type : deviceTypes) {
+      mPdaDevice = Pda::PdaDevice::getPdaDevice(type.pciId);
+      for (const auto& pciDevice : mPdaDevice->getPciDevices(mPdaDevice)) {
+        if (sequenceNumber == sequenceCounter) {
+          Utilities::resetSmartPtr(mPciDevice, pciDevice);
+          mDescriptor = CardDescriptor { type.cardType, type.getSerial(pciDevice), type.pciId, addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice.get())};
+          return;
+        }
+        sequenceCounter++;
+      }
+    }
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not find card"));
+  } catch (boost::exception& e) {
+    e << ErrorInfo::PciSequenceNumber(sequenceNumber);
+    addPossibleCauses(e, { "Invalid PCI address search target" });
+    throw;
+  }
+}
+
+
 RocPciDevice::RocPciDevice(int serialNumber)
     : mDescriptor(defaultDescriptor())
 {
@@ -110,6 +134,12 @@ RocPciDevice::RocPciDevice(const PciAddress& address)
     : mDescriptor(defaultDescriptor())
 {
   initWithAddress(address);
+}
+
+RocPciDevice::RocPciDevice(const PciSequenceNumber& sequenceNumber)
+  : mDescriptor(defaultDescriptor())
+{
+  initWithSequenceNumber(sequenceNumber);
 }
 
 RocPciDevice::RocPciDevice(const Parameters::CardIdType& cardId)
@@ -178,6 +208,28 @@ std::vector<CardDescriptor> RocPciDevice::findSystemDevices(const PciAddress& ad
   catch (boost::exception& e) {
     e << ErrorInfo::PciAddress(address);
     addPossibleCauses(e, {"Invalid PCI address search target"});
+    throw;
+  }
+  return cards;
+}
+
+std::vector<CardDescriptor> RocPciDevice::findSystemDevices(const PciSequenceNumber& sequenceNumber)
+{
+  int sequenceCounter = 0;
+  std::vector<CardDescriptor> cards;
+  try {
+    for (const auto& type : deviceTypes) {
+      for (const auto& pciDevice : Pda::PdaDevice::getPciDevices(type.pciId)) {
+        if (sequenceNumber == sequenceCounter) {
+          cards.push_back(CardDescriptor{type.cardType, type.getSerial(pciDevice), type.pciId, addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice.get())});
+        }
+        sequenceCounter++;
+      }
+    }
+  }
+  catch (boost::exception& e) {
+    e << ErrorInfo::PciSequenceNumber(sequenceNumber);
+    addPossibleCauses(e, {"Invalid Sequence Number search target"});
     throw;
   }
   return cards;

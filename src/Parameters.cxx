@@ -5,6 +5,7 @@
 
 #include "ReadoutCard/Parameters.h"
 #include <map>
+#include <regex>
 #include <set>
 #include <string>
 #include <boost/algorithm/string/split.hpp>
@@ -196,15 +197,19 @@ auto Parameters::linkMaskFromString(const std::string& string) -> LinkMaskType
 
 auto Parameters::cardIdFromString(const std::string& string) -> CardIdType
 {
+  std::regex e ("^#[0-9]+$");
   if (auto pciAddressMaybe = PciAddress::fromString(string)) {
     return *pciAddressMaybe;
+  } else if (auto pciSequenceNumberMaybe = PciSequenceNumber::fromString(string)) {
+    return *pciSequenceNumberMaybe;
   } else {
     int serial = 0;
     if (!boost::conversion::try_lexical_convert<int>(string, serial)) {
       BOOST_THROW_EXCEPTION(
-        ParseException() << ErrorInfo::Message("Failed to parse card ID as either PCI address or serial number"));
+        ParseException() << ErrorInfo::Message("Failed to parse card ID as PCI address ,serial number or sequence number"));
+    } else {
+      return serial;
     }
-    return serial;
   }
 }
 

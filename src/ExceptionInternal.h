@@ -17,6 +17,7 @@
 #include "ReadoutCard/CardType.h"
 #include "ReadoutCard/Parameters.h"
 #include "ReadoutCard/ParameterTypes/PciAddress.h"
+#include "ReadoutCard/ParameterTypes/PciSequenceNumber.h"
 #include "ReadoutCard/ParameterTypes/ResetLevel.h"
 #include "ReadoutCard/ParameterTypes/GeneratorPattern.h"
 #include "ReadoutCard/ParameterTypes/LoopbackMode.h"
@@ -66,6 +67,7 @@ DEFINE_ERRINFO(PciAddressFunctionNumber, int);
 DEFINE_ERRINFO(PciDeviceIndex, int);
 DEFINE_ERRINFO(PciId, ::AliceO2::roc::PciId);
 DEFINE_ERRINFO(PciIds, std::vector<::AliceO2::roc::PciId>);
+DEFINE_ERRINFO(PciSequenceNumber, ::AliceO2::roc::PciSequenceNumber);
 DEFINE_ERRINFO(PdaStatusCode, int);
 DEFINE_ERRINFO(PossibleCauses, std::vector<std::string>);
 DEFINE_ERRINFO(Range, size_t);
@@ -107,6 +109,7 @@ std::string to_string(const AliceO2::roc::ErrorInfo::LoopbackMode& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::PciAddress& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::PciId& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::PciIds& e);
+std::string to_string(const AliceO2::roc::ErrorInfo::PciSequenceNumber& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::PossibleCauses& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::ReadyFifoStatus& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::ResetLevel& e);
