@@ -62,6 +62,28 @@ inline CardDescriptor findCard(const PciAddress& address)
   return cardsFound.at(0);
 }
 
+inline CardDescriptor findCard(const PciSequenceNumber& sequenceNumber)
+{
+  auto cardsFound = RocPciDevice::findSystemDevices(sequenceNumber);
+
+  if (cardsFound.empty()) {
+    BOOST_THROW_EXCEPTION(Exception()
+        << ErrorInfo::Message("Could not find a card with the given PCI sequence Number")
+        << ErrorInfo::PciSequenceNumber(sequenceNumber));
+  }
+
+  if (cardsFound.size() > 1) {
+    std::vector<PciId> pciIds;
+    for (const auto& c : cardsFound) { pciIds.push_back(c.pciId); }
+    BOOST_THROW_EXCEPTION(Exception()
+        << ErrorInfo::Message("Found more than one card with the given PCI sequence number")
+        << ErrorInfo::PciSequenceNumber(sequenceNumber)
+        << ErrorInfo::PciIds(pciIds));
+  }
+
+  return cardsFound.at(0);
+}
+
 inline CardDescriptor findCard(const Parameters::CardIdType& id)
 {
   if (auto serialMaybe = boost::get<int>(&id)) {
@@ -70,6 +92,9 @@ inline CardDescriptor findCard(const Parameters::CardIdType& id)
   } else if (auto addressMaybe = boost::get<PciAddress>(&id)) {
     auto address = *addressMaybe;
     return findCard(address);
+  } else if (auto sequenceNumberStringMaybe = boost::get<PciSequenceNumber>(&id)) {
+    auto sequenceNumber = *sequenceNumberStringMaybe;
+    return findCard(sequenceNumber);
   } else {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Invalid Card ID"));
   }

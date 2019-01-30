@@ -122,6 +122,12 @@ std::string to_string(const ErrorInfo::PciAddress& e)
   return toStringHelper("ReadoutCard PCI address", e.value().toString());
 }
 
+std::string to_string(const ErrorInfo::PciSequenceNumber& e)
+{
+  return toStringHelper("ReadoutCard PCI sequence number", e.value().toString());
+}
+
+
 std::string to_string(const ErrorInfo::CardId& e)
 {
   std::string message;

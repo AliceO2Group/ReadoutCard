@@ -27,6 +27,8 @@ class RocPciDevice
     RocPciDevice(const PciAddress& address);
 
     RocPciDevice(const Parameters::CardIdType& cardId);
+    
+    RocPciDevice(const PciSequenceNumber& sequenceNumber);
 
     ~RocPciDevice();
 
@@ -71,10 +73,14 @@ class RocPciDevice
     // Finds ReadoutCard devices on the system with the given address
     static std::vector<CardDescriptor> findSystemDevices(const PciAddress& address);
 
+    // Finds ReadoutCard devices on the system with the given sequence number
+    static std::vector<CardDescriptor> findSystemDevices(const PciSequenceNumber& sequenceNumber);
+
   private:
 
     void initWithSerial(int serialNumber);
     void initWithAddress(const PciAddress& address);
+    void initWithSequenceNumber(const PciSequenceNumber& sequenceNumber);
 
     Pda::PdaDevice::SharedPdaDevice mPdaDevice;
     std::unique_ptr<Pda::PdaDevice::PdaPciDevice> mPciDevice;
