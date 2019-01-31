@@ -18,7 +18,6 @@ Table of Contents
 3. [Installation](#installation)
 4. [Implementation notes](#implementation-notes)
 5. [Known issues](#known-issues)
-6. [ALICE Low-level Front-end (ALF) DIM Server](#alice-low-level-front-end-alf-dim-server)
 
 
 Introduction
@@ -271,9 +270,6 @@ For detailed information and usage examples, use a program's `--help` option.
 
 Most programs will also provide more detailed output when given the `--verbose` option.
 
-### roc-alf-client & rorc-alf-server
-See section "ALICE Low-level Front-end"
-
 ### roc-bar-stress
 Tool to stress BAR accesses and evaluate performance.
 
@@ -509,8 +505,3 @@ C-RORC concurrent channels
 On certain machines, initializing multiple C-RORC channels concurrently has led to hard lockups.
 The cause is unknown, but adding acpi=off to the Linux boot options fixed the issue.
 The issue has occurred on Dell R720 servers.
-
-ALICE Low-level Front-end (ALF) DIM Server
-===================
-The utilities contain a DIM server for DCS control of the cards 
-For more information, see the dedicated readme at `src/CommandLineUtilities/AliceLowlevelFrontend/README.md`
