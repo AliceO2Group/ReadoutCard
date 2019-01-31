@@ -73,5 +73,11 @@ boost::optional<PciAddress> PciAddress::fromString(std::string string)
   }
 }
 
+std::ostream& operator<<(std::ostream& os, const PciAddress& pciAddress)
+{
+  os << pciAddress.toString();
+  return os;
+}
+
 } // namespace roc
 } // namespace AliceO2

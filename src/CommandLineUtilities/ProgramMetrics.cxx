@@ -25,27 +25,35 @@ class ProgramMetrics: public Program
   {
     return {"Metrics", "Return current RoC parameters", 
       "roc-metrics\n"
-      "roc-metrics --pci-address 42:00.0\n"};
+      "roc-metrics --id 42:00.0\n"};
   }
 
   virtual void addOptions(boost::program_options::options_description& options)
   {
-    options.add_options()
-      ("pci-address",
-       po::value<std::string>(&mOptions.pciAddress)->default_value("-1"),
-       "Card's PCI Address");
+    Options::addOptionCardId(options);
   }
 
   virtual void run(const boost::program_options::variables_map& map) 
   {
 
-    std::vector<CardDescriptor> cardsFound;
-    if (mOptions.pciAddress != "-1")
-      cardsFound = RocPciDevice::findSystemDevices(mOptions.pciAddress);
-    else
-      cardsFound = RocPciDevice::findSystemDevices();
-      
+    auto cardId = Options::getOptionCardId(map);
 
+    std::vector<CardDescriptor> cardsFound;
+
+    if (auto serial = boost::get<int>(&cardId)) {
+      if (*serial == -1) {
+        cardsFound = RocPciDevice::findSystemDevices();
+      } else {
+        cardsFound = RocPciDevice::findSystemDevices(*serial);
+      }
+    } else if (auto pciAddress = boost::get<PciAddress>(&cardId)) {
+      cardsFound = RocPciDevice::findSystemDevices(*pciAddress); 
+    } else if (auto pciSequenceNumber = boost::get<PciSequenceNumber>(&cardId)) {
+      cardsFound = RocPciDevice::findSystemDevices(*pciSequenceNumber);
+    } else {
+      std::cout << "Something went wrong parsing the card id" << std::endl;
+    }
+    
     std::ostringstream table;
 
     auto formatHeader = "  %-3s %-6s %-10s %-10s %-19s %-20s %-19s %-8s %-17s %-17s\n";
@@ -82,19 +90,10 @@ class ProgramMetrics: public Program
     std::cout << table.str();
   }
   
-  struct OptionsStruct 
-  {
-    std::string pciAddress = "-1";
-  }mOptions;
-
   private:
 };
 
 int main(int argc, char** argv)
 {
-  if (argc > 2){
-    std::cout << "Too many arguments" << std::endl;
-    return -1;
-  }
   return ProgramMetrics().execute(argc, argv);
 }

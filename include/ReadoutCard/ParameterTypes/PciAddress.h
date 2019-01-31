@@ -6,6 +6,7 @@
 #ifndef ALICEO2_READOUTCARD_INCLUDE_PCIADDRESS_H_
 #define ALICEO2_READOUTCARD_INCLUDE_PCIADDRESS_H_
 
+#include <iostream>
 #include <string>
 #include <boost/optional.hpp>
 
@@ -39,6 +40,8 @@ class PciAddress
     {
       return (bus == other.bus) && (slot == other.slot) && (function == other.function);
     }
+
+    friend std::ostream& operator<<(std::ostream& os, const PciAddress& pciAddress);
 
     /// Gets the bus number of this address
     /// \return Integer from 0 to 255 (0xff)

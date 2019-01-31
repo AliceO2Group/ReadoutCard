@@ -27,15 +27,12 @@ class ProgramBarStress: public Program
   virtual Description getDescription()
   {
     return {"Bar Stress", "Stress the Bar Accessor", 
-      "roc-bar-stress --pci-address 42:00.0 --gbt-link 0 --cycles 100000 --print-freq 10000 --errorcheck"};
+      "roc-bar-stress --id 42:00.0 --gbt-link 0 --cycles 100000 --print-freq 10000 --errorcheck"};
   }
 
   virtual void addOptions(boost::program_options::options_description& options)
   {
     options.add_options()
-      ("pci-address",
-       po::value<std::string>(&mOptions.pciAddress)->default_value("-1"),
-       "Card's PCI Address")
       ("gbt-link",
        po::value<uint32_t>(&mOptions.gbtLink)->default_value(0),
        "GBT link over which the bar writes will be performed. CRU is 0-17")
@@ -48,6 +45,7 @@ class ProgramBarStress: public Program
       ("errorcheck",
        po::bool_switch(&mOptions.errorCheck),
        "Perform data validation");
+    Options::addOptionCardId(options);
   }
 
   int stress(Swt *swt, long long cycles, long long printFrequency, bool errorCheck) 
@@ -107,7 +105,9 @@ class ProgramBarStress: public Program
   virtual void run(const boost::program_options::variables_map& map) 
   {
 
-    getLogger() << "PCI Address: " << mOptions.pciAddress << InfoLogger::endm;
+    auto cardId = Options::getOptionCardId(map);
+
+    getLogger() << "Card ID: " << cardId << InfoLogger::endm;
     getLogger() << "GBT Link: " << mOptions.gbtLink << InfoLogger::endm;
     getLogger() << "Cycles of SWT write(/read) operations: " << mOptions.cycles << InfoLogger::endm;
     getLogger() << "Print frequency: " << mOptions.printFrequency << InfoLogger::endm;
@@ -121,11 +121,10 @@ class ProgramBarStress: public Program
     getLogger() << "Logging time every " << barOps << " bar operations, of which:" << InfoLogger::endm;
     getLogger() << "barWrites: " << barWrites << " | barReads: " << barReads << InfoLogger::endm;
       
-
     std::shared_ptr<BarInterface>
-      bar0 = ChannelFactory().getBar(mOptions.pciAddress, 0);
+      bar0 = ChannelFactory().getBar(cardId, 0);
     std::shared_ptr<BarInterface>
-      bar2 = ChannelFactory().getBar(mOptions.pciAddress, 2);  
+      bar2 = ChannelFactory().getBar(cardId, 2);  
 
     if(isVerbose())
       getLogger() << "Resetting card..." << InfoLogger::endm;
@@ -153,7 +152,6 @@ class ProgramBarStress: public Program
 
   struct OptionsStruct 
   {
-    std::string pciAddress = "-1";
     uint32_t gbtLink = 0;
     long long cycles = 100;
     long long printFrequency = 10;

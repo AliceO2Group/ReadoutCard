@@ -195,25 +195,25 @@ set(EXE_NAMES
 
 if(PDA_FOUND)
   list(APPEND EXE_SRCS
-    #ProgramBarStress.cxx
+    ProgramBarStress.cxx
     ProgramConfig.cxx
     ProgramCleanup.cxx
     ../Example.cxx
     ProgramFlash.cxx
     ProgramFlashRead.cxx
     ProgramListCards.cxx
-    #ProgramMetrics.cxx
+    ProgramMetrics.cxx
     ProgramStatus.cxx
   )
   list(APPEND EXE_NAMES
-    #roc-bar-stress
+    roc-bar-stress
     roc-config
     roc-channel-cleanup
     roc-example
     roc-flash
     roc-flash-read
     roc-list-cards
-    #roc-metrics
+    roc-metrics
     roc-status
   )
 
