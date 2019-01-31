@@ -1,12 +1,11 @@
 /// \file Sca.h
-/// \brief Implementation of ALICE Lowlevel Frontend (ALF) SCA operations
+/// \brief Implementation of SCA operations
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "Sca.h"
 #include <chrono>
 #include <vector>
-#include "AlfException.h"
 #include "Register.h"
 #include "Utilities/Util.h"
 
@@ -14,8 +13,6 @@
 
 namespace AliceO2 {
 namespace roc {
-namespace CommandLineUtilities {
-namespace Alf {
 
 namespace Registers {
 constexpr int CRU_BASE_INDEX = 0x4224000 / 4;
@@ -222,7 +219,5 @@ void Sca::waitOnBusyClear()
 }
 
 
-} // namespace Alf
-} // namespace CommandLineUtilities
 } // namespace roc
 } // namespace AliceO2

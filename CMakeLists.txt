@@ -76,7 +76,6 @@ find_package(Git QUIET)
 find_package(Common REQUIRED)
 find_package(InfoLogger REQUIRED)
 find_package(PDA)
-find_package(DIM)
 
 ####################################
 # Module, library and executable definition
@@ -107,8 +106,6 @@ set(SRCS
   src/Utilities/Hugetlbfs.cxx
   src/Utilities/MemoryMaps.cxx
   src/Utilities/Numa.cxx
-  src/CommandLineUtilities/AliceLowlevelFrontend/Sca.cxx
-  src/CommandLineUtilities/AliceLowlevelFrontend/ServiceNames.cxx
   src/CommandLineUtilities/Common.cxx
   src/CommandLineUtilities/Options.cxx
 )
@@ -217,21 +214,6 @@ if(PDA_FOUND)
     roc-status
   )
 
-  if(DIM_FOUND)
-    list(APPEND EXE_SRCS
-      AliceLowlevelFrontend/ProgramAliceLowlevelFrontendClient.cxx
-      AliceLowlevelFrontend/ProgramAlfScaWriteSequence.cxx
-      AliceLowlevelFrontend/ProgramAliceLowlevelFrontendServer.cxx
-    )
-    list(APPEND EXE_NAMES
-      roc-alf-client
-      roc-alf-sca-write-seq
-      roc-alf-server
-    )
-  else()
-    message(INFO "DIM not found, ALF client & server will not be built")
-  endif()
-
   if(Python2_FOUND)
     list(APPEND EXE_SRCS ProgramRunScript.cxx)
     list(APPEND EXE_NAMES roc-run-script)
@@ -257,9 +239,6 @@ foreach(i RANGE ${count})
       Boost::program_options
       $<$<BOOL:${PDA_FOUND}>:pda::pda>
   )
-  if (${src} MATCHES "^AliceLowlevelFrontend.*")
-    target_link_libraries(${name} PRIVATE dim::dim)
-  endif()
 endforeach()
 
 ####################################

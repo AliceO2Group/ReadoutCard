@@ -1,10 +1,10 @@
 /// \file Sca.h
-/// \brief Definition of ALICE Lowlevel Frontend (ALF) SCA operations
+/// \brief Definition of SCA operations
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_READOUTCARD_UTILITIES_ALF_ALICELOWLEVELFRONTEND_SCA_H
-#define ALICEO2_READOUTCARD_UTILITIES_ALF_ALICELOWLEVELFRONTEND_SCA_H
+#ifndef ALICEO2_READOUTCARD_SCA_H
+#define ALICEO2_READOUTCARD_SCA_H
 
 #include <string>
 #include "ReadoutCard/CardType.h"
@@ -12,8 +12,8 @@
 
 namespace AliceO2 {
 namespace roc {
-namespace CommandLineUtilities {
-namespace Alf {
+
+struct ScaException : AliceO2::Common::Exception {};
 
 /// Class for interfacing with the C-RORC's and CRU's Slow-Control Adapter (SCA)
 class Sca
@@ -64,9 +64,7 @@ class Sca
 };
 
 
-} // namespace Alf
-} // namespace CommandLineUtilities
 } // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_READOUTCARD_UTILITIES_ALF_ALICELOWLEVELFRONTEND_SCA_H
+#endif // ALICEO2_READOUTCARD_SCA_H
