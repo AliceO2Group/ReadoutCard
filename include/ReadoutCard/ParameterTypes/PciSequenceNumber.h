@@ -6,6 +6,7 @@
 #ifndef ALICEO2_READOUTCARD_INCLUDE_PCISEQUENCENUMBER_H_
 #define ALICEO2_READOUTCARD_INCLUDE_PCISEQUENCENUMBER_H_
 
+#include <iostream>
 #include <string>
 #include <boost/optional.hpp>
 
@@ -25,18 +26,23 @@ class PciSequenceNumber
     /// For example: "#04"
     static boost::optional<PciSequenceNumber> fromString(std::string string);
 
+    std::string toString() const;
+
     bool operator==(const int& other) const
     {
       return mSequenceNumber == other;
     }
-
+  
     bool operator==(const PciSequenceNumber& other) const
     {
       return mSequenceNumber == other.mSequenceNumber;
     }
- 
+
+    friend std::ostream& operator<<(std::ostream& os, const PciSequenceNumber& pciSequenceNumber);
+
   private:
     int mSequenceNumber;
+    std::string mSequenceNumberString;
 };
 
 } // namespace roc

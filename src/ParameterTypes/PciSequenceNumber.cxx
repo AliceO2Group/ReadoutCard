@@ -13,10 +13,9 @@ namespace roc {
 namespace {
 
   int parseSequenceNumberString(const std::string& string) {
-    std::regex expression ("^#[0-9]+$");
+    std::regex expression ("^[ \t]*#[0-9]+[ \t]*$");
     if (std::regex_search(string, expression)) {
-      std::string retString = string;
-      return stoi(retString.erase(0, 1)); //remove initial #
+      return stoi(string.substr(string.find('#') + 1));
     } else {
       BOOST_THROW_EXCEPTION(ParseException()
           << ErrorInfo::Message("Parsing PCI sequence number failed"));
@@ -27,7 +26,13 @@ namespace {
 
 PciSequenceNumber::PciSequenceNumber(const std::string& string)
 {
+  mSequenceNumberString = string;
   mSequenceNumber = parseSequenceNumberString(string);
+}
+
+std::string PciSequenceNumber::toString() const
+{
+  return mSequenceNumberString;
 }
 
 boost::optional<PciSequenceNumber> PciSequenceNumber::fromString(std::string string)
@@ -38,6 +43,12 @@ boost::optional<PciSequenceNumber> PciSequenceNumber::fromString(std::string str
   catch (const ParseException& e) {
     return {};
   }
+}
+
+std::ostream& operator<<(std::ostream& os, const PciSequenceNumber& pciSequenceNumber)
+{
+  os << pciSequenceNumber.toString();
+  return os;
 }
 
 } // namespace roc
