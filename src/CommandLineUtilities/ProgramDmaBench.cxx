@@ -117,6 +117,9 @@ class ProgramDmaBench: public Program
           ("bytes",
               SuffixOption<uint64_t>::make(&mOptions.maxBytes)->default_value("0"),
               "Limit of bytes to transfer. Give 0 for infinite.")
+          ("buffer-full-check",
+              po::bool_switch(&mOptions.bufferFullCheck),
+              "Test how quickly the readout buffer gets full, if it's not emptied")
           ("buffer-size",
               SuffixOption<size_t>::make(&mBufferSize)->default_value("1Gi"),
               "Buffer size in bytes. Rounded down to 2 MiB multiple. Minimum of 2 MiB. Use 2 MiB hugepage by default; |"
@@ -298,6 +301,10 @@ class ProgramDmaBench: public Program
       getLogger() << "Page size: " << mPageSize << endm;
       getLogger() << "Page limit: " << mMaxPages << endm;
       getLogger() << "Pages per superpage: " << mPagesPerSuperpage << endm;
+      if (mOptions.bufferFullCheck) {
+        getLogger() << "Buffer-Full Check enabled" << endm;
+        mBufferFullCheck = true;
+      }
 
       if(!mOptions.noErrorCheck) {
         if (mOptions.errorCheckFrequency < 0x1 || mOptions.errorCheckFrequency > 0xff) {
@@ -356,6 +363,9 @@ class ProgramDmaBench: public Program
           << endm;
       }
 
+      if (mBufferFullCheck) {
+        mBufferFullTimeStart = std::chrono::high_resolution_clock::now();
+      }
       dmaLoop();
       mRunTime.end = std::chrono::steady_clock::now();
 
@@ -487,6 +497,12 @@ class ProgramDmaBench: public Program
               int pages = superpage.getReceived() / mPageSize;
               int pagesToCount = pages - currentPagesCounted;
               mPushCount.fetch_add(pagesToCount, std::memory_order_relaxed);
+
+              if (mBufferFullCheck && (mPushCount.load(std::memory_order_relaxed) == mMaxSuperpages * mPagesPerSuperpage)) {
+                mBufferFullTimeFinish = std::chrono::high_resolution_clock::now();
+                mDmaLoopBreak = true;
+              }
+
               currentPagesCounted += pagesToCount;
 
               if (superpage.isReady() && readoutQueue.write(superpage.getOffset())) {
@@ -525,7 +541,7 @@ class ProgramDmaBench: public Program
           }
 
           size_t offset;
-          if (readoutQueue.read(offset)) {
+          if (readoutQueue.read(offset) && !mBufferFullCheck) {
             // Read out pages
             int pages = mSuperpageSize / mPageSize;
             for (int i = 0; i < pages; ++i) {
@@ -946,6 +962,10 @@ class ProgramDmaBench: public Program
            put("Errors", mErrorCount);
          }
        }
+       if (mBufferFullCheck) {
+         put("Total time needed to fill the buffer (ns) ", std::chrono::duration_cast<std::chrono::nanoseconds>
+             (mBufferFullTimeFinish - mBufferFullTimeStart).count());
+       }
 
        if (mOptions.barHammer) {
          size_t writeSize = sizeof(uint32_t);
@@ -1079,6 +1099,7 @@ class ProgramDmaBench: public Program
         b::optional<ReadoutMode::type> readoutMode;
         std::string links;
         bool generatorEnabled = false;
+        bool bufferFullCheck = false;
         size_t dataGeneratorSize;
         size_t dmaPageSize;
         std::string loopbackModeString;
@@ -1170,11 +1191,17 @@ class ProgramDmaBench: public Program
         TimePoint end; ///< End of run time
     } mRunTime;
 
+    std::chrono::high_resolution_clock::time_point mBufferFullTimeStart;
+    std::chrono::high_resolution_clock::time_point mBufferFullTimeFinish;
+
     /// Flag that marks that runtime has started
     bool mRunTimeStarted = false;
 
     /// The maximum value of the RDH Packet Counter
     size_t mMaxRdhPacketCounter;
+
+    /// Flag to test how quickly the readout buffer gets full in case of error
+    bool mBufferFullCheck;
 };
 
 int main(int argc, char** argv)
