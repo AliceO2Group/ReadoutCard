@@ -38,10 +38,10 @@ class ProgramListCards: public Program
 
       std::ostringstream table;
 
-      auto formatHeader = "  %-3s %-6s %-10s %-11s %-11s %-5s %-8s %-25s %-17s\n";
-      auto formatRow = "  %-3s %-6s %-10s 0x%-9s 0x%-9s %-5s %-8s %-25s %-17s\n";
+      auto formatHeader = "  %-3s %-6s %-10s %-13s %-11s %-11s %-5s %-8s %-25s %-17s\n";
+      auto formatRow = "  %-3s %-6s %-10s %-13s 0x%-9s 0x%-9s %-5s %-8s %-25s %-17s\n";
       auto header = (boost::format(formatHeader)
-          % "#" % "Type" % "PCI Addr" % "Vendor ID" % "Device ID" % "NUMA" % "Serial" % "FW Version" % "Card ID").str();
+          % "#" % "Type" % "PCI Addr" % "Endpoint ID" % "Vendor ID" % "Device ID" % "NUMA" % "Serial" % "FW Version" % "Card ID").str();
       auto lineFat = std::string(header.length(), '=') + '\n';
       auto lineThin = std::string(header.length(), '-') + '\n';
 
@@ -49,25 +49,28 @@ class ProgramListCards: public Program
 
       int i = 0;
       for (const auto& card : cardsFound) {
-        // Try to figure out the firmware version
         const std::string na = "n/a";
         std::string firmware = na;
         std::string cardId = na;
         std::string numaNode = std::to_string(card.numaNode);
+        int endpointNumber = -1;
         try {
-          Parameters params = Parameters::makeParameters(card.pciAddress, 2);
-          params.setBufferParameters(buffer_parameters::Null());
-          firmware = ChannelFactory().getBar(params)->getFirmwareInfo().value_or(na);
-          cardId = ChannelFactory().getBar(params)->getCardId().value_or(na);
+          Parameters params0 = Parameters::makeParameters(card.pciAddress, 0);
+          auto bar0 = ChannelFactory().getBar(params0);
+          Parameters params2 = Parameters::makeParameters(card.pciAddress, 2);
+          auto bar2 = ChannelFactory().getBar(params2);
+          firmware = bar2->getFirmwareInfo().value_or(na);
+          cardId = bar2->getCardId().value_or(na);
+          endpointNumber = bar0->getEndpointNumber();
         }
         catch (const Exception& e) {
           if (isVerbose()) {
-            cout << "Could not get firmware version string:\n" << boost::diagnostic_information(e) << '\n';
+            cout << "Error parsing card information through BAR\n" << boost::diagnostic_information(e) << '\n';
           }
         }
 
         auto format = boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciAddress.toString()
-            % card.pciId.vendor % card.pciId.device % card.numaNode;
+             % endpointNumber % card.pciId.vendor % card.pciId.device % card.numaNode;
 
         if (auto serial = card.serialNumber) {
           format % serial.get();

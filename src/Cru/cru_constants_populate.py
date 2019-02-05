@@ -64,7 +64,8 @@ roc_regs = {
 'add_gbt_bank_fpll':'GBT_BANK_FPLL',
 'add_bsp_i2c_si5345_1':'SI5345_1',
 'add_bsp_i2c_si5345_2':'SI5345_2',
-'add_bsp_i2c_si5344':'SI5344'
+'add_bsp_i2c_si5344':'SI5344',
+'add_pcie_dma_ep_id':'ENDPOINT_ID'
 }
 
 # e.g. 'TEMPERATURE':0x00010008

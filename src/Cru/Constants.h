@@ -90,6 +90,11 @@ static constexpr Register RESET_CONTROL(0x00000400);
 /// * Write 0x0 to unset
 static constexpr Register DEBUG(0x00000c00);
 
+/// Register from which the CRUs endpoint number is available
+/// 0x0        -> Endpoint #0
+/// 0x11111111 -> Endpoint #1
+static constexpr Register ENDPOINT_ID(0x00000500);
+
 ///*** bar2 ***///
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

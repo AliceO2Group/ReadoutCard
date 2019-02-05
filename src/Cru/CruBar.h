@@ -48,6 +48,7 @@ class CruBar final : public BarInterfaceBase
     virtual uint32_t getLocalClock() override;
     virtual int32_t getLinks() override;
     virtual int32_t getLinksPerWrapper(int wrapper) override;
+    virtual int getEndpointNumber() override;
 
     void pushSuperpageDescriptor(uint32_t link, uint32_t pages, uintptr_t busAddress);
     uint32_t getSuperpageCount(uint32_t link);

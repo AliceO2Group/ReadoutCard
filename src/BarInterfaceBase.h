@@ -95,6 +95,11 @@ class BarInterfaceBase: public BarInterface
       return 0;
     }
 
+    virtual int getEndpointNumber() override
+    {
+      return -1;
+    }
+
     /// Default implementation for optional function
     void configure() override
     {
