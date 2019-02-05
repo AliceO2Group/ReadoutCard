@@ -30,6 +30,7 @@ class CrorcBar final : public BarInterfaceBase
 
     virtual boost::optional<int32_t> getSerial() override;
     virtual boost::optional<std::string> getFirmwareInfo() override;
+    virtual int getEndpointNumber() override;
 };
 
 } // namespace roc

@@ -67,6 +67,7 @@ class DummyBar : public BarInterface
       return 0;
     }
 
+
     virtual uint32_t getCTPClock() override
     {
       return 0;
@@ -85,6 +86,11 @@ class DummyBar : public BarInterface
     virtual int32_t getLinksPerWrapper(int /*wrapper*/) override
     {
       return 0;
+    }
+
+    virtual int getEndpointNumber() override
+    {
+      return -1;
     }
 
     void configure() override;

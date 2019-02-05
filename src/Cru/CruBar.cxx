@@ -625,6 +625,17 @@ bool CruBar::getDebugModeEnabled()
   }
 }
 
+int CruBar::getEndpointNumber()
+{
+  uint32_t endpointNumber = readRegister(Cru::Registers::ENDPOINT_ID.index);
+  if (endpointNumber == 0x0) {
+    return 0;
+  } else if (endpointNumber == 0x11111111) {
+    return 1;
+  } else {
+    return -1;
+  }
+}
 
 } // namespace roc
 } // namespace AliceO2

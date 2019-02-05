@@ -45,5 +45,10 @@ boost::optional<std::string> CrorcBar::getFirmwareInfo()
   return stream.str();
 }
 
+int CrorcBar::getEndpointNumber()
+{
+  return 0;
+}
+
 } // namespace roc
 } // namespace AliceO2

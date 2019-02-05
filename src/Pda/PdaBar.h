@@ -145,6 +145,11 @@ class PdaBar : public BarInterface
       return 0;
     }
 
+    virtual int getEndpointNumber() override
+    {
+      return -1;
+    }
+
     void configure() override
     {
       std::cout << "Configure invalid through the PDA BAR" << std::endl;
