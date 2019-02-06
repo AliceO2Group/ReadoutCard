@@ -201,6 +201,7 @@ if(PDA_FOUND)
     ProgramListCards.cxx
     ProgramMetrics.cxx
     ProgramStatus.cxx
+    ProgramSwtStress.cxx
   )
   list(APPEND EXE_NAMES
     roc-bar-stress
@@ -212,6 +213,7 @@ if(PDA_FOUND)
     roc-list-cards
     roc-metrics
     roc-status
+    roc-swt-stress
   )
 
   if(Python2_FOUND)
