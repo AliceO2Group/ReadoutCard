@@ -160,6 +160,8 @@ class Crorc
     /// Set C-RORC for triggered readout
     static void initReadoutTriggered(RegisterReadWriteInterface& bar2);
 
+    std::tuple<std::string, uint32_t> siuStatus();
+
   private:
     RegisterReadWriteInterface& bar;
 
@@ -175,6 +177,10 @@ class Crorc
     void write(uint32_t index, uint32_t value) {
       bar.writeRegister(index, value);
     }
+
+    uint8_t ddlReadHw(int destination, int address, long long int time);
+    std::string ddlGetHwInfo(int destination, long long int time);
+    uint32_t ddlPrintStatus(int destination, int time);
 
     void ddlResetSiu(int cycle, long long int time);
     void ddlSendCommand(int dest, uint32_t command, int transid, uint32_t param, long long int time);

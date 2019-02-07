@@ -200,6 +200,7 @@ if(PDA_FOUND)
     ProgramFlashRead.cxx
     ProgramListCards.cxx
     ProgramMetrics.cxx
+    ProgramSiuStatus.cxx
     ProgramStatus.cxx
     ProgramSwtStress.cxx
   )
@@ -212,6 +213,7 @@ if(PDA_FOUND)
     roc-flash-read
     roc-list-cards
     roc-metrics
+    roc-siu-status
     roc-status
     roc-swt-stress
   )
