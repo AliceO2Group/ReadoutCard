@@ -1003,6 +1003,75 @@ boost::optional<int32_t> getSerial(RegisterReadWriteInterface& bar0)
   return {int32_t(serial)};
 }
 
+uint8_t Crorc::ddlReadHw(int destination, int address, long long int time)
+{
+  // prepare and send DDL command
+  int command = Ddl::RHWVER;
+  int transid = 0;
+  int param = address;
+  ddlSendCommand(destination, command, 0, param, time);
+
+  // read and check the answer
+  ddlWaitStatus(time);
+
+  StWord stw = ddlReadStatus();
+  if (stw.part.code != Ddl::HWSTW || stw.part.trid != transid || stw.part.dest != destination) {
+    BOOST_THROW_EXCEPTION(
+        Exception() << ErrorInfo::Message("Not HWSTW!")
+            << ErrorInfo::StwExpected((b::format("0x00000%x%x%x") % transid % Rorc::IFSTW % destination).str())
+            << ErrorInfo::StwReceived((b::format("0x%08lx") % stw.stw).str()));
+  }
+
+  uint8_t hw = (stw.stw >> 20) & 0xff;
+
+  stw = ddlReadCTSTW(transid, destination, time);
+  return hw;
+}
+
+std::string Crorc::ddlGetHwInfo(int destination, long long int time)
+{
+  uint8_t data[Ddl::MAX_HW_ID];
+  data[0]='\0';
+
+  int i;
+  for(i=0; i<Ddl::MAX_HW_ID; i++) {
+    data[i] = ddlReadHw(destination, i, time);
+    if (data[i] == '\0'){
+      break;
+    }
+  }
+  data[i] = '\0';
+
+  std::string hwInfo ((const char *)data);
+  return hwInfo;
+}
+
+uint32_t Crorc::ddlPrintStatus(int destination, int time)
+{
+  StWord status;
+
+  if (destination == Ddl::Destination::SIU) {
+    status = ddlReadSiu(0, time);
+  } else if (destination == Ddl::Destination::DIU) {
+    status = ddlReadDiu(0, time);
+  } else {
+    //TODO: Throw;
+  }
+
+  return status.stw;
+}
+
+std::tuple<std::string, uint32_t> Crorc::siuStatus()
+{
+  DiuConfig diuConfig = initDiuVersion();
+  long long int time = Ddl::RESPONSE_TIME * diuConfig.pciLoopPerUsec;
+
+  std::string hwInfo = ddlGetHwInfo(Ddl::Destination::SIU, time);
+  uint32_t siuStatus = ddlPrintStatus(Ddl::Destination::SIU, time);
+
+  return std::make_tuple(hwInfo, siuStatus); 
+}
+
 } // namespace Crorc
 } // namespace roc
 } // namespace AliceO2
