@@ -3,9 +3,9 @@
 ///
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#include "CardConfigurator.h"
 #include "Common/Configuration.h"
 #include "Cru/CruBar.h"
+#include "ReadoutCard/CardConfigurator.h"
 #include "ReadoutCard/ChannelFactory.h"
 
 namespace AliceO2 {

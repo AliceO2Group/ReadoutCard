@@ -4,10 +4,10 @@
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
 #include <iostream>
-#include "CardConfigurator.h"
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
 #include "Cru/CruBar.h"
+#include "ReadoutCard/CardConfigurator.h"
 #include "ReadoutCard/ChannelFactory.h"
 #include "RocPciDevice.h"
 
