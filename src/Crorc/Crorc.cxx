@@ -6,6 +6,7 @@
 /// Much of it is not fully understood.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
 #include "Crorc.h"
 #include <chrono>
@@ -1055,7 +1056,7 @@ uint32_t Crorc::ddlPrintStatus(int destination, int time)
   } else if (destination == Ddl::Destination::DIU) {
     status = ddlReadDiu(0, time);
   } else {
-    //TODO: Throw;
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("DDL Status destination invalid"));
   }
 
   return status.stw;
@@ -1067,9 +1068,148 @@ std::tuple<std::string, uint32_t> Crorc::siuStatus()
   long long int time = Ddl::RESPONSE_TIME * diuConfig.pciLoopPerUsec;
 
   std::string hwInfo = ddlGetHwInfo(Ddl::Destination::SIU, time);
-  uint32_t siuStatus = ddlPrintStatus(Ddl::Destination::SIU, time);
+  uint32_t siuStatus;
+  try {
+    ddlPrintStatus(Ddl::Destination::SIU, time);
+  } catch (const Exception& e){
+    throw e;
+  }
 
   return std::make_tuple(hwInfo, siuStatus); 
+}
+
+std::vector<std::string> Crorc::ddlInterpretIfstw(uint32_t ifstw)
+{
+  /* for remote SIU/DIU status */
+  std::string remoteStatus[] = {"Power On Reset", "Offline", "Online", "Waiting for PO",
+    "Offline No Signal", "Offline LOS", "No Optical Signal", "undefined"};
+
+  std::vector<std::string> statusStrings;
+  int destination = ifstw & 0xf;
+  uint32_t status = ifstw & Ddl::STMASK;
+
+  auto appendString = [&] (std::string string) mutable {
+    statusStrings.push_back(string);
+  };
+
+  if (destination == Ddl::Destination::DIU) {
+
+    if (status &  Diu::DIU_LOOP)
+      appendString("DIU is set in loop-back mode");
+    if (status & Diu::ERROR_BIT) {
+      appendString("DIU error bit(s) set");
+      if (status & Diu::LOSS_SYNC)
+        appendString("Loss of synchronization");
+      if (status & Diu::TXOF)
+        appendString("Transmit data/status overflow");
+      if (status & Diu::RES1)
+        appendString("Undefined DIU error");
+      if (status & Diu::OSINFR)
+        appendString("Ordered set in frame");
+      if (status & Diu::INVRX)
+        appendString("Invalid receive character in frame");
+      if (status & Diu::CERR)
+        appendString("CRC error");
+      if (status & Diu::RES2)
+        appendString("Undefined DIU error");
+      if (status & Diu::DOUT)
+        appendString("Data out of frame");
+      if (status & Diu::IFDL)
+        appendString("Illegal frame delimiter");
+      if (status & Diu::LONG)
+        appendString("Too long frame");
+      if (status & Diu::RXOF)
+        appendString("Received data/status overflow");
+      if (status & Diu::FRERR)
+        appendString("Error in receive frame");
+    } else {
+      appendString("DIU error bit(s) not set");
+    }
+
+    switch (status & Ddl::DIUSTMASK) {
+      case Diu::PortState::TSTM:
+        appendString("DIU port in PRBS Test Mode state"); break;
+      case Diu::PortState::POFF:
+        appendString("DIU port in Power Off state"); break;
+      case Diu::PortState::LOS:
+        appendString("DIU port in Offline Loss of Synchr. state"); break;
+      case Diu::PortState::NOSIG:
+        appendString("DIU port in Offline No Signal state"); break;
+      case Diu::PortState::WAIT:
+        appendString("DIU port in Waiting for Power Off state"); break;
+      case Diu::PortState::ONL:
+        appendString("DIU port in Online state"); break;
+      case Diu::PortState::OFFL:
+        appendString("DIU port in Offline state"); break;
+      case Diu::PortState::POR:
+        appendString("DIU port in Power On Reset state"); break;
+    }
+
+    int siuStatus = (status & Ddl::REMMASK) >> 15;
+    appendString("Remote SIU/DIU port is in " + remoteStatus[siuStatus] + "state");
+
+  } else { //destination == SIU
+
+    if (status & Siu::ERROR_BIT) {
+      appendString("SIU error bit(s) set:");
+      if (status & Siu::LONGE)
+        appendString("Too long event or read data block");
+      if (status & Siu::IFEDS)
+        appendString("Illegal FEE data/status");
+      if (status & Siu::TXOF)
+        appendString("Transmit FIFO overflow");
+      if (status & Siu::IWDAT)
+        appendString("Illegal write data word");
+      if (status & Siu::OSINFR)
+        appendString("Ordered set in frame");
+      if (status & Siu::INVRX)
+        appendString("Invalid character in receive frame");
+      if (status & Siu::CERR)
+        appendString("CRC error");
+      if (status & Siu::DJLERR)
+        appendString("DTCC or JTCC error");
+      if (status & Siu::DOUT)
+        appendString("Data out of receive frame");
+      if (status & Siu::IFDL)
+        appendString("Illegal frame delimiter");
+      if (status & Siu::LONG)
+        appendString("Too long receive frame");
+      if (status & Siu::RXOF)
+        appendString("Receive FIFO overflow");
+      if (status & Siu::FRERR)
+        appendString("Error in receive frame");
+      if (status & Siu::LPERR)
+        appendString("Link protocol error");
+    } else {
+      appendString("SIU error bit not set");
+    }
+
+    if (status & Siu::LBMOD)
+      appendString("SIU in Loopback Mode");
+    if (status & Siu::OPTRAN)
+      appendString("One FEE transaction is open");
+
+    switch (status & Ddl::SIUSTMASK) {
+      case Siu::PortState::RESERV:
+        appendString("SIU port in undefined state"); break;
+      case Siu::PortState::POFF:
+        appendString("SIU port in Power Off state"); break;
+      case Siu::PortState::LOS:
+        appendString("SIU port in Offline Loss of Synchr. state"); break;
+      case Siu::PortState::NOSIG:
+        appendString("SIU port in Offline No Signal state"); break;
+      case Siu::PortState::WAIT :
+        appendString("SIU port in Waiting for Power Off state"); break;
+      case Siu::PortState::ONL :
+        appendString("SIU port in Online state"); break;
+      case Siu::PortState::OFFL:
+        appendString("SIU port in Offline state"); break;
+      case Siu::PortState::POR:
+        appendString("SIU port in Power On Reset state"); break;
+    }
+  }
+
+  return statusStrings;
 }
 
 } // namespace Crorc

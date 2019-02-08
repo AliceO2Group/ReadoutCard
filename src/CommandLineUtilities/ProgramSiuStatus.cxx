@@ -7,8 +7,9 @@
 #include <cstddef>
 #include <iostream>
 #include <iomanip>
-#include <thread>
 #include "Crorc/Crorc.h"
+#include "ExceptionInternal.h"
+#include "ReadoutCard/CardType.h"
 #include "ReadoutCard/ChannelFactory.h"
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
@@ -46,18 +47,35 @@ class ProgramSiuStatus: public Program
     auto cardId = Options::getOptionCardId(map);
     getLogger() << "Card ID: " << cardId << InfoLogger::endm;
     getLogger() << "Channel: " << mOptions.channel << InfoLogger::endm;
-    //TODO: Check for CRU
 
     std::shared_ptr<BarInterface>
       bar = ChannelFactory().getBar(cardId, mOptions.channel);
 
+    auto cardType = bar->getCardType();
+    if (cardType != CardType::Crorc) {
+      getLogger() << InfoLogger::Warning <<
+        "SIU status only applicable to CRORC" << InfoLogger::endm;
+      return;
+    }
+
     Crorc::Crorc crorc = Crorc::Crorc(*(bar.get()));
-    auto siuStatus = crorc.siuStatus();
+    std::tuple<std::string, uint32_t> siuStatus;
+    try {
+      siuStatus = crorc.siuStatus();
+    } catch (const Exception& e){
+      getLogger() << InfoLogger::Error <<
+        diagnostic_information(e) << InfoLogger::endm;
+      return;
+    }
 
     getLogger() << "SIU HW info: " << std::get<0>(siuStatus) << InfoLogger::endm;
     getLogger() << "SIU Status Register: 0x" << std::setfill('0') << std::setw(8) << std::hex << std::get<1>(siuStatus) << InfoLogger::endm;
+    auto statusStrings = crorc.ddlInterpretIfstw(std::get<1>(siuStatus));
+
+    for(auto const& string: statusStrings) {
+      getLogger() << string << InfoLogger::endm;
+    }
   }
-  //TODO: Explain status register
 
   private:
   struct OptionsStruct 
