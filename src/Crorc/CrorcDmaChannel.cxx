@@ -46,13 +46,9 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
     mUseContinuousReadout(parameters.getReadoutMode().is_initialized() ?
             parameters.getReadoutModeRequired() == ReadoutMode::Continuous : false)
 {
-  // Prep for BARs
-  auto parameters2 = parameters;
-  parameters2.setChannelNumber(2);
+  // Prep for BAR
   auto bar = ChannelFactory().getBar(parameters);
-  auto bar2 = ChannelFactory().getBar(parameters2);
   crorcBar = std::move(std::dynamic_pointer_cast<CrorcBar> (bar)); // Initialize bar0
-  crorcBar2 = std::move(std::dynamic_pointer_cast<CrorcBar> (bar2)); // Initalize bar2
 
   // Check that the loopback is valid. If not throw
   if (mLoopbackMode == LoopbackMode::Ddg) {
@@ -117,7 +113,7 @@ void CrorcDmaChannel::startPendingDma(SuperpageQueueEntry& entry)
 
   if (mUseContinuousReadout) {
     log("Initializing continuous readout");
-    Crorc::Crorc::initReadoutContinuous(*(getBar2()));
+    Crorc::Crorc::initReadoutContinuous(*(getBar()));
   }
 
   // Find DIU version, required for armDdl()
@@ -181,7 +177,7 @@ void CrorcDmaChannel::startPendingDma(SuperpageQueueEntry& entry)
 
   if (mUseContinuousReadout) {
     log("Starting continuous readout");
-    Crorc::Crorc::startReadoutContinuous(*(getBar2()));
+    Crorc::Crorc::startReadoutContinuous(*(getBar()));
   }
 }
 
@@ -256,6 +252,11 @@ void CrorcDmaChannel::startDataGenerator()
     std::this_thread::sleep_for(100ms); // XXX Why???
     getCrorc().assertLinkUp();
     getCrorc().siuCommand(Ddl::RandCIFST);
+  }
+
+  if (LoopbackMode::Diu == mLoopbackMode) {
+    getCrorc().setDiuLoopback(mDiuConfig);
+    std::this_thread::sleep_for(100ms);
     getCrorc().diuCommand(Ddl::RandCIFST);
   }
 
@@ -453,12 +454,12 @@ CardType::type CrorcDmaChannel::getCardType()
 
 boost::optional<int32_t> CrorcDmaChannel::getSerial()
 {
-  return getBar2()->getSerial();
+  return getBar()->getSerial();
 }
 
 boost::optional<std::string> CrorcDmaChannel::getFirmwareInfo()
 {
-  return getBar2()->getFirmwareInfo();
+  return getBar()->getFirmwareInfo();
 }
 
 } // namespace roc

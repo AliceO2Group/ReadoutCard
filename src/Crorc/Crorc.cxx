@@ -431,11 +431,11 @@ void Crorc::ddlSendCommand(int dest, uint32_t command, int transid, uint32_t par
 
 /// Checks whether status mail box or register is not empty in timeout
 /// \param timeout  Number of check cycles
-void Crorc::ddlWaitStatus(long long int timeout)
+long long int Crorc::ddlWaitStatus(long long int timeout)
 {
   for (int i = 0; i < timeout; ++i) {
     if (checkRxStatus()) {
-      return;
+      return i;
     }
   }
   BOOST_THROW_EXCEPTION(TimeoutException() << ErrorInfo::Message("Timed out waiting on DDL"));
@@ -846,13 +846,31 @@ StWord Crorc::ddlSetSiuLoopBack(const DiuConfig& diuConfig){
   // SIU loopback not set => set it
   ddlSendCommand(Ddl::Destination::SIU, Ddl::IFLOOP, 0, 0, timeout);
 
+  long long ret;
+  ret = ddlWaitStatus(timeout);
+  if (ret >= timeout)
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Timeout waiting for DDL status when setting\
+          SIU loopback"));
+  return ddlReadStatus();
+}
+
+StWord Crorc::ddlSetDiuLoopBack(const DiuConfig& diuConfig){
+  long long int timeout = diuConfig.pciLoopPerUsec * Ddl::RESPONSE_TIME;
+
+  ddlSendCommand(Ddl::Destination::DIU, Ddl::IFLOOP, 0, 0, timeout);
   ddlWaitStatus(timeout);
+
   return ddlReadStatus();
 }
 
 void Crorc::setSiuLoopback(const DiuConfig& diuConfig)
 {
   ddlSetSiuLoopBack(diuConfig);
+}
+
+void Crorc::setDiuLoopback(const DiuConfig& diuConfig)
+{
+  ddlSetDiuLoopBack(diuConfig);
 }
 
 void Crorc::startTrigger(const DiuConfig& diuConfig)

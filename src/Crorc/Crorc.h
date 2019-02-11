@@ -101,6 +101,9 @@ class Crorc
     /// Set SIU loopback
     void setSiuLoopback(const DiuConfig& diuConfig);
 
+    /// Set DIU loopback
+    void setDiuLoopback(const DiuConfig& diuConfig);
+
     /// Not sure
     void setLoopbackOn();
 
@@ -187,13 +190,14 @@ class Crorc
     uint32_t ddlPrintStatus(int destination, int time);
     void ddlResetSiu(int cycle, long long int time);
     void ddlSendCommand(int dest, uint32_t command, int transid, uint32_t param, long long int time);
-    void ddlWaitStatus(long long int timeout);
+    long long int ddlWaitStatus(long long int timeout);
     StWord ddlReadStatus();
     StWord ddlReadDiu(int transid, long long int time);
     StWord ddlReadSiu(int transid, long long int time);
     StWord ddlReadCTSTW(int transid, int destination, long long int time);
     void emptyDataFifos(int timeoutMicroseconds);
     StWord ddlSetSiuLoopBack(const DiuConfig& diuConfig);
+    StWord ddlSetDiuLoopBack(const DiuConfig& diuConfig);
     std::vector<std::string> ddlInterpretIFSTW(uint32_t ifstw);
 };
 

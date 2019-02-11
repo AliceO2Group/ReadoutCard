@@ -126,16 +126,8 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
       return crorcBar.get();
     }
 
-    CrorcBar* getBar2()
-    { 
-      return crorcBar2.get();
-    }
-
-    /// BAR 0 is needed for DMA engine interaction and various other functions
+    /// BAR used for DMA engine and configuration
     std::shared_ptr<CrorcBar> crorcBar;
-
-    /// BAR 2 is needed for configuration
-    std::shared_ptr<CrorcBar> crorcBar2;
 
     /// Memory mapped file for the ReadyFIFO
     boost::scoped_ptr<MemoryMappedFile> mBufferFifoFile;
