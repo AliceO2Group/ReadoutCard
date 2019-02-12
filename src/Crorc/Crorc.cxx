@@ -497,6 +497,7 @@ StWord Crorc::ddlReadSiu(int transid, long long int time)
             << ErrorInfo::StwReceived((b::format("0x%08lx") % stw.stw).str()));
   }
 
+  StWord ret = stw;
   stw = ddlReadStatus();
   if ((stw.part.code != Rorc::CTSTW && stw.part.code != Rorc::ILCMD && stw.part.code != Rorc::CTSTW_TO)
       || stw.part.trid != transid || stw.part.dest != destination) {
@@ -505,7 +506,7 @@ StWord Crorc::ddlReadSiu(int transid, long long int time)
             << ErrorInfo::StwExpected((b::format("0x00000%x%x%x") % transid % Rorc::CTSTW % destination).str())
             << ErrorInfo::StwReceived((b::format("0x%08lx") % stw.stw).str()));
   }
-  return stw;
+  return ret;
 }
 
 /// Interpret DIU or SIU IFSTW to user readable messages
