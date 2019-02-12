@@ -68,8 +68,11 @@ class ProgramSiuStatus: public Program
       return;
     }
 
+    std::stringstream ss;
+    ss << "0x" << std::setfill('0') << std::hex << std::get<1>(siuStatus);
+
     getLogger() << "SIU HW info: " << std::get<0>(siuStatus) << InfoLogger::endm;
-    getLogger() << "SIU Status Register: 0x" << std::setfill('0') << std::setw(8) << std::hex << std::get<1>(siuStatus) << InfoLogger::endm;
+    getLogger() << "SIU Status Register: " << ss.str() << InfoLogger::endm;
     auto statusStrings = crorc.ddlInterpretIfstw(std::get<1>(siuStatus));
 
     for(auto const& string: statusStrings) {

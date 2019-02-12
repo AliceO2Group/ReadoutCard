@@ -1084,12 +1084,15 @@ uint32_t Crorc::ddlPrintStatus(int destination, int time)
 std::tuple<std::string, uint32_t> Crorc::siuStatus()
 {
   DiuConfig diuConfig = initDiuVersion();
+  resetCommand(Rorc::Reset::SIU, diuConfig);
+  sleep_for(100ms);
+
   long long int time = Ddl::RESPONSE_TIME * diuConfig.pciLoopPerUsec;
 
   std::string hwInfo = ddlGetHwInfo(Ddl::Destination::SIU, time);
   uint32_t siuStatus;
   try {
-    ddlPrintStatus(Ddl::Destination::SIU, time);
+    siuStatus = ddlPrintStatus(Ddl::Destination::SIU, time);
   } catch (const Exception& e){
     throw e;
   }

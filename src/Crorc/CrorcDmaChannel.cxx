@@ -252,6 +252,7 @@ void CrorcDmaChannel::startDataGenerator()
     std::this_thread::sleep_for(100ms); // XXX Why???
     getCrorc().assertLinkUp();
     getCrorc().siuCommand(Ddl::RandCIFST);
+    getCrorc().diuCommand(Ddl::RandCIFST);
   }
 
   if (LoopbackMode::Diu == mLoopbackMode) {
