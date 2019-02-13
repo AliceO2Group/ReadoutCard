@@ -2,7 +2,7 @@
 /// \brief Implementation of the CardType enum and supporting functions.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
-
+/// a test
 #include "ReadoutCard/CardType.h"
 #include "Utilities/Enum.h"
 
