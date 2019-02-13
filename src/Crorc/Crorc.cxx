@@ -896,8 +896,8 @@ void Crorc::stopTrigger(const DiuConfig& diuConfig)
   try {
     rorcStopTrigger();
   } catch (const Exception& e) {
+    std::cout << "Stop Trigger timed out" << std::endl;
   }
-  rorcStopTrigger();
 }
 
 void Crorc::setLoopbackOn(){

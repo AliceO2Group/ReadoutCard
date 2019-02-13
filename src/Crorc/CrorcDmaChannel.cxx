@@ -33,11 +33,11 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
     //mPdaBar2(getRocPciDevice().getPciDevice(), 2), // Initialize BAR 2
     mPageSize(parameters.getDmaPageSize().get_value_or(8*1024)), // 8 kB default for uniformity with CRU
     mInitialResetLevel(ResetLevel::Internal), // It's good to reset at least the card channel in general
-    mNoRDYRX(true), // Not sure
+    mNoRDYRX(false), // Not sure
     mUseFeeAddress(false), // Not sure
     mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)), // Internal loopback by default
     mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)), // Use data generator by default
-    mGeneratorPattern(parameters.getGeneratorPattern().get_value_or(GeneratorPattern::Incremental)), //
+    mGeneratorPattern(parameters.getGeneratorPattern().get_value_or(GeneratorPattern::Incremental)), 
     mGeneratorMaximumEvents(0), // Infinite events
     mGeneratorInitialValue(0), // Start from 0
     mGeneratorInitialWord(0), // First word
@@ -88,7 +88,7 @@ auto CrorcDmaChannel::allowedChannels() -> AllowedChannels {
 
 CrorcDmaChannel::~CrorcDmaChannel()
 {
-  deviceStopDma();
+  //deviceStopDma();
 }
 
 void CrorcDmaChannel::deviceStartDma()
@@ -184,16 +184,14 @@ void CrorcDmaChannel::startPendingDma(SuperpageQueueEntry& entry)
 void CrorcDmaChannel::deviceStopDma()
 {
   if (mGeneratorEnabled) {
-    // Starting the data generator
-    startDataGenerator();
     getCrorc().stopDataGenerator();
-    getCrorc().stopDataReceiver();
   } else {
     if (!mNoRDYRX) {
       // Sending EOBTR to FEE.
       getCrorc().stopTrigger(mDiuConfig);
     }
   }
+  getCrorc().stopDataReceiver();
 }
 
 void CrorcDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)
@@ -220,6 +218,7 @@ void CrorcDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)
         getCrorc().armDdl(Rorc::Reset::DIU, mDiuConfig);
       }
 
+      //getCrorc().resetCommand(Rorc::Reset::FIFOS & Rorc::Reset::DIU & Rorc::Reset::SIU, mDiuConfig);
       getCrorc().armDdl(Rorc::Reset::RORC, mDiuConfig);
     }
   }
@@ -235,9 +234,9 @@ void CrorcDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)
 
 void CrorcDmaChannel::startDataGenerator()
 {
-  if (LoopbackMode::None == mLoopbackMode) {
+  /*if (LoopbackMode::None == mLoopbackMode) {
     getCrorc().startTrigger(mDiuConfig);
-  }
+  }*/
 
   getCrorc().armDataGenerator(mGeneratorInitialValue, mGeneratorInitialWord, mGeneratorPattern, mGeneratorDataSize,
       mGeneratorSeed);
