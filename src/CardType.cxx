@@ -2,7 +2,7 @@
 /// \brief Implementation of the CardType enum and supporting functions.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
-/// a test
+
 #include "ReadoutCard/CardType.h"
 #include "Utilities/Enum.h"
 
@@ -10,7 +10,7 @@ namespace AliceO2 {
 namespace roc {
 namespace {
 
-static const auto converter = Utilities::makeEnumConverter<CardType::type>("CardType", {
+//static const auto converter = Utilities::makeEnumConverter<CardType::type>("CardType", {
   { CardType::Unknown, "UNKNOWN" },
   { CardType::Crorc,   "CRORC" },
   { CardType::Cru,     "CRU" },
