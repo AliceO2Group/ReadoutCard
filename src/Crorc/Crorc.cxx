@@ -896,7 +896,7 @@ void Crorc::stopTrigger(const DiuConfig& diuConfig)
   try {
     rorcStopTrigger();
   } catch (const Exception& e) {
-    std::cout << "Stop Trigger timed out" << std::endl;
+    std::cout << "STOP TRIGGER DDL TIME-OUT" << std::endl;
   }
 }
 
