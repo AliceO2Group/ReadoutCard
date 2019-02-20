@@ -296,7 +296,7 @@ endforeach()
 # Install the hugetlbfs script separately, because it's not a compiled target
 install(
   FILES src/roc-setup-hugetlbfs.sh
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
   RENAME roc-setup-hugetlbfs)
 
