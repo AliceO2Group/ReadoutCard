@@ -293,13 +293,6 @@ endforeach()
 # Install
 ####################################
 
-# Install the hugetlbfs script separately, because it's not a compiled target
-install(
-  FILES src/roc-setup-hugetlbfs.sh
-  DESTINATION ${CMAKE_INSTALL_BINDIR}
-  PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-  RENAME roc-setup-hugetlbfs)
-
 include(GNUInstallDirs)
 
 # Build targets with install rpath on Mac to dramatically speed up installation
@@ -355,4 +348,19 @@ install(
     "${CMAKE_CURRENT_BINARY_DIR}/cmake/ReadoutCardConfigVersion.cmake"
   DESTINATION
     ${CMAKE_INSTALL_LIBDIR}/cmake/ReadoutCard
+)
+
+# Install the hugetlbfs script separately, because it's not a compiled target
+install(
+  FILES src/roc-setup-hugetlbfs.sh
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+  RENAME roc-setup-hugetlbfs
+)
+
+install(
+  FILES src/roc-setup-hugetlbfs.sh
+  DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+  PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+  RENAME roc-setup-hugetlbfs
 )
