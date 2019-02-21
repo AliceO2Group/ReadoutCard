@@ -108,7 +108,7 @@ void CrorcDmaChannel::startPendingDma()
     return;
   }
 
-  if (mTransferQueue.size() < DMA_START_REQUIRED_SUPERPAGES) {
+  if (mTransferQueue.empty()) { // We should never end up in here
     log("Insufficient superpages to start pending DMA");
     return;
   }
@@ -126,15 +126,16 @@ void CrorcDmaChannel::startPendingDma()
   // Resetting the card,according to the RESET LEVEL parameter
   deviceResetChannel(mInitialResetLevel);
 
+  // TODO: Move datareceiving at deviceStartDma?
   // Setting the card to be able to receive data
   startDataReceiving();
 
-  // Initializing the firmware FIFO, pushing (entries) pages
-  for(size_t i = 0; i < DMA_START_REQUIRED_SUPERPAGES; ++i){
-    getReadyFifoUser()->entries[i].reset();
-    auto superpage = mTransferQueue[i];
-    mReadyQueue.push_back();
-    pushFreeFifoPage(i, getBusOffsetAddress(superpage.getOffset()));
+  auto superpageToPush = mTransferQueue.front(); // Push the first superpage
+                                                 // After data receiving has begun
+  for (size_t j = 0; j < READYFIFO_ENTRIES; j++) {
+    auto offset = superpageToPush.getOffset() + j * mPageSize;
+    pushFreeFifoPage(j, getBusOffsetAddress(offset));
+    mFifoSize = 128;
   }
 
   if (mGeneratorEnabled) {
@@ -155,21 +156,23 @@ void CrorcDmaChannel::startPendingDma()
     }
   }
 
-  /// Fixed wait for initial pages TODO polling wait with timeout
-  std::this_thread::sleep_for(10ms);
-  if (dataArrived(READYFIFO_ENTRIES - 1) != DataArrivalStatus::WholeArrived) {
+  std::this_thread::sleep_for(100ms);
+
+  /// Fixed wait for initial pages TODO polling wait with timeout 
+  /*while ((dataArrived(READYFIFO_ENTRIES - 1) != DataArrivalStatus::WholeArrived)) {
+    std::this_thread::sleep_for(100ms);
     log("Initial pages not arrived", InfoLogger::InfoLogger::Warning);
   }
 
-  for(size_t i = 0; i < DMA_START_REQUIRED_SUPERPAGES; ++i){
-    auto superpage = mTransferQueue.front();
-    mReadyQueue.push_back(superpage);
-    mTransferQueue.pop_front();
-  }
+  // TODO: Move this read to fillSuperpages...
+  auto superpageToReadout = mTransferQueue.front(); // Read the first Superpage
+  mReadyQueue.push_back(superpageToReadout);
 
-  getReadyFifoUser()->reset();
-  mFifoBack = 0;
+  getReadyFifoUser()->reset(); // Reset ReadyFifo
+  mFifoBack = 0;               // Reset FreeFifo references
   mFifoSize = 0;
+
+  mTransferQueue.pop_front(); // Pop the Superpage after resets; don't introduce race conditions*/ 
 
   mPendingDmaStart = false;
   log("DMA started");
@@ -317,11 +320,20 @@ void CrorcDmaChannel::pushSuperpage(Superpage superpage)
     BOOST_THROW_EXCEPTION(Exception()
       << ErrorInfo::Message("Could not push superpage, firmware queue was full (this should never happen)"));
   }
+  
+  if (mPendingDmaStart) { // TODO: Don't let someone push more than one superpage at this stage
+                          // TODO: Return a "retry" flag?
+    log("DMA has not started, pushSuperpage only updates mTransferQueue");
+    mTransferQueue.push_back(superpage);
+    return;
+  }
 
+  for (int i = 0; i < READYFIFO_ENTRIES; i++) { //TODO: *always* push 128 FIFO entries
+    auto busAddress = getBusOffsetAddress(superpage.getOffset() + i * mPageSize);
+    pushFreeFifoPage(i, busAddress);
+    mFifoSize++;
+  }
   mTransferQueue.push_back(superpage);
-  auto busAddress = getBusOffsetAddress(superpage.getOffset());
-  pushFreeFifoPage(getFifoFront(), busAddress);
-  mFifoSize++;
 }
 
 auto CrorcDmaChannel::popSuperpage() -> Superpage
@@ -337,7 +349,7 @@ auto CrorcDmaChannel::popSuperpage() -> Superpage
 void CrorcDmaChannel::fillSuperpages()
 {
   if (mPendingDmaStart) {
-    if (mTransferQueue.size() >= DMA_START_REQUIRED_SUPERPAGES) {
+    if (!mTransferQueue.empty()) {
       startPendingDma();
     } else {
       // Waiting on enough superpages to start DMA...
@@ -358,11 +370,13 @@ void CrorcDmaChannel::fillSuperpages()
         mFifoSize--;
         mFifoBack = (mFifoBack + 1) % READYFIFO_ENTRIES;
 
-        auto superpage = mTransferQueue.front();
-        superpage.setReceived(length);
-        superpage.setReady(true);
-        mReadyQueue.push_back(superpage);
-        mTransferQueue.pop_front();
+        if (mFifoSize == 0) { // Push the superpage after all of the 128 fifo entries are pushed
+          auto superpage = mTransferQueue.front();
+          superpage.setReceived(mPageSize * READYFIFO_ENTRIES); //TODO: Always full pages?
+          superpage.setReady(true);
+          mReadyQueue.push_back(superpage);
+          mTransferQueue.pop_front();
+        }
       } else {
         // If the back one hasn't arrived yet, the next ones will certainly not have arrived either...
         break;
