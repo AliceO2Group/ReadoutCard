@@ -16,7 +16,6 @@
 #include "CrorcBar.h"
 #include "ReadoutCard/Parameters.h"
 #include "ReadyFifo.h"
-#include "SuperpageQueue.h"
 
 namespace AliceO2 {
 namespace roc {
@@ -57,15 +56,17 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
     virtual void deviceResetChannel(ResetLevel::type resetLevel) override;
 
   private:
-    /// Firmware FIFO Size
-    static constexpr size_t TRANSFER_QUEUE_CAPACITY = READYFIFO_ENTRIES;
-
     /// Max amount of superpages in the ready queue (i.e. finished transfer).
     /// This is an arbitrary size, can easily be increased if more headroom is needed.
-    static constexpr size_t READY_QUEUE_CAPACITY = READYFIFO_ENTRIES;
+    static constexpr size_t READY_QUEUE_CAPACITY = READYFIFO_ENTRIES / READYFIFO_ENTRIES; //Single 1Mi Superpage
+    // TODO: Update to handle larger than 1Mi Superpages
+    // A superpage should contain as many dma pages as possible
+
+    /// Max amount of superpages in the transfer queue (i.e. pending transfer).
+    static constexpr size_t TRANSFER_QUEUE_CAPACITY = READY_QUEUE_CAPACITY;
 
     /// Minimum number of superpages needed to bootstrap DMA
-    static constexpr size_t DMA_START_REQUIRED_SUPERPAGES = 1;
+    //static constexpr size_t DMA_START_REQUIRED_SUPERPAGES = 1;
     //static constexpr size_t DMA_START_REQUIRED_SUPERPAGES = READYFIFO_ENTRIES;
 
     using SuperpageQueue = boost::circular_buffer<Superpage>;
