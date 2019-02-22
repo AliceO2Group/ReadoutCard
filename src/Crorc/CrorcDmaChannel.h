@@ -56,14 +56,19 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
     virtual void deviceResetChannel(ResetLevel::type resetLevel) override;
 
   private:
-    /// Max amount of superpages in the ready queue (i.e. finished transfer).
-    /// This is an arbitrary size, can easily be increased if more headroom is needed.
-    static constexpr size_t READY_QUEUE_CAPACITY = READYFIFO_ENTRIES / READYFIFO_ENTRIES; //Single 1Mi Superpage
-    // TODO: Update to handle larger than 1Mi Superpages
-    // A superpage should contain as many dma pages as possible
+    /// Superpage size supported by the CRORC backend
+    static constexpr size_t SUPERPAGE_SIZE = 1*1024*1024;
+
+    /// DMA page size
+    static constexpr size_t DMA_PAGE_SIZE = 8*1024;
 
     /// Max amount of superpages in the transfer queue (i.e. pending transfer).
-    static constexpr size_t TRANSFER_QUEUE_CAPACITY = READY_QUEUE_CAPACITY;
+    static constexpr size_t TRANSFER_QUEUE_CAPACITY = SUPERPAGE_SIZE / (READYFIFO_ENTRIES * DMA_PAGE_SIZE);
+
+    /// Max amount of superpages in the ready queue (i.e. finished transfer).
+    /// This is an arbitrary size, can easily be increased if more headroom is needed.
+    static constexpr size_t READY_QUEUE_CAPACITY = TRANSFER_QUEUE_CAPACITY + 1; //Allow for some leeway
+
 
     /// Minimum number of superpages needed to bootstrap DMA
     //static constexpr size_t DMA_START_REQUIRED_SUPERPAGES = 1;
@@ -108,9 +113,9 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
     DataArrivalStatus::type dataArrived(int index);
 
     /// Get front index of FIFO
-    int getFifoFront() const
+    int getFreeFifoFront() const
     {
-      return (mFifoBack + mFifoSize) % READYFIFO_ENTRIES;
+      return (mFreeFifoBack + mFreeFifoSize) % READYFIFO_ENTRIES;
     };
 
     CrorcBar* getBar()
@@ -137,10 +142,10 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
     uintptr_t mReadyFifoAddressBus;
 
     /// Back index of the firmware FIFO
-    int mFifoBack = 0;
+    int mFreeFifoBack = 0;
 
     /// Amount of elements in the firmware FIFO
-    int mFifoSize = 0;
+    int mFreeFifoSize = 0;
 
     /// Queue for superpages that are pushed to the firmware FIFO
     SuperpageQueue mTransferQueue {TRANSFER_QUEUE_CAPACITY};
