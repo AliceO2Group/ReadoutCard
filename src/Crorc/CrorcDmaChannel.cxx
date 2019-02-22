@@ -32,7 +32,7 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
     //mPdaBar(getRocPciDevice().getPciDevice(), getChannelNumber()), // Initialize main DMA channel BAR
     //mPdaBar2(getRocPciDevice().getPciDevice(), 2), // Initialize BAR 2
     mPageSize(parameters.getDmaPageSize().get_value_or(DMA_PAGE_SIZE)), // 8 kB default for uniformity with CRU
-    mInitialResetLevel(ResetLevel::Internal), // It's good to reset at least the card channel in general
+    mInitialResetLevel(ResetLevel::InternalDiuSiu), // It's good to reset at least the card channel in general
     mNoRDYRX(false), // Not sure
     mUseFeeAddress(false), // Not sure
     mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)), // Internal loopback by default
@@ -99,6 +99,21 @@ CrorcDmaChannel::~CrorcDmaChannel()
 
 void CrorcDmaChannel::deviceStartDma()
 {
+  if (mUseContinuousReadout) {
+    log("Initializing continuous readout");
+    Crorc::Crorc::initReadoutContinuous(*(getBar()));
+  }
+
+  // Find DIU version, required for armDdl()
+  mDiuConfig = getCrorc().initDiuVersion();
+
+  // Resetting the card,according to the RESET LEVEL parameter
+  deviceResetChannel(mInitialResetLevel);
+
+  // TODO: Move datareceiving at deviceStartDma?
+  // Setting the card to be able to receive data
+  startDataReceiving();
+
   log("DMA start deferred until enough superpages available");
 
   mFreeFifoBack = 0;
@@ -121,7 +136,7 @@ void CrorcDmaChannel::startPendingDma()
 
   log("Starting pending DMA");
 
-  if (mUseContinuousReadout) {
+/*  if (mUseContinuousReadout) {
     log("Initializing continuous readout");
     Crorc::Crorc::initReadoutContinuous(*(getBar()));
   }
@@ -130,7 +145,7 @@ void CrorcDmaChannel::startPendingDma()
   mDiuConfig = getCrorc().initDiuVersion();
 
   // Resetting the card,according to the RESET LEVEL parameter
-  deviceResetChannel(mInitialResetLevel);
+  //deviceResetChannel(mInitialResetLevel);
 
   // TODO: Move datareceiving at deviceStartDma?
   // Setting the card to be able to receive data
@@ -138,12 +153,12 @@ void CrorcDmaChannel::startPendingDma()
 
   auto superpageToPush = mTransferQueue.front(); // Push the first superpage
                                                  // After data receiving has begun
-  for (size_t j = 0; j < READYFIFO_ENTRIES; j++) {
+  for (int j = 0; j < READYFIFO_ENTRIES; j++) {
     auto offset = superpageToPush.getOffset() + j * mPageSize;
     pushFreeFifoPage(j, getBusOffsetAddress(offset));
     //mFreeFifoSize++;
   }
-  mFreeFifoSize = READYFIFO_ENTRIES;
+  mFreeFifoSize = READYFIFO_ENTRIES;*/
 
   if (mGeneratorEnabled) {
     log("Starting data generator");
@@ -165,17 +180,30 @@ void CrorcDmaChannel::startPendingDma()
 
   std::this_thread::sleep_for(100ms);
 
-  if (true) { // Kostas: Temp if to try and remove special handling of first superpage
+  if (false) { // Kostas: Temp if to try and remove special handling of first superpage
+    
+    
+    auto isArrived = [&](int descriptorIndex) {return dataArrived(descriptorIndex) == DataArrivalStatus::WholeArrived;};
+    auto resetDescriptor = [&](int descriptorIndex) {getReadyFifoUser()->entries[descriptorIndex].reset();};
+    
     /// Fixed wait for initial pages TODO polling wait with timeout 
-    while ((dataArrived(READYFIFO_ENTRIES - 1) != DataArrivalStatus::WholeArrived)) {
+    /*while ((dataArrived(READYFIFO_ENTRIES - 1) != DataArrivalStatus::WholeArrived)) {
       std::this_thread::sleep_for(100ms);
       log("Initial pages not arrived", InfoLogger::InfoLogger::Warning);
+    }*/
+    while (mFreeFifoSize) {
+      if (isArrived(mFreeFifoBack)) {
+        mFreeFifoSize--;
+        mFreeFifoBack = (mFreeFifoBack + 1) % READYFIFO_ENTRIES;
+      } else {
+        continue;
+      }
     }
 
     // TODO: Move this read to fillSuperpages...
     auto superpageToReadout = mTransferQueue.front(); // Read the first Superpage
-    //superpageToReadout.setReceived(READYFIFO_ENTRIES * mPageSize);
-    //superpageToReadout.setReady(true);
+    superpageToReadout.setReceived(READYFIFO_ENTRIES * mPageSize);
+    superpageToReadout.setReady(true);
     mReadyQueue.push_back(superpageToReadout);
 
     getReadyFifoUser()->reset(); // Reset ReadyFifo
@@ -211,7 +239,7 @@ void CrorcDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)
   }
 
   try {
-    if (resetLevel == ResetLevel::Internal) {
+    if (resetLevel == ResetLevel::Internal || true) { //temp if
       getCrorc().resetCommand(Rorc::Reset::FF, mDiuConfig);
       getCrorc().resetCommand(Rorc::Reset::RORC, mDiuConfig);
     }
@@ -327,12 +355,12 @@ void CrorcDmaChannel::pushSuperpage(Superpage superpage)
       << ErrorInfo::Message("Could not push superpage, firmware queue was full (this should never happen)"));
   }
   
-  if (mPendingDmaStart) { // TODO: Don't let someone push more than one superpage at this stage
+/*  if (mPendingDmaStart) { // TODO: Don't let someone push more than one superpage at this stage
                           // TODO: Return a "retry" flag?
     log("DMA has not started, pushSuperpage only updates mTransferQueue");
     mTransferQueue.push_back(superpage);
     return;
-  }
+  }*/
 
   for (int i = 0; i < READYFIFO_ENTRIES; i++) { //TODO: *always* push 128 FIFO entries
     auto busAddress = getBusOffsetAddress(superpage.getOffset() + i * mPageSize);

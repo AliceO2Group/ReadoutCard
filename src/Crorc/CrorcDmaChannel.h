@@ -67,7 +67,7 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
 
     /// Max amount of superpages in the ready queue (i.e. finished transfer).
     /// This is an arbitrary size, can easily be increased if more headroom is needed.
-    static constexpr size_t READY_QUEUE_CAPACITY = TRANSFER_QUEUE_CAPACITY + 1; //Allow for some leeway
+    static constexpr size_t READY_QUEUE_CAPACITY = TRANSFER_QUEUE_CAPACITY; //No leeway
 
 
     /// Minimum number of superpages needed to bootstrap DMA
