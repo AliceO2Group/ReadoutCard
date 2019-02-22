@@ -170,8 +170,8 @@ void CrorcDmaChannel::startPendingDma()
 
       // Clearing SIU/DIU status.
       getCrorc().assertLinkUp();
-      //getCrorc().siuCommand(Ddl::RandCIFST);
-      //getCrorc().diuCommand(Ddl::RandCIFST);
+      getCrorc().siuCommand(Ddl::RandCIFST);
+      getCrorc().diuCommand(Ddl::RandCIFST);
 
       // RDYRX command to FEE
       getCrorc().startTrigger(mDiuConfig);
