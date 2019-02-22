@@ -22,7 +22,7 @@ static const auto converter = Utilities::makeEnumConverter<LoopbackMode::type>("
 
 bool LoopbackMode::isExternal(const LoopbackMode::type& mode)
 {
-  return mode == LoopbackMode::Siu || mode == LoopbackMode::Diu;
+  return mode == LoopbackMode::Siu || mode == LoopbackMode::Diu || mode == LoopbackMode::None;
 }
 
 std::string LoopbackMode::toString(const LoopbackMode::type& mode)

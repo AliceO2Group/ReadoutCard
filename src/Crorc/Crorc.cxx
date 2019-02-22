@@ -892,12 +892,20 @@ void Crorc::stopTrigger(const DiuConfig& diuConfig)
     ddlReadStatus();
   };
 
+  // Try stopping once
+  try {
+    rorcStopTrigger();
+  } catch (const Exception& e) {
+    std::cout << "STOP TRIGGER DDL TIME-OUT" << std::endl;
+  }
+
   // Try stopping twice
   try {
     rorcStopTrigger();
   } catch (const Exception& e) {
     std::cout << "STOP TRIGGER DDL TIME-OUT" << std::endl;
   }
+
 }
 
 void Crorc::setLoopbackOn(){
