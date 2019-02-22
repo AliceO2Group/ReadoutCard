@@ -31,7 +31,7 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
     : DmaChannelPdaBase(parameters, allowedChannels()), //
     //mPdaBar(getRocPciDevice().getPciDevice(), getChannelNumber()), // Initialize main DMA channel BAR
     //mPdaBar2(getRocPciDevice().getPciDevice(), 2), // Initialize BAR 2
-    mPageSize(parameters.getDmaPageSize().get_value_or(8*1024)), // 8 kB default for uniformity with CRU
+    mPageSize(parameters.getDmaPageSize().get_value_or(DMA_PAGE_SIZE)), // 8 kB default for uniformity with CRU
     mInitialResetLevel(ResetLevel::Internal), // It's good to reset at least the card channel in general
     mNoRDYRX(false), // Not sure
     mUseFeeAddress(false), // Not sure
@@ -46,16 +46,22 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
     mUseContinuousReadout(parameters.getReadoutMode().is_initialized() ?
             parameters.getReadoutModeRequired() == ReadoutMode::Continuous : false)
 {
-  // Prep for BAR
-  auto bar = ChannelFactory().getBar(parameters);
-  crorcBar = std::move(std::dynamic_pointer_cast<CrorcBar> (bar)); // Initialize bar0
-
+  // Check that the DMA page is valid
+  if (mPageSize != DMA_PAGE_SIZE) {
+    BOOST_THROW_EXCEPTION(CrorcException() << ErrorInfo::Message("CRORC only supports 8KiB DMA page size")
+      << ErrorInfo::DmaPageSize(mPageSize));
+  }
+  
   // Check that the loopback is valid. If not throw
   if (mLoopbackMode == LoopbackMode::Ddg) {
     BOOST_THROW_EXCEPTION(CruException() << ErrorInfo::Message("CRORC does not support given loopback mode")
       << ErrorInfo::LoopbackMode(mLoopbackMode));
   }
   
+  // Prep for BAR
+  auto bar = ChannelFactory().getBar(parameters);
+  crorcBar = std::move(std::dynamic_pointer_cast<CrorcBar> (bar)); // Initialize bar0
+
   // Create and register our ReadyFIFO buffer
   log("Initializing ReadyFIFO DMA buffer", InfoLogger::InfoLogger::Debug);
   {
@@ -95,8 +101,8 @@ void CrorcDmaChannel::deviceStartDma()
 {
   log("DMA start deferred until enough superpages available");
 
-  mFifoBack = 0;
-  mFifoSize = 0;
+  mFreeFifoBack = 0;
+  mFreeFifoSize = 0;
   mReadyQueue.clear();
   mTransferQueue.clear();
   mPendingDmaStart = true;
@@ -135,8 +141,9 @@ void CrorcDmaChannel::startPendingDma()
   for (size_t j = 0; j < READYFIFO_ENTRIES; j++) {
     auto offset = superpageToPush.getOffset() + j * mPageSize;
     pushFreeFifoPage(j, getBusOffsetAddress(offset));
-    mFifoSize = 128;
+    //mFreeFifoSize++;
   }
+  mFreeFifoSize = READYFIFO_ENTRIES;
 
   if (mGeneratorEnabled) {
     log("Starting data generator");
@@ -158,23 +165,29 @@ void CrorcDmaChannel::startPendingDma()
 
   std::this_thread::sleep_for(100ms);
 
-  /// Fixed wait for initial pages TODO polling wait with timeout 
-  while ((dataArrived(READYFIFO_ENTRIES - 1) != DataArrivalStatus::WholeArrived)) {
-    std::this_thread::sleep_for(100ms);
-    log("Initial pages not arrived", InfoLogger::InfoLogger::Warning);
+  if (true) { // Kostas: Temp if to try and remove special handling of first superpage
+    /// Fixed wait for initial pages TODO polling wait with timeout 
+    while ((dataArrived(READYFIFO_ENTRIES - 1) != DataArrivalStatus::WholeArrived)) {
+      std::this_thread::sleep_for(100ms);
+      log("Initial pages not arrived", InfoLogger::InfoLogger::Warning);
+    }
+
+    // TODO: Move this read to fillSuperpages...
+    auto superpageToReadout = mTransferQueue.front(); // Read the first Superpage
+    //superpageToReadout.setReceived(READYFIFO_ENTRIES * mPageSize);
+    //superpageToReadout.setReady(true);
+    mReadyQueue.push_back(superpageToReadout);
+
+    getReadyFifoUser()->reset(); // Reset ReadyFifo
+    mFreeFifoBack = 0;           // Reset FreeFifo references
+    mFreeFifoSize = 0;
+
+    mPendingDmaStart = false;
+    mTransferQueue.pop_front(); // Pop the Superpage after resets; don't introduce race conditions 
+  } else {
+    mPendingDmaStart = false;
   }
 
-  // TODO: Move this read to fillSuperpages...
-  auto superpageToReadout = mTransferQueue.front(); // Read the first Superpage
-  mReadyQueue.push_back(superpageToReadout);
-
-  getReadyFifoUser()->reset(); // Reset ReadyFifo
-  mFifoBack = 0;               // Reset FreeFifo references
-  mFifoSize = 0;
-
-  mTransferQueue.pop_front(); // Pop the Superpage after resets; don't introduce race conditions 
-
-  mPendingDmaStart = false;
   log("DMA started");
 }
 
@@ -299,24 +312,17 @@ auto CrorcDmaChannel::getSuperpage() -> Superpage
 void CrorcDmaChannel::pushSuperpage(Superpage superpage)
 {
   checkSuperpage(superpage);
-  constexpr size_t MIN_SIZE = 1*1024*1024;
-  constexpr size_t MAX_SIZE = 2*1024*1024;
 
-  if (superpage.getSize() > MAX_SIZE) {
+  if (superpage.getSize() != SUPERPAGE_SIZE) {
     BOOST_THROW_EXCEPTION(CrorcException()
-      << ErrorInfo::Message("Could not enqueue superpage, C-RORC backend does not support superpage sizes above 2 MiB"));
-  }
-
-  if (!Utilities::isMultiple(superpage.getSize(), MIN_SIZE)) {
-    BOOST_THROW_EXCEPTION(CrorcException()
-      << ErrorInfo::Message("Could not enqueue superpage, C-RORC backend requires superpage size multiple of 1 MiB"));
+      << ErrorInfo::Message("Could not enqueue superpage, the C-RORC backend only supports superpage sizes of 1 MiB"));
   }
 
   if (mTransferQueue.size() >= TRANSFER_QUEUE_CAPACITY) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not push superpage, transfer queue was full"));
   }
 
-  if (mFifoSize >= READYFIFO_ENTRIES) {
+  if (mFreeFifoSize >= READYFIFO_ENTRIES) {
     BOOST_THROW_EXCEPTION(Exception()
       << ErrorInfo::Message("Could not push superpage, firmware queue was full (this should never happen)"));
   }
@@ -331,8 +337,8 @@ void CrorcDmaChannel::pushSuperpage(Superpage superpage)
   for (int i = 0; i < READYFIFO_ENTRIES; i++) { //TODO: *always* push 128 FIFO entries
     auto busAddress = getBusOffsetAddress(superpage.getOffset() + i * mPageSize);
     pushFreeFifoPage(i, busAddress);
-    mFifoSize++;
   }
+  mFreeFifoSize = READYFIFO_ENTRIES;;
   mTransferQueue.push_back(superpage);
 }
 
@@ -362,15 +368,15 @@ void CrorcDmaChannel::fillSuperpages()
     auto isArrived = [&](int descriptorIndex) {return dataArrived(descriptorIndex) == DataArrivalStatus::WholeArrived;};
     auto resetDescriptor = [&](int descriptorIndex) {getReadyFifoUser()->entries[descriptorIndex].reset();};
 
-    while (mFifoSize > 0) {
-      if (isArrived(mFifoBack)) {
-        uint32_t length = getReadyFifoUser()->entries[mFifoBack].getSize();
-        resetDescriptor(mFifoBack);
+    while (mFreeFifoSize > 0) {
+      if (isArrived(mFreeFifoBack)) {
+        uint32_t length = getReadyFifoUser()->entries[mFreeFifoBack].getSize();
+        resetDescriptor(mFreeFifoBack);
 
-        mFifoSize--;
-        mFifoBack = (mFifoBack + 1) % READYFIFO_ENTRIES;
+        mFreeFifoSize--;
+        mFreeFifoBack = (mFreeFifoBack + 1) % READYFIFO_ENTRIES;
 
-        if (mFifoSize == 0) { // Push the superpage after all of the 128 fifo entries are pushed
+        if (mFreeFifoBack == 0) { // Push the superpage after all of the 128 fifo entries are pushed
           auto superpage = mTransferQueue.front();
           superpage.setReceived(mPageSize * READYFIFO_ENTRIES); //TODO: Always full pages?
           superpage.setReady(true);
