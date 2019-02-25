@@ -32,7 +32,7 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
     //mPdaBar(getRocPciDevice().getPciDevice(), getChannelNumber()), // Initialize main DMA channel BAR
     //mPdaBar2(getRocPciDevice().getPciDevice(), 2), // Initialize BAR 2
     mPageSize(parameters.getDmaPageSize().get_value_or(DMA_PAGE_SIZE)), // 8 kB default for uniformity with CRU
-    mInitialResetLevel(ResetLevel::InternalDiuSiu), // It's good to reset at least the card channel in general
+    mInitialResetLevel(ResetLevel::Internal), // It's good to reset at least the card channel in general
     mNoRDYRX(false), // Not sure
     mUseFeeAddress(false), // Not sure
     mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)), // Internal loopback by default
@@ -86,6 +86,8 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
 
   getReadyFifoUser()->reset();
   mDmaBufferUserspace = getBufferProvider().getAddress();
+
+  //deviceResetChannel(ResetLevel::Internal); //TODO: This looks redundant
 }
 
 auto CrorcDmaChannel::allowedChannels() -> AllowedChannels {
@@ -107,8 +109,14 @@ void CrorcDmaChannel::deviceStartDma()
   // Find DIU version, required for armDdl()
   mDiuConfig = getCrorc().initDiuVersion();
 
-  // Resetting the card,according to the RESET LEVEL parameter
-  deviceResetChannel(mInitialResetLevel);
+  // Resetting the card, according to the channel parameters
+  if ((mLoopbackMode == LoopbackMode::Siu) || (mLoopbackMode == LoopbackMode::None)) { 
+    deviceResetChannel(ResetLevel::InternalDiuSiu);
+  } else if (mLoopbackMode == LoopbackMode::Diu) {
+    deviceResetChannel(ResetLevel::InternalDiu);
+  } else {
+    deviceResetChannel(ResetLevel::Internal);
+  }
 
   // Setting the card to be able to receive data
   startDataReceiving();
@@ -179,13 +187,13 @@ void CrorcDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)
 
   try {
     // Always reset the FreeFifo and the channel
-    getCrorc().resetCommand(Rorc::Reset::FF, mDiuConfig);
+    //getCrorc().resetCommand(Rorc::Reset::FF, mDiuConfig);
     getCrorc().resetCommand(Rorc::Reset::RORC, mDiuConfig);
 
-    if (LoopbackMode::isExternal(mLoopbackMode)) {
+    if (LoopbackMode::isExternal(mLoopbackMode) && (resetLevel != ResetLevel::Internal)) { // At least DIU
       getCrorc().armDdl(Rorc::Reset::DIU, mDiuConfig);
 
-      if ((resetLevel == ResetLevel::InternalDiuSiu) && (mLoopbackMode != LoopbackMode::Diu))
+      if ((resetLevel == ResetLevel::InternalDiuSiu) && (mLoopbackMode != LoopbackMode::Diu)) //SIU & NONE
       {
         // Wait a little before SIU reset.
         std::this_thread::sleep_for(100ms); /// XXX Why???
@@ -194,9 +202,23 @@ void CrorcDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)
         getCrorc().armDdl(Rorc::Reset::DIU, mDiuConfig);
       }
 
-      getCrorc().resetCommand(Rorc::Reset::FIFOS & Rorc::Reset::DIU & Rorc::Reset::SIU, mDiuConfig);
+      //getCrorc().resetCommand(Rorc::Reset::FIFOS & Rorc::Reset::DIU & Rorc::Reset::SIU, mDiuConfig);
       getCrorc().armDdl(Rorc::Reset::RORC, mDiuConfig);
+      std::this_thread::sleep_for(100ms); ////
+   
+      if ((resetLevel == ResetLevel::InternalDiuSiu) && (mLoopbackMode != LoopbackMode::Diu)) //SIU & NONE
+      {
+        getCrorc().assertLinkUp();
+        getCrorc().siuCommand(Ddl::RandCIFST);
+      }
+
+      getCrorc().diuCommand(Ddl::RandCIFST);
+      std::this_thread::sleep_for(100ms);
     }
+
+    getCrorc().resetCommand(Rorc::Reset::FF, mDiuConfig);
+    std::this_thread::sleep_for(100ms); /// XXX Give card some time to reset the FreeFIFO
+    getCrorc().assertFreeFifoEmpty();
   }
   catch (Exception& e) {
     e << ErrorInfo::ResetLevel(resetLevel);
@@ -237,19 +259,19 @@ void CrorcDmaChannel::startDataGenerator()
 
 void CrorcDmaChannel::startDataReceiving()
 {
-  getCrorc().initDiuVersion();
+  /*getCrorc().initDiuVersion();
 
   // Preparing the card.
   if (LoopbackMode::Siu == mLoopbackMode) {
-    deviceResetChannel(ResetLevel::InternalDiuSiu);
+    //deviceResetChannel(ResetLevel::InternalDiuSiu); //Moved to start of DMA
     getCrorc().assertLinkUp();
     getCrorc().siuCommand(Ddl::RandCIFST);
-    getCrorc().diuCommand(Ddl::RandCIFST);
-  }
+    getCrorc().diuCommand(Ddl::RandCIFST); //TODO: Move to reset
+  }*/
 
-  getCrorc().resetCommand(Rorc::Reset::FF, mDiuConfig);
+/*  getCrorc().resetCommand(Rorc::Reset::FF, mDiuConfig);
   std::this_thread::sleep_for(10ms); /// XXX Give card some time to reset the FreeFIFO
-  getCrorc().assertFreeFifoEmpty();
+  getCrorc().assertFreeFifoEmpty();*/
   getCrorc().startDataReceiver(mReadyFifoAddressBus);
 }
 
