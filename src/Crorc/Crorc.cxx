@@ -664,6 +664,10 @@ void Crorc::ddlResetSiu(int cycle, long long int time)
 void Crorc::resetCommand(int option, const DiuConfig& diuConfig)
 {
   uint32_t command = 0;
+  long long int longret, timeout;
+
+  timeout = Ddl::RESPONSE_TIME * diuConfig.pciLoopPerUsec;
+
   if (option & Rorc::Reset::DIU) {
     command |= Rorc::CcsrCommand::RESET_DIU;
   }
@@ -684,8 +688,9 @@ void Crorc::resetCommand(int option, const DiuConfig& diuConfig)
   }
   if (option & Rorc::Reset::SIU) {
     putCommandRegister(Rorc::DcrCommand::RESET_SIU);
-    ddlWaitStatus(Ddl::RESPONSE_TIME * diuConfig.pciLoopPerUsec);
-    ddlReadStatus();
+    longret = ddlWaitStatus(timeout);
+    if (longret < timeout)
+      ddlReadStatus();
   }
   if (!option || (option & Rorc::Reset::RORC)) {
     write(Rorc::RCSR, Rorc::RcsrCommand::RESET_CHAN);  //channel reset
