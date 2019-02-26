@@ -126,6 +126,9 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
     /// Starts pending DMA with given superpage for the initial pages
     void startPendingDma();
 
+    /// Arms the DDL
+    void armDdl(ResetLevel::type resetLevel);
+
     /// BAR used for DMA engine and configuration
     std::shared_ptr<CrorcBar> crorcBar;
 

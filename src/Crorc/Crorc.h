@@ -168,6 +168,9 @@ class Crorc
 
     /// Interprest SIU status
     std::vector<std::string> ddlInterpretIfstw(uint32_t ifstw);
+    
+    StWord ddlReadDiu(int transid, long long int time);
+    StWord ddlReadSiu(int transid, long long int time);
 
   private:
     RegisterReadWriteInterface& bar;
@@ -192,8 +195,6 @@ class Crorc
     void ddlSendCommand(int dest, uint32_t command, int transid, uint32_t param, long long int time);
     long long int ddlWaitStatus(long long int timeout);
     StWord ddlReadStatus();
-    StWord ddlReadDiu(int transid, long long int time);
-    StWord ddlReadSiu(int transid, long long int time);
     StWord ddlReadCTSTW(int transid, int destination, long long int time);
     void emptyDataFifos(int timeoutMicroseconds);
     StWord ddlSetSiuLoopBack(const DiuConfig& diuConfig);

@@ -110,12 +110,12 @@ void CrorcDmaChannel::deviceStartDma()
   mDiuConfig = getCrorc().initDiuVersion();
 
   // Resetting the card, according to the channel parameters
-  if ((mLoopbackMode == LoopbackMode::Siu) || (mLoopbackMode == LoopbackMode::None)) { 
-    deviceResetChannel(ResetLevel::InternalDiuSiu);
+  if ((mLoopbackMode == LoopbackMode::Siu) || (mLoopbackMode == LoopbackMode::None)) {
+    armDdl(ResetLevel::InternalDiuSiu);
   } else if (mLoopbackMode == LoopbackMode::Diu) {
-    deviceResetChannel(ResetLevel::InternalDiu);
+    armDdl(ResetLevel::InternalDiu);
   } else {
-    deviceResetChannel(ResetLevel::Internal);
+    armDdl(ResetLevel::Internal);
   }
 
   // Setting the card to be able to receive data
@@ -180,6 +180,46 @@ void CrorcDmaChannel::deviceStopDma()
 }
 
 void CrorcDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)
+{
+  mDiuConfig = getCrorc().initDiuVersion();
+  uint32_t command;
+  StWord status;
+  long long int timeout = Ddl::RESPONSE_TIME * mDiuConfig.pciLoopPerUsec;
+  if (resetLevel == ResetLevel::Internal) {
+    std::cout << "Internal Reset" << std::endl;
+    command = Rorc::Reset::RORC | Rorc::Reset::FF | Rorc::Reset::FIFOS | Rorc::Reset::ERROR | Rorc::Reset::COUNTERS;
+    getCrorc().resetCommand(command, mDiuConfig); //TODO: Initialize mDiuConfig in a clean way...
+  } else if (resetLevel == ResetLevel::InternalDiu) {
+    std::cout << "DIU Reset" << std::endl;
+    command = Rorc::Reset::RORC | Rorc::Reset::DIU;
+    getCrorc().resetCommand(command, mDiuConfig);
+  } else if (resetLevel == ResetLevel::InternalDiuSiu) {
+    std::cout << "SIU Reset" << std::endl;
+    getCrorc().setLoopbackOff();
+    std::this_thread::sleep_for(100ms);
+    
+    getCrorc().resetCommand(Rorc::Reset::DIU, mDiuConfig);
+    std::this_thread::sleep_for(100ms);
+
+    getCrorc().resetCommand(Rorc::Reset::SIU, mDiuConfig);
+    std::this_thread::sleep_for(100ms);
+
+    status = getCrorc().ddlReadDiu(0, timeout);
+    if (((status.stw >> 15) & 0x7) == 0x6) {
+      BOOST_THROW_EXCEPTION(Exception() << 
+          ErrorInfo::Message("SIU in no signal state (probably not connected), unable to reset SIU."));
+    }
+
+    status = getCrorc().ddlReadSiu(0, timeout);
+    /*if (status.stw == -1) { // Comparing unsigned with -1?
+      BOOST_THROW_EXCEPTION(Exception() << 
+          ErrorInfo::Message("Error: Timeout - SIU not responding, unable to reset SIU."));
+    }*/
+  }
+
+}
+
+void CrorcDmaChannel::armDdl(ResetLevel::type resetLevel)
 {
   if (resetLevel == ResetLevel::Nothing) {
     return;
