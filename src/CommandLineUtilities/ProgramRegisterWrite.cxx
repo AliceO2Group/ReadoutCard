@@ -34,9 +34,9 @@ class ProgramRegisterWrite: public Program
     virtual void run(const boost::program_options::variables_map& map)
     {
       auto cardId = Options::getOptionCardId(map);
-      int address = Options::getOptionRegisterAddress(map);
+      uint32_t address = Options::getOptionRegisterAddress(map);
       int channelNumber = Options::getOptionChannel(map);
-      int registerValue = Options::getOptionRegisterValue(map);
+      uint32_t registerValue = Options::getOptionRegisterValue(map);
       auto readback = !bool(map.count(NOREAD_SWITCH));
       auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
       auto channel = AliceO2::roc::ChannelFactory().getBar(params);
