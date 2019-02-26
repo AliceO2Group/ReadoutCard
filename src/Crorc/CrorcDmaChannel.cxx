@@ -29,8 +29,6 @@ namespace roc {
 
 CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
     : DmaChannelPdaBase(parameters, allowedChannels()), //
-    //mPdaBar(getRocPciDevice().getPciDevice(), getChannelNumber()), // Initialize main DMA channel BAR
-    //mPdaBar2(getRocPciDevice().getPciDevice(), 2), // Initialize BAR 2
     mPageSize(parameters.getDmaPageSize().get_value_or(DMA_PAGE_SIZE)), // 8 kB default for uniformity with CRU
     mInitialResetLevel(ResetLevel::Internal), // It's good to reset at least the card channel in general
     mNoRDYRX(false), // Not sure
@@ -87,7 +85,7 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
   getReadyFifoUser()->reset();
   mDmaBufferUserspace = getBufferProvider().getAddress();
 
-  //deviceResetChannel(ResetLevel::Internal); //TODO: This looks redundant
+  deviceResetChannel(mInitialResetLevel); //TODO: This looks redundant
 }
 
 auto CrorcDmaChannel::allowedChannels() -> AllowedChannels {
@@ -186,15 +184,12 @@ void CrorcDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)
   StWord status;
   long long int timeout = Ddl::RESPONSE_TIME * mDiuConfig.pciLoopPerUsec;
   if (resetLevel == ResetLevel::Internal) {
-    std::cout << "Internal Reset" << std::endl;
     command = Rorc::Reset::RORC | Rorc::Reset::FF | Rorc::Reset::FIFOS | Rorc::Reset::ERROR | Rorc::Reset::COUNTERS;
     getCrorc().resetCommand(command, mDiuConfig); //TODO: Initialize mDiuConfig in a clean way...
   } else if (resetLevel == ResetLevel::InternalDiu) {
-    std::cout << "DIU Reset" << std::endl;
     command = Rorc::Reset::RORC | Rorc::Reset::DIU;
     getCrorc().resetCommand(command, mDiuConfig);
   } else if (resetLevel == ResetLevel::InternalDiuSiu) {
-    std::cout << "SIU Reset" << std::endl;
     getCrorc().setLoopbackOff();
     std::this_thread::sleep_for(100ms);
     
@@ -216,7 +211,6 @@ void CrorcDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)
           ErrorInfo::Message("Error: Timeout - SIU not responding, unable to reset SIU."));
     }*/
   }
-
 }
 
 void CrorcDmaChannel::armDdl(ResetLevel::type resetLevel)
@@ -226,8 +220,6 @@ void CrorcDmaChannel::armDdl(ResetLevel::type resetLevel)
   }
 
   try {
-    // Always reset the FreeFifo and the channel
-    //getCrorc().resetCommand(Rorc::Reset::FF, mDiuConfig);
     getCrorc().resetCommand(Rorc::Reset::RORC, mDiuConfig);
 
     if (LoopbackMode::isExternal(mLoopbackMode) && (resetLevel != ResetLevel::Internal)) { // At least DIU
@@ -242,9 +234,8 @@ void CrorcDmaChannel::armDdl(ResetLevel::type resetLevel)
         getCrorc().armDdl(Rorc::Reset::DIU, mDiuConfig);
       }
 
-      //getCrorc().resetCommand(Rorc::Reset::FIFOS & Rorc::Reset::DIU & Rorc::Reset::SIU, mDiuConfig);
       getCrorc().armDdl(Rorc::Reset::RORC, mDiuConfig);
-      std::this_thread::sleep_for(100ms); ////
+      std::this_thread::sleep_for(100ms);
    
       if ((resetLevel == ResetLevel::InternalDiuSiu) && (mLoopbackMode != LoopbackMode::Diu)) //SIU & NONE
       {
@@ -299,19 +290,6 @@ void CrorcDmaChannel::startDataGenerator()
 
 void CrorcDmaChannel::startDataReceiving()
 {
-  /*getCrorc().initDiuVersion();
-
-  // Preparing the card.
-  if (LoopbackMode::Siu == mLoopbackMode) {
-    //deviceResetChannel(ResetLevel::InternalDiuSiu); //Moved to start of DMA
-    getCrorc().assertLinkUp();
-    getCrorc().siuCommand(Ddl::RandCIFST);
-    getCrorc().diuCommand(Ddl::RandCIFST); //TODO: Move to reset
-  }*/
-
-/*  getCrorc().resetCommand(Rorc::Reset::FF, mDiuConfig);
-  std::this_thread::sleep_for(10ms); /// XXX Give card some time to reset the FreeFIFO
-  getCrorc().assertFreeFifoEmpty();*/
   getCrorc().startDataReceiver(mReadyFifoAddressBus);
 }
 
@@ -351,7 +329,7 @@ void CrorcDmaChannel::pushSuperpage(Superpage superpage)
       << ErrorInfo::Message("Could not push superpage, firmware queue was full (this should never happen)"));
   }
   
-  for (int i = 0; i < READYFIFO_ENTRIES; i++) { //TODO: *always* push 128 FIFO entries
+  for (int i = 0; i < READYFIFO_ENTRIES; i++) { // *always* push 128 FIFO entries
     auto busAddress = getBusOffsetAddress(superpage.getOffset() + i * mPageSize);
     pushFreeFifoPage(i, busAddress);
   }

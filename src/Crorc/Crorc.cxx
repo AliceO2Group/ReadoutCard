@@ -636,17 +636,12 @@ void Crorc::ddlResetSiu(int cycle, long long int time)
       stword.stw &= Ddl::STMASK;
 
       if (stword.stw & Diu::ERROR_BIT){
-        // TODO log error
         statusStrings = ddlInterpretIfstw(stword.stw);
         statusStringsToReturn.insert(statusStringsToReturn.end(), statusStrings.begin(), statusStrings.end());
-        //continue;
       }
       else if (mask(stword.stw, Siu::OPTRAN)){
-        // TODO log error
-        // ddlInterpretIFSTW(retlong, pref, suff, diuConfig.diuVersion);
         statusStrings = ddlInterpretIfstw(stword.stw);
         statusStringsToReturn.insert(statusStringsToReturn.end(), statusStrings.begin(), statusStrings.end());
-        //continue;
       }
 
       transid = incr15(transid);
@@ -654,11 +649,8 @@ void Crorc::ddlResetSiu(int cycle, long long int time)
       stword.stw &= Ddl::STMASK;
 
       if (stword.stw & Diu::ERROR_BIT){
-        // TODO log error
-        // ddlInterpretIFSTW(retlong, pref, suff, diuConfig.diuVersion);
         statusStrings = ddlInterpretIfstw(stword.stw);
         statusStringsToReturn.insert(statusStringsToReturn.end(), statusStrings.begin(), statusStrings.end());
-        //continue;
       }
 
       return;
@@ -673,7 +665,6 @@ void Crorc::ddlResetSiu(int cycle, long long int time)
     ss << string << std::endl;
   }
   BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(ss.str()));
-  //BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Failed to reset SIU"));
 }
 
 /// Sends a reset command
