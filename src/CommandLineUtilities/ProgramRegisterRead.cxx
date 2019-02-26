@@ -29,7 +29,7 @@ class ProgramRegisterRead: public Program
     virtual void run(const boost::program_options::variables_map& map)
     {
       auto cardId = Options::getOptionCardId(map);
-      int address = Options::getOptionRegisterAddress(map);
+      uint32_t address = Options::getOptionRegisterAddress(map);
       int channelNumber = Options::getOptionChannel(map);
       auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
       auto channel = AliceO2::roc::ChannelFactory().getBar(params);

@@ -128,13 +128,13 @@ int getOptionChannel(const po::variables_map& map)
   return value;
 }
 
-int getOptionRegisterAddress(const po::variables_map& map)
+uint32_t getOptionRegisterAddress(const po::variables_map& map)
 {
   auto addressString = getOption<std::string>(option::registerAddress, map);
 
   std::stringstream ss;
   ss << std::hex << addressString;
-  int address;
+  long address;
   ss >> address;
 
   if (address < 0) {
@@ -142,15 +142,16 @@ int getOptionRegisterAddress(const po::variables_map& map)
         << ErrorInfo::Message("Address must be positive"));
   }
 
-  if (address % 4) {
+  uint32_t uaddress = (uint32_t) address;
+  if (uaddress % 4) {
     BOOST_THROW_EXCEPTION(InvalidOptionValueException()
         << ErrorInfo::Message("Address not a multiple of 4"));
   }
 
-  return address;
+  return uaddress;
 }
 
-int getOptionRegisterValue(const po::variables_map& map)
+uint32_t getOptionRegisterValue(const po::variables_map& map)
 {
   auto valueString = getOption<std::string>(option::registerValue, map);
 

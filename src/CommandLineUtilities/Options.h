@@ -27,8 +27,8 @@ void addOptionChannel(boost::program_options::options_description& options);
 void addOptionResetLevel(boost::program_options::options_description& options);
 void addOptionCardId(boost::program_options::options_description& options);
 
-int getOptionRegisterAddress(const boost::program_options::variables_map& map);
-int getOptionRegisterValue(const boost::program_options::variables_map& map);
+uint32_t getOptionRegisterAddress(const boost::program_options::variables_map& map);
+uint32_t getOptionRegisterValue(const boost::program_options::variables_map& map);
 int getOptionChannel(const boost::program_options::variables_map& map);
 ResetLevel::type getOptionResetLevel(const boost::program_options::variables_map& map);
 Parameters::CardIdType getOptionCardId(const boost::program_options::variables_map& map);
