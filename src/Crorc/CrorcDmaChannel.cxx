@@ -85,7 +85,7 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
   getReadyFifoUser()->reset();
   mDmaBufferUserspace = getBufferProvider().getAddress();
 
-  deviceResetChannel(mInitialResetLevel); //TODO: This looks redundant
+  deviceResetChannel(mInitialResetLevel);
 }
 
 auto CrorcDmaChannel::allowedChannels() -> AllowedChannels {
@@ -183,19 +183,29 @@ void CrorcDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)
   uint32_t command;
   StWord status;
   long long int timeout = Ddl::RESPONSE_TIME * mDiuConfig.pciLoopPerUsec;
+
   if (resetLevel == ResetLevel::Internal) {
+    log("Resetting CRORC");
+    log("Clearing Free FIFO");
+    log("Clearing other FIFOS");
+    log("Clearing CRORC's byte counters");
     command = Rorc::Reset::RORC | Rorc::Reset::FF | Rorc::Reset::FIFOS | Rorc::Reset::ERROR | Rorc::Reset::COUNTERS;
-    getCrorc().resetCommand(command, mDiuConfig); //TODO: Initialize mDiuConfig in a clean way...
+    getCrorc().resetCommand(command, mDiuConfig);
   } else if (resetLevel == ResetLevel::InternalDiu) {
+    log("Resetting CRORC & DIU");
     command = Rorc::Reset::RORC | Rorc::Reset::DIU;
     getCrorc().resetCommand(command, mDiuConfig);
   } else if (resetLevel == ResetLevel::InternalDiuSiu) {
+    log("Resetting SIU...");
+    log("Switching off CRORC loopback");
     getCrorc().setLoopbackOff();
     std::this_thread::sleep_for(100ms);
-    
+   
+    log("Resetting DIU");
     getCrorc().resetCommand(Rorc::Reset::DIU, mDiuConfig);
     std::this_thread::sleep_for(100ms);
 
+    log("Resetting SIU");
     getCrorc().resetCommand(Rorc::Reset::SIU, mDiuConfig);
     std::this_thread::sleep_for(100ms);
 
@@ -211,6 +221,7 @@ void CrorcDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)
           ErrorInfo::Message("Error: Timeout - SIU not responding, unable to reset SIU."));
     }*/
   }
+  log("Done!");
 }
 
 void CrorcDmaChannel::armDdl(ResetLevel::type resetLevel)
