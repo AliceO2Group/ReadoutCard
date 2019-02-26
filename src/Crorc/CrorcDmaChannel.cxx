@@ -377,6 +377,20 @@ void CrorcDmaChannel::fillSuperpages()
     while (mFreeFifoSize > 0) {
       if (isArrived(mFreeFifoBack)) {
         uint32_t length = getReadyFifoUser()->entries[mFreeFifoBack].getSize();
+
+        // Write length of the DMA page in the RDH
+        auto writeRdhLength = [](uintptr_t dmaPageAddress, uint32_t length) {
+          auto writeTo = reinterpret_cast<volatile uint32_t*> (dmaPageAddress + sizeof(uint32_t) * 2); //writeTo the 3rd word
+          uint32_t shiftedLength = (length << 16) & 0xffff0000;
+          *writeTo |= shiftedLength; //Only the 16 MSBs
+        };
+
+        // Write the length of the DMA page in its RDH
+        if (mLoopbackMode == LoopbackMode::None) {
+          auto superpage = mTransferQueue.front();
+          auto dmaPageAddress = mDmaBufferUserspace + superpage.getOffset() + mFreeFifoBack * mPageSize;
+          writeRdhLength(dmaPageAddress, length);
+        }
         resetDescriptor(mFreeFifoBack);
 
         mFreeFifoSize--;
