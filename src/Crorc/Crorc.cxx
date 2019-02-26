@@ -463,9 +463,10 @@ StWord Crorc::ddlReadDiu(int transid, long long int time)
             << ErrorInfo::StwExpected((b::format("0x00000%x%x%x") % transid % Rorc::IFSTW % destination).str())
             << ErrorInfo::StwReceived((b::format("0x%08lx") % stw.stw).str()));
   }
+  StWord ret = stw;
 
   stw = ddlReadCTSTW(transid, destination, time); // XXX Not sure why we do this...
-  return stw;
+  return ret;
 }
 
 StWord Crorc::ddlReadCTSTW(int transid, int destination, long long int time){
@@ -623,7 +624,10 @@ void Crorc::ddlResetSiu(int cycle, long long int time)
 
   int transid = 0xf;
 
-  for (int i = 0; i < cycle; ++i) {
+  std::vector<std::string> statusStringsToReturn;
+  std::vector<std::string> statusStrings;
+
+  for (int i = 0; i < cycle; i++) {
     try {
       sleep_for(10ms);
 
@@ -632,14 +636,12 @@ void Crorc::ddlResetSiu(int cycle, long long int time)
       stword.stw &= Ddl::STMASK;
 
       if (stword.stw & Diu::ERROR_BIT){
-        // TODO log error
-        // ddlInterpretIFSTW(retlong, pref, suff, diuConfig.diuVersion);
-        continue;
+        statusStrings = ddlInterpretIfstw(stword.stw);
+        statusStringsToReturn.insert(statusStringsToReturn.end(), statusStrings.begin(), statusStrings.end());
       }
       else if (mask(stword.stw, Siu::OPTRAN)){
-        // TODO log error
-        // ddlInterpretIFSTW(retlong, pref, suff, diuConfig.diuVersion);
-        continue;
+        statusStrings = ddlInterpretIfstw(stword.stw);
+        statusStringsToReturn.insert(statusStringsToReturn.end(), statusStrings.begin(), statusStrings.end());
       }
 
       transid = incr15(transid);
@@ -647,9 +649,8 @@ void Crorc::ddlResetSiu(int cycle, long long int time)
       stword.stw &= Ddl::STMASK;
 
       if (stword.stw & Diu::ERROR_BIT){
-        // TODO log error
-        // ddlInterpretIFSTW(retlong, pref, suff, diuConfig.diuVersion);
-        continue;
+        statusStrings = ddlInterpretIfstw(stword.stw);
+        statusStringsToReturn.insert(statusStringsToReturn.end(), statusStrings.begin(), statusStrings.end());
       }
 
       return;
@@ -657,13 +658,23 @@ void Crorc::ddlResetSiu(int cycle, long long int time)
     }
   }
 
-  BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Failed to reset SIU"));
+  // Prepare verbose error message
+  std::stringstream ss;
+  ss << "Failed to reset SIU" << std::endl;
+  for(auto const& string: statusStringsToReturn) {
+    ss << string << std::endl;
+  }
+  BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(ss.str()));
 }
 
 /// Sends a reset command
 void Crorc::resetCommand(int option, const DiuConfig& diuConfig)
 {
   uint32_t command = 0;
+  long long int longret, timeout;
+
+  timeout = Ddl::RESPONSE_TIME * diuConfig.pciLoopPerUsec;
+
   if (option & Rorc::Reset::DIU) {
     command |= Rorc::CcsrCommand::RESET_DIU;
   }
@@ -684,8 +695,9 @@ void Crorc::resetCommand(int option, const DiuConfig& diuConfig)
   }
   if (option & Rorc::Reset::SIU) {
     putCommandRegister(Rorc::DcrCommand::RESET_SIU);
-    ddlWaitStatus(Ddl::RESPONSE_TIME * diuConfig.pciLoopPerUsec);
-    ddlReadStatus();
+    longret = ddlWaitStatus(timeout);
+    if (longret < timeout)
+      ddlReadStatus();
   }
   if (!option || (option & Rorc::Reset::RORC)) {
     write(Rorc::RCSR, Rorc::RcsrCommand::RESET_CHAN);  //channel reset
