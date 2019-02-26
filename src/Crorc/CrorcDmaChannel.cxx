@@ -107,7 +107,7 @@ void CrorcDmaChannel::deviceStartDma()
   // Find DIU version, required for armDdl()
   mDiuConfig = getCrorc().initDiuVersion();
 
-  // Resetting the card, according to the channel parameters
+  // Arming the DDL, according to the channel parameters
   if ((mLoopbackMode == LoopbackMode::Siu) || (mLoopbackMode == LoopbackMode::None)) {
     armDdl(ResetLevel::InternalDiuSiu);
   } else if (mLoopbackMode == LoopbackMode::Diu) {
