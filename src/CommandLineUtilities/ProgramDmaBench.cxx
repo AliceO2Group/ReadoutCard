@@ -641,7 +641,12 @@ class ProgramDmaBench: public Program
         bool hasError = true;
         switch (mCardType) {
           case CardType::Crorc: //TODO: Implement fast error checking for CRORC
-            hasError = checkErrorsCrorc(pageAddress, pageSize, readoutCount, linkId, mOptions.loopbackModeString);
+            mEventCounters[linkId] = (mEventCounters[linkId] + 1) % EVENT_COUNTER_INITIAL_VALUE;
+            if (mEventCounters[linkId] % mErrorCheckFrequency == 0) {
+              hasError = checkErrorsCrorc(pageAddress, pageSize, readoutCount, linkId, mOptions.loopbackModeString);
+            } else {
+              hasError = false;
+            }
             break;
           case CardType::Cru:
             mEventCounters[linkId] = (mEventCounters[linkId] + 1) % EVENT_COUNTER_INITIAL_VALUE;
@@ -834,8 +839,7 @@ class ProgramDmaBench: public Program
 
     bool checkErrorsCrorcExternal(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
     {
-      // TODO: Clean this up
-      // DataFormat is the same as the CRU
+      // TODO: Clean this up; DataFormat is common with the CRU
       const auto memBytes = Cru::DataFormat::getEventSize(reinterpret_cast<const char*>(pageAddress));
       if (memBytes < 40 || memBytes > pageSize) {
         mErrorCount++;
@@ -854,7 +858,7 @@ class ProgramDmaBench: public Program
           b::format("resync packet counter for e%d l:%d packet_cnt:%x mpacket_cnt:%x, le:%d \n") % eventNumber % linkId % packetCounter %
           mPacketCounters[linkId] % mEventCounters[linkId];
         mPacketCounters[linkId] = packetCounter;
-      } else if (((mPacketCounters[linkId] + 1) % (mMaxRdhPacketCounter + 1)) != packetCounter) {
+      } else if (((mPacketCounters[linkId] + mErrorCheckFrequency) % (mMaxRdhPacketCounter + 1)) != packetCounter) {
         mErrorCount++;
         if (mErrorCount < MAX_RECORDED_ERRORS) {
           mErrorStream <<
@@ -866,12 +870,9 @@ class ProgramDmaBench: public Program
         mPacketCounters[linkId] = packetCounter;
       }
 
-      //TODO: fast check
-      /*
-         if (mFastCheckEnabled) {
-         return false;
-         }
-      */
+      if (mFastCheckEnabled) {
+        return false;
+      }
 
       // Every page starts from a clean slate
       uint32_t dataCounter = 0;
@@ -888,10 +889,10 @@ class ProgramDmaBench: public Program
       };
  
       uint32_t offset = dataCounter;  
-      size_t pageSize32 = (memBytes - Cru::DataFormat::getHeaderSize())/sizeof(uint32_t); //Addressable size of dma page (after RDH)
+      size_t pageSize32 = (memBytes - Cru::DataFormat::getHeaderSize())/sizeof(uint32_t); // Addressable size of dma page (after RDH)
 
-      for (size_t i=0; i < pageSize32; i++) { //iterate through dmaPage
-        if (i == (pageSize32 - 1)) { //skip the DTSW at the end of the page
+      for (size_t i=0; i < pageSize32; i++) { // iterate through dmaPage
+        if (i == (pageSize32 - 1)) { // skip the DTSW at the end of the page
           continue;
         }
         checkValue(i, offset, page[i]);
@@ -904,7 +905,16 @@ class ProgramDmaBench: public Program
     bool checkErrorsCrorcInternal(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
     {
       uint32_t dataCounter = 0; //always start at 0 for CRUs Internal loopbacks
-      uint32_t packetCounter = mPacketCounters[linkId] + 1;
+     
+      uint32_t packetCounter;
+      if (mPacketCounters[linkId] == PACKET_COUNTER_INITIAL_VALUE) {
+        mErrorStream <<
+          b::format("resync packet counter for e%d l:%d packet_cnt:%x mpacket_cnt:%x, le:%d \n") % eventNumber % linkId % packetCounter %
+          mPacketCounters[linkId] % mEventCounters[linkId];
+        packetCounter = 0;
+      } else {
+        packetCounter = (mPacketCounters[linkId] + mErrorCheckFrequency) % (0x100000000);
+      }
 
       auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
 
@@ -933,7 +943,7 @@ class ProgramDmaBench: public Program
         offset = (offset+1) % (0x100000000);
       }
 
-      mPacketCounters[linkId] = (mPacketCounters[linkId] + 1) % (0x100000000);
+      mPacketCounters[linkId] = packetCounter;
       
       return foundError;
     }
