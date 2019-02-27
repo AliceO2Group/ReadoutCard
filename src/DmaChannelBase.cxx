@@ -108,7 +108,12 @@ DmaChannelBase::DmaChannelBase(CardDescriptor cardDescriptor, Parameters& parame
   //try to acquire lock
   log("Acquiring DMA channel lock", InfoLogger::InfoLogger::Debug);
   try{
-    Utilities::resetSmartPtr(mInterprocessLock, "Alice_O2_RoC_DMA_" + cardDescriptor.pciAddress.toString() +"_lock");
+    if (mCardDescriptor.cardType == CardType::Crorc) {
+      Utilities::resetSmartPtr(mInterprocessLock, "Alice_O2_RoC_DMA_" + cardDescriptor.pciAddress.toString() + "_chan" + 
+          std::to_string(mChannelNumber) + "_lock");
+    } else {
+      Utilities::resetSmartPtr(mInterprocessLock, "Alice_O2_RoC_DMA_" + cardDescriptor.pciAddress.toString() + "_lock");
+    }
   }
   catch (const LockException& exception) {
     log("Failed to acquire DMA channel lock", InfoLogger::InfoLogger::Debug);
