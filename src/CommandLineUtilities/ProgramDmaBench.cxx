@@ -640,8 +640,8 @@ class ProgramDmaBench: public Program
         // Check for errors
         bool hasError = true;
         switch (mCardType) {
-          case CardType::Crorc:
-            hasError = checkErrorsCrorc(pageAddress, pageSize, readoutCount, linkId);
+          case CardType::Crorc: //TODO: Implement fast error checking for CRORC
+            hasError = checkErrorsCrorc(pageAddress, pageSize, readoutCount, linkId, mOptions.loopbackModeString);
             break;
           case CardType::Cru:
             mEventCounters[linkId] = (mEventCounters[linkId] + 1) % EVENT_COUNTER_INITIAL_VALUE;
@@ -679,6 +679,15 @@ class ProgramDmaBench: public Program
       }
     }
  
+    bool checkErrorsCrorc(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId, std::string loopbackMode)
+    {
+      if (loopbackMode == "NONE") {
+        return checkErrorsCrorcExternal(pageAddress, pageSize, eventNumber, linkId);
+      } else {
+        return checkErrorsCrorcInternal(pageAddress, pageSize, eventNumber, linkId);
+      }
+    }
+
     bool checkErrorsCruInternal(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
     {
       // pcie internal pattern
@@ -823,44 +832,72 @@ class ProgramDmaBench: public Program
        }
     }
 
-    bool checkErrorsCrorc(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
-    {
-      uint64_t counter = mDataGeneratorCounters[linkId] + 1;
-      mDataGeneratorCounters[linkId]++;
+    bool checkErrorsCrorcExternal(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
+    { // TODO: Update for new RDH
+      uint32_t dataCounter = 0; //always start at 0 for CRUs Internal loopbacks
+      uint32_t packetCounter = mPacketCounters[linkId] + 1;
 
-      auto check = [&](auto patternFunction) {
-        auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
-        auto pageSize32 = pageSize / sizeof(int32_t);
+      auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
 
-        if (page[0] != counter) {
-          addError(eventNumber, linkId, 0, counter, counter, page[0], 0);
+      bool foundError = false;
+      auto checkValue = [&](uint32_t i, uint32_t expectedValue, uint32_t actualValue) {
+        if (expectedValue != actualValue) {
+          foundError = true;
+          addError(eventNumber, linkId, i, dataCounter, expectedValue, actualValue, pageSize);
         }
-
-        // We skip the SDH
-        for (uint32_t i = 8; i < pageSize32; ++i) {
-          uint32_t expectedValue = patternFunction(i);
-          uint32_t actualValue = page[i];
-          if (actualValue != expectedValue) {
-            addError(eventNumber, linkId, i, counter, expectedValue, actualValue, 0);
-            return true;
-          }
-        }
-        return false;
       };
-
-      switch (mOptions.generatorPattern) {
-        case GeneratorPattern::Incremental:
-          return check([&](uint32_t i) {return i - 1;});
-        case GeneratorPattern::Alternating:
-          return check([&](uint32_t) {return 0xa5a5a5a5;});
-        case GeneratorPattern::Constant:
-          return check([&](uint32_t) {return 0x12345678;});
-        default: ;
+ 
+      uint32_t offset = dataCounter;  
+      size_t pageSize32 = pageSize/sizeof(uint32_t); //Addressable size of dma page
+        
+      if (page[0] != packetCounter) {
+        mErrorStream << 
+          b::format("[RDHERR]\tevent:%1% l:%2% packet_cnt:%3% lpacket_cnt%4% mpacket_cnt:%5% unexpected packet counter\n")
+          % eventNumber % linkId % page[0] % packetCounter % mPacketCounters[linkId];
       }
 
-      BOOST_THROW_EXCEPTION(Exception()
-          << ErrorInfo::Message("Unsupported pattern for C-RORC error checking")
-          << ErrorInfo::GeneratorPattern(mOptions.generatorPattern));
+      for (size_t i=1; i < pageSize32; i++) { //iterate through sp
+        checkValue(i, offset, page[i]);
+        offset = (offset+1) % (0x100000000);
+      }
+
+      mPacketCounters[linkId] = (mPacketCounters[linkId] + 1) % (0x100000000);
+      
+      return foundError;
+    }
+
+    bool checkErrorsCrorcInternal(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
+    {
+      uint32_t dataCounter = 0; //always start at 0 for CRUs Internal loopbacks
+      uint32_t packetCounter = mPacketCounters[linkId] + 1;
+
+      auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
+
+      bool foundError = false;
+      auto checkValue = [&](uint32_t i, uint32_t expectedValue, uint32_t actualValue) {
+        if (expectedValue != actualValue) {
+          foundError = true;
+          addError(eventNumber, linkId, i, dataCounter, expectedValue, actualValue, pageSize);
+        }
+      };
+ 
+      uint32_t offset = dataCounter;  
+      size_t pageSize32 = pageSize/sizeof(uint32_t); //Addressable size of dma page
+        
+      if (page[0] != packetCounter) {
+        mErrorStream << 
+          b::format("[RDHERR]\tevent:%1% l:%2% packet_cnt:%3% lpacket_cnt%4% mpacket_cnt:%5% unexpected packet counter\n")
+          % eventNumber % linkId % page[0] % packetCounter % mPacketCounters[linkId];
+      }
+
+      for (size_t i=1; i < pageSize32; i++) { //iterate through sp
+        checkValue(i, offset, page[i]);
+        offset = (offset+1) % (0x100000000);
+      }
+
+      mPacketCounters[linkId] = (mPacketCounters[linkId] + 1) % (0x100000000);
+      
+      return foundError;
     }
 
     void resetPage(uintptr_t pageAddress, size_t pageSize)
