@@ -833,11 +833,51 @@ class ProgramDmaBench: public Program
     }
 
     bool checkErrorsCrorcExternal(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
-    { // TODO: Update for new RDH
-      uint32_t dataCounter = 0; //always start at 0 for CRUs Internal loopbacks
-      uint32_t packetCounter = mPacketCounters[linkId] + 1;
+    {
+      // TODO: Clean this up
+      // DataFormat is the same as the CRU
+      const auto memBytes = Cru::DataFormat::getEventSize(reinterpret_cast<const char*>(pageAddress));
+      if (memBytes < 40 || memBytes > pageSize) {
+        mErrorCount++;
+        if (mErrorCount < MAX_RECORDED_ERRORS) {
+          mErrorStream <<
+            b::format("[RDHERR]\tevent:%1% l:%2% payloadBytes:%3% size:%4% words out of ranger\n")
+            % eventNumber % linkId % memBytes % pageSize;
+        }
+        return true;
+      }
 
-      auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
+      uint32_t packetCounter = Cru::DataFormat::getPacketCounter(reinterpret_cast<const char*>(pageAddress));
+
+      if (mPacketCounters[linkId] == PACKET_COUNTER_INITIAL_VALUE) {
+        mErrorStream <<
+          b::format("resync packet counter for e%d l:%d packet_cnt:%x mpacket_cnt:%x, le:%d \n") % eventNumber % linkId % packetCounter %
+          mPacketCounters[linkId] % mEventCounters[linkId];
+        mPacketCounters[linkId] = packetCounter;
+      } else if (((mPacketCounters[linkId] + 1) % (mMaxRdhPacketCounter + 1)) != packetCounter) {
+        mErrorCount++;
+        if (mErrorCount < MAX_RECORDED_ERRORS) {
+          mErrorStream <<
+            b::format("[RDHERR]\tevent:%1% l:%2% packet_cnt:%3% mpacket_cnt:%4% unexpected packet counter\n")
+            % eventNumber % linkId % packetCounter % mPacketCounters[linkId];
+        }
+        return true;
+      } else {
+        mPacketCounters[linkId] = packetCounter;
+      }
+
+      //TODO: fast check
+      /*
+         if (mFastCheckEnabled) {
+         return false;
+         }
+      */
+
+      // Every page starts from a clean slate
+      uint32_t dataCounter = 0;
+      
+      // Skip the RDH
+      auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress + Cru::DataFormat::getHeaderSize());
 
       bool foundError = false;
       auto checkValue = [&](uint32_t i, uint32_t expectedValue, uint32_t actualValue) {
@@ -848,21 +888,16 @@ class ProgramDmaBench: public Program
       };
  
       uint32_t offset = dataCounter;  
-      size_t pageSize32 = pageSize/sizeof(uint32_t); //Addressable size of dma page
-        
-      if (page[0] != packetCounter) {
-        mErrorStream << 
-          b::format("[RDHERR]\tevent:%1% l:%2% packet_cnt:%3% lpacket_cnt%4% mpacket_cnt:%5% unexpected packet counter\n")
-          % eventNumber % linkId % page[0] % packetCounter % mPacketCounters[linkId];
-      }
+      size_t pageSize32 = (memBytes - Cru::DataFormat::getHeaderSize())/sizeof(uint32_t); //Addressable size of dma page (after RDH)
 
-      for (size_t i=1; i < pageSize32; i++) { //iterate through sp
+      for (size_t i=0; i < pageSize32; i++) { //iterate through dmaPage
+        if (i == (pageSize32 - 1)) { //skip the DTSW at the end of the page
+          continue;
+        }
         checkValue(i, offset, page[i]);
         offset = (offset+1) % (0x100000000);
       }
 
-      mPacketCounters[linkId] = (mPacketCounters[linkId] + 1) % (0x100000000);
-      
       return foundError;
     }
 
@@ -885,9 +920,12 @@ class ProgramDmaBench: public Program
       size_t pageSize32 = pageSize/sizeof(uint32_t); //Addressable size of dma page
         
       if (page[0] != packetCounter) {
-        mErrorStream << 
-          b::format("[RDHERR]\tevent:%1% l:%2% packet_cnt:%3% lpacket_cnt%4% mpacket_cnt:%5% unexpected packet counter\n")
-          % eventNumber % linkId % page[0] % packetCounter % mPacketCounters[linkId];
+        mErrorCount++;
+        if (mErrorCount < MAX_RECORDED_ERRORS) {
+          mErrorStream <<
+            b::format("[RDHERR]\tevent:%1% l:%2% packet_cnt:%3% lpacket_cnt%4% mpacket_cnt:%5% unexpected packet counter\n")
+            % eventNumber % linkId % page[0] % packetCounter % mPacketCounters[linkId];
+        }
       }
 
       for (size_t i=1; i < pageSize32; i++) { //iterate through sp
