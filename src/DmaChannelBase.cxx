@@ -75,6 +75,9 @@ void DmaChannelBase::freeUnusedChannelBuffer()
             for (auto &entry : boost::make_iterator_range(bfs::directory_iterator(dmaPath), {})) {
               auto bufferId = entry.path().filename().string();
               if (bfs::is_directory(entry)) {
+                if ((mCardDescriptor.cardType == CardType::Crorc) && (stoi(bufferId) != getChannelNumber())) { // don't free another channel's buffer
+                  continue;
+                }
                 std::string mapPath = dmaPath + "/" + bufferId + "/map";
                 std::string freePath = dmaPath + "/free";
                                 logger << "Freeing PDA buffer '" + mapPath + "'" << InfoLogger::InfoLogger::endm;
