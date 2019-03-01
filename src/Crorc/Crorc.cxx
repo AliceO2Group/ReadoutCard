@@ -886,10 +886,14 @@ void Crorc::setDiuLoopback(const DiuConfig& diuConfig)
   ddlSetDiuLoopBack(diuConfig);
 }
 
-void Crorc::startTrigger(const DiuConfig& diuConfig)
+void Crorc::startTrigger(const DiuConfig& diuConfig, uint32_t command)
 {
+  if ((command != Fee::RDYRX) && (command != Fee::STBRD)) {
+    BOOST_THROW_EXCEPTION(Exception() <<
+      ErrorInfo::Message("Trigger can only be started with RDYRX or STBRD."));
+  }
   uint64_t timeout = Ddl::RESPONSE_TIME * diuConfig.pciLoopPerUsec;
-  ddlSendCommand(Ddl::Destination::FEE, Fee::RDYRX, 0, 0, timeout);
+  ddlSendCommand(Ddl::Destination::FEE, command, 0, 0, timeout);
   ddlWaitStatus(timeout);
   ddlReadStatus();
 }

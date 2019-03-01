@@ -31,7 +31,7 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
     : DmaChannelPdaBase(parameters, allowedChannels()), //
     mPageSize(parameters.getDmaPageSize().get_value_or(DMA_PAGE_SIZE)), // 8 kB default for uniformity with CRU
     mInitialResetLevel(ResetLevel::Internal), // It's good to reset at least the card channel in general
-    mNoRDYRX(false), // Not sure
+    mSTBRD(parameters.getStbrdEnabled().get_value_or(false)), //TODO: Set as a parameter
     mUseFeeAddress(false), // Not sure
     mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)), // Internal loopback by default
     mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)), // Use data generator by default
@@ -54,6 +54,11 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
   if (mLoopbackMode == LoopbackMode::Ddg) {
     BOOST_THROW_EXCEPTION(CruException() << ErrorInfo::Message("CRORC does not support given loopback mode")
       << ErrorInfo::LoopbackMode(mLoopbackMode));
+  }
+
+  // Set mRDYRX if generator is disabled and mSTBRD is false
+  if (!mGeneratorEnabled) {
+    mRDYRX = mSTBRD ? false : true;
   }
   
   // Prep for BAR
@@ -145,7 +150,7 @@ void CrorcDmaChannel::startPendingDma()
     log("Starting data generator");
     startDataGenerator();
   } else {
-    if (!mNoRDYRX) {
+    if (mRDYRX || mSTBRD) {
       log("Starting trigger");
 
       // Clearing SIU/DIU status.
@@ -153,8 +158,10 @@ void CrorcDmaChannel::startPendingDma()
       getCrorc().siuCommand(Ddl::RandCIFST);
       getCrorc().diuCommand(Ddl::RandCIFST);
 
+      uint32_t command = (mRDYRX) ? Fee::RDYRX : Fee::STBRD;
+
       // RDYRX command to FEE
-      getCrorc().startTrigger(mDiuConfig);
+      getCrorc().startTrigger(mDiuConfig, command);
     }
   }
 
@@ -169,7 +176,7 @@ void CrorcDmaChannel::deviceStopDma()
   if (mGeneratorEnabled) {
     getCrorc().stopDataGenerator();
   } else {
-    if (!mNoRDYRX) {
+    if (mRDYRX || mSTBRD) {
       // Sending EOBTR to FEE.
       getCrorc().stopTrigger(mDiuConfig);
     }

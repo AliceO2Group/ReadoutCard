@@ -186,6 +186,9 @@ class ProgramDmaBench: public Program
           ("readout-mode",
               po::value<std::string>(&mOptions.readoutModeString),
               "Set readout mode [CONTINUOUS]")
+          ("stbrd",
+              po::value<bool>(&mOptions.stbrd),
+              "Set the STBRD trigger command for the CRORC")
           ("superpage-size",
               SuffixOption<size_t>::make(&mSuperpageSize)->default_value("1Mi"),
               "Superpage size in bytes. Note that it can't be larger than the buffer. If the IOMMU is not enabled, the "
@@ -225,6 +228,7 @@ class ProgramDmaBench: public Program
       if (!mOptions.generatorEnabled) // if generator is not enabled, force loopbackMode=NONE for proper errorchecking
         mOptions.loopbackModeString = "NONE";
       params.setGeneratorLoopback(LoopbackMode::fromString(mOptions.loopbackModeString));
+      params.setStbrdEnabled(mOptions.stbrd); //Set STBRD for the CRORC
 
       // Handle file output options
       {
@@ -1192,6 +1196,7 @@ class ProgramDmaBench: public Program
         uint64_t pausePush;
         uint64_t pauseRead;
         size_t maxRdhPacketCounter;
+        bool stbrd = false;
     } mOptions;
 
     /// The DMA channel

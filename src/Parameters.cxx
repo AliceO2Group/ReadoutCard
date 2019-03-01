@@ -119,6 +119,7 @@ _PARAMETER_FUNCTIONS(GbtMode, "gbt_mode")
 _PARAMETER_FUNCTIONS(GbtMux, "gbt_mux")
 _PARAMETER_FUNCTIONS(GbtMuxMap, "gbt_mux_map")
 _PARAMETER_FUNCTIONS(LinkLoopbackEnabled, "link_loopback_enabled")
+_PARAMETER_FUNCTIONS(StbrdEnabled, "stbrd_enabled")
 #undef _PARAMETER_FUNCTIONS
 
 Parameters::Parameters() : mPimpl(std::make_unique<ParametersPimpl>())

@@ -92,8 +92,8 @@ class Crorc
     /// Checks if the C-RORC's Free FIFO is empty
     void assertFreeFifoEmpty();
 
-    /// Starts the trigger
-    void startTrigger(const DiuConfig& diuConfig);
+    /// Starts the trigger (RDYRX or STBRD)
+    void startTrigger(const DiuConfig& diuConfig, uint32_t command);
 
     /// Stops the trigger
     void stopTrigger(const DiuConfig& diuConfig);
