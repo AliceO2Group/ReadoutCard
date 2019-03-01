@@ -6,9 +6,22 @@ include(CMakeFindDependencyMacro)
 set(Common_CMAKE_DIR @Common_DIR@)
 set(InfoLogger_CMAKE_DIR @InfoLogger_DIR@)
 
+if(NOT APPLE)
+  set(boost_python_component "python27")
+  find_dependency(Python2 2.7 COMPONENTS Development REQUIRED)
+endif()
+
+find_dependency(Boost
+  COMPONENTS
+  unit_test_framework
+  filesystem
+  system
+  program_options
+  ${boost_python_component}
+  REQUIRED
+)
 find_dependency(Common CONFIG REQUIRED HINTS ${Common_CMAKE_DIR})
 find_dependency(InfoLogger CONFIG REQUIRED HINTS ${InfoLogger_CMAKE_DIR})
-find_dependency(Boost)
 
 if(NOT TARGET AliceO2::ReadoutCard)
   include("${ReadoutCard_CMAKE_DIR}/ReadoutCardTargets.cmake")
