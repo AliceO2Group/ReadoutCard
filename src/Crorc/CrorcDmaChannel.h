@@ -171,9 +171,11 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
     /// Reset level on initialization of channel
     const ResetLevel::type mInitialResetLevel;
 
-    /// Prevents sending the RDYRX and EOBTR commands. TODO This switch is implicitly set when data generator or the
-    /// STBRD command is used (???)
-    const bool mNoRDYRX;
+    /// Allows sending the RDYRX and EOBTR commands.
+    bool mRDYRX;
+
+    /// Allows sending the STBRD and EOBTR commands for FEE configuration
+    const bool mSTBRD;
 
     /// Enforces that the data reading is carried out with the Start Block Read (STBRD) command
     /// XXX Not sure if this should be a parameter...

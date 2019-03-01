@@ -87,13 +87,26 @@ class Parameters
     /// Type for the gbt mux map parameter
     using GbtMuxMapType = std::map<uint32_t, GbtMux::type>;
 
+    /// Type for the clock parameter
     using ClockType = Clock::type;
+
+    /// Type for the datapath mode parameter
     using DatapathModeType = DatapathMode::type;
+
+    /// Type for the downstream data parameter
     using DownstreamDataType = DownstreamData::type;
+
+    /// Type for the gbt mux parameter
     using GbtMuxType = GbtMux::type;
+
+    /// Type for the gbt mode parameter
     using GbtModeType = GbtMode::type;
 
+    /// Type for the link loopback enabled parameter
     using LinkLoopbackEnabledType = bool;
+
+    /// Type for the STBRD enabled parameter
+    using StbrdEnabledType = bool;
 
     // Setters
 
@@ -301,6 +314,14 @@ class Parameters
     /// \return Reference to this object for chaining calls 
     auto setGbtMuxMap(GbtMuxMapType value) -> Parameters&;
 
+    /// Sets the StbrdEnabled parameter
+    ///
+    /// If enabled the STBRD command is used to start the CRORC trigger.
+    ///
+    /// \param value The value to set
+    /// \return Reference to this object for chaining calls
+    auto setStbrdEnabled(StbrdEnabledType value) -> Parameters&;
+
 
     // on-throwing getters
 
@@ -375,6 +396,10 @@ class Parameters
     /// Gets the GbtMuxMap Parameter
     /// \return The value
     auto getGbtMuxMap() const -> boost::optional<GbtMuxMapType>;
+
+    /// Gets the StbrdEnabled parameter
+    /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+    auto getStbrdEnabled() const -> boost::optional<StbrdEnabledType>;
 
     // Throwing getters
 
@@ -467,6 +492,11 @@ class Parameters
     /// \exception ParameterException The parameter was not present
     /// \return The value
     auto getGbtMuxMapRequired() const -> GbtMuxMapType;
+
+    /// Gets the StbrdEnabled parameter
+    /// \exception ParameterException The parameter was not present
+    /// \return The value
+    auto getStbrdEnabledRequired() const -> StbrdEnabledType;
 
     // Helper functions
 
