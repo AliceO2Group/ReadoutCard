@@ -393,7 +393,7 @@ void CrorcDmaChannel::fillSuperpages()
         };
 
         // Write the length of the DMA page in its RDH
-        if (mLoopbackMode == LoopbackMode::None) {
+        if ((mLoopbackMode == LoopbackMode::None) && mRDYRX) { //Don't write the header for STBRD
           auto superpage = mTransferQueue.front();
           auto dmaPageAddress = mDmaBufferUserspace + superpage.getOffset() + mFreeFifoBack * mPageSize;
           writeRdhLength(dmaPageAddress, length);
