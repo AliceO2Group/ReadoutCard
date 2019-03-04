@@ -11,16 +11,17 @@ if(NOT APPLE)
   find_dependency(Python2 2.7 COMPONENTS Development REQUIRED)
 endif()
 
-find_dependency(Boost
+find_dependency(Common CONFIG HINTS ${Common_CMAKE_DIR})
+find_dependency(InfoLogger CONFIG HINTS ${InfoLogger_CMAKE_DIR})
+
+# find package must be used as Common already looks for boost and set Boost_FOUND
+find_package(Boost QUIET
   COMPONENTS
-  program_options
   system
   filesystem
   ${boost_python_component}
   REQUIRED
 )
-find_dependency(Common CONFIG REQUIRED HINTS ${Common_CMAKE_DIR})
-find_dependency(InfoLogger CONFIG REQUIRED HINTS ${InfoLogger_CMAKE_DIR})
 
 if(NOT TARGET AliceO2::ReadoutCard)
   include("${ReadoutCard_CMAKE_DIR}/ReadoutCardTargets.cmake")
