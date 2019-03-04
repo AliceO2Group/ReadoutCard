@@ -29,7 +29,8 @@ class ProgramBarStress: public Program
   virtual Description getDescription()
   {
     return {"Bar Stress", "Stress the Bar Accessor", 
-      "roc-bar-stress --id 42:00.0 --cycles 100000 --print-freq 10000"};
+      "roc-bar-stress --id 04:00.0 --channel=1 --address=0x0f00040 --value=0x18 \n"
+        "\t--cycles 100000 --print-freq 10000"};
   }
 
   virtual void addOptions(boost::program_options::options_description& options)
@@ -42,16 +43,19 @@ class ProgramBarStress: public Program
        po::value<long long>(&mOptions.printFrequency)->default_value(10),
        "Print every #print-freq cycles");
     Options::addOptionCardId(options);
+    Options::addOptionRegisterAddress(options);
+    Options::addOptionRegisterValue(options);
+    Options::addOptionChannel(options);
   }
 
-  int stress(BarInterface *bar, long long cycles, long long printFrequency) 
+  int stress(BarInterface *bar, uint32_t address, uint32_t value, long long cycles, long long printFrequency) 
   {
 
     std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
     std::chrono::high_resolution_clock::time_point finish = std::chrono::high_resolution_clock::now();
 
     for (long long i=0;; i++){
-      bar->writeRegister(SWT_WR_WORD_L, 0x42);
+      bar->writeRegister(address/4,  value);
       
       if (i && ((i%printFrequency == 0) || (i == cycles))){
         finish = std::chrono::high_resolution_clock::now();
@@ -76,25 +80,22 @@ class ProgramBarStress: public Program
   {
 
     auto cardId = Options::getOptionCardId(map);
+    int channelNumber = Options::getOptionChannel(map);
+    uint32_t registerAddress = Options::getOptionRegisterAddress(map);
+    uint32_t registerValue = Options::getOptionRegisterValue(map);
+    auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
+    auto bar = AliceO2::roc::ChannelFactory().getBar(params);
 
     getLogger() << "Card ID: " << cardId << InfoLogger::endm;
     getLogger() << "Total BAR write operations: " << mOptions.cycles << InfoLogger::endm;
     getLogger() << "Print frequency: " << mOptions.printFrequency << InfoLogger::endm;
 
-    std::shared_ptr<BarInterface>
-      bar0 = ChannelFactory().getBar(cardId, 0);
-    std::shared_ptr<BarInterface>
-      bar2 = ChannelFactory().getBar(cardId, 2);  
-
-    if(isVerbose())
-      getLogger() << "Resetting card..." << InfoLogger::endm;
-    bar0->writeRegister(Cru::Registers::RESET_CONTROL.index, 0x1);
-
     if(isVerbose())
       getLogger() << "Running operations..." << InfoLogger::endm;
   
     auto start = std::chrono::high_resolution_clock::now();
-    long long cycles_run = stress(bar2.get(), mOptions.cycles, mOptions.printFrequency);
+    long long cycles_run = stress(bar.get(), registerAddress, registerValue,
+        mOptions.cycles, mOptions.printFrequency);
     auto finish = std::chrono::high_resolution_clock::now();
     
     if (!cycles_run)
