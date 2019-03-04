@@ -81,7 +81,7 @@ find_package(PDA)
 # Module, library and executable definition
 ####################################
 
-set(SRCS
+add_library(ReadoutCard SHARED
   #src/CardConfigurator.cxx
   src/CardType.cxx
   src/Factory/ChannelFactory.cxx
@@ -106,13 +106,11 @@ set(SRCS
   src/Utilities/Hugetlbfs.cxx
   src/Utilities/MemoryMaps.cxx
   src/Utilities/Numa.cxx
-  src/CommandLineUtilities/Common.cxx
-  src/CommandLineUtilities/Options.cxx
 )
 
 # Add sources requiring PDA
 if(PDA_FOUND)
-  list(APPEND SRCS
+  target_sources(ReadoutCard PRIVATE
     src/DmaChannelPdaBase.cxx
     src/BarInterfaceBase.cxx
     src/CardConfigurator.cxx
@@ -135,8 +133,6 @@ if(PDA_FOUND)
   )
 endif()
 
-# Create library
-add_library(ReadoutCard SHARED ${SRCS})
 target_include_directories(ReadoutCard
   PUBLIC
     $<INSTALL_INTERFACE:include>
@@ -232,7 +228,7 @@ math(EXPR count "${count}-1")
 foreach(i RANGE ${count})
   list(GET EXE_SRCS ${i} src)
   list(GET EXE_NAMES ${i} name)
-  add_executable(${name} src/CommandLineUtilities/${src})
+  add_executable(${name} src/CommandLineUtilities/${src} src/CommandLineUtilities/Options.cxx src/CommandLineUtilities/Common.cxx)
   target_include_directories(${name}
     PRIVATE
       ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -273,7 +269,7 @@ foreach (test ${TEST_SRCS})
   get_filename_component(test_name ${test} NAME)
   string(REGEX REPLACE ".cxx" "" test_name ${test_name})
 
-  add_executable(${test_name} ${test})
+  add_executable(${test_name} ${test} src/CommandLineUtilities/Options.cxx)
    target_include_directories(${test_name}
     PRIVATE
       ${CMAKE_CURRENT_SOURCE_DIR}/src
