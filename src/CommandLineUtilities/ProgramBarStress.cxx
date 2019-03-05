@@ -30,7 +30,7 @@ class ProgramBarStress: public Program
   {
     return {"Bar Stress", "Stress the Bar Accessor", 
       "roc-bar-stress --id 04:00.0 --channel=1 --address=0x0f00040 --value=0x18 \n"
-        "\t--cycles 100000 --print-freq 10000"};
+        "\t--cycles 100000 --print-freq 10000 --sleep=1000"};
   }
 
   virtual void addOptions(boost::program_options::options_description& options)
@@ -41,7 +41,10 @@ class ProgramBarStress: public Program
        "Total bar writes to perform")
       ("print-freq",
        po::value<long long>(&mOptions.printFrequency)->default_value(10),
-       "Print every #print-freq cycles");
+       "Print every #print-freq cycles")
+      ("sleep",
+       po::value<int>(&mOptions.sleep)->default_value(0),
+       "Sleep for #sleep us between every bar write");
     Options::addOptionCardId(options);
     Options::addOptionRegisterAddress(options);
     Options::addOptionRegisterValue(options);
@@ -55,6 +58,9 @@ class ProgramBarStress: public Program
     std::chrono::high_resolution_clock::time_point finish = std::chrono::high_resolution_clock::now();
 
     for (long long i=0;; i++){
+      if (mOptions.sleep)  {
+        std::this_thread::sleep_for(std::chrono::microseconds(mOptions.sleep));
+      }
       bar->writeRegister(address/4,  value);
       
       if (i && ((i%printFrequency == 0) || (i == cycles))){
@@ -109,6 +115,7 @@ class ProgramBarStress: public Program
   {
     long long cycles = 100;
     long long printFrequency = 10;
+    int sleep = 0;
   }mOptions;
 
   private:
