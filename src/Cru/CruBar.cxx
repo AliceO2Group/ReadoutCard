@@ -456,15 +456,18 @@ void CruBar::configure()
 
   /* TTC */
   Ttc ttc = Ttc(mPdaBar);
-
-  log("Calibrating TTC");
-  ttc.calibrateTtc();
   
   log("Setting the clock");
   ttc.setClock(mClock);
+
+  log("Calibrating TTC");
+  ttc.calibrateTtc();
+
   if (ponUpstream) {
-    ttc.resetFpll();
-    ttc.configurePonTx(onuAddress);
+    //ttc.resetFpll();
+    if(!ttc.configurePonTx(onuAddress)) {
+      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("PON TX fPLL phase scan failed."));
+    }
   }
 
   log("Setting downstream data");

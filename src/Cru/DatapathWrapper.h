@@ -26,7 +26,7 @@ class DatapathWrapper{
     void setDatapathMode(Link link, uint32_t mode);
     DatapathMode::type getDatapathMode(Link link);
     void setPacketArbitration(int wrapperCount, int arbitrationMode=0);
-    void setFlowControl(int wrapper, int allowReject=0, int forceReject=0);
+    void setFlowControl(int wrapper, int allowReject=0);
 
   private:
     uint32_t getDatapathWrapperBaseAddress(int wrapper);

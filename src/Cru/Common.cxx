@@ -215,6 +215,45 @@ uint32_t waitForBit(std::shared_ptr<Pda::PdaBar> pdaBar,uint32_t address, uint32
   return bit;
 }
 
+void fpllref(std::vector<Link> linkList, std::shared_ptr<Pda::PdaBar> mPdaBar, uint32_t refClock, uint32_t baseAddress) //baseAddress = 0
+{
+  if (baseAddress == 0){
+    int prevWrapper = -1;
+    int prevBank = -1;
+    for (auto const& link: linkList) {
+      if ((prevWrapper != link.wrapper) || (prevBank != link.bank)) {
+        Cru::fpllref0(mPdaBar, getBankPllRegisterAddress(link.wrapper, link.bank), refClock);
+        prevWrapper = link.wrapper;
+        prevBank = link.bank;
+      }
+    }
+  } else
+    Cru::fpllref0(mPdaBar, baseAddress, refClock);
+}
+
+void fpllcal(std::vector<Link> linkList, std::shared_ptr<Pda::PdaBar> mPdaBar, uint32_t baseAddress, bool configCompensation) //baseAddress = 0, configCompensation = true
+{
+  if (baseAddress == 0){
+    int prevWrapper = -1;
+    int prevBank = -1;
+    for (auto const& link: linkList) {
+      if ((prevWrapper != link.wrapper) || (prevBank!= link.bank)) {
+        Cru::fpllcal0(mPdaBar, getBankPllRegisterAddress(link.wrapper, link.bank), configCompensation);
+        prevWrapper = link.wrapper;
+        prevBank = link.bank;
+      }
+    }
+  } else
+    Cru::fpllcal0(mPdaBar, baseAddress, configCompensation);
+}
+
+uint32_t getBankPllRegisterAddress(int wrapper, int bank)
+{
+  return Cru::getWrapperBaseAddress(wrapper) +
+    Cru::Registers::GBT_WRAPPER_BANK_OFFSET.address * (bank + 1) +
+    Cru::Registers::GBT_BANK_FPLL.address;
+}
+
 
 } // namespace Cru
 } // namespace roc
