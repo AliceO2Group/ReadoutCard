@@ -18,7 +18,7 @@ class Ttc {
     void calibrateTtc();
     void setClock(uint32_t clock, bool devkit=false); 
     void resetFpll();
-    void configurePonTx(uint32_t onuAddress);
+    bool configurePonTx(uint32_t onuAddress);
     void selectDownstreamData(uint32_t downstreamData);
     uint32_t getPllClock();
     uint32_t getDownstreamData();

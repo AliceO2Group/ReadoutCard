@@ -18,8 +18,10 @@
 #include "Constants.h"
 #include "I2c.h"
 #include "Ttc.h"
-#include "register_maps/Regmap_default_PLL2_40mhz_input_240mhz_output.h"
-#include "register_maps/Regmap_PLL2_240mhz_input_240mhz_output.h"
+#include "register_maps/Si5345-RevD_local_pll1_zdb-Registers.h"
+#include "register_maps/Si5345-RevD_local_pll2_zdb-Registers.h"
+#include "register_maps/Si5345-RevD_ttc_pll1_zdb-Registers.h"
+#include "register_maps/Si5345-RevD_ttc_pll2_zdb-Registers.h"
 #include "register_maps/Si5344-RevD-TFC_40-Registers.h"
 
 namespace AliceO2 {
@@ -45,21 +47,29 @@ void Ttc::configurePlls(uint32_t clock)
 
   uint32_t chipAddress = 0x68; //fixed address
 
+  std::vector<std::pair<uint32_t, uint32_t>> registerMap1;
   std::vector<std::pair<uint32_t, uint32_t>> registerMap2;
   std::vector<std::pair<uint32_t, uint32_t>> registerMap3 = getSi5344RegisterMap();
 
   if (clock == Cru::CLOCK_LOCAL) {
-    registerMap2 = getLocalClockRegisterMap();
+    registerMap1 = getLocalClockPll1RegisterMap();
+    registerMap2 = getLocalClockPll2RegisterMap();
   } else {
+    setRefGen(0);
     setRefGen(1);
-    registerMap2 = getTtcClockRegisterMap();
+    registerMap1 = getTtcClockPll1RegisterMap();
+    registerMap2 = getTtcClockPll1RegisterMap();
   }
 
+  I2c p1 = I2c(Cru::Registers::SI5345_1.address, chipAddress, mPdaBar, registerMap1);
   I2c p2 = I2c(Cru::Registers::SI5345_2.address, chipAddress, mPdaBar, registerMap2);
   I2c p3 = I2c(Cru::Registers::SI5344.address, chipAddress, mPdaBar, registerMap3);
 
+  p1.configurePll();
   p2.configurePll();
   p3.configurePll();
+
+  std::this_thread::sleep_for(std::chrono::seconds(2));
 }
 
 void Ttc::setRefGen(uint32_t refGenId, int frequency)
@@ -95,15 +105,45 @@ void Ttc::resetFpll()
   mPdaBar->modifyRegister(Cru::Registers::CLOCK_CONTROL.index, 24, 1, 0x0);
 }
 
-void Ttc::configurePonTx(uint32_t onuAddress)
+bool Ttc::configurePonTx(uint32_t onuAddress)
 {
-
-  Cru::fpllref0(mPdaBar, Cru::Registers::CLOCK_ONU_FPLL.address, 0x1);
-  Cru::fpllcal0(mPdaBar, Cru::Registers::CLOCK_ONU_FPLL.address, false);
-
+  // Disable automatic phase scan
   mPdaBar->writeRegister(Cru::Registers::CLOCK_PLL_CONTROL_ONU.index, 0x1);
+
+  // Perform phase scan manually
+  int count = 0;
+  bool lowSeen = false;
+  int minimumSteps = 22;
+  uint32_t onuStatus;
+  int i;
+  for(i=0; i<256; i++) {
+    mPdaBar->writeRegister(Cru::Registers::CLOCK_PLL_CONTROL_ONU.index, 0x00300000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    mPdaBar->writeRegister(Cru::Registers::CLOCK_PLL_CONTROL_ONU.index, 0x00200000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    onuStatus = mPdaBar->readRegister((Cru::Registers::ONU_USER_LOGIC.address + 0xC)/4);
+    if (onuStatus == 0xff || onuStatus == 0x7f) {
+      count++;
+    } else if (onuStatus == 0xf5 || onuStatus == 0xfd) {
+      count = 0;
+      lowSeen = true;
+    } else {
+      count = 0;
+    }
+
+    if (i > minimumSteps && lowSeen && count==1) {
+      break;
+    }
+  }
+
+  if (i==256) {
+    return false;
+  }
+
+  // Assign ONU address
   mPdaBar->modifyRegister(Cru::Registers::ONU_USER_LOGIC.index, 1, 8, onuAddress);
 
+  return true;
   //TODO: Show calibration status..
 }
 
@@ -113,12 +153,18 @@ void Ttc::calibrateTtc()
   uint32_t sel0 = mPdaBar->readRegister((Cru::Registers::PON_WRAPPER_PLL.address + 0x044c)/4);
   mPdaBar->writeRegister((Cru::Registers::PON_WRAPPER_PLL.address + 0x0448)/4, sel0);
 
+  // Calibrate PON RX
+  Cru::rxcal0(mPdaBar, Cru::Registers::PON_WRAPPER_TX.address);
+
+  // Calibrate fPLL
+  Cru::fpllref0(mPdaBar, Cru::Registers::CLOCK_ONU_FPLL.address, 1); //selecte refclk 1
+  Cru::fpllcal0(mPdaBar, Cru::Registers::CLOCK_ONU_FPLL.address, false);
+
   // Calibrate ATX PLL
   Cru::atxcal0(mPdaBar, Cru::Registers::PON_WRAPPER_PLL.address);
 
-  //Calibrate PON TX/RX
+  //Calibrate PON TX
   Cru::txcal0(mPdaBar, Cru::Registers::PON_WRAPPER_TX.address);
-  Cru::rxcal0(mPdaBar, Cru::Registers::PON_WRAPPER_TX.address);
 
   std::this_thread::sleep_for(std::chrono::seconds(2));
 }
@@ -143,46 +189,7 @@ uint32_t Ttc::getPllClock()
 }
 
 // Currently unused by RoC
-/*void Ttc::fpllref(uint32_t refClock, uint32_t baseAddress) //baseAddress = 0
-{
-  if (baseAddress == 0){
-    int prevWrapper = -1;
-    int prevBank = -1;
-    for (auto const& link: mLinkList) {
-      if ((prevWrapper != link.wrapper) || (prevBank != link.bank)) {
-        Cru::fpllref0(mPdaBar, getBankPllRegisterAddress(link.wrapper, link.bank), refClock);
-        prevWrapper = link.wrapper;
-        prevBank = link.bank;
-      }
-    }
-  } else
-    Cru::fpllref0(mPdaBar, baseAddress, refClock);
-}
-
-void Ttc::fpllcal(uint32_t baseAddress, bool configCompensation) //baseAddress = 0, configCompensation = true
-{
-  if (baseAddress == 0){
-    int prevWrapper = -1;
-    int prevBank = -1;
-    for (auto const& link: mLinkList) {
-      if ((prevWrapper != link.wrapper) || (prevBank!= link.bank)) {
-        Cru::fpllcal0(mPdaBar, getBankPllRegisterAddress(link.wrapper, link.bank), configCompensation);
-        prevWrapper = link.wrapper;
-        prevBank = link.bank;
-      }
-    }
-  } else
-    Cru::fpllcal0(mPdaBar, baseAddress, configCompensation);
-}
-
-uint32_t Ttc::getBankPllRegisterAddress(int wrapper, int bank)
-{
-  return Cru::getWrapperBaseAddress(wrapper) + 
-    Cru::Registers::GBT_WRAPPER_BANK_OFFSET.address * (bank + 1) +
-    Cru::Registers::GBT_BANK_FPLL.address;
-}
-
-void Ttc::atxref(uint32_t refClock)
+/*void Ttc::atxref(uint32_t refClock)
 {
   //Was not used... (just for info purposes)
   //uint32_t reg112 = readRegister(getAtxPllRegisterAddress(0, 0x112)/4); //get in gbt for now

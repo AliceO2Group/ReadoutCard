@@ -101,11 +101,10 @@ void DatapathWrapper::setPacketArbitration(int wrapperCount, int arbitrationMode
 } 
 
 /// Set Flow Control 
-void DatapathWrapper::setFlowControl(int wrapper, int allowReject, int forceReject)
+void DatapathWrapper::setFlowControl(int wrapper, int allowReject)
 {
   uint32_t value = 0;
   value |= (allowReject << 0);
-  value |= (forceReject << 4);
 
   uint32_t address = getDatapathWrapperBaseAddress(wrapper) +
     Cru::Registers::FLOW_CONTROL_OFFSET.address +

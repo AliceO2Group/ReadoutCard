@@ -70,8 +70,9 @@ void Gbt::setLoopback(Link link, uint32_t enabled)
 
 void Gbt::calibrateGbt()
 {
-  atxcal();
-  cdrref(0);
+  Cru::fpllref(mLinkList, mPdaBar, 2);
+  Cru::fpllcal(mLinkList, mPdaBar);
+  cdrref(2);
   txcal();
   rxcal();
 }
