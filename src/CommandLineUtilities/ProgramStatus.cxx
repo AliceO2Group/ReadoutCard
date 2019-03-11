@@ -80,6 +80,7 @@ class ProgramStatus: public Program
     std::cout << clock << " clock" << std::endl;
     std::cout << "------------" << std::endl;
 
+    // TODO: Sort according to linkID
     for (const auto& link : reportInfo.linkList) {
       int globalId = link.id + link.bank*6;
       std::string gbtTxMode = (link.gbtTxMode == Cru::GBT_MODE_WB ? "WB" : "GBT");

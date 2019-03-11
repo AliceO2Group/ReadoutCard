@@ -205,7 +205,7 @@ static constexpr Register GBT_BANK_LINK_OFFSET(0x00002000);
 static constexpr Register GBT_LINK_REGS_OFFSET(0x00000000);
 
 /// Register for selecting the GBT link source (i.e. Internal Data Generator)
-static constexpr Register GBT_LINK_SOURCE_SELECT(0x00000038);
+static constexpr Register GBT_LINK_SOURCE_SELECT(0x00000030);
 
 /// Register for selecting the the GBT Multiplexer
 static constexpr Register GBT_MUX_SELECT(0x0000001c);
@@ -222,8 +222,8 @@ static constexpr Register GBT_WRAPPER_ATX_PLL(0x000e0000);
 static constexpr Register GBT_BANK_FPLL(0x0000e000);
 
 /// Registers to set TX and RX GBT modes
-static constexpr Register GBT_LINK_TX_CONTROL_OFFSET(0x00000034);
-static constexpr Register GBT_LINK_RX_CONTROL_OFFSET(0x00000040);
+static constexpr Register GBT_LINK_TX_CONTROL_OFFSET(0x0000002c);
+static constexpr Register GBT_LINK_RX_CONTROL_OFFSET(0x0000003c);
 /*static constexpr uint32_t GBT_MODE_GBT(0x0);
 static constexpr uint32_t GBT_MODE_WB(0x1);*/
 
@@ -246,7 +246,7 @@ static constexpr Register DWRAPPER_MUX_CONTROL(0x00000004);
 
 /// Datapath Wrapper configuration registers
 static constexpr Register DATAPATHLINK_OFFSET(0x00040000);
-static constexpr Register DATALINK_OFFSET(0x00001000);
+static constexpr Register DATALINK_OFFSET(0x00002000);
 static constexpr Register DATALINK_CONTROL(0x00000000);
 /*static constexpr uint32_t GBT_PACKET(0x1); 
 static constexpr uint32_t GBT_CONTINUOUS(0x0);*/
