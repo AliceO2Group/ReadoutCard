@@ -553,7 +553,24 @@ std::vector<Link> CruBar::initializeLinkList()
       }
     }
   }
-  return links;
+
+  std::vector<Link> newLinks(sizeof(links));
+  for(int i=0; i<links.size(); i++) {
+    Link link = links.at(i);
+    int newpos = (i-link.bank*6) * 2 + 12*(link.bank/2) + (link.bank %2);
+    newLinks[newpos] = link;
+  }
+
+  for(auto link: links) {
+    std::cout << link.id << std::endl;
+  }
+  std::cout << "====" << std::endl;
+  for (auto link: newLinks) {
+    std::cout << link.id << std::endl;
+    std::cout << std::hex << link.baseAddress << std::endl;
+  }
+  return newLinks;
+  //return links;
 }
 
 /// Initializes and Populates the linkList with the GBT configuration parameters

@@ -35,6 +35,32 @@ end record t_cru_gbt;
 type t_cru_gbt_array is array (natural range <>) of t_cru_gbt; 
 
 -------------------------------------------------------------------------------
+----             transcodage matrix for the GBT enumerate                  ----
+-------------------------------------------------------------------------------
+
+-- constant swap_table_fid : t_swap_table := 
+--  ( 36 + 11, 36 + 9, 36 + 7, 36 + 5, 36 + 3, 36 + 1,
+--    36 + 10, 36 + 8, 36 + 6, 36 + 4, 36 + 2, 36 + 0,
+--    24 + 11, 24 + 9, 24 + 7, 24 + 5, 24 + 3, 24 + 1,
+--    24 + 0, 24 + 2, 24 + 4, 24 + 6, 24 + 8, 24 + 10,
+--    12 + 11, 12 + 9, 12 + 7, 12 + 3, 12 + 5, 12 + 1,
+--    12 + 0, 12 + 2, 12 + 4, 12 + 6, 12 + 8, 12 + 10,
+--    00 + 11, 00 + 9, 00 + 7, 00 + 5, 00 + 3, 00 + 1,
+--    00 + 0, 00 + 2, 00 + 4, 00 + 8, 00 + 10, 00 + 6  );
+
+ type t_swap_table is array (47 downto 0) of integer;
+    
+ constant swap_table : t_swap_table := 
+  ( 36 + 11, 36 +  9, 36 + 7, 36 + 5, 36 + 3, 36 + 1,
+    36 + 10, 36 +  8, 36 + 6, 36 + 4, 36 + 2, 36 + 0,
+    24 + 11, 24 +  9, 24 + 7, 24 + 5, 24 + 3, 24 + 1,
+    24 + 10, 24 +  8, 24 + 6, 24 + 4, 24 + 2, 24 + 0,
+    12 + 11, 12 +  9, 12 + 7, 12 + 5, 12 + 3, 12 + 1,
+    12 + 10, 12 +  8, 12 + 6, 12 + 4, 12 + 2, 12 + 0,
+    00 + 11, 00 +  9, 00 + 7, 00 + 5, 00 + 3, 00 + 1,
+    00 + 10, 00 +  8, 00 + 6, 00 + 4, 00 + 2, 00 + 0  );
+
+-------------------------------------------------------------------------------
 ----                       Constant definition                             ----
 -------------------------------------------------------------------------------
  constant c_GBT_FRAME   : integer := 0;  --! GBT-FRAME encoding (constant definition)
@@ -46,6 +72,14 @@ type t_cru_gbt_array is array (natural range <>) of t_cru_gbt;
  constant c_GBT         : std_logic_vector(11 downto 0) := x"B69"; -- x"47_42_54"
  constant c_TRD         : std_logic_vector(11 downto 0) := x"978"; -- x"54_52_44"
 
+-------------------------------------------------------------------------------
+-- Redaout protocol address tables
+-------------------------------------------------------------------------------
+constant add_ro_protocol_base		    : unsigned(31 downto 0):=X"0010_0000";
+constant add_ro_prot_conf_reg 		    : unsigned(31 downto 0):=X"0000_0000"+add_ro_protocol_base;
+constant add_ro_prot_check_mask 		: unsigned(31 downto 0):=X"0000_0004"+add_ro_protocol_base;
+constant add_ro_prot_alloc_fail 		: unsigned(31 downto 0):=X"0000_0008"+add_ro_protocol_base;
+constant add_ro_prot_ttc_linkerr 		: unsigned(31 downto 0):=X"0000_000C"+add_ro_protocol_base;
 
 -------------------------------------------------------------------------------
 -- GBT address tables
@@ -81,19 +115,16 @@ constant add_gbt_link_status		: unsigned(31 downto 0):=X"0000_0000"; -- RO
 constant add_gbt_link_txclk_cnt		: unsigned(31 downto 0):=X"0000_0004"; -- RO
 constant add_gbt_link_rxclk_cnt		: unsigned(31 downto 0):=X"0000_0008"; -- RO
 constant add_gbt_link_rxframe_32lsb	: unsigned(31 downto 0):=X"0000_000C"; -- RO
-constant add_gbt_link_dbgdata0		: unsigned(31 downto 0):=X"0000_0010"; -- RO
-constant add_gbt_link_dbgdata1		: unsigned(31 downto 0):=X"0000_0014"; -- RO
-constant add_gbt_link_dbgdata2		: unsigned(31 downto 0):=X"0000_0018"; -- RO
-constant add_gbt_link_rx_err_cnt	: unsigned(31 downto 0):=X"0000_001C"; -- RO
-constant add_gbt_link_mask_hi       : unsigned(31 downto 0):=x"0000_0020"; -- W with loopBack
-constant add_gbt_link_mask_med	    : unsigned(31 downto 0):=x"0000_0024"; -- W with loopBack
-constant add_gbt_link_mask_lo	    : unsigned(31 downto 0):=x"0000_0028"; -- W with loopBack
-constant add_gbt_link_header_errcnt_offset : unsigned(31 downto 0) := x"0000_002C";
-constant add_gbt_link_data_errcnt_offset   : unsigned(31 downto 0) := x"0000_0030";
-constant add_gbt_link_tx_ctrl_offset : unsigned(31 downto 0) := x"0000_0034";
-constant add_gbt_link_source_sel	 : unsigned(31 downto 0):=X"0000_0038"; -- W with loopBack
-constant add_gbt_link_FEC_monitoring : unsigned(31 downto 0):=X"0000_003C";
-constant add_gbt_link_rx_ctrl_offset : unsigned(31 downto 0) := x"0000_0040";
+constant add_gbt_link_rx_err_cnt	: unsigned(31 downto 0) := x"0000_0010"; -- RO
+constant add_gbt_link_FEC_monitoring : unsigned(31 downto 0) := x"0000_001C";
+
+constant add_gbt_link_mask_hi        : unsigned(31 downto 0) := x"0000_0020"; -- W with loopBack
+constant add_gbt_link_mask_med	     : unsigned(31 downto 0) := x"0000_0024"; -- W with loopBack
+constant add_gbt_link_mask_lo	     : unsigned(31 downto 0) := x"0000_0028"; -- W with loopBack
+constant add_gbt_link_tx_ctrl_offset : unsigned(31 downto 0) := x"0000_002c";
+constant add_gbt_link_source_sel	 : unsigned(31 downto 0) := x"0000_0030"; -- W with loopBack
+constant add_gbt_link_clr_errcnt     : unsigned(31 downto 0) := x"0000_0038"; -- Wr only
+constant add_gbt_link_rx_ctrl_offset : unsigned(31 downto 0) := x"0000_003C";
 
 -------------------------------------------------------------------------------
 -- GBTSC address tables
@@ -101,30 +132,30 @@ constant add_gbt_link_rx_ctrl_offset : unsigned(31 downto 0) := x"0000_0040";
 -- GBTSCA wrapper pages
 constant add_gbt_sc	        		: unsigned(31 downto 0):=X"00f0_0000";
 -- WR
-constant add_gbt_sca_wr_data        		: unsigned(31 downto 0):=X"0000_0000";
-constant add_gbt_sca_wr_cmd        		: unsigned(31 downto 0):=X"0000_0004";
-constant add_gbt_sca_wr_ctr        		: unsigned(31 downto 0):=X"0000_0008";
+constant add_gbt_sca_wr_data        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0000";
+constant add_gbt_sca_wr_cmd        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0004";
+constant add_gbt_sca_wr_ctr        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0008";
 -- RD
-constant add_gbt_sca_rd_data        		: unsigned(31 downto 0):=X"0000_0010";
-constant add_gbt_sca_rd_cmd        		: unsigned(31 downto 0):=X"0000_0014";
-constant add_gbt_sca_rd_ctr        		: unsigned(31 downto 0):=X"0000_0018";
-constant add_gbt_sca_rd_mon        		: unsigned(31 downto 0):=X"0000_001c";
+constant add_gbt_sca_rd_data        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0010";
+constant add_gbt_sca_rd_cmd        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0014";
+constant add_gbt_sca_rd_ctr        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0018";
+constant add_gbt_sca_rd_mon        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_001c";
 -- SWT
-constant add_gbt_swt_wr_l                       : unsigned(31 downto 0):=X"0000_0040";
-constant add_gbt_swt_wr_m                       : unsigned(31 downto 0):=X"0000_0044";
-constant add_gbt_swt_wr_h                       : unsigned(31 downto 0):=X"0000_0048";
+constant add_gbt_swt_wr_l                       : unsigned(31 downto 0):=add_gbt_sc+X"0000_0040";
+constant add_gbt_swt_wr_m                       : unsigned(31 downto 0):=add_gbt_sc+X"0000_0044";
+constant add_gbt_swt_wr_h                       : unsigned(31 downto 0):=add_gbt_sc+X"0000_0048";
 
-constant add_gbt_swt_cmd                        : unsigned(31 downto 0):=X"0000_004c";
+constant add_gbt_swt_cmd                        : unsigned(31 downto 0):=add_gbt_sc+X"0000_004c";
 
-constant add_gbt_swt_rd_l                       : unsigned(31 downto 0):=X"0000_0050";
-constant add_gbt_swt_rd_m                       : unsigned(31 downto 0):=X"0000_0054";
-constant add_gbt_swt_rd_h                       : unsigned(31 downto 0):=X"0000_0058";
+constant add_gbt_swt_rd_l                       : unsigned(31 downto 0):=add_gbt_sc+X"0000_0050";
+constant add_gbt_swt_rd_m                       : unsigned(31 downto 0):=add_gbt_sc+X"0000_0054";
+constant add_gbt_swt_rd_h                       : unsigned(31 downto 0):=add_gbt_sc+X"0000_0058";
 
-constant add_gbt_swt_mon                        : unsigned(31 downto 0):=X"0000_005c";
-constant add_gbt_swt_word_mon                   : unsigned(31 downto 0):=X"0000_0060";
+constant add_gbt_swt_mon                        : unsigned(31 downto 0):=add_gbt_sc+X"0000_005c";
+constant add_gbt_swt_word_mon                   : unsigned(31 downto 0):=add_gbt_sc+X"0000_0060";
 
-constant add_gbt_sc_link                        : unsigned(31 downto 0):=X"0000_0078";
-constant add_gbt_sc_rst                         : unsigned(31 downto 0):=X"0000_007c";
+constant add_gbt_sc_link                        : unsigned(31 downto 0):=add_gbt_sc+X"0000_0078";
+constant add_gbt_sc_rst                         : unsigned(31 downto 0):=add_gbt_sc+X"0000_007c";
 
 -------------------------------------------------------------------------------
 -- TTC PON address tables
@@ -222,7 +253,8 @@ constant add_ctp_emu_fbct	            : unsigned(31 downto 0):=add_ctp_emu_core+
 constant add_ddg		  : unsigned(31 downto 0):=X"00D0_0000";
 constant add_ddg_ctrl	  : unsigned(31 downto 0):=add_ddg+X"0000_0000";
 constant add_ddg_ctrl2	  : unsigned(31 downto 0):=add_ddg+X"0000_0004";
-constant add_ddg_pkt_cnt  :  unsigned(31 downto 0):=add_ddg+X"0000_0008";
+constant add_ddg_trgmask  : unsigned(31 downto 0):=add_ddg+X"0000_0008";
+constant add_ddg_pkt_cnt  : unsigned(31 downto 0):=add_ddg+X"0000_000C";
 
 -------------------------------------------------------------------------------
 -- datapath wrapper address tables
@@ -232,11 +264,10 @@ constant add_base_datapathwrapper1  : unsigned(31 downto 0):=X"0070_0000";
 
 constant add_dwrapper_gregs		  : unsigned(31 downto 0):=X"0000_0000";
 constant add_datapathlink_offset  : unsigned(31 downto 0):=X"0004_0000"; -- add link offset to access it
-constant add_mingler_offset		  : unsigned(31 downto 0):=X"0008_0000";
 constant add_flowctrl_offset	  : unsigned(31 downto 0):=X"000C_0000";
 
 -- datapath link page access
-constant add_datalink_offset		: unsigned(31 downto 0):=X"0000_1000"; -- to multiply by 0 to 23
+constant add_datalink_offset		: unsigned(31 downto 0):=X"0000_2000"; -- to multiply by 0 to 15
 
 -- datapath wrapper global registers
 constant add_dwrapper_enreg 	   : unsigned(31 downto 0):=X"0000_0000"; -- WO
@@ -255,13 +286,9 @@ constant add_dwrapper_drop_per_sec : unsigned(31 downto 0):=X"0000_0030"; -- RO
 --datapath link registers
 constant add_datalink_ctrl	      : unsigned(31 downto 0):=X"0000_0000";
 
-constant add_datalink_rej_pkt     : unsigned(31 downto 0):=X"0000_000C";
-constant add_datalink_acc_pkt     : unsigned(31 downto 0):=X"0000_0010";
-constant add_datalink_forced_pkt  : unsigned(31 downto 0):=X"0000_0014";
-
---mingler registers
-constant add_mingler_linkid		    : unsigned(31 downto 0):=X"0000_0000"; -- WO cdc
-constant add_mingler_linkid_mod	    : unsigned(31 downto 0):=X"0000_000C"; -- RO cdc
+constant add_datalink_rej_pkt     : unsigned(31 downto 0):=X"0000_0008";
+constant add_datalink_acc_pkt     : unsigned(31 downto 0):=X"0000_000C";
+constant add_datalink_forced_pkt  : unsigned(31 downto 0):=X"0000_0010";
 
 -- flow control registers
 constant add_flowctrl_ctrlreg		: unsigned(31 downto 0):=X"0000_0000";
@@ -307,35 +334,32 @@ constant add_bsp_i2c_sfp2         : unsigned(31 downto 0):=add_bsp_i2c+X"0000_0e
 -------------------------------------------------------------------------------
 -- User logic
 -------------------------------------------------------------------------------
-constant add_userlogic			: unsigned(31 downto 0):=X"00C0_0000";
+constant add_userlogic			    : unsigned(31 downto 0):=X"00C0_0000";
 
-constant add_userlogic_ctrl_offset	: unsigned(31 downto 0):=X"0000_0000"; 
-constant add_userlogic_bcidmax_offset	: unsigned(31 downto 0):=X"0000_0004";
-constant add_userlogic_hbbcerror_offset	: unsigned(31 downto 0):=X"0000_0008";
-constant add_userlogic_errcntall_offset	: unsigned(31 downto 0):=X"0000_000C";
+constant add_userlogic_ctrl     	: unsigned(31 downto 0):=add_userlogic+X"0000_0000"; 
 
 --------------------------------------------------------------------------------
 -- BAR 0 REGISTERs (DMA)
 --------------------------------------------------------------------------------
-constant add_pcie_dma_ctrl         : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0200";
+constant add_pcie_dma_ctrl         : unsigned(31 downto 0)   :=X"0000_0200";
 -- DESCRIPTOR SW -> CRU
-constant add_pcie_dma_desc_h       : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0204";
-constant add_pcie_dma_desc_l       : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0208";
-constant add_pcie_dma_desc_sz      : unsigned(31 downto 0)   :=add_bsp_info+X"0000_020c";
+constant add_pcie_dma_desc_h       : unsigned(31 downto 0)   :=X"0000_0204";
+constant add_pcie_dma_desc_l       : unsigned(31 downto 0)   :=X"0000_0208";
+constant add_pcie_dma_desc_sz      : unsigned(31 downto 0)   :=X"0000_020c";
 --
-constant add_pcie_dma_rst          : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0400";
-constant add_pcie_dma_ep_id        : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0500";
+constant add_pcie_dma_rst          : unsigned(31 downto 0)   :=X"0000_0400";
+constant add_pcie_dma_ep_id        : unsigned(31 downto 0)   :=X"0000_0500";
 -- DDG
-constant add_pcie_dma_ddg_cfg0     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0600";
-constant add_pcie_dma_ddg_cfg1     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0604";
-constant add_pcie_dma_ddg_cfg2     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0608";
-constant add_pcie_dma_ddg_cfg3     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_060c";
+constant add_pcie_dma_ddg_cfg0     : unsigned(31 downto 0)   :=X"0000_0600";
+constant add_pcie_dma_ddg_cfg1     : unsigned(31 downto 0)   :=X"0000_0604";
+constant add_pcie_dma_ddg_cfg2     : unsigned(31 downto 0)   :=X"0000_0608";
+constant add_pcie_dma_ddg_cfg3     : unsigned(31 downto 0)   :=X"0000_060c";
 --
-constant add_pcie_dma_data_sel     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0700";
+constant add_pcie_dma_data_sel     : unsigned(31 downto 0)   :=X"0000_0700";
 -- SUPERPAGE REPORT CRU > SW
-constant add_pcie_dma_spg0_ack     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0800";
+constant add_pcie_dma_spg0_ack     : unsigned(31 downto 0)   :=X"0000_0800";
 --
-constant add_pcie_dma_dbg          : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0c00";
+constant add_pcie_dma_dbg          : unsigned(31 downto 0)   :=X"0000_0c00";
 
 
 -------------------------------------------------------------------------------
@@ -411,7 +435,6 @@ component freqmeas is
     SYNCOUT : out std_logic_vector(1 downto 0);          -- cascade out
     --
     I       : in  std_logic;            -- input, treated as a clock signal
-    FREQRAW : out std_logic_vector(DWIDTH - 1 downto 0);  -- valid in I clkdomain
     FREQ    : out std_logic_vector(DWIDTH - 1 downto 0)
     );
 
@@ -464,48 +487,58 @@ component ddg is
     );
 end component ddg;
 
-component flowstat is
-  generic(
-    g_ID_BIT_LENGTH    : natural := 6;  -- Length of packet ID in bits.
-    g_CLASS_BIT_LENGTH : natural := 2;  -- Length of packet CLASS in bits.
-
-    g_PKT_SIZE_BIT_LENGTH : natural := 16;  -- Length of data vector containing
-                                            -- accumulated packet sizes in bits
-
-    g_PKT_COUNT_BIT_LENGTH : natural := 16;  -- Length of data vector containing
-                                        -- the total number of packets with
-                                        -- the same ID and CLASS
-    g_EARLY_LENGTH         : natural := 50;
-    g_LATE_LENGTH          : natural := 50
-    );
-  port(
+component RO_CTRL is
+generic(
+	FIFOLOGSIZE: natural:=3; -- should permit to store up several information, 
+	g_max_dur : natural :=3576*6; -- 89.4µs
+	g_CHECKER_NUM : natural:=8 -- allocate the number of checker that can work in parallel
+	);
+port (
     ---------------------------------------------------------------------------
-    clk_i             : in  std_logic;
-    rst_i             : in  std_logic;
-    noupdate_i        : in  std_logic;
-    noramclr_i        : in  std_logic;
-    val_i             : in  std_logic;
-    sop_i             : in  std_logic;
-    eop_i             : in  std_logic;
-    id_i              : in  std_logic_vector(31 downto 0);
-    class_i           : in  std_logic_vector(g_CLASS_BIT_LENGTH-1 downto 0);
-    current_id        : in  std_logic_vector(31 downto 0);
-    max_rdout_entry_i : in  std_logic_vector(7 downto 0) := X"10";
-    output_lenctrl_i  : in  std_logic;
-    --
-    ttc_clk_i         : in  std_logic;
-    ttc_early_val_i   : in  std_logic;
-    ttc_early_data_i  : in  std_logic_vector(g_EARLY_LENGTH - 1 downto 0);
-    ttc_late_val_i    : in  std_logic;
-    ttc_late_data_i   : in  std_logic_vector(g_LATE_LENGTH - 1 downto 0);
-    --
-    rsop_o            : out std_logic;
-    reop_o            : out std_logic;
-    rval_o            : out std_logic;
-    rq_o              : out std_logic_vector(127 downto 0)
-   ---------------------------------------------------------------------------
-    );
-end component flowstat;
+    MMS_CLK     : in  std_logic;
+    MMS_RESET   : in  std_logic;
+    MMS_WAITREQ : out std_logic := '0';
+    MMS_ADDR    : in  std_logic_vector(23 downto 0);
+    MMS_WR      : in  std_logic;
+    MMS_WRDATA  : in  std_logic_vector(31 downto 0);
+    MMS_RD      : in  std_logic;
+    MMS_RDVAL   : out std_logic;
+    MMS_RDDATA  : out std_logic_vector(31 downto 0);
+	--
+    RUN_ENABLE  : in  std_logic;
+    ---------------------------------------------------------------------------
+    CRUID    : in  std_logic_vector(11 downto 0); -- only 10 bit meaningful
+    STAT     : in  std_logic_vector(1 downto 0);
+    ---------------------------------------------------------------------------
+    TTCRXCLK    : in  std_logic;
+    TTCRXREADY  : in  std_logic;
+    TTCRXVALID  : in  std_logic;
+    TTCRXD      : in  std_logic_vector(199 downto 0);
+    ---------------------------------------------------------------------------
+    TTCTX_READY     : in  std_logic; -- data taken on last cycle high
+    TTCTXD          : out  std_logic_vector(55 downto 0); -- put idle pattern or message to transmit
+
+	-- packet info input
+	UPD        : in std_logic_vector(0 to 1); -- new packet information (pulse)
+	HBID       : in Array32bit(0 to 1);
+	LINKID     : in Array8bit(0 to 1);
+	page       : in Array16bit(0 to 1);
+	AFULL      : in std_logic_vector(0 to 1);
+	STOP       : in std_logic_vector(0 to 1);
+
+	-- hbf acknowledge message insertion port
+    SOP_DW0    : out  std_logic;
+    EOP_DW0    : out  std_logic;
+    VAL_DW0    : out  std_logic;
+    DOUT_DW0   : out  std_logic_vector(127 downto 0);
+
+	-- hbf decision message insertion port
+    SOP_DW1    : out  std_logic;
+    EOP_DW1    : out  std_logic;
+    VAL_DW1    : out  std_logic;
+    DOUT_DW1   : out  std_logic_vector(127 downto 0)
+	);
+end component RO_CTRL;
 
 component datapath_wrapper is
 
@@ -514,6 +547,7 @@ component datapath_wrapper is
     g_BIGFIFO_LOGSIZE      : integer := 13;  -- in 256 bit words
     g_NUM_GBT_LINKS        : integer := 1;
     g_DWRAPPER_NUM         : integer range 0 to 1 := 0;
+    g_LINKID_RO_PROT       : integer; -- LINK ID to use for the RO protocol message (13 for ack, 14 for decision)
     g_NUM_USERLOGIC_LINKS  : integer := 1
     );
 
@@ -545,6 +579,20 @@ component datapath_wrapper is
     USERSOP     : in  std_logic;
     USEREOP     : in  std_logic;
     USERD       : in  std_logic_vector(255 downto 0);
+    ---------------------------------------------------------------------------
+	-- RO protocol port (for ack or decision message). clocked by TTCRXCLK 
+    ROPROT_VAL     : in  std_logic;
+    ROPROT_SOP     : in  std_logic;
+    ROPROT_EOP     : in  std_logic;
+    ROPROT_D       : in  std_logic_vector(127 downto 0);
+    ---------------------------------------------------------------------------
+    -- port on PCI clock
+	PACK_UPD    : out std_logic; -- new packet information (pulse)
+	PACK_HBID   : out std_logic_vector(31 downto 0);
+	PACK_LINKID : out std_logic_vector(7 downto 0);
+	PACK_page   : out std_logic_vector(15 downto 0);
+	PACK_STOP   : out std_logic;
+	PACK_AF     : out std_logic;
     ---------------------------------------------------------------------------
     PCIe_CLK        : in  std_logic;        -- clock for this FIFO interface
     PCIe_RST        : in  std_logic;
@@ -729,15 +777,57 @@ component avalon_mm_slave is
  end component avalon_mm_slave;
 
 -- eventual usefull procedure/functions
-function setAdd(mult : in natural; offset : unsigned) return unsigned;
+  function setAdd (mult : in natural; offset : unsigned) return unsigned;
+  function f_gbtrx (src : in std_logic_vector ) return std_logic_vector;
+  function f_gbttx (src : in std_logic_vector ) return std_logic_vector;
+  function f_gbtrx_bus (src : in t_cru_gbt_array ) return t_cru_gbt_array;
+  function f_gbttx_bus (src : in t_cru_gbt_array ) return t_cru_gbt_array;
 
 end pack_cru_core;
 
 package body pack_cru_core is
+
 function setAdd(mult : in natural; offset : unsigned) return unsigned is
-variable tmp : unsigned(31 downto 0);
+  variable tmp : unsigned(31 downto 0);
 begin
-tmp:=to_unsigned(mult*to_integer(offset),32);
-return tmp;
+  tmp:=to_unsigned(mult*to_integer(offset),32);
+  return tmp;
 end setAdd;
+
+  function f_gbtrx (src : in std_logic_vector ) return std_logic_vector is
+    variable dst : std_logic_vector(src'range);
+  begin
+    for i in src'range loop
+      dst(i) := src(swap_table(i));
+    end loop;
+    return dst;
+  end function f_gbtrx;
+
+  function f_gbttx (src : in std_logic_vector ) return std_logic_vector is
+    variable dst : std_logic_vector(src'range);
+  begin
+    for i in src'range loop
+      dst(swap_table(i)) := src(i);
+    end loop;
+    return dst;
+  end function f_gbttx;
+
+  function f_gbtrx_bus (src : in t_cru_gbt_array ) return t_cru_gbt_array is
+    variable dst : t_cru_gbt_array(src'range);
+  begin
+    for i in src'range loop
+      dst(i) := src(swap_table(i));
+    end loop;
+    return dst;
+  end function f_gbtrx_bus;
+
+  function f_gbttx_bus (src : in t_cru_gbt_array ) return t_cru_gbt_array is
+    variable dst : t_cru_gbt_array(src'range);
+  begin
+    for i in src'range loop
+      dst(swap_table(i)) := src(i);
+    end loop;
+    return dst;
+  end function f_gbttx_bus;
+
 end pack_cru_core;
