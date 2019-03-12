@@ -126,7 +126,7 @@ void rxcal0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress)
 
   //b. Validate that user has control
   uint32_t bit = waitForBit(pdaBar, baseAddress + 4 * 0x280, 2, 0);
-  if (bit != 0 && false) {
+  if (bit != 0) {
     std::cout << "rxcal0 0" << std::endl;
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("rxcal0: User does not have control"));
   }
@@ -145,7 +145,7 @@ void rxcal0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress)
 
   //g. Wait..
   bit = waitForBit(pdaBar, baseAddress + 4 * 0x281, 1, 0);
-  if (bit != 0 && false) {
+  if (bit != 0) {
     std::cout << "rxcal0 1" << std::endl;
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("rxcal0: User does not have control"));
   }
@@ -216,7 +216,7 @@ uint32_t waitForBit(std::shared_ptr<Pda::PdaBar> pdaBar,uint32_t address, uint32
   uint32_t readValue = pdaBar->readRegister(address/4);
   uint32_t bit = Utilities::getBit(readValue, position);
 
-  while ((elapsed <= std::chrono::milliseconds(500)) && bit != value){
+  while ((elapsed <= std::chrono::milliseconds(800)) && bit != value){
     readValue = pdaBar->readRegister(address/4);
     bit = Utilities::getBit(readValue, position);
     curr = std::chrono::system_clock::now();
