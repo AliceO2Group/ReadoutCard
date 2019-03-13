@@ -127,6 +127,9 @@ class ProgramDmaBench: public Program
           ("bytes",
               SuffixOption<uint64_t>::make(&mOptions.maxBytes)->default_value("0"),
               "Limit of bytes to transfer. Give 0 for infinite.")
+          ("byte-count",
+              po::bool_switch(&mOptions.byteCountEnabled),
+              "Flag to enable byte-count; use the actual dma page for throughput (not always 8K)")
           ("buffer-full-check",
               po::bool_switch(&mOptions.bufferFullCheck),
               "Test how quickly the readout buffer gets full, if it's not emptied")
@@ -559,8 +562,14 @@ class ProgramDmaBench: public Program
             // Read out pages
             int pages = mSuperpageSize / mPageSize;
             for (int i = 0; i < pages; ++i) {
+              auto pageAddress = mBufferBaseAddress + offset + i * mPageSize;
               auto readoutCount = fetchAddReadoutCount();
-              readoutPage(mBufferBaseAddress + offset + i * mPageSize, mPageSize, readoutCount);
+              readoutPage(pageAddress, mPageSize, readoutCount);
+
+              if(mOptions.byteCountEnabled && !(mOptions.loopbackModeString == "INTERNAL")) {
+                const auto bytes = Cru::DataFormat::getEventSize(reinterpret_cast<const char*>(pageAddress));
+                mByteCount.fetch_add(bytes, std::memory_order_relaxed);
+              }
             }
 
             // Page has been read out
@@ -990,7 +999,8 @@ class ProgramDmaBench: public Program
        format % (mReadoutCount.load(std::memory_order_relaxed) / mPagesPerSuperpage);
 
        double runTime = std::chrono::duration<double>(steady_clock::now() - mRunTime.start).count();
-       double bytes = double(mReadoutCount.load(std::memory_order_relaxed)) * mPageSize;
+       double bytes = mOptions.byteCountEnabled ? double(mByteCount.load(std::memory_order_relaxed)) : 
+         double(mReadoutCount.load(std::memory_order_relaxed)) * mPageSize;
        double Gb = bytes * 8 / (1000 * 1000 * 1000);
        double Gbps = Gb / runTime;
        format % Gbps;
@@ -1035,7 +1045,8 @@ class ProgramDmaBench: public Program
      {
        // Calculating throughput
        double runTime = std::chrono::duration<double>(mRunTime.end - mRunTime.start).count();
-       double bytes = double(mReadoutCount.load()) * mPageSize;
+       double bytes = mOptions.byteCountEnabled ? double(mByteCount.load()) : 
+         double(mReadoutCount.load()) * mPageSize;
        double GB = bytes / (1000 * 1000 * 1000);
        double GBs = GB / runTime;
        double GiB = bytes / (1024 * 1024 * 1024);
@@ -1207,6 +1218,7 @@ class ProgramDmaBench: public Program
         uint64_t pauseRead;
         size_t maxRdhPacketCounter;
         bool stbrd = false;
+        bool byteCountEnabled = false;
     } mOptions;
 
     /// The DMA channel
@@ -1230,6 +1242,9 @@ class ProgramDmaBench: public Program
 
     // Amount of DMA pages read out
     std::atomic<uint64_t> mReadoutCount { 0 };
+
+    // Amount of bytes read out (as reported in the RDH)
+    std::atomic<uint64_t> mByteCount { 0 };
 
     /// Total amount of errors encountered
     int64_t mErrorCount = 0;
