@@ -100,13 +100,15 @@ bool MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
       }
     }
 
+    // We don't care if the file exists. 
+    // Locks are in place that make sure we don't get here unless we're allowed to
     // Check the file exists
-    {
+    /*{
       if (bfs::exists(fileName) && (bfs::file_size(fileName) != fileSize)) {
         BOOST_THROW_EXCEPTION(MemoryMapException()
             << ErrorInfo::Message("File already exists, but mismatching file size. Resizing dangerous."));
       }
-    }
+    }*/
 
     // Similar operation to calling "touch" command, making sure the file exists
     try {
