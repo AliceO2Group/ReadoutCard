@@ -140,6 +140,7 @@ DmaChannelBase::DmaChannelBase(CardDescriptor cardDescriptor, Parameters& parame
 
 DmaChannelBase::~DmaChannelBase()
 {
+  freeUnusedChannelBuffer();
   log("Releasing DMA channel lock", InfoLogger::InfoLogger::Debug);
 }
 
