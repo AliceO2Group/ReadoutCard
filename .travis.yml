@@ -24,3 +24,5 @@ script:
         exit 1;
       fi
     fi
+notifications:
+  email: false
