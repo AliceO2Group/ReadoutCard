@@ -174,6 +174,9 @@ class CruDmaChannel final : public DmaChannelPdaBase
 
     /// Flag to know if we should reset the debug register after we fiddle with it
     bool mDebugRegisterReset = false;
+
+    /// DMA page size, as specified when opening the channel
+    const size_t mDmaPageSize;
 };
 
 } // namespace roc
