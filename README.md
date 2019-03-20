@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.com/AliceO2Group/ReadoutCard.svg?branch=master)](https://travis-ci.com/AliceO2Group/ReadoutCard)
 [![JIRA](https://img.shields.io/badge/JIRA-Report%20issue-blue.svg)](https://alice.its.cern.ch/jira/secure/CreateIssue.jspa?pid=11700&issuetype=1) [![](http://ali-ci.cern.ch/repo/buildstatus/AliceO2Group/ReadoutCard/master/build_ReadoutCard_o2-dataflow.svg)](https://ali-ci.cern.ch/repo/logs/AliceO2Group/ReadoutCard/master/latest/build_ReadoutCard_o2-dataflow/fullLog.txt)
 
 ReadoutCard (RoC) module
