@@ -39,16 +39,19 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
       mGeneratorInitialValue(0), // Start from 0
       mGeneratorInitialWord(0), // First word
       mGeneratorSeed(0), // Presumably for random patterns, incremental doesn't really need it
-      mGeneratorDataSize(parameters.getGeneratorDataSize().get_value_or(Cru::DMA_PAGE_SIZE)) // Can use page size
+      mGeneratorDataSize(parameters.getGeneratorDataSize().get_value_or(Cru::DMA_PAGE_SIZE)), // Can use page size
+      mDmaPageSize(parameters.getDmaPageSize().get_value_or(Cru::DMA_PAGE_SIZE))
 {
   
-  if (auto pageSize = parameters.getDmaPageSize()) {
+  //TODO: Figure out how to approach errors here
+  //TODO: PageSize > 0?8?128? PageSize< 8K?
+  /*if (auto pageSize = parameters.getDmaPageSize()) {
     if (pageSize.get() != Cru::DMA_PAGE_SIZE) {
       BOOST_THROW_EXCEPTION(CruException()
           << ErrorInfo::Message("CRU only supports an 8KiB page size")
           << ErrorInfo::DmaPageSize(pageSize.get()));
     }
-  }
+  }*/
 
   if (mLoopbackMode == LoopbackMode::Diu || mLoopbackMode == LoopbackMode::Siu) { 
     BOOST_THROW_EXCEPTION(CruException() << ErrorInfo::Message("CRU does not support given loopback mode")
@@ -265,7 +268,7 @@ void CruDmaChannel::pushSuperpage(Superpage superpage)
 
   // Once we've confirmed the link has a slot available, we push the superpage
   pushSuperpageToLink(link, superpage);
-  auto dmaPages = superpage.getSize() / Cru::DMA_PAGE_SIZE;
+  auto dmaPages = superpage.getSize() / mDmaPageSize;
   auto busAddress = getBusOffsetAddress(superpage.getOffset());
   getBar()->pushSuperpageDescriptor(link.id, dmaPages, busAddress);
 }
