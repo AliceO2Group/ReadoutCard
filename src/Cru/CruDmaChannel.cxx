@@ -43,15 +43,14 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
       mDmaPageSize(parameters.getDmaPageSize().get_value_or(Cru::DMA_PAGE_SIZE))
 {
   
-  //TODO: Figure out how to approach errors here
-  //TODO: PageSize > 0?8?128? PageSize< 8K?
-  /*if (auto pageSize = parameters.getDmaPageSize()) {
+  if (auto pageSize = parameters.getDmaPageSize()) {
     if (pageSize.get() != Cru::DMA_PAGE_SIZE) {
-      BOOST_THROW_EXCEPTION(CruException()
+      log("DMA page size not default; Behaviour undefined", InfoLogger::InfoLogger::Warning);
+      /*BOOST_THROW_EXCEPTION(CruException()
           << ErrorInfo::Message("CRU only supports an 8KiB page size")
-          << ErrorInfo::DmaPageSize(pageSize.get()));
+          << ErrorInfo::DmaPageSize(pageSize.get()));*/
     }
-  }*/
+  }
 
   if (mLoopbackMode == LoopbackMode::Diu || mLoopbackMode == LoopbackMode::Siu) { 
     BOOST_THROW_EXCEPTION(CruException() << ErrorInfo::Message("CRU does not support given loopback mode")
