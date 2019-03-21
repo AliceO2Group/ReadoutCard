@@ -446,15 +446,21 @@ class ProgramDmaBench: public Program
               }
             }
 
-            // Status display updates
-            // Wait until the DMA has really started before printing our table to avoid messy output
-            if (!mOptions.noDisplay && mPushCount.load(std::memory_order_relaxed) != 0) {
-              if (!mRunTimeStarted) { // Start counting time when the first page arrives
+            if (mPushCount.load(std::memory_order_relaxed) != 0) {
+
+              // Start our run timer when DMA starts
+              if (!mRunTimeStarted) {
                 mRunTime.start = std::chrono::steady_clock::now();
                 mRunTimeStarted = true;
               }
-              updateStatusDisplay();
+
+              // Status display updates
+              // Wait until the DMA has really started before printing our table to avoid messy output
+              if(!mOptions.noDisplay) {
+                updateStatusDisplay();
+              }
             }
+
             next += LOW_PRIORITY_INTERVAL;
             std::this_thread::sleep_until(next);
           }
