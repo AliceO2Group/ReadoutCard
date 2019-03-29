@@ -19,6 +19,7 @@
 
 #include <cstddef>
 #include <set>
+#include <map>
 #include <boost/optional/optional.hpp>
 #include "BarInterfaceBase.h"
 #include "Common.h"
@@ -102,8 +103,8 @@ class CruBar final : public BarInterfaceBase
     uint32_t getFirmwareTime();
     uint32_t getFpgaChipHigh();
     uint32_t getFpgaChipLow();
-    std::vector<Link> initializeLinkList();
-    void populateLinkList(std::vector<Link> &linkList);
+    std::map<int, Link> initializeLinkMap();
+    void populateLinkMap(std::map<int, Link> &linkMap);
 
     int getDdgBurstLength();
     //void checkParameters();
@@ -119,7 +120,7 @@ class CruBar final : public BarInterfaceBase
     uint32_t mLoopback;
     int mWrapperCount = 0;
     std::set<uint32_t> mLinkMask;
-    std::vector<Link> mLinkList;
+    std::map<int, Link> mLinkMap;
     std::map<uint32_t, uint32_t> mRegisterMap;
     std::map<uint32_t, GbtMux::type> mGbtMuxMap;
 

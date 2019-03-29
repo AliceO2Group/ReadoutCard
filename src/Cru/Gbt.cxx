@@ -23,9 +23,9 @@ namespace roc {
 
 using Link = Cru::Link;
 
-Gbt::Gbt(std::shared_ptr<Pda::PdaBar> pdaBar, std::vector<Link> &linkList, int wrapperCount) :
+Gbt::Gbt(std::shared_ptr<Pda::PdaBar> pdaBar, std::map<int, Link> &linkMap, int wrapperCount) :
   mPdaBar(pdaBar),
-  mLinkList(linkList),
+  mLinkMap(linkMap),
   mWrapperCount(wrapperCount)
 {
 }
@@ -70,8 +70,8 @@ void Gbt::setLoopback(Link link, uint32_t enabled)
 
 void Gbt::calibrateGbt()
 {
-  Cru::fpllref(mLinkList, mPdaBar, 2);
-  Cru::fpllcal(mLinkList, mPdaBar);
+  Cru::fpllref(mLinkMap, mPdaBar, 2);
+  Cru::fpllcal(mLinkMap, mPdaBar);
   cdrref(2);
   txcal();
   rxcal();
@@ -79,7 +79,8 @@ void Gbt::calibrateGbt()
 
 void Gbt::getGbtModes()
 {
-  for (auto& link: mLinkList) {
+  for (auto& el : mLinkMap) {
+    auto& link = el.second;
     uint32_t rxControl = mPdaBar->readRegister(getRxControlAddress(link)/4);
     if (((rxControl >> 8) & 0x1) == Cru::GBT_MODE_WB) { //TODO: Change with Constants
       link.gbtRxMode = GbtMode::type::Wb;
@@ -98,7 +99,9 @@ void Gbt::getGbtModes()
 
 void Gbt::getGbtMuxes()
 {
-  for (auto& link: mLinkList) { uint32_t txMux = mPdaBar->readRegister((Cru::Registers::GBT_MUX_SELECT.address + link.bank * 4)/4);
+  for (auto& el: mLinkMap) {
+    auto& link = el.second;
+    uint32_t txMux = mPdaBar->readRegister((Cru::Registers::GBT_MUX_SELECT.address + link.bank * 4)/4);
     txMux = (txMux >> (link.id*4)) & 0x3;
     if (txMux == Cru::GBT_MUX_TTC) {
       link.gbtMux = GbtMux::type::Ttc;
@@ -112,7 +115,8 @@ void Gbt::getGbtMuxes()
 
 void Gbt::getLoopbacks()
 {
-  for (auto& link: mLinkList) {
+  for (auto& el: mLinkMap) {
+    auto& link = el.second;
     uint32_t loopback = mPdaBar->readRegister(getSourceSelectAddress(link)/4);
     if (((loopback >> 4) & 0x1) == 0x1) {
       link.loopback = true;
@@ -136,7 +140,8 @@ void Gbt::atxcal(uint32_t baseAddress)
 
 void Gbt::cdrref(uint32_t refClock)
 {
-  for (auto const& link: mLinkList) {
+  for (auto const& el: mLinkMap) {
+    auto& link = el.second;
     //uint32_t reg141 = readRegister(getXcvrRegisterAddress(link.wrapper, link.bank, link.id, 0x141)/4);
     uint32_t data = mPdaBar->readRegister(Cru::getXcvrRegisterAddress(link.wrapper, link.bank, link.id, 0x16A + refClock)/4);
     mPdaBar->writeRegister(Cru::getXcvrRegisterAddress(link.wrapper, link.bank, link.id, 0x141)/4, data);
@@ -145,14 +150,16 @@ void Gbt::cdrref(uint32_t refClock)
 
 void Gbt::rxcal()
 {
-  for (auto const& link: mLinkList) {
+  for (auto const& el: mLinkMap) {
+    auto& link = el.second;
     Cru::rxcal0(mPdaBar, link.baseAddress);
   }
 }
 
 void Gbt::txcal()
 {
-  for (auto const& link: mLinkList) {
+  for (auto const& el: mLinkMap) {
+    auto& link = el.second;
     Cru::txcal0(mPdaBar, link.baseAddress);
   }
 }
