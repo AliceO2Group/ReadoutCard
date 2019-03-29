@@ -70,9 +70,9 @@ class ProgramStatus: public Program
     std::cout << clock << " clock" << std::endl;
     std::cout << "------------" << std::endl;
 
-    // TODO: Sort according to linkID
-    for (const auto& link : reportInfo.linkList) {
-      int globalId = link.id + link.bank*6;
+    for (const auto& el : reportInfo.linkMap) {
+      auto link = el.second;
+      int globalId = el.first; //Use the "new" link mapping
       std::string gbtTxMode = (link.gbtTxMode == Cru::GBT_MODE_WB ? "WB" : "GBT");
       std::string gbtRxMode = (link.gbtRxMode == Cru::GBT_MODE_WB ? "WB" : "GBT");
       std::string gbtTxRxMode = gbtTxMode + "/" + gbtRxMode;

@@ -51,7 +51,7 @@ struct Link {
 };
 
 struct ReportInfo {
-  std::vector<Link> linkList;
+  std::map<int, Link> linkMap;
   uint32_t ttcClock;
   uint32_t downstreamData;
 };
@@ -63,8 +63,8 @@ void txcal0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress);
 void rxcal0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress);
 void fpllref0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress, uint32_t refClock);
 void fpllcal0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress, bool configCompensation=true);
-void fpllref(std::vector<Link> linkList, std::shared_ptr<Pda::PdaBar> mPdaBar, uint32_t refClock, uint32_t baseAddress=0);
-void fpllcal(std::vector<Link> linkList, std::shared_ptr<Pda::PdaBar> mPdaBar, uint32_t baseAddress=0, bool configCompensation=true);
+void fpllref(std::map<int, Link> linkMap, std::shared_ptr<Pda::PdaBar> mPdaBar, uint32_t refClock, uint32_t baseAddress=0);
+void fpllcal(std::map<int, Link> linkMap, std::shared_ptr<Pda::PdaBar> mPdaBar, uint32_t baseAddress=0, bool configCompensation=true);
 uint32_t getBankPllRegisterAddress(int wrapper, int bank);
 uint32_t waitForBit(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t address, uint32_t position, uint32_t value);
 

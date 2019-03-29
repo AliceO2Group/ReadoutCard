@@ -215,12 +215,13 @@ uint32_t waitForBit(std::shared_ptr<Pda::PdaBar> pdaBar,uint32_t address, uint32
   return bit;
 }
 
-void fpllref(std::vector<Link> linkList, std::shared_ptr<Pda::PdaBar> mPdaBar, uint32_t refClock, uint32_t baseAddress) //baseAddress = 0
+void fpllref(std::map<int, Link> linkMap, std::shared_ptr<Pda::PdaBar> mPdaBar, uint32_t refClock, uint32_t baseAddress) //baseAddress = 0
 {
   if (baseAddress == 0){
     int prevWrapper = -1;
     int prevBank = -1;
-    for (auto const& link: linkList) {
+    for (auto const& el: linkMap) {
+      auto& link = el.second;
       if ((prevWrapper != link.wrapper) || (prevBank != link.bank)) {
         Cru::fpllref0(mPdaBar, getBankPllRegisterAddress(link.wrapper, link.bank), refClock);
         prevWrapper = link.wrapper;
@@ -231,12 +232,13 @@ void fpllref(std::vector<Link> linkList, std::shared_ptr<Pda::PdaBar> mPdaBar, u
     Cru::fpllref0(mPdaBar, baseAddress, refClock);
 }
 
-void fpllcal(std::vector<Link> linkList, std::shared_ptr<Pda::PdaBar> mPdaBar, uint32_t baseAddress, bool configCompensation) //baseAddress = 0, configCompensation = true
+void fpllcal(std::map<int, Link> linkMap, std::shared_ptr<Pda::PdaBar> mPdaBar, uint32_t baseAddress, bool configCompensation) //baseAddress = 0, configCompensation = true
 {
   if (baseAddress == 0){
     int prevWrapper = -1;
     int prevBank = -1;
-    for (auto const& link: linkList) {
+    for (auto const& el: linkMap) {
+      auto& link = el.second;
       if ((prevWrapper != link.wrapper) || (prevBank!= link.bank)) {
         Cru::fpllcal0(mPdaBar, getBankPllRegisterAddress(link.wrapper, link.bank), configCompensation);
         prevWrapper = link.wrapper;
