@@ -58,8 +58,15 @@ ENDIF()
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 if(NOT APPLE)
-  set(boost_python_component "python27")
-  find_package(Python2 2.7 COMPONENTS Development)
+  find_package(Python3 3.6 COMPONENTS Development)
+  if(Python3_FOUND)
+    set(boost_python_component "python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}")
+  else()
+    # Backwards compatible. Can be removed once the Python3 recipe is stable
+    message(WARNING "Python 3 was not found: falling back to Python 3")
+    find_package(Python2 2.7 COMPONENTS Development REQUIRED)
+    set(boost_python_component "python27")
+  endif()
 endif()
 
 find_package(Boost 1.56
