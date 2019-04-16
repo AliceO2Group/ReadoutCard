@@ -155,6 +155,8 @@ target_link_libraries(ReadoutCard
     AliceO2::Common
     $<$<BOOL:${Python2_FOUND}>:Boost::python27>
     $<$<BOOL:${Python2_FOUND}>:Python2::Python>
+    $<$<BOOL:${Python3_FOUND}>:Boost::python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}>
+    $<$<BOOL:${Python3_FOUND}>:Python3::Python>
   PRIVATE
     $<$<BOOL:${PDA_FOUND}>:pda::pda>
     Boost::filesystem
