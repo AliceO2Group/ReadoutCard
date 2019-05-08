@@ -169,8 +169,8 @@ target_compile_definitions(ReadoutCard
     $<$<BOOL:${PDA_FOUND}>:ALICEO2_READOUTCARD_PDA_ENABLED>
 )
 
-# Use C++14
-target_compile_features(ReadoutCard PUBLIC cxx_std_14)
+# Use C++17
+target_compile_features(ReadoutCard PUBLIC cxx_std_17)
 
 
 ####################################
