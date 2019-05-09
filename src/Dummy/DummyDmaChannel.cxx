@@ -27,15 +27,15 @@ CardDescriptor makeDummyDescriptor()
   return {CardType::Dummy, ChannelFactory::getDummySerialNumber(), PciId {"dummy", "dummy"}, PciAddress {0,0,0}, -1};
 }
 
-constexpr size_t TRANSFER_QUEUE_SIZE = 16;
-constexpr size_t READY_QUEUE_SIZE = 32;
+constexpr size_t TRANSFER_QUEUE_CAPACITY = 16;
+constexpr size_t READY_QUEUE_CAPACITY = 32;
 }
 
 constexpr auto endm = InfoLogger::InfoLogger::StreamOps::endm;
 
 DummyDmaChannel::DummyDmaChannel(const Parameters& params)
     : DmaChannelBase(makeDummyDescriptor(), const_cast<Parameters&>(params), { 0, 1, 2, 3, 4, 5, 6, 7 }),
-      mTransferQueue(TRANSFER_QUEUE_SIZE), mReadyQueue(READY_QUEUE_SIZE)
+      mTransferQueue(TRANSFER_QUEUE_CAPACITY), mReadyQueue(READY_QUEUE_CAPACITY)
 {
   getLogger() << "DummyDmaChannel::DummyDmaChannel(channel:" << params.getChannelNumberRequired() << ")"
       << InfoLogger::InfoLogger::endm;
@@ -151,6 +151,22 @@ void DummyDmaChannel::fillSuperpages()
     mTransferQueue.pop_front();
   }
 }
+
+bool DummyDmaChannel::isTransferQueueEmpty()
+{
+  return mTransferQueue.empty();
+}
+
+bool DummyDmaChannel::isReadyQueueFull()
+{
+  return mReadyQueue.size() == READY_QUEUE_CAPACITY;
+}
+
+int32_t DummyDmaChannel::getDroppedPackets()
+{
+  return 0; // No dropped packets on the Dummy DMA Channel
+}
+
 
 boost::optional<int32_t> DummyDmaChannel::getSerial()
 {

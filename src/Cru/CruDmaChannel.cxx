@@ -348,9 +348,28 @@ int CruDmaChannel::getTransferQueueAvailable()
   return mLinkQueuesTotalAvailable;
 }
 
+// Return a boolean that denotes whether the transfer queue is empty
+// The transfer queue is empty when all its slots are available
+bool CruDmaChannel::isTransferQueueEmpty()
+{
+  return mLinkQueuesTotalAvailable == (LINK_QUEUE_CAPACITY * mLinks.size());
+}
+
 int CruDmaChannel::getReadyQueueSize()
 {
   return mReadyQueue.size();
+}
+
+// Return a boolean that denotes whether the ready queue is full
+// The ready queue is full when the CRU has filled it up
+bool CruDmaChannel::isReadyQueueFull()
+{
+  return mReadyQueue.size() == READY_QUEUE_CAPACITY;
+}
+
+int32_t CruDmaChannel::getDroppedPackets()
+{
+  return getBar()->getDroppedPackets();
 }
 
 bool CruDmaChannel::injectError()
