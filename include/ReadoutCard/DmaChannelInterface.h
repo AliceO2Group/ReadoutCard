@@ -84,6 +84,17 @@ class DmaChannelInterface
     /// superpage can be inspected with getSuperpage() or popped with popSuperpage().
     virtual int getReadyQueueSize() = 0;
 
+    // Returns true if the Transfer Queue is empty
+    // i.e. no free pages to send to the card
+    virtual bool isTransferQueueEmpty() = 0;
+
+    // Returns true if the Ready Queue is full
+    // i.e. queue filled by the card
+    virtual bool isReadyQueueFull() = 0;
+
+    // Returns the number of dropped packets, as reported by the BAR
+    virtual int32_t getDroppedPackets() = 0;
+
     /// Stops DMA for the given channel.
     /// Called automatically on channel closure.
     /// This moves any remaining superpages to the "ready queue", even if they are not filled.

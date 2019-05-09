@@ -428,6 +428,26 @@ void CrorcDmaChannel::fillSuperpages()
   }
 }
 
+// Return a boolean that denotes whether the transfer queue is empty
+// The transfer queue is empty when all its slots are available
+bool CrorcDmaChannel::isTransferQueueEmpty()
+{
+  return mTransferQueue.empty();
+}
+
+// Return a boolean that denotes whether the ready queue is full
+// The ready queue is full when the CRORC has filled it up
+bool CrorcDmaChannel::isReadyQueueFull()
+{
+  return mReadyQueue.size() == READY_QUEUE_CAPACITY;
+}
+
+int32_t CrorcDmaChannel::getDroppedPackets()
+{
+  log("No support for dropped packets in CRORC yet", InfoLogger::InfoLogger::Warning);
+  return -1;
+}
+
 void CrorcDmaChannel::pushFreeFifoPage(int readyFifoIndex, uintptr_t pageBusAddress)
 {
   size_t pageWords = mPageSize / 4; // Size in 32-bit words
