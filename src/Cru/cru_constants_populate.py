@@ -98,7 +98,7 @@ def parse_vhdl_hex(vhdl_lines, line):
 vhdl_file = open('pack_cru_core.vhd')
 vhdl_lines = vhdl_file.readlines()
 
-for (key, value) in roc_regs.iteritems():
+for (key, value) in roc_regs.items():
   for (i, line) in enumerate(vhdl_lines): #cru-fw regs here
     if (re.search("constant " + key + "\s*:", line)): #line has reg info
       ret = parse_vhdl_hex(vhdl_lines, line)
@@ -109,7 +109,7 @@ print(to_replace)
 cfile = open('Constants.h')
 contents = cfile.readlines()
 
-for key,value in to_replace.iteritems():
+for key,value in to_replace.items():
   for (i, line) in enumerate(contents):
     if(re.search("\s+Register\s*" + key, line)):
       contents[i] = re.sub("\([^)]*\)", '(' + value + ')', line)
