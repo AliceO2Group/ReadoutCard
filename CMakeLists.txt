@@ -137,6 +137,7 @@ if(PDA_FOUND)
     src/RocPciDevice.cxx
     src/Swt/Swt.cxx
     $<$<BOOL:${Python2_FOUND}>:src/PythonInterface.cxx>
+    $<$<BOOL:${Python3_FOUND}>:src/PythonInterface.cxx>
   )
 endif()
 
