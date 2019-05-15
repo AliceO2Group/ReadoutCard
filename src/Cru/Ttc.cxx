@@ -122,7 +122,7 @@ bool Ttc::configurePonTx(uint32_t onuAddress)
     mPdaBar->writeRegister(Cru::Registers::CLOCK_PLL_CONTROL_ONU.index, 0x00200000);
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
     onuStatus = mPdaBar->readRegister((Cru::Registers::ONU_USER_LOGIC.address + 0xC)/4);
-    if (onuStatus == 0xff || onuStatus == 0x7f) {
+    if (onuStatus == 0xff || onuStatus == 0xf7) {
       count++;
     } else if (onuStatus == 0xf5 || onuStatus == 0xfd) {
       count = 0;
