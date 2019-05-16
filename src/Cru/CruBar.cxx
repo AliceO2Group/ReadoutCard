@@ -41,7 +41,9 @@ CruBar::CruBar(const Parameters& parameters)
       mGbtMode(parameters.getGbtMode().get_value_or(GbtMode::Gbt)),
       mGbtMux(parameters.getGbtMux().get_value_or(GbtMux::Ttc)),
       mLinkMask(parameters.getLinkMask().get_value_or(std::set<uint32_t>{0})),
-      mGbtMuxMap(parameters.getGbtMuxMap().get_value_or(std::map<uint32_t, GbtMux::type>{}))
+      mGbtMuxMap(parameters.getGbtMuxMap().get_value_or(std::map<uint32_t, GbtMux::type>{})),
+      mPonUpstream(parameters.getPonUpstreamEnabled().get_value_or(false)),
+      mOnuAddress(parameters.getOnuAddress().get_value_or(0x0))
 {
   if (getIndex() == 0) {
     mFeatures = parseFirmwareFeatures(); 
@@ -425,11 +427,15 @@ Cru::ReportInfo CruBar::report()
   // setClock: 2 for Local clock, 0 for TTC clock
   uint32_t clock = (ttc.getPllClock() == 0 ? Clock::Local : Clock::Ttc);
   uint32_t downstreamData = ttc.getDownstreamData();
+  //bool ponUpstream = true; //TODO: ponUpstream currently irrelevant for configuration
+  //uint32_t onuAddress = 0xdeadbeef; //TODO: onuAddress currently irrelevant for configuration
 
   Cru::ReportInfo reportInfo = {
     linkMap,
     clock,
-    downstreamData
+    downstreamData,
+    //ponUpstream
+    //onuAddress
   };
 
   return reportInfo;
@@ -455,9 +461,6 @@ void CruBar::reconfigure()
 /// Configures the CRU according to the parameters passed on init
 void CruBar::configure()
 {
-  bool ponUpstream = false;
-  uint32_t onuAddress = 0xbadcafe;
-  
   if (mLinkMap.empty()) {
     populateLinkMap(mLinkMap);
   }
@@ -476,10 +479,10 @@ void CruBar::configure()
   log("Calibrating TTC");
   ttc.calibrateTtc();
 
-  if (ponUpstream) {
-    //ttc.resetFpll();
-    if(!ttc.configurePonTx(onuAddress)) {
-      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("PON TX fPLL phase scan failed."));
+  if (mPonUpstream) {
+    ttc.resetFpll();
+    if(!ttc.configurePonTx(mOnuAddress)) {
+      log("PON TX fPLL phase scan failed", InfoLogger::InfoLogger::Error);
     }
   }
 

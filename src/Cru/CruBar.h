@@ -123,6 +123,8 @@ class CruBar final : public BarInterfaceBase
     std::map<int, Link> mLinkMap;
     std::map<uint32_t, uint32_t> mRegisterMap;
     std::map<uint32_t, GbtMux::type> mGbtMuxMap;
+    bool mPonUpstream;
+    uint32_t mOnuAddress;
 
     /// Checks if this is the correct BAR. Used to check for BAR 2 for special functions.
     void assertBarIndex(int index, std::string message) const

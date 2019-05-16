@@ -28,6 +28,7 @@
 #include "ReadoutCard/ParameterTypes/PciAddress.h"
 #include "ReadoutCard/ParameterTypes/PciSequenceNumber.h"
 #include "ReadoutCard/ParameterTypes/ReadoutMode.h"
+#include "ReadoutCard/ParameterTypes/Address.h"
 
 // CRU Specific
 #include "ReadoutCard/ParameterTypes/Clock.h"
@@ -115,6 +116,12 @@ class Parameters
     /// Type for the link loopback enabled parameter
     using LinkLoopbackEnabledType = bool;
 
+    /// Type for the PON upstream enabled parameter
+    using PonUpstreamEnabledType = bool;
+
+    /// Type for the ONU address parameter
+    using OnuAddressType = Address::type;
+
     /// Type for the STBRD enabled parameter
     using StbrdEnabledType = bool;
 
@@ -175,6 +182,20 @@ class Parameters
     /// \param value The value to set
     /// \return Reference to this object for chaining calls
     auto setLinkLoopbackEnabled(LinkLoopbackEnabledType value) -> Parameters&;
+
+    /// Sets the PonUpstreamEnabled parameter
+    ///
+    /// If enabled the PON upstream is used.
+    ///
+    /// \param value The value to set
+    /// \return Reference to this object for chaining calls
+    auto setPonUpstreamEnabled(PonUpstreamEnabledType value) -> Parameters&;
+
+    /// Sets the OnuAddress parameter
+    /// 
+    /// \param value The value to set
+    /// \return Reference to this object for chaining calls
+    auto setOnuAddress(OnuAddressType value) -> Parameters&;
 
     /// Sets the GeneratorDataSize parameter
     ///
@@ -351,9 +372,17 @@ class Parameters
     /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
     auto getGeneratorEnabled() const -> boost::optional<GeneratorEnabledType>;
 
-    /// Gets the LinkLoopbacknabled parameter
+    /// Gets the LinkLoopbackEnabled parameter
     /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
     auto getLinkLoopbackEnabled() const -> boost::optional<LinkLoopbackEnabledType>;
+
+    /// Gets the PonUpstreamEnabled parameter
+    /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+    auto getPonUpstreamEnabled() const -> boost::optional<PonUpstreamEnabledType>;
+
+    /// Gets the OnuAddress parameter
+    /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+    auto getOnuAddress() const -> boost::optional<OnuAddressType>;
 
     /// Gets the GeneratorDataSize parameter
     /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
@@ -437,6 +466,16 @@ class Parameters
     /// \exception ParameterException The parameter was not present
     /// \return The value
     auto getLinkLoopbackEnabledRequired() const -> LinkLoopbackEnabledType;
+
+    /// Gets the PonUpstreamEnabled parameter
+    /// \exception ParameterException The parameter was not present
+    /// \return The value
+    auto getPonUpstreamEnabledRequired() const -> PonUpstreamEnabledType;
+
+    /// Gets the OnuAddress parameter
+    /// \exception ParameterException The parameter was not present
+    /// \return The value
+    auto getOnuAddressRequired() const -> OnuAddressType;
 
     /// Gets the GeneratorDataSize parameter
     /// \exception ParameterException The parameter was not present

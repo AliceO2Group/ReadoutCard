@@ -99,6 +99,7 @@ add_library(ReadoutCard SHARED
   src/ExceptionInternal.cxx
   src/MemoryMappedFile.cxx
   src/Parameters.cxx
+  src/ParameterTypes/Address.cxx
   src/ParameterTypes/Clock.cxx
   src/ParameterTypes/DatapathMode.cxx
   src/ParameterTypes/DownstreamData.cxx

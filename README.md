@@ -139,6 +139,10 @@ The Parameters that affect the configuration of the CRU and their possible value
 
 `LinkLoopbackEnabled (true | false)`
 
+`PonUpstreamEnabled (true | false)`
+
+`OnuAddress (0x01234567)`
+
 To set any of the above parameters the usual template can be followed.
 
 ```
@@ -156,10 +160,17 @@ params.setClock(Parameters::Clock::type::Local);
 The above parameters will be set for the enabled links, as specified by the `LinkMask` parameter. See the [LinkMask](#linkmask) section
 for more info.
 
-Note that for `LinkLoopbackEnabled` it is sufficient to do the following, as it is simply a boolean.
+Note that for `LinkLoopbackEnabled` and `PonUpstreamEnabled` it is sufficient to do the following, as they are simply booleans.
 
 ```
 params.setLinkLoopbackEnabled(true);
+params.setPonUpstreamEnabled(true);
+```
+
+Likewise for `OnuAddress`, passing the hex is enough.
+
+```
+params.setOnuAddress(0x0badcafe)
 ```
 
 ### Configuration File
@@ -175,6 +186,7 @@ datapathmode
 loopback
 gbtmode
 downstreamdata
+ponupstream
 ```
 
 The "per link" parameters are
