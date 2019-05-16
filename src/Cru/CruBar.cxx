@@ -420,7 +420,10 @@ Cru::ReportInfo CruBar::report()
   }
 
   Ttc ttc = Ttc(mPdaBar);
-  uint32_t clock = ttc.getPllClock();
+  // Mismatch between values returned by getPllClock and value required to set the clock
+  // getPllClock: 0 for Local clock, 1 for TTC clock
+  // setClock: 2 for Local clock, 0 for TTC clock
+  uint32_t clock = (ttc.getPllClock() == 0 ? Clock::Local : Clock::Ttc);
   uint32_t downstreamData = ttc.getDownstreamData();
 
   Cru::ReportInfo reportInfo = {

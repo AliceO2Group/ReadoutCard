@@ -75,7 +75,7 @@ class ProgramStatus: public Program
 
     table << lineFat << header << lineThin;
 
-    std::string clock = (reportInfo.ttcClock ? "TTC" : "Local");;
+    std::string clock = (reportInfo.ttcClock == 0 ? "TTC" : "Local");;
     std::cout << "------------" << std::endl;
     std::cout << clock << " clock" << std::endl;
     std::cout << "------------" << std::endl;
