@@ -64,6 +64,12 @@ class ProgramConfig: public Program
       ("loopback",
        po::bool_switch(&mOptions.linkLoopbackEnabled),
        "Flag to enable link loopback for DDG")
+      ("pon-upstream",
+       po::bool_switch(&mOptions.ponUpstreamEnabled),
+       "Flag to enable use of the PON upstream")
+      ("onu-address",
+       po::value<uint32_t>(&mOptions.onuAddress)->default_value(0x0),
+       "ONU address for PON upstream")
       ("config-all",
        po::bool_switch(&mOptions.configAll),
        "Flag to configure all cards with default parameters on startup")
@@ -90,7 +96,7 @@ class ProgramConfig: public Program
         std::cout << " __== " << card.pciAddress.toString() << " ==__ " << std::endl;
         auto params = Parameters::makeParameters(card.pciAddress, 2);
         try {
-          auto cardConfigurator = CardConfigurator(card.pciAddress, mOptions.configFile, mOptions.forceConfig);
+          CardConfigurator(card.pciAddress, mOptions.configFile, mOptions.forceConfig);
         } catch(...) {
           std::cout << "Something went badly reading the configuration file..." << std::endl;
         }
@@ -111,12 +117,14 @@ class ProgramConfig: public Program
       params.setGbtMode(GbtMode::fromString(mOptions.gbtMode));
       params.setGbtMux(GbtMux::fromString(mOptions.gbtMux));
       params.setLinkLoopbackEnabled(mOptions.linkLoopbackEnabled);
+      params.setPonUpstreamEnabled(mOptions.ponUpstreamEnabled);
+      params.setOnuAddress(mOptions.onuAddress);
 
-      auto cardConfigurator = CardConfigurator(params, mOptions.forceConfig);
+      CardConfigurator(params, mOptions.forceConfig);
     } else if (!strncmp(mOptions.configFile.c_str(), "file:", 5)) {
       std::cout << "Configuring with config file" << std::endl;
       try {
-        auto cardConfigurator = CardConfigurator(cardId, mOptions.configFile, mOptions.forceConfig);
+        CardConfigurator(cardId, mOptions.configFile, mOptions.forceConfig);
       } catch(std::runtime_error e) {
         std::cout << "Something went badly reading the configuration file..." << e.what() << std::endl;
       }
@@ -139,6 +147,8 @@ class ProgramConfig: public Program
     bool linkLoopbackEnabled = false;
     bool configAll= false;
     bool forceConfig = false;
+    bool ponUpstreamEnabled = false;
+    uint32_t onuAddress = 0x0;
   }mOptions;
 
   private:

@@ -14,7 +14,11 @@ namespace roc {
 CardConfigurator::CardConfigurator(Parameters::CardIdType cardId, std::string pathToConfigFile, bool forceConfigure)
 { 
   auto parameters = Parameters::makeParameters(cardId, 2); //have to make parameters for this case, bar2
-  parseConfigFile(pathToConfigFile, parameters);
+  try {
+    parseConfigFile(pathToConfigFile, parameters);
+  } catch (std::string e) {
+    throw std::runtime_error(e);
+  }
 
   auto bar2 = ChannelFactory().getBar(parameters);
   if (forceConfigure) {
@@ -45,6 +49,8 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
   Clock::type clock = Clock::type::Local;
   DatapathMode::type datapathMode = DatapathMode::type::Packet;
   bool loopback = false;
+  bool ponUpstream = false;
+  uint32_t onuAddress = 0x0;
   GbtMode::type gbtMode = GbtMode::type::Gbt;
   DownstreamData::type downstreamData = DownstreamData::type::Ctp;
 
@@ -97,13 +103,28 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
     } catch(...) {
       throw("Invalid or missing loopback property");
     }
+
+    try {
+      ponUpstream = configFile.getValue<bool>(globalGroup + ".ponupstream");
+    } catch(...) {
+      throw("Invalid or missing ponupstream property");
+    }
+
+    try {
+      parsedString = configFile.getValue<std::string>(globalGroup + ".onuaddress");
+      onuAddress = Address::fromString(parsedString);
+    } catch(...) {
+      throw("Invalid or missing onuAddress property");
+    }
   }
 
-  parameters.setLinkLoopbackEnabled(loopback);
   parameters.setClock(clock);
   parameters.setDatapathMode(datapathMode);
   parameters.setGbtMode(gbtMode);
   parameters.setDownstreamData(downstreamData);
+  parameters.setLinkLoopbackEnabled(loopback);
+  parameters.setPonUpstreamEnabled(ponUpstream);
+  parameters.setOnuAddress(onuAddress);
 
   //* Per link *//
   for (auto configGroup: ConfigFileBrowser(&configFile, "link")) {

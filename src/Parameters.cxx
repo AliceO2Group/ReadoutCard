@@ -32,7 +32,8 @@ namespace roc {
 using Variant = boost::variant<size_t, int32_t, bool, Parameters::BufferParametersType, Parameters::CardIdType,
   Parameters::GeneratorLoopbackType, Parameters::GeneratorPatternType, Parameters::ReadoutModeType,
   Parameters::LinkMaskType, Parameters::ClockType, Parameters::DatapathModeType, Parameters::DownstreamDataType,
-  Parameters::GbtModeType, Parameters::GbtMuxType, Parameters::GbtMuxMapType>;
+  Parameters::GbtModeType, Parameters::GbtMuxType, Parameters::GbtMuxMapType, Parameters::PonUpstreamEnabledType,
+  Parameters::OnuAddressType>;
 
 using KeyType = const char*;
 
@@ -129,6 +130,8 @@ _PARAMETER_FUNCTIONS(GbtMode, "gbt_mode")
 _PARAMETER_FUNCTIONS(GbtMux, "gbt_mux")
 _PARAMETER_FUNCTIONS(GbtMuxMap, "gbt_mux_map")
 _PARAMETER_FUNCTIONS(LinkLoopbackEnabled, "link_loopback_enabled")
+_PARAMETER_FUNCTIONS(PonUpstreamEnabled, "pon_upstream_enabled")
+_PARAMETER_FUNCTIONS(OnuAddress, "onu_address")
 _PARAMETER_FUNCTIONS(StbrdEnabled, "stbrd_enabled")
 #undef _PARAMETER_FUNCTIONS
 
