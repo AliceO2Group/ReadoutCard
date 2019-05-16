@@ -103,6 +103,9 @@ class CruBar final : public BarInterfaceBase
     uint32_t getFirmwareTime();
     uint32_t getFpgaChipHigh();
     uint32_t getFpgaChipLow();
+    uint32_t getPonStatusRegister();
+    uint32_t getOnuAddress();
+    bool checkPonUpstreamStatusExpected(uint32_t ponUpstreamRegister, uint32_t onuAddress);
     std::map<int, Link> initializeLinkMap();
     void populateLinkMap(std::map<int, Link> &linkMap);
 

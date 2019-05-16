@@ -307,6 +307,30 @@ uint32_t CruBar::getFpgaChipLow()
   return readRegister(Cru::Registers::FPGA_CHIP_LOW.index);
 }
 
+uint32_t CruBar::getPonStatusRegister()
+{
+  assertBarIndex(2, "Can only get PON status register from BAR 2");
+  return readRegister((Cru::Registers::ONU_USER_LOGIC.address + 0x0c)/4);
+}
+
+uint32_t CruBar::getOnuAddress()
+{
+  assertBarIndex(2, "Can only get PON status register from BAR 2");
+  return readRegister(Cru::Registers::ONU_USER_LOGIC.index) >> 1;
+}
+
+bool CruBar::checkPonUpstreamStatusExpected(uint32_t ponUpstreamRegister, uint32_t onuAddress)
+{
+  if (!mPonUpstream) { //no need to check if ponUpstream is disabled
+    return true;
+  } else if ((ponUpstreamRegister == 0xff || ponUpstreamRegister == 0xf7) && (mOnuAddress == onuAddress)) {
+    //ponUpstream should be 0b11110111 or 0b11111111
+    //onuAddress should be the same as requested
+    return true;
+  } else {
+    return false;
+  }
+}
 /// Get the enabled features for the card's firmware.
 FirmwareFeatures CruBar::parseFirmwareFeatures()
 {
@@ -427,15 +451,15 @@ Cru::ReportInfo CruBar::report()
   // setClock: 2 for Local clock, 0 for TTC clock
   uint32_t clock = (ttc.getPllClock() == 0 ? Clock::Local : Clock::Ttc);
   uint32_t downstreamData = ttc.getDownstreamData();
-  //bool ponUpstream = true; //TODO: ponUpstream currently irrelevant for configuration
-  //uint32_t onuAddress = 0xdeadbeef; //TODO: onuAddress currently irrelevant for configuration
+  uint32_t ponStatusRegister = getPonStatusRegister();
+  uint32_t onuAddress = getOnuAddress();
 
   Cru::ReportInfo reportInfo = {
     linkMap,
     clock,
     downstreamData,
-    //ponUpstream
-    //onuAddress
+    ponStatusRegister,
+    onuAddress
   };
 
   return reportInfo;
@@ -450,7 +474,8 @@ void CruBar::reconfigure()
 
   if (static_cast<uint32_t>(mClock) == reportInfo.ttcClock && 
       static_cast<uint32_t>(mDownstreamData) == reportInfo.downstreamData &&
-      std::equal(mLinkMap.begin(), mLinkMap.end(), reportInfo.linkMap.begin())) {
+      std::equal(mLinkMap.begin(), mLinkMap.end(), reportInfo.linkMap.begin()) &&
+      checkPonUpstreamStatusExpected(reportInfo.ponStatusRegister, reportInfo.onuAddress)){
     log("No need to reconfigure further");
   } else {
     log("Reconfiguring");
