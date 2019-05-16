@@ -64,6 +64,8 @@ struct ReportInfo {
   std::map<int, Link> linkMap;
   uint32_t ttcClock;
   uint32_t downstreamData;
+  uint32_t ponStatusRegister;
+  uint32_t onuAddress;
 };
 
 uint32_t getWrapperBaseAddress(int wrapper);
