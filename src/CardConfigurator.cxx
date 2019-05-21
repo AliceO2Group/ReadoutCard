@@ -51,6 +51,7 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
   bool loopback = false;
   bool ponUpstream = false;
   uint32_t onuAddress = 0x0;
+  uint16_t cruId = 0x0;
   GbtMode::type gbtMode = GbtMode::type::Gbt;
   DownstreamData::type downstreamData = DownstreamData::type::Ctp;
 
@@ -112,9 +113,16 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
 
     try {
       parsedString = configFile.getValue<std::string>(globalGroup + ".onuaddress");
-      onuAddress = Address::fromString(parsedString);
+      onuAddress = Hex::fromString(parsedString);
     } catch(...) {
       throw("Invalid or missing onuAddress property");
+    }
+
+    try {
+      parsedString = configFile.getValue<std::string>(globalGroup + ".cruid");
+      cruId = Hex::fromString(parsedString);
+    } catch (...) {
+      throw("Invalid or missing cruId property");
     }
   }
 
@@ -125,6 +133,7 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
   parameters.setLinkLoopbackEnabled(loopback);
   parameters.setPonUpstreamEnabled(ponUpstream);
   parameters.setOnuAddress(onuAddress);
+  parameters.setCruId(cruId);
 
   //* Per link *//
   for (auto configGroup: ConfigFileBrowser(&configFile, "link")) {

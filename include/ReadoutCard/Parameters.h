@@ -28,7 +28,7 @@
 #include "ReadoutCard/ParameterTypes/PciAddress.h"
 #include "ReadoutCard/ParameterTypes/PciSequenceNumber.h"
 #include "ReadoutCard/ParameterTypes/ReadoutMode.h"
-#include "ReadoutCard/ParameterTypes/Address.h"
+#include "ReadoutCard/ParameterTypes/Hex.h"
 
 // CRU Specific
 #include "ReadoutCard/ParameterTypes/Clock.h"
@@ -120,10 +120,13 @@ class Parameters
     using PonUpstreamEnabledType = bool;
 
     /// Type for the ONU address parameter
-    using OnuAddressType = Address::type;
+    using OnuAddressType = Hex::type;
 
     /// Type for the STBRD enabled parameter
     using StbrdEnabledType = bool;
+
+    /// Type for the CRU ID
+    using CruIdType = Hex::type;
 
     // Setters
 
@@ -353,6 +356,12 @@ class Parameters
     /// \return Reference to this object for chaining calls
     auto setStbrdEnabled(StbrdEnabledType value) -> Parameters&;
 
+    /// Sets the CruId parameter
+    ///
+    /// \param value The value to set
+    /// \return Reference to this object for chaining calls
+    auto setCruId(CruIdType value) -> Parameters&;
+
 
     // on-throwing getters
 
@@ -439,6 +448,10 @@ class Parameters
     /// Gets the StbrdEnabled parameter
     /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
     auto getStbrdEnabled() const -> boost::optional<StbrdEnabledType>;
+
+    /// Gets the CruId parameter
+    /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+    auto getCruId() const -> boost::optional<CruIdType>;
 
     // Throwing getters
 
@@ -546,6 +559,11 @@ class Parameters
     /// \exception ParameterException The parameter was not present
     /// \return The value
     auto getStbrdEnabledRequired() const -> StbrdEnabledType;
+
+    /// Gets the CruId parameter
+    /// \exception ParameterException The parameter was not present
+    /// \return The value
+    auto getCruIdRequired() const -> CruIdType;
 
     // Helper functions
 

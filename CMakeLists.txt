@@ -99,13 +99,13 @@ add_library(ReadoutCard SHARED
   src/ExceptionInternal.cxx
   src/MemoryMappedFile.cxx
   src/Parameters.cxx
-  src/ParameterTypes/Address.cxx
   src/ParameterTypes/Clock.cxx
   src/ParameterTypes/DatapathMode.cxx
   src/ParameterTypes/DownstreamData.cxx
   src/ParameterTypes/GbtMode.cxx
   src/ParameterTypes/GbtMux.cxx
   src/ParameterTypes/GeneratorPattern.cxx
+  src/ParameterTypes/Hex.cxx
   src/ParameterTypes/LoopbackMode.cxx
   src/ParameterTypes/PciAddress.cxx
   src/ParameterTypes/PciSequenceNumber.cxx
