@@ -66,6 +66,7 @@ struct ReportInfo {
   uint32_t downstreamData;
   uint32_t ponStatusRegister;
   uint32_t onuAddress;
+  uint16_t cruId;
 };
 
 uint32_t getWrapperBaseAddress(int wrapper);

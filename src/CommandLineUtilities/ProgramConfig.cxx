@@ -43,6 +43,9 @@ class ProgramConfig: public Program
       ("clock",
        po::value<std::string>(&mOptions.clock)->default_value("LOCAL"),
        "Clock [LOCAL, TTC]")
+      ("cru-id",
+       po::value<uint16_t>(&mOptions.cruId)->default_value(0x0),
+       "12-bit CRU ID")
       ("datapathmode",
        po::value<std::string>(&mOptions.datapathMode)->default_value("PACKET"),
        "DatapathMode [PACKET, CONTINUOUS]")
@@ -119,6 +122,7 @@ class ProgramConfig: public Program
       params.setLinkLoopbackEnabled(mOptions.linkLoopbackEnabled);
       params.setPonUpstreamEnabled(mOptions.ponUpstreamEnabled);
       params.setOnuAddress(mOptions.onuAddress);
+      params.setCruId(mOptions.cruId);
 
       CardConfigurator(params, mOptions.forceConfig);
     } else if (!strncmp(mOptions.configFile.c_str(), "file:", 5)) {
@@ -149,6 +153,7 @@ class ProgramConfig: public Program
     bool forceConfig = false;
     bool ponUpstreamEnabled = false;
     uint32_t onuAddress = 0x0;
+    uint16_t cruId = 0x0;
   }mOptions;
 
   private:

@@ -8,21 +8,30 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 
-/// \file Address.cxx
-/// \brief Implementation of the Address struct and supporting functions
+/// \file Hex.h
+/// \brief Definition of the Hex struct
 ///
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#include "ReadoutCard/ParameterTypes/Address.h"
-#include "Utilities/Enum.h"
+#ifndef ALICEO2_INCLUDE_READOUTCARD_CRU_ADDRESS_H_
+#define ALICEO2_INCLUDE_READOUTCARD_CRU_ADDRESS_H_
+
+#include <string>
+#include "ReadoutCard/Cru.h"
 
 namespace AliceO2 {
 namespace roc {
 
-Address::type Address::fromString(const std::string& string)
+//Ugly for consistency reasons
+struct Hex
 {
-  return std::stoul(string, nullptr, 16);
-}
+    using type = uint32_t;
+
+    /// Converts a string to an Hex
+    static Hex::type fromString(const std::string& string);
+};
 
 } // namespace roc
 } // namespace AliceO2
+
+#endif // ALICEO2_INCLUDE_READOUTCARD_CRU_ADDRESS_H_

@@ -111,11 +111,15 @@ class CruBar final : public BarInterfaceBase
 
     int getDdgBurstLength();
     //void checkParameters();
+    
+    void setCruId(uint16_t cruId);
+    uint16_t getCruId();
 
     FirmwareFeatures parseFirmwareFeatures(); 
     FirmwareFeatures mFeatures;
 
     Clock::type mClock;
+    uint16_t mCruId;
     DatapathMode::type mDatapathMode;
     DownstreamData::type mDownstreamData;
     GbtMode::type mGbtMode;

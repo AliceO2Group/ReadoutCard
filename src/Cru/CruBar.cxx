@@ -36,6 +36,7 @@ using Link = Cru::Link;
 CruBar::CruBar(const Parameters& parameters)
     : BarInterfaceBase(parameters),
       mClock(parameters.getClock().get_value_or(Clock::Local)),
+      mCruId(parameters.getCruId().get_value_or(0x0)),
       mDatapathMode(parameters.getDatapathMode().get_value_or(DatapathMode::Packet)),
       mDownstreamData(parameters.getDownstreamData().get_value_or(DownstreamData::Ctp)),
       mGbtMode(parameters.getGbtMode().get_value_or(GbtMode::Gbt)),
@@ -453,13 +454,15 @@ Cru::ReportInfo CruBar::report()
   uint32_t downstreamData = ttc.getDownstreamData();
   uint32_t ponStatusRegister = getPonStatusRegister();
   uint32_t onuAddress = getOnuAddress();
+  uint16_t cruId = getCruId();
 
   Cru::ReportInfo reportInfo = {
     linkMap,
     clock,
     downstreamData,
     ponStatusRegister,
-    onuAddress
+    onuAddress,
+    cruId
   };
 
   return reportInfo;
@@ -475,7 +478,8 @@ void CruBar::reconfigure()
   if (static_cast<uint32_t>(mClock) == reportInfo.ttcClock && 
       static_cast<uint32_t>(mDownstreamData) == reportInfo.downstreamData &&
       std::equal(mLinkMap.begin(), mLinkMap.end(), reportInfo.linkMap.begin()) &&
-      checkPonUpstreamStatusExpected(reportInfo.ponStatusRegister, reportInfo.onuAddress)){
+      checkPonUpstreamStatusExpected(reportInfo.ponStatusRegister, reportInfo.onuAddress) &&
+      mCruId == reportInfo.cruId){
     log("No need to reconfigure further");
   } else {
     log("Reconfiguring");
@@ -515,6 +519,8 @@ void CruBar::configure()
   ttc.selectDownstreamData(mDownstreamData);
 
   /* BSP */
+  setCruId(mCruId);
+
   disableDataTaking();
 
   DatapathWrapper datapathWrapper = DatapathWrapper(mPdaBar);
@@ -698,5 +704,14 @@ int CruBar::getEndpointNumber()
   }
 }
 
+void CruBar::setCruId(uint16_t cruId)
+{
+  modifyRegister(Cru::Registers::BSP_USER_CONTROL.index, 16, 12, cruId);
+}
+
+uint16_t CruBar::getCruId()
+{
+  return (readRegister(Cru::Registers::BSP_USER_CONTROL.index) >> 16) & 0x0fff;
+}
 } // namespace roc
 } // namespace AliceO2

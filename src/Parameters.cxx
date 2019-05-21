@@ -33,7 +33,7 @@ using Variant = boost::variant<size_t, int32_t, bool, Parameters::BufferParamete
   Parameters::GeneratorLoopbackType, Parameters::GeneratorPatternType, Parameters::ReadoutModeType,
   Parameters::LinkMaskType, Parameters::ClockType, Parameters::DatapathModeType, Parameters::DownstreamDataType,
   Parameters::GbtModeType, Parameters::GbtMuxType, Parameters::GbtMuxMapType, Parameters::PonUpstreamEnabledType,
-  Parameters::OnuAddressType>;
+  Parameters::OnuAddressType, Parameters::CruIdType>;
 
 using KeyType = const char*;
 
@@ -133,6 +133,7 @@ _PARAMETER_FUNCTIONS(LinkLoopbackEnabled, "link_loopback_enabled")
 _PARAMETER_FUNCTIONS(PonUpstreamEnabled, "pon_upstream_enabled")
 _PARAMETER_FUNCTIONS(OnuAddress, "onu_address")
 _PARAMETER_FUNCTIONS(StbrdEnabled, "stbrd_enabled")
+_PARAMETER_FUNCTIONS(CruId, "cru_id")
 #undef _PARAMETER_FUNCTIONS
 
 Parameters::Parameters() : mPimpl(std::make_unique<ParametersPimpl>())
