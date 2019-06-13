@@ -200,7 +200,7 @@ class ProgramDmaBench: public Program
               po::value<std::string>(&mOptions.readoutModeString),
               "Set readout mode [CONTINUOUS]")
           ("stbrd",
-              po::value<bool>(&mOptions.stbrd),
+              po::bool_switch(&mOptions.stbrd),
               "Set the STBRD trigger command for the CRORC")
           ("superpage-size",
               SuffixOption<size_t>::make(&mSuperpageSize)->default_value("1Mi"),
