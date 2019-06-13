@@ -369,7 +369,7 @@ bool CruDmaChannel::isReadyQueueFull()
 
 int32_t CruDmaChannel::getDroppedPackets()
 {
-  return getBar()->getDroppedPackets();
+  return getBar2()->getDroppedPackets();
 }
 
 bool CruDmaChannel::injectError()
