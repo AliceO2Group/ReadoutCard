@@ -95,7 +95,7 @@ def parse_vhdl_hex(vhdl_lines, line):
 
 
 #create cru-fw table
-vhdl_file = open('pack_cru_core.vhd')
+vhdl_file = open('pack_cru_core.vhd', encoding="utf-8")
 vhdl_lines = vhdl_file.readlines()
 
 for (key, value) in roc_regs.items():
