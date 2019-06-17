@@ -46,7 +46,7 @@ PdaDevice::PdaDevice(const PciId& pciId) : mDeviceOperator(nullptr)
     const std::string id = pciId.getVendorId() + " " + pciId.getDeviceId() + '\0';
     const char* ids[2] = { id.data(), nullptr };
 
-    mDeviceOperator = DeviceOperator_new(ids, PDA_ENUMERATE_DEVICES);
+    mDeviceOperator = DeviceOperator_new(ids, PDA_DONT_ENUMERATE_DEVICES);
     if(mDeviceOperator == nullptr){
       BOOST_THROW_EXCEPTION(PdaException()
           << ErrorInfo::Message("Failed to get DeviceOperator")
