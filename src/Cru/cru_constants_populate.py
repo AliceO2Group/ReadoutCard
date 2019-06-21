@@ -70,7 +70,34 @@ roc_regs = {
 'add_bsp_i2c_si5345_1':'SI5345_1',
 'add_bsp_i2c_si5345_2':'SI5345_2',
 'add_bsp_i2c_si5344':'SI5344',
-'add_pcie_dma_ep_id':'ENDPOINT_ID'
+'add_pcie_dma_ep_id':'ENDPOINT_ID',
+
+### SCA ###
+'add_gbt_sc':'SC_BASE_INDEX',
+'add_gbt_sca_wr_data':'SCA_WR_DATA',
+'add_gbt_sca_wr_cmd':'SCA_WR_CMD',
+'add_gbt_sca_wr_ctr':'SCA_WR_CTRL',
+
+'add_gbt_sca_rd_data':'SCA_RD_DATA',
+'add_gbt_sca_rd_cmd':'SCA_RD_CMD',
+'add_gbt_sca_rd_ctr':'SCA_RD_CTRL',
+'add_gbt_sca_rd_mon':'SCA_RD_MON',
+
+'add_gbt_sc_link':'SC_LINK',
+'add_gbt_sc_rst':'SC_RESET',
+
+### SWT ###
+'add_gbt_swt_wr_l':'SWT_WR_WORD_L',
+'add_gbt_swt_wr_m':'SWT_WR_WORD_M',
+'add_gbt_swt_wr_h':'SWT_WR_WORD_H',
+
+'add_gbt_swt_rd_l':'SWT_RD_WORD_L',
+'add_gbt_swt_rd_m':'SWT_RD_WORD_M',
+'add_gbt_swt_rd_h':'SWT_RD_WORD_H',
+
+'add_gbt_swt_cmd':'SWT_CMD',
+'add_gbt_swt_mon':'SWT_MON',
+'add_gbt_swt_word_mon':'SWT_WORD_MON'
 }
 
 # e.g. 'TEMPERATURE':0x00010008
@@ -111,6 +138,7 @@ for (key, value) in roc_regs.items():
 
 print(to_replace)
 
+# Update Cru/Constants.h
 cfile = open('Constants.h')
 contents = cfile.readlines()
 
@@ -123,4 +151,19 @@ for key,value in to_replace.items():
 
 
 cfile = open('Constants.h', 'w')
+cfile.writelines(contents)
+
+# Update include/ReadoutCard/Cru.h
+cfile = open('../../include/ReadoutCard/Cru.h')
+contents = cfile.readlines()
+
+for key,value in to_replace.items():
+  for (i, line) in enumerate(contents):
+    if(re.search("\s+Register\s*" + key, line)):
+      contents[i] = re.sub("\([^)]*\)", '(' + value + ')', line)
+    elif(re.search("\s+IntervalRegister\s*" + key, line)):
+      contents[i] = re.sub("\([^,]*\,", '(' + value + ',', line)
+
+
+cfile = open('../../include/ReadoutCard/Cru.h', 'w')
 cfile.writelines(contents)
