@@ -394,13 +394,30 @@ Alternatively, you can use [Ansible](https://alice-o2-project.web.cern.ch/instal
 
 Dependencies
 -------------------
+### Compatibility
+
+In order to use a CRU the package versions have to adhere to the following table.
+
+| ReadoutCard | PDA Driver | PDA Library  | CRU firmware |
+| ----------- | ---------- | ------------ | ------------ |
+| v0.10.*     | v1.0.3+    | v12.0.0      | v3.0.0/v3.1.0|
+| v0.11.*     | v1.0.4+    | v12.0.0      | v3.0.0/v3.1.0|
+
+The _PDA Driver_ entry refers to the `pda-kadapter-dkms-*.rpm` package which is availabe through the [o2-daq-yum](http://alice-daq-yum-o2.web.cern.ch/alice-daq-yum-o2/cc7_64/) repo as an RPM.
+
+The _PDA Library_ entry refers to the `alisw-PDA*.rpm` package which is pulled as a dependency of the ReadoutCard rpm.
+
+Both _PDA_ packages can also be installed from source as described on the next section.
+
+For the _CRU firmware_ see the [gitlab](https://gitlab.cern.ch/alice-cru/cru-fw) repo.
+
 ### PDA
-The module depends on the PDA (Portable Driver Architecture) library. 
+The module depends on the PDA (Portable Driver Architecture) library and driver.
 If PDA is not detected on the system, only a dummy implementation of the interface will be compiled.
 
 1. Install dependency packages
   ~~~
-  yum install kernel-devel pciutils-devel kmod-devel libtool libhugetlbfs
+  yum install kernel-devel pciutils-devel kmod-devel libtool
   ~~~
 
 2. Download PDA
@@ -412,9 +429,9 @@ If PDA is not detected on the system, only a dummy implementation of the interfa
 3. Compile
   ~~~
   ./configure --debug=false --numa=true --modprobe=true
-  make install
+  make install #installs the pda library
   cd patches/linux_uio
-  make install
+  make install #installs the pda driver
   ~~~
   
 4. Optionally, insert kernel module. If the utilities are run as root, PDA will do this automatically.
@@ -453,6 +470,7 @@ Either use the script `roc-setup-hugetlbfs.sh` (located in the src directory), o
   ~~~
 
 Note that after every reboot it is necessary to run the `roc-setup-hugetlbfs.sh` script again or repeat the previous manual steps.
+
 
 Configuration
 -------------------
