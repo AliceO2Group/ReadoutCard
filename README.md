@@ -390,7 +390,7 @@ Installation
 ===================
 Install the dependencies below and follow the instructions for building the FLP prototype.
 
-Alternatively, you can use [Ansible](https://alice-o2-project.web.cern.ch/install-readoutcard-through-ansible) to completely set up the system.
+Alternatively, you can install the [FLP Suite](https://alice-o2-project.web.cern.ch/flp-suite) to completely set up the system.
 
 Dependencies
 -------------------
