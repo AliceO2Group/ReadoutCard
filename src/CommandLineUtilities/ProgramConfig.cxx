@@ -34,7 +34,7 @@ class ProgramConfig: public Program
   {
     return {"Config", "Configure the CRU(s)", 
       "roc-config --config-file file:roc.cfg\n"
-      "roc-config --id 42:00.0 --links 0-23 --clock local --gbtmode packet --loopback INTERNAL -gbtmux ttc\n"};
+      "roc-config --id 42:00.0 --links 0-23 --clock local --datapathmode packet --loopback --gbtmux ttc\n"};
   }
 
   virtual void addOptions(boost::program_options::options_description& options)
