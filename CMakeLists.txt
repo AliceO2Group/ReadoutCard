@@ -58,7 +58,7 @@ ENDIF()
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 if(NOT APPLE)
-  find_package(Python3 3.6 COMPONENTS Development)
+  find_package(Python3 3.6 COMPONENTS Interpreter Development)
   if(Python3_FOUND)
     set(boost_python_component "python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}")
   else()
