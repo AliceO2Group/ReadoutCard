@@ -494,11 +494,6 @@ void CruBar::configure()
     populateLinkMap(mLinkMap);
   }
 
-  /* GBT */
-  log("Calibrating GBT");
-  Gbt gbt = Gbt(mPdaBar, mLinkMap, mWrapperCount);
-  gbt.calibrateGbt();
-
   /* TTC */
   Ttc ttc = Ttc(mPdaBar);
   
@@ -517,6 +512,11 @@ void CruBar::configure()
 
   log("Setting downstream data");
   ttc.selectDownstreamData(mDownstreamData);
+
+  /* GBT */
+  log("Calibrating GBT");
+  Gbt gbt = Gbt(mPdaBar, mLinkMap, mWrapperCount);
+  gbt.calibrateGbt();
 
   /* BSP */
   setCruId(mCruId);
