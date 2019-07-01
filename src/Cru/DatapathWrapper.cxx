@@ -110,7 +110,7 @@ void DatapathWrapper::setFlowControl(int wrapper, int allowReject)
     Cru::Registers::FLOW_CONTROL_OFFSET.address +
     Cru::Registers::FLOW_CONTROL_REGISTER.address;
 
-  mPdaBar->writeRegister(address, value);
+  mPdaBar->writeRegister(address/4, value);
 }
 
 uint32_t DatapathWrapper::getDatapathWrapperBaseAddress(int wrapper)
