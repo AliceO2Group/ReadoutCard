@@ -7,7 +7,7 @@ set(Common_CMAKE_DIR @Common_DIR@)
 set(InfoLogger_CMAKE_DIR @InfoLogger_ROOT@)
 
 if(NOT APPLE)
-  find_package(Python3 3.6 COMPONENTS Development)
+        find_package(Python3 3.6 COMPONENTS Interpreter Development)
   if(Python3_FOUND)
     set(boost_python_component "python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}")
   else()
