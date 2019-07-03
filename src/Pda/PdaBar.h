@@ -130,7 +130,7 @@ class PdaBar : public BarInterface
       return {};
     }
 
-    virtual int32_t getDroppedPackets() override
+    virtual int32_t getDroppedPackets(int /*endpoint*/) override
     {
       return -1;
     }

@@ -54,7 +54,7 @@ class CruBar final : public BarInterfaceBase
     virtual boost::optional<float> getTemperature() override;
     virtual boost::optional<std::string> getFirmwareInfo() override;
     virtual boost::optional<std::string> getCardId() override;
-    virtual int32_t getDroppedPackets() override;
+    virtual int32_t getDroppedPackets(int endpoint) override;
     virtual uint32_t getCTPClock() override;
     virtual uint32_t getLocalClock() override;
     virtual int32_t getLinks() override;

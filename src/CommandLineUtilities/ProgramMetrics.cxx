@@ -78,11 +78,13 @@ class ProgramMetrics: public Program
 
     int i = 0;
     for (const auto& card : cardsFound) {
-      Parameters params = Parameters::makeParameters(card.pciAddress, 2);
-      auto bar2 = ChannelFactory().getBar(params);
+      Parameters params0 = Parameters::makeParameters(card.pciAddress, 0);
+      auto bar0 = ChannelFactory().getBar(params0);
+      Parameters params2 = Parameters::makeParameters(card.pciAddress, 2);
+      auto bar2 = ChannelFactory().getBar(params2);
 
       float temperature = bar2->getTemperature().value_or(0);
-      int32_t dropped = bar2->getDroppedPackets();
+      int32_t dropped = bar2->getDroppedPackets(bar0->getEndpointNumber());
       float ctp_clock = bar2->getCTPClock()/1e6;
       float local_clock = bar2->getLocalClock()/1e6;
       int32_t links = bar2->getLinks();

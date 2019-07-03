@@ -58,7 +58,7 @@ class BarInterface: public virtual RegisterReadWriteInterface
 
     virtual boost::optional<std::string> getCardId() = 0;
     
-    virtual int32_t getDroppedPackets() = 0;
+    virtual int32_t getDroppedPackets(int endpoint) = 0;
     
     virtual uint32_t getCTPClock() = 0;
     

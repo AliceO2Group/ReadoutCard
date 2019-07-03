@@ -18,12 +18,16 @@
 
 #include <map>
 #include "Pda/PdaBar.h"
+#include "Common.h"
 
 namespace AliceO2 {
 namespace roc {
 
 class I2c
 {
+
+  using Link = Cru::Link;
+  
   public:
     I2c(uint32_t baseAddress, uint32_t chipAddress, 
         std::shared_ptr<Pda::PdaBar> pdaBar,
@@ -33,12 +37,14 @@ class I2c
     void resetI2c();
     void configurePll();
     uint32_t getSelectedClock();
+    void getOpticalPower(std::map<int, Link> &linkMap);
 
   private:
     //std::map<uint32_t, uint32_t> readRegisterMap(std::string file);
     void writeI2c(uint32_t address, uint32_t data);
     uint32_t readI2c(uint32_t address);
     void waitForI2cReady();
+    std::vector<uint32_t> getChipAddresses();
 
     uint32_t mI2cConfig;
     uint32_t mI2cCommand;
