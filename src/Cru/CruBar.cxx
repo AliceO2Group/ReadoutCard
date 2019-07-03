@@ -172,10 +172,16 @@ FirmwareFeatures CruBar::getFirmwareFeatures()
   return mFeatures;
 }
 
-/// Get number of dropped packets
-int32_t CruBar::getDroppedPackets()
+/// Get number of dropped packets on endpoint 2
+int32_t CruBar::getDroppedPackets(int endpoint)
 {
-  return readRegister(Cru::Registers::NUM_DROPPED_PACKETS.index);
+  if (endpoint == 0) {
+    return readRegister(Cru::Registers::NUM_DROPPED_PACKETS_ENDPOINT0.index);
+  } else if (endpoint == 1) {
+    return readRegister(Cru::Registers::NUM_DROPPED_PACKETS_ENDPOINT1.index);
+  } else {
+    return -1;
+  }
 }
 
 // Get CTP clock (Hz)
@@ -444,7 +450,14 @@ Cru::ReportInfo CruBar::report()
     auto& link = el.second;
     link.datapathMode = datapathWrapper.getDatapathMode(link);
     link.enabled = datapathWrapper.getLinkEnabled(link);
+    link.stickyBit = gbt.getStickyBit(link);
+    link.rxFreq = gbt.getRxClockFrequency(link) / 1e6; // Hz -> Mhz
+    link.txFreq = gbt.getTxClockFrequency(link) / 1e6; // Hz -> Mhz
   }
+
+  // Update the link map with optical power information through I2C
+  I2c i2c = I2c(Cru::Registers::BSP_I2C_MINIPODS.address, 0x0, mPdaBar);
+  i2c.getOpticalPower(linkMap);
 
   Ttc ttc = Ttc(mPdaBar);
   // Mismatch between values returned by getPllClock and value required to set the clock
@@ -604,7 +617,7 @@ std::map<int, Link> CruBar::initializeLinkMap()
 
   // Calculate "new" positions to accommodate CRU FW v3.0.0 link mapping
   std::map<int, Link> newLinkMap;
-  for(int i=0; i<links.size(); i++) {
+  for(size_t i=0; i < links.size(); i++) {
     Link link = links.at(i);
     int newPos = (i-link.bank*6) * 2 + 12*(int)(link.bank/2) + (link.bank %2);
     link.dwrapperId = newPos % 12;
@@ -713,5 +726,6 @@ uint16_t CruBar::getCruId()
 {
   return (readRegister(Cru::Registers::BSP_USER_CONTROL.index) >> 16) & 0x0fff;
 }
+
 } // namespace roc
 } // namespace AliceO2

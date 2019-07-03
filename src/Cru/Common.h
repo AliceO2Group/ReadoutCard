@@ -39,6 +39,10 @@ struct Link {
   bool loopback = false;
   DatapathMode::type datapathMode = DatapathMode::type::Packet;
   bool enabled = false;
+  bool stickyBit = false;
+  float opticalPower = 0.0;
+  float txFreq = 0x0; //In MHz
+  float rxFreq = 0x0; //In MHz
 
   bool operator== (const Link &dlink) const {
     if (enabled == dlink.enabled && enabled == false) {

@@ -18,6 +18,7 @@
 
 #include "Pda/PdaBar.h"
 #include "Constants.h"
+#include "I2c.h"
 
 namespace AliceO2 {
 namespace roc {
@@ -38,9 +39,14 @@ class Gbt {
     void getGbtModes();
     void getGbtMuxes();
     void getLoopbacks();
+    bool getStickyBit(Link link);
+    uint32_t getRxClockFrequency(Link link);
+    uint32_t getTxClockFrequency(Link link);
 
   private:
     uint32_t getSourceSelectAddress(Link link);
+    uint32_t getStatusAddress(Link link);
+    uint32_t getClearErrorAddress(Link link);
     uint32_t getRxControlAddress(Link link);
     uint32_t getTxControlAddress(Link link);
     uint32_t getAtxPllRegisterAddress(int wrapper, uint32_t reg);
@@ -49,6 +55,8 @@ class Gbt {
     void cdrref(uint32_t refClock);
     void txcal();
     void rxcal();
+
+    void resetStickyBit(Link link);
 
     std::shared_ptr<Pda::PdaBar> mPdaBar;
     std::map<int, Link> &mLinkMap;

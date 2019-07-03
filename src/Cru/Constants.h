@@ -149,10 +149,13 @@ static constexpr Register FPGA_CHIP_HIGH(0x00010014);
 /// Must be accessed on BAR 2
 static constexpr Register FPGA_CHIP_LOW(0x00010018);
 
-/// Register containing the number of dropped packets
+/// Registers containing the number of dropped packets
 /// Must be accessed on BAR 2
-// not yet in cru_tables.py
-static constexpr Register NUM_DROPPED_PACKETS(0x0060001C);
+/// Endpoint resolution must be done *manually*
+/// HARDCODED
+static constexpr Register NUM_DROPPED_PACKETS_ENDPOINT0(0x0060001C);
+
+static constexpr Register NUM_DROPPED_PACKETS_ENDPOINT1(0x0070001C);
 
 /// Registers for controlling the DDG
 static constexpr Register DDG_CTRL0(0x00d00000);
@@ -160,6 +163,9 @@ static constexpr Register DDG_CTRL2(0x00d00004);
 
 /// Register to control BSP
 static constexpr Register BSP_USER_CONTROL(0x00000018);
+
+/// Register to access I2C minipod information
+static constexpr Register BSP_I2C_MINIPODS(0x00030600);
 
 //** TTC **//
 /// Register for setting the Clock
@@ -204,8 +210,18 @@ static constexpr Register GBT_WRAPPER_BANK_OFFSET(0x00020000);
 static constexpr Register GBT_BANK_LINK_OFFSET(0x00002000);
 static constexpr Register GBT_LINK_REGS_OFFSET(0x00000000);
 
+// Register for getting the GBT link status (i.e. sticky bit)
+static constexpr Register GBT_LINK_STATUS(0x00000000);
+
 /// Register for selecting the GBT link source (i.e. Internal Data Generator)
 static constexpr Register GBT_LINK_SOURCE_SELECT(0x00000030);
+
+/// Register for clearing the GBT link error counters
+static constexpr Register GBT_LINK_CLEAR_ERRORS(0x00000038);
+
+/// Registers for getting the RX and TX link frequencies
+static constexpr Register GBT_LINK_RX_CLOCK(0x00000008);
+static constexpr Register GBT_LINK_TX_CLOCK(0x00000004);
 
 /// Register for selecting the the GBT Multiplexer
 static constexpr Register GBT_MUX_SELECT(0x0000001c);
