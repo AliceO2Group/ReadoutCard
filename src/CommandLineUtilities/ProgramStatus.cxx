@@ -102,8 +102,8 @@ class ProgramStatus: public Program
         gbtMux = "TTC:" + downstreamData;
       } else if (link.gbtMux == Cru::GBT_MUX_DDG) {
         gbtMux = "DDG";
-      } else if (link.gbtMux == Cru::GBT_MUX_SC) {
-        gbtMux = "SC";
+      } else if (link.gbtMux == Cru::GBT_MUX_SWT) {
+        gbtMux = "SWT";
       }
 
       std::string datapathMode; 

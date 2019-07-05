@@ -107,8 +107,8 @@ void Gbt::getGbtMuxes()
       link.gbtMux = GbtMux::type::Ttc;
     } else if (txMux == Cru::GBT_MUX_DDG) {
       link.gbtMux = GbtMux::type::Ddg;
-    } else if (txMux == Cru::GBT_MUX_SC) {
-      link.gbtMux = GbtMux::type::Sc;
+    } else if (txMux == Cru::GBT_MUX_SWT) {
+      link.gbtMux = GbtMux::type::Swt;
     }
   }
 }
