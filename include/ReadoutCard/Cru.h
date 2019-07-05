@@ -31,7 +31,7 @@ static constexpr uint32_t DATA_MIDTRG(0x2);
 
 static constexpr uint32_t GBT_MUX_TTC(0x0);
 static constexpr uint32_t GBT_MUX_DDG(0x1);
-static constexpr uint32_t GBT_MUX_SC(0x2);
+static constexpr uint32_t GBT_MUX_SWT(0x2);
 
 static constexpr uint32_t GBT_MODE_GBT(0x0);
 static constexpr uint32_t GBT_MODE_WB(0x1);

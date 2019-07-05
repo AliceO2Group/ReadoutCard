@@ -135,7 +135,7 @@ The Parameters that affect the configuration of the CRU and their possible value
 
 `GbtMode (GBT | WB)`
 
-`GbtMux (TTC | DDG | SC)`
+`GbtMux (TTC | DDG | SWT)`
 
 `LinkLoopbackEnabled (true | false)`
 
@@ -204,12 +204,12 @@ The configuration file separates the parameter into three groups.
 2. `[links]`
 
     This part refers to all the links. Configuration that goes in this group will be applied to all links, unless specifically
-    setting parameters for individual links in the next section. For example to enable all links with SC MUX by default:
+    setting parameters for individual links in the next section. For example to enable all links with SWT MUX by default:
 
     ```
     [links]
     enabled=true
-    gbtmux=sc
+    gbtmux=swt
     ```
 
 3. `[link*]`

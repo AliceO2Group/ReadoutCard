@@ -23,7 +23,7 @@ namespace {
 static const auto converter = Utilities::makeEnumConverter<GbtMux::type>("GbtMux", {
   { GbtMux::Ttc, "Ttc" },
   { GbtMux::Ddg, "Ddg" },
-  { GbtMux::Sc,  "Sc" },
+  { GbtMux::Swt,  "Swt" },
 });
 
 } // Anonymous namespace
