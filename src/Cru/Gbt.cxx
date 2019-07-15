@@ -30,10 +30,12 @@ Gbt::Gbt(std::shared_ptr<Pda::PdaBar> pdaBar, std::map<int, Link> &linkMap, int 
 {
 }
 
-void Gbt::setMux(Link link, uint32_t mux)
+void Gbt::setMux(int index, uint32_t mux)
 {
-  uint32_t address = Cru::Registers::GBT_MUX_SELECT.address + (link.bank * 4);
-  mPdaBar->modifyRegister(address/4, link.id*4, 2, mux);
+  uint32_t reg = index / 16;
+  uint32_t bitOffset = (index % 16) * 2;
+  uint32_t address = Cru::Registers::GBT_MUX_SELECT.address + (reg * 4);
+  mPdaBar->modifyRegister(address/4, bitOffset, 2, mux);
 }
 
 void Gbt::setInternalDataGenerator(Link link, uint32_t value)
@@ -100,15 +102,20 @@ void Gbt::getGbtModes()
 void Gbt::getGbtMuxes()
 {
   for (auto& el: mLinkMap) {
+    int index = el.first;
     auto& link = el.second;
-    uint32_t txMux = mPdaBar->readRegister((Cru::Registers::GBT_MUX_SELECT.address + link.bank * 4)/4);
-    txMux = (txMux >> (link.id*4)) & 0x3;
+    uint32_t reg = (index / 16);
+    uint32_t bitOffset = (index % 16) * 2;
+    uint32_t txMux = mPdaBar->readRegister((Cru::Registers::GBT_MUX_SELECT.address + reg * 4)/4);
+    txMux = (txMux >> bitOffset) & 0x3;
     if (txMux == Cru::GBT_MUX_TTC) {
       link.gbtMux = GbtMux::type::Ttc;
     } else if (txMux == Cru::GBT_MUX_DDG) {
       link.gbtMux = GbtMux::type::Ddg;
     } else if (txMux == Cru::GBT_MUX_SWT) {
       link.gbtMux = GbtMux::type::Swt;
+    } else {
+      link.gbtMux = GbtMux::type::Na;
     }
   }
 }
