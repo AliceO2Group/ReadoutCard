@@ -30,6 +30,7 @@ struct GbtMux
       Ttc = Cru::GBT_MUX_TTC,
       Ddg = Cru::GBT_MUX_DDG,
       Swt = Cru::GBT_MUX_SWT,
+      Na  = -1,
     };
 
     /// Converts a GbtMux to an int

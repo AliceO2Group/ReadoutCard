@@ -21,9 +21,10 @@ namespace roc {
 namespace {
 
 static const auto converter = Utilities::makeEnumConverter<GbtMux::type>("GbtMux", {
-  { GbtMux::Ttc, "Ttc" },
-  { GbtMux::Ddg, "Ddg" },
-  { GbtMux::Swt,  "Swt" },
+  { GbtMux::Ttc, "TTC" },
+  { GbtMux::Ddg, "DDG" },
+  { GbtMux::Swt, "SWT" },
+  { GbtMux::Na,  "N/A" },
 });
 
 } // Anonymous namespace

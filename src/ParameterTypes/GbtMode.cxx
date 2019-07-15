@@ -21,8 +21,8 @@ namespace roc {
 namespace {
 
 static const auto converter = Utilities::makeEnumConverter<GbtMode::type>("GbtMode", {
-  { GbtMode::Gbt, "Gbt" },
-  { GbtMode::Wb,  "Wb" },
+  { GbtMode::Gbt, "GBT" },
+  { GbtMode::Wb,  "WB" },
 });
 
 } // Anonymous namespace
