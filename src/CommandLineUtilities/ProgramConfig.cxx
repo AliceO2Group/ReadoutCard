@@ -40,6 +40,9 @@ class ProgramConfig: public Program
   virtual void addOptions(boost::program_options::options_description& options)
   {
     options.add_options()
+      ("allow-rejection",
+       po::bool_switch(&mOptions.allowRejection),
+       "Flag to allow HBF rejection")
       ("clock",
        po::value<std::string>(&mOptions.clock)->default_value("LOCAL"),
        "Clock [LOCAL, TTC]")
@@ -114,7 +117,9 @@ class ProgramConfig: public Program
       std::cout << "Configuring with command line arguments" << std::endl;
       auto params = Parameters::makeParameters(cardId, 2);
       params.setLinkMask(Parameters::linkMaskFromString(mOptions.links));
+      params.setAllowRejection(mOptions.allowRejection);
       params.setClock(Clock::fromString(mOptions.clock));
+      params.setCruId(mOptions.cruId);
       params.setDatapathMode(DatapathMode::fromString(mOptions.datapathMode));
       params.setDownstreamData(DownstreamData::fromString(mOptions.downstreamData));
       params.setGbtMode(GbtMode::fromString(mOptions.gbtMode));
@@ -122,7 +127,6 @@ class ProgramConfig: public Program
       params.setLinkLoopbackEnabled(mOptions.linkLoopbackEnabled);
       params.setPonUpstreamEnabled(mOptions.ponUpstreamEnabled);
       params.setOnuAddress(mOptions.onuAddress);
-      params.setCruId(mOptions.cruId);
 
       CardConfigurator(params, mOptions.forceConfig);
     } else if (!strncmp(mOptions.configFile.c_str(), "file:", 5)) {
@@ -142,15 +146,16 @@ class ProgramConfig: public Program
   struct OptionsStruct 
   {
     std::string clock = "local";
+    std::string configFile = "";
     std::string datapathMode = "packet";
     std::string downstreamData = "Ctp";
     std::string gbtMode = "gbt";
     std::string gbtMux = "ttc";
     std::string links = "0";
-    std::string configFile = "";
-    bool linkLoopbackEnabled = false;
+    bool allowRejection = false;
     bool configAll= false;
     bool forceConfig = false;
+    bool linkLoopbackEnabled = false;
     bool ponUpstreamEnabled = false;
     uint32_t onuAddress = 0x0;
     uint16_t cruId = 0x0;

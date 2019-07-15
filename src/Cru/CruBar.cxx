@@ -35,6 +35,7 @@ using Link = Cru::Link;
 
 CruBar::CruBar(const Parameters& parameters)
     : BarInterfaceBase(parameters),
+      mAllowRejection(parameters.getAllowRejection().get_value_or(false)),
       mClock(parameters.getClock().get_value_or(Clock::Local)),
       mCruId(parameters.getCruId().get_value_or(0x0)),
       mDatapathMode(parameters.getDatapathMode().get_value_or(DatapathMode::Packet)),
@@ -552,7 +553,9 @@ void CruBar::configure()
 
   log("Setting packet arbitration and flow control");
   datapathWrapper.setPacketArbitration(mWrapperCount, 0);
-  datapathWrapper.setFlowControl(0);
+  if (mAllowRejection) {
+    datapathWrapper.setFlowControl(0, 1);
+  }
 
   log("CRU configuration done.");
 }
