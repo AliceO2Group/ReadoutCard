@@ -83,8 +83,8 @@ class ProgramStatus: public Program
     for (const auto& el : reportInfo.linkMap) {
       auto link = el.second;
       int globalId = el.first; //Use the "new" link mapping
-      std::string gbtTxMode = (link.gbtTxMode == Cru::GBT_MODE_WB ? "WB" : "GBT");
-      std::string gbtRxMode = (link.gbtRxMode == Cru::GBT_MODE_WB ? "WB" : "GBT");
+      std::string gbtTxMode = GbtMode::toString(link.gbtTxMode);
+      std::string gbtRxMode = GbtMode::toString(link.gbtRxMode);
       std::string gbtTxRxMode = gbtTxMode + "/" + gbtRxMode;
       std::string loopback = (link.loopback == false ? "None" : "Enabled");
 
@@ -97,21 +97,12 @@ class ProgramStatus: public Program
         downstreamData = "MIDTRG";
       }
 
-      std::string gbtMux;
-      if (link.gbtMux == Cru::GBT_MUX_TTC) {
-        gbtMux = "TTC:" + downstreamData;
-      } else if (link.gbtMux == Cru::GBT_MUX_DDG) {
-        gbtMux = "DDG";
-      } else if (link.gbtMux == Cru::GBT_MUX_SWT) {
-        gbtMux = "SWT";
+      std::string gbtMux = GbtMux::toString(link.gbtMux);
+      if (gbtMux == "TTC") {
+        gbtMux += ":" + downstreamData;
       }
 
-      std::string datapathMode; 
-      if (link.datapathMode == Cru::GBT_PACKET) {
-        datapathMode = "Packet";
-      } else {
-        datapathMode = "Continuous";
-      }
+      std::string datapathMode = DatapathMode::toString(link.datapathMode); 
 
       std::string enabled = (link.enabled) ? "Enabled" : "Disabled" ;
 
