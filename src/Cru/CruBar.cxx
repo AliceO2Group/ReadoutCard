@@ -663,7 +663,7 @@ void CruBar::populateLinkMap(std::map<int, Link> &linkMap)
       } else {                                    // Specific MUX not found
         link.gbtMux = mGbtMux;
       }
-      gbt.setMux(link, link.gbtMux);
+      gbt.setMux(el.first, link.gbtMux);
       
       link.datapathMode = mDatapathMode;
     }
