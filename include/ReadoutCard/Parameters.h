@@ -98,8 +98,14 @@ class Parameters
     /// Type for the gbt mux map parameter
     using GbtMuxMapType = std::map<uint32_t, GbtMux::type>;
 
+    /// Type for the allow rejection parameter
+    using AllowRejectionType = bool;
+
     /// Type for the clock parameter
     using ClockType = Clock::type;
+
+    /// Type for the CRU ID
+    using CruIdType = Hex::type;
 
     /// Type for the datapath mode parameter
     using DatapathModeType = DatapathMode::type;
@@ -124,9 +130,6 @@ class Parameters
 
     /// Type for the STBRD enabled parameter
     using StbrdEnabledType = bool;
-
-    /// Type for the CRU ID
-    using CruIdType = Hex::type;
 
     // Setters
 
@@ -295,6 +298,14 @@ class Parameters
     /// \return Reference to this object for chaining calls
     auto setLinkMask(LinkMaskType value) -> Parameters&;
 
+    /// Sets the AllowRejection parameter
+    ///
+    /// If enabled the PON upstream is used.
+    ///
+    /// \param value The value to set
+    /// \return Reference to this object for chaining calls
+    auto setAllowRejection(AllowRejectionType value) -> Parameters&;
+    
     /// Sets the Clock Parameter
     ///
     /// The Clock parameter refers to the selection of the TTC or Local clock for the CRU configuration
@@ -303,6 +314,11 @@ class Parameters
     /// \return Reference to this object for chaining calls
     auto setClock(ClockType value) -> Parameters&;
 
+    /// Sets the CruId parameter
+    ///
+    /// \param value The value to set
+    /// \return Reference to this object for chaining calls
+    auto setCruId(CruIdType value) -> Parameters&;
 
     /// Sets the DatapathMode Parameter
     ///
@@ -356,18 +372,19 @@ class Parameters
     /// \return Reference to this object for chaining calls
     auto setStbrdEnabled(StbrdEnabledType value) -> Parameters&;
 
-    /// Sets the CruId parameter
-    ///
-    /// \param value The value to set
-    /// \return Reference to this object for chaining calls
-    auto setCruId(CruIdType value) -> Parameters&;
-
-
     // on-throwing getters
+
+    /// Gets the AllowRejection parameter
+    /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+    auto getAllowRejection() const -> boost::optional<AllowRejectionType>;
 
     /// Gets the CardId parameter
     /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
     auto getCardId() const -> boost::optional<CardIdType>;
+
+    /// Gets the CruId parameter
+    /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+    auto getCruId() const -> boost::optional<CruIdType>;
 
     /// Gets the ChannelNumber parameter
     /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
@@ -449,11 +466,12 @@ class Parameters
     /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
     auto getStbrdEnabled() const -> boost::optional<StbrdEnabledType>;
 
-    /// Gets the CruId parameter
-    /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
-    auto getCruId() const -> boost::optional<CruIdType>;
-
     // Throwing getters
+
+    /// Gets the AllowRejection parameter
+    /// \exception ParameterException The parameter was not present
+    /// \return The value
+    auto getAllowRejectionRequired() const -> AllowRejectionType;
 
     /// Gets the CardId parameter
     /// \exception ParameterException The parameter was not present
@@ -530,6 +548,11 @@ class Parameters
     /// \return The value
     auto getClockRequired() const -> ClockType;
 
+    /// Gets the CruId parameter
+    /// \exception ParameterException The parameter was not present
+    /// \return The value
+    auto getCruIdRequired() const -> CruIdType;
+
     /// Gets the DatapathMode Parameter
     /// \exception ParameterException The parameter was not present
     /// \return The value
@@ -559,11 +582,6 @@ class Parameters
     /// \exception ParameterException The parameter was not present
     /// \return The value
     auto getStbrdEnabledRequired() const -> StbrdEnabledType;
-
-    /// Gets the CruId parameter
-    /// \exception ParameterException The parameter was not present
-    /// \return The value
-    auto getCruIdRequired() const -> CruIdType;
 
     // Helper functions
 

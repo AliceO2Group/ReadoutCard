@@ -118,6 +118,7 @@ class CruBar final : public BarInterfaceBase
     FirmwareFeatures parseFirmwareFeatures(); 
     FirmwareFeatures mFeatures;
 
+    bool mAllowRejection;
     Clock::type mClock;
     uint16_t mCruId;
     DatapathMode::type mDatapathMode;

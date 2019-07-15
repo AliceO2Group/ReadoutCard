@@ -29,11 +29,11 @@ namespace AliceO2 {
 namespace roc {
 
 /// Variant used for internal storage of parameters
-using Variant = boost::variant<size_t, int32_t, bool, Parameters::BufferParametersType, Parameters::CardIdType,
+using Variant = boost::variant<size_t, int32_t, bool, Parameters::BufferParametersType, Parameters::CardIdType, 
   Parameters::GeneratorLoopbackType, Parameters::GeneratorPatternType, Parameters::ReadoutModeType,
-  Parameters::LinkMaskType, Parameters::ClockType, Parameters::DatapathModeType, Parameters::DownstreamDataType,
-  Parameters::GbtModeType, Parameters::GbtMuxType, Parameters::GbtMuxMapType, Parameters::PonUpstreamEnabledType,
-  Parameters::OnuAddressType, Parameters::CruIdType>;
+  Parameters::LinkMaskType, Parameters::AllowRejectionType, Parameters::ClockType, Parameters::CruIdType,
+  Parameters::DatapathModeType,  Parameters::DownstreamDataType, Parameters::GbtModeType, Parameters::GbtMuxType,
+  Parameters::GbtMuxMapType, Parameters::PonUpstreamEnabledType,Parameters::OnuAddressType>;
 
 using KeyType = const char*;
 
@@ -123,7 +123,9 @@ _PARAMETER_FUNCTIONS(GeneratorPattern, "generator_pattern")
 _PARAMETER_FUNCTIONS(GeneratorRandomSizeEnabled, "generator_random_size_enabled")
 _PARAMETER_FUNCTIONS(ReadoutMode, "readout_mode")
 _PARAMETER_FUNCTIONS(LinkMask, "link_mask")
+_PARAMETER_FUNCTIONS(AllowRejection, "allow_rejection")
 _PARAMETER_FUNCTIONS(Clock, "clock")
+_PARAMETER_FUNCTIONS(CruId, "cru_id")
 _PARAMETER_FUNCTIONS(DatapathMode, "datapath_mode")
 _PARAMETER_FUNCTIONS(DownstreamData, "downstream_data")
 _PARAMETER_FUNCTIONS(GbtMode, "gbt_mode")
@@ -133,7 +135,6 @@ _PARAMETER_FUNCTIONS(LinkLoopbackEnabled, "link_loopback_enabled")
 _PARAMETER_FUNCTIONS(PonUpstreamEnabled, "pon_upstream_enabled")
 _PARAMETER_FUNCTIONS(OnuAddress, "onu_address")
 _PARAMETER_FUNCTIONS(StbrdEnabled, "stbrd_enabled")
-_PARAMETER_FUNCTIONS(CruId, "cru_id")
 #undef _PARAMETER_FUNCTIONS
 
 Parameters::Parameters() : mPimpl(std::make_unique<ParametersPimpl>())
