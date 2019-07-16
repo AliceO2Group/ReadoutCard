@@ -127,6 +127,10 @@ achieves that is `makeParameters(cardId, 2)`. Refer to the [Parameters](#paramet
 
 The Parameters that affect the configuration of the CRU and their possible values are as follows:
 
+`AllowRejection (true | false)`
+
+`CruId (0x42)`
+
 `Clock (LOCAL | TTC)`
 
 `DatapathMode (PACKET | CONTINUOUS)`
@@ -160,9 +164,10 @@ params.setClock(Parameters::Clock::type::Local);
 The above parameters will be set for the enabled links, as specified by the `LinkMask` parameter. See the [LinkMask](#linkmask) section
 for more info.
 
-Note that for `LinkLoopbackEnabled` and `PonUpstreamEnabled` it is sufficient to do the following, as they are simply booleans.
+Note that for `AllowRejection`, `LinkLoopbackEnabled` and `PonUpstreamEnabled` it is sufficient to do the following, as they are simply booleans.
 
 ```
+params.setAllowRejection(true);
 params.setLinkLoopbackEnabled(true);
 params.setPonUpstreamEnabled(true);
 ```
@@ -182,6 +187,7 @@ The "global" parameters are:
 
 ```
 clock
+cruid
 datapathmode
 loopback
 gbtmode

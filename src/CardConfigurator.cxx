@@ -48,6 +48,7 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
 
   Clock::type clock = Clock::type::Local;
   DatapathMode::type datapathMode = DatapathMode::type::Packet;
+  bool allowRejection = false;
   bool loopback = false;
   bool ponUpstream = false;
   uint32_t onuAddress = 0x0;
@@ -124,6 +125,12 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
     } catch (...) {
       throw("Invalid or missing cruId property");
     }
+
+    try {
+      allowRejection = configFile.getValue<bool>(globalGroup + ".allowrejection");
+    } catch(...) {
+      throw("Invalid or missing allowrejection property");
+    }
   }
 
   parameters.setClock(clock);
@@ -134,6 +141,7 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
   parameters.setPonUpstreamEnabled(ponUpstream);
   parameters.setOnuAddress(onuAddress);
   parameters.setCruId(cruId);
+  parameters.setAllowRejection(allowRejection);
 
   //* Per link *//
   for (auto configGroup: ConfigFileBrowser(&configFile, "link")) {
