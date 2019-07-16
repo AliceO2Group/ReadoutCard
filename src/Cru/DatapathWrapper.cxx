@@ -113,6 +113,14 @@ void DatapathWrapper::setFlowControl(int wrapper, int allowReject)
   mPdaBar->writeRegister(address/4, value);
 }
 
+uint32_t DatapathWrapper::getFlowControl(int wrapper)
+{
+  uint32_t address = getDatapathWrapperBaseAddress(wrapper) +
+    Cru::Registers::FLOW_CONTROL_OFFSET.address +
+    Cru::Registers::FLOW_CONTROL_REGISTER.address;
+  return mPdaBar->readRegister(address/4);
+}
+
 uint32_t DatapathWrapper::getDatapathWrapperBaseAddress(int wrapper)
 {
   if (wrapper == 0) {
