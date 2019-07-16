@@ -35,7 +35,6 @@ using Link = Cru::Link;
 
 CruBar::CruBar(const Parameters& parameters)
     : BarInterfaceBase(parameters),
-      mAllowRejection(parameters.getAllowRejection().get_value_or(false)),
       mClock(parameters.getClock().get_value_or(Clock::Local)),
       mCruId(parameters.getCruId().get_value_or(0x0)),
       mDatapathMode(parameters.getDatapathMode().get_value_or(DatapathMode::Packet)),
@@ -55,6 +54,12 @@ CruBar::CruBar(const Parameters& parameters)
     mLoopback = 0x1;
   } else { //default to disabled
     mLoopback = 0x0;
+  }
+
+  if (parameters.getAllowRejection() == true) {
+    mAllowRejection = 0x1;
+  } else {
+    mAllowRejection = 0x0;
   }
 }
 
@@ -451,6 +456,7 @@ Cru::ReportInfo CruBar::report()
     auto& link = el.second;
     link.datapathMode = datapathWrapper.getDatapathMode(link);
     link.enabled = datapathWrapper.getLinkEnabled(link);
+    link.allowRejection = datapathWrapper.getFlowControl(link.dwrapper);
     link.stickyBit = gbt.getStickyBit(link);
     link.rxFreq = gbt.getRxClockFrequency(link) / 1e6; // Hz -> Mhz
     link.txFreq = gbt.getTxClockFrequency(link) / 1e6; // Hz -> Mhz
@@ -476,7 +482,7 @@ Cru::ReportInfo CruBar::report()
     downstreamData,
     ponStatusRegister,
     onuAddress,
-    cruId
+    cruId,
   };
 
   return reportInfo;
@@ -493,7 +499,7 @@ void CruBar::reconfigure()
       static_cast<uint32_t>(mDownstreamData) == reportInfo.downstreamData &&
       std::equal(mLinkMap.begin(), mLinkMap.end(), reportInfo.linkMap.begin()) &&
       checkPonUpstreamStatusExpected(reportInfo.ponStatusRegister, reportInfo.onuAddress) &&
-      mCruId == reportInfo.cruId){
+      mCruId == reportInfo.cruId) {
     log("No need to reconfigure further");
   } else {
     log("Reconfiguring");
@@ -542,20 +548,18 @@ void CruBar::configure()
   datapathWrapper.setLinksEnabled(0, 0x0);
   datapathWrapper.setLinksEnabled(1, 0x0);
 
-  log("Enabling links and setting datapath mode");
+  log("Enabling links and setting datapath mode and flow control");
   for (auto const& el: mLinkMap) {
     auto& link = el.second;
     if (link.enabled) {
       datapathWrapper.setLinkEnabled(link);
       datapathWrapper.setDatapathMode(link, mDatapathMode);
     }
+    datapathWrapper.setFlowControl(link.dwrapper, mAllowRejection); //Set flow control anyway as it's per dwrapper
   }
 
-  log("Setting packet arbitration and flow control");
+  log("Setting packet arbitration");
   datapathWrapper.setPacketArbitration(mWrapperCount, 0);
-  if (mAllowRejection) {
-    datapathWrapper.setFlowControl(0, 1);
-  }
 
   log("CRU configuration done.");
 }
@@ -669,6 +673,7 @@ void CruBar::populateLinkMap(std::map<int, Link> &linkMap)
       gbt.setMux(el.first, link.gbtMux);
       
       link.datapathMode = mDatapathMode;
+      link.allowRejection = mAllowRejection;
     }
   }
 }

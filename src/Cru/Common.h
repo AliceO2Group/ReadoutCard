@@ -43,6 +43,7 @@ struct Link {
   float opticalPower = 0.0;
   float txFreq = 0x0; //In MHz
   float rxFreq = 0x0; //In MHz
+  uint32_t allowRejection = 0;
 
   bool operator== (const Link &dlink) const {
     if (enabled == dlink.enabled && enabled == false) {
@@ -59,7 +60,8 @@ struct Link {
       gbtRxMode == dlink.gbtRxMode &&
       loopback == dlink.loopback &&
       datapathMode == dlink.datapathMode &&
-      enabled == dlink.enabled);
+      enabled == dlink.enabled &&
+      allowRejection == dlink.allowRejection);
     }
   }
 };
