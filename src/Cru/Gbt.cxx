@@ -247,7 +247,7 @@ LinkStatus Gbt::getStickyBit(Link link)
     return (lockedData == 0x1 && ready == 0x1) ? LinkStatus::UpWasDown : LinkStatus::Down;
   }
 
-  return (lockedData == 0x1 && ready == 0x1) ? LinkStatus::Up : LinkStatus::UpWasDown;
+  return (lockedData == 0x1 && ready == 0x1) ? LinkStatus::Up : LinkStatus::Down;
 }
 
 void Gbt::resetStickyBit(Link link)
