@@ -59,8 +59,8 @@ void DatapathWrapper::setDatapathMode(Link link, uint32_t mode)
     Cru::Registers::DATALINK_CONTROL.address;
 
   uint32_t val = 0;
-  val |= 0x1EA;   //=RAWMAXLEN
-  val |= (0<<24); //=RAWBYID
+  val |= 0x1FC;   //=RAWMAXLEN
+  val |= (1<<24); //=RAWBYID
   val |= (mode << 31);
       
   mPdaBar->writeRegister(address/4, val);
