@@ -14,7 +14,6 @@
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
 #include <iostream>
-#include "Common.h"
 #include "Gbt.h"
 #include "Utilities/Util.h"
 
@@ -22,6 +21,7 @@ namespace AliceO2 {
 namespace roc {
 
 using Link = Cru::Link;
+using LinkStatus = Cru::LinkStatus;
 
 Gbt::Gbt(std::shared_ptr<Pda::PdaBar> pdaBar, std::map<int, Link> &linkMap, int wrapperCount) :
   mPdaBar(pdaBar),
@@ -232,7 +232,7 @@ uint32_t Gbt::getAtxPllRegisterAddress(int wrapper, uint32_t reg)
     Cru::Registers::GBT_WRAPPER_ATX_PLL.address + 4 * reg;
 }
 
-bool Gbt::getStickyBit(Link link)
+LinkStatus Gbt::getStickyBit(Link link)
 {
   uint32_t addr = getStatusAddress(link);
   uint32_t data = mPdaBar->readRegister(addr/4);
@@ -240,18 +240,25 @@ bool Gbt::getStickyBit(Link link)
   uint32_t ready = Utilities::getBit(~data, 15); //data layer up 1 = locked, 0 = down 
   if ((lockedData == 0x0) || (ready == 0x0)) {
     resetStickyBit(link);
+    data = mPdaBar->readRegister(addr/4);
+    lockedData = Utilities::getBit(~data, 14); //phy up 1 = locked, 0 = down
+    ready = Utilities::getBit(~data, 15); //data layer up 1 = locked, 0 = down 
+
+    return (lockedData == 0x1 && ready == 0x1) ? LinkStatus::UpWasDown : LinkStatus::Down;
   }
 
-  return (lockedData == 0x1 && ready == 0x1) ? true : false;
+  return (lockedData == 0x1 && ready == 0x1) ? LinkStatus::Up : LinkStatus::UpWasDown;
 }
 
-void Gbt::resetStickyBit(Link link) {
+void Gbt::resetStickyBit(Link link)
+{
   uint32_t addr = getClearErrorAddress(link);
 
   mPdaBar->writeRegister(addr/4, 0x0);
 }
 
-uint32_t Gbt::getRxClockFrequency(Link link) { //In Hz
+uint32_t Gbt::getRxClockFrequency(Link link) //In Hz
+{
   uint32_t address = Cru::getWrapperBaseAddress(link.wrapper) +
     Cru::Registers::GBT_WRAPPER_BANK_OFFSET.address * (link.bank + 1) +
     Cru::Registers::GBT_BANK_LINK_OFFSET.address * (link.id + 1) +
@@ -261,7 +268,8 @@ uint32_t Gbt::getRxClockFrequency(Link link) { //In Hz
   return mPdaBar->readRegister(address/4);
 }
 
-uint32_t Gbt::getTxClockFrequency(Link link) { //In Hz
+uint32_t Gbt::getTxClockFrequency(Link link) //In Hz
+{
   uint32_t address = Cru::getWrapperBaseAddress(link.wrapper) +
     Cru::Registers::GBT_WRAPPER_BANK_OFFSET.address * (link.bank + 1) +
     Cru::Registers::GBT_BANK_LINK_OFFSET.address * (link.id + 1) +

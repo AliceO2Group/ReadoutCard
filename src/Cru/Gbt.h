@@ -17,6 +17,7 @@
 #define ALICEO2_READOUTCARD_CRU_GBT_H_
 
 #include "Pda/PdaBar.h"
+#include "Common.h"
 #include "Constants.h"
 #include "I2c.h"
 
@@ -26,6 +27,7 @@ namespace roc {
 class Gbt {
   
   using Link = Cru::Link;
+  using LinkStatus = Cru::LinkStatus;
 
   public: 
     //Gbt(std::shared_ptr<Pda::PdaBar> pdaBar, std::vector<Link> &mLinkList, int wrapperCount);
@@ -39,7 +41,7 @@ class Gbt {
     void getGbtModes();
     void getGbtMuxes();
     void getLoopbacks();
-    bool getStickyBit(Link link);
+    LinkStatus getStickyBit(Link link);
     uint32_t getRxClockFrequency(Link link);
     uint32_t getTxClockFrequency(Link link);
 

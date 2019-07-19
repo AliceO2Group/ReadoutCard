@@ -25,6 +25,12 @@ namespace AliceO2 {
 namespace roc {
 namespace Cru {
 
+enum LinkStatus {
+  Up,
+  Down,
+  UpWasDown
+};
+
 struct Link {
   int dwrapper = -1;
   int wrapper = -1;
@@ -39,7 +45,7 @@ struct Link {
   bool loopback = false;
   DatapathMode::type datapathMode = DatapathMode::type::Packet;
   bool enabled = false;
-  bool stickyBit = false;
+  LinkStatus stickyBit = LinkStatus::Down;
   float opticalPower = 0.0;
   float txFreq = 0x0; //In MHz
   float rxFreq = 0x0; //In MHz
