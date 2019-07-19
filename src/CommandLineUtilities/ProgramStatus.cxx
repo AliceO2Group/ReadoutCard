@@ -109,7 +109,15 @@ class ProgramStatus: public Program
       float rxFreq = link.rxFreq;
       float txFreq = link.txFreq;
 
-      std::string linkStatus = link.stickyBit ? "UP" : "DOWN" ;
+      std::string linkStatus;
+      if (link.stickyBit == Cru::LinkStatus::Up) {
+        linkStatus = "UP";
+      } else if (link.stickyBit == Cru::LinkStatus::UpWasDown) {
+        linkStatus = "UP (was DOWN)";
+      } else if (link.stickyBit == Cru::LinkStatus::Down) {
+        linkStatus = "DOWN";
+      }
+
       float opticalPower = link.opticalPower;
 
       auto format = boost::format(formatRow) % globalId % gbtTxRxMode % loopback % gbtMux % datapathMode % enabled % rxFreq % txFreq % linkStatus % opticalPower;
