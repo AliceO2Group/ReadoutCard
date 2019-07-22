@@ -35,7 +35,7 @@ class ProgramMetrics: public Program
   virtual Description getDescription()
   {
     return {"Metrics", "Return current RoC parameters", 
-      "roc-metrics\n"
+      "roc-metrics --id -1\n"
       "roc-metrics --id 42:00.0\n"};
   }
 
@@ -45,7 +45,7 @@ class ProgramMetrics: public Program
     options.add_options()
       ("csv-out",
        po::value<std::string>(&mOptions.csvOut),
-       "Path to CSV file to write output");
+       "Target CSV file to write output to");
   }
 
   virtual void run(const boost::program_options::variables_map& map) 
