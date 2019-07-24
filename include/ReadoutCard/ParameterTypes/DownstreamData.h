@@ -19,24 +19,24 @@
 #include <string>
 #include "ReadoutCard/Cru.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 /// Namespace for the ROC GBT mux enum, and supporting functions
-struct DownstreamData
-{
-    enum type
-    {
-      Ctp = Cru::DATA_CTP,
-      Pattern = Cru::DATA_PATTERN,
-      Midtrg = Cru::DATA_MIDTRG,
-    };
+struct DownstreamData {
+  enum type {
+    Ctp = Cru::DATA_CTP,
+    Pattern = Cru::DATA_PATTERN,
+    Midtrg = Cru::DATA_MIDTRG,
+  };
 
-    /// Converts a DownstreamData to an int
-    static std::string toString(const DownstreamData::type& downstreamData);
+  /// Converts a DownstreamData to an int
+  static std::string toString(const DownstreamData::type& downstreamData);
 
-    /// Converts a string to a DownstreamData
-    static DownstreamData::type fromString(const std::string& string);
+  /// Converts a string to a DownstreamData
+  static DownstreamData::type fromString(const std::string& string);
 };
 
 } // namespace roc

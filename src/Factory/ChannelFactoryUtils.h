@@ -20,12 +20,15 @@
 #include "ReadoutCard/CardType.h"
 #include "ReadoutCard/Parameters.h"
 #ifdef ALICEO2_READOUTCARD_PDA_ENABLED
-# include "RocPciDevice.h"
+#include "RocPciDevice.h"
 #endif
 
-namespace AliceO2 {
-namespace roc {
-namespace ChannelFactoryUtils {
+namespace AliceO2
+{
+namespace roc
+{
+namespace ChannelFactoryUtils
+{
 
 #ifdef ALICEO2_READOUTCARD_PDA_ENABLED
 inline CardDescriptor findCard(int serial)
@@ -34,17 +37,19 @@ inline CardDescriptor findCard(int serial)
 
   if (cardsFound.empty()) {
     BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message("Could not find a card with the given serial number")
-        << ErrorInfo::SerialNumber(serial));
+                          << ErrorInfo::Message("Could not find a card with the given serial number")
+                          << ErrorInfo::SerialNumber(serial));
   }
 
   if (cardsFound.size() > 1) {
     std::vector<PciId> pciIds;
-    for (const auto& c : cardsFound) { pciIds.push_back(c.pciId); }
+    for (const auto& c : cardsFound) {
+      pciIds.push_back(c.pciId);
+    }
     BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message("Found more than one card with the given serial number")
-        << ErrorInfo::SerialNumber(serial)
-        << ErrorInfo::PciIds(pciIds));
+                          << ErrorInfo::Message("Found more than one card with the given serial number")
+                          << ErrorInfo::SerialNumber(serial)
+                          << ErrorInfo::PciIds(pciIds));
   }
 
   return cardsFound.at(0);
@@ -56,17 +61,19 @@ inline CardDescriptor findCard(const PciAddress& address)
 
   if (cardsFound.empty()) {
     BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message("Could not find a card with the given PCI address number")
-        << ErrorInfo::PciAddress(address));
+                          << ErrorInfo::Message("Could not find a card with the given PCI address number")
+                          << ErrorInfo::PciAddress(address));
   }
 
   if (cardsFound.size() > 1) {
     std::vector<PciId> pciIds;
-    for (const auto& c : cardsFound) { pciIds.push_back(c.pciId); }
+    for (const auto& c : cardsFound) {
+      pciIds.push_back(c.pciId);
+    }
     BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message("Found more than one card with the given PCI address number")
-        << ErrorInfo::PciAddress(address)
-        << ErrorInfo::PciIds(pciIds));
+                          << ErrorInfo::Message("Found more than one card with the given PCI address number")
+                          << ErrorInfo::PciAddress(address)
+                          << ErrorInfo::PciIds(pciIds));
   }
 
   return cardsFound.at(0);
@@ -78,17 +85,19 @@ inline CardDescriptor findCard(const PciSequenceNumber& sequenceNumber)
 
   if (cardsFound.empty()) {
     BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message("Could not find a card with the given PCI sequence Number")
-        << ErrorInfo::PciSequenceNumber(sequenceNumber));
+                          << ErrorInfo::Message("Could not find a card with the given PCI sequence Number")
+                          << ErrorInfo::PciSequenceNumber(sequenceNumber));
   }
 
   if (cardsFound.size() > 1) {
     std::vector<PciId> pciIds;
-    for (const auto& c : cardsFound) { pciIds.push_back(c.pciId); }
+    for (const auto& c : cardsFound) {
+      pciIds.push_back(c.pciId);
+    }
     BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message("Found more than one card with the given PCI sequence number")
-        << ErrorInfo::PciSequenceNumber(sequenceNumber)
-        << ErrorInfo::PciIds(pciIds));
+                          << ErrorInfo::Message("Found more than one card with the given PCI sequence number")
+                          << ErrorInfo::PciSequenceNumber(sequenceNumber)
+                          << ErrorInfo::PciIds(pciIds));
   }
 
   return cardsFound.at(0);
@@ -122,7 +131,7 @@ inline CardDescriptor findCard(const Parameters::CardIdType& id)
 ///       { CardType::Crorc, [](){ return makeCrorc(); }}});
 template <typename Interface>
 std::unique_ptr<Interface> channelFactoryHelper(const Parameters& params, int dummySerial,
-    const std::map<CardType::type, std::function<std::unique_ptr<Interface>()>>& map)
+                                                const std::map<CardType::type, std::function<std::unique_ptr<Interface>()>>& map)
 {
   auto makeDummy = [&]() {
     auto iter = map.find(CardType::Dummy);
@@ -130,7 +139,7 @@ std::unique_ptr<Interface> channelFactoryHelper(const Parameters& params, int du
       return iter->second();
     } else {
       BOOST_THROW_EXCEPTION(Exception()
-          << ErrorInfo::Message("Instantiation function for Dummy card type not available"));
+                            << ErrorInfo::Message("Instantiation function for Dummy card type not available"));
     }
   };
 
@@ -157,7 +166,7 @@ std::unique_ptr<Interface> channelFactoryHelper(const Parameters& params, int du
     return iter->second();
   } else {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Instantiation function for card type not available")
-        << ErrorInfo::CardType(cardDescriptor.cardType) << ErrorInfo::CardId(id));
+                                      << ErrorInfo::CardType(cardDescriptor.cardType) << ErrorInfo::CardId(id));
   }
 #endif
 }

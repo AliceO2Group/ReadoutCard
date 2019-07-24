@@ -18,13 +18,16 @@
 
 #include "ReadoutCard/ParameterTypes/PciAddress.h"
 
-namespace AliceO2 {
-namespace roc {
-namespace Utilities {
+namespace AliceO2
+{
+namespace roc
+{
+namespace Utilities
+{
 
 int getNumaNode(const PciAddress& pciAddress);
 
-} // namespace Util
+} // namespace Utilities
 } // namespace roc
 } // namespace AliceO2
 

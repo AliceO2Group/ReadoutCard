@@ -21,51 +21,53 @@
 #include "Constants.h"
 #include "I2c.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
-class Gbt {
-  
+class Gbt
+{
+
   using Link = Cru::Link;
   using LinkStatus = Cru::LinkStatus;
 
-  public: 
-    //Gbt(std::shared_ptr<Pda::PdaBar> pdaBar, std::vector<Link> &mLinkList, int wrapperCount);
-    Gbt(std::shared_ptr<Pda::PdaBar> pdaBar, std::map<int, Link> &mLinkMap, int wrapperCount);
-    void setMux(int link, uint32_t mux);
-    void setInternalDataGenerator(Link link, uint32_t value);
-    void setTxMode(Link link, uint32_t mode);
-    void setRxMode(Link link, uint32_t mode);
-    void setLoopback(Link link, uint32_t enabled);
-    void calibrateGbt();
-    void getGbtModes();
-    void getGbtMuxes();
-    void getLoopbacks();
-    LinkStatus getStickyBit(Link link);
-    uint32_t getRxClockFrequency(Link link);
-    uint32_t getTxClockFrequency(Link link);
+ public:
+  //Gbt(std::shared_ptr<Pda::PdaBar> pdaBar, std::vector<Link> &mLinkList, int wrapperCount);
+  Gbt(std::shared_ptr<Pda::PdaBar> pdaBar, std::map<int, Link>& mLinkMap, int wrapperCount);
+  void setMux(int link, uint32_t mux);
+  void setInternalDataGenerator(Link link, uint32_t value);
+  void setTxMode(Link link, uint32_t mode);
+  void setRxMode(Link link, uint32_t mode);
+  void setLoopback(Link link, uint32_t enabled);
+  void calibrateGbt();
+  void getGbtModes();
+  void getGbtMuxes();
+  void getLoopbacks();
+  LinkStatus getStickyBit(Link link);
+  uint32_t getRxClockFrequency(Link link);
+  uint32_t getTxClockFrequency(Link link);
 
-  private:
-    uint32_t getSourceSelectAddress(Link link);
-    uint32_t getStatusAddress(Link link);
-    uint32_t getClearErrorAddress(Link link);
-    uint32_t getRxControlAddress(Link link);
-    uint32_t getTxControlAddress(Link link);
-    uint32_t getAtxPllRegisterAddress(int wrapper, uint32_t reg);
+ private:
+  uint32_t getSourceSelectAddress(Link link);
+  uint32_t getStatusAddress(Link link);
+  uint32_t getClearErrorAddress(Link link);
+  uint32_t getRxControlAddress(Link link);
+  uint32_t getTxControlAddress(Link link);
+  uint32_t getAtxPllRegisterAddress(int wrapper, uint32_t reg);
 
-    void atxcal(uint32_t baseAddress=0x0);
-    void cdrref(uint32_t refClock);
-    void txcal();
-    void rxcal();
+  void atxcal(uint32_t baseAddress = 0x0);
+  void cdrref(uint32_t refClock);
+  void txcal();
+  void rxcal();
 
-    void resetStickyBit(Link link);
+  void resetStickyBit(Link link);
 
-    std::shared_ptr<Pda::PdaBar> mPdaBar;
-    std::map<int, Link> &mLinkMap;
-    int mWrapperCount;
+  std::shared_ptr<Pda::PdaBar> mPdaBar;
+  std::map<int, Link>& mLinkMap;
+  int mWrapperCount;
 };
 } // namespace roc
 } // namespace AliceO2
-
 
 #endif // ALICEO2_READOUTCARD_CRU_GBT_H_

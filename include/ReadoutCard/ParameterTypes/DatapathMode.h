@@ -19,23 +19,23 @@
 #include <string>
 #include "ReadoutCard/Cru.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 /// Namespace for the ROC datapath mode enum, and supporting functions
-struct DatapathMode
-{
-    enum type
-    {
-      Continuous = Cru::GBT_CONTINUOUS,
-      Packet = Cru::GBT_PACKET,
-    };
+struct DatapathMode {
+  enum type {
+    Continuous = Cru::GBT_CONTINUOUS,
+    Packet = Cru::GBT_PACKET,
+  };
 
-    /// Converts a DatapathMode to a string
-    static std::string toString(const DatapathMode::type& datapathMode);
+  /// Converts a DatapathMode to a string
+  static std::string toString(const DatapathMode::type& datapathMode);
 
-    /// Converts a string to a DatapathMode
-    static DatapathMode::type fromString(const std::string& string);
+  /// Converts a string to a DatapathMode
+  static DatapathMode::type fromString(const std::string& string);
 };
 
 } // namespace roc

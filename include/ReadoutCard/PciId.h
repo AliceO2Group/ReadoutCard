@@ -18,24 +18,25 @@
 
 #include <string>
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 /// Simple data holder class for a PCI ID, consisting of a device ID and vendor ID.
-struct PciId
-{
-    const std::string& getDeviceId() const
-    {
-      return device;
-    }
+struct PciId {
+  const std::string& getDeviceId() const
+  {
+    return device;
+  }
 
-    const std::string& getVendorId() const
-    {
-      return vendor;
-    }
+  const std::string& getVendorId() const
+  {
+    return vendor;
+  }
 
-    std::string device;
-    std::string vendor;
+  std::string device;
+  std::string vendor;
 };
 
 } // namespace roc

@@ -31,12 +31,12 @@ namespace DataFormat
 {
 namespace
 {
-  uint32_t getWord(const char* data, int i)
-  {
-    uint32_t word = 0;
-    memcpy(&word, &data[sizeof(word)*i], sizeof(word));
-    return word;
-  }
+uint32_t getWord(const char* data, int i)
+{
+  uint32_t word = 0;
+  memcpy(&word, &data[sizeof(word) * i], sizeof(word));
+  return word;
+}
 } // Anonymous namespace
 
 uint32_t getLinkId(const char* data)

@@ -32,9 +32,12 @@
 #include "ReadoutCard/ParameterTypes/GeneratorPattern.h"
 #include "ReadoutCard/ParameterTypes/LoopbackMode.h"
 
-namespace AliceO2 {
-namespace roc {
-namespace ErrorInfo {
+namespace AliceO2
+{
+namespace roc
+{
+namespace ErrorInfo
+{
 
 using Message = AliceO2::Common::ErrorInfo::Message;
 using FileName = AliceO2::Common::ErrorInfo::FileName;
@@ -108,8 +111,8 @@ void addPossibleCauses(boost::exception& exception, const std::vector<std::strin
 } // namespace roc
 } // namespace AliceO2
 
-
-namespace boost {
+namespace boost
+{
 
 // These functions convert the errinfos to strings for diagnostic messages
 std::string to_string(const AliceO2::roc::ErrorInfo::CardId& e);
@@ -124,6 +127,6 @@ std::string to_string(const AliceO2::roc::ErrorInfo::PossibleCauses& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::ReadyFifoStatus& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::ResetLevel& e);
 
-}
+} // namespace boost
 
 #endif // ALICEO2_SRC_READOUTCARD_EXCEPTIONINTERNAL_H_

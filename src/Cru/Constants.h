@@ -173,7 +173,7 @@ static constexpr Register CLOCK_CONTROL(0x00240010);
 static constexpr Register CTP_CLOCK(0x00240000);
 static constexpr Register LOCAL_CLOCK(0x00240004);
 
-/// Register for locking the clock the the refclk 
+/// Register for locking the clock the the refclk
 static constexpr Register LOCK_CLOCK_TO_REF(0x00220000);
 
 /// Register for modifying TTC parameters (CLOCK_/DATA_)
@@ -243,7 +243,6 @@ static constexpr Register GBT_LINK_RX_CONTROL_OFFSET(0x0000003c);
 /*static constexpr uint32_t GBT_MODE_GBT(0x0);
 static constexpr uint32_t GBT_MODE_WB(0x1);*/
 
-
 //** DATAPATH WRAPPER **//
 /// Datapath Wrapper 0 base address
 static constexpr Register DWRAPPER_BASE0(0x00600000);
@@ -277,8 +276,8 @@ static constexpr Register SI5345_1(0x00030a00);
 static constexpr Register SI5345_2(0x00030c00);
 static constexpr Register SI5344(0x00030800);
 
-} // namespace Cru
 } // namespace Registers
+} // namespace Cru
 } // namespace roc
 } // namespace AliceO2
 

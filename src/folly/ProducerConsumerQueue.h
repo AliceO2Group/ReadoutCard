@@ -27,18 +27,19 @@
 #include <type_traits>
 #include <utility>
 
-namespace folly {
+namespace folly
+{
 
 /*
  * ProducerConsumerQueue is a one producer and one consumer queue
  * without locks.
  */
-template<class T>
+template <class T>
 struct ProducerConsumerQueue {
   typedef T value_type;
 
   ProducerConsumerQueue(const ProducerConsumerQueue&) = delete;
-  ProducerConsumerQueue& operator = (const ProducerConsumerQueue&) = delete;
+  ProducerConsumerQueue& operator=(const ProducerConsumerQueue&) = delete;
 
   // size must be >= 2.
   //
@@ -46,10 +47,7 @@ struct ProducerConsumerQueue {
   // given time is actually (size-1), so if you start with an empty queue,
   // isFull() will return true after size-1 insertions.
   explicit ProducerConsumerQueue(uint32_t size)
-    : size_(size)
-    , records_(static_cast<T*>(std::malloc(sizeof(T) * size)))
-    , readIndex_(0)
-    , writeIndex_(0)
+    : size_(size), records_(static_cast<T*>(std::malloc(sizeof(T) * size))), readIndex_(0), writeIndex_(0)
   {
     assert(size >= 2);
     if (!records_) {
@@ -57,7 +55,8 @@ struct ProducerConsumerQueue {
     }
   }
 
-  ~ProducerConsumerQueue() {
+  ~ProducerConsumerQueue()
+  {
     // We need to destruct anything that may still exist in our queue.
     // (No real synchronization needed at destructor time: only one
     // thread can be doing this.)
@@ -75,8 +74,9 @@ struct ProducerConsumerQueue {
     std::free(records_);
   }
 
-  template<class ...Args>
-  bool write(Args&&... recordArgs) {
+  template <class... Args>
+  bool write(Args&&... recordArgs)
+  {
     auto const currentWrite = writeIndex_.load(std::memory_order_relaxed);
     auto nextRecord = currentWrite + 1;
     if (nextRecord == size_) {
@@ -93,7 +93,8 @@ struct ProducerConsumerQueue {
   }
 
   // move (or copy) the value at the front of the queue to given variable
-  bool read(T& record) {
+  bool read(T& record)
+  {
     auto const currentRead = readIndex_.load(std::memory_order_relaxed);
     if (currentRead == writeIndex_.load(std::memory_order_acquire)) {
       // queue is empty
@@ -112,7 +113,8 @@ struct ProducerConsumerQueue {
 
   // pointer to the value at the front of the queue (for use in-place) or
   // nullptr if empty.
-  T* frontPtr() {
+  T* frontPtr()
+  {
     auto const currentRead = readIndex_.load(std::memory_order_relaxed);
     if (currentRead == writeIndex_.load(std::memory_order_acquire)) {
       // queue is empty
@@ -122,7 +124,8 @@ struct ProducerConsumerQueue {
   }
 
   // queue must not be empty
-  void popFront() {
+  void popFront()
+  {
     auto const currentRead = readIndex_.load(std::memory_order_relaxed);
     assert(currentRead != writeIndex_.load(std::memory_order_acquire));
 
@@ -134,12 +137,14 @@ struct ProducerConsumerQueue {
     readIndex_.store(nextRecord, std::memory_order_release);
   }
 
-  bool isEmpty() const {
+  bool isEmpty() const
+  {
     return readIndex_.load(std::memory_order_acquire) ==
-        writeIndex_.load(std::memory_order_acquire);
+           writeIndex_.load(std::memory_order_acquire);
   }
 
-  bool isFull() const {
+  bool isFull() const
+  {
     auto nextRecord = writeIndex_.load(std::memory_order_acquire) + 1;
     if (nextRecord == size_) {
       nextRecord = 0;
@@ -156,16 +161,17 @@ struct ProducerConsumerQueue {
   // * If called by producer, then true size may be less (because consumer may
   //   be removing items concurrently).
   // * It is undefined to call this from any other thread.
-  size_t sizeGuess() const {
+  size_t sizeGuess() const
+  {
     int ret = writeIndex_.load(std::memory_order_acquire) -
-        readIndex_.load(std::memory_order_acquire);
+              readIndex_.load(std::memory_order_acquire);
     if (ret < 0) {
       ret += size_;
     }
     return ret;
   }
 
-private:
+ private:
   const uint32_t size_;
   T* const records_;
 
@@ -173,4 +179,4 @@ private:
   std::atomic<unsigned int> writeIndex_;
 };
 
-}
+} // namespace folly

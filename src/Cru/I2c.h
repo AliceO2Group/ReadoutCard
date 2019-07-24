@@ -20,42 +20,44 @@
 #include "Pda/PdaBar.h"
 #include "Common.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 class I2c
 {
 
   using Link = Cru::Link;
-  
-  public:
-    I2c(uint32_t baseAddress, uint32_t chipAddress, 
-        std::shared_ptr<Pda::PdaBar> pdaBar,
-        std::vector<std::pair<uint32_t, uint32_t>> registerMap = {});
-    ~I2c();
 
-    void resetI2c();
-    void configurePll();
-    uint32_t getSelectedClock();
-    void getOpticalPower(std::map<int, Link> &linkMap);
+ public:
+  I2c(uint32_t baseAddress, uint32_t chipAddress,
+      std::shared_ptr<Pda::PdaBar> pdaBar,
+      std::vector<std::pair<uint32_t, uint32_t>> registerMap = {});
+  ~I2c();
 
-  private:
-    //std::map<uint32_t, uint32_t> readRegisterMap(std::string file);
-    void writeI2c(uint32_t address, uint32_t data);
-    uint32_t readI2c(uint32_t address);
-    void waitForI2cReady();
-    std::vector<uint32_t> getChipAddresses();
+  void resetI2c();
+  void configurePll();
+  uint32_t getSelectedClock();
+  void getOpticalPower(std::map<int, Link>& linkMap);
 
-    uint32_t mI2cConfig;
-    uint32_t mI2cCommand;
-    uint32_t mI2cData;
+ private:
+  //std::map<uint32_t, uint32_t> readRegisterMap(std::string file);
+  void writeI2c(uint32_t address, uint32_t data);
+  uint32_t readI2c(uint32_t address);
+  void waitForI2cReady();
+  std::vector<uint32_t> getChipAddresses();
 
-    uint32_t mChipAddress;
-    uint32_t mChipAddressStart = 0x00;
-    uint32_t mChipAddressEnd = 0x7f;
-    
-    std::shared_ptr<Pda::PdaBar> mPdaBar;
-    std::vector<std::pair<uint32_t, uint32_t>> mRegisterMap;
+  uint32_t mI2cConfig;
+  uint32_t mI2cCommand;
+  uint32_t mI2cData;
+
+  uint32_t mChipAddress;
+  uint32_t mChipAddressStart = 0x00;
+  uint32_t mChipAddressEnd = 0x7f;
+
+  std::shared_ptr<Pda::PdaBar> mPdaBar;
+  std::vector<std::pair<uint32_t, uint32_t>> mRegisterMap;
 };
 
 } // namespace roc

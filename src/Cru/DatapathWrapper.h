@@ -19,30 +19,33 @@
 #include "Common.h"
 #include "Pda/PdaBar.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 using Link = Cru::Link;
 
-class DatapathWrapper{
+class DatapathWrapper
+{
 
-  public:
-    DatapathWrapper(std::shared_ptr<Pda::PdaBar> pdaBar);
+ public:
+  DatapathWrapper(std::shared_ptr<Pda::PdaBar> pdaBar);
 
-    /// Set links with a bitmask
-    void setLinksEnabled(uint32_t dwrapper, uint32_t mask);
-    void setLinkEnabled(Link link);
-    bool getLinkEnabled(Link link);
-    void setDatapathMode(Link link, uint32_t mode);
-    DatapathMode::type getDatapathMode(Link link);
-    void setPacketArbitration(int wrapperCount, int arbitrationMode=0);
-    void setFlowControl(int wrapper, int allowReject=0);
-    uint32_t getFlowControl(int wrapper);
+  /// Set links with a bitmask
+  void setLinksEnabled(uint32_t dwrapper, uint32_t mask);
+  void setLinkEnabled(Link link);
+  bool getLinkEnabled(Link link);
+  void setDatapathMode(Link link, uint32_t mode);
+  DatapathMode::type getDatapathMode(Link link);
+  void setPacketArbitration(int wrapperCount, int arbitrationMode = 0);
+  void setFlowControl(int wrapper, int allowReject = 0);
+  uint32_t getFlowControl(int wrapper);
 
-  private:
-    uint32_t getDatapathWrapperBaseAddress(int wrapper);
+ private:
+  uint32_t getDatapathWrapperBaseAddress(int wrapper);
 
-    std::shared_ptr<Pda::PdaBar> mPdaBar;
+  std::shared_ptr<Pda::PdaBar> mPdaBar;
 };
 } // namespace roc
 } // namespace AliceO2

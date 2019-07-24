@@ -13,32 +13,32 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-
 #ifndef ALICEO2_READOUTCARD_CRU_FIRMWAREFEATURES_H_
 #define ALICEO2_READOUTCARD_CRU_FIRMWAREFEATURES_H_
 
-namespace AliceO2 {
-namespace roc {
-
-struct FirmwareFeatures
+namespace AliceO2
 {
-    /// Is the card's firmware a "standalone design"?
-    bool standalone = false;
+namespace roc
+{
 
-    /// Is a serial number available?
-    bool serial = false;
+struct FirmwareFeatures {
+  /// Is the card's firmware a "standalone design"?
+  bool standalone = false;
 
-    /// Is firmware information available?
-    bool firmwareInfo = false;
+  /// Is a serial number available?
+  bool serial = false;
 
-    /// Is the special register for loopback at BAR2 0x8000020 enabled?
-    bool dataSelection = false;
+  /// Is firmware information available?
+  bool firmwareInfo = false;
 
-    /// Is the temperature sensor enabled?
-    bool temperature = false;
+  /// Is the special register for loopback at BAR2 0x8000020 enabled?
+  bool dataSelection = false;
 
-    /// Is the Arria 10 FPGA chip ID available?
-    bool chipId = false;
+  /// Is the temperature sensor enabled?
+  bool temperature = false;
+
+  /// Is the Arria 10 FPGA chip ID available?
+  bool chipId = false;
 };
 
 } // namespace roc

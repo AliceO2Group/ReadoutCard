@@ -22,46 +22,47 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/throw_exception.hpp>
 
-namespace AliceO2 {
-namespace roc {
-namespace Utilities {
+namespace AliceO2
+{
+namespace roc
+{
+namespace Utilities
+{
 
 template <typename Enum>
-struct EnumConverter
-{
-    const std::string typeName;
-    const std::vector<std::pair<Enum, std::string>> mapping;
+struct EnumConverter {
+  const std::string typeName;
+  const std::vector<std::pair<Enum, std::string>> mapping;
 
-    std::string toString(Enum e) const
-    {
-      for (const auto& pair : mapping) {
-        if (e == pair.first) {
-          return pair.second;
-        }
+  std::string toString(Enum e) const
+  {
+    for (const auto& pair : mapping) {
+      if (e == pair.first) {
+        return pair.second;
       }
-      BOOST_THROW_EXCEPTION(std::runtime_error("Failed to convert " + typeName + " enum to string"));
     }
+    BOOST_THROW_EXCEPTION(std::runtime_error("Failed to convert " + typeName + " enum to string"));
+  }
 
-    Enum fromString(const std::string& string) const
-    {
-      for (const auto& pair : mapping) {
-        // Case-insensitive string comparison
-        if (boost::iequals(string, pair.second)) {
-          return pair.first;
-        }
+  Enum fromString(const std::string& string) const
+  {
+    for (const auto& pair : mapping) {
+      // Case-insensitive string comparison
+      if (boost::iequals(string, pair.second)) {
+        return pair.first;
       }
-      BOOST_THROW_EXCEPTION(std::runtime_error("Failed to convert string to " + typeName + " enum"));
     }
+    BOOST_THROW_EXCEPTION(std::runtime_error("Failed to convert string to " + typeName + " enum"));
+  }
 };
 
 template <typename Enum>
 EnumConverter<Enum> makeEnumConverter(std::string typeName, std::vector<std::pair<Enum, std::string>> mapping)
 {
-  return EnumConverter<Enum>{typeName, mapping};
+  return EnumConverter<Enum>{ typeName, mapping };
 }
 
-
-} // namespace Util
+} // namespace Utilities
 } // namespace roc
 } // namespace AliceO2
 

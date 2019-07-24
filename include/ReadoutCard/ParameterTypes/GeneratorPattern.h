@@ -18,14 +18,14 @@
 
 #include <string>
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 /// Namespace for the RORC generator pattern enum
-struct GeneratorPattern
-{
-  enum type
-  {
+struct GeneratorPattern {
+  enum type {
     Unknown = 0,
     Constant = 1,
     Alternating = 2,

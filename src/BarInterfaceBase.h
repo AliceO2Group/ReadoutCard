@@ -25,124 +25,125 @@
 #include "ReadoutCard/BarInterface.h"
 #include "ReadoutCard/Parameters.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 /// Partially implements the BarInterface
-class BarInterfaceBase: public BarInterface
+class BarInterfaceBase : public BarInterface
 {
-  public:
+ public:
+  BarInterfaceBase(const Parameters& parameters);
+  BarInterfaceBase(std::shared_ptr<Pda::PdaBar> bar);
+  virtual ~BarInterfaceBase();
 
-    BarInterfaceBase(const Parameters& parameters);
-    BarInterfaceBase(std::shared_ptr<Pda::PdaBar> bar);
-    virtual ~BarInterfaceBase();
+  virtual uint32_t readRegister(int index) override;
+  virtual void writeRegister(int index, uint32_t value) override;
+  virtual void modifyRegister(int index, int position, int width, uint32_t value) override;
 
-    virtual uint32_t readRegister(int index) override;
-    virtual void writeRegister(int index, uint32_t value) override;
-    virtual void modifyRegister(int index, int position, int width, uint32_t value) override;
+  virtual int getIndex() const override
+  {
+    return mPdaBar->getIndex();
+  }
 
-    virtual int getIndex() const override
-    {
-      return mPdaBar->getIndex();
-    }
+  virtual size_t getSize() const override
+  {
+    return mPdaBar->getSize();
+  }
 
-    virtual size_t getSize() const override
-    {
-      return mPdaBar->getSize();
-    }
+  /// Default implementation for optional function
+  virtual boost::optional<int32_t> getSerial() override
+  {
+    return {};
+  }
 
-    /// Default implementation for optional function
-    virtual boost::optional<int32_t> getSerial() override
-    {
-      return {};
-    }
+  /// Default implementation for optional function
+  virtual boost::optional<float> getTemperature() override
+  {
+    return {};
+  }
 
-    /// Default implementation for optional function
-    virtual boost::optional<float> getTemperature() override
-    {
-      return {};
-    }
+  /// Default implementation for optional function
+  virtual boost::optional<std::string> getFirmwareInfo() override
+  {
+    return {};
+  }
 
-    /// Default implementation for optional function
-    virtual boost::optional<std::string> getFirmwareInfo() override
-    {
-      return {};
-    }
+  /// Default implementation for optional function
+  virtual boost::optional<std::string> getCardId() override
+  {
+    return {};
+  }
 
-    /// Default implementation for optional function
-    virtual boost::optional<std::string> getCardId() override
-    {
-      return {};
-    }
+  /// Default implementation for optional function
+  virtual int32_t getDroppedPackets(int /*endpoint*/) override
+  {
+    return 0;
+  }
 
-    /// Default implementation for optional function
-    virtual int32_t getDroppedPackets(int /*endpoint*/) override
-    {
-      return 0;
-    }
- 
-    /// Default implementation for optional function
-    virtual uint32_t getCTPClock() override
-    {
-      return 0;
-    }
-    
-    /// Default implementation for optional function
-    virtual uint32_t getLocalClock() override
-    {
-      return 0;
-    }
-    
-    /// Default implementation for optional function
-    virtual int32_t getLinks() override
-    {
-      return 0;
-    }
-    
-    /// Default implementation for optional function
-    virtual int32_t getLinksPerWrapper(int /*wrapper*/) override
-    {
-      return 0;
-    }
+  /// Default implementation for optional function
+  virtual uint32_t getCTPClock() override
+  {
+    return 0;
+  }
 
-    virtual int getEndpointNumber() override
-    {
-      return -1;
-    }
+  /// Default implementation for optional function
+  virtual uint32_t getLocalClock() override
+  {
+    return 0;
+  }
 
-    /// Default implementation for optional function
-    void configure() override
-    {
-      log("Configure unavailable for this interface", InfoLogger::InfoLogger::Error);
-    }
-     /// Default implementation for optional function
-    void reconfigure() override
-    {
-      log("Reconfigure unavailable for this interface", InfoLogger::InfoLogger::Error);
-    }
+  /// Default implementation for optional function
+  virtual int32_t getLinks() override
+  {
+    return 0;
+  }
 
-  protected:
-    /// BAR index
-    int mBarIndex;
+  /// Default implementation for optional function
+  virtual int32_t getLinksPerWrapper(int /*wrapper*/) override
+  {
+    return 0;
+  }
 
-    /// PDA device objects
-    std::unique_ptr<RocPciDevice> mRocPciDevice;
+  virtual int getEndpointNumber() override
+  {
+    return -1;
+  }
 
-    /// PDA BAR object ptr
-    std::shared_ptr<Pda::PdaBar> mPdaBar;
+  /// Default implementation for optional function
+  void configure() override
+  {
+    log("Configure unavailable for this interface", InfoLogger::InfoLogger::Error);
+  }
+  /// Default implementation for optional function
+  void reconfigure() override
+  {
+    log("Reconfigure unavailable for this interface", InfoLogger::InfoLogger::Error);
+  }
 
-    /// Convenience function for InfoLogger
-    void log(std::string logMessage, InfoLogger::InfoLogger::Severity logLevel = InfoLogger::InfoLogger::Info);
+ protected:
+  /// BAR index
+  int mBarIndex;
 
-  private:
-    /// Inheriting classes must implement this to check whether a given read is safe.
-    /// If it is not safe, it should throw an UnsafeReadAccess exception
-    //virtual void checkReadSafe(int index) = 0;
-    /// Inheriting classes must implement this to check whether a given write is safe.
-    /// If it is not safe, it should throw an UnsafeWriteAccess exception
-    //virtual void checkWriteSafe(int index, uint32_t value) = 0;
-    
-    InfoLogger::InfoLogger mLogger;
+  /// PDA device objects
+  std::unique_ptr<RocPciDevice> mRocPciDevice;
+
+  /// PDA BAR object ptr
+  std::shared_ptr<Pda::PdaBar> mPdaBar;
+
+  /// Convenience function for InfoLogger
+  void log(std::string logMessage, InfoLogger::InfoLogger::Severity logLevel = InfoLogger::InfoLogger::Info);
+
+ private:
+  /// Inheriting classes must implement this to check whether a given read is safe.
+  /// If it is not safe, it should throw an UnsafeReadAccess exception
+  //virtual void checkReadSafe(int index) = 0;
+  /// Inheriting classes must implement this to check whether a given write is safe.
+  /// If it is not safe, it should throw an UnsafeWriteAccess exception
+  //virtual void checkWriteSafe(int index, uint32_t value) = 0;
+
+  InfoLogger::InfoLogger mLogger;
 };
 
 } // namespace roc

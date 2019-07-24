@@ -18,31 +18,33 @@
 
 #include "ReadoutCard/InterprocessLock.h"
 
-namespace AliceO2 {
-namespace roc {
-namespace Pda {
+namespace AliceO2
+{
+namespace roc
+{
+namespace Pda
+{
 
 /// Represents a global, system-wide lock on ReadoutCard's PDA usage. This is needed because the PDA kernel module
 /// will lock up if buffers are created/freed in parallel.
 /// Just hope nobody else uses PDA in parallel.
 class PdaLock
 {
-  public:
+ public:
+  /// Be careful you don't use it like this:
+  ///   Pda::PdaLock lock()
+  /// But rather like this:
+  ///   Pda::PdaLock lock{}
+  PdaLock(bool waitOnLock = true) : mLock("Alice_O2_RoC_PDA_lock", waitOnLock)
+  {
+  }
 
-    /// Be careful you don't use it like this:
-    ///   Pda::PdaLock lock()
-    /// But rather like this:
-    ///   Pda::PdaLock lock{}
-    PdaLock(bool waitOnLock = true) : mLock("Alice_O2_RoC_PDA_lock", waitOnLock)
-    {
-    }
+  ~PdaLock()
+  {
+  }
 
-    ~PdaLock()
-    {
-    }
-
-  private:
-    Interprocess::Lock mLock;
+ private:
+  Interprocess::Lock mLock;
 };
 
 } // namespace Pda

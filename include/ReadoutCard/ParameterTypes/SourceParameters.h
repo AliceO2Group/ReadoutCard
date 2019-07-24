@@ -22,34 +22,32 @@
 #include "ReadoutCard/ParameterTypes/LoopbackMode.h"
 #include "LoopbackMode.h"
 
-namespace AliceO2 {
-namespace roc {
-namespace source_parameters {
-
-struct Trigger
+namespace AliceO2
 {
+namespace roc
+{
+namespace source_parameters
+{
+
+struct Trigger {
 };
 
-struct Continuous
-{
+struct Continuous {
 };
 
-struct Generator
-{
-    GeneratorPattern::type pattern;
-    LoopbackMode::type loopback;
+struct Generator {
+  GeneratorPattern::type pattern;
+  LoopbackMode::type loopback;
 
-    struct FixedSize
-    {
-        size_t size;
-    };
-    struct RandomSize
-    {
-        size_t min;
-        size_t max;
-    };
+  struct FixedSize {
+    size_t size;
+  };
+  struct RandomSize {
+    size_t min;
+    size_t max;
+  };
 
-    boost::variant<FixedSize, RandomSize> size;
+  boost::variant<FixedSize, RandomSize> size;
 };
 
 } // namespace source_parameters

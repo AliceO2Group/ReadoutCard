@@ -24,10 +24,14 @@
 #include "ReadoutCard/ParameterTypes/GeneratorPattern.h"
 #include "ReadoutCard/ParameterTypes/ResetLevel.h"
 
-namespace AliceO2 {
-namespace roc {
-namespace CommandLineUtilities {
-namespace Options {
+namespace AliceO2
+{
+namespace roc
+{
+namespace CommandLineUtilities
+{
+namespace Options
+{
 
 void addOptionHelp(boost::program_options::options_description& options);
 void addOptionRegisterAddress(boost::program_options::options_description& options);

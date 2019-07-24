@@ -24,37 +24,40 @@
 #include "CommandLineUtilities/Options.h"
 #include "ReadoutCard/Exception.h"
 
-namespace AliceO2 {
-namespace roc {
-namespace CommandLineUtilities {
+namespace AliceO2
+{
+namespace roc
+{
+namespace CommandLineUtilities
+{
 
 /// Helper class for making a ReadoutCard utility program. It adds logging facilities to the Common::Program
 /// - SIGINT signals
 class Program : public AliceO2::Common::Program
 {
-  public:
-    virtual ~Program() = default;
+ public:
+  virtual ~Program() = default;
 
-  protected:
-    /// Get Program's InfoLogger instance
-    InfoLogger::InfoLogger& getLogger()
-    {
-      return mLogger;
-    }
+ protected:
+  /// Get Program's InfoLogger instance
+  InfoLogger::InfoLogger& getLogger()
+  {
+    return mLogger;
+  }
 
-    InfoLogger::InfoLogger::Severity getLogLevel() const
-    {
-      return mLogLevel;
-    }
+  InfoLogger::InfoLogger::Severity getLogLevel() const
+  {
+    return mLogLevel;
+  }
 
-    void setLogLevel(InfoLogger::InfoLogger::Severity logLevel = InfoLogger::InfoLogger::Severity::Info)
-    {
-      mLogLevel = logLevel;
-    }
+  void setLogLevel(InfoLogger::InfoLogger::Severity logLevel = InfoLogger::InfoLogger::Severity::Info)
+  {
+    mLogLevel = logLevel;
+  }
 
-  private:
-    InfoLogger::InfoLogger mLogger;
-    InfoLogger::InfoLogger::Severity mLogLevel = InfoLogger::InfoLogger::Severity::Info;
+ private:
+  InfoLogger::InfoLogger mLogger;
+  InfoLogger::InfoLogger::Severity mLogLevel = InfoLogger::InfoLogger::Severity::Info;
 };
 
 } // namespace CommandLineUtilities

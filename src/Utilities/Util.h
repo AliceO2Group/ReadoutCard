@@ -21,9 +21,12 @@
 #include <iostream>
 #include <bitset>
 
-namespace AliceO2 {
-namespace roc {
-namespace Utilities {
+namespace AliceO2
+{
+namespace roc
+{
+namespace Utilities
+{
 
 /// Is x a multiple of y
 template <typename T1, typename T2>
@@ -43,7 +46,8 @@ inline uint32_t getUpper32Bits(uint64_t x)
 }
 
 template <typename T>
-T getBit(T x, int index) {
+T getBit(T x, int index)
+{
   return (x >> index) & 1;
 }
 
@@ -60,18 +64,20 @@ void setBit(T& bits, int index, bool value)
 template <typename T>
 void setBits(T& bits, int index, int width, uint32_t value)
 {
-  uint32_t mask = ~(~T(0)<<width) << index;
+  uint32_t mask = ~(~T(0) << width) << index;
   bits = (bits & ~mask) | ((value << index) & mask);
 }
 
 template <typename T>
-T getBits(T x, int lsb, int msb) {
+T getBits(T x, int lsb, int msb)
+{
   assert(lsb < msb);
   return (x >> lsb) & ~(~T(0) << (msb - lsb + T(1)));
 }
 
 template <typename T>
-int getWidth(T x) {
+int getWidth(T x)
+{
   int length = 0;
   while (x & T(1)) {
     length += 1;
@@ -105,7 +111,7 @@ inline bool checkAlignment(void* address, uint64_t alignment)
   return (uint64_t(address) % alignment) == 0;
 }
 
-} // namespace Util
+} // namespace Utilities
 } // namespace roc
 } // namespace AliceO2
 

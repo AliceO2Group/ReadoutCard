@@ -19,23 +19,23 @@
 #include <string>
 #include "ReadoutCard/Cru.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 /// Namespace for the ROC GBT mux enum, and supporting functions
-struct GbtMode
-{
-    enum type
-    {
-      Gbt = Cru::GBT_MODE_GBT,
-      Wb = Cru::GBT_MODE_WB,
-    };
+struct GbtMode {
+  enum type {
+    Gbt = Cru::GBT_MODE_GBT,
+    Wb = Cru::GBT_MODE_WB,
+  };
 
-    /// Converts a GbtMode to an int
-    static std::string toString(const GbtMode::type& gbtMode);
+  /// Converts a GbtMode to an int
+  static std::string toString(const GbtMode::type& gbtMode);
 
-    /// Converts a string to a GbtMode
-    static GbtMode::type fromString(const std::string& string);
+  /// Converts a string to a GbtMode
+  static GbtMode::type fromString(const std::string& string);
 };
 
 } // namespace roc
