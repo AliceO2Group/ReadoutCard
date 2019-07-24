@@ -1,16 +1,16 @@
 #!/bin/bash
 
 # Script for setting up hugetlbfs pages & mounts.
-# By default allocates 128 of 2 MiB hugepages and 0 of 1 GiB hugepages.
+# By default allocates 128 of 2 MiB hugepages and 6 of 1 GiB hugepages.
 # Defaults can be altered by configuration files containing an integer (see variables HUGEPAGES_XX_CONF for paths).
 
 
-HUGEPAGES_2M_CONF="/etc/flpprototype.d/hugepages-2MiB.conf"
-HUGEPAGES_2M_SYSFILE="/sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages"
+HUGEPAGES_2M_CONF=/etc/flp.d/readoutcard/hugepages-2MiB.conf
+HUGEPAGES_2M_SYSFILE=/sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
 HUGEPAGES_2M_NUMBER=128
-HUGEPAGES_1G_CONF="/etc/flpprototype.d/hugepages-1GiB.conf"
-HUGEPAGES_1G_SYSFILE="/sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages"
-HUGEPAGES_1G_NUMBER=0
+HUGEPAGES_1G_CONF=/etc/flp.d/readoutcard/hugepages-1GiB.conf
+HUGEPAGES_1G_SYSFILE=/sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages
+HUGEPAGES_1G_NUMBER=6
 
 
 # Allocate hugepages of each type
@@ -32,20 +32,12 @@ else
 fi
 echo $HUGEPAGES_1G_NUMBER > $HUGEPAGES_1G_SYSFILE
 
-
-# Add group for PDA
-# This group will be allowed to do PCI things with the driver, and create files in the hugetlbfs mounts
-echo "Adding 'pda' group"
-groupadd --force pda
-
-
 # Create hugetlbfs mounts in /var/lib/hugetlbfs/global/...
 echo "Creating hugetlbfs mounts"
 hugeadm --create-global-mounts
 echo "Setting permissions on hugeltbfs mounts"
 chgrp -R pda /var/lib/hugetlbfs/global/*
 chmod -R g+rwx /var/lib/hugetlbfs/global/*
-
 
 # Display hugepage status
 echo ""
