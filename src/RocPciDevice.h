@@ -25,76 +25,77 @@
 #include "ReadoutCard/ParameterTypes/PciAddress.h"
 #include "ReadoutCard/PciId.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 /// Represents a single ReadoutCard PCI device
 class RocPciDevice
 {
-  public:
-    RocPciDevice(int serialNumber);
+ public:
+  RocPciDevice(int serialNumber);
 
-    RocPciDevice(const PciAddress& address);
+  RocPciDevice(const PciAddress& address);
 
-    RocPciDevice(const Parameters::CardIdType& cardId);
-    
-    RocPciDevice(const PciSequenceNumber& sequenceNumber);
+  RocPciDevice(const Parameters::CardIdType& cardId);
 
-    ~RocPciDevice();
+  RocPciDevice(const PciSequenceNumber& sequenceNumber);
 
-    CardDescriptor getCardDescriptor() const
-    {
-      return mDescriptor;
-    }
+  ~RocPciDevice();
 
-    PciId getPciId() const
-    {
-      return mDescriptor.pciId;
-    }
+  CardDescriptor getCardDescriptor() const
+  {
+    return mDescriptor;
+  }
 
-    CardType::type getCardType() const
-    {
-      return mDescriptor.cardType;
-    }
+  PciId getPciId() const
+  {
+    return mDescriptor.pciId;
+  }
 
-    boost::optional<int> getSerialNumber() const
-    {
-      return mDescriptor.serialNumber;
-    }
+  CardType::type getCardType() const
+  {
+    return mDescriptor.cardType;
+  }
 
-    PciAddress getPciAddress() const
-    {
-      return mDescriptor.pciAddress;
-    }
+  boost::optional<int> getSerialNumber() const
+  {
+    return mDescriptor.serialNumber;
+  }
 
-    Pda::PdaDevice::PdaPciDevice getPciDevice() const
-    {
-      return *mPciDevice.get();
-    }
+  PciAddress getPciAddress() const
+  {
+    return mDescriptor.pciAddress;
+  }
 
-    void printDeviceInfo(std::ostream& ostream);
+  Pda::PdaDevice::PdaPciDevice getPciDevice() const
+  {
+    return *mPciDevice.get();
+  }
 
-    // Finds ReadoutCard devices on the system
-    static std::vector<CardDescriptor> findSystemDevices();
+  void printDeviceInfo(std::ostream& ostream);
 
-    // Finds ReadoutCard devices on the system with the given serial number
-    static std::vector<CardDescriptor> findSystemDevices(int serialNumber);
+  // Finds ReadoutCard devices on the system
+  static std::vector<CardDescriptor> findSystemDevices();
 
-    // Finds ReadoutCard devices on the system with the given address
-    static std::vector<CardDescriptor> findSystemDevices(const PciAddress& address);
+  // Finds ReadoutCard devices on the system with the given serial number
+  static std::vector<CardDescriptor> findSystemDevices(int serialNumber);
 
-    // Finds ReadoutCard devices on the system with the given sequence number
-    static std::vector<CardDescriptor> findSystemDevices(const PciSequenceNumber& sequenceNumber);
+  // Finds ReadoutCard devices on the system with the given address
+  static std::vector<CardDescriptor> findSystemDevices(const PciAddress& address);
 
-  private:
+  // Finds ReadoutCard devices on the system with the given sequence number
+  static std::vector<CardDescriptor> findSystemDevices(const PciSequenceNumber& sequenceNumber);
 
-    void initWithSerial(int serialNumber);
-    void initWithAddress(const PciAddress& address);
-    void initWithSequenceNumber(const PciSequenceNumber& sequenceNumber);
+ private:
+  void initWithSerial(int serialNumber);
+  void initWithAddress(const PciAddress& address);
+  void initWithSequenceNumber(const PciSequenceNumber& sequenceNumber);
 
-    Pda::PdaDevice::SharedPdaDevice mPdaDevice;
-    std::unique_ptr<Pda::PdaDevice::PdaPciDevice> mPciDevice;
-    CardDescriptor mDescriptor;
+  Pda::PdaDevice::SharedPdaDevice mPdaDevice;
+  std::unique_ptr<Pda::PdaDevice::PdaPciDevice> mPciDevice;
+  CardDescriptor mDescriptor;
 };
 
 } // namespace roc

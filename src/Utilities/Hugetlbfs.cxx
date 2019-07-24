@@ -81,7 +81,6 @@ std::unique_ptr<MemoryMappedFile> tryMapFile(size_t bufferSize, std::string buff
   return memoryMappedFile;
 }
 
-}
- // namespace Util
+}// namespace Util
 }// namespace roc
 } // namespace AliceO2

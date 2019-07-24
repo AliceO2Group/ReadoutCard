@@ -22,25 +22,27 @@
 #include "Crorc/Constants.h"
 #include "Utilities/Util.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 class CrorcBar final : public BarInterfaceBase
 {
-  public:
-    CrorcBar(const Parameters& parameters);
-    virtual ~CrorcBar();
-    //virtual void checkReadSafe(int index) override;
-    //virtual void checkWriteSafe(int index, uint32_t value) override;
+ public:
+  CrorcBar(const Parameters& parameters);
+  virtual ~CrorcBar();
+  //virtual void checkReadSafe(int index) override;
+  //virtual void checkWriteSafe(int index, uint32_t value) override;
 
-    virtual CardType::type getCardType() override
-    {
-      return CardType::Crorc;
-    }
+  virtual CardType::type getCardType() override
+  {
+    return CardType::Crorc;
+  }
 
-    virtual boost::optional<int32_t> getSerial() override;
-    virtual boost::optional<std::string> getFirmwareInfo() override;
-    virtual int getEndpointNumber() override;
+  virtual boost::optional<int32_t> getSerial() override;
+  virtual boost::optional<std::string> getFirmwareInfo() override;
+  virtual int getEndpointNumber() override;
 };
 
 } // namespace roc

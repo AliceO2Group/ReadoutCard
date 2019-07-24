@@ -18,10 +18,14 @@
 
 #include <boost/program_options.hpp>
 
-namespace AliceO2 {
-namespace roc {
-namespace CommandLineUtilities {
-namespace Common {
+namespace AliceO2
+{
+namespace roc
+{
+namespace CommandLineUtilities
+{
+namespace Common
+{
 
 /// Create a string showing individual bits of the given 32-bit value
 std::string make32bitString(uint32_t bits);

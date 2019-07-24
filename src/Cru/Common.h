@@ -21,9 +21,12 @@
 
 #include <iostream>
 
-namespace AliceO2 {
-namespace roc {
-namespace Cru {
+namespace AliceO2
+{
+namespace roc
+{
+namespace Cru
+{
 
 enum LinkStatus {
   Up,
@@ -51,23 +54,24 @@ struct Link {
   float rxFreq = 0x0; //In MHz
   uint32_t allowRejection = 0;
 
-  bool operator== (const Link &dlink) const {
+  bool operator==(const Link& dlink) const
+  {
     if (enabled == dlink.enabled && enabled == false) {
       return true;
-    } else { 
-    return (dwrapper == dlink.dwrapper &&
-      wrapper == dlink.wrapper &&
-      bank == dlink.bank &&
-      id == dlink.id &&
-      dwrapperId == dlink.dwrapperId &&
-      baseAddress == dlink.baseAddress &&
-      gbtMux == dlink.gbtMux &&
-      gbtTxMode == dlink.gbtTxMode &&
-      gbtRxMode == dlink.gbtRxMode &&
-      loopback == dlink.loopback &&
-      datapathMode == dlink.datapathMode &&
-      enabled == dlink.enabled &&
-      allowRejection == dlink.allowRejection);
+    } else {
+      return (dwrapper == dlink.dwrapper &&
+              wrapper == dlink.wrapper &&
+              bank == dlink.bank &&
+              id == dlink.id &&
+              dwrapperId == dlink.dwrapperId &&
+              baseAddress == dlink.baseAddress &&
+              gbtMux == dlink.gbtMux &&
+              gbtTxMode == dlink.gbtTxMode &&
+              gbtRxMode == dlink.gbtRxMode &&
+              loopback == dlink.loopback &&
+              datapathMode == dlink.datapathMode &&
+              enabled == dlink.enabled &&
+              allowRejection == dlink.allowRejection);
     }
   }
 };
@@ -82,14 +86,14 @@ struct ReportInfo {
 };
 
 uint32_t getWrapperBaseAddress(int wrapper);
-uint32_t getXcvrRegisterAddress(int wrapper, int bank, int link, int reg=0);
+uint32_t getXcvrRegisterAddress(int wrapper, int bank, int link, int reg = 0);
 void atxcal0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress);
 void txcal0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress);
 void rxcal0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress);
 void fpllref0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress, uint32_t refClock);
-void fpllcal0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress, bool configCompensation=true);
-void fpllref(std::map<int, Link> linkMap, std::shared_ptr<Pda::PdaBar> mPdaBar, uint32_t refClock, uint32_t baseAddress=0);
-void fpllcal(std::map<int, Link> linkMap, std::shared_ptr<Pda::PdaBar> mPdaBar, uint32_t baseAddress=0, bool configCompensation=true);
+void fpllcal0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress, bool configCompensation = true);
+void fpllref(std::map<int, Link> linkMap, std::shared_ptr<Pda::PdaBar> mPdaBar, uint32_t refClock, uint32_t baseAddress = 0);
+void fpllcal(std::map<int, Link> linkMap, std::shared_ptr<Pda::PdaBar> mPdaBar, uint32_t baseAddress = 0, bool configCompensation = true);
 uint32_t getBankPllRegisterAddress(int wrapper, int bank);
 uint32_t waitForBit(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t address, uint32_t position, uint32_t value);
 

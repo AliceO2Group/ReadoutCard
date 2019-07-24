@@ -26,160 +26,158 @@
 #include "Cru/FirmwareFeatures.h"
 #include "ReadoutCard/Parameters.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 /// Extends DmaChannel object, and provides device-specific functionality
 class CruDmaChannel final : public DmaChannelPdaBase
 {
-  public:
+ public:
+  CruDmaChannel(const Parameters& parameters);
+  virtual ~CruDmaChannel() override;
 
-    CruDmaChannel(const Parameters& parameters);
-    virtual ~CruDmaChannel() override;
+  virtual CardType::type getCardType() override;
 
-    virtual CardType::type getCardType() override;
+  virtual void pushSuperpage(Superpage) override;
 
-    virtual void pushSuperpage(Superpage) override;
+  virtual int getTransferQueueAvailable() override;
+  virtual int getReadyQueueSize() override;
 
-    virtual int getTransferQueueAvailable() override;
-    virtual int getReadyQueueSize() override;
+  virtual Superpage getSuperpage() override;
+  virtual Superpage popSuperpage() override;
+  virtual void fillSuperpages() override;
+  virtual bool isTransferQueueEmpty() override;
+  virtual bool isReadyQueueFull() override;
+  virtual int32_t getDroppedPackets() override;
 
-    virtual Superpage getSuperpage() override;
-    virtual Superpage popSuperpage() override;
-    virtual void fillSuperpages() override;
-    virtual bool isTransferQueueEmpty() override;
-    virtual bool isReadyQueueFull() override;
-    virtual int32_t getDroppedPackets() override;
+  virtual bool injectError() override;
+  virtual boost::optional<int32_t> getSerial() override;
+  virtual boost::optional<float> getTemperature() override;
+  virtual boost::optional<std::string> getFirmwareInfo() override;
+  virtual boost::optional<std::string> getCardId() override;
+  AllowedChannels allowedChannels();
 
-    virtual bool injectError() override;
-    virtual boost::optional<int32_t> getSerial() override;
-    virtual boost::optional<float> getTemperature() override;
-    virtual boost::optional<std::string> getFirmwareInfo() override;
-    virtual boost::optional<std::string> getCardId() override;
-    AllowedChannels allowedChannels();
+ protected:
+  virtual void deviceStartDma() override;
+  virtual void deviceStopDma() override;
+  virtual void deviceResetChannel(ResetLevel::type resetLevel) override;
 
-  protected:
+ private:
+  /// Max amount of superpages per link.
+  /// This may not exceed the limit determined by the firmware capabilities.
+  static constexpr size_t LINK_QUEUE_CAPACITY = Cru::MAX_SUPERPAGE_DESCRIPTORS;
 
-    virtual void deviceStartDma() override;
-    virtual void deviceStopDma() override;
-    virtual void deviceResetChannel(ResetLevel::type resetLevel) override;
+  /// Max amount of superpages in the ready queue.
+  /// This is an arbitrary size, can easily be increased if more headroom is needed.
+  static constexpr size_t READY_QUEUE_CAPACITY = Cru::MAX_SUPERPAGE_DESCRIPTORS * Cru::MAX_LINKS;
 
-  private:
+  /// Queue for one link
+  using SuperpageQueue = boost::circular_buffer<Superpage>;
 
-    /// Max amount of superpages per link.
-    /// This may not exceed the limit determined by the firmware capabilities.
-    static constexpr size_t LINK_QUEUE_CAPACITY = Cru::MAX_SUPERPAGE_DESCRIPTORS;
+  /// Index into mLinks
+  using LinkIndex = uint32_t;
 
-    /// Max amount of superpages in the ready queue.
-    /// This is an arbitrary size, can easily be increased if more headroom is needed.
-    static constexpr size_t READY_QUEUE_CAPACITY = Cru::MAX_SUPERPAGE_DESCRIPTORS * Cru::MAX_LINKS;
+  /// ID for a link
+  using LinkId = uint32_t;
 
-    /// Queue for one link
-    using SuperpageQueue = boost::circular_buffer<Superpage>;
+  /// Struct for keeping track of one link's counter and superpages
+  struct Link {
+    /// The link's FEE ID
+    LinkId id = 0;
 
-    /// Index into mLinks
-    using LinkIndex = uint32_t;
+    /// The amount of superpages received from this link
+    uint32_t superpageCounter = 0;
 
-    /// ID for a link
-    using LinkId = uint32_t;
+    /// The superpage queue
+    SuperpageQueue queue{ LINK_QUEUE_CAPACITY };
+  };
 
-    /// Struct for keeping track of one link's counter and superpages
-    struct Link
-    {
-        /// The link's FEE ID
-        LinkId id = 0;
+  void resetCru();
+  void setBufferReady();
+  void setBufferNonReady();
 
-        /// The amount of superpages received from this link
-        uint32_t superpageCounter = 0;
+  auto getBar()
+  {
+    return cruBar.get();
+  }
 
-        /// The superpage queue
-        SuperpageQueue queue {LINK_QUEUE_CAPACITY};
-    };
+  auto getBar2()
+  {
+    return cruBar2.get();
+  }
 
-    void resetCru();
-    void setBufferReady();
-    void setBufferNonReady();
+  /// Gets index of next link to push
+  LinkIndex getNextLinkIndex();
 
-    auto getBar()
-    {
-      return cruBar.get();
-    }
+  /// Push a superpage to a link
+  void pushSuperpageToLink(Link& link, const Superpage& superpage);
 
-    auto getBar2()
-    { 
-      return cruBar2.get();
-    }
+  /// Mark the front superpage of a link ready and transfer it to the ready queue
+  void transferSuperpageFromLinkToReady(Link& link);
 
-    /// Gets index of next link to push
-    LinkIndex getNextLinkIndex();
+  /// Enable debug mode by writing to the appropriate CRU register
+  void enableDebugMode();
 
-    /// Push a superpage to a link
-    void pushSuperpageToLink(Link& link, const Superpage& superpage);
+  /// Reset debug mode to the state it was in prior to the start of execution
+  void resetDebugMode();
 
-    /// Mark the front superpage of a link ready and transfer it to the ready queue
-    void transferSuperpageFromLinkToReady(Link& link);
+  /// BAR 0 is needed for DMA engine interaction and various other functions
+  std::shared_ptr<CruBar> cruBar;
 
-    /// Enable debug mode by writing to the appropriate CRU register
-    void enableDebugMode();
+  /// BAR 2 is needed to read serial number, temperature, etc.
+  std::shared_ptr<CruBar> cruBar2;
 
-    /// Reset debug mode to the state it was in prior to the start of execution
-    void resetDebugMode();
+  /// Features of the firmware
+  FirmwareFeatures mFeatures;
 
-    /// BAR 0 is needed for DMA engine interaction and various other functions
-    std::shared_ptr<CruBar> cruBar;
+  /// Vector of objects representing links
+  std::vector<Link> mLinks;
 
-    /// BAR 2 is needed to read serial number, temperature, etc.
-    std::shared_ptr<CruBar> cruBar2;
+  /// To keep track of how many slots are available in the link queues (in mLinks) in total
+  size_t mLinkQueuesTotalAvailable;
 
-    /// Features of the firmware
-    FirmwareFeatures mFeatures;
+  /// Queue for superpages that have been transferred and are waiting for popping by the user
+  SuperpageQueue mReadyQueue{ READY_QUEUE_CAPACITY };
 
-    /// Vector of objects representing links
-    std::vector<Link> mLinks;
+  // These variables are configuration parameters
 
-    /// To keep track of how many slots are available in the link queues (in mLinks) in total
-    size_t mLinkQueuesTotalAvailable;
+  /// Reset level on initialization of channel
+  const ResetLevel::type mInitialResetLevel;
 
-    /// Queue for superpages that have been transferred and are waiting for popping by the user
-    SuperpageQueue mReadyQueue { READY_QUEUE_CAPACITY };
+  /// Gives the type of loopback
+  const LoopbackMode::type mLoopbackMode;
 
-    // These variables are configuration parameters
+  /// Enables the data generator
+  const bool mGeneratorEnabled;
 
-    /// Reset level on initialization of channel
-    const ResetLevel::type mInitialResetLevel;
+  /// Data pattern for the data generator
+  const GeneratorPattern::type mGeneratorPattern;
 
-    /// Gives the type of loopback
-    const LoopbackMode::type mLoopbackMode;
+  /// Random data size
+  const bool mGeneratorDataSizeRandomEnabled;
 
-    /// Enables the data generator
-    const bool mGeneratorEnabled;
+  /// Maximum number of events
+  const int mGeneratorMaximumEvents;
 
-    /// Data pattern for the data generator
-    const GeneratorPattern::type mGeneratorPattern;
+  /// Initial value of the first data in a data block
+  const uint32_t mGeneratorInitialValue;
 
-    /// Random data size
-    const bool mGeneratorDataSizeRandomEnabled;
+  /// Sets the second word of each fragment when the data generator is used
+  const uint32_t mGeneratorInitialWord;
 
-    /// Maximum number of events
-    const int mGeneratorMaximumEvents;
+  /// Random seed parameter in case the data generator is set to produce random data
+  const int mGeneratorSeed;
 
-    /// Initial value of the first data in a data block
-    const uint32_t mGeneratorInitialValue;
+  /// Length of data written to each page
+  const size_t mGeneratorDataSize;
 
-    /// Sets the second word of each fragment when the data generator is used
-    const uint32_t mGeneratorInitialWord;
+  /// Flag to know if we should reset the debug register after we fiddle with it
+  bool mDebugRegisterReset = false;
 
-    /// Random seed parameter in case the data generator is set to produce random data
-    const int mGeneratorSeed;
-
-    /// Length of data written to each page
-    const size_t mGeneratorDataSize;
-
-    /// Flag to know if we should reset the debug register after we fiddle with it
-    bool mDebugRegisterReset = false;
-
-    /// DMA page size, as specified when opening the channel
-    const size_t mDmaPageSize;
+  /// DMA page size, as specified when opening the channel
+  const size_t mDmaPageSize;
 };
 
 } // namespace roc

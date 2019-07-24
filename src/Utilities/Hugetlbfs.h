@@ -20,14 +20,16 @@
 #include "ReadoutCard/ParameterTypes/PciAddress.h"
 #include "ReadoutCard/MemoryMappedFile.h"
 
-namespace AliceO2 {
-namespace roc {
-namespace Utilities {
-
-enum class HugepageType
+namespace AliceO2
 {
-    Size2MiB,
-    Size1GiB
+namespace roc
+{
+namespace Utilities
+{
+
+enum class HugepageType {
+  Size2MiB,
+  Size1GiB
 };
 
 /// Get the directory where you can create memory mapped files for the given hugepage type
@@ -46,9 +48,9 @@ std::string getDirectory(HugepageType hugepageType);
 /// \param allocatedHugepageType Optional argument, set to a HugepageType if you must know what type of hugepage was
 ///        allocated.
 std::unique_ptr<MemoryMappedFile> tryMapFile(size_t bufferSize, std::string bufferName, bool deleteFileOnDestruction,
-    HugepageType* allocatedHugepageType = nullptr);
+                                             HugepageType* allocatedHugepageType = nullptr);
 
-} // namespace Util
+} // namespace Utilities
 } // namespace roc
 } // namespace AliceO2
 

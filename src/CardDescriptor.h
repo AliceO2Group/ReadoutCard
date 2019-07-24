@@ -21,17 +21,18 @@
 #include "ReadoutCard/ParameterTypes/PciAddress.h"
 #include "ReadoutCard/PciId.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 /// Data holder for basic information about a card
-struct CardDescriptor
-{
-    CardType::type cardType;
-    boost::optional<int> serialNumber;
-    PciId pciId;
-    PciAddress pciAddress;
-    int32_t numaNode;
+struct CardDescriptor {
+  CardType::type cardType;
+  boost::optional<int> serialNumber;
+  PciId pciId;
+  PciAddress pciAddress;
+  int32_t numaNode;
 };
 
 } // namespace roc

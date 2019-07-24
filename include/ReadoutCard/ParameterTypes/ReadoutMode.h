@@ -18,24 +18,24 @@
 
 #include <string>
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 /// Namespace for the RORC readout mode enum, and supporting functions
-struct ReadoutMode
-{
-    /// Readout mode
-    enum type
-    {
-      Continuous,
-      //Triggered // Not yet supported
-    };
+struct ReadoutMode {
+  /// Readout mode
+  enum type {
+    Continuous,
+    //Triggered // Not yet supported
+  };
 
-    /// Converts a ReadoutMode to a string
-    static std::string toString(const ReadoutMode::type& mode);
+  /// Converts a ReadoutMode to a string
+  static std::string toString(const ReadoutMode::type& mode);
 
-    /// Converts a string to a ReadoutMode
-    static ReadoutMode::type fromString(const std::string& string);
+  /// Converts a string to a ReadoutMode
+  static ReadoutMode::type fromString(const std::string& string);
 };
 
 } // namespace roc

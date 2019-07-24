@@ -19,16 +19,17 @@
 #include <string>
 #include "ReadoutCard/Cru.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 //Ugly for consistency reasons
-struct Hex
-{
-    using type = uint32_t;
+struct Hex {
+  using type = uint32_t;
 
-    /// Converts a string to an Hex
-    static Hex::type fromString(const std::string& string);
+  /// Converts a string to an Hex
+  static Hex::type fromString(const std::string& string);
 };
 
 } // namespace roc

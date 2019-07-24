@@ -18,9 +18,12 @@
 
 #include <cstdint>
 
-namespace AliceO2 {
-namespace roc {
-namespace Cru {
+namespace AliceO2
+{
+namespace roc
+{
+namespace Cru
+{
 
 static constexpr uint32_t CLOCK_TTC(0x0);
 static constexpr uint32_t CLOCK_LOCAL(0x2);

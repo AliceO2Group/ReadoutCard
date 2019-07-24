@@ -20,59 +20,59 @@
 #include "ReadoutCard/CardType.h"
 #include "ReadoutCard/RegisterReadWriteInterface.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
-struct ScaException : AliceO2::Common::Exception {};
+struct ScaException : AliceO2::Common::Exception {
+};
 
 /// Class for interfacing with the C-RORC's and CRU's Slow-Control Adapter (SCA)
 class Sca
 {
-  public:
-    struct ReadResult
-    {
-        uint32_t command;
-        uint32_t data;
-    };
+ public:
+  struct ReadResult {
+    uint32_t command;
+    uint32_t data;
+  };
 
-    struct CommandData
-    {
-        uint32_t command;
-        uint32_t data;
-    };
+  struct CommandData {
+    uint32_t command;
+    uint32_t data;
+  };
 
-    /// \param bar2 SCA is on BAR 2
-    /// \param cardType Needed to get offset for SCA registers
-    /// \param link Needed to get offset for SCA registers
-    Sca(RegisterReadWriteInterface& bar2, CardType::type cardType, int link);
+  /// \param bar2 SCA is on BAR 2
+  /// \param cardType Needed to get offset for SCA registers
+  /// \param link Needed to get offset for SCA registers
+  Sca(RegisterReadWriteInterface& bar2, CardType::type cardType, int link);
 
-    void initialize();
-    void write(uint32_t command, uint32_t data);
-    void write(CommandData commandData)
-    {
-        write(commandData.command, commandData.data);
-    }
-    ReadResult read();
-    ReadResult gpioRead();
-    ReadResult gpioWrite(uint32_t data);
+  void initialize();
+  void write(uint32_t command, uint32_t data);
+  void write(CommandData commandData)
+  {
+    write(commandData.command, commandData.data);
+  }
+  ReadResult read();
+  ReadResult gpioRead();
+  ReadResult gpioWrite(uint32_t data);
 
-  private:
-    void init();
-    void gpioEnable();
-    void barWrite(int index, uint32_t data);
-    uint32_t barRead(int index);
-    void executeCommand();
-    void waitOnBusyClear();
-    void checkError(uint32_t command);
-    bool isChannelBusy(uint32_t command);
+ private:
+  void init();
+  void gpioEnable();
+  void barWrite(int index, uint32_t data);
+  uint32_t barRead(int index);
+  void executeCommand();
+  void waitOnBusyClear();
+  void checkError(uint32_t command);
+  bool isChannelBusy(uint32_t command);
 
-    /// Interface for BAR 2
-    RegisterReadWriteInterface& mBar2;
+  /// Interface for BAR 2
+  RegisterReadWriteInterface& mBar2;
 
-    /// Offset for the registers. May differ per card
-    int mOffset;
+  /// Offset for the registers. May differ per card
+  int mOffset;
 };
-
 
 } // namespace roc
 } // namespace AliceO2

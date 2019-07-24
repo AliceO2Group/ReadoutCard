@@ -20,8 +20,10 @@
 #include "ReadoutCard/RegisterReadWriteInterface.h"
 #include "Swt/SwtWord.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 #define SWT_WRITE_BAR_WRITES 5
 #define SWT_WRITE_BAR_READS 1
@@ -31,19 +33,19 @@ namespace roc {
 /// Class for Single Word Transactions with the CRU
 class Swt
 {
-  public:
-    Swt(RegisterReadWriteInterface& bar2, int gbtChannel);
+ public:
+  Swt(RegisterReadWriteInterface& bar2, int gbtChannel);
 
-    void reset();
-    uint32_t write(SwtWord& swtWord);
-    uint32_t read(SwtWord& swtWord);
+  void reset();
+  uint32_t write(SwtWord& swtWord);
+  uint32_t read(SwtWord& swtWord);
 
-  private:
-    void setChannel(int gbtChannel);
-    void barWrite(uint32_t offset, uint32_t data);
-    uint32_t barRead(uint32_t index);
+ private:
+  void setChannel(int gbtChannel);
+  void barWrite(uint32_t offset, uint32_t data);
+  uint32_t barRead(uint32_t index);
 
-    RegisterReadWriteInterface& mBar2;
+  RegisterReadWriteInterface& mBar2;
 };
 
 } // namespace roc

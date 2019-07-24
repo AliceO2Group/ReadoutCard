@@ -16,18 +16,21 @@
 #ifndef ALICEO2_SRC_READOUTCARD_UTILITIES_SMARTPOINTER_H_
 #define ALICEO2_SRC_READOUTCARD_UTILITIES_SMARTPOINTER_H_
 
-namespace AliceO2 {
-namespace roc {
-namespace Utilities {
+namespace AliceO2
+{
+namespace roc
+{
+namespace Utilities
+{
 
 /// Convenience function to reset a smart pointer
-template <typename SmartPtr, typename ...Args>
+template <typename SmartPtr, typename... Args>
 void resetSmartPtr(SmartPtr& ptr, Args&&... args)
 {
   ptr.reset(new typename SmartPtr::element_type(std::forward<Args>(args)...));
 }
 
-} // namespace Util
+} // namespace Utilities
 } // namespace roc
 } // namespace AliceO2
 

@@ -19,23 +19,23 @@
 #include <string>
 #include "ReadoutCard/Cru.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 /// Namespace for the ROC clock enum, and supporting functions
-struct Clock
-{
-    enum type
-    {
-      Local = Cru::CLOCK_LOCAL,
-      Ttc = Cru::CLOCK_TTC,
-    };
+struct Clock {
+  enum type {
+    Local = Cru::CLOCK_LOCAL,
+    Ttc = Cru::CLOCK_TTC,
+  };
 
-    /// Converts a Clock to a string
-    static std::string toString(const Clock::type& clock);
+  /// Converts a Clock to a string
+  static std::string toString(const Clock::type& clock);
 
-    /// Converts a string to a Clock
-    static Clock::type fromString(const std::string& string);
+  /// Converts a string to a Clock
+  static Clock::type fromString(const std::string& string);
 };
 
 } // namespace roc

@@ -19,25 +19,25 @@
 #include <string>
 #include "ReadoutCard/Cru.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 /// Namespace for the ROC GBT mux enum, and supporting functions
-struct GbtMux
-{
-    enum type
-    {
-      Ttc = Cru::GBT_MUX_TTC,
-      Ddg = Cru::GBT_MUX_DDG,
-      Swt = Cru::GBT_MUX_SWT,
-      Na  = -1,
-    };
+struct GbtMux {
+  enum type {
+    Ttc = Cru::GBT_MUX_TTC,
+    Ddg = Cru::GBT_MUX_DDG,
+    Swt = Cru::GBT_MUX_SWT,
+    Na = -1,
+  };
 
-    /// Converts a GbtMux to an int
-    static std::string toString(const GbtMux::type& gbtMux);
+  /// Converts a GbtMux to an int
+  static std::string toString(const GbtMux::type& gbtMux);
 
-    /// Converts a string to a GbtMux
-    static GbtMux::type fromString(const std::string& string);
+  /// Converts a string to a GbtMux
+  static GbtMux::type fromString(const std::string& string);
 };
 
 } // namespace roc
