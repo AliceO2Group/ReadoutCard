@@ -214,7 +214,7 @@ if(PDA_FOUND)
   list(APPEND EXE_NAMES
     roc-bar-stress
     roc-config
-    roc-channel-cleanup
+    roc-cleanup
     roc-example
     roc-flash
     roc-flash-read

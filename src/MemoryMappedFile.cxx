@@ -21,19 +21,20 @@
 #include "ExceptionInternal.h"
 #include "Utilities/SmartPointer.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 namespace b = boost;
 namespace bip = boost::interprocess;
 namespace bfs = boost::filesystem;
 
-struct MemoryMappedFileInternal
-{
-    std::string fileName;
-    boost::interprocess::file_mapping fileMapping;
-    boost::interprocess::mapped_region mappedRegion;
-    bool deleteFileOnDestruction;
+struct MemoryMappedFileInternal {
+  std::string fileName;
+  boost::interprocess::file_mapping fileMapping;
+  boost::interprocess::mapped_region mappedRegion;
+  bool deleteFileOnDestruction;
 };
 
 MemoryMappedFile::MemoryMappedFile()
@@ -42,26 +43,26 @@ MemoryMappedFile::MemoryMappedFile()
 }
 
 MemoryMappedFile::MemoryMappedFile(const std::string& fileName, size_t fileSize, bool deleteFileOnDestruction,
-    bool lockMap)
-    : MemoryMappedFile()
+                                   bool lockMap)
+  : MemoryMappedFile()
 {
   mInternal->fileName = fileName;
   mInternal->deleteFileOnDestruction = deleteFileOnDestruction;
 
   if (lockMap) {
     // Try to acquire the lock on the file
-    try{
+    try {
       Utilities::resetSmartPtr(mInterprocessLock, "Alice_O2_RoC_MMF_" + fileName + "_lock");
     } catch (const boost::exception& e) {
       BOOST_THROW_EXCEPTION(LockException()
-          << ErrorInfo::Message("Couldn't lock Memory Mapped File; " + boost::diagnostic_information(e)));
+                            << ErrorInfo::Message("Couldn't lock Memory Mapped File; " + boost::diagnostic_information(e)));
     }
 
     try {
       mMapAcquired = map(fileName, fileSize);
     } catch (const boost::exception& e) {
       BOOST_THROW_EXCEPTION(MemoryMapException()
-          << ErrorInfo::Message(boost::diagnostic_information(e)));
+                            << ErrorInfo::Message(boost::diagnostic_information(e)));
     }
   }
 }
@@ -96,11 +97,11 @@ bool MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
       auto dir = bfs::path(fileName.c_str()).parent_path();
       if (!(bfs::is_directory(dir) && bfs::exists(dir))) {
         BOOST_THROW_EXCEPTION(MemoryMapException()
-            << ErrorInfo::Message("Failed to open memory map file, parent directory does not exist"));
+                              << ErrorInfo::Message("Failed to open memory map file, parent directory does not exist"));
       }
     }
 
-    // We don't care if the file exists. 
+    // We don't care if the file exists.
     // Locks are in place that make sure we don't get here unless we're allowed to
     // Check the file exists
     /*{
@@ -113,24 +114,22 @@ bool MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
     // Similar operation to calling "touch" command, making sure the file exists
     try {
       std::ofstream ofs(fileName.c_str(), std::ios::app);
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
       BOOST_THROW_EXCEPTION(MemoryMapException()
-          << ErrorInfo::Message(std::string("Failed to open memory map file: ") + e.what()));
+                            << ErrorInfo::Message(std::string("Failed to open memory map file: ") + e.what()));
     }
 
     // Resize and map file to memory
     try {
       bfs::resize_file(fileName.c_str(), fileSize);
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
       BOOST_THROW_EXCEPTION(MemoryMapException()
-          << ErrorInfo::Message(std::string("Failed to resize memory map file: ") + e.what())
-          << ErrorInfo::PossibleCauses({
-            "Size not a multiple of page size",
-            "Not enough memory available",
-            "Not enough memory available (check 'hugeadm --pool-list')",
-            "Insufficient permissions"}));
+                            << ErrorInfo::Message(std::string("Failed to resize memory map file: ") + e.what())
+                            << ErrorInfo::PossibleCauses({ "Size not a multiple of page size",
+                                                           "Not enough memory available",
+                                                           "Not enough hugepages allocated (check 'hugeadm --pool-list')",
+                                                           "Insufficient permissions",
+                                                           "Stale hugepage / uio_pci_dma resources (run 'roc-cleanup')" }));
     }
 
     try {
@@ -138,13 +137,12 @@ bool MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
       mInternal->mappedRegion = bip::mapped_region(mInternal->fileMapping, bip::read_write, 0, fileSize);
     } catch (const std::exception& e) {
       BOOST_THROW_EXCEPTION(MemoryMapException()
-          << ErrorInfo::Message(std::string("Failed to memory map file: ") + e.what())
-          << ErrorInfo::PossibleCauses({
-            "Not enough memory available",
-            "Not enough hugepages allocated (check 'hugeadm --pool-list')"}));
+                            << ErrorInfo::Message(std::string("Failed to memory map file: ") + e.what())
+                            << ErrorInfo::PossibleCauses({ "Not enough memory available",
+                                                           "Not enough hugepages allocated (check 'hugeadm --pool-list')",
+                                                           "Stale hugepage / uio_pci_dma resources (run 'roc-cleanup')" }));
     }
-  }
-  catch (MemoryMapException& e) {
+  } catch (MemoryMapException& e) {
     e << ErrorInfo::FileName(fileName) << ErrorInfo::FileSize(fileSize);
     throw;
   }
