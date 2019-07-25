@@ -13,7 +13,6 @@
 ///
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#include <fstream>
 #include <iostream>
 #include "Cru/Common.h"
 #include "Cru/Constants.h"
@@ -43,8 +42,8 @@ class ProgramStatus: public Program
     Options::addOptionCardId(options);
     options.add_options()
       ("csv-out",
-       po::value<std::string>(&mOptions.csvOut),
-       "Target CSV file to write output to");
+       po::bool_switch(&mOptions.csvOut),
+       "Toggle csv-formatted output");
   }
 
   virtual void run(const boost::program_options::variables_map& map) 
@@ -69,12 +68,6 @@ class ProgramStatus: public Program
 
     Cru::ReportInfo reportInfo = cruBar2->report();
 
-    if (mOptions.csvOut != "") {
-      mOutputToCsv = true;
-    }
-
-    std::ofstream csvOut;
-    
     std::ostringstream table;
     auto formatHeader = "  %-9s %-16s %-10s %-14s %-15s %-10s %-14s %-14s %-8s %-19s\n";
     auto formatRow = "  %-9s %-16s %-10s %-14s %-15s %-10s %-14.2f %-14.2f %-8s %-19.1f\n";
@@ -83,15 +76,14 @@ class ProgramStatus: public Program
     auto lineFat = std::string(header.length(), '=') + '\n';
     auto lineThin = std::string(header.length(), '-') + '\n';
 
-    if (mOutputToCsv) {
-      csvOut.open(mOptions.csvOut);
+    if (mOptions.csvOut) {
       auto csvHeader = "Link ID,GBT Mode,Loopback,GBT Mux,Datapath Mode,Datapath,RX Freq(MHz),TX Freq(MHz),Status,Optical Power(uW)\n"; 
-      csvOut << csvHeader;
+      std::cout << csvHeader;
     } else {
       table << lineFat << header << lineThin;
     }
 
-    if (!mOutputToCsv) {
+    if (!mOptions.csvOut) {
       std::string clock = (reportInfo.ttcClock == 0 ? "TTC" : "Local");;
       std::cout << "------------" << std::endl;
       std::cout << clock << " clock" << std::endl;
@@ -138,10 +130,10 @@ class ProgramStatus: public Program
 
       float opticalPower = link.opticalPower;
 
-      if (mOutputToCsv) {
+      if (mOptions.csvOut) {
         auto csvLine = std::to_string(globalId) +  "," + gbtTxRxMode + "," + loopback + "," + gbtMux + "," + datapathMode + "," + enabled + "," + 
           std::to_string(rxFreq) + "," + std::to_string(txFreq) + "," + linkStatus + "," + std::to_string(opticalPower) + "\n";
-        csvOut << csvLine;
+        std::cout << csvLine;
       } else {
         auto format = boost::format(formatRow) % globalId % gbtTxRxMode % loopback % gbtMux % datapathMode % enabled % rxFreq % txFreq % linkStatus % opticalPower;
         table << format;
@@ -149,9 +141,7 @@ class ProgramStatus: public Program
 
     }
 
-    if (mOutputToCsv) {
-      csvOut.close();
-    } else {
+    if (!mOptions.csvOut) {
       auto lineFat = std::string(header.length(), '=') + '\n';
       table << lineFat;
       std::cout << table.str();
@@ -161,10 +151,8 @@ class ProgramStatus: public Program
 private:
 
   struct OptionsStruct {
-    std::string csvOut = "";
+    bool csvOut = false;
   } mOptions;
-
-  bool mOutputToCsv = false;
 };
 
 int main(int argc, char** argv)
