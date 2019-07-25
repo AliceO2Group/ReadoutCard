@@ -300,9 +300,10 @@ It may use files in these directories for DMA buffers:
 The program will report the exact file used. 
 They can be inspected manually if needed, e.g. with hexdump: `hexdump -e '"%07_ax" " | " 4/8 "%08x " "\n"' [filename]`
 
-### roc-channel-cleanup
-In the event of a serious crash, such as a segfault, it may be necessary to clean up and reset a channel.
-See section "Channel ownership lock" for more details.
+### roc-cleanup
+In the event of a serious crash, such as a segfault, it may be necessary to clean up and reset.
+This tool serves this purpose and is intended to be run as root. Be aware that this will make every
+running instance of readout.exe or roc-bench-dma fail.
 
 ### roc-config
 Configures the CRU. Uses the [Card Configurator](#card-configurator).
