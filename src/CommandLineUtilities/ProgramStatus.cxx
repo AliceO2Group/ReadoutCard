@@ -13,7 +13,6 @@
 ///
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#include <fstream>
 #include <iostream>
 #include "Cru/Common.h"
 #include "Cru/Constants.h"
@@ -28,30 +27,28 @@ using namespace AliceO2::roc;
 using namespace AliceO2::InfoLogger;
 namespace po = boost::program_options;
 
-class ProgramStatus: public Program
+class ProgramStatus : public Program
 {
-  public:
-
+ public:
   virtual Description getDescription()
   {
-    return {"Status", "Return current RoC configuration status", 
-      "roc-status --id 42:00.0\n"};
+    return { "Status", "Return current RoC configuration status",
+             "roc-status --id 42:00.0\n" };
   }
 
   virtual void addOptions(boost::program_options::options_description& options)
   {
     Options::addOptionCardId(options);
-    options.add_options()
-      ("csv-out",
-       po::value<std::string>(&mOptions.csvOut),
-       "Target CSV file to write output to");
+    options.add_options()("csv-out",
+                          po::bool_switch(&mOptions.csvOut),
+                          "Toggle csv-formatted output");
   }
 
-  virtual void run(const boost::program_options::variables_map& map) 
+  virtual void run(const boost::program_options::variables_map& map)
   {
 
     auto cardId = Options::getOptionCardId(map);
-    auto params = Parameters::makeParameters(cardId, 2); //status available on BAR2 
+    auto params = Parameters::makeParameters(cardId, 2); //status available on BAR2
     // We care for all of the links
     //params.setLinkMask(Parameters::linkMaskFromString("0-23"));
     auto bar2 = ChannelFactory().getBar(params);
@@ -69,30 +66,23 @@ class ProgramStatus: public Program
 
     Cru::ReportInfo reportInfo = cruBar2->report();
 
-    if (mOptions.csvOut != "") {
-      mOutputToCsv = true;
-    }
-
-    std::ofstream csvOut;
-    
     std::ostringstream table;
     auto formatHeader = "  %-9s %-16s %-10s %-14s %-15s %-10s %-14s %-14s %-8s %-19s\n";
     auto formatRow = "  %-9s %-16s %-10s %-14s %-15s %-10s %-14.2f %-14.2f %-8s %-19.1f\n";
-    auto header = (boost::format(formatHeader)
-        % "Link ID" % "GBT Mode Tx/Rx" % "Loopback" % "GBT MUX" % "Datapath Mode" % "Datapath" % "RX freq(MHz)" % "TX freq(MHz)" % "Status" % "Optical power(uW)").str();
+    auto header = (boost::format(formatHeader) % "Link ID" % "GBT Mode Tx/Rx" % "Loopback" % "GBT MUX" % "Datapath Mode" % "Datapath" % "RX freq(MHz)" % "TX freq(MHz)" % "Status" % "Optical power(uW)").str();
     auto lineFat = std::string(header.length(), '=') + '\n';
     auto lineThin = std::string(header.length(), '-') + '\n';
 
-    if (mOutputToCsv) {
-      csvOut.open(mOptions.csvOut);
-      auto csvHeader = "Link ID,GBT Mode,Loopback,GBT Mux,Datapath Mode,Datapath,RX Freq(MHz),TX Freq(MHz),Status,Optical Power(uW)\n"; 
-      csvOut << csvHeader;
+    if (mOptions.csvOut) {
+      auto csvHeader = "Link ID,GBT Mode,Loopback,GBT Mux,Datapath Mode,Datapath,RX Freq(MHz),TX Freq(MHz),Status,Optical Power(uW)\n";
+      std::cout << csvHeader;
     } else {
       table << lineFat << header << lineThin;
     }
 
-    if (!mOutputToCsv) {
-      std::string clock = (reportInfo.ttcClock == 0 ? "TTC" : "Local");;
+    if (!mOptions.csvOut) {
+      std::string clock = (reportInfo.ttcClock == 0 ? "TTC" : "Local");
+      ;
       std::cout << "------------" << std::endl;
       std::cout << clock << " clock" << std::endl;
       std::cout << "------------" << std::endl;
@@ -120,9 +110,9 @@ class ProgramStatus: public Program
         gbtMux += ":" + downstreamData;
       }
 
-      std::string datapathMode = DatapathMode::toString(link.datapathMode); 
+      std::string datapathMode = DatapathMode::toString(link.datapathMode);
 
-      std::string enabled = (link.enabled) ? "Enabled" : "Disabled" ;
+      std::string enabled = (link.enabled) ? "Enabled" : "Disabled";
 
       float rxFreq = link.rxFreq;
       float txFreq = link.txFreq;
@@ -138,33 +128,27 @@ class ProgramStatus: public Program
 
       float opticalPower = link.opticalPower;
 
-      if (mOutputToCsv) {
-        auto csvLine = std::to_string(globalId) +  "," + gbtTxRxMode + "," + loopback + "," + gbtMux + "," + datapathMode + "," + enabled + "," + 
-          std::to_string(rxFreq) + "," + std::to_string(txFreq) + "," + linkStatus + "," + std::to_string(opticalPower) + "\n";
-        csvOut << csvLine;
+      if (mOptions.csvOut) {
+        auto csvLine = std::to_string(globalId) + "," + gbtTxRxMode + "," + loopback + "," + gbtMux + "," + datapathMode + "," + enabled + "," +
+                       std::to_string(rxFreq) + "," + std::to_string(txFreq) + "," + linkStatus + "," + std::to_string(opticalPower) + "\n";
+        std::cout << csvLine;
       } else {
         auto format = boost::format(formatRow) % globalId % gbtTxRxMode % loopback % gbtMux % datapathMode % enabled % rxFreq % txFreq % linkStatus % opticalPower;
         table << format;
       }
-
     }
 
-    if (mOutputToCsv) {
-      csvOut.close();
-    } else {
+    if (!mOptions.csvOut) {
       auto lineFat = std::string(header.length(), '=') + '\n';
       table << lineFat;
       std::cout << table.str();
     }
   }
 
-private:
-
+ private:
   struct OptionsStruct {
-    std::string csvOut = "";
+    bool csvOut = false;
   } mOptions;
-
-  bool mOutputToCsv = false;
 };
 
 int main(int argc, char** argv)
