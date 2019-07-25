@@ -13,7 +13,6 @@
 ///
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#include <fstream>
 #include <iostream>
 #include "Cru/Constants.h"
 #include "ReadoutCard/ChannelFactory.h"
@@ -28,27 +27,25 @@ using namespace AliceO2::roc;
 using namespace AliceO2::InfoLogger;
 namespace po = boost::program_options;
 
-class ProgramMetrics: public Program
+class ProgramMetrics : public Program
 {
-  public:
-
+ public:
   virtual Description getDescription()
   {
-    return {"Metrics", "Return current RoC parameters", 
-      "roc-metrics --id -1\n"
-      "roc-metrics --id 42:00.0\n"};
+    return { "Metrics", "Return current RoC parameters",
+             "roc-metrics --id -1\n"
+             "roc-metrics --id 42:00.0\n" };
   }
 
   virtual void addOptions(boost::program_options::options_description& options)
   {
     Options::addOptionCardId(options);
-    options.add_options()
-      ("csv-out",
-       po::value<std::string>(&mOptions.csvOut),
-       "Target CSV file to write output to");
+    options.add_options()("csv-out",
+                          po::bool_switch(&mOptions.csvOut),
+                          "Toggle csv-formatted output");
   }
 
-  virtual void run(const boost::program_options::variables_map& map) 
+  virtual void run(const boost::program_options::variables_map& map)
   {
 
     auto cardId = Options::getOptionCardId(map);
@@ -62,32 +59,23 @@ class ProgramMetrics: public Program
         cardsFound = RocPciDevice::findSystemDevices(*serial);
       }
     } else if (auto pciAddress = boost::get<PciAddress>(&cardId)) {
-      cardsFound = RocPciDevice::findSystemDevices(*pciAddress); 
+      cardsFound = RocPciDevice::findSystemDevices(*pciAddress);
     } else if (auto pciSequenceNumber = boost::get<PciSequenceNumber>(&cardId)) {
       cardsFound = RocPciDevice::findSystemDevices(*pciSequenceNumber);
     } else {
       std::cout << "Something went wrong parsing the card id" << std::endl;
     }
 
-    if (mOptions.csvOut != "") {
-      mOutputToCsv = true;
-    }
-
-    std::ofstream csvOut;
-    
     std::ostringstream table;
     auto formatHeader = "  %-3s %-6s %-10s %-10s %-19s %-20s %-19s %-8s %-17s %-17s\n";
     auto formatRow = "  %-3s %-6s %-10s %-10s %-19s %-20s %-19s %-8s %-17s %-17s\n";
-    auto header = (boost::format(formatHeader)
-        % "#" % "Type" % "PCI Addr" % "Temp (C)" % "#Dropped Packets" % "CTP Clock (MHz)" % "Local Clock (MHz)"
-        % "#links" % "#Wrapper 0 links" % "#Wrapper 1 links").str();
+    auto header = (boost::format(formatHeader) % "#" % "Type" % "PCI Addr" % "Temp (C)" % "#Dropped Packets" % "CTP Clock (MHz)" % "Local Clock (MHz)" % "#links" % "#Wrapper 0 links" % "#Wrapper 1 links").str();
     auto lineFat = std::string(header.length(), '=') + '\n';
     auto lineThin = std::string(header.length(), '-') + '\n';
 
-    if (mOutputToCsv) {
-      csvOut.open(mOptions.csvOut);
-      auto csvHeader = "#,Type,PCI Addr,Temp (C),#Dropped Packets,CTP Clock (MHz),Local Clock (MHz),#links,#Wrapper 0 links, #Wrapper 1 links\n"; 
-      csvOut << csvHeader;
+    if (mOptions.csvOut) {
+      auto csvHeader = "#,Type,PCI Addr,Temp (C),#Dropped Packets,CTP Clock (MHz),Local Clock (MHz),#links,#Wrapper 0 links, #Wrapper 1 links\n";
+      std::cout << csvHeader;
     } else {
       table << lineFat << header << lineThin;
     }
@@ -101,43 +89,34 @@ class ProgramMetrics: public Program
 
       float temperature = bar2->getTemperature().value_or(0);
       int32_t dropped = bar2->getDroppedPackets(bar0->getEndpointNumber());
-      float ctp_clock = bar2->getCTPClock()/1e6;
-      float local_clock = bar2->getLocalClock()/1e6;
+      float ctp_clock = bar2->getCTPClock() / 1e6;
+      float local_clock = bar2->getLocalClock() / 1e6;
       int32_t links = bar2->getLinks();
       uint32_t links0 = bar2->getLinksPerWrapper(0);
       uint32_t links1 = bar2->getLinksPerWrapper(1);
 
-      if (mOutputToCsv) {
-        auto csvLine =  std::to_string(i) + "," +  CardType::toString(card.cardType) + "," +  card.pciAddress.toString() + "," +  std::to_string(temperature)
-          + "," +  std::to_string(dropped) + "," +  std::to_string(ctp_clock) + "," +  std::to_string(local_clock) + "," +  std::to_string(links) + ","
-          +  std::to_string(links0) + "," +  std::to_string(links1) + "\n";
-        csvOut << csvLine;
+      if (mOptions.csvOut) {
+        auto csvLine = std::to_string(i) + "," + CardType::toString(card.cardType) + "," + card.pciAddress.toString() + "," + std::to_string(temperature) + "," + std::to_string(dropped) + "," + std::to_string(ctp_clock) + "," + std::to_string(local_clock) + "," + std::to_string(links) + "," + std::to_string(links0) + "," + std::to_string(links1) + "\n";
+        std::cout << csvLine;
       } else {
-        auto format = boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciAddress.toString()
-          % temperature % dropped % ctp_clock % local_clock % links % links0 % links1;
+        auto format = boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciAddress.toString() % temperature % dropped % ctp_clock % local_clock % links % links0 % links1;
 
         table << format;
       }
       i++;
     }
 
-    if (mOutputToCsv) {
-      csvOut.close();
-    } else {
+    if (!mOptions.csvOut) {
       auto lineFat = std::string(header.length(), '=') + '\n';
       table << lineFat;
       std::cout << table.str();
     }
   }
-  
-private:
 
+ private:
   struct OptionsStruct {
-    std::string csvOut = "";
+    bool csvOut = false;
   } mOptions;
-
-  bool mOutputToCsv = false;
-
 };
 
 int main(int argc, char** argv)
