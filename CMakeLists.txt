@@ -259,7 +259,7 @@ endforeach()
 enable_testing()
 
 set(TEST_SRCS
-  test/TestChannelFactoryUtils.cxx
+  #test/TestChannelFactoryUtils.cxx
   test/TestChannelPaths.cxx
   test/TestCruDataFormat.cxx
   test/TestEnums.cxx

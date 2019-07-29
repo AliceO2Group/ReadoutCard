@@ -28,26 +28,28 @@
 #include "boost/format.hpp"
 #include "Utilities/Util.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 using Link = Cru::Link;
 
 CruBar::CruBar(const Parameters& parameters)
-    : BarInterfaceBase(parameters),
-      mClock(parameters.getClock().get_value_or(Clock::Local)),
-      mCruId(parameters.getCruId().get_value_or(0x0)),
-      mDatapathMode(parameters.getDatapathMode().get_value_or(DatapathMode::Packet)),
-      mDownstreamData(parameters.getDownstreamData().get_value_or(DownstreamData::Ctp)),
-      mGbtMode(parameters.getGbtMode().get_value_or(GbtMode::Gbt)),
-      mGbtMux(parameters.getGbtMux().get_value_or(GbtMux::Ttc)),
-      mLinkMask(parameters.getLinkMask().get_value_or(std::set<uint32_t>{0})),
-      mGbtMuxMap(parameters.getGbtMuxMap().get_value_or(std::map<uint32_t, GbtMux::type>{})),
-      mPonUpstream(parameters.getPonUpstreamEnabled().get_value_or(false)),
-      mOnuAddress(parameters.getOnuAddress().get_value_or(0x0))
+  : BarInterfaceBase(parameters),
+    mClock(parameters.getClock().get_value_or(Clock::Local)),
+    mCruId(parameters.getCruId().get_value_or(0x0)),
+    mDatapathMode(parameters.getDatapathMode().get_value_or(DatapathMode::Packet)),
+    mDownstreamData(parameters.getDownstreamData().get_value_or(DownstreamData::Ctp)),
+    mGbtMode(parameters.getGbtMode().get_value_or(GbtMode::Gbt)),
+    mGbtMux(parameters.getGbtMux().get_value_or(GbtMux::Ttc)),
+    mLinkMask(parameters.getLinkMask().get_value_or(std::set<uint32_t>{ 0 })),
+    mGbtMuxMap(parameters.getGbtMuxMap().get_value_or(std::map<uint32_t, GbtMux::type>{})),
+    mPonUpstream(parameters.getPonUpstreamEnabled().get_value_or(false)),
+    mOnuAddress(parameters.getOnuAddress().get_value_or(0x0))
 {
   if (getIndex() == 0) {
-    mFeatures = parseFirmwareFeatures(); 
+    mFeatures = parseFirmwareFeatures();
   }
 
   if (parameters.getLinkLoopbackEnabled() == true) { // explicit true needed here
@@ -64,12 +66,12 @@ CruBar::CruBar(const Parameters& parameters)
 }
 
 CruBar::CruBar(std::shared_ptr<Pda::PdaBar> bar)
-    : BarInterfaceBase(bar)
+  : BarInterfaceBase(bar)
 {
   if (getIndex() == 0)
     mFeatures = parseFirmwareFeatures();
 }
- 
+
 CruBar::~CruBar()
 {
 }
@@ -94,8 +96,7 @@ boost::optional<float> CruBar::getTemperature()
 
 boost::optional<std::string> CruBar::getFirmwareInfo()
 {
-  return (boost::format("%x-%x-%x") % getFirmwareDate() % getFirmwareTime()
-      % getFirmwareGitHash()).str();
+  return (boost::format("%x-%x-%x") % getFirmwareDate() % getFirmwareTime() % getFirmwareGitHash()).str();
 }
 
 boost::optional<std::string> CruBar::getCardId()
@@ -111,9 +112,9 @@ void CruBar::pushSuperpageDescriptor(uint32_t link, uint32_t pages, uintptr_t bu
 {
   // Set superpage address. These writes are buffered on the firmware side.
   writeRegister(Cru::Registers::LINK_SUPERPAGE_ADDRESS_HIGH.get(link).index,
-      Utilities::getUpper32Bits(busAddress));
+                Utilities::getUpper32Bits(busAddress));
   writeRegister(Cru::Registers::LINK_SUPERPAGE_ADDRESS_LOW.get(link).index,
-      Utilities::getLower32Bits(busAddress));
+                Utilities::getLower32Bits(busAddress));
   // Set superpage size. This write signals the push of the descriptor into the link's FIFO.
   writeRegister(Cru::Registers::LINK_SUPERPAGE_SIZE.get(link).index, pages);
 }
@@ -164,7 +165,7 @@ void CruBar::setDataGeneratorPattern(GeneratorPattern::type pattern, size_t size
 void CruBar::dataGeneratorInjectError()
 {
   writeRegister(Cru::Registers::DATA_GENERATOR_INJECT_ERROR.index,
-      Cru::Registers::DATA_GENERATOR_CONTROL_INJECT_ERROR_CMD);
+                Cru::Registers::DATA_GENERATOR_CONTROL_INJECT_ERROR_CMD);
 }
 
 /// Sets the data source for the DMA
@@ -227,7 +228,6 @@ int32_t CruBar::getLinksPerWrapper(int wrapper)
     return 0;
 
   return Utilities::getBits(regread, 24, 31);
-
 }
 
 /// Gets the serial number from the card.
@@ -239,7 +239,7 @@ uint32_t CruBar::getSerialNumber()
   auto serial = readRegister(Cru::Registers::SERIAL_NUMBER.index);
   if (serial == 0xFfffFfff) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("CRU reported invalid serial number 0xffffffff, "
-          "a fatal error may have occurred"));
+                                                            "a fatal error may have occurred"));
   }
   return serial;
 }
@@ -323,7 +323,7 @@ uint32_t CruBar::getFpgaChipLow()
 uint32_t CruBar::getPonStatusRegister()
 {
   assertBarIndex(2, "Can only get PON status register from BAR 2");
-  return readRegister((Cru::Registers::ONU_USER_LOGIC.address + 0x0c)/4);
+  return readRegister((Cru::Registers::ONU_USER_LOGIC.address + 0x0c) / 4);
 }
 
 uint32_t CruBar::getOnuAddress()
@@ -357,7 +357,7 @@ FirmwareFeatures CruBar::convertToFirmwareFeatures(uint32_t reg)
   uint32_t safeword = Utilities::getBits(reg, 0, 15);
   if (safeword == 0x5afe) {
     // Standalone firmware
-    auto enabled = [&](int i){ return Utilities::getBit(reg, i) == 0; };
+    auto enabled = [&](int i) { return Utilities::getBit(reg, i) == 0; };
     features.standalone = true;
     features.dataSelection = enabled(16);
     features.temperature = enabled(17);
@@ -396,7 +396,7 @@ void CruBar::setDataGeneratorPatternBits(uint32_t& bits, GeneratorPattern::type 
       break;
     default:
       BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Unsupported generator pattern for CRU")
-          << ErrorInfo::GeneratorPattern(pattern));
+                                        << ErrorInfo::GeneratorPattern(pattern));
   }
 }
 
@@ -407,18 +407,18 @@ void CruBar::setDataGeneratorSizeBits(uint32_t& bits, size_t size)
 {
   if (!Utilities::isMultiple(size, 32ul)) {
     BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message("Unsupported generator data size for CRU; must be multiple of 32 bytes")
-        << ErrorInfo::GeneratorEventLength(size));
+                          << ErrorInfo::Message("Unsupported generator data size for CRU; must be multiple of 32 bytes")
+                          << ErrorInfo::GeneratorEventLength(size));
   }
 
   if (size < 32 || size > Cru::DMA_PAGE_SIZE) {
     BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message("Unsupported generator data size for CRU; must be >= 32 bytes and <= 8 KiB")
-        << ErrorInfo::GeneratorEventLength(size));
+                          << ErrorInfo::Message("Unsupported generator data size for CRU; must be >= 32 bytes and <= 8 KiB")
+                          << ErrorInfo::GeneratorEventLength(size));
   }
 
   // We set the size in 256-bit (32 byte) words and do -1 because that's how it works.
-  uint32_t sizeValue = ((size/32) - 1) << 8;
+  uint32_t sizeValue = ((size / 32) - 1) << 8;
   bits &= ~(uint32_t(0xff00));
   bits += sizeValue;
 }
@@ -443,7 +443,7 @@ void CruBar::setDataGeneratorRandomSizeBits(uint32_t& bits, bool enabled)
 Cru::ReportInfo CruBar::report()
 {
   std::map<int, Link> linkMap = initializeLinkMap();
- 
+
   // Update linkMap
   Gbt gbt = Gbt(mPdaBar, linkMap, mWrapperCount);
   gbt.getGbtModes();
@@ -452,7 +452,7 @@ Cru::ReportInfo CruBar::report()
 
   DatapathWrapper datapathWrapper = DatapathWrapper(mPdaBar);
 
-  for (auto& el: linkMap) {
+  for (auto& el : linkMap) {
     auto& link = el.second;
     link.datapathMode = datapathWrapper.getDatapathMode(link);
     link.enabled = datapathWrapper.getLinkEnabled(link);
@@ -495,7 +495,7 @@ void CruBar::reconfigure()
 
   populateLinkMap(mLinkMap);
 
-  if (static_cast<uint32_t>(mClock) == reportInfo.ttcClock && 
+  if (static_cast<uint32_t>(mClock) == reportInfo.ttcClock &&
       static_cast<uint32_t>(mDownstreamData) == reportInfo.downstreamData &&
       std::equal(mLinkMap.begin(), mLinkMap.end(), reportInfo.linkMap.begin()) &&
       checkPonUpstreamStatusExpected(reportInfo.ponStatusRegister, reportInfo.onuAddress) &&
@@ -516,7 +516,7 @@ void CruBar::configure()
 
   /* TTC */
   Ttc ttc = Ttc(mPdaBar);
-  
+
   log("Setting the clock");
   ttc.setClock(mClock);
 
@@ -525,7 +525,7 @@ void CruBar::configure()
 
   if (mPonUpstream) {
     ttc.resetFpll();
-    if(!ttc.configurePonTx(mOnuAddress)) {
+    if (!ttc.configurePonTx(mOnuAddress)) {
       log("PON TX fPLL phase scan failed", InfoLogger::InfoLogger::Error);
     }
   }
@@ -549,7 +549,7 @@ void CruBar::configure()
   datapathWrapper.setLinksEnabled(1, 0x0);
 
   log("Enabling links and setting datapath mode and flow control");
-  for (auto const& el: mLinkMap) {
+  for (auto const& el : mLinkMap) {
     auto& link = el.second;
     if (link.enabled) {
       datapathWrapper.setLinkEnabled(link);
@@ -570,11 +570,11 @@ void CruBar::setWrapperCount()
   int wrapperCount = 0;
 
   /* Read the clock counter; If it's running increase the count */
-  for (int i=0 ; i<2; i++){
-    uint32_t address = Cru::getWrapperBaseAddress(i) + Cru::Registers::GBT_WRAPPER_GREGS.address + 
-      Cru::Registers::GBT_WRAPPER_CLOCK_COUNTER.address;
-    uint32_t reg11a = readRegister(address/4);
-    uint32_t reg11b = readRegister(address/4);
+  for (int i = 0; i < 2; i++) {
+    uint32_t address = Cru::getWrapperBaseAddress(i) + Cru::Registers::GBT_WRAPPER_GREGS.address +
+                       Cru::Registers::GBT_WRAPPER_CLOCK_COUNTER.address;
+    uint32_t reg11a = readRegister(address / 4);
+    uint32_t reg11b = readRegister(address / 4);
 
     if (reg11a != reg11b) {
       wrapperCount += 1;
@@ -590,11 +590,11 @@ std::map<int, Link> CruBar::initializeLinkMap()
   if (mWrapperCount == 0) {
     setWrapperCount();
   }
-  for (int wrapper = 0; wrapper<mWrapperCount; wrapper++){
+  for (int wrapper = 0; wrapper < mWrapperCount; wrapper++) {
     uint32_t address = Cru::getWrapperBaseAddress(wrapper) + Cru::Registers::GBT_WRAPPER_CONF0.address;
-    uint32_t wrapperConfig = readRegister(address/4);
+    uint32_t wrapperConfig = readRegister(address / 4);
 
-    for(int bank=0; bank<6; bank++) {
+    for (int bank = 0; bank < 6; bank++) {
       int dwrapper = (bank < 2) ? 0 : 1;
       int lpbLSB = (4 * bank) + 4;
       int lpbMSB = lpbLSB + 4 - 1;
@@ -602,18 +602,18 @@ std::map<int, Link> CruBar::initializeLinkMap()
       if (linksPerBank == 0) {
         break;
       }
-      for(int link=0; link<linksPerBank; link++) {
+      for (int link = 0; link < linksPerBank; link++) {
 
-        int dwrapperIndex = link + (bank%2) * linksPerBank;
+        int dwrapperIndex = link + (bank % 2) * linksPerBank;
         int globalIndex = link + bank * linksPerBank;
         uint32_t baseAddress = Cru::getXcvrRegisterAddress(wrapper, bank, link);
         Link new_link = {
-          dwrapper, 
+          dwrapper,
           wrapper,
           bank,
-          (uint32_t) link,
-          (uint32_t) dwrapperIndex,
-          (uint32_t) globalIndex,
+          (uint32_t)link,
+          (uint32_t)dwrapperIndex,
+          (uint32_t)globalIndex,
           baseAddress,
         };
 
@@ -624,13 +624,12 @@ std::map<int, Link> CruBar::initializeLinkMap()
 
   // Calculate "new" positions to accommodate CRU FW v3.0.0 link mapping
   std::map<int, Link> newLinkMap;
-  for(size_t i=0; i < links.size(); i++) {
+  for (std::size_t i = 0; i < links.size(); i++) {
     Link link = links.at(i);
-    int newPos = (i-link.bank*6) * 2 + 12*(int)(link.bank/2) + (link.bank %2);
+    int newPos = (i - link.bank * 6) * 2 + 12 * (int)(link.bank / 2) + (link.bank % 2);
     link.dwrapperId = newPos % 12;
-    newLinkMap.insert({newPos, link});
+    newLinkMap.insert({ newPos, link });
   }
-
 
   /*for(auto el : newLinkMap)
     std::cout << el.first << " " << el.second.bank << " " << el.second.id << std::endl;*/
@@ -640,21 +639,21 @@ std::map<int, Link> CruBar::initializeLinkMap()
 
 /// Initializes and Populates the linkMap with the GBT configuration parameters
 /// Also runs the corresponding configuration
-void CruBar::populateLinkMap(std::map<int, Link> &linkMap)
+void CruBar::populateLinkMap(std::map<int, Link>& linkMap)
 {
   linkMap = initializeLinkMap();
 
   Gbt gbt = Gbt(mPdaBar, linkMap, mWrapperCount);
 
   log("Configuring GBT");
-  for (auto& el: linkMap) {
+  for (auto& el : linkMap) {
     auto& link = el.second;
 
     if (!(mLinkMask.find(el.first) == mLinkMask.end())) {
       link.enabled = true;
 
       gbt.setInternalDataGenerator(link, 0);
-      
+
       link.gbtTxMode = GbtMode::Gbt;
       gbt.setTxMode(link, link.gbtTxMode); //TX is always GBT
 
@@ -667,11 +666,11 @@ void CruBar::populateLinkMap(std::map<int, Link> &linkMap)
       auto gbtMuxMapElement = mGbtMuxMap.find(el.first);
       if (gbtMuxMapElement != mGbtMuxMap.end()) { // Different MUXs per link
         link.gbtMux = gbtMuxMapElement->second;
-      } else {                                    // Specific MUX not found
+      } else { // Specific MUX not found
         link.gbtMux = mGbtMux;
       }
       gbt.setMux(el.first, link.gbtMux);
-      
+
       link.datapathMode = mDatapathMode;
       link.allowRejection = mAllowRejection;
     }
@@ -680,7 +679,7 @@ void CruBar::populateLinkMap(std::map<int, Link> &linkMap)
 
 int CruBar::getDdgBurstLength()
 {
-  uint32_t burst = (((readRegister(Cru::Registers::DDG_CTRL0.address) ) >> 20)/4 ) & 0xff;
+  uint32_t burst = (((readRegister(Cru::Registers::DDG_CTRL0.address)) >> 20) / 4) & 0xff;
   return Utilities::getWidth(burst);
 }
 
