@@ -8,32 +8,24 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 
-/// \file CardConfigurator.h
-/// \brief Definition of the CardConfigurator class.
+/// \file CardFinder.h
+/// \brief Definitions for the CardFinder methods.
 ///
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_READOUTCARD_CARDCONFIGURATOR_H_
-#define ALICEO2_INCLUDE_READOUTCARD_CARDCONFIGURATOR_H_
+#ifndef ALICEO2_INCLUDE_READOUTCARD_CARDFINDER_H_
+#define ALICEO2_INCLUDE_READOUTCARD_CARDFINDER_H_
 
-#include "ReadoutCard/Parameters.h"
+#include "ReadoutCard/CardDescriptor.h"
 
 namespace AliceO2
 {
 namespace roc
 {
 
-class CardConfigurator
-{
- public:
-  CardConfigurator(Parameters::CardIdType cardId, std::string pathToConfigFile, bool forceConfigure = false);
-  CardConfigurator(Parameters& parameters, bool forceConfigure = false);
-
- private:
-  void parseConfigFile(std::string pathToConfigFile, Parameters& parameters);
-};
+std::vector<CardDescriptor> findCards(); //Possibly extend with card types (crorc, cru)
 
 } // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_SRC_READOUTCARD_CARDCONFIGURATOR_H_
+#endif // ALICEO2_INCLUDE_READOUTCARD_CARDFINDER_H_
