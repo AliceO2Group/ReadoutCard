@@ -13,8 +13,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_SRC_READOUTCARD_CARDDESCRIPTOR_H_
-#define ALICEO2_SRC_READOUTCARD_CARDDESCRIPTOR_H_
+#ifndef ALICEO2_INCLUDE_READOUTCARD_CARDDESCRIPTOR_H_
+#define ALICEO2_INCLUDE_READOUTCARD_CARDDESCRIPTOR_H_
 
 #include <boost/optional.hpp>
 #include "ReadoutCard/CardType.h"
@@ -38,4 +38,4 @@ struct CardDescriptor {
 } // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_SRC_READOUTCARD_CARDDESCRIPTOR_H_
+#endif // ALICEO2_INCLUDE_READOUTCARD_CARDDESCRIPTOR_H_

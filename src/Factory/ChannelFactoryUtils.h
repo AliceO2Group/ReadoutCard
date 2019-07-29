@@ -15,8 +15,8 @@
 
 #include <map>
 #include <algorithm>
-#include "CardDescriptor.h"
 #include "ExceptionInternal.h"
+#include "ReadoutCard/CardDescriptor.h"
 #include "ReadoutCard/CardType.h"
 #include "ReadoutCard/Parameters.h"
 #ifdef ALICEO2_READOUTCARD_PDA_ENABLED

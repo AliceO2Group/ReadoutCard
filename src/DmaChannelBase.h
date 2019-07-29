@@ -22,10 +22,10 @@
 #include <mutex>
 #include <boost/optional.hpp>
 #include <InfoLogger/InfoLogger.hxx>
-#include "CardDescriptor.h"
 #include "ChannelPaths.h"
 #include "ExceptionInternal.h"
 #include "Pda/PdaLock.h"
+#include "ReadoutCard/CardDescriptor.h"
 #include "ReadoutCard/DmaChannelInterface.h"
 #include "ReadoutCard/Exception.h"
 #include "ReadoutCard/InterprocessLock.h"

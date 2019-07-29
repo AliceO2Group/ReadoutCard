@@ -18,9 +18,9 @@
 
 #include <memory>
 #include <string>
-#include "CardDescriptor.h"
 #include "Pda/PdaDevice.h"
 #include "ReadoutCard/CardType.h"
+#include "ReadoutCard/CardDescriptor.h"
 #include "ReadoutCard/Parameters.h"
 #include "ReadoutCard/ParameterTypes/PciAddress.h"
 #include "ReadoutCard/PciId.h"

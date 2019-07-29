@@ -122,6 +122,7 @@ if(PDA_FOUND)
     src/DmaChannelPdaBase.cxx
     src/BarInterfaceBase.cxx
     src/CardConfigurator.cxx
+    src/CardFinder.cxx
     src/Crorc/Crorc.cxx
     src/Crorc/CrorcDmaChannel.cxx
     src/Crorc/CrorcBar.cxx
