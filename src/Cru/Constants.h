@@ -18,7 +18,6 @@
 #define ALICEO2_READOUTCARD_CRU_CONSTANTS_H_
 
 #include "ReadoutCard/Cru.h"
-#include "Register.h"
 
 namespace AliceO2
 {
