@@ -13,8 +13,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_SRC_READOUTCARD_REGISTER_H_
-#define ALICEO2_SRC_READOUTCARD_REGISTER_H_
+#ifndef ALICEO2_INCLUDE_READOUTCARD_REGISTER_H_
+#define ALICEO2_INCLUDE_READOUTCARD_REGISTER_H_
 
 #include <cstdint>
 #include <cstddef>
@@ -61,4 +61,4 @@ struct IntervalRegister {
 } // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_SRC_READOUTCARD_REGISTER_H_
+#endif // ALICEO2_INCLUDE_READOUTCARD_REGISTER_H_

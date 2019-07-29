@@ -16,7 +16,7 @@
 #include "Sca.h"
 #include <chrono>
 #include <vector>
-#include "Register.h"
+#include "ReadoutCard/Register.h"
 #include "Utilities/Util.h"
 
 // TODO Sort out magic numbers
