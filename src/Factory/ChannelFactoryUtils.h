@@ -182,7 +182,6 @@ std::unique_ptr<Interface> channelFactoryHelper(const Parameters& /*params*/, in
   return makeDummy();
 
 #endif
-
 }
 
 } // namespace ChannelFactoryUtils

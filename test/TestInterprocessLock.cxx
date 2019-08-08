@@ -22,18 +22,18 @@
 
 #include "ReadoutCard/Exception.h"
 
-namespace {
+namespace
+{
 
 using namespace ::AliceO2::roc;
 namespace b = boost;
 namespace bip = boost::interprocess;
 namespace bfs = boost::filesystem;
 
-struct TestObject
-{
-    TestObject(const std::string& s, int i) : string(s), integer(i) {}
-    std::string string;
-    int integer;
+struct TestObject {
+  TestObject(const std::string& s, int i) : string(s), integer(i) {}
+  std::string string;
+  int integer;
 };
 
 const std::string namedMutexName("AliceO2_InterprocessMutex_Test");
@@ -45,7 +45,8 @@ void cleanupFiles()
   bfs::remove(lockFilePath);
 }
 
-#define CONSTRUCT_LOCK() Interprocess::Lock _test_lock {lockFilePath, namedMutexName}
+#define CONSTRUCT_LOCK() \
+  Interprocess::Lock _test_lock { lockFilePath, namedMutexName }
 
 void doLock()
 {
@@ -61,14 +62,13 @@ BOOST_AUTO_TEST_CASE(InterprocessMutexTestIntraprocess)
   std::atomic<bool> childAcquired(false);
 
   // Launch "child" thread that acquires the lock
-  auto future = std::async(std::launch::async, [&](){
+  auto future = std::async(std::launch::async, [&]() {
     try {
       CONSTRUCT_LOCK();
       childAcquired = true;
       conditionVariable.notify_all();
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
-    catch (const LockException& e) {
+    } catch (const LockException& e) {
       BOOST_FAIL("Child failed to acquire FileSharedObject");
     }
   });
@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE(InterprocessMutexTestIntraprocess)
   // Parent tries to acquire the lock
   std::mutex mutex;
   std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
-  auto status = conditionVariable.wait_for(lock, std::chrono::milliseconds(100), [&]{return childAcquired.load();});
+  auto status = conditionVariable.wait_for(lock, std::chrono::milliseconds(100), [&] { return childAcquired.load(); });
   if (!status) {
     BOOST_FAIL("Timed out or child failed to acquire lock");
   }
@@ -85,7 +85,6 @@ BOOST_AUTO_TEST_CASE(InterprocessMutexTestIntraprocess)
   // Wait on child thread
   future.get();
 }
-
 
 // Test the interprocess locking. Probably not 100% reliable test, since we rely on sleeps to "synchronize"
 // The procedure is:
@@ -106,13 +105,11 @@ BOOST_AUTO_TEST_CASE(InterprocessMutexTestInterprocess)
     }
     cleanupFiles();
     exit(0);
-  }
-  else if (pid > 0) {
+  } else if (pid > 0) {
     // Parent
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
     BOOST_CHECK_THROW(doLock(), FileLockException);
-  }
-  else {
+  } else {
     BOOST_FAIL("Failed to fork");
   }
 }

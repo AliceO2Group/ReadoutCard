@@ -25,11 +25,15 @@
 #include <boost/lexical_cast.hpp>
 #include "Common/System.h"
 
-namespace AliceO2 {
-namespace roc {
-namespace Utilities {
+namespace AliceO2
+{
+namespace roc
+{
+namespace Utilities
+{
 
-namespace {
+namespace
+{
 std::string slurp(std::string file)
 {
   std::ifstream ifstream(file);
@@ -39,7 +43,8 @@ std::string slurp(std::string file)
 }
 
 /// Splits string into rows and "columns"
-std::vector<std::vector<std::string>> tablify(std::string string) {
+std::vector<std::vector<std::string>> tablify(std::string string)
+{
   std::vector<std::string> lines;
   boost::split(lines, string, boost::is_any_of("\n"), boost::token_compress_on);
   std::vector<std::vector<std::string>> splitLines(lines.size());
@@ -49,21 +54,19 @@ std::vector<std::vector<std::string>> tablify(std::string string) {
   return splitLines;
 }
 
-struct Mapping
-{
-    uintptr_t addressStart;
-    uintptr_t addressEnd;
-    std::string permissions;
-    uintptr_t offset;
-    std::string dev;
-    size_t inode;
-    std::string path;
+struct Mapping {
+  uintptr_t addressStart;
+  uintptr_t addressEnd;
+  std::string permissions;
+  uintptr_t offset;
+  std::string dev;
+  size_t inode;
+  std::string path;
 };
 
-struct NumaMapping
-{
-    std::string path;
-    size_t pageSizeKiB;
+struct NumaMapping {
+  std::string path;
+  size_t pageSizeKiB;
 };
 
 std::vector<Mapping> getMaps()
@@ -111,11 +114,11 @@ std::map<uintptr_t, NumaMapping> getNumaMaps()
         }
       };
 
-      setKeyValue("file", [&](auto value){mapping.path = value;});
-      setKeyValue("kernelpagesize_kB", [&](auto value){mapping.pageSizeKiB = boost::lexical_cast<size_t>(value);});
+      setKeyValue("file", [&](auto value) { mapping.path = value; });
+      setKeyValue("kernelpagesize_kB", [&](auto value) { mapping.pageSizeKiB = boost::lexical_cast<size_t>(value); });
 
       if (item.find("huge") == 0) {
-        mapping.pageSizeKiB = 2*1024;
+        mapping.pageSizeKiB = 2 * 1024;
       }
     }
 
@@ -124,7 +127,6 @@ std::map<uintptr_t, NumaMapping> getNumaMaps()
 
   return maps;
 }
-
 
 } // Anonymous namespace
 
@@ -149,6 +151,6 @@ std::vector<MemoryMap> getMemoryMaps()
   return memoryMaps;
 }
 
-} // namespace Util
+} // namespace Utilities
 } // namespace roc
 } // namespace AliceO2

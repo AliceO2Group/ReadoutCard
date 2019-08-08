@@ -16,11 +16,13 @@
 
 #include "Crorc/CrorcBar.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 CrorcBar::CrorcBar(const Parameters& parameters)
-    : BarInterfaceBase(parameters)
+  : BarInterfaceBase(parameters)
 {
 }
 
@@ -47,7 +49,7 @@ boost::optional<std::string> CrorcBar::getFirmwareInfo()
 
   if (reserved != 0x2) {
     BOOST_THROW_EXCEPTION(CrorcException()
-        << ErrorInfo::Message("Static field of version register did not equal 0x2"));
+                          << ErrorInfo::Message("Static field of version register did not equal 0x2"));
   }
 
   std::ostringstream stream;

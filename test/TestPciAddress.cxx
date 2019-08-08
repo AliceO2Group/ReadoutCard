@@ -14,7 +14,8 @@
 
 using namespace ::AliceO2::roc;
 
-namespace {
+namespace
+{
 
 // Test string-based constructor
 BOOST_AUTO_TEST_CASE(PciAddressTest)
@@ -48,9 +49,9 @@ BOOST_AUTO_TEST_CASE(PciAddressTest3)
 // Test ranges
 BOOST_AUTO_TEST_CASE(PciAddressTest4)
 {
-  BOOST_CHECK_THROW(PciAddress(-1,  2,  3), ParameterException);
-  BOOST_CHECK_THROW(PciAddress( 1, -2,  3), ParameterException);
-  BOOST_CHECK_THROW(PciAddress( 1,  2, -3), ParameterException);
+  BOOST_CHECK_THROW(PciAddress(-1, 2, 3), ParameterException);
+  BOOST_CHECK_THROW(PciAddress(1, -2, 3), ParameterException);
+  BOOST_CHECK_THROW(PciAddress(1, 2, -3), ParameterException);
 
   BOOST_CHECK_NO_THROW(PciAddress(0xff, 0x1f, 7));
   BOOST_CHECK_THROW(PciAddress(0xff + 1, 0x1f + 0, 7 + 0), ParameterException);
@@ -65,7 +66,6 @@ BOOST_AUTO_TEST_CASE(PciAddressTest5)
   auto b = PciAddress(a.toString());
   BOOST_REQUIRE(a == b);
 }
-
 
 //  std::vector<std::string> strings { "hello", "1.23", "42" };
 //

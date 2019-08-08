@@ -16,14 +16,17 @@
 #include "ReadoutCard/ParameterTypes/GbtMode.h"
 #include "Utilities/Enum.h"
 
-namespace AliceO2 {
-namespace roc {
-namespace {
+namespace AliceO2
+{
+namespace roc
+{
+namespace
+{
 
 static const auto converter = Utilities::makeEnumConverter<GbtMode::type>("GbtMode", {
-  { GbtMode::Gbt, "GBT" },
-  { GbtMode::Wb,  "WB" },
-});
+                                                                                       { GbtMode::Gbt, "GBT" },
+                                                                                       { GbtMode::Wb, "WB" },
+                                                                                     });
 
 } // Anonymous namespace
 

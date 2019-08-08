@@ -16,16 +16,19 @@
 #include "ReadoutCard/ParameterTypes/GbtMux.h"
 #include "Utilities/Enum.h"
 
-namespace AliceO2 {
-namespace roc {
-namespace {
+namespace AliceO2
+{
+namespace roc
+{
+namespace
+{
 
 static const auto converter = Utilities::makeEnumConverter<GbtMux::type>("GbtMux", {
-  { GbtMux::Ttc, "TTC" },
-  { GbtMux::Ddg, "DDG" },
-  { GbtMux::Swt, "SWT" },
-  { GbtMux::Na,  "N/A" },
-});
+                                                                                     { GbtMux::Ttc, "TTC" },
+                                                                                     { GbtMux::Ddg, "DDG" },
+                                                                                     { GbtMux::Swt, "SWT" },
+                                                                                     { GbtMux::Na, "N/A" },
+                                                                                   });
 
 } // Anonymous namespace
 

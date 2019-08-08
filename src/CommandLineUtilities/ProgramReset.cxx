@@ -18,37 +18,37 @@
 #include "ReadoutCard/ChannelFactory.h"
 #include "ReadoutCard/MemoryMappedFile.h"
 
-namespace {
+namespace
+{
 using namespace AliceO2::roc::CommandLineUtilities;
 
-class ProgramReset: public Program
+class ProgramReset : public Program
 {
-  public:
+ public:
+  virtual Description getDescription()
+  {
+    return { "Reset", "Resets a channel", "roc-reset --id=12345 --channel=0 --reset=INTERNAL_DIU_SIU" };
+  }
 
-    virtual Description getDescription()
-    {
-      return {"Reset", "Resets a channel", "roc-reset --id=12345 --channel=0 --reset=INTERNAL_DIU_SIU"};
-    }
+  virtual void addOptions(boost::program_options::options_description& options)
+  {
+    Options::addOptionRegisterAddress(options);
+    Options::addOptionChannel(options);
+    Options::addOptionCardId(options);
+    Options::addOptionResetLevel(options);
+  }
 
-    virtual void addOptions(boost::program_options::options_description& options)
-    {
-      Options::addOptionRegisterAddress(options);
-      Options::addOptionChannel(options);
-      Options::addOptionCardId(options);
-      Options::addOptionResetLevel(options);
-    }
+  virtual void run(const boost::program_options::variables_map& map)
+  {
+    auto resetLevel = Options::getOptionResetLevel(map);
+    auto cardId = Options::getOptionCardId(map);
+    int channelNumber = Options::getOptionChannel(map);
 
-    virtual void run(const boost::program_options::variables_map& map)
-    {
-      auto resetLevel = Options::getOptionResetLevel(map);
-      auto cardId = Options::getOptionCardId(map);
-      int channelNumber = Options::getOptionChannel(map);
-
-      auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
-      params.setBufferParameters(AliceO2::roc::buffer_parameters::Null());
-      auto channel = AliceO2::roc::ChannelFactory().getDmaChannel(params);
-      channel->resetChannel(resetLevel);
-    }
+    auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
+    params.setBufferParameters(AliceO2::roc::buffer_parameters::Null());
+    auto channel = AliceO2::roc::ChannelFactory().getDmaChannel(params);
+    channel->resetChannel(resetLevel);
+  }
 };
 } // Anonymous namespace
 

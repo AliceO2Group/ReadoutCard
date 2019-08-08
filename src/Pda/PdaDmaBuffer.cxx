@@ -21,12 +21,15 @@
 #include "Pda/PdaLock.h"
 #include "ReadoutCard/InterprocessLock.h"
 
-namespace AliceO2 {
-namespace roc {
-namespace Pda {
+namespace AliceO2
+{
+namespace roc
+{
+namespace Pda
+{
 
 PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAddress, size_t userBufferSize,
-    int dmaBufferId, bool requireHugepage) : mPciDevice(pciDevice)
+                           int dmaBufferId, bool requireHugepage) : mPciDevice(pciDevice)
 {
   // Safeguard against PDA kernel module deadlocks, since it does not like parallel buffer registration
   try {
@@ -39,7 +42,7 @@ PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAd
   try {
     // Tell PDA we're using our already allocated userspace buffer.
     if (PciDevice_registerDMABuffer(pciDevice.get(), dmaBufferId, userBufferAddress, userBufferSize,
-        &mDmaBuffer) != PDA_SUCCESS) {
+                                    &mDmaBuffer) != PDA_SUCCESS) {
       // Failed to register it. Usually, this means a DMA buffer wasn't cleaned up properly (such as after a crash).
       // So, try to clean things up.
 
@@ -48,33 +51,32 @@ PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAd
       if (PciDevice_getDMABuffer(pciDevice.get(), dmaBufferId, &tempDmaBuffer) != PDA_SUCCESS) {
         // Give up
         BOOST_THROW_EXCEPTION(PdaException() << ErrorInfo::Message(
-            "Failed to register external DMA buffer; Failed to get previous buffer for cleanup"));
+                                "Failed to register external DMA buffer; Failed to get previous buffer for cleanup"));
       }
 
       // Free it
       if (PciDevice_deleteDMABuffer(pciDevice.get(), tempDmaBuffer) != PDA_SUCCESS) {
         // Give up
         BOOST_THROW_EXCEPTION(PdaException() << ErrorInfo::Message(
-            "Failed to register external DMA buffer; Failed to delete previous buffer for cleanup"));
+                                "Failed to register external DMA buffer; Failed to delete previous buffer for cleanup"));
       }
 
       // Retry the registration of our new buffer
       if (PciDevice_registerDMABuffer(pciDevice.get(), dmaBufferId, userBufferAddress, userBufferSize,
-          &mDmaBuffer) != PDA_SUCCESS) {
+                                      &mDmaBuffer) != PDA_SUCCESS) {
         // Give up
         BOOST_THROW_EXCEPTION(PdaException() << ErrorInfo::Message(
-            "Failed to register external DMA buffer; Failed retry after automatic cleanup of previous buffer"));
+                                "Failed to register external DMA buffer; Failed retry after automatic cleanup of previous buffer"));
       }
     }
-  }
-  catch (PdaException& e) {
-    addPossibleCauses(e, {"Program previously exited without cleaning up DMA buffer, reinserting DMA kernel module may "
-        " help, but ensure no channels are open before reinsertion (modprobe -r uio_pci_dma; modprobe uio_pci_dma"});
+  } catch (PdaException& e) {
+    addPossibleCauses(e, { "Program previously exited without cleaning up DMA buffer, reinserting DMA kernel module may "
+                           " help, but ensure no channels are open before reinsertion (modprobe -r uio_pci_dma; modprobe uio_pci_dma" });
     throw;
   }
 
   try {
-    DMABuffer_SGNode *sgList;
+    DMABuffer_SGNode* sgList;
     if (DMABuffer_getSGList(mDmaBuffer, &sgList) != PDA_SUCCESS) {
       BOOST_THROW_EXCEPTION(PdaException() << ErrorInfo::Message("Failed to get scatter-gather list"));
     }
@@ -86,8 +88,8 @@ PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAd
         if (node->length < hugePageMinSize) {
           BOOST_THROW_EXCEPTION(
             PdaException() << ErrorInfo::Message("Scatter-gather node smaller than 2 MiB (minimum hugepage"
-              " size. This means the IOMMU is off and the buffer is not backed by hugepages - an unsupported buffer "
-              "configuration."));
+                                                 " size. This means the IOMMU is off and the buffer is not backed by hugepages - an unsupported buffer "
+                                                 "configuration."));
         }
       }
 
@@ -102,10 +104,9 @@ PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAd
 
     if (mScatterGatherVector.empty()) {
       BOOST_THROW_EXCEPTION(PdaException() << ErrorInfo::Message(
-        "Failed to initialize scatter-gather list, was empty"));
+                              "Failed to initialize scatter-gather list, was empty"));
     }
-  }
-  catch (const PdaException& ) {
+  } catch (const PdaException&) {
     PciDevice_deleteDMABuffer(mPciDevice.get(), mDmaBuffer);
     throw;
   }
@@ -154,8 +155,8 @@ uintptr_t PdaDmaBuffer::getBusOffsetAddress(size_t offset) const
   }
 
   BOOST_THROW_EXCEPTION(Exception()
-      << ErrorInfo::Message("Physical offset address out of range")
-      << ErrorInfo::Offset(offset));
+                        << ErrorInfo::Message("Physical offset address out of range")
+                        << ErrorInfo::Offset(offset));
 }
 
 } // namespace Pda

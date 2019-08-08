@@ -22,23 +22,26 @@
 #include "Utilities/Util.h"
 #include "Utilities/SmartPointer.h"
 
-namespace AliceO2 {
-namespace roc {
-namespace Utilities {
+namespace AliceO2
+{
+namespace roc
+{
+namespace Utilities
+{
 namespace b = boost;
-namespace {
-constexpr size_t SIZE_2MiB = 2*1024*1024;
-constexpr size_t SIZE_1GiB = 1*1024*1024*1024;
+namespace
+{
+constexpr size_t SIZE_2MiB = 2 * 1024 * 1024;
+constexpr size_t SIZE_1GiB = 1 * 1024 * 1024 * 1024;
 } // Anonymous namespace
 
 std::string getDirectory(HugepageType hugepageType)
 {
-  return (b::format("/var/lib/hugetlbfs/global/pagesize-%s/")
-      % (hugepageType == HugepageType::Size2MiB ? "2MB" : "1GB")).str();
+  return (b::format("/var/lib/hugetlbfs/global/pagesize-%s/") % (hugepageType == HugepageType::Size2MiB ? "2MB" : "1GB")).str();
 }
 
 std::unique_ptr<MemoryMappedFile> tryMapFile(size_t bufferSize, std::string bufferName, bool deleteOnDestruction,
-    HugepageType* allocatedHugepageType)
+                                             HugepageType* allocatedHugepageType)
 {
   std::unique_ptr<MemoryMappedFile> memoryMappedFile;
   HugepageType attemptHugepageType;
@@ -58,9 +61,7 @@ std::unique_ptr<MemoryMappedFile> tryMapFile(size_t bufferSize, std::string buff
   auto createBuffer = [&](HugepageType hugepageType) {
     // Create buffer file
     std::string bufferFilePath = b::str(
-        b::format("/var/lib/hugetlbfs/global/pagesize-%1%/%2%")
-        % (hugepageType == HugepageType::Size2MiB ? "2MB" : "1GB")
-        % bufferName);
+      b::format("/var/lib/hugetlbfs/global/pagesize-%1%/%2%") % (hugepageType == HugepageType::Size2MiB ? "2MB" : "1GB") % bufferName);
     Utilities::resetSmartPtr(memoryMappedFile, bufferFilePath, bufferSize, deleteOnDestruction);
     if (allocatedHugepageType) {
       *allocatedHugepageType = hugepageType;
@@ -70,8 +71,7 @@ std::unique_ptr<MemoryMappedFile> tryMapFile(size_t bufferSize, std::string buff
   if (attemptHugepageType == HugepageType::Size1GiB) {
     try {
       createBuffer(HugepageType::Size1GiB);
-    }
-    catch (const MemoryMapException&) {
+    } catch (const MemoryMapException&) {
       // Failed to allocate buffer with 1GiB hugepages, falling back to 2MiB hugepages...
     }
   }

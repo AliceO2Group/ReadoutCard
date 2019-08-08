@@ -8,11 +8,13 @@
 #include "ReadoutCard/CardConfigurator.h"
 #include "ReadoutCard/ChannelFactory.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 CardConfigurator::CardConfigurator(Parameters::CardIdType cardId, std::string pathToConfigFile, bool forceConfigure)
-{ 
+{
   auto parameters = Parameters::makeParameters(cardId, 2); //have to make parameters for this case, bar2
   try {
     parseConfigFile(pathToConfigFile, parameters);
@@ -38,7 +40,6 @@ CardConfigurator::CardConfigurator(Parameters& parameters, bool forceConfigure)
   }
 }
 
-
 /// pathToConfigFile: Has to start with "file:"
 void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters& parameters)
 {
@@ -56,7 +57,6 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
   GbtMode::type gbtMode = GbtMode::type::Gbt;
   DownstreamData::type downstreamData = DownstreamData::type::Ctp;
 
-
   //Open the file
   try {
     if (!strncmp(pathToConfigFile.c_str(), "file:", 5)) {
@@ -70,52 +70,52 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
   }
 
   //* Global *//
-  for (auto globalGroup: ConfigFileBrowser(&configFile, "cru")) { //Is there another way to do this?
+  for (auto globalGroup : ConfigFileBrowser(&configFile, "cru")) { //Is there another way to do this?
     std::string parsedString;
     try {
       parsedString = configFile.getValue<std::string>(globalGroup + ".clock");
       clock = Clock::fromString(parsedString);
-    } catch(...) {
+    } catch (...) {
       throw std::runtime_error("Invalid or missing clock property");
     }
 
     try {
       parsedString = configFile.getValue<std::string>(globalGroup + ".datapathmode");
       datapathMode = DatapathMode::fromString(parsedString);
-    } catch(...) {
+    } catch (...) {
       throw std::runtime_error("Invalid or missing datapath mode property");
     }
 
     try {
       parsedString = configFile.getValue<std::string>(globalGroup + ".gbtmode");
       gbtMode = GbtMode::fromString(parsedString);
-    } catch(...) {
+    } catch (...) {
       throw("Invalid or missing gbtmode property");
     }
 
     try {
       parsedString = configFile.getValue<std::string>(globalGroup + ".downstreamdata");
       downstreamData = DownstreamData::fromString(parsedString);
-    } catch(...) {
+    } catch (...) {
       throw("Invalid or missing downstreamdata property");
     }
 
     try {
       loopback = configFile.getValue<bool>(globalGroup + ".loopback");
-    } catch(...) {
+    } catch (...) {
       throw("Invalid or missing loopback property");
     }
 
     try {
       ponUpstream = configFile.getValue<bool>(globalGroup + ".ponupstream");
-    } catch(...) {
+    } catch (...) {
       throw("Invalid or missing ponupstream property");
     }
 
     try {
       parsedString = configFile.getValue<std::string>(globalGroup + ".onuaddress");
       onuAddress = Hex::fromString(parsedString);
-    } catch(...) {
+    } catch (...) {
       throw("Invalid or missing onuAddress property");
     }
 
@@ -128,7 +128,7 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
 
     try {
       allowRejection = configFile.getValue<bool>(globalGroup + ".allowrejection");
-    } catch(...) {
+    } catch (...) {
       throw("Invalid or missing allowrejection property");
     }
   }
@@ -144,7 +144,7 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
   parameters.setAllowRejection(allowRejection);
 
   //* Per link *//
-  for (auto configGroup: ConfigFileBrowser(&configFile, "link")) {
+  for (auto configGroup : ConfigFileBrowser(&configFile, "link")) {
 
     bool enabled = false;
     std::string gbtMux;
@@ -154,8 +154,8 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
       try {
         enabled = configFile.getValue<bool>(configGroup + ".enabled");
         if (enabled) {
-          for (int i=0; i<24; i++) {
-            linkMask.insert((uint32_t) i);
+          for (int i = 0; i < 24; i++) {
+            linkMask.insert((uint32_t)i);
           }
         }
       } catch (...) {
@@ -164,10 +164,10 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
 
       try {
         gbtMux = configFile.getValue<std::string>(configGroup + ".gbtmux");
-        for (int i=0; i<24; i++) {
-          gbtMuxMap.insert(std::make_pair((uint32_t) i, GbtMux::fromString(gbtMux)));
+        for (int i = 0; i < 24; i++) {
+          gbtMuxMap.insert(std::make_pair((uint32_t)i, GbtMux::fromString(gbtMux)));
         }
-      } catch(...) {
+      } catch (...) {
         throw("Invalid or missing gbt mux property for all links");
       }
       continue;
@@ -175,7 +175,7 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
 
     /* configure for individual links */
     std::string linkIndexString = configGroup.substr(configGroup.find("k") + 1);
-    uint32_t linkIndex = std::stoul(linkIndexString, NULL, 10); 
+    uint32_t linkIndex = std::stoul(linkIndexString, NULL, 10);
 
     try {
       enabled = configFile.getValue<bool>(configGroup + ".enabled");
@@ -184,7 +184,7 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
       } else {
         linkMask.erase(linkIndex);
       }
-    } catch(...) {
+    } catch (...) {
       throw("Invalid or missing enabled property for link: " + linkIndexString);
     }
 
@@ -195,7 +195,7 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
       } else {
         gbtMuxMap.insert(std::make_pair(linkIndex, GbtMux::fromString(gbtMux)));
       }
-    } catch(...) {
+    } catch (...) {
       throw("Invalid or missing gbt mux set for link: " + linkIndexString);
     }
   }

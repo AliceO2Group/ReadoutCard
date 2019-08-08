@@ -16,17 +16,20 @@
 #include "ReadoutCard/ParameterTypes/LoopbackMode.h"
 #include "Utilities/Enum.h"
 
-namespace AliceO2 {
-namespace roc {
-namespace {
+namespace AliceO2
+{
+namespace roc
+{
+namespace
+{
 
 static const auto converter = Utilities::makeEnumConverter<LoopbackMode::type>("LoopbackMode", {
-  { LoopbackMode::None, "NONE" },
-  { LoopbackMode::Internal, "INTERNAL" },
-  { LoopbackMode::Diu, "DIU" },
-  { LoopbackMode::Siu, "SIU" },
-  { LoopbackMode::Ddg, "DDG" },
-});
+                                                                                                 { LoopbackMode::None, "NONE" },
+                                                                                                 { LoopbackMode::Internal, "INTERNAL" },
+                                                                                                 { LoopbackMode::Diu, "DIU" },
+                                                                                                 { LoopbackMode::Siu, "SIU" },
+                                                                                                 { LoopbackMode::Ddg, "DDG" },
+                                                                                               });
 
 } // Anonymous namespace
 
@@ -47,4 +50,3 @@ LoopbackMode::type LoopbackMode::fromString(const std::string& string)
 
 } // namespace roc
 } // namespace AliceO2
-

@@ -24,7 +24,8 @@
 #include "ReadoutCard/ChannelFactory.h"
 #include "ReadoutCard/Parameters.h"
 
-namespace {
+namespace
+{
 using namespace AliceO2::roc::CommandLineUtilities;
 namespace bpy = boost::python;
 
@@ -46,164 +47,161 @@ roc.register_read_32(channel, 0x40)
 roc.register_write_32(channel, 0x40, 123)
 )";
 
-
 AliceO2::roc::Parameters::CardIdType sCardId;
 
 /// Channels for Python interface
 std::map<int, AliceO2::roc::ChannelFactory::BarSharedPtr> sChannelMap;
 
-struct PythonWrapper
-{
-    static AliceO2::roc::BarInterface* getChannel(int channelNumber)
-    {
-      auto found = sChannelMap.find(channelNumber);
-      if (found != sChannelMap.end()) {
-        // Channel is already opened
-        return found->second.get();
-      } else {
-        // Channel is not yet opened, so we open it, insert it into the map, and return it
-        auto params = AliceO2::roc::Parameters::makeParameters(sCardId, channelNumber);
-        auto inserted =
-            sChannelMap.insert(std::make_pair(channelNumber, AliceO2::roc::ChannelFactory().getBar(params))).first;
-        return inserted->second.get();
-      }
+struct PythonWrapper {
+  static AliceO2::roc::BarInterface* getChannel(int channelNumber)
+  {
+    auto found = sChannelMap.find(channelNumber);
+    if (found != sChannelMap.end()) {
+      // Channel is already opened
+      return found->second.get();
+    } else {
+      // Channel is not yet opened, so we open it, insert it into the map, and return it
+      auto params = AliceO2::roc::Parameters::makeParameters(sCardId, channelNumber);
+      auto inserted =
+        sChannelMap.insert(std::make_pair(channelNumber, AliceO2::roc::ChannelFactory().getBar(params))).first;
+      return inserted->second.get();
     }
+  }
 
-    static int registerRead(int channelNumber, uint32_t address)
-    {
-      return getChannel(channelNumber)->readRegister(address / 4);
-    }
+  static int registerRead(int channelNumber, uint32_t address)
+  {
+    return getChannel(channelNumber)->readRegister(address / 4);
+  }
 
-    static void registerWrite(int channelNumber, uint32_t address, uint32_t value)
-    {
-      return getChannel(channelNumber)->writeRegister(address / 4, value);
-    }
+  static void registerWrite(int channelNumber, uint32_t address, uint32_t value)
+  {
+    return getChannel(channelNumber)->writeRegister(address / 4, value);
+  }
 
-    /// Puts this class into the given Python namespace
-    static void putClass(bpy::object& mainNamespace)
-    {
-      auto className = "roc";
-      auto readName = "register_read_32";
-      auto writeName = "register_write_32";
-      auto readDoc =
-          "Read the 32-bit value at given 32-bit aligned address\n"
-          "\n"
-          "Args:\n"
-          "    channel: Number of the channel\n"
-          "    index: 32-bit aligned address of the register\n"
-          "Returns:\n"
-          "    The 32-bit value of the register";
-      auto writeDoc =
-          "Write a 32-bit value at given 32-bit aligned address\n"
-          "\n"
-          "Args:\n"
-          "    channel: Number of the channel\n"
-          "    index: 32-bit aligned address of the register\n"
-          "    value: 32-bit value to write to the register";
+  /// Puts this class into the given Python namespace
+  static void putClass(bpy::object& mainNamespace)
+  {
+    auto className = "roc";
+    auto readName = "register_read_32";
+    auto writeName = "register_write_32";
+    auto readDoc =
+      "Read the 32-bit value at given 32-bit aligned address\n"
+      "\n"
+      "Args:\n"
+      "    channel: Number of the channel\n"
+      "    index: 32-bit aligned address of the register\n"
+      "Returns:\n"
+      "    The 32-bit value of the register";
+    auto writeDoc =
+      "Write a 32-bit value at given 32-bit aligned address\n"
+      "\n"
+      "Args:\n"
+      "    channel: Number of the channel\n"
+      "    index: 32-bit aligned address of the register\n"
+      "    value: 32-bit value to write to the register";
 
-      mainNamespace[className] = bpy::class_<PythonWrapper>(className)
-          .def(readName, &registerRead, readDoc).staticmethod(readName)
-          .def(writeName, &registerWrite, writeDoc).staticmethod(writeName);
-    }
+    mainNamespace[className] = bpy::class_<PythonWrapper>(className)
+                                 .def(readName, &registerRead, readDoc)
+                                 .staticmethod(readName)
+                                 .def(writeName, &registerWrite, writeDoc)
+                                 .staticmethod(writeName);
+  }
 };
 
 class ProgramRunScript : public Program
 {
-  public:
+ public:
+  virtual Description getDescription()
+  {
+    return { "Run script", "Runs a Python script to perform actions on a channel",
+             "roc-run-script --id=12345 --script=myscript.py" };
+  }
 
-    virtual Description getDescription()
-    {
-      return {"Run script", "Runs a Python script to perform actions on a channel",
-          "roc-run-script --id=12345 --script=myscript.py"};
+  virtual void addOptions(boost::program_options::options_description& options)
+  {
+    Options::addOptionCardId(options);
+    options.add_options()("script", boost::program_options::value<std::string>(&mScriptFilename), "Python script path");
+    options.add_options()("example", boost::program_options::bool_switch(&mPrintExample), "Print example script");
+  }
+
+  virtual void run(const boost::program_options::variables_map& map)
+  {
+    std::cout << "NOTE: this utility is deprecated now that the library itself can be used as a Python module.\n"
+                 "See the README.md for more details\n";
+
+    if (mPrintExample) {
+      std::cout << sExampleScript << '\n';
+      return;
     }
 
-    virtual void addOptions(boost::program_options::options_description& options)
-    {
-      Options::addOptionCardId(options);
-      options.add_options()
-          ("script", boost::program_options::value<std::string>(&mScriptFilename), "Python script path")
-          ("example", boost::program_options::bool_switch(&mPrintExample), "Print example script");
+    if (mScriptFilename.empty()) {
+      BOOST_THROW_EXCEPTION(AliceO2::roc::ProgramOptionException()
+                            << AliceO2::roc::ErrorInfo::Message("Empty script path"));
     }
 
-    virtual void run(const boost::program_options::variables_map& map)
-    {
-      std::cout << "NOTE: this utility is deprecated now that the library itself can be used as a Python module.\n"
-          "See the README.md for more details\n";
+    sCardId = Options::getOptionCardId(map);
 
-      if (mPrintExample) {
-        std::cout << sExampleScript << '\n';
-        return;
-      }
+    try {
+      // Initialize Python environment
+      Py_Initialize();
+      bpy::object mainModule = bpy::import("__main__");
+      bpy::object mainNamespace = mainModule.attr("__dict__");
 
-      if (mScriptFilename.empty()) {
-        BOOST_THROW_EXCEPTION(AliceO2::roc::ProgramOptionException()
-            << AliceO2::roc::ErrorInfo::Message("Empty script path"));
-      }
+      // Initialize interface wrapper
+      PythonWrapper::putClass(mainNamespace);
 
-      sCardId = Options::getOptionCardId(map);
+      // Close channels on scope exit
+      AliceO2::Common::GuardFunction guard = { [&] { sChannelMap.clear(); } };
 
-      try {
-        // Initialize Python environment
-        Py_Initialize();
-        bpy::object mainModule = bpy::import("__main__");
-        bpy::object mainNamespace = mainModule.attr("__dict__");
-
-        // Initialize interface wrapper
-        PythonWrapper::putClass(mainNamespace);
-
-        // Close channels on scope exit
-        AliceO2::Common::GuardFunction guard = {[&]{ sChannelMap.clear(); }};
-
-        // Execute the script
-        exec_file(mScriptFilename.c_str(), mainNamespace);
-      }
-      catch (const bpy::error_already_set& e) {
-        std::cout << "Error in Python: " << makePythonExceptionMessage() << std::endl;
-      }
+      // Execute the script
+      exec_file(mScriptFilename.c_str(), mainNamespace);
+    } catch (const bpy::error_already_set& e) {
+      std::cout << "Error in Python: " << makePythonExceptionMessage() << std::endl;
     }
+  }
 
-    /// Extracts information from the current Python error and creates a string representation
-    /// Based on:
-    /// http://thejosephturner.com/blog/post/embedding-python-in-c-applications-with-boostpython-part-2/
-    std::string makePythonExceptionMessage()
-    {
-      PyObject* typePointer = nullptr;
-      PyObject* valuePointer = nullptr;
-      PyObject* tracebackPointer = nullptr;
-      PyErr_Fetch(&typePointer, &valuePointer, &tracebackPointer);
+  /// Extracts information from the current Python error and creates a string representation
+  /// Based on:
+  /// http://thejosephturner.com/blog/post/embedding-python-in-c-applications-with-boostpython-part-2/
+  std::string makePythonExceptionMessage()
+  {
+    PyObject* typePointer = nullptr;
+    PyObject* valuePointer = nullptr;
+    PyObject* tracebackPointer = nullptr;
+    PyErr_Fetch(&typePointer, &valuePointer, &tracebackPointer);
 
-      std::string returnString("Unfetchable Python error");
+    std::string returnString("Unfetchable Python error");
 
-      auto addString = [&](PyObject* object, std::string errorMessage) {
-        if (object != nullptr) {
-          bpy::handle<> handle(object);
-          bpy::str string(handle);
-          bpy::extract<std::string> extractedString(string);
-          returnString += extractedString.check()
-              ? extractedString()
-              : errorMessage;
-        }
-      };
-
-      addString(typePointer, "Unknown exception type");
-      addString(valuePointer, ": Unparseable Python error");
-
-      if (tracebackPointer != nullptr) {
-        bpy::object traceback(bpy::import("traceback"));
-        bpy::object format(traceback.attr("format_tb"));
-        bpy::object list(format(bpy::handle<>(tracebackPointer)));
-        bpy::object string(bpy::str("\n").join(list));
+    auto addString = [&](PyObject* object, std::string errorMessage) {
+      if (object != nullptr) {
+        bpy::handle<> handle(object);
+        bpy::str string(handle);
         bpy::extract<std::string> extractedString(string);
         returnString += extractedString.check()
-            ? extractedString()
-            : ": Unparseable Python traceback";
+                          ? extractedString()
+                          : errorMessage;
       }
+    };
 
-      return returnString;
+    addString(typePointer, "Unknown exception type");
+    addString(valuePointer, ": Unparseable Python error");
+
+    if (tracebackPointer != nullptr) {
+      bpy::object traceback(bpy::import("traceback"));
+      bpy::object format(traceback.attr("format_tb"));
+      bpy::object list(format(bpy::handle<>(tracebackPointer)));
+      bpy::object string(bpy::str("\n").join(list));
+      bpy::extract<std::string> extractedString(string);
+      returnString += extractedString.check()
+                        ? extractedString()
+                        : ": Unparseable Python traceback";
     }
 
-    std::string mScriptFilename;
-    bool mPrintExample = false;
+    return returnString;
+  }
+
+  std::string mScriptFilename;
+  bool mPrintExample = false;
 };
 } // Anonymous namespace
 

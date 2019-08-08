@@ -34,46 +34,47 @@ using std::cout;
 using std::endl;
 using namespace std::literals;
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
-    : DmaChannelPdaBase(parameters, allowedChannels()), //
-    mPageSize(parameters.getDmaPageSize().get_value_or(DMA_PAGE_SIZE)), // 8 kB default for uniformity with CRU
-    mInitialResetLevel(ResetLevel::Internal), // It's good to reset at least the card channel in general
-    mSTBRD(parameters.getStbrdEnabled().get_value_or(false)), //TODO: Set as a parameter
-    mUseFeeAddress(false), // Not sure
+  : DmaChannelPdaBase(parameters, allowedChannels()),                                      //
+    mPageSize(parameters.getDmaPageSize().get_value_or(DMA_PAGE_SIZE)),                    // 8 kB default for uniformity with CRU
+    mInitialResetLevel(ResetLevel::Internal),                                              // It's good to reset at least the card channel in general
+    mSTBRD(parameters.getStbrdEnabled().get_value_or(false)),                              //TODO: Set as a parameter
+    mUseFeeAddress(false),                                                                 // Not sure
     mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)), // Internal loopback by default
-    mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)), // Use data generator by default
-    mGeneratorPattern(parameters.getGeneratorPattern().get_value_or(GeneratorPattern::Incremental)), 
-    mGeneratorMaximumEvents(0), // Infinite events
-    mGeneratorInitialValue(0), // Start from 0
-    mGeneratorInitialWord(0), // First word
-    mGeneratorSeed(mGeneratorPattern == GeneratorPattern::Random ? 1 : 0), // We use a seed for random only
+    mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)),                // Use data generator by default
+    mGeneratorPattern(parameters.getGeneratorPattern().get_value_or(GeneratorPattern::Incremental)),
+    mGeneratorMaximumEvents(0),                                                    // Infinite events
+    mGeneratorInitialValue(0),                                                     // Start from 0
+    mGeneratorInitialWord(0),                                                      // First word
+    mGeneratorSeed(mGeneratorPattern == GeneratorPattern::Random ? 1 : 0),         // We use a seed for random only
     mGeneratorDataSize(parameters.getGeneratorDataSize().get_value_or(mPageSize)), // Can use page size
-    mUseContinuousReadout(parameters.getReadoutMode().is_initialized() ?
-            parameters.getReadoutModeRequired() == ReadoutMode::Continuous : false)
+    mUseContinuousReadout(parameters.getReadoutMode().is_initialized() ? parameters.getReadoutModeRequired() == ReadoutMode::Continuous : false)
 {
   // Check that the DMA page is valid
   if (mPageSize != DMA_PAGE_SIZE) {
     BOOST_THROW_EXCEPTION(CrorcException() << ErrorInfo::Message("CRORC only supports 8KiB DMA page size")
-      << ErrorInfo::DmaPageSize(mPageSize));
+                                           << ErrorInfo::DmaPageSize(mPageSize));
   }
-  
+
   // Check that the loopback is valid. If not throw
   if (mLoopbackMode == LoopbackMode::Ddg) {
     BOOST_THROW_EXCEPTION(CruException() << ErrorInfo::Message("CRORC does not support given loopback mode")
-      << ErrorInfo::LoopbackMode(mLoopbackMode));
+                                         << ErrorInfo::LoopbackMode(mLoopbackMode));
   }
 
   // Set mRDYRX if generator is disabled and mSTBRD is false
   if (!mGeneratorEnabled) {
     mRDYRX = mSTBRD ? false : true;
   }
-  
+
   // Prep for BAR
   auto bar = ChannelFactory().getBar(parameters);
-  crorcBar = std::move(std::dynamic_pointer_cast<CrorcBar> (bar)); // Initialize bar0
+  crorcBar = std::move(std::dynamic_pointer_cast<CrorcBar>(bar)); // Initialize bar0
 
   // Create and register our ReadyFIFO buffer
   log("Initializing ReadyFIFO DMA buffer", InfoLogger::InfoLogger::Debug);
@@ -83,15 +84,15 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
     constexpr auto FIFO_SIZE = sizeof(ReadyFifo);
     Utilities::resetSmartPtr(mBufferFifoFile, getPaths().fifo(), FIFO_SIZE, true);
     Utilities::resetSmartPtr(mPdaDmaBufferFifo, getRocPciDevice().getPciDevice(), mBufferFifoFile->getAddress(),
-        FIFO_SIZE, getPdaDmaBufferIndexFifo(getChannelNumber()), false);// note the 'false' at the end specifies non-hugepage memory
+                             FIFO_SIZE, getPdaDmaBufferIndexFifo(getChannelNumber()), false); // note the 'false' at the end specifies non-hugepage memory
 
     const auto& entry = mPdaDmaBufferFifo->getScatterGatherList().at(0);
     if (entry.size < FIFO_SIZE) {
       // Something must've failed at some point
       BOOST_THROW_EXCEPTION(Exception()
-          << ErrorInfo::Message("Scatter gather list entry for internal FIFO was too small")
-          << ErrorInfo::ScatterGatherEntrySize(entry.size)
-          << ErrorInfo::FifoSize(FIFO_SIZE));
+                            << ErrorInfo::Message("Scatter gather list entry for internal FIFO was too small")
+                            << ErrorInfo::ScatterGatherEntrySize(entry.size)
+                            << ErrorInfo::FifoSize(FIFO_SIZE));
     }
     mReadyFifoAddressUser = entry.addressUser;
     mReadyFifoAddressBus = entry.addressBus;
@@ -103,8 +104,9 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
   deviceResetChannel(mInitialResetLevel);
 }
 
-auto CrorcDmaChannel::allowedChannels() -> AllowedChannels {
-  return {0, 1, 2, 3, 4, 5};
+auto CrorcDmaChannel::allowedChannels() -> AllowedChannels
+{
+  return { 0, 1, 2, 3, 4, 5 };
 }
 
 CrorcDmaChannel::~CrorcDmaChannel()
@@ -217,7 +219,7 @@ void CrorcDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)
     log("Switching off CRORC loopback");
     getCrorc().setLoopbackOff();
     std::this_thread::sleep_for(100ms);
-   
+
     log("Resetting DIU");
     getCrorc().resetCommand(Rorc::Reset::DIU, mDiuConfig);
     std::this_thread::sleep_for(100ms);
@@ -228,8 +230,7 @@ void CrorcDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)
 
     status = getCrorc().ddlReadDiu(0, timeout);
     if (((status.stw >> 15) & 0x7) == 0x6) {
-      BOOST_THROW_EXCEPTION(Exception() << 
-          ErrorInfo::Message("SIU in no signal state (probably not connected), unable to reset SIU."));
+      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("SIU in no signal state (probably not connected), unable to reset SIU."));
     }
 
     status = getCrorc().ddlReadSiu(0, timeout);
@@ -264,7 +265,7 @@ void CrorcDmaChannel::armDdl(ResetLevel::type resetLevel)
 
       getCrorc().armDdl(Rorc::Reset::RORC, mDiuConfig);
       std::this_thread::sleep_for(100ms);
-   
+
       if ((resetLevel == ResetLevel::InternalDiuSiu) && (mLoopbackMode != LoopbackMode::Diu)) //SIU & NONE
       {
         getCrorc().assertLinkUp();
@@ -278,8 +279,7 @@ void CrorcDmaChannel::armDdl(ResetLevel::type resetLevel)
     getCrorc().resetCommand(Rorc::Reset::FF, mDiuConfig);
     std::this_thread::sleep_for(100ms); /// XXX Give card some time to reset the FreeFIFO
     getCrorc().assertFreeFifoEmpty();
-  }
-  catch (Exception& e) {
+  } catch (Exception& e) {
     e << ErrorInfo::ResetLevel(resetLevel);
     e << ErrorInfo::LoopbackMode(mLoopbackMode);
     throw;
@@ -292,7 +292,7 @@ void CrorcDmaChannel::armDdl(ResetLevel::type resetLevel)
 void CrorcDmaChannel::startDataGenerator()
 {
   getCrorc().armDataGenerator(mGeneratorInitialValue, mGeneratorInitialWord, mGeneratorPattern, mGeneratorDataSize,
-      mGeneratorSeed);
+                              mGeneratorSeed);
 
   if (LoopbackMode::Internal == mLoopbackMode) {
     getCrorc().setLoopbackOn();
@@ -345,7 +345,7 @@ void CrorcDmaChannel::pushSuperpage(Superpage superpage)
 
   if (superpage.getSize() != SUPERPAGE_SIZE) {
     BOOST_THROW_EXCEPTION(CrorcException()
-      << ErrorInfo::Message("Could not enqueue superpage, the C-RORC backend only supports superpage sizes of 1 MiB"));
+                          << ErrorInfo::Message("Could not enqueue superpage, the C-RORC backend only supports superpage sizes of 1 MiB"));
   }
 
   if (mTransferQueue.size() >= TRANSFER_QUEUE_CAPACITY) {
@@ -354,14 +354,15 @@ void CrorcDmaChannel::pushSuperpage(Superpage superpage)
 
   if (mFreeFifoSize >= READYFIFO_ENTRIES) {
     BOOST_THROW_EXCEPTION(Exception()
-      << ErrorInfo::Message("Could not push superpage, firmware queue was full (this should never happen)"));
+                          << ErrorInfo::Message("Could not push superpage, firmware queue was full (this should never happen)"));
   }
-  
+
   for (int i = 0; i < READYFIFO_ENTRIES; i++) { // *always* push 128 FIFO entries
     auto busAddress = getBusOffsetAddress(superpage.getOffset() + i * mPageSize);
     pushFreeFifoPage(i, busAddress);
   }
-  mFreeFifoSize = READYFIFO_ENTRIES;;
+  mFreeFifoSize = READYFIFO_ENTRIES;
+  ;
   mTransferQueue.push_back(superpage);
 }
 
@@ -388,8 +389,8 @@ void CrorcDmaChannel::fillSuperpages()
 
   // Check for arrivals & handle them
   if (!mTransferQueue.empty()) {
-    auto isArrived = [&](int descriptorIndex) {return dataArrived(descriptorIndex) == DataArrivalStatus::WholeArrived;};
-    auto resetDescriptor = [&](int descriptorIndex) {getReadyFifoUser()->entries[descriptorIndex].reset();};
+    auto isArrived = [&](int descriptorIndex) { return dataArrived(descriptorIndex) == DataArrivalStatus::WholeArrived; };
+    auto resetDescriptor = [&](int descriptorIndex) { getReadyFifoUser()->entries[descriptorIndex].reset(); };
 
     while (mFreeFifoSize > 0) {
       if (isArrived(mFreeFifoBack)) {
@@ -397,7 +398,7 @@ void CrorcDmaChannel::fillSuperpages()
 
         // Write length of the DMA page in the RDH
         auto writeRdhLength = [](uintptr_t dmaPageAddress, uint32_t length) {
-          auto writeTo = reinterpret_cast<volatile uint32_t*> (dmaPageAddress + sizeof(uint32_t) * 2); //writeTo the 3rd word
+          auto writeTo = reinterpret_cast<volatile uint32_t*>(dmaPageAddress + sizeof(uint32_t) * 2); //writeTo the 3rd word
           uint32_t shiftedLength = (length << 16) & 0xffff0000;
           *writeTo |= shiftedLength; //Only the 16 MSBs
         };
@@ -469,19 +470,19 @@ CrorcDmaChannel::DataArrivalStatus::type CrorcDmaChannel::dataArrived(int index)
     if ((status & (1 << 31)) != 0) {
       // The error bit is set
       BOOST_THROW_EXCEPTION(CrorcDataArrivalException()
-          << ErrorInfo::Message("Data arrival status word contains error bits")
-          << ErrorInfo::ReadyFifoStatus(status)
-          << ErrorInfo::ReadyFifoLength(length)
-          << ErrorInfo::FifoIndex(index));
+                            << ErrorInfo::Message("Data arrival status word contains error bits")
+                            << ErrorInfo::ReadyFifoStatus(status)
+                            << ErrorInfo::ReadyFifoLength(length)
+                            << ErrorInfo::FifoIndex(index));
     }
     return DataArrivalStatus::WholeArrived;
   }
 
   BOOST_THROW_EXCEPTION(CrorcDataArrivalException()
-      << ErrorInfo::Message("Unrecognized data arrival status word")
-      << ErrorInfo::ReadyFifoStatus(status)
-      << ErrorInfo::ReadyFifoLength(length)
-      << ErrorInfo::FifoIndex(index));
+                        << ErrorInfo::Message("Unrecognized data arrival status word")
+                        << ErrorInfo::ReadyFifoStatus(status)
+                        << ErrorInfo::ReadyFifoLength(length)
+                        << ErrorInfo::FifoIndex(index));
 }
 
 CardType::type CrorcDmaChannel::getCardType()
@@ -501,4 +502,3 @@ boost::optional<std::string> CrorcDmaChannel::getFirmwareInfo()
 
 } // namespace roc
 } // namespace AliceO2
-

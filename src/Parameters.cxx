@@ -25,15 +25,17 @@
 #include <boost/variant.hpp>
 #include "ExceptionInternal.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 /// Variant used for internal storage of parameters
-using Variant = boost::variant<size_t, int32_t, bool, Parameters::BufferParametersType, Parameters::CardIdType, 
-  Parameters::GeneratorLoopbackType, Parameters::GeneratorPatternType, Parameters::ReadoutModeType,
-  Parameters::LinkMaskType, Parameters::AllowRejectionType, Parameters::ClockType, Parameters::CruIdType,
-  Parameters::DatapathModeType,  Parameters::DownstreamDataType, Parameters::GbtModeType, Parameters::GbtMuxType,
-  Parameters::GbtMuxMapType, Parameters::PonUpstreamEnabledType,Parameters::OnuAddressType>;
+using Variant = boost::variant<size_t, int32_t, bool, Parameters::BufferParametersType, Parameters::CardIdType,
+                               Parameters::GeneratorLoopbackType, Parameters::GeneratorPatternType, Parameters::ReadoutModeType,
+                               Parameters::LinkMaskType, Parameters::AllowRejectionType, Parameters::ClockType, Parameters::CruIdType,
+                               Parameters::DatapathModeType, Parameters::DownstreamDataType, Parameters::GbtModeType, Parameters::GbtMuxType,
+                               Parameters::GbtMuxMapType, Parameters::PonUpstreamEnabledType, Parameters::OnuAddressType>;
 
 using KeyType = const char*;
 
@@ -41,13 +43,13 @@ using KeyType = const char*;
 using Map = std::map<KeyType, Variant>;
 
 /// PIMPL for hiding Parameters implementation
-struct ParametersPimpl
-{
-    /// Map for storage of parameters
-    Map map;
+struct ParametersPimpl {
+  /// Map for storage of parameters
+  Map map;
 };
 
-namespace {
+namespace
+{
 
 /// Set a parameter from the map
 /// \tparam T The parameter type to get
@@ -55,7 +57,7 @@ namespace {
 template <class T>
 void setParam(Map& map, KeyType key, const T& value)
 {
-    map[key] = Variant { value };
+  map[key] = Variant{ value };
 }
 
 /// Get a parameter from the map
@@ -86,8 +88,8 @@ auto getParamRequired(const Map& map, KeyType key) -> T
     return *optional;
   } else {
     BOOST_THROW_EXCEPTION(ParameterException()
-        << ErrorInfo::Message("Parameter was not set")
-        << ErrorInfo::ParameterKey(key));
+                          << ErrorInfo::Message("Parameter was not set")
+                          << ErrorInfo::ParameterKey(key));
   }
 }
 } // Anonymous namespace
@@ -95,22 +97,22 @@ auto getParamRequired(const Map& map, KeyType key) -> T
 /// Helper macro to implement getters/setters
 /// \param _param_name The name of the parameter
 /// \param _key_string The string for the parameter's map key
-#define _PARAMETER_FUNCTIONS(_param_name, _key_string)\
-auto Parameters::set##_param_name(_param_name##Type value) -> Parameters&\
-{\
-  setParam(mPimpl->map, _key_string, value);\
-  return *this;\
-}\
-\
-auto Parameters::get##_param_name() const -> boost::optional<_param_name##Type>\
-{\
-  return getParam<_param_name##Type>(mPimpl->map, _key_string);\
-}\
-\
-auto Parameters::get##_param_name##Required() const -> _param_name##Type\
-{\
-  return getParamRequired<_param_name##Type>(mPimpl->map, _key_string);\
-}
+#define _PARAMETER_FUNCTIONS(_param_name, _key_string)                          \
+  auto Parameters::set##_param_name(_param_name##Type value)->Parameters&       \
+  {                                                                             \
+    setParam(mPimpl->map, _key_string, value);                                  \
+    return *this;                                                               \
+  }                                                                             \
+                                                                                \
+  auto Parameters::get##_param_name() const->boost::optional<_param_name##Type> \
+  {                                                                             \
+    return getParam<_param_name##Type>(mPimpl->map, _key_string);               \
+  }                                                                             \
+                                                                                \
+  auto Parameters::get##_param_name##Required() const->_param_name##Type        \
+  {                                                                             \
+    return getParamRequired<_param_name##Type>(mPimpl->map, _key_string);       \
+  }
 
 _PARAMETER_FUNCTIONS(BufferParameters, "buffer_parameters")
 _PARAMETER_FUNCTIONS(CardId, "card_id")
@@ -202,8 +204,7 @@ auto Parameters::linkMaskFromString(const std::string& string) -> LinkMaskType
         links.insert(boost::lexical_cast<uint32_t>(commaSeparated));
       }
     }
-  }
-  catch (boost::bad_lexical_cast& e) {
+  } catch (boost::bad_lexical_cast& e) {
     BOOST_THROW_EXCEPTION(
       ParseException() << ErrorInfo::Message(std::string("Invalid link string format: ") + e.what()));
   }
@@ -213,7 +214,7 @@ auto Parameters::linkMaskFromString(const std::string& string) -> LinkMaskType
 
 auto Parameters::cardIdFromString(const std::string& string) -> CardIdType
 {
-  std::regex e ("^#[0-9]+$");
+  std::regex e("^#[0-9]+$");
   if (auto pciAddressMaybe = PciAddress::fromString(string)) {
     return *pciAddressMaybe;
   } else if (auto pciSequenceNumberMaybe = PciSequenceNumber::fromString(string)) {

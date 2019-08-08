@@ -33,11 +33,11 @@ BOOST_AUTO_TEST_CASE(ParametersConstructors)
 BOOST_AUTO_TEST_CASE(ParametersPutGetTest)
 {
   Parameters p = Parameters::makeParameters(SERIAL_NUMBER, CHANNEL_NUMBER)
-      .setDmaPageSize(DMA_PAGE_SIZE)
-      .setGeneratorDataSize(GENERATOR_DATA_SIZE)
-      .setGeneratorEnabled(GENERATOR_ENABLED)
-      .setGeneratorLoopback(GENERATOR_LOOPBACK_MODE)
-      .setBufferParameters(buffer_parameters::File{"/my/file.shm", 0});
+                   .setDmaPageSize(DMA_PAGE_SIZE)
+                   .setGeneratorDataSize(GENERATOR_DATA_SIZE)
+                   .setGeneratorEnabled(GENERATOR_ENABLED)
+                   .setGeneratorLoopback(GENERATOR_LOOPBACK_MODE)
+                   .setBufferParameters(buffer_parameters::File{ "/my/file.shm", 0 });
 
   BOOST_REQUIRE(boost::get<int>(p.getCardId().get()) == SERIAL_NUMBER);
   BOOST_REQUIRE(p.getChannelNumber().get_value_or(0) == CHANNEL_NUMBER);
@@ -66,12 +66,12 @@ BOOST_AUTO_TEST_CASE(ParametersThrowTest)
 BOOST_AUTO_TEST_CASE(ParametersLinkMaskFromString)
 {
   {
-    auto a = Parameters::LinkMaskType{0, 1, 2, 3, 4, 5};
+    auto a = Parameters::LinkMaskType{ 0, 1, 2, 3, 4, 5 };
     BOOST_CHECK(Parameters::linkMaskFromString("0,1,2,3,4,5") == a);
     BOOST_CHECK(Parameters::linkMaskFromString("0-5") == a);
   }
   {
-    auto b = Parameters::LinkMaskType{0, 1, 4, 5, 6};
+    auto b = Parameters::LinkMaskType{ 0, 1, 4, 5, 6 };
     BOOST_CHECK(Parameters::linkMaskFromString("0,1,4,5,6") == b);
     BOOST_CHECK(Parameters::linkMaskFromString("0,1,4-6") == b);
     BOOST_CHECK(Parameters::linkMaskFromString("0-1,4-6") == b);

@@ -19,33 +19,37 @@
 #include "ReadoutCard/ChannelFactory.h"
 #include "Visitor.h"
 
-namespace AliceO2 {
-namespace roc {
-namespace {
+namespace AliceO2
+{
+namespace roc
+{
+namespace
+{
 CardDescriptor makeDummyDescriptor()
 {
-  return {CardType::Dummy, ChannelFactory::getDummySerialNumber(), PciId {"dummy", "dummy"}, PciAddress {0,0,0}, -1};
+  return { CardType::Dummy, ChannelFactory::getDummySerialNumber(), PciId{ "dummy", "dummy" }, PciAddress{ 0, 0, 0 }, -1 };
 }
 
 constexpr size_t TRANSFER_QUEUE_CAPACITY = 16;
 constexpr size_t READY_QUEUE_CAPACITY = 32;
-}
+} // namespace
 
 constexpr auto endm = InfoLogger::InfoLogger::StreamOps::endm;
 
 DummyDmaChannel::DummyDmaChannel(const Parameters& params)
-    : DmaChannelBase(makeDummyDescriptor(), const_cast<Parameters&>(params), { 0, 1, 2, 3, 4, 5, 6, 7 }),
-      mTransferQueue(TRANSFER_QUEUE_CAPACITY), mReadyQueue(READY_QUEUE_CAPACITY)
+  : DmaChannelBase(makeDummyDescriptor(), const_cast<Parameters&>(params), { 0, 1, 2, 3, 4, 5, 6, 7 }),
+    mTransferQueue(TRANSFER_QUEUE_CAPACITY),
+    mReadyQueue(READY_QUEUE_CAPACITY)
 {
   getLogger() << "DummyDmaChannel::DummyDmaChannel(channel:" << params.getChannelNumberRequired() << ")"
-      << InfoLogger::InfoLogger::endm;
+              << InfoLogger::InfoLogger::endm;
 
   if (auto bufferParameters = params.getBufferParameters()) {
     // Create appropriate BufferProvider subclass
     Visitor::apply(*bufferParameters,
-        [&](buffer_parameters::Memory parameters){ mBufferSize = parameters.size; },
-        [&](buffer_parameters::File parameters){ mBufferSize = parameters.size; },
-        [&](buffer_parameters::Null){ mBufferSize = 0; });
+                   [&](buffer_parameters::Memory parameters) { mBufferSize = parameters.size; },
+                   [&](buffer_parameters::File parameters) { mBufferSize = parameters.size; },
+                   [&](buffer_parameters::Null) { mBufferSize = 0; });
   } else {
     BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("DmaChannel requires buffer_parameters"));
   }
@@ -71,7 +75,7 @@ void DummyDmaChannel::stopDma()
 void DummyDmaChannel::resetChannel(ResetLevel::type resetLevel)
 {
   getLogger() << "DummyDmaChannel::resetCard(" << ResetLevel::toString(resetLevel) << ")"
-      << endm;
+              << endm;
 }
 
 CardType::type DummyDmaChannel::getCardType()
@@ -104,19 +108,19 @@ void DummyDmaChannel::pushSuperpage(Superpage superpage)
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not enqueue superpage, size == 0"));
   }
 
-  if (!Utilities::isMultiple(superpage.getSize(), size_t(32*1024))) {
+  if (!Utilities::isMultiple(superpage.getSize(), size_t(32 * 1024))) {
     BOOST_THROW_EXCEPTION(Exception()
-                            << ErrorInfo::Message("Could not enqueue superpage, size not a multiple of 32 KiB"));
+                          << ErrorInfo::Message("Could not enqueue superpage, size not a multiple of 32 KiB"));
   }
 
   if ((superpage.getOffset() + superpage.getSize()) > mBufferSize) {
     BOOST_THROW_EXCEPTION(Exception()
-                            << ErrorInfo::Message("Superpage out of range"));
+                          << ErrorInfo::Message("Superpage out of range"));
   }
 
   if ((superpage.getOffset() % 4) != 0) {
     BOOST_THROW_EXCEPTION(Exception()
-                            << ErrorInfo::Message("Superpage offset not 32-bit aligned"));
+                          << ErrorInfo::Message("Superpage offset not 32-bit aligned"));
   }
 
   mTransferQueue.push_back(superpage);
@@ -167,7 +171,6 @@ int32_t DummyDmaChannel::getDroppedPackets()
   return 0; // No dropped packets on the Dummy DMA Channel
 }
 
-
 boost::optional<int32_t> DummyDmaChannel::getSerial()
 {
   return ChannelFactory::getDummySerialNumber();
@@ -176,16 +179,16 @@ boost::optional<int32_t> DummyDmaChannel::getSerial()
 boost::optional<float> DummyDmaChannel::getTemperature()
 {
   auto seconds = std::chrono::duration_cast<std::chrono::seconds>(
-    std::chrono::steady_clock::now().time_since_epoch()).count();
-  std::mt19937 engine {static_cast<uint32_t>(seconds)};
-  std::uniform_real_distribution<float> distribution {37, 43};
-  return {distribution(engine)};
+                   std::chrono::steady_clock::now().time_since_epoch())
+                   .count();
+  std::mt19937 engine{ static_cast<uint32_t>(seconds) };
+  std::uniform_real_distribution<float> distribution{ 37, 43 };
+  return { distribution(engine) };
 }
-
 
 PciAddress DummyDmaChannel::getPciAddress()
 {
-  return PciAddress(0,0,0);
+  return PciAddress(0, 0, 0);
 }
 
 int DummyDmaChannel::getNumaNode()

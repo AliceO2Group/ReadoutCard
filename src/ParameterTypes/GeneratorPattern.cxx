@@ -16,20 +16,23 @@
 #include "ReadoutCard/ParameterTypes/GeneratorPattern.h"
 #include "Utilities/Enum.h"
 
-namespace AliceO2 {
-namespace roc {
-namespace {
+namespace AliceO2
+{
+namespace roc
+{
+namespace
+{
 
 static const auto converter = Utilities::makeEnumConverter<GeneratorPattern::type>("GeneratorPattern", {
-  { GeneratorPattern::Alternating,  "ALTERNATING" },
-  { GeneratorPattern::Constant,     "CONSTANT" },
-  { GeneratorPattern::Decremental,  "DECREMENTAL" },
-  { GeneratorPattern::Flying0,      "FLYING_0" },
-  { GeneratorPattern::Flying1,      "FLYING_1" },
-  { GeneratorPattern::Incremental,  "INCREMENTAL" },
-  { GeneratorPattern::Random,       "RANDOM" },
-  { GeneratorPattern::Unknown,      "UNKNOWN" },
-});
+                                                                                                         { GeneratorPattern::Alternating, "ALTERNATING" },
+                                                                                                         { GeneratorPattern::Constant, "CONSTANT" },
+                                                                                                         { GeneratorPattern::Decremental, "DECREMENTAL" },
+                                                                                                         { GeneratorPattern::Flying0, "FLYING_0" },
+                                                                                                         { GeneratorPattern::Flying1, "FLYING_1" },
+                                                                                                         { GeneratorPattern::Incremental, "INCREMENTAL" },
+                                                                                                         { GeneratorPattern::Random, "RANDOM" },
+                                                                                                         { GeneratorPattern::Unknown, "UNKNOWN" },
+                                                                                                       });
 
 } // Anonymous namespace
 
@@ -45,4 +48,3 @@ GeneratorPattern::type GeneratorPattern::fromString(const std::string& string)
 
 } // namespace roc
 } // namespace AliceO2
-

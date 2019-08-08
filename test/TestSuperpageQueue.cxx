@@ -18,7 +18,8 @@
 
 using namespace ::AliceO2::roc;
 
-namespace {
+namespace
+{
 
 constexpr size_t MAX_SUPERPAGES = 4;
 using Queue = SuperpageQueue<MAX_SUPERPAGES>;

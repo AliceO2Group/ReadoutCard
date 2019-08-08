@@ -21,11 +21,15 @@
 #include "ExceptionInternal.h"
 #include "Common/System.h"
 
-namespace AliceO2 {
-namespace roc {
-namespace Utilities {
+namespace AliceO2
+{
+namespace roc
+{
+namespace Utilities
+{
 namespace b = boost;
-namespace {
+namespace
+{
 
 std::string getPciSysfsDirectory(const PciAddress& pciAddress)
 {
@@ -51,11 +55,11 @@ int getNumaNode(const PciAddress& pciAddress)
   int result = 0;
   if (!b::conversion::try_lexical_convert<int>(string, result)) {
     BOOST_THROW_EXCEPTION(
-        Exception() << ErrorInfo::Message("Failed to get numa node") << ErrorInfo::PciAddress(pciAddress));
+      Exception() << ErrorInfo::Message("Failed to get numa node") << ErrorInfo::PciAddress(pciAddress));
   }
   return result;
 }
 
-} // namespace Util
+} // namespace Utilities
 } // namespace roc
 } // namespace AliceO2

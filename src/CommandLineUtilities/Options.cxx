@@ -21,11 +21,16 @@
 #include "CommandLineUtilities/Common.h"
 #include "ExceptionInternal.h"
 
-namespace AliceO2 {
-namespace roc {
-namespace CommandLineUtilities {
-namespace Options {
-namespace {
+namespace AliceO2
+{
+namespace roc
+{
+namespace CommandLineUtilities
+{
+namespace Options
+{
+namespace
+{
 
 using std::cout;
 using std::endl;
@@ -34,28 +39,28 @@ namespace b = boost;
 
 /// Simple data holder struct that represents a program option
 template <typename T>
-struct Option
-{
-    Option(std::string swtch, std::string description)
-        : swtch(swtch), description(description)
-    {
-    }
+struct Option {
+  Option(std::string swtch, std::string description)
+    : swtch(swtch), description(description)
+  {
+  }
 
-    /// We need to split the swtch string on comma, because it might contain the short command line switch as well,
-    /// but only the long switch (which comes first) is used for the variables_map
-    std::string getLongSwitch() const
-    {
-      return swtch.substr(0, swtch.find(","));
-    }
+  /// We need to split the swtch string on comma, because it might contain the short command line switch as well,
+  /// but only the long switch (which comes first) is used for the variables_map
+  std::string getLongSwitch() const
+  {
+    return swtch.substr(0, swtch.find(","));
+  }
 
-    /// The command line switch
-    const std::string swtch;
+  /// The command line switch
+  const std::string swtch;
 
-    /// The description of the option
-    const std::string description;
+  /// The description of the option
+  const std::string description;
 };
 
-namespace option {
+namespace option
+{
 // General options
 static Option<int> channel("channel", "BAR channel number");
 static Option<std::string> registerAddress("address", "Register address in hex format");
@@ -63,7 +68,7 @@ static Option<int> registerRange("range", "Amount of registers to print past giv
 static Option<std::string> registerValue("value", "Register value, either in decimal or hex (prefix with 0x)");
 static Option<std::string> cardId("id", "Card ID: either serial number or PCI address in 'lspci' format");
 static Option<std::string> resetLevel("reset", "Reset level [NOTHING, INTERNAL, INTERNAL_DIU, INTERNAL_DIU_SIU]");
-}
+} // namespace option
 
 /// Adds the given Option to the options_description
 /// \param option The Option to add
@@ -82,9 +87,9 @@ T getOption(const Option<T>& option, const po::variables_map& map)
 {
   auto longSwitch = option.getLongSwitch();
 
-  if (map.count(longSwitch) == 0){
+  if (map.count(longSwitch) == 0) {
     BOOST_THROW_EXCEPTION(OptionRequiredException()
-        << ErrorInfo::Message("The option '" + option.swtch + "' is required but missing"));
+                          << ErrorInfo::Message("The option '" + option.swtch + "' is required but missing"));
   }
 
   po::variable_value v = map.at(longSwitch);
@@ -132,7 +137,7 @@ int getOptionChannel(const po::variables_map& map)
 
   if (value < 0) {
     BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-        << ErrorInfo::Message("Channel value is negative"));
+                          << ErrorInfo::Message("Channel value is negative"));
   }
 
   return value;
@@ -149,13 +154,13 @@ uint32_t getOptionRegisterAddress(const po::variables_map& map)
 
   if (address < 0) {
     BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-        << ErrorInfo::Message("Address must be positive"));
+                          << ErrorInfo::Message("Address must be positive"));
   }
 
-  uint32_t uaddress = (uint32_t) address;
+  uint32_t uaddress = (uint32_t)address;
   if (uaddress % 4) {
     BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-        << ErrorInfo::Message("Address not a multiple of 4"));
+                          << ErrorInfo::Message("Address not a multiple of 4"));
   }
 
   return uaddress;
@@ -177,7 +182,7 @@ uint32_t getOptionRegisterValue(const po::variables_map& map)
 
   if (ss.fail()) {
     BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-        << ErrorInfo::Message("Failed to parse 'register value' option"));
+                          << ErrorInfo::Message("Failed to parse 'register value' option"));
   }
 
   return value;
@@ -189,7 +194,7 @@ int getOptionRegisterRange(const po::variables_map& map)
 
   if (value < 0) {
     BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-        << ErrorInfo::Message("Register range negative"));
+                          << ErrorInfo::Message("Register range negative"));
   }
 
   return value;
@@ -200,10 +205,9 @@ ResetLevel::type getOptionResetLevel(const po::variables_map& map)
   std::string string = getOption(option::resetLevel, map);
   try {
     return ResetLevel::fromString(string);
-  }
-  catch (const std::runtime_error& e) {
+  } catch (const std::runtime_error& e) {
     BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-        << ErrorInfo::Message("Failed to parse 'reset level' option"));
+                          << ErrorInfo::Message("Failed to parse 'reset level' option"));
   }
 }
 
@@ -219,6 +223,6 @@ std::string getOptionCardIdString(const po::variables_map& map)
 }
 
 } // namespace Options
-} // namespace Util
+} // namespace CommandLineUtilities
 } // namespace roc
 } // namespace AliceO2

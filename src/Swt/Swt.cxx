@@ -18,10 +18,13 @@
 #include <chrono>
 #include <thread>
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
-namespace Registers {
+namespace Registers
+{
 constexpr uint32_t SWT_BASE_INDEX = 0x0f00000 / 4;
 
 constexpr uint32_t SWT_WR_WORD_L = 0x40 / 4;
@@ -36,12 +39,12 @@ constexpr uint32_t SWT_RD_CMD = 0x4c / 4;
 
 constexpr uint32_t SWT_RD_WORD_MON = 0x5c / 4;
 
-constexpr uint32_t SWT_SET_CHANNEL = 0x60 / 4; 
-constexpr uint32_t SWT_RESET_CORE = 0x64 / 4; 
+constexpr uint32_t SWT_SET_CHANNEL = 0x60 / 4;
+constexpr uint32_t SWT_RESET_CORE = 0x64 / 4;
 
 } //namespace Registers
 
-Swt::Swt(RegisterReadWriteInterface &bar2, int gbtChannel) : mBar2(bar2)
+Swt::Swt(RegisterReadWriteInterface& bar2, int gbtChannel) : mBar2(bar2)
 {
   reset();
   setChannel(gbtChannel);

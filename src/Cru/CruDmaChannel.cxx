@@ -29,20 +29,20 @@ namespace roc
 {
 
 CruDmaChannel::CruDmaChannel(const Parameters& parameters)
-    : DmaChannelPdaBase(parameters, allowedChannels()), //
-      mInitialResetLevel(ResetLevel::Internal), // It's good to reset at least the card channel in general
-      mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)), // DG loopback mode by default
-      mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)), // Use data generator by default
-      mGeneratorPattern(parameters.getGeneratorPattern().get_value_or(GeneratorPattern::Incremental)), //
-      mGeneratorDataSizeRandomEnabled(parameters.getGeneratorRandomSizeEnabled().get_value_or(false)), //
-      mGeneratorMaximumEvents(0), // Infinite events
-      mGeneratorInitialValue(0), // Start from 0
-      mGeneratorInitialWord(0), // First word
-      mGeneratorSeed(0), // Presumably for random patterns, incremental doesn't really need it
-      mGeneratorDataSize(parameters.getGeneratorDataSize().get_value_or(Cru::DMA_PAGE_SIZE)), // Can use page size
-      mDmaPageSize(parameters.getDmaPageSize().get_value_or(Cru::DMA_PAGE_SIZE))
+  : DmaChannelPdaBase(parameters, allowedChannels()),                                                //
+    mInitialResetLevel(ResetLevel::Internal),                                                        // It's good to reset at least the card channel in general
+    mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)),           // DG loopback mode by default
+    mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)),                          // Use data generator by default
+    mGeneratorPattern(parameters.getGeneratorPattern().get_value_or(GeneratorPattern::Incremental)), //
+    mGeneratorDataSizeRandomEnabled(parameters.getGeneratorRandomSizeEnabled().get_value_or(false)), //
+    mGeneratorMaximumEvents(0),                                                                      // Infinite events
+    mGeneratorInitialValue(0),                                                                       // Start from 0
+    mGeneratorInitialWord(0),                                                                        // First word
+    mGeneratorSeed(0),                                                                               // Presumably for random patterns, incremental doesn't really need it
+    mGeneratorDataSize(parameters.getGeneratorDataSize().get_value_or(Cru::DMA_PAGE_SIZE)),          // Can use page size
+    mDmaPageSize(parameters.getDmaPageSize().get_value_or(Cru::DMA_PAGE_SIZE))
 {
-  
+
   if (auto pageSize = parameters.getDmaPageSize()) {
     if (pageSize.get() != Cru::DMA_PAGE_SIZE) {
       log("DMA page size not default; Behaviour undefined", InfoLogger::InfoLogger::Warning);
@@ -52,9 +52,9 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
     }
   }
 
-  if (mLoopbackMode == LoopbackMode::Diu || mLoopbackMode == LoopbackMode::Siu) { 
+  if (mLoopbackMode == LoopbackMode::Diu || mLoopbackMode == LoopbackMode::Siu) {
     BOOST_THROW_EXCEPTION(CruException() << ErrorInfo::Message("CRU does not support given loopback mode")
-      << ErrorInfo::LoopbackMode(mLoopbackMode));
+                                         << ErrorInfo::LoopbackMode(mLoopbackMode));
   }
 
   // Prep for BARs
@@ -62,13 +62,13 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
   parameters2.setChannelNumber(2);
   auto bar = ChannelFactory().getBar(parameters);
   auto bar2 = ChannelFactory().getBar(parameters2);
-  cruBar = std::move(std::dynamic_pointer_cast<CruBar> (bar)); // Initialize BAR 0
-  cruBar2 = std::move(std::dynamic_pointer_cast<CruBar> (bar2)); // Initialize BAR 2
-  mFeatures = getBar()->getFirmwareFeatures(); // Get which features of the firmware are enabled
+  cruBar = std::move(std::dynamic_pointer_cast<CruBar>(bar));   // Initialize BAR 0
+  cruBar2 = std::move(std::dynamic_pointer_cast<CruBar>(bar2)); // Initialize BAR 2
+  mFeatures = getBar()->getFirmwareFeatures();                  // Get which features of the firmware are enabled
 
   if (mFeatures.standalone) {
     std::stringstream stream;
-    auto logFeature = [&](auto name, bool enabled) { if (!enabled) { stream << " " << name; }};
+    auto logFeature = [&](auto name, bool enabled) { if (!enabled) { stream << " " << name; } };
     stream << "Standalone firmware features disabled:";
     logFeature("firmware-info", mFeatures.firmwareInfo);
     logFeature("serial-number", mFeatures.serial);
@@ -81,15 +81,15 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
   {
     std::stringstream stream;
     stream << "Enabling link(s): ";
-    auto linkMask = parameters.getLinkMask().value_or(Parameters::LinkMaskType{0});
+    auto linkMask = parameters.getLinkMask().value_or(Parameters::LinkMaskType{ 0 });
     mLinks.reserve(linkMask.size());
     for (uint32_t id : linkMask) {
       if (id >= Cru::MAX_LINKS) {
         BOOST_THROW_EXCEPTION(InvalidLinkId() << ErrorInfo::Message("CRU does not support given link ID")
-          << ErrorInfo::LinkId(id));
+                                              << ErrorInfo::LinkId(id));
       }
       stream << id << " ";
-      mLinks.push_back({static_cast<LinkId>(id)});
+      mLinks.push_back({ static_cast<LinkId>(id) });
     }
     log(stream.str());
   }
@@ -99,9 +99,10 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
   log(stream.str());
 }
 
-auto CruDmaChannel::allowedChannels() -> AllowedChannels {
+auto CruDmaChannel::allowedChannels() -> AllowedChannels
+{
   // We have only one DMA channel per CRU endpoint
-  return {0};
+  return { 0 };
 }
 
 CruDmaChannel::~CruDmaChannel()
@@ -114,7 +115,6 @@ CruDmaChannel::~CruDmaChannel()
   if (mLoopbackMode == LoopbackMode::Internal) {
     resetDebugMode();
   }
-
 }
 
 void CruDmaChannel::deviceStartDma()
@@ -134,14 +134,14 @@ void CruDmaChannel::deviceStartDma()
       dataSourceSelection = Cru::Registers::DATA_SOURCE_SELECT_GBT;
     } else {
       BOOST_THROW_EXCEPTION(CruException()
-        << ErrorInfo::Message("CRU only support 'Internal' or 'Ddg' for data generator"));
+                            << ErrorInfo::Message("CRU only support 'Internal' or 'Ddg' for data generator"));
     }
   } else {
     if (mLoopbackMode == LoopbackMode::None) {
       dataSourceSelection = Cru::Registers::DATA_SOURCE_SELECT_GBT;
     } else {
       BOOST_THROW_EXCEPTION(CruException()
-        << ErrorInfo::Message("CRU only supports 'None' loopback mode when operating without a data generator"));
+                            << ErrorInfo::Message("CRU only supports 'None' loopback mode when operating without a data generator"));
     }
   }
 
@@ -155,7 +155,7 @@ void CruDmaChannel::deviceStartDma()
   resetCru();
 
   // Initialize link queues
-  for (auto &link : mLinks) {
+  for (auto& link : mLinks) {
     link.queue.clear();
     link.superpageCounter = 0;
   }
@@ -257,7 +257,7 @@ void CruDmaChannel::pushSuperpage(Superpage superpage)
   }
 
   // Get the next link to push
-  auto &link = mLinks[getNextLinkIndex()];
+  auto& link = mLinks[getNextLinkIndex()];
 
   if (link.queue.size() >= LINK_QUEUE_CAPACITY) {
     // Is the link's FIFO out of space?
@@ -322,13 +322,12 @@ void CruDmaChannel::fillSuperpages()
       uint32_t amountAvailable = superpageCount - link.superpageCounter;
       if (amountAvailable > link.queue.size()) {
         std::stringstream stream;
-        stream << "FATAL: Firmware reported more superpages available (" << amountAvailable <<
-          ") than should be present in FIFO (" << link.queue.size() << "); "
-          << link.superpageCounter << " superpages received from link " << int(link.id) << " according to driver, "
-          << superpageCount << " pushed according to firmware";
+        stream << "FATAL: Firmware reported more superpages available (" << amountAvailable << ") than should be present in FIFO (" << link.queue.size() << "); "
+               << link.superpageCounter << " superpages received from link " << int(link.id) << " according to driver, "
+               << superpageCount << " pushed according to firmware";
         log(stream.str(), InfoLogger::InfoLogger::Error);
         BOOST_THROW_EXCEPTION(Exception()
-            << ErrorInfo::Message("FATAL: Firmware reported more superpages available than should be present in FIFO"));
+                              << ErrorInfo::Message("FATAL: Firmware reported more superpages available than should be present in FIFO"));
       }
 
       for (uint32_t i = 0; i < amountAvailable; ++i) {
@@ -383,14 +382,16 @@ bool CruDmaChannel::injectError()
   }
 }
 
-void CruDmaChannel::enableDebugMode() {
-  if(!getBar()->getDebugModeEnabled()) {
+void CruDmaChannel::enableDebugMode()
+{
+  if (!getBar()->getDebugModeEnabled()) {
     getBar()->setDebugModeEnabled(true);
     mDebugRegisterReset = true;
   }
 }
 
-void CruDmaChannel::resetDebugMode() {
+void CruDmaChannel::resetDebugMode()
+{
   if (mDebugRegisterReset) {
     getBar()->setDebugModeEnabled(false);
   }
@@ -407,7 +408,7 @@ boost::optional<int32_t> CruDmaChannel::getSerial()
 
 boost::optional<float> CruDmaChannel::getTemperature()
 {
-  if (mFeatures.temperature){
+  if (mFeatures.temperature) {
     return getBar2()->getTemperature();
   } else {
     return {};
@@ -427,7 +428,7 @@ boost::optional<std::string> CruDmaChannel::getCardId()
 {
   if (mFeatures.chipId) {
     return getBar2()->getCardId();
-  } else  {
+  } else {
     return {};
   }
 }

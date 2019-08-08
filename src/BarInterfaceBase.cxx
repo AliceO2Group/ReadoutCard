@@ -17,11 +17,13 @@
 #include "BarInterfaceBase.h"
 #include "Utilities/SmartPointer.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 BarInterfaceBase::BarInterfaceBase(const Parameters& parameters)
- : mBarIndex(parameters.getChannelNumberRequired())
+  : mBarIndex(parameters.getChannelNumberRequired())
 {
   auto id = parameters.getCardIdRequired();
   if (auto serial = boost::get<int>(&id)) {
@@ -38,7 +40,6 @@ BarInterfaceBase::BarInterfaceBase(std::shared_ptr<Pda::PdaBar> bar)
 {
   mPdaBar = std::move(bar);
 }
-
 
 BarInterfaceBase::~BarInterfaceBase()
 {
@@ -64,8 +65,7 @@ void BarInterfaceBase::modifyRegister(int index, int position, int width, uint32
 void BarInterfaceBase::log(std::string logMessage, InfoLogger::InfoLogger::Severity logLevel)
 {
   mLogger << logLevel;
-  mLogger << "[PCI ID: " << mRocPciDevice->getPciAddress().toString() << " | bar" << getIndex() << "] : " <<
-    logMessage << InfoLogger::InfoLogger::endm;
+  mLogger << "[PCI ID: " << mRocPciDevice->getPciAddress().toString() << " | bar" << getIndex() << "] : " << logMessage << InfoLogger::InfoLogger::endm;
 }
 
 } // namespace roc

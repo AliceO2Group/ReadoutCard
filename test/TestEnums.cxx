@@ -28,21 +28,21 @@ void checkEnumConversion(const std::vector<typename E::type>& items)
 
 BOOST_AUTO_TEST_CASE(EnumCardTypeConversion)
 {
-  checkEnumConversion<CardType>({CardType::Crorc, CardType::Cru, CardType::Dummy, CardType::Unknown});
+  checkEnumConversion<CardType>({ CardType::Crorc, CardType::Cru, CardType::Dummy, CardType::Unknown });
 }
 
 BOOST_AUTO_TEST_CASE(EnumLoopbackModeConversion)
 {
-  checkEnumConversion<LoopbackMode>({LoopbackMode::Diu, LoopbackMode::None, LoopbackMode::Internal, LoopbackMode::Siu});
+  checkEnumConversion<LoopbackMode>({ LoopbackMode::Diu, LoopbackMode::None, LoopbackMode::Internal, LoopbackMode::Siu });
 }
 
 BOOST_AUTO_TEST_CASE(EnumResetLevelConversion)
 {
-  checkEnumConversion<ResetLevel>({ResetLevel::Nothing, ResetLevel::Internal, ResetLevel::InternalDiu,
-      ResetLevel::InternalDiuSiu});
+  checkEnumConversion<ResetLevel>({ ResetLevel::Nothing, ResetLevel::Internal, ResetLevel::InternalDiu,
+                                    ResetLevel::InternalDiuSiu });
 }
 
 BOOST_AUTO_TEST_CASE(EnumReadoutModeConversion)
 {
-  checkEnumConversion<ReadoutMode>({ReadoutMode::Continuous});
+  checkEnumConversion<ReadoutMode>({ ReadoutMode::Continuous });
 }
