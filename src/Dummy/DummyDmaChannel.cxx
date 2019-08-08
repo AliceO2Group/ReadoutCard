@@ -53,25 +53,25 @@ DummyDmaChannel::DummyDmaChannel(const Parameters& params)
 
 DummyDmaChannel::~DummyDmaChannel()
 {
-  getLogger() << "DummyDmaChannel::~DummyDmaChannel()" << InfoLogger::InfoLogger::endm;
+  getLogger() << "DummyDmaChannel::~DummyDmaChannel()" << endm;
 }
 
 void DummyDmaChannel::startDma()
 {
-  getLogger() << "DummyDmaChannel::startDma()" << InfoLogger::InfoLogger::endm;
+  getLogger() << "DummyDmaChannel::startDma()" << endm;
   mTransferQueue.clear();
   mReadyQueue.clear();
 }
 
 void DummyDmaChannel::stopDma()
 {
-  getLogger() << "DummyDmaChannel::stopDma()" << InfoLogger::InfoLogger::endm;
+  getLogger() << "DummyDmaChannel::stopDma()" << endm;
 }
 
 void DummyDmaChannel::resetChannel(ResetLevel::type resetLevel)
 {
   getLogger() << "DummyDmaChannel::resetCard(" << ResetLevel::toString(resetLevel) << ")"
-      << InfoLogger::InfoLogger::endm;
+      << endm;
 }
 
 CardType::type DummyDmaChannel::getCardType()

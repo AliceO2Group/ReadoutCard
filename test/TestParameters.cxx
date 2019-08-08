@@ -16,7 +16,7 @@ using namespace AliceO2::roc;
 
 constexpr auto SERIAL_NUMBER = 1;
 constexpr auto CHANNEL_NUMBER = 2;
-constexpr auto DMA_BUFFER_SIZE = 3ul;
+//constexpr auto DMA_BUFFER_SIZE = 3ul;
 constexpr auto DMA_PAGE_SIZE = 4ul;
 constexpr auto GENERATOR_DATA_SIZE = 5ul;
 constexpr auto GENERATOR_ENABLED = true;
