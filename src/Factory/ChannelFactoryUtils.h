@@ -1,4 +1,4 @@
-// Copyright CERN and copyright holders of ALICE O2. This software is
+// Copyright CERN and copyright holders of ALICE O3. This software is
 // distributed under the terms of the GNU General Public License v3 (GPL
 // Version 3), copied verbatim in the file "COPYING".
 //
@@ -118,7 +118,6 @@ inline CardDescriptor findCard(const Parameters::CardIdType& id)
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Invalid Card ID"));
   }
 }
-#endif
 
 /// Helper template method for the channel factories.
 /// \param serialNumber Serial number of the card
@@ -143,11 +142,6 @@ std::unique_ptr<Interface> channelFactoryHelper(const Parameters& params, int du
     }
   };
 
-#ifndef ALICEO2_READOUTCARD_PDA_ENABLED
-  // If PDA is NOT enabled we only make dummies
-  return makeDummy();
-#else
-
   auto id = params.getCardIdRequired();
 
   // First check if we got a dummy serial number
@@ -168,7 +162,27 @@ std::unique_ptr<Interface> channelFactoryHelper(const Parameters& params, int du
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Instantiation function for card type not available")
                                       << ErrorInfo::CardType(cardDescriptor.cardType) << ErrorInfo::CardId(id));
   }
+#else
+
+template <typename Interface>
+std::unique_ptr<Interface> channelFactoryHelper(const Parameters& /*params*/, int /*dummySerial*/,
+                                                const std::map<CardType::type, std::function<std::unique_ptr<Interface>()>>& map)
+{
+  auto makeDummy = [&]() {
+    auto iter = map.find(CardType::Dummy);
+    if (iter != map.end()) {
+      return iter->second();
+    } else {
+      BOOST_THROW_EXCEPTION(Exception()
+                            << ErrorInfo::Message("Instantiation function for Dummy card type not available"));
+    }
+  };
+
+  // If PDA is NOT enabled we only make dummies
+  return makeDummy();
+
 #endif
+
 }
 
 } // namespace ChannelFactoryUtils
