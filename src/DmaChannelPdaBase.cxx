@@ -25,23 +25,26 @@
 #include "DmaBufferProvider/NullDmaBufferProvider.h"
 #include "Visitor.h"
 
-namespace AliceO2 {
-namespace roc {
-namespace {
+namespace AliceO2
+{
+namespace roc
+{
+namespace
+{
 
 CardDescriptor createCardDescriptor(const Parameters& parameters)
 {
   return Visitor::apply<CardDescriptor>(parameters.getCardIdRequired(),
-      [&](int serial) {return RocPciDevice(serial).getCardDescriptor();},
-      [&](const PciAddress& address) {return RocPciDevice(address).getCardDescriptor();},
-      [&](const PciSequenceNumber& sequenceNumber) {return RocPciDevice(sequenceNumber).getCardDescriptor();});
+                                        [&](int serial) { return RocPciDevice(serial).getCardDescriptor(); },
+                                        [&](const PciAddress& address) { return RocPciDevice(address).getCardDescriptor(); },
+                                        [&](const PciSequenceNumber& sequenceNumber) { return RocPciDevice(sequenceNumber).getCardDescriptor(); });
 }
 
-}
+} // namespace
 
 DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
-    const AllowedChannels& allowedChannels)
-    : DmaChannelBase(createCardDescriptor(parameters), const_cast<Parameters&>(parameters), allowedChannels), mDmaState(DmaState::STOPPED)
+                                     const AllowedChannels& allowedChannels)
+  : DmaChannelBase(createCardDescriptor(parameters), const_cast<Parameters&>(parameters), allowedChannels), mDmaState(DmaState::STOPPED)
 {
   // Initialize PDA & DMA objects
   Utilities::resetSmartPtr(mRocPciDevice, getCardDescriptor().pciAddress);
@@ -51,20 +54,20 @@ DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
     // Create appropriate BufferProvider subclass
     auto bufferId = getPdaDmaBufferIndexPages(getChannelNumber(), 0);
     mBufferProvider = Visitor::apply<std::unique_ptr<DmaBufferProviderInterface>>(*bufferParameters,
-        [&](buffer_parameters::Memory parameters){
-          log("Initializing with DMA buffer from memory region", InfoLogger::InfoLogger::Debug);
-          return std::make_unique<PdaDmaBufferProvider>(mRocPciDevice->getPciDevice(), parameters.address,
-            parameters.size, bufferId, true);
-        },
-        [&](buffer_parameters::File parameters){
-          log("Initializing with DMA buffer from memory-mapped file", InfoLogger::InfoLogger::Debug);
-          return std::make_unique<FilePdaDmaBufferProvider>(mRocPciDevice->getPciDevice(), parameters.path,
-            parameters.size, bufferId, true);
-        },
-        [&](buffer_parameters::Null){
-          log("Initializing with null DMA buffer", InfoLogger::InfoLogger::Debug);
-          return std::make_unique<NullDmaBufferProvider>();
-        });
+                                                                                  [&](buffer_parameters::Memory parameters) {
+                                                                                    log("Initializing with DMA buffer from memory region", InfoLogger::InfoLogger::Debug);
+                                                                                    return std::make_unique<PdaDmaBufferProvider>(mRocPciDevice->getPciDevice(), parameters.address,
+                                                                                                                                  parameters.size, bufferId, true);
+                                                                                  },
+                                                                                  [&](buffer_parameters::File parameters) {
+                                                                                    log("Initializing with DMA buffer from memory-mapped file", InfoLogger::InfoLogger::Debug);
+                                                                                    return std::make_unique<FilePdaDmaBufferProvider>(mRocPciDevice->getPciDevice(), parameters.path,
+                                                                                                                                      parameters.size, bufferId, true);
+                                                                                  },
+                                                                                  [&](buffer_parameters::Null) {
+                                                                                    log("Initializing with null DMA buffer", InfoLogger::InfoLogger::Debug);
+                                                                                    return std::make_unique<NullDmaBufferProvider>();
+                                                                                  });
   } else {
     BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("DmaChannel requires buffer_parameters"));
   }
@@ -72,11 +75,12 @@ DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
   // Check if scatter-gather list is not suspicious
   {
     auto listSize = mBufferProvider->getScatterGatherListSize();
-    auto hugePageMinSize = 1024*1024*2; // 2 MiB, the smallest hugepage size
+    auto hugePageMinSize = 1024 * 1024 * 2; // 2 MiB, the smallest hugepage size
     auto bufferSize = getBufferProvider().getSize();
     log(std::string("Scatter-gather list size: ") + std::to_string(listSize));
     if (listSize > (bufferSize / hugePageMinSize)) {
-      std::string message = "Scatter-gather list size greater than buffer size divided by 2MiB (minimum hugepage size)."
+      std::string message =
+        "Scatter-gather list size greater than buffer size divided by 2MiB (minimum hugepage size)."
         " This means the IOMMU is off and the buffer is not backed by hugepages - an unsupported buffer configuration.";
       log(message, InfoLogger::InfoLogger::Error);
       BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(message));
@@ -97,11 +101,12 @@ DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
           if (Common::Iommu::isEnabled()) {
             log("Buffer is NOT hugepage-backed, but IOMMU is enabled", InfoLogger::InfoLogger::Warning);
           } else {
-            std::string message = "Buffer is NOT hugepage-backed and IOMMU is disabled - unsupported buffer "
+            std::string message =
+              "Buffer is NOT hugepage-backed and IOMMU is disabled - unsupported buffer "
               "configuration";
             log(message, InfoLogger::InfoLogger::Error);
             BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(message)
-              << ErrorInfo::PossibleCauses({"roc-setup-hugetlbfs was not run"}));
+                                              << ErrorInfo::PossibleCauses({ "roc-setup-hugetlbfs was not run" }));
           }
         }
         checked = true;
@@ -170,19 +175,19 @@ void DmaChannelPdaBase::checkSuperpage(const Superpage& superpage)
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not enqueue superpage, size == 0"));
   }
 
-  if (!Utilities::isMultiple(superpage.getSize(), size_t(32*1024))) {
+  if (!Utilities::isMultiple(superpage.getSize(), size_t(32 * 1024))) {
     BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message("Could not enqueue superpage, size not a multiple of 32 KiB"));
+                          << ErrorInfo::Message("Could not enqueue superpage, size not a multiple of 32 KiB"));
   }
 
   if ((superpage.getOffset() + superpage.getSize()) > getBufferProvider().getSize()) {
     BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message("Superpage out of range"));
+                          << ErrorInfo::Message("Superpage out of range"));
   }
 
   if ((superpage.getOffset() % 4) != 0) {
     BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message("Superpage offset not 32-bit aligned"));
+                          << ErrorInfo::Message("Superpage offset not 32-bit aligned"));
   }
 }
 

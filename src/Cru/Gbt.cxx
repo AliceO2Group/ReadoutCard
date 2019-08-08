@@ -17,16 +17,17 @@
 #include "Gbt.h"
 #include "Utilities/Util.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 using Link = Cru::Link;
 using LinkStatus = Cru::LinkStatus;
 
-Gbt::Gbt(std::shared_ptr<Pda::PdaBar> pdaBar, std::map<int, Link> &linkMap, int wrapperCount) :
-  mPdaBar(pdaBar),
-  mLinkMap(linkMap),
-  mWrapperCount(wrapperCount)
+Gbt::Gbt(std::shared_ptr<Pda::PdaBar> pdaBar, std::map<int, Link>& linkMap, int wrapperCount) : mPdaBar(pdaBar),
+                                                                                                mLinkMap(linkMap),
+                                                                                                mWrapperCount(wrapperCount)
 {
 }
 
@@ -35,17 +36,17 @@ void Gbt::setMux(int index, uint32_t mux)
   uint32_t reg = index / 16;
   uint32_t bitOffset = (index % 16) * 2;
   uint32_t address = Cru::Registers::GBT_MUX_SELECT.address + (reg * 4);
-  mPdaBar->modifyRegister(address/4, bitOffset, 2, mux);
+  mPdaBar->modifyRegister(address / 4, bitOffset, 2, mux);
 }
 
 void Gbt::setInternalDataGenerator(Link link, uint32_t value)
 {
   uint32_t address = getSourceSelectAddress(link);
 
-  uint32_t modifiedRegister = mPdaBar->readRegister(address/4);
+  uint32_t modifiedRegister = mPdaBar->readRegister(address / 4);
   Utilities::setBits(modifiedRegister, 1, 1, value);
   Utilities::setBits(modifiedRegister, 2, 1, value);
-  mPdaBar->writeRegister(address/4, modifiedRegister);
+  mPdaBar->writeRegister(address / 4, modifiedRegister);
 
   /*mPdaBar->modifyRegister(address/4, 1, 1, value);
   mPdaBar->modifyRegister(address/4, 2, 1, value);*/
@@ -54,20 +55,19 @@ void Gbt::setInternalDataGenerator(Link link, uint32_t value)
 void Gbt::setTxMode(Link link, uint32_t mode)
 {
   uint32_t address = getTxControlAddress(link);
-  mPdaBar->modifyRegister(address/4, 8, 1, mode);
+  mPdaBar->modifyRegister(address / 4, 8, 1, mode);
 }
 
 void Gbt::setRxMode(Link link, uint32_t mode)
 {
-   uint32_t address = getRxControlAddress(link);
-   mPdaBar->modifyRegister(address/4, 8, 1, mode);
+  uint32_t address = getRxControlAddress(link);
+  mPdaBar->modifyRegister(address / 4, 8, 1, mode);
 }
 
-void Gbt::setLoopback(Link link, uint32_t enabled) 
+void Gbt::setLoopback(Link link, uint32_t enabled)
 {
   uint32_t address = getSourceSelectAddress(link);
-  mPdaBar->modifyRegister(address/4, 4, 1, enabled);
-
+  mPdaBar->modifyRegister(address / 4, 4, 1, enabled);
 }
 
 void Gbt::calibrateGbt()
@@ -83,14 +83,14 @@ void Gbt::getGbtModes()
 {
   for (auto& el : mLinkMap) {
     auto& link = el.second;
-    uint32_t rxControl = mPdaBar->readRegister(getRxControlAddress(link)/4);
+    uint32_t rxControl = mPdaBar->readRegister(getRxControlAddress(link) / 4);
     if (((rxControl >> 8) & 0x1) == Cru::GBT_MODE_WB) { //TODO: Change with Constants
       link.gbtRxMode = GbtMode::type::Wb;
     } else {
       link.gbtRxMode = GbtMode::type::Gbt;
     }
 
-    uint32_t txControl = mPdaBar->readRegister(getTxControlAddress(link)/4);
+    uint32_t txControl = mPdaBar->readRegister(getTxControlAddress(link) / 4);
     if (((txControl >> 8) & 0x1) == Cru::GBT_MODE_WB) { //TODO: Change with Constants
       link.gbtTxMode = GbtMode::type::Wb;
     } else {
@@ -101,12 +101,12 @@ void Gbt::getGbtModes()
 
 void Gbt::getGbtMuxes()
 {
-  for (auto& el: mLinkMap) {
+  for (auto& el : mLinkMap) {
     int index = el.first;
     auto& link = el.second;
     uint32_t reg = (index / 16);
     uint32_t bitOffset = (index % 16) * 2;
-    uint32_t txMux = mPdaBar->readRegister((Cru::Registers::GBT_MUX_SELECT.address + reg * 4)/4);
+    uint32_t txMux = mPdaBar->readRegister((Cru::Registers::GBT_MUX_SELECT.address + reg * 4) / 4);
     txMux = (txMux >> bitOffset) & 0x3;
     if (txMux == Cru::GBT_MUX_TTC) {
       link.gbtMux = GbtMux::type::Ttc;
@@ -122,9 +122,9 @@ void Gbt::getGbtMuxes()
 
 void Gbt::getLoopbacks()
 {
-  for (auto& el: mLinkMap) {
+  for (auto& el : mLinkMap) {
     auto& link = el.second;
-    uint32_t loopback = mPdaBar->readRegister(getSourceSelectAddress(link)/4);
+    uint32_t loopback = mPdaBar->readRegister(getSourceSelectAddress(link) / 4);
     if (((loopback >> 4) & 0x1) == 0x1) {
       link.loopback = true;
     } else {
@@ -136,28 +136,27 @@ void Gbt::getLoopbacks()
 void Gbt::atxcal(uint32_t baseAddress)
 {
   if (baseAddress == 0) {
-    for (int wrapper=0; wrapper<mWrapperCount; wrapper++) {
+    for (int wrapper = 0; wrapper < mWrapperCount; wrapper++) {
       Cru::atxcal0(mPdaBar, getAtxPllRegisterAddress(wrapper, 0x000));
     }
-  }
-  else {
+  } else {
     Cru::atxcal0(mPdaBar, baseAddress);
   }
 }
 
 void Gbt::cdrref(uint32_t refClock)
 {
-  for (auto const& el: mLinkMap) {
+  for (auto const& el : mLinkMap) {
     auto& link = el.second;
     //uint32_t reg141 = readRegister(getXcvrRegisterAddress(link.wrapper, link.bank, link.id, 0x141)/4);
-    uint32_t data = mPdaBar->readRegister(Cru::getXcvrRegisterAddress(link.wrapper, link.bank, link.id, 0x16A + refClock)/4);
-    mPdaBar->writeRegister(Cru::getXcvrRegisterAddress(link.wrapper, link.bank, link.id, 0x141)/4, data);
+    uint32_t data = mPdaBar->readRegister(Cru::getXcvrRegisterAddress(link.wrapper, link.bank, link.id, 0x16A + refClock) / 4);
+    mPdaBar->writeRegister(Cru::getXcvrRegisterAddress(link.wrapper, link.bank, link.id, 0x141) / 4, data);
   }
 }
 
 void Gbt::rxcal()
 {
-  for (auto const& el: mLinkMap) {
+  for (auto const& el : mLinkMap) {
     auto& link = el.second;
     Cru::rxcal0(mPdaBar, link.baseAddress);
   }
@@ -165,7 +164,7 @@ void Gbt::rxcal()
 
 void Gbt::txcal()
 {
-  for (auto const& el: mLinkMap) {
+  for (auto const& el : mLinkMap) {
     auto& link = el.second;
     Cru::txcal0(mPdaBar, link.baseAddress);
   }
@@ -174,10 +173,10 @@ void Gbt::txcal()
 uint32_t Gbt::getStatusAddress(Link link)
 {
   uint32_t address = Cru::getWrapperBaseAddress(link.wrapper) +
-    Cru::Registers::GBT_WRAPPER_BANK_OFFSET.address * (link.bank + 1) +
-    Cru::Registers::GBT_BANK_LINK_OFFSET.address * (link.id + 1) +
-    Cru::Registers::GBT_LINK_REGS_OFFSET.address +
-    Cru::Registers::GBT_LINK_STATUS.address;
+                     Cru::Registers::GBT_WRAPPER_BANK_OFFSET.address * (link.bank + 1) +
+                     Cru::Registers::GBT_BANK_LINK_OFFSET.address * (link.id + 1) +
+                     Cru::Registers::GBT_LINK_REGS_OFFSET.address +
+                     Cru::Registers::GBT_LINK_STATUS.address;
 
   return address;
 }
@@ -185,10 +184,10 @@ uint32_t Gbt::getStatusAddress(Link link)
 uint32_t Gbt::getClearErrorAddress(Link link)
 {
   uint32_t address = Cru::getWrapperBaseAddress(link.wrapper) +
-    Cru::Registers::GBT_WRAPPER_BANK_OFFSET.address * (link.bank + 1) +
-    Cru::Registers::GBT_BANK_LINK_OFFSET.address * (link.id + 1) +
-    Cru::Registers::GBT_LINK_REGS_OFFSET.address +
-    Cru::Registers::GBT_LINK_CLEAR_ERRORS.address;
+                     Cru::Registers::GBT_WRAPPER_BANK_OFFSET.address * (link.bank + 1) +
+                     Cru::Registers::GBT_BANK_LINK_OFFSET.address * (link.id + 1) +
+                     Cru::Registers::GBT_LINK_REGS_OFFSET.address +
+                     Cru::Registers::GBT_LINK_CLEAR_ERRORS.address;
 
   return address;
 }
@@ -196,10 +195,10 @@ uint32_t Gbt::getClearErrorAddress(Link link)
 uint32_t Gbt::getSourceSelectAddress(Link link)
 {
   uint32_t address = Cru::getWrapperBaseAddress(link.wrapper) +
-    Cru::Registers::GBT_WRAPPER_BANK_OFFSET.address * (link.bank + 1) +
-    Cru::Registers::GBT_BANK_LINK_OFFSET.address * (link.id + 1) +
-    Cru::Registers::GBT_LINK_REGS_OFFSET.address +
-    Cru::Registers::GBT_LINK_SOURCE_SELECT.address;
+                     Cru::Registers::GBT_WRAPPER_BANK_OFFSET.address * (link.bank + 1) +
+                     Cru::Registers::GBT_BANK_LINK_OFFSET.address * (link.id + 1) +
+                     Cru::Registers::GBT_LINK_REGS_OFFSET.address +
+                     Cru::Registers::GBT_LINK_SOURCE_SELECT.address;
 
   return address;
 }
@@ -207,10 +206,10 @@ uint32_t Gbt::getSourceSelectAddress(Link link)
 uint32_t Gbt::getTxControlAddress(Link link)
 {
   uint32_t address = Cru::getWrapperBaseAddress(link.wrapper) +
-    Cru::Registers::GBT_WRAPPER_BANK_OFFSET.address * (link.bank + 1) +
-    Cru::Registers::GBT_BANK_LINK_OFFSET.address * (link.id + 1) +
-    Cru::Registers::GBT_LINK_REGS_OFFSET.address +
-    Cru::Registers::GBT_LINK_TX_CONTROL_OFFSET.address;
+                     Cru::Registers::GBT_WRAPPER_BANK_OFFSET.address * (link.bank + 1) +
+                     Cru::Registers::GBT_BANK_LINK_OFFSET.address * (link.id + 1) +
+                     Cru::Registers::GBT_LINK_REGS_OFFSET.address +
+                     Cru::Registers::GBT_LINK_TX_CONTROL_OFFSET.address;
 
   return address;
 }
@@ -218,31 +217,31 @@ uint32_t Gbt::getTxControlAddress(Link link)
 uint32_t Gbt::getRxControlAddress(Link link)
 {
   uint32_t address = Cru::getWrapperBaseAddress(link.wrapper) +
-    Cru::Registers::GBT_WRAPPER_BANK_OFFSET.address * (link.bank + 1) +
-    Cru::Registers::GBT_BANK_LINK_OFFSET.address * (link.id + 1) +
-    Cru::Registers::GBT_LINK_REGS_OFFSET.address +
-    Cru::Registers::GBT_LINK_RX_CONTROL_OFFSET.address;
+                     Cru::Registers::GBT_WRAPPER_BANK_OFFSET.address * (link.bank + 1) +
+                     Cru::Registers::GBT_BANK_LINK_OFFSET.address * (link.id + 1) +
+                     Cru::Registers::GBT_LINK_REGS_OFFSET.address +
+                     Cru::Registers::GBT_LINK_RX_CONTROL_OFFSET.address;
 
   return address;
 }
 
 uint32_t Gbt::getAtxPllRegisterAddress(int wrapper, uint32_t reg)
 {
-  return Cru::getWrapperBaseAddress(wrapper) + 
-    Cru::Registers::GBT_WRAPPER_ATX_PLL.address + 4 * reg;
+  return Cru::getWrapperBaseAddress(wrapper) +
+         Cru::Registers::GBT_WRAPPER_ATX_PLL.address + 4 * reg;
 }
 
 LinkStatus Gbt::getStickyBit(Link link)
 {
   uint32_t addr = getStatusAddress(link);
-  uint32_t data = mPdaBar->readRegister(addr/4);
+  uint32_t data = mPdaBar->readRegister(addr / 4);
   uint32_t lockedData = Utilities::getBit(~data, 14); //phy up 1 = locked, 0 = down
-  uint32_t ready = Utilities::getBit(~data, 15); //data layer up 1 = locked, 0 = down 
+  uint32_t ready = Utilities::getBit(~data, 15);      //data layer up 1 = locked, 0 = down
   if ((lockedData == 0x0) || (ready == 0x0)) {
     resetStickyBit(link);
-    data = mPdaBar->readRegister(addr/4);
+    data = mPdaBar->readRegister(addr / 4);
     lockedData = Utilities::getBit(~data, 14); //phy up 1 = locked, 0 = down
-    ready = Utilities::getBit(~data, 15); //data layer up 1 = locked, 0 = down 
+    ready = Utilities::getBit(~data, 15);      //data layer up 1 = locked, 0 = down
 
     return (lockedData == 0x1 && ready == 0x1) ? LinkStatus::UpWasDown : LinkStatus::Down;
   }
@@ -254,29 +253,29 @@ void Gbt::resetStickyBit(Link link)
 {
   uint32_t addr = getClearErrorAddress(link);
 
-  mPdaBar->writeRegister(addr/4, 0x0);
+  mPdaBar->writeRegister(addr / 4, 0x0);
 }
 
 uint32_t Gbt::getRxClockFrequency(Link link) //In Hz
 {
   uint32_t address = Cru::getWrapperBaseAddress(link.wrapper) +
-    Cru::Registers::GBT_WRAPPER_BANK_OFFSET.address * (link.bank + 1) +
-    Cru::Registers::GBT_BANK_LINK_OFFSET.address * (link.id + 1) +
-    Cru::Registers::GBT_LINK_REGS_OFFSET.address +
-    Cru::Registers::GBT_LINK_RX_CLOCK.address;
+                     Cru::Registers::GBT_WRAPPER_BANK_OFFSET.address * (link.bank + 1) +
+                     Cru::Registers::GBT_BANK_LINK_OFFSET.address * (link.id + 1) +
+                     Cru::Registers::GBT_LINK_REGS_OFFSET.address +
+                     Cru::Registers::GBT_LINK_RX_CLOCK.address;
 
-  return mPdaBar->readRegister(address/4);
+  return mPdaBar->readRegister(address / 4);
 }
 
 uint32_t Gbt::getTxClockFrequency(Link link) //In Hz
 {
   uint32_t address = Cru::getWrapperBaseAddress(link.wrapper) +
-    Cru::Registers::GBT_WRAPPER_BANK_OFFSET.address * (link.bank + 1) +
-    Cru::Registers::GBT_BANK_LINK_OFFSET.address * (link.id + 1) +
-    Cru::Registers::GBT_LINK_REGS_OFFSET.address +
-    Cru::Registers::GBT_LINK_TX_CLOCK.address;
+                     Cru::Registers::GBT_WRAPPER_BANK_OFFSET.address * (link.bank + 1) +
+                     Cru::Registers::GBT_BANK_LINK_OFFSET.address * (link.id + 1) +
+                     Cru::Registers::GBT_LINK_REGS_OFFSET.address +
+                     Cru::Registers::GBT_LINK_TX_CLOCK.address;
 
-  return mPdaBar->readRegister(address/4);
+  return mPdaBar->readRegister(address / 4);
 }
 
 } // namespace roc

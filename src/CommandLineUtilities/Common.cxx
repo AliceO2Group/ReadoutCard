@@ -18,10 +18,14 @@
 #include <iomanip>
 #include <bitset>
 
-namespace AliceO2 {
-namespace roc {
-namespace CommandLineUtilities {
-namespace Common {
+namespace AliceO2
+{
+namespace roc
+{
+namespace CommandLineUtilities
+{
+namespace Common
+{
 
 using std::cout;
 using std::endl;
@@ -43,7 +47,7 @@ std::string make32hexString(uint32_t bits)
 {
   std::ostringstream oss;
   oss << std::hex << std::setw(4) << std::setfill('0') << uint16_t(bits >> 16)
-    << "." << std::hex << std::setw(4) << std::setfill('0') << uint16_t(bits);
+      << "." << std::hex << std::setw(4) << std::setfill('0') << uint16_t(bits);
   return oss.str();
 }
 
@@ -58,9 +62,9 @@ std::string makeRegisterString(int address, uint32_t value)
 {
   std::ostringstream oss;
   oss << "  0x" << makeRegisterAddressString(address)
-    << "  =>  0x" << make32hexString(value)
-    << "  =  0b" << make32bitString(value)
-    << "  =  " << value;
+      << "  =>  0x" << make32hexString(value)
+      << "  =  0b" << make32bitString(value)
+      << "  =  " << value;
   return oss.str();
 }
 

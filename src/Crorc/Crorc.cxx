@@ -61,9 +61,9 @@ int roundPowerOf2(int number)
 }
 
 // Translations of old macros
-auto ST_DEST = [](auto fw) {return ((unsigned short)((fw) & 0xf));};
-auto mask = [](auto a, auto b) {return a & b;};
-auto incr15 = [](auto a) {return (((a) + 1) & 0xf);};
+auto ST_DEST = [](auto fw) { return ((unsigned short)((fw)&0xf)); };
+auto mask = [](auto a, auto b) { return a & b; };
+auto incr15 = [](auto a) { return (((a) + 1) & 0xf); };
 } // Anonymous namespace
 
 namespace AliceO2
@@ -82,20 +82,20 @@ constexpr int REGISTER_ADDRESS = Rorc::Flash::IADR;
 constexpr int REGISTER_READY = Rorc::Flash::LRD;
 
 // TODO figure out what these are/do
-constexpr int MAGIC_VALUE_0  = 0x80;
-constexpr int MAGIC_VALUE_3  = 0x0100bddf;
+constexpr int MAGIC_VALUE_0 = 0x80;
+constexpr int MAGIC_VALUE_3 = 0x0100bddf;
 constexpr int MAGIC_VALUE_13 = 0x03000000;
-constexpr int MAGIC_VALUE_5  = 0x03000003;
+constexpr int MAGIC_VALUE_5 = 0x03000003;
 constexpr int MAGIC_VALUE_12 = 0x0300001f;
-constexpr int MAGIC_VALUE_8  = 0x03000020;
-constexpr int MAGIC_VALUE_9  = 0x03000040;
-constexpr int MAGIC_VALUE_2  = 0x03000050;
-constexpr int MAGIC_VALUE_4  = 0x03000060;
-constexpr int MAGIC_VALUE_6  = 0x03000070;
-constexpr int MAGIC_VALUE_7  = 0x030000d0;
+constexpr int MAGIC_VALUE_8 = 0x03000020;
+constexpr int MAGIC_VALUE_9 = 0x03000040;
+constexpr int MAGIC_VALUE_2 = 0x03000050;
+constexpr int MAGIC_VALUE_4 = 0x03000060;
+constexpr int MAGIC_VALUE_6 = 0x03000070;
+constexpr int MAGIC_VALUE_7 = 0x030000d0;
 constexpr int MAGIC_VALUE_11 = 0x030000e8;
 constexpr int MAGIC_VALUE_10 = 0x030000ff;
-constexpr int MAGIC_VALUE_1  = 0x04000000;
+constexpr int MAGIC_VALUE_1 = 0x04000000;
 
 constexpr uint32_t ADDRESS_START = 0x01000000;
 constexpr uint32_t ADDRESS_END = 0x01460000;
@@ -150,7 +150,7 @@ void checkStatus(RegisterReadWriteInterface& channel)
 
 void unlockBlock(RegisterReadWriteInterface& bar0, uint32_t address)
 {
-//  writeStatusSequence(bar0, 10us, {MAGIC_VALUE_3, address, MAGIC_VALUE_4, MAGIC_VALUE_7});
+  //  writeStatusSequence(bar0, 10us, {MAGIC_VALUE_3, address, MAGIC_VALUE_4, MAGIC_VALUE_7});
   writeStatusSleep(bar0, MAGIC_VALUE_3);
   writeStatusSleep(bar0, address);
   writeStatusSleep(bar0, MAGIC_VALUE_4);
@@ -177,7 +177,7 @@ void eraseBlock(RegisterReadWriteInterface& bar0, uint32_t address)
 }*/
 
 /// Reads a 16-bit flash word and writes it into the given buffer
-void readWord(RegisterReadWriteInterface& bar0, uint32_t address, char *data)
+void readWord(RegisterReadWriteInterface& bar0, uint32_t address, char* data)
 {
   writeStatusSleep(bar0, address);
   writeStatusSleep(bar0, MAGIC_VALUE_10);
@@ -187,7 +187,8 @@ void readWord(RegisterReadWriteInterface& bar0, uint32_t address, char *data)
   data[1] = stat & 0xFF;
 }
 
-void readRange(RegisterReadWriteInterface& bar0, int addressFlash, int wordNumber, std::ostream& out) {
+void readRange(RegisterReadWriteInterface& bar0, int addressFlash, int wordNumber, std::ostream& out)
+{
   for (int i = addressFlash; i < (addressFlash + wordNumber); ++i) {
     uint32_t address = i;
     address = 0x01000000 | address;
@@ -203,7 +204,8 @@ void readRange(RegisterReadWriteInterface& bar0, int addressFlash, int wordNumbe
   }
 }
 
-void wait(RegisterReadWriteInterface& channel) {
+void wait(RegisterReadWriteInterface& channel)
+{
   int status = 0;
   while (status == 0) {
     status = channel.readRegister(REGISTER_READY);
@@ -221,12 +223,13 @@ void readFlashRange(RegisterReadWriteInterface& channel, int addressFlash, int w
 /// Based on "pdaCrorcFlashProgrammer.c"
 /// I don't really understand what it does.
 void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath, int addressFlash, std::ostream& out,
-    const std::atomic<bool>* interrupt)
+                  const std::atomic<bool>* interrupt)
 {
   using boost::format;
-  struct InterruptedException : public std::exception {};
+  struct InterruptedException : public std::exception {
+  };
 
-  auto checkInterrupt = [&]{
+  auto checkInterrupt = [&] {
     if (interrupt != nullptr && interrupt->load(std::memory_order_relaxed)) {
       throw InterruptedException();
     }
@@ -244,10 +247,10 @@ void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath,
   };
 
   // Open file
-  std::ifstream ifstream { dataFilePath };
+  std::ifstream ifstream{ dataFilePath };
   if (!ifstream.is_open()) {
     BOOST_THROW_EXCEPTION(
-        Exception() << ErrorInfo::Message("Failed to open file") << ErrorInfo::FileName(dataFilePath));
+      Exception() << ErrorInfo::Message("Failed to open file") << ErrorInfo::FileName(dataFilePath));
   }
 
   try {
@@ -312,7 +315,7 @@ void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath,
         address++;
         numberOfLinesRead++;
         if (numberOfLinesRead % 1000 == 0) {
-          float perc = ((float) numberOfLinesRead / Flash::MAX_WORDS) * 100.0;
+          float perc = ((float)numberOfLinesRead / Flash::MAX_WORDS) * 100.0;
           out << format("\r  Progress  %1.1f%%") % perc << std::flush;
         }
       }
@@ -330,8 +333,8 @@ void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath,
         maxCount++;
         if (maxCount == 5000000) {
           BOOST_THROW_EXCEPTION(Exception()
-              << ErrorInfo::Message("Flash was stuck")
-              << ErrorInfo::Address(address));
+                                << ErrorInfo::Message("Flash was stuck")
+                                << ErrorInfo::Address(address));
         }
       }
       Flash::checkStatus(channel);
@@ -347,14 +350,14 @@ void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath,
 }
 
 int Crorc::armDataGenerator(uint32_t initEventNumber, uint32_t initDataWord, GeneratorPattern::type dataPattern,
-    int dataSize, int seed)
+                            int dataSize, int seed)
 {
   int eventLen = dataSize / 4;
 
   if ((eventLen < 1) || (eventLen >= 0x00080000)) {
     BOOST_THROW_EXCEPTION(CrorcArmDataGeneratorException()
-        << ErrorInfo::Message("Failed to arm data generator; invalid event length")
-        << ErrorInfo::GeneratorEventLength(eventLen));
+                          << ErrorInfo::Message("Failed to arm data generator; invalid event length")
+                          << ErrorInfo::GeneratorEventLength(eventLen));
   }
 
   int roundedLen = eventLen;
@@ -426,7 +429,7 @@ void Crorc::ddlSendCommand(int dest, uint32_t command, int transid, uint32_t par
   }
 
   long long int i;
-  for (i = 0; i < time; i++){
+  for (i = 0; i < time; i++) {
     if (checkCommandRegister() == 0) {
       break;
     }
@@ -469,9 +472,9 @@ StWord Crorc::ddlReadDiu(int transid, long long int time)
   StWord stw = ddlReadStatus();
   if (stw.part.code != Rorc::IFSTW || stw.part.trid != transid || stw.part.dest != destination) {
     BOOST_THROW_EXCEPTION(
-        Exception() << ErrorInfo::Message("Unexpected DIU STW (not IFSTW)")
-            << ErrorInfo::StwExpected((b::format("0x00000%x%x%x") % transid % Rorc::IFSTW % destination).str())
-            << ErrorInfo::StwReceived((b::format("0x%08lx") % stw.stw).str()));
+      Exception() << ErrorInfo::Message("Unexpected DIU STW (not IFSTW)")
+                  << ErrorInfo::StwExpected((b::format("0x00000%x%x%x") % transid % Rorc::IFSTW % destination).str())
+                  << ErrorInfo::StwReceived((b::format("0x%08lx") % stw.stw).str()));
   }
   StWord ret = stw;
 
@@ -479,15 +482,15 @@ StWord Crorc::ddlReadDiu(int transid, long long int time)
   return ret;
 }
 
-StWord Crorc::ddlReadCTSTW(int transid, int destination, long long int time){
+StWord Crorc::ddlReadCTSTW(int transid, int destination, long long int time)
+{
   ddlWaitStatus(time);
   StWord stw = ddlReadStatus();
-  if ((stw.part.code != Rorc::CTSTW && stw.part.code != Rorc::ILCMD && stw.part.code != Rorc::CTSTW_TO)
-      || stw.part.trid != transid || stw.part.dest != destination) {
+  if ((stw.part.code != Rorc::CTSTW && stw.part.code != Rorc::ILCMD && stw.part.code != Rorc::CTSTW_TO) || stw.part.trid != transid || stw.part.dest != destination) {
     BOOST_THROW_EXCEPTION(
-        Exception() << ErrorInfo::Message("Unexpected STW (not CTSTW)")
-        << ErrorInfo::StwExpected((b::format("0x00000%x%x%x") % transid % Rorc::CTSTW % destination).str())
-        << ErrorInfo::StwReceived((b::format("0x%08lx") % stw.stw).str()));
+      Exception() << ErrorInfo::Message("Unexpected STW (not CTSTW)")
+                  << ErrorInfo::StwExpected((b::format("0x00000%x%x%x") % transid % Rorc::CTSTW % destination).str())
+                  << ErrorInfo::StwReceived((b::format("0x%08lx") % stw.stw).str()));
   }
   return stw;
 }
@@ -503,19 +506,18 @@ StWord Crorc::ddlReadSiu(int transid, long long int time)
   StWord stw = ddlReadStatus();
   if (stw.part.code != Rorc::IFSTW || stw.part.trid != transid || stw.part.dest != destination) {
     BOOST_THROW_EXCEPTION(
-        Exception() << ErrorInfo::Message("Unexpected SIU STW (not IFSTW)")
-            << ErrorInfo::StwExpected((b::format("0x00000%x%x%x") % transid % Rorc::IFSTW % destination).str())
-            << ErrorInfo::StwReceived((b::format("0x%08lx") % stw.stw).str()));
+      Exception() << ErrorInfo::Message("Unexpected SIU STW (not IFSTW)")
+                  << ErrorInfo::StwExpected((b::format("0x00000%x%x%x") % transid % Rorc::IFSTW % destination).str())
+                  << ErrorInfo::StwReceived((b::format("0x%08lx") % stw.stw).str()));
   }
 
   StWord ret = stw;
   stw = ddlReadStatus();
-  if ((stw.part.code != Rorc::CTSTW && stw.part.code != Rorc::ILCMD && stw.part.code != Rorc::CTSTW_TO)
-      || stw.part.trid != transid || stw.part.dest != destination) {
+  if ((stw.part.code != Rorc::CTSTW && stw.part.code != Rorc::ILCMD && stw.part.code != Rorc::CTSTW_TO) || stw.part.trid != transid || stw.part.dest != destination) {
     BOOST_THROW_EXCEPTION(
-        Exception() << ErrorInfo::Message("Unexpected SIU STW (not CTSTW)")
-            << ErrorInfo::StwExpected((b::format("0x00000%x%x%x") % transid % Rorc::CTSTW % destination).str())
-            << ErrorInfo::StwReceived((b::format("0x%08lx") % stw.stw).str()));
+      Exception() << ErrorInfo::Message("Unexpected SIU STW (not CTSTW)")
+                  << ErrorInfo::StwExpected((b::format("0x00000%x%x%x") % transid % Rorc::CTSTW % destination).str())
+                  << ErrorInfo::StwReceived((b::format("0x%08lx") % stw.stw).str()));
   }
   return ret;
 }
@@ -531,10 +533,10 @@ std::vector<std::string> ddlInterpretIFSTW(uint32_t ifstw)
   const uint32_t status = ifstw & STMASK;
   std::vector<std::string> messages;
 
-  auto add = [&](const char* message){ messages.push_back(message); };
+  auto add = [&](const char* message) { messages.push_back(message); };
 
   auto checkTable = [&](uint32_t status, const Table& table) {
-    for(const auto& pair : table) {
+    for (const auto& pair : table) {
       if (mask(pair.first, status)) {
         add(pair.second);
       }
@@ -542,7 +544,7 @@ std::vector<std::string> ddlInterpretIFSTW(uint32_t ifstw)
   };
 
   auto checkTableExclusive = [&](uint32_t status, const Table& table) {
-    for(const auto& pair : table) {
+    for (const auto& pair : table) {
       if (mask(pair.first, status)) {
         add(pair.second);
         break;
@@ -552,67 +554,72 @@ std::vector<std::string> ddlInterpretIFSTW(uint32_t ifstw)
 
   if (destination == Destination::DIU) {
     using namespace Diu;
-    const Table errorTable {
-        {LOSS_SYNC, "Loss of synchronization"},
-        {TXOF, "Transmit data/status overflow"},
-        {RES1, "Undefined DIU error"},
-        {OSINFR, "Ordered set in frame"},
-        {INVRX, "Invalid receive character in frame"},
-        {CERR, "CRC error"},
-        {RES2, "Undefined DIU error"},
-        {DOUT, "Data out of frame"},
-        {IFDL, "Illegal frame delimiter"},
-        {LONG, "Too long frame"},
-        {RXOF, "Received data/status overflow"},
-        {FRERR, "Error in receive frame"}};
-    const Table portTable {
-        {PortState::TSTM, "DIU port in PRBS Test Mode state"},
-        {PortState::POFF, "DIU port in Power Off state"},
-        {PortState::LOS, "DIU port in Offline Loss of Synchr. state"},
-        {PortState::NOSIG, "DIU port in Offline No Signal state"},
-        {PortState::WAIT, "DIU port in Waiting for Power Off state"},
-        {PortState::ONL, "DIU port in Online state"},
-        {PortState::OFFL, "DIU port in Offline state"},
-        {PortState::POR, "DIU port in Power On Reset state"}};
+    const Table errorTable{
+      { LOSS_SYNC, "Loss of synchronization" },
+      { TXOF, "Transmit data/status overflow" },
+      { RES1, "Undefined DIU error" },
+      { OSINFR, "Ordered set in frame" },
+      { INVRX, "Invalid receive character in frame" },
+      { CERR, "CRC error" },
+      { RES2, "Undefined DIU error" },
+      { DOUT, "Data out of frame" },
+      { IFDL, "Illegal frame delimiter" },
+      { LONG, "Too long frame" },
+      { RXOF, "Received data/status overflow" },
+      { FRERR, "Error in receive frame" }
+    };
+    const Table portTable{
+      { PortState::TSTM, "DIU port in PRBS Test Mode state" },
+      { PortState::POFF, "DIU port in Power Off state" },
+      { PortState::LOS, "DIU port in Offline Loss of Synchr. state" },
+      { PortState::NOSIG, "DIU port in Offline No Signal state" },
+      { PortState::WAIT, "DIU port in Waiting for Power Off state" },
+      { PortState::ONL, "DIU port in Online state" },
+      { PortState::OFFL, "DIU port in Offline state" },
+      { PortState::POR, "DIU port in Power On Reset state" }
+    };
 
     if (mask(status, DIU_LOOP)) {
       add("DIU is set in loop-back mode");
     }
-    if (mask(status, ERROR_BIT)){
+    if (mask(status, ERROR_BIT)) {
       checkTable(mask(status, DIUSTMASK), errorTable);
     }
     checkTableExclusive(status, portTable);
   } else {
     using namespace Siu;
-    const Table okTable {
-        {LBMOD, "SIU in Loopback Mode"},
-        {OPTRAN, "One FEE transaction is open"}};
-    const Table errorTable {
-        {LONGE, "Too long event or read data block"},
-        {IFEDS, "Illegal FEE data/status"},
-        {TXOF, "Transmit FIFO overflow"},
-        {IWDAT, "Illegal write data word"},
-        {OSINFR, "Ordered set in frame"},
-        {INVRX, "Invalid character in receive frame"},
-        {CERR, "CRC error"},
-        {DJLERR, "DTCC or JTCC error"},
-        {DOUT, "Data out of receive frame"},
-        {IFDL, "Illegal frame delimiter"},
-        {LONG, "Too long receive frame"},
-        {RXOF, "Receive FIFO overflow"},
-        {FRERR, "Error in receive frame"},
-        {LPERR, "Link protocol error"}};
-    const Table portTable {
-        {PortState::RESERV ,"SIU port in undefined state"},
-        {PortState::POFF, "SIU port in Power Off state"},
-        {PortState::LOS, "SIU port in Offline Loss of Synchr. state"},
-        {PortState::NOSIG, "SIU port in Offline No Signal state"},
-        {PortState::WAIT, "SIU port in Waiting for Power Off state"},
-        {PortState::ONL, "SIU port in Online state"},
-        {PortState::OFFL, "SIU port in Offline state"},
-        {PortState::POR, "SIU port in Power On Reset state"}};
+    const Table okTable{
+      { LBMOD, "SIU in Loopback Mode" },
+      { OPTRAN, "One FEE transaction is open" }
+    };
+    const Table errorTable{
+      { LONGE, "Too long event or read data block" },
+      { IFEDS, "Illegal FEE data/status" },
+      { TXOF, "Transmit FIFO overflow" },
+      { IWDAT, "Illegal write data word" },
+      { OSINFR, "Ordered set in frame" },
+      { INVRX, "Invalid character in receive frame" },
+      { CERR, "CRC error" },
+      { DJLERR, "DTCC or JTCC error" },
+      { DOUT, "Data out of receive frame" },
+      { IFDL, "Illegal frame delimiter" },
+      { LONG, "Too long receive frame" },
+      { RXOF, "Receive FIFO overflow" },
+      { FRERR, "Error in receive frame" },
+      { LPERR, "Link protocol error" }
+    };
+    const Table portTable{
+      { PortState::RESERV, "SIU port in undefined state" },
+      { PortState::POFF, "SIU port in Power Off state" },
+      { PortState::LOS, "SIU port in Offline Loss of Synchr. state" },
+      { PortState::NOSIG, "SIU port in Offline No Signal state" },
+      { PortState::WAIT, "SIU port in Waiting for Power Off state" },
+      { PortState::ONL, "SIU port in Online state" },
+      { PortState::OFFL, "SIU port in Offline state" },
+      { PortState::POR, "SIU port in Power On Reset state" }
+    };
 
-    if (mask(status, ERROR_BIT)){
+    if (mask(status, ERROR_BIT)) {
       checkTable(status, errorTable);
     } else {
       checkTable(status, okTable);
@@ -628,7 +635,7 @@ std::vector<std::string> ddlInterpretIFSTW(uint32_t ifstw)
 /// \param time Number of cycles to wait for command sending and replies
 void Crorc::ddlResetSiu(int cycle, long long int time)
 {
-  ddlSendCommand(Ddl::Destination::DIU, Ddl::SRST, 0,  0, time);
+  ddlSendCommand(Ddl::Destination::DIU, Ddl::SRST, 0, 0, time);
   ddlWaitStatus(time);
   ddlReadStatus();
 
@@ -645,11 +652,10 @@ void Crorc::ddlResetSiu(int cycle, long long int time)
       StWord stword = ddlReadDiu(transid, time);
       stword.stw &= Ddl::STMASK;
 
-      if (stword.stw & Diu::ERROR_BIT){
+      if (stword.stw & Diu::ERROR_BIT) {
         statusStrings = ddlInterpretIfstw(stword.stw);
         statusStringsToReturn.insert(statusStringsToReturn.end(), statusStrings.begin(), statusStrings.end());
-      }
-      else if (mask(stword.stw, Siu::OPTRAN)){
+      } else if (mask(stword.stw, Siu::OPTRAN)) {
         statusStrings = ddlInterpretIfstw(stword.stw);
         statusStringsToReturn.insert(statusStringsToReturn.end(), statusStrings.begin(), statusStrings.end());
       }
@@ -658,7 +664,7 @@ void Crorc::ddlResetSiu(int cycle, long long int time)
       stword = ddlReadSiu(transid, time);
       stword.stw &= Ddl::STMASK;
 
-      if (stword.stw & Diu::ERROR_BIT){
+      if (stword.stw & Diu::ERROR_BIT) {
         statusStrings = ddlInterpretIfstw(stword.stw);
         statusStringsToReturn.insert(statusStringsToReturn.end(), statusStrings.begin(), statusStrings.end());
       }
@@ -671,7 +677,7 @@ void Crorc::ddlResetSiu(int cycle, long long int time)
   // Prepare verbose error message
   std::stringstream ss;
   ss << "Failed to reset SIU" << std::endl;
-  for(auto const& string: statusStringsToReturn) {
+  for (auto const& string : statusStringsToReturn) {
     ss << string << std::endl;
   }
   BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(ss.str()));
@@ -701,7 +707,7 @@ void Crorc::resetCommand(int option, const DiuConfig& diuConfig)
     command |= Rorc::CcsrCommand::CLEAR_COUNTERS;
   }
   if (command) {
-    write(Rorc::C_CSR, (uint32_t) command);
+    write(Rorc::C_CSR, (uint32_t)command);
   }
   if (option & Rorc::Reset::SIU) {
     putCommandRegister(Rorc::DcrCommand::RESET_SIU);
@@ -710,7 +716,7 @@ void Crorc::resetCommand(int option, const DiuConfig& diuConfig)
       ddlReadStatus();
   }
   if (!option || (option & Rorc::Reset::RORC)) {
-    write(Rorc::RCSR, Rorc::RcsrCommand::RESET_CHAN);  //channel reset
+    write(Rorc::RCSR, Rorc::RcsrCommand::RESET_CHAN); //channel reset
   }
 }
 
@@ -720,11 +726,11 @@ void Crorc::emptyDataFifos(int timeoutMicroseconds)
 {
   auto endTime = chrono::steady_clock::now() + chrono::microseconds(timeoutMicroseconds);
 
-  while (chrono::steady_clock::now() < endTime){
+  while (chrono::steady_clock::now() < endTime) {
     if (!checkRxData()) {
       return;
     }
-    write(Rorc::C_CSR, (uint32_t) Rorc::CcsrCommand::CLEAR_FIFOS);
+    write(Rorc::C_CSR, (uint32_t)Rorc::CcsrCommand::CLEAR_FIFOS);
   }
 
   if (checkRxData()) {
@@ -732,18 +738,17 @@ void Crorc::emptyDataFifos(int timeoutMicroseconds)
   }
 }
 
-
 void Crorc::armDdl(int resetMask, const DiuConfig& diuConfig)
 {
-  auto reset = [&](uint32_t command){ resetCommand(command, diuConfig); };
+  auto reset = [&](uint32_t command) { resetCommand(command, diuConfig); };
 
-  if (resetMask & Rorc::Reset::FEE){
+  if (resetMask & Rorc::Reset::FEE) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Command not allowed"));
   }
-  if (resetMask & Rorc::Reset::SIU){
+  if (resetMask & Rorc::Reset::SIU) {
     ddlResetSiu(3, Ddl::RESPONSE_TIME * diuConfig.pciLoopPerUsec);
   }
-  if (resetMask & Rorc::Reset::LINK_UP){
+  if (resetMask & Rorc::Reset::LINK_UP) {
     reset(Rorc::Reset::RORC);
     reset(Rorc::Reset::DIU);
     reset(Rorc::Reset::SIU);
@@ -773,12 +778,12 @@ auto Crorc::initDiuVersion() -> DiuConfig
   int maxLoop = 1000;
   auto start = chrono::steady_clock::now();
   for (int i = 0; i < maxLoop; i++) {
-    (void) checkRxStatus();
+    (void)checkRxStatus();
   };
   auto end = chrono::steady_clock::now();
 
   DiuConfig diuConfig;
-  diuConfig.pciLoopPerUsec = double(maxLoop) / chrono::duration<double, std::micro>(end-start).count();
+  diuConfig.pciLoopPerUsec = double(maxLoop) / chrono::duration<double, std::micro>(end - start).count();
   return diuConfig;
 }
 
@@ -825,7 +830,7 @@ void Crorc::assertFreeFifoEmpty()
 {
   if (!isFreeFifoEmpty()) {
     BOOST_THROW_EXCEPTION(CrorcFreeFifoException() << ErrorInfo::Message("Free FIFO not empty")
-        << ErrorInfo::PossibleCauses({"Previous DMA did not get/free all received pages"}));
+                                                   << ErrorInfo::PossibleCauses({ "Previous DMA did not get/free all received pages" }));
   }
 }
 
@@ -842,7 +847,8 @@ void Crorc::startDataReceiver(uintptr_t readyFifoBusAddress)
   }
 }
 
-StWord Crorc::ddlSetSiuLoopBack(const DiuConfig& diuConfig){
+StWord Crorc::ddlSetSiuLoopBack(const DiuConfig& diuConfig)
+{
   long long int timeout = diuConfig.pciLoopPerUsec * Ddl::RESPONSE_TIME;
 
   // Check SIU fw version
@@ -850,7 +856,7 @@ StWord Crorc::ddlSetSiuLoopBack(const DiuConfig& diuConfig){
   ddlWaitStatus(timeout);
 
   StWord stword = ddlReadStatus();
-  if (stword.part.code == Rorc::ILCMD){
+  if (stword.part.code == Rorc::ILCMD) {
     // Illegal command => old version => send TSTMODE for loopback
     ddlSendCommand(Ddl::Destination::SIU, Ddl::TSTMODE, 0, 0, timeout);
     ddlWaitStatus(timeout);
@@ -877,7 +883,8 @@ StWord Crorc::ddlSetSiuLoopBack(const DiuConfig& diuConfig){
   return ddlReadStatus();
 }
 
-StWord Crorc::ddlSetDiuLoopBack(const DiuConfig& diuConfig){
+StWord Crorc::ddlSetDiuLoopBack(const DiuConfig& diuConfig)
+{
   long long int timeout = diuConfig.pciLoopPerUsec * Ddl::RESPONSE_TIME;
 
   ddlSendCommand(Ddl::Destination::DIU, Ddl::IFLOOP, 0, 0, timeout);
@@ -899,8 +906,7 @@ void Crorc::setDiuLoopback(const DiuConfig& diuConfig)
 void Crorc::startTrigger(const DiuConfig& diuConfig, uint32_t command)
 {
   if ((command != Fee::RDYRX) && (command != Fee::STBRD)) {
-    BOOST_THROW_EXCEPTION(Exception() <<
-      ErrorInfo::Message("Trigger can only be started with RDYRX or STBRD."));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Trigger can only be started with RDYRX or STBRD."));
   }
   uint64_t timeout = Ddl::RESPONSE_TIME * diuConfig.pciLoopPerUsec;
   ddlSendCommand(Ddl::Destination::FEE, command, 0, 0, timeout);
@@ -931,10 +937,10 @@ void Crorc::stopTrigger(const DiuConfig& diuConfig)
   } catch (const Exception& e) {
     std::cout << "STOP TRIGGER DDL TIME-OUT" << std::endl;
   }
-
 }
 
-void Crorc::setLoopbackOn(){
+void Crorc::setLoopbackOn()
+{
   if (!isLoopbackOn()) {
     toggleLoopback();
   }
@@ -994,7 +1000,7 @@ void Crorc::initReadoutContinuous(RegisterReadWriteInterface& bar2)
 
   // this script works with the G-RORC firmware 3.16
   // SET the card in CONT MODE
-  bar2.writeRegister(0x190/4, 0x02000000);
+  bar2.writeRegister(0x190 / 4, 0x02000000);
   // s_send_wide            <= s_reg(0);
   // s_gbt_tx_pol           <= s_reg(1);
   // s_gbt_tx_sel           <= s_reg(3 downto 2);
@@ -1005,9 +1011,9 @@ void Crorc::initReadoutContinuous(RegisterReadWriteInterface& bar2)
   // s_disable_bank         <= s_reg(17 downto 16);
   // s_bar_rd_ch(2).reg_194 <= s_reg;
   // Choose only BANK0
-  bar2.writeRegister(0x194/4, 0x21005);
+  bar2.writeRegister(0x194 / 4, 0x21005);
   // number of GBT words per event
-  bar2.writeRegister(0x18c/4, 0x1f);
+  bar2.writeRegister(0x18c / 4, 0x1f);
 }
 
 void Crorc::startReadoutContinuous(RegisterReadWriteInterface& bar2)
@@ -1016,8 +1022,8 @@ void Crorc::startReadoutContinuous(RegisterReadWriteInterface& bar2)
   // https://gitlab.cern.ch/costaf/grorc_sw/blob/master/script/grorc_send_IDLE_SYNC.sh
 
   // SET IT AS CUSTOM PATTERN FOR 1 CC and open the GATE READOUT
-  bar2.writeRegister(0x198/4, 0x60000001);
-  bar2.writeRegister(0x198/4, 0x0);
+  bar2.writeRegister(0x198 / 4, 0x60000001);
+  bar2.writeRegister(0x198 / 4, 0x0);
 }
 
 void Crorc::initReadoutTriggered(RegisterReadWriteInterface&)
@@ -1033,7 +1039,7 @@ boost::optional<int32_t> getSerial(RegisterReadWriteInterface& bar0)
 
   // Setting the address to the serial number's (SN) position. (Actually it's the position
   // one before the SN's, because we need even position and the SN is at odd position.
-  std::array<char, Rorc::Serial::LENGTH + 1> data { '\0' };
+  std::array<char, Rorc::Serial::LENGTH + 1> data{ '\0' };
   address += (Rorc::Serial::POSITION - 1) / 2;
   for (int i = 0; i < Rorc::Serial::LENGTH; i += 2, address++) {
     Flash::readWord(bar0, address, &data[i]);
@@ -1051,10 +1057,10 @@ boost::optional<int32_t> getSerial(RegisterReadWriteInterface& bar0)
 
   if (serial == 0xFfffFfff) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("C-RORC reported invalid serial number 0xffffffff, "
-                                                              "a fatal error may have occurred"));
+                                                            "a fatal error may have occurred"));
   }
 
-  return {int32_t(serial)};
+  return { int32_t(serial) };
 }
 
 uint8_t Crorc::ddlReadHw(int destination, int address, long long int time)
@@ -1071,9 +1077,9 @@ uint8_t Crorc::ddlReadHw(int destination, int address, long long int time)
   StWord stw = ddlReadStatus();
   if (stw.part.code != Ddl::HWSTW || stw.part.trid != transid || stw.part.dest != destination) {
     BOOST_THROW_EXCEPTION(
-        Exception() << ErrorInfo::Message("Not HWSTW!")
-            << ErrorInfo::StwExpected((b::format("0x00000%x%x%x") % transid % Rorc::IFSTW % destination).str())
-            << ErrorInfo::StwReceived((b::format("0x%08lx") % stw.stw).str()));
+      Exception() << ErrorInfo::Message("Not HWSTW!")
+                  << ErrorInfo::StwExpected((b::format("0x00000%x%x%x") % transid % Rorc::IFSTW % destination).str())
+                  << ErrorInfo::StwReceived((b::format("0x%08lx") % stw.stw).str()));
   }
 
   uint8_t hw = (stw.stw >> 20) & 0xff;
@@ -1085,18 +1091,18 @@ uint8_t Crorc::ddlReadHw(int destination, int address, long long int time)
 std::string Crorc::ddlGetHwInfo(int destination, long long int time)
 {
   uint8_t data[Ddl::MAX_HW_ID];
-  data[0]='\0';
+  data[0] = '\0';
 
   int i;
-  for(i=0; i<Ddl::MAX_HW_ID; i++) {
+  for (i = 0; i < Ddl::MAX_HW_ID; i++) {
     data[i] = ddlReadHw(destination, i, time);
-    if (data[i] == '\0'){
+    if (data[i] == '\0') {
       break;
     }
   }
   data[i] = '\0';
 
-  std::string hwInfo ((const char *)data);
+  std::string hwInfo((const char*)data);
   return hwInfo;
 }
 
@@ -1127,30 +1133,30 @@ std::tuple<std::string, uint32_t> Crorc::siuStatus()
   uint32_t siuStatus;
   try {
     siuStatus = ddlPrintStatus(Ddl::Destination::SIU, time);
-  } catch (const Exception& e){
+  } catch (const Exception& e) {
     throw e;
   }
 
-  return std::make_tuple(hwInfo, siuStatus); 
+  return std::make_tuple(hwInfo, siuStatus);
 }
 
 std::vector<std::string> Crorc::ddlInterpretIfstw(uint32_t ifstw)
 {
   /* for remote SIU/DIU status */
-  std::string remoteStatus[] = {"Power On Reset", "Offline", "Online", "Waiting for PO",
-    "Offline No Signal", "Offline LOS", "No Optical Signal", "undefined"};
+  std::string remoteStatus[] = { "Power On Reset", "Offline", "Online", "Waiting for PO",
+                                 "Offline No Signal", "Offline LOS", "No Optical Signal", "undefined" };
 
   std::vector<std::string> statusStrings;
   int destination = ifstw & 0xf;
   uint32_t status = ifstw & Ddl::STMASK;
 
-  auto appendString = [&] (std::string string) mutable {
+  auto appendString = [&](std::string string) mutable {
     statusStrings.push_back(string);
   };
 
   if (destination == Ddl::Destination::DIU) {
 
-    if (status &  Diu::DIU_LOOP)
+    if (status & Diu::DIU_LOOP)
       appendString("DIU is set in loop-back mode");
     if (status & Diu::ERROR_BIT) {
       appendString("DIU error bit(s) set");
@@ -1184,21 +1190,29 @@ std::vector<std::string> Crorc::ddlInterpretIfstw(uint32_t ifstw)
 
     switch (status & Ddl::DIUSTMASK) {
       case Diu::PortState::TSTM:
-        appendString("DIU port in PRBS Test Mode state"); break;
+        appendString("DIU port in PRBS Test Mode state");
+        break;
       case Diu::PortState::POFF:
-        appendString("DIU port in Power Off state"); break;
+        appendString("DIU port in Power Off state");
+        break;
       case Diu::PortState::LOS:
-        appendString("DIU port in Offline Loss of Synchr. state"); break;
+        appendString("DIU port in Offline Loss of Synchr. state");
+        break;
       case Diu::PortState::NOSIG:
-        appendString("DIU port in Offline No Signal state"); break;
+        appendString("DIU port in Offline No Signal state");
+        break;
       case Diu::PortState::WAIT:
-        appendString("DIU port in Waiting for Power Off state"); break;
+        appendString("DIU port in Waiting for Power Off state");
+        break;
       case Diu::PortState::ONL:
-        appendString("DIU port in Online state"); break;
+        appendString("DIU port in Online state");
+        break;
       case Diu::PortState::OFFL:
-        appendString("DIU port in Offline state"); break;
+        appendString("DIU port in Offline state");
+        break;
       case Diu::PortState::POR:
-        appendString("DIU port in Power On Reset state"); break;
+        appendString("DIU port in Power On Reset state");
+        break;
     }
 
     int siuStatus = (status & Ddl::REMMASK) >> 15;
@@ -1247,21 +1261,29 @@ std::vector<std::string> Crorc::ddlInterpretIfstw(uint32_t ifstw)
 
     switch (status & Ddl::SIUSTMASK) {
       case Siu::PortState::RESERV:
-        appendString("SIU port in undefined state"); break;
+        appendString("SIU port in undefined state");
+        break;
       case Siu::PortState::POFF:
-        appendString("SIU port in Power Off state"); break;
+        appendString("SIU port in Power Off state");
+        break;
       case Siu::PortState::LOS:
-        appendString("SIU port in Offline Loss of Synchr. state"); break;
+        appendString("SIU port in Offline Loss of Synchr. state");
+        break;
       case Siu::PortState::NOSIG:
-        appendString("SIU port in Offline No Signal state"); break;
-      case Siu::PortState::WAIT :
-        appendString("SIU port in Waiting for Power Off state"); break;
-      case Siu::PortState::ONL :
-        appendString("SIU port in Online state"); break;
+        appendString("SIU port in Offline No Signal state");
+        break;
+      case Siu::PortState::WAIT:
+        appendString("SIU port in Waiting for Power Off state");
+        break;
+      case Siu::PortState::ONL:
+        appendString("SIU port in Online state");
+        break;
       case Siu::PortState::OFFL:
-        appendString("SIU port in Offline state"); break;
+        appendString("SIU port in Offline state");
+        break;
       case Siu::PortState::POR:
-        appendString("SIU port in Power On Reset state"); break;
+        appendString("SIU port in Power On Reset state");
+        break;
     }
   }
 

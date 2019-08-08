@@ -17,22 +17,26 @@
 #include "ExceptionInternal.h"
 #include <regex>
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
-namespace {
+namespace
+{
 
-  int parseSequenceNumberString(const std::string& string) {
-    std::regex expression ("^[ \t]*#[0-9]+[ \t]*$");
-    if (std::regex_search(string, expression)) {
-      return stoi(string.substr(string.find('#') + 1));
-    } else {
-      BOOST_THROW_EXCEPTION(ParseException()
-          << ErrorInfo::Message("Parsing PCI sequence number failed"));
-    }
+int parseSequenceNumberString(const std::string& string)
+{
+  std::regex expression("^[ \t]*#[0-9]+[ \t]*$");
+  if (std::regex_search(string, expression)) {
+    return stoi(string.substr(string.find('#') + 1));
+  } else {
+    BOOST_THROW_EXCEPTION(ParseException()
+                          << ErrorInfo::Message("Parsing PCI sequence number failed"));
   }
-
 }
+
+} // namespace
 
 PciSequenceNumber::PciSequenceNumber(const std::string& string)
 {
@@ -49,8 +53,7 @@ boost::optional<PciSequenceNumber> PciSequenceNumber::fromString(std::string str
 {
   try {
     return PciSequenceNumber(string);
-  }
-  catch (const ParseException& e) {
+  } catch (const ParseException& e) {
     return {};
   }
 }

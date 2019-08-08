@@ -25,8 +25,10 @@
 using namespace AliceO2::roc;
 namespace b = boost;
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 void addPossibleCauses(boost::exception& exception, const std::vector<std::string>& newCauses)
 {
@@ -35,8 +37,7 @@ void addPossibleCauses(boost::exception& exception, const std::vector<std::strin
     // Note that we also preserve the chronological order, so messages which are closest to the original throw
     // site -- which might even be more likely to reveal the underlying issue -- appear first in the diagnostic output.
     oldCauses->insert(oldCauses->end(), newCauses.begin(), newCauses.end());
-  }
-  else {
+  } else {
     // Otherwise, we can just them to the exception as usual
     exception << ErrorInfo::PossibleCauses(newCauses);
   }
@@ -57,7 +58,8 @@ std::string toStringHelper(const std::string& name, const Basic& basic, const Ex
   return b::str(b::format("[%s] = %s, \"%s\"\n") % name % basic % extended);
 }
 
-namespace boost {
+namespace boost
+{
 
 std::string to_string(const ErrorInfo::Message& e)
 {
@@ -68,11 +70,9 @@ std::string to_string(const ErrorInfo::PossibleCauses& e)
 {
   if (e.value().size() == 0) {
     return toStringHelper("Possible cause", "<none given>");
-  }
-  else if (e.value().size() == 1) {
+  } else if (e.value().size() == 1) {
     return toStringHelper("Possible cause", e.value()[0]);
-  }
-  else {
+  } else {
     std::ostringstream oss;
     oss << "[Possible causes]:\n";
     for (const auto& string : e.value()) {
@@ -96,12 +96,10 @@ std::string to_string(const ErrorInfo::PciIds& e)
 {
   if (e.value().size() == 0) {
     return "";
-  }
-  else if (e.value().size() == 1) {
+  } else if (e.value().size() == 1) {
     auto pciId = e.value()[0];
     return b::str(b::format("[PCI IDs (device, vendor)] = 0x%s 0x%s\n") % pciId.getDeviceId() % pciId.getVendorId());
-  }
-  else {
+  } else {
     std::ostringstream oss;
     oss << "[PCI IDs (device, vendor)]:\n";
     for (size_t i = 0; i < e.value().size(); ++i) {
@@ -137,7 +135,6 @@ std::string to_string(const ErrorInfo::PciSequenceNumber& e)
   return toStringHelper("ReadoutCard PCI sequence number", e.value().toString());
 }
 
-
 std::string to_string(const ErrorInfo::CardId& e)
 {
   std::string message;
@@ -151,6 +148,5 @@ std::string to_string(const ErrorInfo::CardId& e)
   }
   return toStringHelper("ReadoutCard PCI address", message);
 }
-
 
 } // namespace boost

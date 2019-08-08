@@ -18,52 +18,52 @@
 
 using namespace AliceO2::roc::CommandLineUtilities;
 
-namespace {
+namespace
+{
 
 const char* NOREAD_SWITCH("noread");
 
-class ProgramRegisterWrite: public Program
+class ProgramRegisterWrite : public Program
 {
-  public:
+ public:
+  virtual Description getDescription()
+  {
+    return { "Write Register", "Write a value to a single register",
+             "roc-reg-write --id=12345 --channel=0 --address=0x8 --value=0" };
+  }
 
-    virtual Description getDescription()
-    {
-      return {"Write Register", "Write a value to a single register",
-          "roc-reg-write --id=12345 --channel=0 --address=0x8 --value=0"};
-    }
+  virtual void addOptions(boost::program_options::options_description& options)
+  {
+    Options::addOptionRegisterAddress(options);
+    Options::addOptionChannel(options);
+    Options::addOptionCardId(options);
+    Options::addOptionRegisterValue(options);
+    options.add_options()(NOREAD_SWITCH, "No readback of register after write");
+  }
 
-    virtual void addOptions(boost::program_options::options_description& options)
-    {
-      Options::addOptionRegisterAddress(options);
-      Options::addOptionChannel(options);
-      Options::addOptionCardId(options);
-      Options::addOptionRegisterValue(options);
-      options.add_options()(NOREAD_SWITCH, "No readback of register after write");
-    }
+  virtual void run(const boost::program_options::variables_map& map)
+  {
+    auto cardId = Options::getOptionCardId(map);
+    uint32_t address = Options::getOptionRegisterAddress(map);
+    int channelNumber = Options::getOptionChannel(map);
+    uint32_t registerValue = Options::getOptionRegisterValue(map);
+    auto readback = !bool(map.count(NOREAD_SWITCH));
+    auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
+    auto channel = AliceO2::roc::ChannelFactory().getBar(params);
 
-    virtual void run(const boost::program_options::variables_map& map)
-    {
-      auto cardId = Options::getOptionCardId(map);
-      uint32_t address = Options::getOptionRegisterAddress(map);
-      int channelNumber = Options::getOptionChannel(map);
-      uint32_t registerValue = Options::getOptionRegisterValue(map);
-      auto readback = !bool(map.count(NOREAD_SWITCH));
-      auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
-      auto channel = AliceO2::roc::ChannelFactory().getBar(params);
-
-      // Registers are indexed by 32 bits (4 bytes)
-      channel->writeRegister(address / 4, registerValue);
-      if (readback) {
-        auto value = channel->readRegister(address / 4);
-        if (isVerbose()) {
-          std::cout << Common::makeRegisterString(address, value) << '\n';
-        } else {
-          std::cout << "0x" << std::hex << value << '\n';
-        }
+    // Registers are indexed by 32 bits (4 bytes)
+    channel->writeRegister(address / 4, registerValue);
+    if (readback) {
+      auto value = channel->readRegister(address / 4);
+      if (isVerbose()) {
+        std::cout << Common::makeRegisterString(address, value) << '\n';
       } else {
-        std::cout << (isVerbose() ? "Done!\n" : "\n");
+        std::cout << "0x" << std::hex << value << '\n';
       }
+    } else {
+      std::cout << (isVerbose() ? "Done!\n" : "\n");
     }
+  }
 };
 } // Anonymous namespace
 

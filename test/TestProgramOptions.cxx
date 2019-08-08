@@ -20,11 +20,11 @@ BOOST_AUTO_TEST_CASE(UtilOptions)
 
   // Our mock options
   std::vector<const char*> args = {
-      "/test",
-      "--channel=0",
-      "--address=0x100",
-      "--value=0x250",
-      "--range=200",
+    "/test",
+    "--channel=0",
+    "--address=0x100",
+    "--value=0x250",
+    "--range=200",
   };
 
   // Add option descriptions
@@ -45,4 +45,3 @@ BOOST_AUTO_TEST_CASE(UtilOptions)
   BOOST_CHECK_MESSAGE(getOptionRegisterRange(vm) == 200, "register range");
   BOOST_CHECK_MESSAGE(getOptionRegisterValue(vm) == 0x250, "register value");
 }
-

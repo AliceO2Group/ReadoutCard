@@ -20,36 +20,39 @@
 #include <boost/spirit/include/qi.hpp>
 #include "ExceptionInternal.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
-namespace {
-  bool parseLspciFormat(const std::string& string, int& bus, int& slot, int& function)
-  {
-    using namespace boost::spirit::qi;
-    return phrase_parse(string.begin(), string.end(), hex >> ":" >> hex >> "." >> hex, space, bus, slot, function);
+namespace
+{
+bool parseLspciFormat(const std::string& string, int& bus, int& slot, int& function)
+{
+  using namespace boost::spirit::qi;
+  return phrase_parse(string.begin(), string.end(), hex >> ":" >> hex >> "." >> hex, space, bus, slot, function);
+}
+
+void checkRanges(int bus, int slot, int function)
+{
+  if (bus < 0 || bus > 0xff) {
+    BOOST_THROW_EXCEPTION(ParameterException()
+                          << ErrorInfo::Message("Bus number out of range")
+                          << ErrorInfo::PciAddressBusNumber(bus));
   }
 
-  void checkRanges(int bus, int slot, int function)
-  {
-    if (bus < 0 || bus > 0xff) {
-      BOOST_THROW_EXCEPTION(ParameterException()
-          << ErrorInfo::Message("Bus number out of range")
-          << ErrorInfo::PciAddressBusNumber(bus));
-    }
-
-    if (slot < 0 || slot > 0x1f) {
-      BOOST_THROW_EXCEPTION(ParameterException()
-          << ErrorInfo::Message("Slot number out of range")
-          << ErrorInfo::PciAddressSlotNumber(slot));
-    }
-
-    if (function < 0 || function > 7) {
-      BOOST_THROW_EXCEPTION(ParameterException()
-          << ErrorInfo::Message("Function number out of range")
-          << ErrorInfo::PciAddressFunctionNumber(function));
-    }
+  if (slot < 0 || slot > 0x1f) {
+    BOOST_THROW_EXCEPTION(ParameterException()
+                          << ErrorInfo::Message("Slot number out of range")
+                          << ErrorInfo::PciAddressSlotNumber(slot));
   }
+
+  if (function < 0 || function > 7) {
+    BOOST_THROW_EXCEPTION(ParameterException()
+                          << ErrorInfo::Message("Function number out of range")
+                          << ErrorInfo::PciAddressFunctionNumber(function));
+  }
+}
 } // Anonymous namespace
 
 PciAddress::PciAddress(int bus, int slot, int function)
@@ -63,7 +66,7 @@ PciAddress::PciAddress(const std::string& string)
 {
   if (!parseLspciFormat(string, bus, slot, function)) {
     BOOST_THROW_EXCEPTION(ParseException()
-        << ErrorInfo::Message("Parsing PCI address failed"));
+                          << ErrorInfo::Message("Parsing PCI address failed"));
   }
   checkRanges(bus, slot, function);
 }
@@ -77,8 +80,7 @@ boost::optional<PciAddress> PciAddress::fromString(std::string string)
 {
   try {
     return PciAddress(string);
-  }
-  catch (const ParseException& e) {
+  } catch (const ParseException& e) {
     return {};
   }
 }

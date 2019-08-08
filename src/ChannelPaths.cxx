@@ -18,12 +18,15 @@
 
 namespace b = boost;
 
-namespace AliceO2 {
-namespace roc {
-namespace {
+namespace AliceO2
+{
+namespace roc
+{
+namespace
+{
 static const char* DIR_SHAREDMEM = "/dev/shm/";
 static const char* FORMAT = "%s/AliceO2_RoC_%s_Channel_%i%s";
-}
+} // namespace
 
 ChannelPaths::ChannelPaths(PciAddress pciAddress, int channel) : mPciAddress(pciAddress), mChannel(channel)
 {

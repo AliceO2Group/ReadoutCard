@@ -18,26 +18,26 @@
 
 using namespace ::AliceO2::roc;
 
-namespace {
+namespace
+{
 
 struct TestInterface {
-    TestInterface() {}
-    virtual ~TestInterface() {}
+  TestInterface() {}
+  virtual ~TestInterface() {}
 };
 
-struct DummyImpl : public TestInterface {};
-struct CrorcImpl : public TestInterface {};
-struct CruImpl : public TestInterface {};
+struct DummyImpl : public TestInterface {
+};
+struct CrorcImpl : public TestInterface {
+};
+struct CruImpl : public TestInterface {
+};
 
 // Helper function for calling the factory make function
 std::unique_ptr<TestInterface> callMake()
 {
   auto parameters = Parameters::makeParameters(ChannelFactory::getDummySerialNumber(), 0);
-  return ChannelFactoryUtils::channelFactoryHelper<TestInterface>(parameters, ChannelFactory::getDummySerialNumber(), {
-      {CardType::Dummy, []{ return std::make_unique<DummyImpl>(); }},
-      {CardType::Crorc, []{ return std::make_unique<CrorcImpl>(); }},
-      {CardType::Cru,   []{ return std::make_unique<CruImpl>(); }}
-    });
+  return ChannelFactoryUtils::channelFactoryHelper<TestInterface>(parameters, ChannelFactory::getDummySerialNumber(), { { CardType::Dummy, [] { return std::make_unique<DummyImpl>(); } }, { CardType::Crorc, [] { return std::make_unique<CrorcImpl>(); } }, { CardType::Cru, [] { return std::make_unique<CruImpl>(); } } });
 }
 
 // This tests if the FactoryHelper::make() function maps to the expected types.

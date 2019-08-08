@@ -16,15 +16,18 @@
 #include "ReadoutCard/ParameterTypes/DownstreamData.h"
 #include "Utilities/Enum.h"
 
-namespace AliceO2 {
-namespace roc {
-namespace {
+namespace AliceO2
+{
+namespace roc
+{
+namespace
+{
 
 static const auto converter = Utilities::makeEnumConverter<DownstreamData::type>("DownstreamData", {
-  { DownstreamData::Ctp,      "Ctp" },
-  { DownstreamData::Pattern,  "Pattern" },
-  { DownstreamData::Midtrg,   "Midtrg" },
-});
+                                                                                                     { DownstreamData::Ctp, "Ctp" },
+                                                                                                     { DownstreamData::Pattern, "Pattern" },
+                                                                                                     { DownstreamData::Midtrg, "Midtrg" },
+                                                                                                   });
 
 } // Anonymous namespace
 

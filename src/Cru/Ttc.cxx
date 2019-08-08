@@ -24,15 +24,16 @@
 #include "register_maps/Si5345-RevD_ttc_pll2_zdb-Registers.h"
 #include "register_maps/Si5344-RevD-TFC_40-Registers.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
-Ttc::Ttc(std::shared_ptr<Pda::PdaBar> pdaBar) :
-  mPdaBar(pdaBar)
+Ttc::Ttc(std::shared_ptr<Pda::PdaBar> pdaBar) : mPdaBar(pdaBar)
 {
 }
 
-void Ttc::setClock(uint32_t clock, bool devkit) 
+void Ttc::setClock(uint32_t clock, bool devkit)
 {
   if (!devkit) {
     configurePlls(clock);
@@ -78,21 +79,17 @@ void Ttc::setRefGen(uint32_t refGenId, int frequency)
   uint32_t address = Cru::Registers::ONU_USER_REFGEN.index;
   if (refGenId == 0) {
     address += Cru::Registers::REFGEN0_OFFSET.index;
-  }
-  else if (refGenId == 1) {
+  } else if (refGenId == 1) {
     address += Cru::Registers::REFGEN1_OFFSET.index;
   }
 
   if (frequency == 40) {
-    refGenFrequency = 0x11000000; 
-  }
-  else if (frequency == 120) {
+    refGenFrequency = 0x11000000;
+  } else if (frequency == 120) {
     refGenFrequency = 0x11010000;
-  }
-  else if (frequency == 240) {
+  } else if (frequency == 240) {
     refGenFrequency = 0x11020000;
-  }
-  else if (frequency == 0) {
+  } else if (frequency == 0) {
     refGenFrequency = 0x11030000;
   }
 
@@ -116,12 +113,12 @@ bool Ttc::configurePonTx(uint32_t onuAddress)
   int minimumSteps = 22;
   uint32_t onuStatus;
   int i;
-  for(i=0; i<256; i++) {
+  for (i = 0; i < 256; i++) {
     mPdaBar->writeRegister(Cru::Registers::CLOCK_PLL_CONTROL_ONU.index, 0x00300000);
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
     mPdaBar->writeRegister(Cru::Registers::CLOCK_PLL_CONTROL_ONU.index, 0x00200000);
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    onuStatus = mPdaBar->readRegister((Cru::Registers::ONU_USER_LOGIC.address + 0xC)/4);
+    onuStatus = mPdaBar->readRegister((Cru::Registers::ONU_USER_LOGIC.address + 0xC) / 4);
     if (onuStatus == 0xff || onuStatus == 0xf7) {
       count++;
     } else if (onuStatus == 0xf5 || onuStatus == 0xfd) {
@@ -131,12 +128,12 @@ bool Ttc::configurePonTx(uint32_t onuAddress)
       count = 0;
     }
 
-    if (i > minimumSteps && lowSeen && count==1) {
+    if (i > minimumSteps && lowSeen && count == 1) {
       break;
     }
   }
 
-  if (i==256) {
+  if (i == 256) {
     return false;
   }
 
@@ -150,8 +147,8 @@ bool Ttc::configurePonTx(uint32_t onuAddress)
 void Ttc::calibrateTtc()
 {
   // Switch to refclk #0
-  uint32_t sel0 = mPdaBar->readRegister((Cru::Registers::PON_WRAPPER_PLL.address + 0x044c)/4);
-  mPdaBar->writeRegister((Cru::Registers::PON_WRAPPER_PLL.address + 0x0448)/4, sel0);
+  uint32_t sel0 = mPdaBar->readRegister((Cru::Registers::PON_WRAPPER_PLL.address + 0x044c) / 4);
+  mPdaBar->writeRegister((Cru::Registers::PON_WRAPPER_PLL.address + 0x0448) / 4, sel0);
 
   // Calibrate PON RX
   Cru::rxcal0(mPdaBar, Cru::Registers::PON_WRAPPER_TX.address);

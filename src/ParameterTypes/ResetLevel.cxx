@@ -16,16 +16,19 @@
 #include "ReadoutCard/ParameterTypes/ResetLevel.h"
 #include "Utilities/Enum.h"
 
-namespace AliceO2 {
-namespace roc {
-namespace {
+namespace AliceO2
+{
+namespace roc
+{
+namespace
+{
 
 static const auto converter = Utilities::makeEnumConverter<ResetLevel::type>("ResetLevel", {
-  { ResetLevel::Nothing,        "NOTHING" },
-  { ResetLevel::Internal,       "INTERNAL" },
-  { ResetLevel::InternalDiu,    "INTERNAL_DIU" },
-  { ResetLevel::InternalDiuSiu, "INTERNAL_DIU_SIU" },
-});
+                                                                                             { ResetLevel::Nothing, "NOTHING" },
+                                                                                             { ResetLevel::Internal, "INTERNAL" },
+                                                                                             { ResetLevel::InternalDiu, "INTERNAL_DIU" },
+                                                                                             { ResetLevel::InternalDiuSiu, "INTERNAL_DIU_SIU" },
+                                                                                           });
 
 } // Anonymous namespace
 
@@ -46,4 +49,3 @@ ResetLevel::type ResetLevel::fromString(const std::string& string)
 
 } // namespace roc
 } // namespace AliceO2
-

@@ -21,10 +21,13 @@
 
 // TODO Sort out magic numbers
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
-namespace Registers {
+namespace Registers
+{
 constexpr int CRU_BASE_INDEX = 0x4224000 / 4;
 constexpr int CRU_LINK_OFFSET = 0x20000 / 4;
 constexpr int CRU_MAX_LINKS = 7;
@@ -43,10 +46,10 @@ constexpr int READ_TIME = 0x3c / 4;
 constexpr auto BUSY_TIMEOUT = std::chrono::milliseconds(10);
 constexpr auto CHANNEL_BUSY_TIMEOUT = std::chrono::milliseconds(10);
 
-Sca::Sca(RegisterReadWriteInterface &bar2, CardType::type cardType, int link) : mBar2(bar2)
+Sca::Sca(RegisterReadWriteInterface& bar2, CardType::type cardType, int link) : mBar2(bar2)
 {
   auto setOffset = [&](auto base, auto offset, auto maxLinks) {
-    if (link >= maxLinks ) {
+    if (link >= maxLinks) {
       BOOST_THROW_EXCEPTION(ScaException() << ErrorInfo::Message("Maximum link number exceeded"));
     }
     mOffset = base + link * offset;
@@ -56,7 +59,7 @@ Sca::Sca(RegisterReadWriteInterface &bar2, CardType::type cardType, int link) : 
     setOffset(Registers::CRU_BASE_INDEX, Registers::CRU_LINK_OFFSET, Registers::CRU_MAX_LINKS);
   } else if (cardType == CardType::Crorc) {
     setOffset(Registers::CRORC_BASE_INDEX, Registers::CRORC_LINK_OFFSET, Registers::CRORC_MAX_LINKS);
-  } else if (cardType == CardType::Dummy){
+  } else if (cardType == CardType::Dummy) {
     setOffset(0, 0x100, 1);
   } else {
     throw std::runtime_error("Unknown card type, could not calculate SCA offset");
@@ -95,10 +98,10 @@ auto Sca::read() -> ReadResult
 {
   auto data = barRead(Registers::READ_DATA);
   auto command = barRead(Registers::READ_COMMAND);
-//  printf("Sca::read   DATA=0x%x   CH=0x%x   TR=0x%x   CMD=0x%x\n", data, command >> 24, (command >> 16) & 0xff, command & 0xff);
+  //  printf("Sca::read   DATA=0x%x   CH=0x%x   TR=0x%x   CMD=0x%x\n", data, command >> 24, (command >> 16) & 0xff, command & 0xff);
 
   auto endTime = std::chrono::steady_clock::now() + CHANNEL_BUSY_TIMEOUT;
-  while (std::chrono::steady_clock::now() < endTime){
+  while (std::chrono::steady_clock::now() < endTime) {
     if (!isChannelBusy(barRead(Registers::READ_COMMAND))) {
       checkError(command);
       return { command, data };
@@ -116,7 +119,7 @@ void Sca::checkError(uint32_t command)
 {
   uint32_t errorCode = command & 0xff;
 
-  auto toString = [&](int flag){
+  auto toString = [&](int flag) {
     switch (flag) {
       case 1:
         return "invalid channel request";
@@ -179,7 +182,7 @@ void Sca::gpioEnable()
 
 auto Sca::gpioWrite(uint32_t data) -> ReadResult
 {
-//  printf("Sca::gpioWrite DATA=0x%x\n", data);
+  //  printf("Sca::gpioWrite DATA=0x%x\n", data);
   initialize();
   // WR REGISTER OUT DATA
   write(0x02040010, data);
@@ -193,12 +196,11 @@ auto Sca::gpioWrite(uint32_t data) -> ReadResult
 
 auto Sca::gpioRead() -> ReadResult
 {
-//  printf("Sca::gpioRead\n", data);
+  //  printf("Sca::gpioRead\n", data);
   // RD DATA
   write(0x02050011, 0x0);
   return read();
 }
-
 
 void Sca::barWrite(int index, uint32_t data)
 {
@@ -220,14 +222,13 @@ void Sca::executeCommand()
 void Sca::waitOnBusyClear()
 {
   auto endTime = std::chrono::steady_clock::now() + BUSY_TIMEOUT;
-  while (std::chrono::steady_clock::now() < endTime){
+  while (std::chrono::steady_clock::now() < endTime) {
     if ((((barRead(Registers::READ_BUSY)) >> 31) & 0x1) == 0) {
       return;
     }
   }
   BOOST_THROW_EXCEPTION(ScaException() << ErrorInfo::Message("Exceeded timeout on busy wait"));
 }
-
 
 } // namespace roc
 } // namespace AliceO2

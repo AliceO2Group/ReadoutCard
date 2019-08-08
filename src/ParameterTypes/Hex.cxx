@@ -16,8 +16,10 @@
 #include "ReadoutCard/ParameterTypes/Hex.h"
 #include "Utilities/Enum.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 Hex::type Hex::fromString(const std::string& string)
 {

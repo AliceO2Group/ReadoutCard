@@ -16,14 +16,17 @@
 #include "ReadoutCard/ParameterTypes/DatapathMode.h"
 #include "Utilities/Enum.h"
 
-namespace AliceO2 {
-namespace roc {
-namespace {
+namespace AliceO2
+{
+namespace roc
+{
+namespace
+{
 
 static const auto converter = Utilities::makeEnumConverter<DatapathMode::type>("DatapathMode", {
-  { DatapathMode::Packet,       "Packet" },
-  { DatapathMode::Continuous,   "Continuous" },
-});
+                                                                                                 { DatapathMode::Packet, "Packet" },
+                                                                                                 { DatapathMode::Continuous, "Continuous" },
+                                                                                               });
 
 } // Anonymous namespace
 

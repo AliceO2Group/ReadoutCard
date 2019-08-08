@@ -28,21 +28,21 @@ using namespace AliceO2;
 int main(int, char**)
 {
   try {
-    
+
     // Get the DMA channel object
     cout << "\n### Acquiring DMA channel object" << endl;
 
     // Create a 10MiB file in 2MiB hugepage filesystem
-    constexpr size_t superpageSize = 2*1024*1024;
+    constexpr size_t superpageSize = 2 * 1024 * 1024;
     constexpr size_t superpageCount = 5;
     constexpr size_t bufferSize = superpageCount * superpageSize;
-    roc::MemoryMappedFile file {"/dev/hugepages/rorc_example.bin", bufferSize};
+    roc::MemoryMappedFile file{ "/dev/hugepages/rorc_example.bin", bufferSize };
 
     // Create parameters object for channel
     auto parameters = roc::Parameters()
-        .setCardId(-1) // Dummy card
-        .setChannelNumber(0) // DMA channel 0
-        .setBufferParameters(roc::buffer_parameters::Memory{file.getAddress(), bufferSize}); // Register our buffer
+                        .setCardId(-1)                                                                         // Dummy card
+                        .setChannelNumber(0)                                                                   // DMA channel 0
+                        .setBufferParameters(roc::buffer_parameters::Memory{ file.getAddress(), bufferSize }); // Register our buffer
 
     // Get the DMA channel
     std::shared_ptr<roc::DmaChannelInterface> channel = roc::ChannelFactory().getDmaChannel(parameters);
@@ -65,7 +65,7 @@ int main(int, char**)
       cout << "Pushed superpage " << i << '\n';
     }
 
-    while(true) {
+    while (true) {
       if (timeExceeded()) {
         cout << "Time was exceeded!\n";
         break;
@@ -88,8 +88,7 @@ int main(int, char**)
       // Give the CPU some resting time
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
-  }
-  catch (const std::exception& e) {
+  } catch (const std::exception& e) {
     // Most exceptions thrown from the library inherit from boost::exception and will contain information besides
     // the "what()" message that can help diagnose the problem. Here we print this information for the user.
     cout << boost::diagnostic_information(e) << endl;

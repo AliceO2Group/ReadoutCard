@@ -22,8 +22,10 @@
 #include "Utilities/SmartPointer.h"
 #include "Visitor.h"
 
-namespace AliceO2 {
-namespace roc {
+namespace AliceO2
+{
+namespace roc
+{
 
 namespace b = boost;
 namespace bfs = boost::filesystem;
@@ -37,7 +39,7 @@ void DmaChannelBase::checkChannelNumber(const AllowedChannels& allowedChannels)
       stream << c << ' ';
     }
     BOOST_THROW_EXCEPTION(InvalidParameterException() << ErrorInfo::Message(stream.str())
-        << ErrorInfo::ChannelNumber(mChannelNumber));
+                                                      << ErrorInfo::ChannelNumber(mChannelNumber));
   }
 }
 
@@ -52,7 +54,7 @@ void DmaChannelBase::checkParameters(Parameters& parameters)
   }
 
   // Generator disabled. Loopback mode should be set to None
-  if (enabled && loopback && (!*enabled && (*loopback != LoopbackMode::None))){
+  if (enabled && loopback && (!*enabled && (*loopback != LoopbackMode::None))) {
     log("Generator disabled, defaulting to LoopbackMode = None", InfoLogger::InfoLogger::Warning);
     parameters.setGeneratorLoopback(LoopbackMode::None);
   }
@@ -62,7 +64,7 @@ void DmaChannelBase::freeUnusedChannelBuffer()
 {
   namespace bfs = boost::filesystem;
   InfoLogger::InfoLogger logger;
- 
+
   try {
     Pda::PdaLock lock{}; // We're messing around with PDA buffers so we need this even though we hold the DMA lock
   } catch (const LockException& exception) {
@@ -73,7 +75,7 @@ void DmaChannelBase::freeUnusedChannelBuffer()
   try {
     std::string pciPath = "/sys/bus/pci/drivers/uio_pci_dma/";
     if (boost::filesystem::exists(pciPath)) {
-      for (auto &entry : boost::make_iterator_range(bfs::directory_iterator(pciPath), {})) {
+      for (auto& entry : boost::make_iterator_range(bfs::directory_iterator(pciPath), {})) {
         auto filename = entry.path().filename().string();
         if (filename.size() == 12) {
           // The PCI directory names are 12 characters long
@@ -82,7 +84,7 @@ void DmaChannelBase::freeUnusedChannelBuffer()
           if (PciAddress::fromString(pciAddress) && (pciAddress == mCardDescriptor.pciAddress.toString())) {
             // This is a valid PCI address and it's *ours*
             std::string dmaPath("/sys/bus/pci/drivers/uio_pci_dma/" + filename + "/dma");
-            for (auto &entry : boost::make_iterator_range(bfs::directory_iterator(dmaPath), {})) {
+            for (auto& entry : boost::make_iterator_range(bfs::directory_iterator(dmaPath), {})) {
               auto bufferId = entry.path().filename().string();
               if (bfs::is_directory(entry)) {
                 if ((mCardDescriptor.cardType == CardType::Crorc) && (stoi(bufferId) != getChannelNumber())) { // don't free another channel's buffer
@@ -90,7 +92,7 @@ void DmaChannelBase::freeUnusedChannelBuffer()
                 }
                 std::string mapPath = dmaPath + "/" + bufferId + "/map";
                 std::string freePath = dmaPath + "/free";
-                                logger << "Freeing PDA buffer '" + mapPath + "'" << InfoLogger::InfoLogger::endm;
+                logger << "Freeing PDA buffer '" + mapPath + "'" << InfoLogger::InfoLogger::endm;
                 AliceO2::Common::System::executeCommand("echo " + bufferId + " > " + freePath);
               }
             }
@@ -98,15 +100,15 @@ void DmaChannelBase::freeUnusedChannelBuffer()
         }
       }
     }
-  } catch (const boost::filesystem::filesystem_error &e) {
+  } catch (const boost::filesystem::filesystem_error& e) {
     logger << "Failed to free buffers: " << e.what() << InfoLogger::InfoLogger::endm;
     throw;
   }
 }
 
 DmaChannelBase::DmaChannelBase(CardDescriptor cardDescriptor, Parameters& parameters,
-    const AllowedChannels& allowedChannels)
-    : mCardDescriptor(cardDescriptor), mChannelNumber(parameters.getChannelNumberRequired())
+                               const AllowedChannels& allowedChannels)
+  : mCardDescriptor(cardDescriptor), mChannelNumber(parameters.getChannelNumberRequired())
 {
 #ifndef NDEBUG
   log("Backend compiled without NDEBUG; performance may be severely degraded", InfoLogger::InfoLogger::Info);
@@ -120,15 +122,14 @@ DmaChannelBase::DmaChannelBase(CardDescriptor cardDescriptor, Parameters& parame
 
   //try to acquire lock
   log("Acquiring DMA channel lock", InfoLogger::InfoLogger::Debug);
-  try{
+  try {
     if (mCardDescriptor.cardType == CardType::Crorc) {
-      Utilities::resetSmartPtr(mInterprocessLock, "Alice_O2_RoC_DMA_" + cardDescriptor.pciAddress.toString() + "_chan" + 
-          std::to_string(mChannelNumber) + "_lock");
+      Utilities::resetSmartPtr(mInterprocessLock, "Alice_O2_RoC_DMA_" + cardDescriptor.pciAddress.toString() + "_chan" +
+                                                    std::to_string(mChannelNumber) + "_lock");
     } else {
       Utilities::resetSmartPtr(mInterprocessLock, "Alice_O2_RoC_DMA_" + cardDescriptor.pciAddress.toString() + "_lock");
     }
-  }
-  catch (const LockException& exception) {
+  } catch (const LockException& exception) {
     log("Failed to acquire DMA channel lock", InfoLogger::InfoLogger::Debug);
     throw;
   }
@@ -155,7 +156,6 @@ void DmaChannelBase::log(const std::string& message, boost::optional<InfoLogger:
   mLogger << message;
   mLogger << InfoLogger::InfoLogger::endm;
 }
-
 
 } // namespace roc
 } // namespace AliceO2

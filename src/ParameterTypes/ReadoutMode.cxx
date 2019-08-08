@@ -16,13 +16,16 @@
 #include "ReadoutCard/ParameterTypes/ReadoutMode.h"
 #include "Utilities/Enum.h"
 
-namespace AliceO2 {
-namespace roc {
-namespace {
+namespace AliceO2
+{
+namespace roc
+{
+namespace
+{
 
 static const auto converter = Utilities::makeEnumConverter<ReadoutMode::type>("ReadoutMode", {
-  { ReadoutMode::Continuous, "CONTINUOUS" },
-});
+                                                                                               { ReadoutMode::Continuous, "CONTINUOUS" },
+                                                                                             });
 
 } // Anonymous namespace
 
@@ -38,4 +41,3 @@ ReadoutMode::type ReadoutMode::fromString(const std::string& string)
 
 } // namespace roc
 } // namespace AliceO2
-

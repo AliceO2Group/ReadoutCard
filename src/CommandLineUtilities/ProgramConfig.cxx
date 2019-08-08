@@ -26,84 +26,82 @@ using namespace AliceO2::roc;
 using namespace AliceO2::InfoLogger;
 namespace po = boost::program_options;
 
-class ProgramConfig: public Program
+class ProgramConfig : public Program
 {
-  public:
-
+ public:
   virtual Description getDescription()
   {
-    return {"Config", "Configure the CRU(s)", 
-      "roc-config --config-file file:roc.cfg\n"
-      "roc-config --id 42:00.0 --links 0-23 --clock local --datapathmode packet --loopback --gbtmux ttc\n"};
+    return { "Config", "Configure the CRU(s)",
+             "roc-config --config-file file:roc.cfg\n"
+             "roc-config --id 42:00.0 --links 0-23 --clock local --datapathmode packet --loopback --gbtmux ttc\n" };
   }
 
   virtual void addOptions(boost::program_options::options_description& options)
   {
-    options.add_options()
-      ("allow-rejection",
-       po::bool_switch(&mOptions.allowRejection),
-       "Flag to allow HBF rejection")
-      ("clock",
-       po::value<std::string>(&mOptions.clock)->default_value("LOCAL"),
-       "Clock [LOCAL, TTC]")
-      ("cru-id",
-       po::value<uint16_t>(&mOptions.cruId)->default_value(0x0),
-       "12-bit CRU ID")
-      ("datapathmode",
-       po::value<std::string>(&mOptions.datapathMode)->default_value("PACKET"),
-       "DatapathMode [PACKET, CONTINUOUS]")
-      ("downstreamdata",
-       po::value<std::string>(&mOptions.downstreamData)->default_value("CTP"),
-       "DownstreamData [CTP, PATTERN, MIDTRG]")
-      ("gbtmode",
-       po::value<std::string>(&mOptions.gbtMode)->default_value("GBT"),
-       "GBT MODE [GBT, WB]")
-      ("gbtmux",
-       po::value<std::string>(&mOptions.gbtMux)->default_value("TTC"),
-       "GBT MUX [TTC, DDG, SWT]")
-      ("links", 
-       po::value<std::string>(&mOptions.links)->default_value("0"),
-       "Links to enable")
-      ("config-file",
-       po::value<std::string>(&mOptions.configFile)->default_value(""),
-       "Configuration file [file:*.cfg]")
-      ("loopback",
-       po::bool_switch(&mOptions.linkLoopbackEnabled),
-       "Flag to enable link loopback for DDG")
-      ("pon-upstream",
-       po::bool_switch(&mOptions.ponUpstreamEnabled),
-       "Flag to enable use of the PON upstream")
-      ("onu-address",
-       po::value<uint32_t>(&mOptions.onuAddress)->default_value(0x0),
-       "ONU address for PON upstream")
-      ("config-all",
-       po::bool_switch(&mOptions.configAll),
-       "Flag to configure all cards with default parameters on startup")
-      ("force-config",
-       po::bool_switch(&mOptions.forceConfig),
-       "Flag to force configuration and not check if the configuration is already present");
+    options.add_options()("allow-rejection",
+                          po::bool_switch(&mOptions.allowRejection),
+                          "Flag to allow HBF rejection");
+    options.add_options()("clock",
+                          po::value<std::string>(&mOptions.clock)->default_value("LOCAL"),
+                          "Clock [LOCAL, TTC]");
+    options.add_options()("cru-id",
+                          po::value<uint16_t>(&mOptions.cruId)->default_value(0x0),
+                          "12-bit CRU ID");
+    options.add_options()("datapathmode",
+                          po::value<std::string>(&mOptions.datapathMode)->default_value("PACKET"),
+                          "DatapathMode [PACKET, CONTINUOUS]");
+    options.add_options()("downstreamdata",
+                          po::value<std::string>(&mOptions.downstreamData)->default_value("CTP"),
+                          "DownstreamData [CTP, PATTERN, MIDTRG]");
+    options.add_options()("gbtmode",
+                          po::value<std::string>(&mOptions.gbtMode)->default_value("GBT"),
+                          "GBT MODE [GBT, WB]");
+    options.add_options()("gbtmux",
+                          po::value<std::string>(&mOptions.gbtMux)->default_value("TTC"),
+                          "GBT MUX [TTC, DDG, SWT]");
+    options.add_options()("links",
+                          po::value<std::string>(&mOptions.links)->default_value("0"),
+                          "Links to enable");
+    options.add_options()("config-file",
+                          po::value<std::string>(&mOptions.configFile)->default_value(""),
+                          "Configuration file [file:*.cfg]");
+    options.add_options()("loopback",
+                          po::bool_switch(&mOptions.linkLoopbackEnabled),
+                          "Flag to enable link loopback for DDG");
+    options.add_options()("pon-upstream",
+                          po::bool_switch(&mOptions.ponUpstreamEnabled),
+                          "Flag to enable use of the PON upstream");
+    options.add_options()("onu-address",
+                          po::value<uint32_t>(&mOptions.onuAddress)->default_value(0x0),
+                          "ONU address for PON upstream");
+    options.add_options()("config-all",
+                          po::bool_switch(&mOptions.configAll),
+                          "Flag to configure all cards with default parameters on startup");
+    options.add_options()("force-config",
+                          po::bool_switch(&mOptions.forceConfig),
+                          "Flag to force configuration and not check if the configuration is already present");
     Options::addOptionCardId(options);
   }
 
-  virtual void run(const boost::program_options::variables_map& map) 
+  virtual void run(const boost::program_options::variables_map& map)
   {
 
     // Configure all cards found - Normally used during boot
     if (mOptions.configAll) {
       std::cout << "Running RoC Configuration for all cards" << std::endl;
       std::vector<CardDescriptor> cardsFound;
-      if(mOptions.configFile == "") {
+      if (mOptions.configFile == "") {
         std::cout << "A configuration file is necessary with the startup-config flag set" << std::endl;
         return;
       }
 
       cardsFound = RocPciDevice::findSystemDevices();
-      for(auto const& card: cardsFound) {
+      for (auto const& card : cardsFound) {
         std::cout << " __== " << card.pciAddress.toString() << " ==__ " << std::endl;
         auto params = Parameters::makeParameters(card.pciAddress, 2);
         try {
           CardConfigurator(card.pciAddress, mOptions.configFile, mOptions.forceConfig);
-        } catch(...) {
+        } catch (...) {
           std::cout << "Something went badly reading the configuration file..." << std::endl;
         }
       }
@@ -133,7 +131,7 @@ class ProgramConfig: public Program
       std::cout << "Configuring with config file" << std::endl;
       try {
         CardConfigurator(cardId, mOptions.configFile, mOptions.forceConfig);
-      } catch(std::runtime_error e) {
+      } catch (std::runtime_error e) {
         std::cout << "Something went badly reading the configuration file..." << e.what() << std::endl;
       }
     } else {
@@ -142,9 +140,8 @@ class ProgramConfig: public Program
 
     return;
   }
-  
-  struct OptionsStruct 
-  {
+
+  struct OptionsStruct {
     std::string clock = "local";
     std::string configFile = "";
     std::string datapathMode = "packet";
@@ -153,15 +150,15 @@ class ProgramConfig: public Program
     std::string gbtMux = "ttc";
     std::string links = "0";
     bool allowRejection = false;
-    bool configAll= false;
+    bool configAll = false;
     bool forceConfig = false;
     bool linkLoopbackEnabled = false;
     bool ponUpstreamEnabled = false;
     uint32_t onuAddress = 0x0;
     uint16_t cruId = 0x0;
-  }mOptions;
+  } mOptions;
 
-  private:
+ private:
 };
 
 int main(int argc, char** argv)

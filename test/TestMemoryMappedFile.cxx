@@ -14,7 +14,8 @@
 #include <string>
 #include "ReadoutCard/Exception.h"
 
-namespace {
+namespace
+{
 
 using namespace ::AliceO2::roc;
 

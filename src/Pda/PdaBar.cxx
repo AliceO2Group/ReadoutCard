@@ -21,9 +21,12 @@
 
 #include "ReadoutCard/Exception.h"
 
-namespace AliceO2 {
-namespace roc {
-namespace Pda {
+namespace AliceO2
+{
+namespace roc
+{
+namespace Pda
+{
 
 PdaBar::PdaBar() : mPdaBar(nullptr), mBarLength(-1), mBarNumber(-1), mUserspaceAddress(0)
 {
@@ -35,23 +38,23 @@ PdaBar::PdaBar(PdaDevice::PdaPciDevice pciDevice, int barNumberInt) : mBarNumber
 
   if (mBarNumber > std::numeric_limits<decltype(barNumber)>::max()) {
     BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message("BAR number out of range (max 256)")
-        << ErrorInfo::ChannelNumber(barNumber));
+                          << ErrorInfo::Message("BAR number out of range (max 256)")
+                          << ErrorInfo::ChannelNumber(barNumber));
   }
 
   // Getting the BAR struct
-  if(PciDevice_getBar(pciDevice.get(), &mPdaBar, barNumber) != PDA_SUCCESS) {
+  if (PciDevice_getBar(pciDevice.get(), &mPdaBar, barNumber) != PDA_SUCCESS) {
     BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message("Failed to get BAR")
-        << ErrorInfo::ChannelNumber(barNumber));
+                          << ErrorInfo::Message("Failed to get BAR")
+                          << ErrorInfo::ChannelNumber(barNumber));
   }
 
   // Mapping the BAR starting  address
   void* address = nullptr;
-  if(Bar_getMap(mPdaBar, &address, &mBarLength) != PDA_SUCCESS) {
+  if (Bar_getMap(mPdaBar, &address, &mBarLength) != PDA_SUCCESS) {
     BOOST_THROW_EXCEPTION(Exception()
-        << ErrorInfo::Message("Failed to map BAR")
-        << ErrorInfo::ChannelNumber(barNumber));
+                          << ErrorInfo::Message("Failed to map BAR")
+                          << ErrorInfo::ChannelNumber(barNumber));
   }
   mUserspaceAddress = reinterpret_cast<uintptr_t>(address);
 }
