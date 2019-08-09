@@ -306,7 +306,7 @@ This tool serves this purpose and is intended to be run as root. Be aware that t
 running instance of readout.exe or roc-bench-dma fail.
 
 ### roc-config
-Configures the CRU. Uses the [Card Configurator](#card-configurator).
+Configures the CRU. Can be executed with a list of parameters, or with a [configuration file](#configuration-file). Uses the [Card Configurator](#card-configurator). For more details refer to the `--help` dialog of the binary.
 
 ### roc-example
 The compiled example of `src/Example.cxx`
