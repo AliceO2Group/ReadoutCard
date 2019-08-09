@@ -19,6 +19,7 @@
 #include "Cru/CruBar.h"
 #include "ReadoutCard/CardConfigurator.h"
 #include "ReadoutCard/ChannelFactory.h"
+#include "ReadoutCard/Exception.h"
 #include "RocPciDevice.h"
 
 using namespace AliceO2::roc::CommandLineUtilities;
@@ -101,8 +102,8 @@ class ProgramConfig : public Program
         auto params = Parameters::makeParameters(card.pciAddress, 2);
         try {
           CardConfigurator(card.pciAddress, mOptions.configFile, mOptions.forceConfig);
-        } catch (...) {
-          std::cout << "Something went badly reading the configuration file..." << std::endl;
+        } catch (const Exception& e) {
+          std::cout << boost::diagnostic_information(e) << std::endl;
         }
       }
       return;
@@ -126,7 +127,11 @@ class ProgramConfig : public Program
       params.setPonUpstreamEnabled(mOptions.ponUpstreamEnabled);
       params.setOnuAddress(mOptions.onuAddress);
 
-      CardConfigurator(params, mOptions.forceConfig);
+      try {
+        CardConfigurator(params, mOptions.forceConfig);
+      } catch (const Exception& e) {
+        std::cout << boost::diagnostic_information(e) << std::endl;
+      }
     } else if (!strncmp(mOptions.configFile.c_str(), "file:", 5)) {
       std::cout << "Configuring with config file" << std::endl;
       try {

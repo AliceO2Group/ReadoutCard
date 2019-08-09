@@ -164,7 +164,7 @@ static constexpr Register DDG_CTRL2(0x00d00004);
 static constexpr Register BSP_USER_CONTROL(0x00000018);
 
 /// Register to access I2C minipod information
-static constexpr Register BSP_I2C_MINIPODS(0x00030600);
+static constexpr Register BSP_I2C_MINIPODS(0x00030300);
 
 //** TTC **//
 /// Register for setting the Clock
@@ -186,6 +186,7 @@ static constexpr uint32_t DATA_MIDTRG(0x2);*/
 /// Registers used for TTC calibration
 static constexpr Register PON_WRAPPER_PLL(0x00224000);
 static constexpr Register PON_WRAPPER_TX(0x00226000);
+static constexpr Register PON_WRAPPER_REG(0x00222000);
 
 /// Register for configuring PON TX
 static constexpr Register CLOCK_ONU_FPLL(0x00248000);
@@ -249,6 +250,9 @@ static constexpr Register DWRAPPER_BASE0(0x00600000);
 /// Datapath Wrapper 1 base address
 static constexpr Register DWRAPPER_BASE1(0x00700000);
 
+/// DATAPATH Data Generator Control Register
+static constexpr Register DWRAPPER_DATAGEN_CONTROL(0x00000004);
+
 /// Datapath Wrapper offset for "Global Registers"
 static constexpr Register DWRAPPER_GREGS(0x00000000);
 
@@ -271,9 +275,9 @@ static constexpr Register FLOW_CONTROL_REGISTER(0x00000000);
 
 //** I2C **//
 /// I2C base addresses
-static constexpr Register SI5345_1(0x00030a00);
-static constexpr Register SI5345_2(0x00030c00);
-static constexpr Register SI5344(0x00030800);
+static constexpr Register SI5345_1(0x00030500);
+static constexpr Register SI5345_2(0x00030600);
+static constexpr Register SI5344(0x00030400);
 
 } // namespace Registers
 } // namespace Cru

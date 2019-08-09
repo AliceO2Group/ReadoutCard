@@ -33,11 +33,9 @@ Ttc::Ttc(std::shared_ptr<Pda::PdaBar> pdaBar) : mPdaBar(pdaBar)
 {
 }
 
-void Ttc::setClock(uint32_t clock, bool devkit)
+void Ttc::setClock(uint32_t clock)
 {
-  if (!devkit) {
-    configurePlls(clock);
-  }
+  configurePlls(clock);
 
   mPdaBar->writeRegister(Cru::Registers::LOCK_CLOCK_TO_REF.index, 0);
   mPdaBar->modifyRegister(Cru::Registers::TTC_DATA.index, 0, 2, clock);
@@ -56,8 +54,7 @@ void Ttc::configurePlls(uint32_t clock)
     registerMap1 = getLocalClockPll1RegisterMap();
     registerMap2 = getLocalClockPll2RegisterMap();
   } else {
-    setRefGen(0);
-    setRefGen(1);
+    setRefGen();
     registerMap1 = getTtcClockPll1RegisterMap();
     registerMap2 = getTtcClockPll2RegisterMap();
   }
@@ -73,27 +70,23 @@ void Ttc::configurePlls(uint32_t clock)
   std::this_thread::sleep_for(std::chrono::seconds(2));
 }
 
-void Ttc::setRefGen(uint32_t refGenId, int frequency)
+void Ttc::setRefGen(int frequency)
 {
   uint32_t refGenFrequency = 0x0;
-  uint32_t address = Cru::Registers::ONU_USER_REFGEN.index;
-  if (refGenId == 0) {
-    address += Cru::Registers::REFGEN0_OFFSET.index;
-  } else if (refGenId == 1) {
-    address += Cru::Registers::REFGEN1_OFFSET.index;
-  }
+  uint32_t address = Cru::Registers::PON_WRAPPER_REG.address + 0x48;
 
   if (frequency == 40) {
-    refGenFrequency = 0x11000000;
+    refGenFrequency = 0x80000000;
   } else if (frequency == 120) {
-    refGenFrequency = 0x11010000;
+    refGenFrequency = 0x80000001;
   } else if (frequency == 240) {
-    refGenFrequency = 0x11020000;
+    refGenFrequency = 0x80000002;
   } else if (frequency == 0) {
-    refGenFrequency = 0x11030000;
+    refGenFrequency = 0x80000003;
   }
 
-  mPdaBar->writeRegister(address, refGenFrequency);
+  mPdaBar->writeRegister(address / 4, 0x0);
+  mPdaBar->writeRegister(address / 4, refGenFrequency);
 }
 
 void Ttc::resetFpll()
@@ -110,15 +103,16 @@ bool Ttc::configurePonTx(uint32_t onuAddress)
   // Perform phase scan manually
   int count = 0;
   bool lowSeen = false;
-  int minimumSteps = 22;
   uint32_t onuStatus;
+  int steps = 50000;
   int i;
-  for (i = 0; i < 256; i++) {
+  for (i = 0; i < steps; i++) {
+    // Toggle phase step bit
     mPdaBar->writeRegister(Cru::Registers::CLOCK_PLL_CONTROL_ONU.index, 0x00300000);
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     mPdaBar->writeRegister(Cru::Registers::CLOCK_PLL_CONTROL_ONU.index, 0x00200000);
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     onuStatus = mPdaBar->readRegister((Cru::Registers::ONU_USER_LOGIC.address + 0xC) / 4);
+
+    // Check if ONU status bits are all '1' (ONU operational bit is not necessary)
     if (onuStatus == 0xff || onuStatus == 0xf7) {
       count++;
     } else if (onuStatus == 0xf5 || onuStatus == 0xfd) {
@@ -128,12 +122,12 @@ bool Ttc::configurePonTx(uint32_t onuAddress)
       count = 0;
     }
 
-    if (i > minimumSteps && lowSeen && count == 1) {
+    if (lowSeen && count == 19) {
       break;
     }
   }
 
-  if (i == 256) {
+  if (i == steps) {
     return false;
   }
 
@@ -146,6 +140,11 @@ bool Ttc::configurePonTx(uint32_t onuAddress)
 
 void Ttc::calibrateTtc()
 {
+  // Reset ONU core
+  mPdaBar->modifyRegister(Cru::Registers::ONU_USER_LOGIC.index, 0, 1, 0x1);
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  mPdaBar->modifyRegister(Cru::Registers::ONU_USER_LOGIC.index, 0, 1, 0x0);
+
   // Switch to refclk #0
   uint32_t sel0 = mPdaBar->readRegister((Cru::Registers::PON_WRAPPER_PLL.address + 0x044c) / 4);
   mPdaBar->writeRegister((Cru::Registers::PON_WRAPPER_PLL.address + 0x0448) / 4, sel0);
@@ -154,7 +153,7 @@ void Ttc::calibrateTtc()
   Cru::rxcal0(mPdaBar, Cru::Registers::PON_WRAPPER_TX.address);
 
   // Calibrate fPLL
-  Cru::fpllref0(mPdaBar, Cru::Registers::CLOCK_ONU_FPLL.address, 1); //selecte refclk 1
+  Cru::fpllref0(mPdaBar, Cru::Registers::CLOCK_ONU_FPLL.address, 1); //select refclk 1
   Cru::fpllcal0(mPdaBar, Cru::Registers::CLOCK_ONU_FPLL.address, false);
 
   // Calibrate ATX PLL
@@ -164,6 +163,12 @@ void Ttc::calibrateTtc()
   Cru::txcal0(mPdaBar, Cru::Registers::PON_WRAPPER_TX.address);
 
   std::this_thread::sleep_for(std::chrono::seconds(2));
+
+  //Check MGT RX ready, RX locked and RX40 locked
+  uint32_t calStatus = mPdaBar->readRegister((Cru::Registers::ONU_USER_LOGIC.address + 0xc) / 4);
+  if (((calStatus >> 5) & (calStatus >> 2) & calStatus & 0x1) != 0x1) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("PON RX Calibration failed"));
+  }
 }
 
 void Ttc::selectDownstreamData(uint32_t downstreamData)

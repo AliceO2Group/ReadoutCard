@@ -19,7 +19,7 @@ class Ttc
   Ttc(std::shared_ptr<Pda::PdaBar> pdaBar);
 
   void calibrateTtc();
-  void setClock(uint32_t clock, bool devkit = false);
+  void setClock(uint32_t clock);
   void resetFpll();
   bool configurePonTx(uint32_t onuAddress);
   void selectDownstreamData(uint32_t downstreamData);
@@ -28,7 +28,7 @@ class Ttc
 
  private:
   void configurePlls(uint32_t clock);
-  void setRefGen(uint32_t refGenId, int frequency = 240);
+  void setRefGen(int frequency = 240);
 
   std::shared_ptr<Pda::PdaBar> mPdaBar;
 };

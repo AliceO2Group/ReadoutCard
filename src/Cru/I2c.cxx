@@ -130,7 +130,6 @@ void I2c::writeI2c(uint32_t address, uint32_t data)
   mPdaBar->writeRegister(mI2cConfig / 4, value);
 
   mPdaBar->writeRegister(mI2cCommand / 4, 0x1);
-  std::this_thread::sleep_for(std::chrono::nanoseconds(100));
   mPdaBar->writeRegister(mI2cCommand / 4, 0x0);
 
   waitForI2cReady();
@@ -158,8 +157,7 @@ void I2c::waitForI2cReady()
   while (readValue == 0 && done < 10) {
     readValue = mPdaBar->readRegister(mI2cData / 4);
     readValue = Utilities::getBit(readValue, 31);
-    std::this_thread::sleep_for(std::chrono::nanoseconds(100));
-    //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    std::this_thread::sleep_for(std::chrono::microseconds(100));
     done++;
   }
 }
@@ -180,7 +178,7 @@ std::vector<uint32_t> I2c::getChipAddresses()
 
     uint32_t addrValue = mPdaBar->readRegister(mI2cData / 4);
     //addrValue = addrValue < 0 ? addrValue + pow(2, 32) : addrValue; //unsigned is never negative : what was the idea here?
-    if (((addrValue >> 31) & 0x1) == 0x1) {
+    if ((addrValue >> 31) == 0x1) {
       chipAddresses.push_back(addr);
     }
   }
@@ -231,11 +229,17 @@ void I2c::getOpticalPower(std::map<int, Link>& linkMap)
   int chipIndex = 11;
   for (auto& el : linkMap) {
     auto& link = el.second;
-    link.opticalPower = opticalPowers[chipIndex--];
-    if (chipIndex == -1) {
-      chipIndex = 23; //move to second chip
+    if (opticalPowers.empty()) { //Means no chip found
+      link.opticalPower = 0.0;
+    } else {
+      link.opticalPower = opticalPowers[chipIndex--];
+
+      if (chipIndex == -1) {
+        chipIndex = 23; //move to second chip
+      }
     }
   }
+
   return;
 }
 

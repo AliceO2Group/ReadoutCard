@@ -23,20 +23,28 @@ CardConfigurator::CardConfigurator(Parameters::CardIdType cardId, std::string pa
   }
 
   auto bar2 = ChannelFactory().getBar(parameters);
-  if (forceConfigure) {
-    bar2->configure();
-  } else {
-    bar2->reconfigure();
+  try {
+    if (forceConfigure) {
+      bar2->configure();
+    } else {
+      bar2->reconfigure();
+    }
+  } catch (const Exception& e) {
+    throw std::runtime_error(boost::diagnostic_information(e));
   }
 }
 
 CardConfigurator::CardConfigurator(Parameters& parameters, bool forceConfigure)
 {
   auto bar2 = ChannelFactory().getBar(parameters);
-  if (forceConfigure) {
-    bar2->configure();
-  } else {
-    bar2->reconfigure();
+  try {
+    if (forceConfigure) {
+      bar2->configure();
+    } else {
+      bar2->reconfigure();
+    }
+  } catch (const Exception& e) {
+    throw std::runtime_error(boost::diagnostic_information(e));
   }
 }
 
