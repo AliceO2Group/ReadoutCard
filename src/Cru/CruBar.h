@@ -109,7 +109,7 @@ class CruBar final : public BarInterfaceBase
   std::map<int, Link> initializeLinkMap();
   void populateLinkMap(std::map<int, Link>& linkMap);
 
-  int getDdgBurstLength();
+  uint32_t getDdgBurstLength();
   //void checkParameters();
 
   void setCruId(uint16_t cruId);

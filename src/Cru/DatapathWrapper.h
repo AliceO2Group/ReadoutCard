@@ -41,6 +41,9 @@ class DatapathWrapper
   void setPacketArbitration(int wrapperCount, int arbitrationMode = 0);
   void setFlowControl(int wrapper, int allowReject = 0);
   uint32_t getFlowControl(int wrapper);
+  void resetDataGeneratorPulse();
+  void useDataGeneratorSource(bool enable);
+  void enableDataGenerator(bool enable);
 
  private:
   uint32_t getDatapathWrapperBaseAddress(int wrapper);

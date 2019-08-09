@@ -59,12 +59,7 @@ void atxcal0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress)
   pdaBar->writeRegister((baseAddress + 4 * 0x000) / 4, 0x02); //...
 
   // b. Validate that user has control
-  // TODO(cru-sw): There should be a check here...
-  uint32_t bit = waitForBit(pdaBar, baseAddress + 4 * 0x280, 2, 0);
-  if (bit != 0) {
-    std::cout << "atxcal0 0" << std::endl;
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("atxcal0: User does not have control"));
-  }
+  waitForBit(pdaBar, baseAddress + 4 * 0x280, 2, 0);
 
   // c. Enable ATX PLL alibration
   pdaBar->modifyRegister((baseAddress + 4 * 0x100) / 4, 0, 1, 0x1);
@@ -73,11 +68,7 @@ void atxcal0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress)
   pdaBar->modifyRegister((baseAddress + 4 * 0x000) / 4, 0, 8, 0x1);
 
   //e. Wait...
-  bit = waitForBit(pdaBar, baseAddress + 4 * 0x280, 1, 0);
-  if (bit != 0) {
-    std::cout << "atxcal0 1" << std::endl;
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("atxcal0: User does not have control"));
-  }
+  waitForBit(pdaBar, baseAddress + 4 * 0x280, 1, 0);
 
   //f. Calibration complete...
 }
@@ -90,11 +81,7 @@ void txcal0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress)
   pdaBar->writeRegister((baseAddress + 4 * 0x000) / 4, 0x2);
 
   //b. Validate that user has control
-  uint32_t bit = waitForBit(pdaBar, baseAddress + 4 * 0x280, 2, 0);
-  if (bit != 0) {
-    std::cout << "txcal0 0" << std::endl;
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("txcal0: User does not have control"));
-  }
+  waitForBit(pdaBar, baseAddress + 4 * 0x280, 2, 0);
 
   //c. Mask out rx_cal_busy...
   pdaBar->modifyRegister((baseAddress + 4 * 0x281) / 4, 5, 1, 0x0);
@@ -107,11 +94,7 @@ void txcal0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress)
   pdaBar->modifyRegister((baseAddress + 4 * 0x000) / 4, 0, 8, 0x1);
 
   //f. Wait..
-  bit = waitForBit(pdaBar, baseAddress + 4 * 0x281, 1, 0);
-  if (bit != 0) {
-    std::cout << "txcal0 1" << std::endl;
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("txcal0: User does not have control"));
-  }
+  waitForBit(pdaBar, baseAddress + 4 * 0x281, 1, 0);
 
   //g. Calibration is complete
 
@@ -126,11 +109,7 @@ void rxcal0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress)
   pdaBar->writeRegister((baseAddress + 4 * 0x000) / 4, 0x2);
 
   //b. Validate that user has control
-  uint32_t bit = waitForBit(pdaBar, baseAddress + 4 * 0x280, 2, 0);
-  if (bit != 0) {
-    std::cout << "rxcal0 0" << std::endl;
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("rxcal0: User does not have control"));
-  }
+  waitForBit(pdaBar, baseAddress + 4 * 0x280, 2, 0);
 
   //c. Mask out tx_cal_busy...
   pdaBar->modifyRegister((baseAddress + 4 * 0x281) / 4, 4, 1, 0x0);
@@ -145,11 +124,7 @@ void rxcal0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress)
   pdaBar->modifyRegister((baseAddress + 4 * 0x000) / 4, 0, 8, 0x1);
 
   //g. Wait..
-  bit = waitForBit(pdaBar, baseAddress + 4 * 0x281, 1, 0);
-  if (bit != 0) {
-    std::cout << "rxcal0 1" << std::endl;
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("rxcal0: User does not have control"));
-  }
+  waitForBit(pdaBar, baseAddress + 4 * 0x281, 1, 0);
 
   //h. Calibration is complete
 
@@ -183,10 +158,7 @@ void fpllcal0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress, bool co
   pdaBar->modifyRegister((baseAddress + 4 * 0x000) / 4, 0, 8, 0x02);
 
   //b. Validate that user has control
-  uint32_t bit = waitForBit(pdaBar, baseAddress + 4 * 0x280, 2, 0);
-  if (bit != 0) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("fpllcal0: User does not have control"));
-  }
+  waitForBit(pdaBar, baseAddress + 4 * 0x280, 2, 0);
 
   //c. Enable fPLL calibration
   pdaBar->modifyRegister((baseAddress + 4 * 0x100) / 4, 1, 1, 0x1);
@@ -195,10 +167,7 @@ void fpllcal0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress, bool co
   pdaBar->modifyRegister((baseAddress + 4 * 0x000) / 4, 0, 8, 0x1);
 
   //e. Wait...
-  bit = waitForBit(pdaBar, baseAddress + 4 * 0x280, 1, 0);
-  if (bit != 0) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("fpllcal0: User does not have control"));
-  }
+  waitForBit(pdaBar, baseAddress + 4 * 0x280, 1, 0);
 
   //f. Calibration is complete
 
@@ -217,7 +186,7 @@ uint32_t waitForBit(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t address, uint3
   uint32_t readValue = pdaBar->readRegister(address / 4);
   uint32_t bit = Utilities::getBit(readValue, position);
 
-  while ((elapsed <= std::chrono::milliseconds(800)) && bit != value) {
+  while ((elapsed <= std::chrono::milliseconds(500)) && bit != value) {
     readValue = pdaBar->readRegister(address / 4);
     bit = Utilities::getBit(readValue, position);
     curr = std::chrono::system_clock::now();

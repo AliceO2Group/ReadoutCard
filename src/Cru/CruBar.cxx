@@ -521,7 +521,9 @@ void CruBar::configure()
   ttc.setClock(mClock);
 
   log("Calibrating TTC");
-  ttc.calibrateTtc();
+  if (mClock == Clock::Ttc) {
+    ttc.calibrateTtc();
+  }
 
   if (mPonUpstream) {
     ttc.resetFpll();
@@ -544,6 +546,11 @@ void CruBar::configure()
   disableDataTaking();
 
   DatapathWrapper datapathWrapper = DatapathWrapper(mPdaBar);
+
+  // Disable DWRAPPER datagenerator (in case of restart)
+  datapathWrapper.resetDataGeneratorPulse();
+  datapathWrapper.useDataGeneratorSource(false);
+  datapathWrapper.enableDataGenerator(false);
   // Disable all links
   datapathWrapper.setLinksEnabled(0, 0x0);
   datapathWrapper.setLinksEnabled(1, 0x0);
@@ -677,10 +684,10 @@ void CruBar::populateLinkMap(std::map<int, Link>& linkMap)
   }
 }
 
-int CruBar::getDdgBurstLength()
+uint32_t CruBar::getDdgBurstLength()
 {
   uint32_t burst = (((readRegister(Cru::Registers::DDG_CTRL0.address)) >> 20) / 4) & 0xff;
-  return Utilities::getWidth(burst);
+  return burst;
 }
 
 void CruBar::enableDataTaking()

@@ -175,7 +175,7 @@ constant add_ttc_phystrig_ltu	: unsigned(31 downto 0):=add_ttc_regs+X"0000_0008"
 constant add_ttc_eox_sox_ltu	: unsigned(31 downto 0):=add_ttc_regs+X"0000_000C";
 
 constant add_ttc_clkgen_ttc240freq	: unsigned(31 downto 0):=add_ttc_clkgen+X"0000_0000";
-constant add_ttc_clkgen_lcl240freq	: unsigned(31 downto 0):=add_ttc_clkgen+X"0000_0004";
+constant add_ttc_clkgen_glb240freq	: unsigned(31 downto 0):=add_ttc_clkgen+X"0000_0004";
 constant add_ttc_clkgen_ref240freq	: unsigned(31 downto 0):=add_ttc_clkgen+X"0000_0008";
 constant add_ttc_clkgen_clknotokcnt  	: unsigned(31 downto 0):=add_ttc_clkgen+X"0000_000C";
 constant add_ttc_clkgen_clkctrl 	: unsigned(31 downto 0):=add_ttc_clkgen+X"0000_0010";
@@ -195,21 +195,11 @@ constant add_pon_wrapper_reg	        : unsigned(31 downto 0):=add_ttc_onu+X"0000
 constant add_pon_wrapper_pll	        : unsigned(31 downto 0):=add_ttc_onu+X"0000_4000";
 constant add_pon_wrapper_tx		: unsigned(31 downto 0):=add_ttc_onu+X"0000_6000";
 constant add_onu_user_logic	        : unsigned(31 downto 0):=add_ttc_onu+X"0000_A000";
-constant add_onu_user_refgen	        : unsigned(31 downto 0):=add_ttc_onu+X"0000_C000";
 constant add_onu_freq_meas		: unsigned(31 downto 0):=add_ttc_onu+X"0000_E000";
 
-constant add_refgen0_offset             : unsigned(31 downto 0):=X"0000_0000";
-constant add_refgen1_offset             : unsigned(31 downto 0):=X"0000_0004";
-constant add_onu_refgen_cnt		: unsigned(31 downto 0):=add_onu_user_refgen+X"0000_0018";
-
 constant add_onu_rxref_freq		: unsigned(31 downto 0):=add_onu_freq_meas+X"0000_0000";
-constant add_onu_rxuser_freq	        : unsigned(31 downto 0):=add_onu_freq_meas+X"0000_0004";
-constant add_onu_refout_freq	        : unsigned(31 downto 0):=add_onu_freq_meas+X"0000_0008";
-constant add_onu_tx0ref_freq	        : unsigned(31 downto 0):=add_onu_freq_meas+X"0000_000C";
-constant add_onu_tx1ref_freq	        : unsigned(31 downto 0):=add_onu_freq_meas+X"0000_0010";
-constant add_onu_tx2ref_freq	        : unsigned(31 downto 0):=add_onu_freq_meas+X"0000_0014";
-constant add_onu_tx3ref_freq	        : unsigned(31 downto 0):=add_onu_freq_meas+X"0000_0018";
-constant add_onu_txuser_freq	        : unsigned(31 downto 0):=add_onu_freq_meas+X"0000_001C";
+constant add_onu_trxuser_freq	        : unsigned(31 downto 0):=add_onu_freq_meas+X"0000_0004";
+constant add_onu_txref_freq	        : unsigned(31 downto 0):=add_onu_freq_meas+X"0000_0008";
 
 
 -- Pattern player
@@ -237,7 +227,7 @@ constant add_ctp_emu_core		: unsigned(31 downto 0):=add_ctp_emu+X"0000_0000";
 constant add_ctp_emu_ctrl		: unsigned(31 downto 0):=add_ctp_emu_core+X"0000_0000";
 constant add_ctp_emu_bc_max		: unsigned(31 downto 0):=add_ctp_emu_core+X"0000_0004";
 constant add_ctp_emu_hb_max		: unsigned(31 downto 0):=add_ctp_emu_core+X"0000_0008";
-constant add_ctp_emu_hb_keep	        : unsigned(31 downto 0):=add_ctp_emu_core+X"0000_000C";
+constant add_ctp_emu_prescaler  : unsigned(31 downto 0):=add_ctp_emu_core+X"0000_000C";
 
 constant add_ctp_emu_runmode	        : unsigned(31 downto 0):=add_ctp_emu_core+X"0000_0010";
 constant add_ctp_emu_physdiv	        : unsigned(31 downto 0):=add_ctp_emu_core+X"0000_0014";
@@ -250,11 +240,13 @@ constant add_ctp_emu_fbct	            : unsigned(31 downto 0):=add_ctp_emu_core+
 -------------------------------------------------------------------------------
 -- DDG address tables
 -------------------------------------------------------------------------------
-constant add_ddg		  : unsigned(31 downto 0):=X"00D0_0000";
-constant add_ddg_ctrl	  : unsigned(31 downto 0):=add_ddg+X"0000_0000";
-constant add_ddg_ctrl2	  : unsigned(31 downto 0):=add_ddg+X"0000_0004";
-constant add_ddg_trgmask  : unsigned(31 downto 0):=add_ddg+X"0000_0008";
-constant add_ddg_pkt_cnt  : unsigned(31 downto 0):=add_ddg+X"0000_000C";
+constant add_ddg	     : unsigned(31 downto 0):=X"00D0_0000";
+constant add_ddg_ctrl	     : unsigned(31 downto 0):=add_ddg+X"0000_0000";
+constant add_ddg_ctrl2	     : unsigned(31 downto 0):=add_ddg+X"0000_0004";
+constant add_ddg_ctrl3	     : unsigned(31 downto 0):=add_ddg+X"0000_0008";
+constant add_ddg_trgmask     : unsigned(31 downto 0):=add_ddg+X"0000_000C";
+constant add_ddg_pkt_cnt     : unsigned(31 downto 0):=add_ddg+X"0000_0010";
+constant add_ddg_trgmiss_cnt : unsigned(31 downto 0):=add_ddg+X"0000_0014";
 
 -------------------------------------------------------------------------------
 -- datapath wrapper address tables
@@ -271,8 +263,9 @@ constant add_datalink_offset		: unsigned(31 downto 0):=X"0000_2000"; -- to multi
 
 -- datapath wrapper global registers
 constant add_dwrapper_enreg 	   : unsigned(31 downto 0):=X"0000_0000"; -- WO
-constant add_dwrapper_muxctrl	   : unsigned(31 downto 0):=X"0000_0004"; -- WO (cdc)
+constant add_dwrapper_datagenctrl  : unsigned(31 downto 0):=X"0000_0004"; -- WO (cdc)
 
+constant add_dwrapper_datagenstatus: unsigned(31 downto 0):=X"0000_0008"; -- RO
 constant add_dwrapper_bigfifo_lvl  : unsigned(31 downto 0):=X"0000_000C"; -- RO
 constant add_dwrapper_tot_words	   : unsigned(31 downto 0):=X"0000_0010"; -- RO
 constant add_dwrapper_drop_words   : unsigned(31 downto 0):=X"0000_0014"; -- RO
@@ -307,7 +300,7 @@ constant add_bsp_info_dirtystatus  : unsigned(31 downto 0)   :=add_bsp_info+X"00
 constant add_bsp_info_shorthash    : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0004";
 constant add_bsp_info_builddate    : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0008";
 constant add_bsp_info_buildtime    : unsigned(31 downto 0)   :=add_bsp_info+X"0000_000C";
-constant add_bsp_info_debug        : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0010";
+constant add_bsp_info_boardtype    : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0010";
 constant add_bsp_info_userctrl     : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0018";
 constant add_bsp_info_usertxsel    : unsigned(31 downto 0)   :=add_bsp_info+X"0000_001C";
 
@@ -322,14 +315,14 @@ constant add_bsp_hkeeping_chipid_low  : unsigned(31 downto 0):=add_bsp_hkeeping+
 constant add_bsp_hkeeping_spare_in    : unsigned(31 downto 0):=add_bsp_hkeeping+X"0000_001C";
 
 constant add_bsp_i2c_tsensor      : unsigned(31 downto 0):=add_bsp_i2c+X"0000_0000";
-constant add_bsp_i2c_cpcie        : unsigned(31 downto 0):=add_bsp_i2c+X"0000_0200";
-constant add_bsp_i2c_sfp1         : unsigned(31 downto 0):=add_bsp_i2c+X"0000_0400";
-constant add_bsp_i2c_minipods     : unsigned(31 downto 0):=add_bsp_i2c+X"0000_0600";
-constant add_bsp_i2c_si5344       : unsigned(31 downto 0):=add_bsp_i2c+X"0000_0800";
-constant add_bsp_i2c_si5345_1     : unsigned(31 downto 0):=add_bsp_i2c+X"0000_0a00";
-constant add_bsp_i2c_si5345_2     : unsigned(31 downto 0):=add_bsp_i2c+X"0000_0c00";
-constant add_bsp_i2c_sfp2         : unsigned(31 downto 0):=add_bsp_i2c+X"0000_0e00";
-
+constant add_bsp_i2c_cpcie        : unsigned(31 downto 0):=add_bsp_i2c+X"0000_0100";
+constant add_bsp_i2c_sfp1         : unsigned(31 downto 0):=add_bsp_i2c+X"0000_0200";
+constant add_bsp_i2c_minipods     : unsigned(31 downto 0):=add_bsp_i2c+X"0000_0300";
+constant add_bsp_i2c_si5344       : unsigned(31 downto 0):=add_bsp_i2c+X"0000_0400";
+constant add_bsp_i2c_si5345_1     : unsigned(31 downto 0):=add_bsp_i2c+X"0000_0500";
+constant add_bsp_i2c_si5345_2     : unsigned(31 downto 0):=add_bsp_i2c+X"0000_0600";
+constant add_bsp_i2c_sfp2         : unsigned(31 downto 0):=add_bsp_i2c+X"0000_0700";
+constant add_bsp_i2c_eeprom       : unsigned(31 downto 0):=add_bsp_i2c+X"0000_0800";
 
 -------------------------------------------------------------------------------
 -- User logic
@@ -396,12 +389,12 @@ component bsp is
     GPI         : in  std_logic_vector(31 downto 0) := (others => '0');  -- general purpose in
     GPO         : out std_logic_vector(31 downto 0);  -- general purpose out
     ---------------------------------------------------------------------------
-    SCL_I       : in  std_logic_vector(7 downto 0)  := (others => '1');
-    SCL_T       : out std_logic_vector(7 downto 0);
-    SCL_O       : out std_logic_vector(7 downto 0);
-    SDA_I       : in  std_logic_vector(7 downto 0)  := (others => '1');
-    SDA_T       : out std_logic_vector(7 downto 0);
-    SDA_O       : out std_logic_vector(7 downto 0)
+    SCL_I       : in  std_logic_vector(15 downto 0)  := (others => '1');
+    SCL_T       : out std_logic_vector(15 downto 0);
+    SCL_O       : out std_logic_vector(15 downto 0);
+    SDA_I       : in  std_logic_vector(15 downto 0)  := (others => '1');
+    SDA_T       : out std_logic_vector(15 downto 0);
+    SDA_O       : out std_logic_vector(15 downto 0)
    ---------------------------------------------------------------------------
     );
 end component bsp;
@@ -514,10 +507,20 @@ port (
     TTCRXREADY  : in  std_logic;
     TTCRXVALID  : in  std_logic;
     TTCRXD      : in  std_logic_vector(199 downto 0);
+	
+	CURRENT_HBID_i : in std_logic_vector(31 downto 0);
+	CURRENT_BCID_i : in std_logic_vector(11 downto 0);
     ---------------------------------------------------------------------------
     TTCTX_READY     : in  std_logic; -- data taken on last cycle high
     TTCTXD          : out  std_logic_vector(55 downto 0); -- put idle pattern or message to transmit
 
+    ---------------------------------------------------------------------------
+	BUSY       : in std_logic; -- input for TRD only
+    ---------------------------------------------------------------------------
+	NEW_RESULT_o     : out std_logic; -- new HBF check result (each time at one is a new result, can be almost consecutive)
+	ACK_o            : out std_logic; -- ACK or NACK HBF
+	HBID_CHECKED_o   : out std_logic_vector(31 downto 0); -- HBID checked
+    ---------------------------------------------------------------------------
 	-- packet info input
 	UPD        : in std_logic_vector(0 to 1); -- new packet information (pulse)
 	HBID       : in Array32bit(0 to 1);
@@ -593,6 +596,9 @@ component datapath_wrapper is
 	PACK_page   : out std_logic_vector(15 downto 0);
 	PACK_STOP   : out std_logic;
 	PACK_AF     : out std_logic;
+
+	CURRENT_HBID_o : out std_logic_vector(31 downto 0);
+	CURRENT_BCID_o : out std_logic_vector(11 downto 0);
     ---------------------------------------------------------------------------
     PCIe_CLK        : in  std_logic;        -- clock for this FIFO interface
     PCIe_RST        : in  std_logic;
@@ -600,6 +606,7 @@ component datapath_wrapper is
     PCIe_SOP        : out std_logic;        -- start of packet
     PCIe_EOP        : out std_logic;        -- end of packet
     PCIe_VAL        : out std_logic;        -- data valid
+    PCIe_EMPTy      : out std_logic;        -- data valid
     PCIe_D          : out std_logic_vector(255 downto 0)  -- actual data
    ---------------------------------------------------------------------------
     );
@@ -778,10 +785,10 @@ component avalon_mm_slave is
 
 -- eventual usefull procedure/functions
   function setAdd (mult : in natural; offset : unsigned) return unsigned;
-  function f_gbtrx (src : in std_logic_vector ) return std_logic_vector;
-  function f_gbttx (src : in std_logic_vector ) return std_logic_vector;
-  function f_gbtrx_bus (src : in t_cru_gbt_array ) return t_cru_gbt_array;
-  function f_gbttx_bus (src : in t_cru_gbt_array ) return t_cru_gbt_array;
+  function f_order_in_gbtw (src : in std_logic_vector ) return std_logic_vector;
+  function f_order_out_gbtw (src : in std_logic_vector ) return std_logic_vector;
+  function f_order_in_bus_gbtw (src : in t_cru_gbt_array ) return t_cru_gbt_array;
+  function f_order_out_bus_gbtw (src : in t_cru_gbt_array ) return t_cru_gbt_array;
 
 end pack_cru_core;
 
@@ -794,40 +801,40 @@ begin
   return tmp;
 end setAdd;
 
-  function f_gbtrx (src : in std_logic_vector ) return std_logic_vector is
+  function f_order_in_gbtw(src : in std_logic_vector ) return std_logic_vector is
     variable dst : std_logic_vector(src'range);
   begin
     for i in src'range loop
       dst(i) := src(swap_table(i));
     end loop;
     return dst;
-  end function f_gbtrx;
+  end function f_order_in_gbtw;
 
-  function f_gbttx (src : in std_logic_vector ) return std_logic_vector is
+  function f_order_out_gbtw (src : in std_logic_vector ) return std_logic_vector is
     variable dst : std_logic_vector(src'range);
   begin
     for i in src'range loop
       dst(swap_table(i)) := src(i);
     end loop;
     return dst;
-  end function f_gbttx;
+  end function f_order_out_gbtw;
 
-  function f_gbtrx_bus (src : in t_cru_gbt_array ) return t_cru_gbt_array is
+  function f_order_in_bus_gbtw (src : in t_cru_gbt_array ) return t_cru_gbt_array is
     variable dst : t_cru_gbt_array(src'range);
   begin
     for i in src'range loop
       dst(i) := src(swap_table(i));
     end loop;
     return dst;
-  end function f_gbtrx_bus;
+  end function f_order_in_bus_gbtw;
 
-  function f_gbttx_bus (src : in t_cru_gbt_array ) return t_cru_gbt_array is
+  function f_order_out_bus_gbtw (src : in t_cru_gbt_array ) return t_cru_gbt_array is
     variable dst : t_cru_gbt_array(src'range);
   begin
     for i in src'range loop
       dst(swap_table(i)) := src(i);
     end loop;
     return dst;
-  end function f_gbttx_bus;
+  end function f_order_out_bus_gbtw;
 
 end pack_cru_core;

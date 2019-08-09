@@ -62,8 +62,7 @@ void DatapathWrapper::setDatapathMode(Link link, uint32_t mode)
                      Cru::Registers::DATALINK_CONTROL.address;
 
   uint32_t val = 0;
-  val |= 0x1FC;     //=RAWMAXLEN
-  val |= (1 << 24); //=RAWBYID
+  val |= 0x1FC; //=RAWMAXLEN
   val |= (mode << 31);
 
   mPdaBar->writeRegister(address / 4, val);
@@ -133,6 +132,48 @@ uint32_t DatapathWrapper::getDatapathWrapperBaseAddress(int wrapper)
   }
 
   return 0x0;
+}
+
+void DatapathWrapper::resetDataGeneratorPulse()
+{
+  // Resets data generator
+  for (int wrapper = 0; wrapper <= 1; wrapper++) {
+    uint32_t address = getDatapathWrapperBaseAddress(wrapper) +
+                       Cru::Registers::DWRAPPER_GREGS.address +
+                       Cru::Registers::DWRAPPER_DATAGEN_CONTROL.address;
+    mPdaBar->modifyRegister(address / 4, 0, 1, 0x1);
+    mPdaBar->modifyRegister(address / 4, 0, 1, 0x0);
+  }
+}
+
+void DatapathWrapper::useDataGeneratorSource(bool enable)
+{
+  // Sets datagenerator as bigfifo input source
+  for (int wrapper = 0; wrapper <= 1; wrapper++) {
+    uint32_t address = getDatapathWrapperBaseAddress(wrapper) +
+                       Cru::Registers::DWRAPPER_GREGS.address +
+                       Cru::Registers::DWRAPPER_DATAGEN_CONTROL.address;
+    if (enable) {
+      mPdaBar->modifyRegister(address / 4, 31, 1, 0x1);
+    } else {
+      mPdaBar->modifyRegister(address / 4, 31, 1, 0x0);
+    }
+  }
+}
+
+void DatapathWrapper::enableDataGenerator(bool enable)
+{
+  // Enables data generation
+  for (int wrapper = 0; wrapper <= 1; wrapper++) {
+    uint32_t address = getDatapathWrapperBaseAddress(wrapper) +
+                       Cru::Registers::DWRAPPER_GREGS.address +
+                       Cru::Registers::DWRAPPER_DATAGEN_CONTROL.address;
+    if (enable) {
+      mPdaBar->modifyRegister(address / 4, 1, 1, 0x1);
+    } else {
+      mPdaBar->modifyRegister(address / 4, 1, 1, 0x0);
+    }
+  }
 }
 
 } // namespace roc
