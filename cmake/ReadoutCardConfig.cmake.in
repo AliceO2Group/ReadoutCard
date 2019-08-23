@@ -34,4 +34,4 @@ if(NOT TARGET AliceO2::ReadoutCard)
   include("${ReadoutCard_CMAKE_DIR}/ReadoutCardTargets.cmake")
 endif()
 
-message(STATUS "ReadoutCard ${ReadoutCard_VERSION} found")
+message(STATUS "ReadoutCard found")
