@@ -360,8 +360,8 @@ void CrorcDmaChannel::pushSuperpage(Superpage superpage)
 
   auto busAddress = getBusOffsetAddress(superpage.getOffset());
   pushFreeFifoPage(mFreeFifoFront, busAddress, superpage.getSize());
-  mFreeFifoSize++; // I think I need a check here
-  mFreeFifoFront = (mFreeFifoFront + 1) % READYFIFO_ENTRIES;
+  mFreeFifoSize++; // I might need a check here
+  mFreeFifoFront = (mFreeFifoFront + 1) % MAX_SUPERPAGE_DESCRIPTORS;
 
   mTransferQueue.push_back(superpage);
 }
@@ -397,7 +397,7 @@ void CrorcDmaChannel::fillSuperpages()
         resetDescriptor(mFreeFifoBack);
 
         mFreeFifoSize--;
-        mFreeFifoBack = (mFreeFifoBack + 1) % READYFIFO_ENTRIES;
+        mFreeFifoBack = (mFreeFifoBack + 1) % MAX_SUPERPAGE_DESCRIPTORS;
 
         // Push Superpage
         auto superpage = mTransferQueue.front();
