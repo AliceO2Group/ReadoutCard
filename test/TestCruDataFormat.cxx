@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(TestGetLinkId)
 
 BOOST_AUTO_TEST_CASE(TestGetEventSize)
 {
-  BOOST_CHECK_EQUAL(getEventSize(reinterpret_cast<const char*>(link18Test1.data())), 256);
-  BOOST_CHECK_EQUAL(getEventSize(reinterpret_cast<const char*>(link18Test2.data())), 256);
-  BOOST_CHECK_EQUAL(getEventSize(reinterpret_cast<const char*>(link21Test1.data())), 256);
+  BOOST_CHECK_EQUAL(getMemsize(reinterpret_cast<const char*>(link18Test1.data())), 256);
+  BOOST_CHECK_EQUAL(getMemsize(reinterpret_cast<const char*>(link18Test2.data())), 256);
+  BOOST_CHECK_EQUAL(getMemsize(reinterpret_cast<const char*>(link21Test1.data())), 256);
 }
