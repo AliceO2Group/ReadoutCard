@@ -658,7 +658,7 @@ class ProgramDmaBench : public Program
       // Check for errors
       bool hasError = true;
       switch (mCardType) {
-        case CardType::Crorc: //TODO: Implement fast error checking for CRORC
+        case CardType::Crorc:
           mEventCounters[linkId] = (mEventCounters[linkId] + 1) % EVENT_COUNTER_INITIAL_VALUE;
           if (mEventCounters[linkId] % mErrorCheckFrequency == 0) {
             hasError = checkErrorsCrorc(pageAddress, pageSize, readoutCount, linkId, mOptions.loopbackModeString);
@@ -704,11 +704,7 @@ class ProgramDmaBench : public Program
 
   bool checkErrorsCrorc(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId, std::string loopbackMode)
   {
-    if (loopbackMode == "NONE") {
-      return checkErrorsCrorcExternal(pageAddress, pageSize, eventNumber, linkId);
-    } else {
-      return checkErrorsCrorcInternal(pageAddress, pageSize, eventNumber, linkId);
-    }
+    return checkErrorsCrorc(pageAddress, pageSize, eventNumber, linkId);
   }
 
   bool checkErrorsCruInternal(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
@@ -852,7 +848,7 @@ class ProgramDmaBench : public Program
     }
   }
 
-  bool checkErrorsCrorcExternal(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
+  bool checkErrorsCrorc(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
   {
     // TODO: Clean this up; DataFormat is common with the CRU
     const auto memBytes = Cru::DataFormat::getEventSize(reinterpret_cast<const char*>(pageAddress));
@@ -908,49 +904,6 @@ class ProgramDmaBench : public Program
       checkValue(i, offset, page[i]);
       offset = (offset + 1) % (0x100000000);
     }
-
-    return foundError;
-  }
-
-  bool checkErrorsCrorcInternal(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
-  {
-    uint32_t dataCounter = 0; //always start at 0 for CRUs Internal loopbacks
-
-    uint32_t packetCounter;
-    if (mPacketCounters[linkId] == PACKET_COUNTER_INITIAL_VALUE) {
-      mErrorStream << b::format("resync packet counter for e%d l:%d packet_cnt:%x mpacket_cnt:%x, le:%d \n") % eventNumber % linkId % packetCounter %
-                        mPacketCounters[linkId] % mEventCounters[linkId];
-      packetCounter = 0;
-    } else {
-      packetCounter = (mPacketCounters[linkId] + mErrorCheckFrequency) % (0x100000000);
-    }
-
-    auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
-
-    bool foundError = false;
-    auto checkValue = [&](uint32_t i, uint32_t expectedValue, uint32_t actualValue) {
-      if (expectedValue != actualValue) {
-        foundError = true;
-        addError(eventNumber, linkId, i, dataCounter, expectedValue, actualValue, pageSize);
-      }
-    };
-
-    uint32_t offset = dataCounter;
-    size_t pageSize32 = pageSize / sizeof(uint32_t); //Addressable size of dma page
-
-    if (page[0] != packetCounter) {
-      mErrorCount++;
-      if (mErrorCount < MAX_RECORDED_ERRORS) {
-        mErrorStream << b::format("[RDHERR]\tevent:%1% l:%2% packet_cnt:%3% lpacket_cnt%4% mpacket_cnt:%5% unexpected packet counter\n") % eventNumber % linkId % page[0] % packetCounter % mPacketCounters[linkId];
-      }
-    }
-
-    for (size_t i = 1; i < pageSize32; i++) { //iterate through sp
-      checkValue(i, offset, page[i]);
-      offset = (offset + 1) % (0x100000000);
-    }
-
-    mPacketCounters[linkId] = packetCounter;
 
     return foundError;
   }

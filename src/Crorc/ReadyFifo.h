@@ -24,7 +24,7 @@ namespace AliceO2
 namespace roc
 {
 
-constexpr int READYFIFO_ENTRIES = 128;
+constexpr int READYFIFO_ENTRIES = MAX_SUPERPAGE_DESCRIPTORS;
 
 /// Class representing CRORC readyFifo
 /// This class is meant to be used as an aliased type, reinterpret_casted from a raw memory pointer
