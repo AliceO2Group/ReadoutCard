@@ -259,9 +259,6 @@ static constexpr Register DWRAPPER_GREGS(0x00000000);
 /// Datapath Wrapper offset for "Enabled(?) Registers"
 static constexpr Register DWRAPPER_ENREG(0x00000000);
 
-/// Register to control the Datapath Wrapper multiplexer
-static constexpr Register DWRAPPER_MUX_CONTROL(0x00000004);
-
 /// Datapath Wrapper configuration registers
 static constexpr Register DATAPATHLINK_OFFSET(0x00040000);
 static constexpr Register DATALINK_OFFSET(0x00002000);

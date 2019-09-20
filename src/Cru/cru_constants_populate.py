@@ -65,7 +65,6 @@ roc_regs = {
 #'add_refgen2_offset':'I2C_COMMAND',
 'add_flowctrl_offset':'FLOW_CONTROL_OFFSET',
 'add_flowctrl_ctrlreg':'FLOW_CONTROL_REGISTER',
-'add_dwrapper_muxctrl':'DWRAPPER_MUX_CONTROL',
 'add_gbt_wrapper_atx_pll':'GBT_WRAPPER_ATX_PLL',
 'add_gbt_bank_fpll':'GBT_BANK_FPLL',
 'add_bsp_i2c_minipods':"BSP_I2C_MINIPODS",

@@ -96,7 +96,7 @@ void DatapathWrapper::setPacketArbitration(int wrapperCount, int arbitrationMode
   for (int i = 0; i < wrapperCount; i++) {
     uint32_t address = getDatapathWrapperBaseAddress(i) +
                        Cru::Registers::DWRAPPER_GREGS.address +
-                       Cru::Registers::DWRAPPER_MUX_CONTROL.address;
+                       Cru::Registers::DWRAPPER_DATAGEN_CONTROL.address;
 
     mPdaBar->writeRegister(address / 4, value);
   }
