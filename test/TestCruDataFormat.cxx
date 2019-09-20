@@ -7,10 +7,10 @@
 #define BOOST_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
-#include "Cru/DataFormat.h"
+#include "DataFormat.h"
 
 using namespace AliceO2::roc;
-using namespace Cru::DataFormat;
+using namespace DataFormat;
 
 static const std::vector<uint32_t> link18Test1 = {
   0xabcd,

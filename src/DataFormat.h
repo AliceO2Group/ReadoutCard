@@ -13,8 +13,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_READOUTCARD_CRU_DATAFORMAT_H_
-#define ALICEO2_READOUTCARD_CRU_DATAFORMAT_H_
+#ifndef ALICEO2_READOUTCARD_DATAFORMAT_H_
+#define ALICEO2_READOUTCARD_DATAFORMAT_H_
 
 #include <cstddef>
 #include <cstdint>
@@ -24,8 +24,6 @@
 namespace AliceO2
 {
 namespace roc
-{
-namespace Cru
 {
 namespace DataFormat
 {
@@ -56,7 +54,7 @@ uint32_t getPacketCounter(const char* data)
 
 uint32_t getOffset(const char* data)
 {
-  return Utilities::getBits(getWord(data, 2), 0, 15); //bits #[64-79]
+  return Utilities::getBits(getWord(data, 2), 0, 15); //bits #[64-79] from RDH
 }
 
 /// Get header size in bytes
@@ -73,8 +71,7 @@ constexpr size_t getHeaderSizeWords()
 }
 
 } // namespace DataFormat
-} // namespace Cru
 } // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_READOUTCARD_CRU_DATAFORMAT_H_
+#endif // ALICEO2_READOUTCARD_DATAFORMAT_H_

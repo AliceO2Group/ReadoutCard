@@ -37,7 +37,7 @@
 #include "CommandLineUtilities/Program.h"
 #include "Common/Iommu.h"
 #include "Common/SuffixOption.h"
-#include "Cru/DataFormat.h"
+#include "DataFormat.h"
 #include "ExceptionInternal.h"
 #include "InfoLogger/InfoLogger.hxx"
 #include "folly/ProducerConsumerQueue.h"
@@ -91,6 +91,11 @@ struct TimeLimit {
   uint64_t seconds = 0;
   uint64_t minutes = 0;
   uint64_t hours = 0;
+};
+/// Struct used for the readoutQueue
+struct SuperpageInfo {
+  size_t bufferOffset;
+  size_t effectiveSize;
 };
 } // Anonymous namespace
 
@@ -402,7 +407,7 @@ class ProgramDmaBench : public Program
 
     // Lock-free queues. Usable size is (size-1), so we add 1
     /// Queue for passing filled superpages from the push thread to the readout thread
-    folly::ProducerConsumerQueue<std::pair<size_t, size_t>> readoutQueue{ static_cast<uint32_t>(mMaxSuperpages) + 1 };
+    folly::ProducerConsumerQueue<SuperpageInfo> readoutQueue{ static_cast<uint32_t>(mMaxSuperpages) + 1 };
     /// Queue for free superpages. This starts out as full, then the readout thread consumes them. When superpages
     /// arrive, they are passed via the readoutQueue to the readout thread. When the readout thread is done with it,
     /// it is put back in the freeQueue.
@@ -518,7 +523,7 @@ class ProgramDmaBench : public Program
 
             currentPagesCounted += pagesToCount;
 
-            if (superpage.isReady() && readoutQueue.write(std::make_pair(superpage.getOffset(), superpage.getReceived()))) {
+            if (superpage.isReady() && readoutQueue.write(SuperpageInfo{superpage.getOffset(), superpage.getReceived()})) {
               // Move full superpage to readout queue
               currentPagesCounted = 0;
               mChannel->popSuperpage();
@@ -557,17 +562,17 @@ class ProgramDmaBench : public Program
           size_t actualSize;
         }*/
 
-        std::pair<size_t, size_t> superpageInfos; // {SP offset, SP size} //TODO: Use something more meaningful (like a struct)
+        SuperpageInfo superpageInfo;
 
-        if (readoutQueue.read(superpageInfos) && !mBufferFullCheck) {
+        if (readoutQueue.read(superpageInfo) && !mBufferFullCheck) {
 
           // Read out pages
           size_t readoutBytes = 0;
-          auto superpageAddress = mBufferBaseAddress + superpageInfos.first;
+          auto superpageAddress = mBufferBaseAddress + superpageInfo.bufferOffset;
 
-          std::cout << superpageInfos.second << std::endl;
+          //std::cout << superpageInfos.second << std::endl;
 
-          while ((readoutBytes < superpageInfos.second) && !isStopDma()) {
+          while ((readoutBytes < superpageInfo.effectiveSize) && !isStopDma()) {
             auto pageAddress = superpageAddress + readoutBytes;
             auto readoutCount = fetchAddReadoutCount();
             size_t pageSize = readoutPage(pageAddress, readoutCount);
@@ -585,7 +590,7 @@ class ProgramDmaBench : public Program
 
           // Page has been read out
           // Add superpage back to free queue
-          if (!freeQueue.write(superpageInfos.first)) {
+          if (!freeQueue.write(superpageInfo.bufferOffset)) {
             mDmaLoopBreak = true;
             BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Something went horribly wrong"));
           }
@@ -638,34 +643,17 @@ class ProgramDmaBench : public Program
     return popped;
   }
 
-  uint32_t get32bitFromPage(uintptr_t pageAddress, size_t index)
-  {
-    auto page = reinterpret_cast<void*>(pageAddress + index * 4);
-    uint32_t value = 0;
-    memcpy(&value, page, sizeof(value));
-    return value;
-  }
-
   uint32_t getDataGeneratorCounterFromPage(uintptr_t pageAddress, size_t headerSize)
   {
-    switch (mCardType) {
-      case CardType::Crorc:
-        return get32bitFromPage(pageAddress, 0);
-      case CardType::Cru: {
-        // Grab the first payload word as the counter's beginning
-        auto payload = reinterpret_cast<const volatile uint32_t*>(pageAddress + headerSize);
-        return payload[0];
-      }
-      default:
-        throw std::runtime_error("Error checking unsupported for this card type");
-    }
+    auto payload = reinterpret_cast<const volatile uint32_t*>(pageAddress + headerSize);
+    return payload[0];
   };
 
   size_t readoutPage(uintptr_t pageAddress, int64_t readoutCount)
   {
-    size_t pageSize = Cru::DataFormat::getOffset(reinterpret_cast<const char*>(pageAddress));
+    size_t pageSize = DataFormat::getOffset(reinterpret_cast<const char*>(pageAddress));
     //std::cout << "offset/pagesize = " << pageSize << std::endl;
-    if (mOptions.loopbackModeString == "INTERNAL") {
+    if (mOptions.loopbackModeString == "INTERNAL") { //TODO: Is this still relevant??
       pageSize = mPageSize; // Fake the page size for internal
     }
 
@@ -678,7 +666,7 @@ class ProgramDmaBench : public Program
       // Get link ID if needed
       uint32_t linkId = 0; // Use 0 for non-CRU cards
       if (mCardType == CardType::Cru) {
-        linkId = Cru::DataFormat::getLinkId(reinterpret_cast<const char*>(pageAddress));
+        linkId = DataFormat::getLinkId(reinterpret_cast<const char*>(pageAddress));
         if (linkId >= mDataGeneratorCounters.size()) {
           BOOST_THROW_EXCEPTION(Exception()
                                 << ErrorInfo::Message("Link ID from superpage out of range")
@@ -688,9 +676,9 @@ class ProgramDmaBench : public Program
 
       // Check for errors
       bool hasError = true;
+      mEventCounters[linkId] = (mEventCounters[linkId] + 1) % EVENT_COUNTER_INITIAL_VALUE;
       switch (mCardType) {
         case CardType::Crorc:
-          mEventCounters[linkId] = (mEventCounters[linkId] + 1) % EVENT_COUNTER_INITIAL_VALUE;
           if (mEventCounters[linkId] % mErrorCheckFrequency == 0) {
             hasError = checkErrorsCrorc(pageAddress, pageSize, readoutCount, linkId);
           } else {
@@ -698,7 +686,6 @@ class ProgramDmaBench : public Program
           }
           break;
         case CardType::Cru:
-          mEventCounters[linkId] = (mEventCounters[linkId] + 1) % EVENT_COUNTER_INITIAL_VALUE;
           if (mEventCounters[linkId] % mErrorCheckFrequency == 0) {
             hasError = checkErrorsCru(pageAddress, pageSize, readoutCount, linkId, mOptions.loopbackModeString);
           } else {
@@ -721,7 +708,6 @@ class ProgramDmaBench : public Program
       resetPage(pageAddress, pageSize);
     }
 
-    //return pageSize == 0x40 ? mPageSize : pageSize; // Make sure thet an RDH only page correctly jumps 8KiB for now....
     return pageSize;
   }
 
@@ -789,7 +775,7 @@ class ProgramDmaBench : public Program
   bool checkErrorsCruDdg(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
   {
     // Get memsize from the header
-    const auto memBytes = Cru::DataFormat::getMemsize(reinterpret_cast<const char*>(pageAddress)); // Memory size [RDH, Payload]
+    const auto memBytes = DataFormat::getMemsize(reinterpret_cast<const char*>(pageAddress)); // Memory size [RDH, Payload]
 
     if (memBytes < 0x40 || memBytes > pageSize) {
       // Report RDH error
@@ -801,7 +787,7 @@ class ProgramDmaBench : public Program
     }
 
     // check link's packet counter here
-    const auto packetCounter = Cru::DataFormat::getPacketCounter(reinterpret_cast<const char*>(pageAddress));
+    const auto packetCounter = DataFormat::getPacketCounter(reinterpret_cast<const char*>(pageAddress));
 
     if (mPacketCounters[linkId] == PACKET_COUNTER_INITIAL_VALUE) {
       mErrorStream << b::format("resync packet counter for e:%d l:%d packet_cnt:%x mpacket_cnt:%x le:%d \n") % eventNumber % linkId % packetCounter %
@@ -825,7 +811,7 @@ class ProgramDmaBench : public Program
     }
 
     // Get counter value only if page is valid...
-    const auto dataCounter = getDataGeneratorCounterFromPage(pageAddress, Cru::DataFormat::getHeaderSize());
+    const auto dataCounter = getDataGeneratorCounterFromPage(pageAddress, DataFormat::getHeaderSize());
     if (mDataGeneratorCounters[linkId] == DATA_COUNTER_INITIAL_VALUE) {
       mErrorStream << b::format("resync counter for e:%d l:%d cnt:%x\n") % eventNumber % linkId % dataCounter;
       mDataGeneratorCounters[linkId] = dataCounter;
@@ -833,8 +819,8 @@ class ProgramDmaBench : public Program
     //const uint32_t dataCounter = mDataGeneratorCounters[linkId];
 
     //skip the header -> address + 0x40
-    const auto payload = reinterpret_cast<const volatile uint32_t*>(pageAddress + Cru::DataFormat::getHeaderSize());
-    const auto payloadBytes = memBytes - Cru::DataFormat::getHeaderSize();
+    const auto payload = reinterpret_cast<const volatile uint32_t*>(pageAddress + DataFormat::getHeaderSize());
+    const auto payloadBytes = memBytes - DataFormat::getHeaderSize();
 
     bool foundError = false;
     auto checkValue = [&](uint32_t i, uint32_t expectedValue, uint32_t actualValue) {
@@ -880,7 +866,7 @@ class ProgramDmaBench : public Program
   bool checkErrorsCrorc(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
   {
     // TODO: Clean this up; DataFormat is common with the CRU
-    const auto memBytes = Cru::DataFormat::getMemsize(reinterpret_cast<const char*>(pageAddress));
+    const auto memBytes = DataFormat::getMemsize(reinterpret_cast<const char*>(pageAddress));
     if (memBytes > pageSize) {
       mErrorCount++;
       if (mErrorCount < MAX_RECORDED_ERRORS) {
@@ -889,7 +875,7 @@ class ProgramDmaBench : public Program
       return true;
     }
 
-    uint32_t packetCounter = Cru::DataFormat::getPacketCounter(reinterpret_cast<const char*>(pageAddress));
+    uint32_t packetCounter = DataFormat::getPacketCounter(reinterpret_cast<const char*>(pageAddress));
 
     if (mPacketCounters[linkId] == PACKET_COUNTER_INITIAL_VALUE) {
       mErrorStream << b::format("resync packet counter for e%d l:%d packet_cnt:%x mpacket_cnt:%x, le:%d \n") % eventNumber % linkId % packetCounter %
@@ -909,32 +895,40 @@ class ProgramDmaBench : public Program
       return false;
     }
 
+    // Get counter value only if page is valid...
+    const auto dataCounter = getDataGeneratorCounterFromPage(pageAddress, DataFormat::getHeaderSize());
+    if (mDataGeneratorCounters[linkId] == DATA_COUNTER_INITIAL_VALUE) {
+      mErrorStream << b::format("resync counter for e:%d l:%d cnt:%x\n") % eventNumber % linkId % dataCounter;
+      mDataGeneratorCounters[linkId] = dataCounter;
+    }
+
     // Every page starts from a clean slate
     //uint32_t dataCounter = mDataCounters[linkId];
 
     // Skip the RDH
-    auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress + Cru::DataFormat::getHeaderSize());
+    auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress + DataFormat::getHeaderSize());
+    uint32_t offset = dataCounter;
 
     bool foundError = false;
     auto checkValue = [&](uint32_t i, uint32_t expectedValue, uint32_t actualValue) {
       if (expectedValue != actualValue) {
         foundError = true;
-        addError(eventNumber, linkId, i, crorcGlobalDataCheck, expectedValue, actualValue, pageSize);
+        addError(eventNumber, linkId, i, offset, expectedValue, actualValue, pageSize);
       }
     };
 
-    //uint32_t offset = dataCounter;
-    size_t pageSize32 = (memBytes - Cru::DataFormat::getHeaderSize() ) / sizeof(uint32_t); // Addressable size of dma page (after RDH)
+    size_t pageSize32 = (memBytes - DataFormat::getHeaderSize()) / sizeof(uint32_t); // Addressable size of dma page (after RDH)
 
     for (size_t i = 0; i < pageSize32; i++) { // iterate through dmaPage
-      checkValue(i, crorcGlobalDataCheck, page[i]);
-      crorcGlobalDataCheck = (crorcGlobalDataCheck + 1) % (0x100000000);
+      checkValue(i, offset, page[i]);
+      offset = (offset + 1) % (0x100000000);
     }
 
+    mDataGeneratorCounters[linkId] = offset;
     return foundError;
   }
 
-  void resetPage(uintptr_t pageAddress, size_t pageSize)
+  void resetPage(uintptr_t pageAddress, size_t pageSize) //TODO: Is this still relevant?
   {
     auto page = reinterpret_cast<volatile uint32_t*>(pageAddress);
     auto pageSize32 = pageSize / sizeof(uint32_t);
@@ -1277,9 +1271,6 @@ class ProgramDmaBench : public Program
 
   /// Flag to test how quickly the readout buffer gets full in case of error
   bool mBufferFullCheck;
-
-  // TODO: Clean this up
-  uint32_t crorcGlobalDataCheck = 0;
 };
 
 int main(int argc, char** argv)
