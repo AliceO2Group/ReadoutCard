@@ -391,10 +391,11 @@ void CrorcDmaChannel::fillSuperpages()
   if (!mTransferQueue.empty()) { // i.e. If something is pushed to the CRORC
     auto isArrived = [&](int descriptorIndex) { return dataArrived(descriptorIndex) == DataArrivalStatus::WholeArrived; };
     auto resetDescriptor = [&](int descriptorIndex) { getReadyFifoUser()->entries[descriptorIndex].reset(); };
-    auto getLength = [&](int descriptorIndex) { return getReadyFifoUser()->entries[descriptorIndex].length; };
+    auto getLength = [&](int descriptorIndex) { return getReadyFifoUser()->entries[descriptorIndex].length * 4; }; // length in 4B words
 
     while (mFreeFifoSize > 0) {
       if (isArrived(mFreeFifoBack)) {
+        //size_t superpageFilled = SUPERPAGE_SIZE; // Get the length before updating our descriptor index
         size_t superpageFilled = getLength(mFreeFifoBack); // Get the length before updating our descriptor index
         resetDescriptor(mFreeFifoBack);
 

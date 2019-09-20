@@ -560,11 +560,14 @@ class ProgramDmaBench : public Program
         std::pair<size_t, size_t> superpageInfos; // {SP offset, SP size} //TODO: Use something more meaningful (like a struct)
 
         if (readoutQueue.read(superpageInfos) && !mBufferFullCheck) {
+
           // Read out pages
           size_t readoutBytes = 0;
           auto superpageAddress = mBufferBaseAddress + superpageInfos.first;
 
-          while ((readoutBytes <= superpageInfos.second) && !isStopDma()) {
+          std::cout << superpageInfos.second << std::endl;
+
+          while ((readoutBytes < superpageInfos.second) && !isStopDma()) {
             auto pageAddress = superpageAddress + readoutBytes;
             auto readoutCount = fetchAddReadoutCount();
             size_t pageSize = readoutPage(pageAddress, readoutCount);
@@ -576,12 +579,14 @@ class ProgramDmaBench : public Program
           }
 
           if (readoutBytes > mSuperpageSize) {
+            mDmaLoopBreak = true;
             BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("RDH reports cumulative dma page sizes that exceed the superpage size"));
           }
 
           // Page has been read out
           // Add superpage back to free queue
           if (!freeQueue.write(superpageInfos.first)) {
+            mDmaLoopBreak = true;
             BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Something went horribly wrong"));
           }
         } else {
@@ -615,7 +620,7 @@ class ProgramDmaBench : public Program
           auto superpageAddress = mBufferBaseAddress + superpage.getOffset();
           size_t readoutBytes = 0;
           //while ((readoutBytes <= (mSuperpageSize - mPageSize)) && !isSigInt()) { // At least one more dma page fits in the superpage
-          while ((readoutBytes <= superpage.getReceived()) && !isSigInt()) { // At least one more dma page fits in the superpage
+          while ((readoutBytes < superpage.getReceived()) && !isSigInt()) { // At least one more dma page fits in the superpage
             auto pageAddress = superpageAddress + readoutBytes;
             auto readoutCount = fetchAddReadoutCount();
             size_t pageSize = readoutPage(pageAddress, readoutCount);
@@ -659,6 +664,7 @@ class ProgramDmaBench : public Program
   size_t readoutPage(uintptr_t pageAddress, int64_t readoutCount)
   {
     size_t pageSize = Cru::DataFormat::getOffset(reinterpret_cast<const char*>(pageAddress));
+    //std::cout << "offset/pagesize = " << pageSize << std::endl;
     if (mOptions.loopbackModeString == "INTERNAL") {
       pageSize = mPageSize; // Fake the page size for internal
     }
@@ -904,7 +910,7 @@ class ProgramDmaBench : public Program
     }
 
     // Every page starts from a clean slate
-    uint32_t dataCounter = 0;
+    //uint32_t dataCounter = mDataCounters[linkId];
 
     // Skip the RDH
     auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress + Cru::DataFormat::getHeaderSize());
@@ -913,19 +919,16 @@ class ProgramDmaBench : public Program
     auto checkValue = [&](uint32_t i, uint32_t expectedValue, uint32_t actualValue) {
       if (expectedValue != actualValue) {
         foundError = true;
-        addError(eventNumber, linkId, i, dataCounter, expectedValue, actualValue, pageSize);
+        addError(eventNumber, linkId, i, crorcGlobalDataCheck, expectedValue, actualValue, pageSize);
       }
     };
 
-    uint32_t offset = dataCounter;
-    size_t pageSize32 = memBytes / sizeof(uint32_t); // Addressable size of dma page (after RDH)
+    //uint32_t offset = dataCounter;
+    size_t pageSize32 = (memBytes - Cru::DataFormat::getHeaderSize() ) / sizeof(uint32_t); // Addressable size of dma page (after RDH)
 
     for (size_t i = 0; i < pageSize32; i++) { // iterate through dmaPage
-      if (i == (pageSize32 - 1)) {            // skip the DTSW at the end of the page
-        continue;
-      }
-      checkValue(i, offset, page[i]);
-      offset = (offset + 1) % (0x100000000);
+      checkValue(i, crorcGlobalDataCheck, page[i]);
+      crorcGlobalDataCheck = (crorcGlobalDataCheck + 1) % (0x100000000);
     }
 
     return foundError;
@@ -1274,6 +1277,9 @@ class ProgramDmaBench : public Program
 
   /// Flag to test how quickly the readout buffer gets full in case of error
   bool mBufferFullCheck;
+
+  // TODO: Clean this up
+  uint32_t crorcGlobalDataCheck = 0;
 };
 
 int main(int argc, char** argv)
