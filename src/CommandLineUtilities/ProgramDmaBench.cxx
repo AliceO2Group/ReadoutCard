@@ -254,7 +254,7 @@ class ProgramDmaBench : public Program
     mOptions.fileOutputBin = !mOptions.fileOutputPathBin.empty();
 
     if (mOptions.fileOutputAscii && mOptions.fileOutputBin) {
-      throw ParameterException() << ErrorInfo::Message("File output can't be both ASCII and binary");
+      BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("File output can't be both ASCII and binary"));
     } else {
       if (mOptions.fileOutputAscii) {
         mReadoutStream.open(mOptions.fileOutputPathAscii);
@@ -280,7 +280,7 @@ class ProgramDmaBench : public Program
     // Create channel buffer
     {
       if (mBufferSize < mSuperpageSize) {
-        throw ParameterException() << ErrorInfo::Message("Buffer size smaller than superpage size");
+        BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("Buffer size smaller than superpage size"));
       }
 
       std::string bufferName = (b::format("roc-bench-dma_id=%s_chan=%s_pages") % map["id"].as<std::string>() % mOptions.dmaChannel).str();
@@ -548,7 +548,7 @@ class ProgramDmaBench : public Program
     });
 
     // Readout thread (main thread)
-    {
+    try {
       RandomPauses pauses;
 
       while (!isStopDma()) {
@@ -560,20 +560,14 @@ class ProgramDmaBench : public Program
           pauses.pauseIfNeeded();
         }
 
-        /*struct superpageDetails {
-          size_t offsetWithinBuffer;
-          size_t actualSize;
-        }*/
-
         SuperpageInfo superpageInfo;
-
         if (readoutQueue.read(superpageInfo) && !mBufferFullCheck) {
 
           // Read out pages
           size_t readoutBytes = 0;
           auto superpageAddress = mBufferBaseAddress + superpageInfo.bufferOffset;
 
-          //std::cout << superpageInfos.second << std::endl;
+          //std::cout << superpageInfo.effectiveSize << std::endl;
 
           while ((readoutBytes < superpageInfo.effectiveSize) && !isStopDma()) {
             auto pageAddress = superpageAddress + readoutBytes;
@@ -586,7 +580,7 @@ class ProgramDmaBench : public Program
             readoutBytes += pageSize;
           }
 
-          if (readoutBytes > mSuperpageSize) {
+          if (readoutBytes > mSuperpageSize && false) { //TODO: Might this check fail, if the page is not full? readoutBytes will go over the reported superpage size by the driver
             mDmaLoopBreak = true;
             BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("RDH reports cumulative dma page sizes that exceed the superpage size"));
           }
@@ -602,6 +596,9 @@ class ProgramDmaBench : public Program
           std::this_thread::sleep_for(std::chrono::microseconds(mOptions.pauseRead));
         }
       }
+    } catch (Exception& e) {
+      mDmaLoopBreak = true;
+      throw;
     }
 
     pushFuture.get();
@@ -634,11 +631,12 @@ class ProgramDmaBench : public Program
             readoutBytes += pageSize;
           }
 
-          if (readoutBytes > mSuperpageSize) {
+          if (readoutBytes > mSuperpageSize && false) { //TODO: Might this check fail, if the page is not full? readoutBytes will go over the reported superpage size by the driver
             BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("RDH reports cumulative dma page sizes that exceed the superpage size"));
           }
         }
-        std::cout << "[popped superpage " << i << " ], size= " << superpage.getSize() << " received= " << superpage.getReceived() << " isFilled=" << superpage.isFilled() << " isReady=" << superpage.isReady() << std::endl;
+        std::cout << "[popped superpage " << i << " ], size= " << superpage.getSize() << " received= " << superpage.getReceived() << " isFilled=" <<
+          superpage.isFilled() << " isReady=" << superpage.isReady() << std::endl;
       }
       popped += size;
     }
@@ -675,23 +673,19 @@ class ProgramDmaBench : public Program
       // Check for errors
       bool hasError = true;
       mEventCounters[linkId] = (mEventCounters[linkId] + 1) % EVENT_COUNTER_INITIAL_VALUE;
-      switch (mCardType) {
-        case CardType::Crorc:
-          if (mEventCounters[linkId] % mErrorCheckFrequency == 0) {
+      if (mEventCounters[linkId] % mErrorCheckFrequency == 0) {
+        switch (mCardType) {
+          case CardType::Crorc:
             hasError = checkErrorsCrorc(pageAddress, pageSize, readoutCount, linkId);
-          } else {
-            hasError = false;
-          }
-          break;
-        case CardType::Cru:
-          if (mEventCounters[linkId] % mErrorCheckFrequency == 0) {
-            hasError = checkErrorsCru(pageAddress, pageSize, readoutCount, linkId, mOptions.loopbackModeString);
-          } else {
-            hasError = false;
-          }
-          break;
-        default:
-          throw std::runtime_error("Error checking unsupported for this card type");
+            break;
+          case CardType::Cru:
+            hasError = checkErrorsCru(pageAddress, pageSize, readoutCount, linkId);
+            break;
+          default:
+            BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Error checking unsupported for this card type"));
+        }
+      } else {
+        hasError = false;
       }
 
       if (hasError && !mOptions.noResyncCounter) {
