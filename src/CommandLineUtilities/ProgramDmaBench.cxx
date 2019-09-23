@@ -24,6 +24,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <thread>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/circular_buffer.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/interprocess/sync/named_mutex.hpp>
@@ -239,25 +240,27 @@ class ProgramDmaBench : public Program
     auto params = Parameters::makeParameters(cardId, mOptions.dmaChannel);
     params.setDmaPageSize(mOptions.dmaPageSize);
     params.setGeneratorEnabled(mOptions.generatorEnabled);
-    if (!mOptions.generatorEnabled) // if generator is not enabled, force loopbackMode=NONE for proper errorchecking
-      mOptions.loopbackModeString = "NONE";
-    params.setGeneratorLoopback(LoopbackMode::fromString(mOptions.loopbackModeString));
+    if (!mOptions.generatorEnabled) { // if generator is not enabled, force loopbackMode=NONE
+      params.setGeneratorLoopback(LoopbackMode::None);
+    } else {
+      params.setGeneratorLoopback(LoopbackMode::fromString(mOptions.loopbackModeString));
+    }
+    mLoopback = params.getGeneratorLoopback().get_value_or(LoopbackMode::None);
+
     params.setStbrdEnabled(mOptions.stbrd); //Set STBRD for the CRORC
 
     // Handle file output options
-    {
-      mOptions.fileOutputAscii = !mOptions.fileOutputPathAscii.empty();
-      mOptions.fileOutputBin = !mOptions.fileOutputPathBin.empty();
+    mOptions.fileOutputAscii = !mOptions.fileOutputPathAscii.empty();
+    mOptions.fileOutputBin = !mOptions.fileOutputPathBin.empty();
 
-      if (mOptions.fileOutputAscii && mOptions.fileOutputBin) {
-        throw ParameterException() << ErrorInfo::Message("File output can't be both ASCII and binary");
-      } else {
-        if (mOptions.fileOutputAscii) {
-          mReadoutStream.open(mOptions.fileOutputPathAscii);
-        }
-        if (mOptions.fileOutputBin) {
-          mReadoutStream.open(mOptions.fileOutputPathBin, std::ios::binary);
-        }
+    if (mOptions.fileOutputAscii && mOptions.fileOutputBin) {
+      throw ParameterException() << ErrorInfo::Message("File output can't be both ASCII and binary");
+    } else {
+      if (mOptions.fileOutputAscii) {
+        mReadoutStream.open(mOptions.fileOutputPathAscii);
+      }
+      if (mOptions.fileOutputBin) {
+        mReadoutStream.open(mOptions.fileOutputPathBin, std::ios::binary);
       }
     }
 
@@ -621,10 +624,9 @@ class ProgramDmaBench : public Program
       auto size = mChannel->getReadyQueueSize();
       for (int i = 0; i < size; ++i) {
         auto superpage = mChannel->popSuperpage();
-        if (mOptions.loopbackModeString == "NONE" || mOptions.loopbackModeString == "DDG") { // TODO: CRORC?
+        if ((mLoopback == LoopbackMode::None) || (mLoopback == LoopbackMode::Ddg)) { // TODO: CRORC? -> Should be good for crorc
           auto superpageAddress = mBufferBaseAddress + superpage.getOffset();
           size_t readoutBytes = 0;
-          //while ((readoutBytes <= (mSuperpageSize - mPageSize)) && !isSigInt()) { // At least one more dma page fits in the superpage
           while ((readoutBytes < superpage.getReceived()) && !isSigInt()) { // At least one more dma page fits in the superpage
             auto pageAddress = superpageAddress + readoutBytes;
             auto readoutCount = fetchAddReadoutCount();
@@ -652,10 +654,6 @@ class ProgramDmaBench : public Program
   size_t readoutPage(uintptr_t pageAddress, int64_t readoutCount)
   {
     size_t pageSize = DataFormat::getOffset(reinterpret_cast<const char*>(pageAddress));
-    //std::cout << "offset/pagesize = " << pageSize << std::endl;
-    if (mOptions.loopbackModeString == "INTERNAL") { //TODO: Is this still relevant??
-      pageSize = mPageSize; // Fake the page size for internal
-    }
 
     // Read out to file
     printToFile(pageAddress, pageSize, readoutCount);
@@ -711,14 +709,14 @@ class ProgramDmaBench : public Program
     return pageSize;
   }
 
-  bool checkErrorsCru(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId, std::string loopbackMode)
+  bool checkErrorsCru(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
   {
-    if (loopbackMode == "DDG") {
+    if (mLoopback == LoopbackMode::Ddg) {
       return checkErrorsCruDdg(pageAddress, pageSize, eventNumber, linkId);
-    } else if (loopbackMode == "INTERNAL") {
+    } else if (mLoopback == LoopbackMode::Internal) {
       return checkErrorsCruInternal(pageAddress, pageSize, eventNumber, linkId);
     } else {
-      throw std::runtime_error("CRU error check: Loopback Mode not supported");
+      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("CRU error check: Loopback Mode " + LoopbackMode::toString(mLoopback) + " not supported"));
     }
   }
 
@@ -865,7 +863,6 @@ class ProgramDmaBench : public Program
 
   bool checkErrorsCrorc(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
   {
-    // TODO: Clean this up; DataFormat is common with the CRU
     const auto memBytes = DataFormat::getMemsize(reinterpret_cast<const char*>(pageAddress));
     if (memBytes > pageSize) {
       mErrorCount++;
@@ -902,11 +899,9 @@ class ProgramDmaBench : public Program
       mDataGeneratorCounters[linkId] = dataCounter;
     }
 
-    // Every page starts from a clean slate
-    //uint32_t dataCounter = mDataCounters[linkId];
-
     // Skip the RDH
     auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress + DataFormat::getHeaderSize());
+    
     uint32_t offset = dataCounter;
 
     bool foundError = false;
@@ -1271,6 +1266,9 @@ class ProgramDmaBench : public Program
 
   /// Flag to test how quickly the readout buffer gets full in case of error
   bool mBufferFullCheck;
+
+  /// Loopback mode
+  LoopbackMode::type mLoopback;
 };
 
 int main(int argc, char** argv)
