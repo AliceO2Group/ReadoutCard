@@ -27,7 +27,6 @@
 #include "ReadoutCard/ParameterTypes/LoopbackMode.h"
 #include "ReadoutCard/ParameterTypes/PciAddress.h"
 #include "ReadoutCard/ParameterTypes/PciSequenceNumber.h"
-#include "ReadoutCard/ParameterTypes/ReadoutMode.h"
 #include "ReadoutCard/ParameterTypes/Hex.h"
 
 // CRU Specific
@@ -89,9 +88,6 @@ class Parameters
 
   /// Type for the generator data size parameter
   using GeneratorRandomSizeEnabledType = bool;
-
-  /// Type for the readout mode parameter
-  using ReadoutModeType = ReadoutMode::type;
 
   /// Type for the link mask parameter
   using LinkMaskType = std::set<uint32_t>;
@@ -276,14 +272,6 @@ class Parameters
   /// \return Reference to this object for chaining calls
   auto setBufferParameters(BufferParametersType value) -> Parameters&;
 
-  /// Sets the ReadoutMode parameter
-  ///
-  /// This is a work-in-progress feature. Currently, only the C-RORC is supported in continuous readout mode.
-  ///
-  /// \param value The value to set
-  /// \return Reference to this object for chaining calls
-  auto setReadoutMode(ReadoutModeType value) -> Parameters&;
-
   /// Sets the LinkMask parameter
   ///
   /// The BAR channel may transfer data from multiple links.
@@ -431,10 +419,6 @@ class Parameters
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
   auto getBufferParameters() const -> boost::optional<BufferParametersType>;
 
-  /// Gets the ReadoutMode parameter
-  /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
-  auto getReadoutMode() const -> boost::optional<ReadoutModeType>;
-
   /// Gets the LinkMask parameter
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
   auto getLinkMask() const -> boost::optional<LinkMaskType>;
@@ -533,11 +517,6 @@ class Parameters
   /// \exception ParameterException The parameter was not present
   /// \return The value
   auto getBufferParametersRequired() const -> BufferParametersType;
-
-  /// Gets the ReadoutMode parameter
-  /// \exception ParameterException The parameter was not present
-  /// \return The value
-  auto getReadoutModeRequired() const -> ReadoutModeType;
 
   /// Gets the LinkMask parameter
   /// \exception ParameterException The parameter was not present

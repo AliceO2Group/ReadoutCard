@@ -5,7 +5,6 @@
 
 #include "ReadoutCard/CardType.h"
 #include "ReadoutCard/ParameterTypes/LoopbackMode.h"
-#include "ReadoutCard/ParameterTypes/ReadoutMode.h"
 #include "ReadoutCard/ParameterTypes/ResetLevel.h"
 
 #define BOOST_TEST_MODULE RORC_TestEnums
@@ -40,9 +39,4 @@ BOOST_AUTO_TEST_CASE(EnumResetLevelConversion)
 {
   checkEnumConversion<ResetLevel>({ ResetLevel::Nothing, ResetLevel::Internal, ResetLevel::InternalDiu,
                                     ResetLevel::InternalDiuSiu });
-}
-
-BOOST_AUTO_TEST_CASE(EnumReadoutModeConversion)
-{
-  checkEnumConversion<ReadoutMode>({ ReadoutMode::Continuous });
 }

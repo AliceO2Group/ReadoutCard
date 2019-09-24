@@ -993,39 +993,6 @@ void Crorc::pushRxFreeFifo(uintptr_t blockAddress, uint32_t blockLength, uint32_
   write(Rorc::C_RAFL, (blockLength << 8) | readyFifoIndex);
 }
 
-void Crorc::initReadoutContinuous(RegisterReadWriteInterface& bar2)
-{
-  // Based on:
-  // https://gitlab.cern.ch/costaf/grorc_sw/blob/master/script/grorc_cont_readout.sh
-
-  // this script works with the G-RORC firmware 3.16
-  // SET the card in CONT MODE
-  bar2.writeRegister(0x190 / 4, 0x02000000);
-  // s_send_wide            <= s_reg(0);
-  // s_gbt_tx_pol           <= s_reg(1);
-  // s_gbt_tx_sel           <= s_reg(3 downto 2);
-  // s_gbt_reset            <= s_reg(4);
-  // s_rx_encoding          <= s_reg(8);
-  // s_tx_encoding          <= s_reg(9);
-  // s_read_gate            <= s_reg(12);
-  // s_disable_bank         <= s_reg(17 downto 16);
-  // s_bar_rd_ch(2).reg_194 <= s_reg;
-  // Choose only BANK0
-  bar2.writeRegister(0x194 / 4, 0x21005);
-  // number of GBT words per event
-  bar2.writeRegister(0x18c / 4, 0x1f);
-}
-
-void Crorc::startReadoutContinuous(RegisterReadWriteInterface& bar2)
-{
-  // Based on:
-  // https://gitlab.cern.ch/costaf/grorc_sw/blob/master/script/grorc_send_IDLE_SYNC.sh
-
-  // SET IT AS CUSTOM PATTERN FOR 1 CC and open the GATE READOUT
-  bar2.writeRegister(0x198 / 4, 0x60000001);
-  bar2.writeRegister(0x198 / 4, 0x0);
-}
-
 void Crorc::initReadoutTriggered(RegisterReadWriteInterface&)
 {
   BOOST_THROW_EXCEPTION(std::runtime_error("not implemented"));

@@ -218,9 +218,6 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
   /// Length of data written to each page
   const size_t mGeneratorDataSize;
 
-  /// Use continuous readout mode
-  const bool mUseContinuousReadout;
-
   Crorc::Crorc::DiuConfig mDiuConfig;
 };
 

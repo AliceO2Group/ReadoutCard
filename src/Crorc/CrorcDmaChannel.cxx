@@ -48,12 +48,11 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
     mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)), // Internal loopback by default
     mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)),                // Use data generator by default
     mGeneratorPattern(parameters.getGeneratorPattern().get_value_or(GeneratorPattern::Incremental)),
-    mGeneratorMaximumEvents(0),                                                    // Infinite events
-    mGeneratorInitialValue(0),                                                     // Start from 0
-    mGeneratorInitialWord(0),                                                      // First word
-    mGeneratorSeed(mGeneratorPattern == GeneratorPattern::Random ? 1 : 0),         // We use a seed for random only
-    mGeneratorDataSize(parameters.getGeneratorDataSize().get_value_or(mPageSize)), // Can use page size
-    mUseContinuousReadout(parameters.getReadoutMode().is_initialized() ? parameters.getReadoutModeRequired() == ReadoutMode::Continuous : false)
+    mGeneratorMaximumEvents(0),                                                   // Infinite events
+    mGeneratorInitialValue(0),                                                    // Start from 0
+    mGeneratorInitialWord(0),                                                     // First word
+    mGeneratorSeed(mGeneratorPattern == GeneratorPattern::Random ? 1 : 0),        // We use a seed for random only
+    mGeneratorDataSize(parameters.getGeneratorDataSize().get_value_or(mPageSize)) // Can use page size
 {
   // Check that the DMA page is valid
   if (mPageSize != DMA_PAGE_SIZE) {
@@ -116,11 +115,6 @@ CrorcDmaChannel::~CrorcDmaChannel()
 
 void CrorcDmaChannel::deviceStartDma()
 {
-  if (mUseContinuousReadout) {
-    log("Initializing continuous readout");
-    Crorc::Crorc::initReadoutContinuous(*(getBar()));
-  }
-
   // Find DIU version, required for armDdl()
   mDiuConfig = getCrorc().initDiuVersion();
 

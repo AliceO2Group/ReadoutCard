@@ -164,12 +164,6 @@ class Crorc
 
   static ScaReadResult scaGpioWrite(RegisterReadWriteInterface& bar2, uint32_t data);
 
-  /// Set C-RORC for continuous readout
-  static void initReadoutContinuous(RegisterReadWriteInterface& bar2);
-
-  /// Enable (or re-enable) continuous readout
-  static void startReadoutContinuous(RegisterReadWriteInterface& bar2);
-
   /// Set C-RORC for triggered readout
   static void initReadoutTriggered(RegisterReadWriteInterface& bar2);
 

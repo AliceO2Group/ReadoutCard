@@ -196,9 +196,6 @@ class ProgramDmaBench : public Program
     options.add_options()("random-pause",
                           po::bool_switch(&mOptions.randomPause),
                           "Randomly pause readout");
-    options.add_options()("readout-mode",
-                          po::value<std::string>(&mOptions.readoutModeString),
-                          "Set readout mode [CONTINUOUS]");
     options.add_options()("stbrd",
                           po::bool_switch(&mOptions.stbrd),
                           "Set the STBRD trigger command for the CRORC");
@@ -266,11 +263,6 @@ class ProgramDmaBench : public Program
       mOptions.generatorPattern = GeneratorPattern::fromString(mOptions.generatorPatternString);
     }
 
-    // Handle readout mode option
-    if (!mOptions.readoutModeString.empty()) {
-      mOptions.readoutMode = ReadoutMode::fromString(mOptions.readoutModeString);
-    }
-
     // Log IOMMU status
     getLogger() << "IOMMU " << (AliceO2::Common::Iommu::isEnabled() ? "enabled" : "not enabled") << endm;
 
@@ -301,10 +293,6 @@ class ProgramDmaBench : public Program
 
     mInfinitePages = (mOptions.maxBytes <= 0);
     mMaxPages = mOptions.maxBytes / mPageSize;
-
-    if (mOptions.readoutMode) {
-      params.setReadoutMode(*mOptions.readoutMode);
-    }
 
     if (!Utilities::isMultiple(mSuperpageSize, mPageSize)) {
       throw ParameterException() << ErrorInfo::Message("Superpage size not a multiple of page size");
@@ -1126,11 +1114,9 @@ class ProgramDmaBench : public Program
     bool barHammer = false;
     bool noRemovePagesFile = false;
     std::string generatorPatternString;
-    std::string readoutModeString;
     std::string fileOutputPathBin;
     std::string fileOutputPathAscii;
     GeneratorPattern::type generatorPattern = GeneratorPattern::Incremental;
-    b::optional<ReadoutMode::type> readoutMode;
     std::string links;
     bool generatorEnabled = false;
     bool bufferFullCheck = false;

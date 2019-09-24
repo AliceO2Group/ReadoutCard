@@ -32,10 +32,10 @@ namespace roc
 
 /// Variant used for internal storage of parameters
 using Variant = boost::variant<size_t, int32_t, bool, Parameters::BufferParametersType, Parameters::CardIdType,
-                               Parameters::GeneratorLoopbackType, Parameters::GeneratorPatternType, Parameters::ReadoutModeType,
-                               Parameters::LinkMaskType, Parameters::AllowRejectionType, Parameters::ClockType, Parameters::CruIdType,
-                               Parameters::DatapathModeType, Parameters::DownstreamDataType, Parameters::GbtModeType, Parameters::GbtMuxType,
-                               Parameters::GbtMuxMapType, Parameters::PonUpstreamEnabledType, Parameters::OnuAddressType>;
+                               Parameters::GeneratorLoopbackType, Parameters::GeneratorPatternType, Parameters::LinkMaskType,
+                               Parameters::AllowRejectionType, Parameters::ClockType, Parameters::CruIdType,
+                               Parameters::DatapathModeType, Parameters::DownstreamDataType, Parameters::GbtModeType,
+                               Parameters::GbtMuxType, Parameters::GbtMuxMapType, Parameters::PonUpstreamEnabledType, Parameters::OnuAddressType>;
 
 using KeyType = const char*;
 
@@ -123,7 +123,6 @@ _PARAMETER_FUNCTIONS(GeneratorLoopback, "generator_loopback")
 _PARAMETER_FUNCTIONS(GeneratorDataSize, "generator_data_size")
 _PARAMETER_FUNCTIONS(GeneratorPattern, "generator_pattern")
 _PARAMETER_FUNCTIONS(GeneratorRandomSizeEnabled, "generator_random_size_enabled")
-_PARAMETER_FUNCTIONS(ReadoutMode, "readout_mode")
 _PARAMETER_FUNCTIONS(LinkMask, "link_mask")
 _PARAMETER_FUNCTIONS(AllowRejection, "allow_rejection")
 _PARAMETER_FUNCTIONS(Clock, "clock")

@@ -110,7 +110,6 @@ add_library(ReadoutCard SHARED
   src/ParameterTypes/PciAddress.cxx
   src/ParameterTypes/PciSequenceNumber.cxx
   src/ParameterTypes/ResetLevel.cxx
-  src/ParameterTypes/ReadoutMode.cxx
   src/Utilities/Hugetlbfs.cxx
   src/Utilities/MemoryMaps.cxx
   src/Utilities/Numa.cxx
