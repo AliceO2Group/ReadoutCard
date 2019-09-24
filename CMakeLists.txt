@@ -225,13 +225,6 @@ if(PDA_FOUND)
     roc-status
     roc-swt-stress
   )
-
-  if(Python2_FOUND)
-    list(APPEND EXE_SRCS ProgramRunScript.cxx)
-    list(APPEND EXE_NAMES roc-run-script)
-  else()
-    message(INFO "PythonLibs not found, 'roc-run-script' utility will not be built")
-  endif()
 endif()
 
 
