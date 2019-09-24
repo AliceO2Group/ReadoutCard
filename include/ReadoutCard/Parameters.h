@@ -23,7 +23,6 @@
 #include <boost/optional.hpp>
 #include <boost/variant.hpp>
 #include "ReadoutCard/ParameterTypes/BufferParameters.h"
-#include "ReadoutCard/ParameterTypes/GeneratorPattern.h"
 #include "ReadoutCard/ParameterTypes/LoopbackMode.h"
 #include "ReadoutCard/ParameterTypes/PciAddress.h"
 #include "ReadoutCard/ParameterTypes/PciSequenceNumber.h"
@@ -82,9 +81,6 @@ class Parameters
 
   /// Type for the LoopbackMode parameter
   using GeneratorLoopbackType = LoopbackMode::type;
-
-  /// Type for the generator pattern parameter
-  using GeneratorPatternType = GeneratorPattern::type;
 
   /// Type for the generator data size parameter
   using GeneratorRandomSizeEnabledType = bool;
@@ -226,19 +222,6 @@ class Parameters
   /// \param value The value to set
   /// \return Reference to this object for chaining calls
   auto setGeneratorLoopback(GeneratorLoopbackType value) -> Parameters&;
-
-  /// Sets the GeneratorPattern parameter.
-  ///
-  /// Determines the content of the generated data.
-  /// Supported formats:
-  /// * C-RORC: all formats (I think...)
-  /// * CRU: Constant, Alternating, Incremental
-  ///
-  /// If not set, the driver will default to the incremental pattern (GeneratorPattern::Incremental).
-  ///
-  /// \param value The value to set
-  /// \return Reference to this object for chaining calls
-  auto setGeneratorPattern(GeneratorPatternType value) -> Parameters&;
 
   /// Sets the GeneratorRandomSizeEnabled parameter.
   ///
@@ -407,10 +390,6 @@ class Parameters
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
   auto getGeneratorLoopback() const -> boost::optional<GeneratorLoopbackType>;
 
-  /// Gets the GeneratorPattern parameter
-  /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
-  auto getGeneratorPattern() const -> boost::optional<GeneratorPatternType>;
-
   /// Gets the GeneratorRandomSizeEnabled parameter
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
   auto getGeneratorRandomSizeEnabled() const -> boost::optional<GeneratorRandomSizeEnabledType>;
@@ -502,11 +481,6 @@ class Parameters
   /// \exception ParameterException The parameter was not present
   /// \return The value
   auto getGeneratorLoopbackRequired() const -> GeneratorLoopbackType;
-
-  /// Gets the GeneratorPattern parameter
-  /// \exception ParameterException The parameter was not present
-  /// \return The value
-  auto getGeneratorPatternRequired() const -> GeneratorPatternType;
 
   /// Gets the GeneratorRandomSizeEnabled parameter
   /// \exception ParameterException The parameter was not present

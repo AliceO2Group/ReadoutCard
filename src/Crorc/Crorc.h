@@ -21,7 +21,6 @@
 #include <string>
 #include <vector>
 #include <boost/optional.hpp>
-#include "ReadoutCard/ParameterTypes/GeneratorPattern.h"
 #include "ReadoutCard/RegisterReadWriteInterface.h"
 #include "RxFreeFifoState.h"
 #include "StWord.h"
@@ -65,10 +64,13 @@ class Crorc
   void armDdl(int resetMask, const DiuConfig& diuConfig);
 
   /// Arms C-RORC data generator
-  int armDataGenerator(uint32_t initEventNumber, uint32_t initDataWord, GeneratorPattern::type dataPattern,
-                       int dataSize, int seed);
+  int armDataGenerator(int dataSize,
+                       uint32_t initEventNumber = 0,
+                       uint32_t initDataWord = 0,
+                       int dataPattern = 5,
+                       int seed = 0);
 
-  void startDataGenerator(uint32_t maxLoop);
+  void startDataGenerator(uint32_t maxLoop = 0);
 
   /// Stops C-RORC data generator
   void stopDataGenerator();

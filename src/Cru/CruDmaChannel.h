@@ -152,27 +152,6 @@ class CruDmaChannel final : public DmaChannelPdaBase
   /// Enables the data generator
   const bool mGeneratorEnabled;
 
-  /// Data pattern for the data generator
-  const GeneratorPattern::type mGeneratorPattern;
-
-  /// Random data size
-  const bool mGeneratorDataSizeRandomEnabled;
-
-  /// Maximum number of events
-  const int mGeneratorMaximumEvents;
-
-  /// Initial value of the first data in a data block
-  const uint32_t mGeneratorInitialValue;
-
-  /// Sets the second word of each fragment when the data generator is used
-  const uint32_t mGeneratorInitialWord;
-
-  /// Random seed parameter in case the data generator is set to produce random data
-  const int mGeneratorSeed;
-
-  /// Length of data written to each page
-  const size_t mGeneratorDataSize;
-
   /// Flag to know if we should reset the debug register after we fiddle with it
   bool mDebugRegisterReset = false;
 

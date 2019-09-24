@@ -29,17 +29,10 @@ namespace roc
 {
 
 CruDmaChannel::CruDmaChannel(const Parameters& parameters)
-  : DmaChannelPdaBase(parameters, allowedChannels()),                                                //
-    mInitialResetLevel(ResetLevel::Internal),                                                        // It's good to reset at least the card channel in general
-    mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)),           // DG loopback mode by default
-    mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)),                          // Use data generator by default
-    mGeneratorPattern(parameters.getGeneratorPattern().get_value_or(GeneratorPattern::Incremental)), //
-    mGeneratorDataSizeRandomEnabled(parameters.getGeneratorRandomSizeEnabled().get_value_or(false)), //
-    mGeneratorMaximumEvents(0),                                                                      // Infinite events
-    mGeneratorInitialValue(0),                                                                       // Start from 0
-    mGeneratorInitialWord(0),                                                                        // First word
-    mGeneratorSeed(0),                                                                               // Presumably for random patterns, incremental doesn't really need it
-    mGeneratorDataSize(parameters.getGeneratorDataSize().get_value_or(Cru::DMA_PAGE_SIZE)),          // Can use page size
+  : DmaChannelPdaBase(parameters, allowedChannels()),                                      //
+    mInitialResetLevel(ResetLevel::Internal),                                              // It's good to reset at least the card channel in general
+    mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)), // DG loopback mode by default
+    mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)),                // Use data generator by default
     mDmaPageSize(parameters.getDmaPageSize().get_value_or(Cru::DMA_PAGE_SIZE))
 {
 
@@ -119,11 +112,6 @@ CruDmaChannel::~CruDmaChannel()
 
 void CruDmaChannel::deviceStartDma()
 {
-  // Set data generator pattern
-  if (mGeneratorEnabled) {
-    getBar()->setDataGeneratorPattern(mGeneratorPattern, mGeneratorDataSize, mGeneratorDataSizeRandomEnabled);
-  }
-
   // Set data source
   uint32_t dataSourceSelection = 0x0;
   if (mGeneratorEnabled) {

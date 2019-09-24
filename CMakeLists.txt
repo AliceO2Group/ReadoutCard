@@ -89,7 +89,6 @@ find_package(PDA)
 ####################################
 
 add_library(ReadoutCard SHARED
-  #src/CardConfigurator.cxx
   src/CardType.cxx
   src/Factory/ChannelFactory.cxx
   src/DmaChannelBase.cxx
@@ -104,7 +103,6 @@ add_library(ReadoutCard SHARED
   src/ParameterTypes/DownstreamData.cxx
   src/ParameterTypes/GbtMode.cxx
   src/ParameterTypes/GbtMux.cxx
-  src/ParameterTypes/GeneratorPattern.cxx
   src/ParameterTypes/Hex.cxx
   src/ParameterTypes/LoopbackMode.cxx
   src/ParameterTypes/PciAddress.cxx

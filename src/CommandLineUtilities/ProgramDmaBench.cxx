@@ -184,9 +184,6 @@ class ProgramDmaBench : public Program
     options.add_options()("page-size",
                           SuffixOption<size_t>::make(&mOptions.dmaPageSize)->default_value("8Ki"),
                           "Card DMA page size");
-    options.add_options()("pattern",
-                          po::value<std::string>(&mOptions.generatorPatternString)->default_value("INCREMENTAL"),
-                          "Error check with given pattern [INCREMENTAL, ALTERNATING, CONSTANT, RANDOM]");
     options.add_options()("pause-push",
                           po::value<uint64_t>(&mOptions.pausePush)->default_value(1),
                           "Push thread pause time in microseconds if no work can be done");
@@ -258,11 +255,6 @@ class ProgramDmaBench : public Program
       }
     }
 
-    // Handle generator pattern option
-    if (!mOptions.generatorPatternString.empty()) {
-      mOptions.generatorPattern = GeneratorPattern::fromString(mOptions.generatorPatternString);
-    }
-
     // Log IOMMU status
     getLogger() << "IOMMU " << (AliceO2::Common::Iommu::isEnabled() ? "enabled" : "not enabled") << endm;
 
@@ -285,8 +277,6 @@ class ProgramDmaBench : public Program
     mPageSize = params.getDmaPageSize().get();
     params.setCardId(cardId);
     params.setChannelNumber(mOptions.dmaChannel);
-    params.setGeneratorDataSize(mPageSize);
-    params.setGeneratorPattern(mOptions.generatorPattern);
     params.setBufferParameters(buffer_parameters::Memory{ mMemoryMappedFile->getAddress(),
                                                           mMemoryMappedFile->getSize() });
     params.setLinkMask(Parameters::linkMaskFromString(mOptions.links));
@@ -323,13 +313,6 @@ class ProgramDmaBench : public Program
       }
       mMaxRdhPacketCounter = mOptions.maxRdhPacketCounter;
       getLogger() << "Maximum RDH packet counter" << mMaxRdhPacketCounter << endm;
-    }
-
-    if (mOptions.dataGeneratorSize != 0) {
-      params.setGeneratorDataSize(mOptions.dataGeneratorSize);
-      getLogger() << "Generator data size: " << mOptions.dataGeneratorSize << endm;
-    } else {
-      getLogger() << "Generator data size: <internal default>" << endm;
     }
 
     // Get DMA channel object
@@ -1113,10 +1096,8 @@ class ProgramDmaBench : public Program
     bool noResyncCounter = false;
     bool barHammer = false;
     bool noRemovePagesFile = false;
-    std::string generatorPatternString;
     std::string fileOutputPathBin;
     std::string fileOutputPathAscii;
-    GeneratorPattern::type generatorPattern = GeneratorPattern::Incremental;
     std::string links;
     bool generatorEnabled = false;
     bool bufferFullCheck = false;

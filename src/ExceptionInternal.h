@@ -29,7 +29,6 @@
 #include "ReadoutCard/ParameterTypes/PciAddress.h"
 #include "ReadoutCard/ParameterTypes/PciSequenceNumber.h"
 #include "ReadoutCard/ParameterTypes/ResetLevel.h"
-#include "ReadoutCard/ParameterTypes/GeneratorPattern.h"
 #include "ReadoutCard/ParameterTypes/LoopbackMode.h"
 
 namespace AliceO2
@@ -63,8 +62,6 @@ DEFINE_ERRINFO(FifoIndex, int);
 DEFINE_ERRINFO(FifoSize, size_t);
 DEFINE_ERRINFO(FileSize, size_t);
 DEFINE_ERRINFO(GeneratorEventLength, size_t);
-DEFINE_ERRINFO(GeneratorPattern, int);
-DEFINE_ERRINFO(GeneratorSeed, int);
 DEFINE_ERRINFO(Index, size_t);
 DEFINE_ERRINFO(LinkId, uint32_t);
 DEFINE_ERRINFO(LoopbackMode, ::AliceO2::roc::LoopbackMode::type);

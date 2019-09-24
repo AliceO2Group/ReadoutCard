@@ -21,7 +21,6 @@
 #include <boost/program_options.hpp>
 #include "ReadoutCard/Exception.h"
 #include "ReadoutCard/Parameters.h"
-#include "ReadoutCard/ParameterTypes/GeneratorPattern.h"
 #include "ReadoutCard/ParameterTypes/ResetLevel.h"
 
 namespace AliceO2
