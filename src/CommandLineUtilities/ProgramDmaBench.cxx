@@ -181,9 +181,6 @@ class ProgramDmaBench : public Program
     options.add_options()("no-temperature",
                           po::bool_switch(&mOptions.noTemperature),
                           "No temperature readout");
-    options.add_options()("page-reset",
-                          po::bool_switch(&mOptions.pageReset),
-                          "Reset page to default values after readout (slow)");
     options.add_options()("page-size",
                           SuffixOption<size_t>::make(&mOptions.dmaPageSize)->default_value("8Ki"),
                           "Card DMA page size");
@@ -694,11 +691,6 @@ class ProgramDmaBench : public Program
       }
     }
 
-    if (mOptions.pageReset) {
-      // Set the buffer to the default value after the readout
-      resetPage(pageAddress, pageSize);
-    }
-
     return pageSize;
   }
 
@@ -1130,7 +1122,6 @@ class ProgramDmaBench : public Program
     bool noErrorCheck = false;
     bool noTemperature = false;
     bool noDisplay = false;
-    bool pageReset = false;
     bool noResyncCounter = false;
     bool barHammer = false;
     bool noRemovePagesFile = false;
