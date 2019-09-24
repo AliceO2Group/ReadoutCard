@@ -153,7 +153,7 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
 
   /// Bus address of FIFO in DMA buffer
   uintptr_t mReadyFifoAddressBus;
-  
+
   /// Front index of the firmware FIFO (WRITE)
   int mFreeFifoFront = 0;
 

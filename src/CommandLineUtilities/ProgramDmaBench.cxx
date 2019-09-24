@@ -526,7 +526,7 @@ class ProgramDmaBench : public Program
 
             currentPagesCounted += pagesToCount;
 
-            if (superpage.isReady() && readoutQueue.write(SuperpageInfo{superpage.getOffset(), superpage.getReceived()})) {
+            if (superpage.isReady() && readoutQueue.write(SuperpageInfo{ superpage.getOffset(), superpage.getReceived() })) {
               // Move full superpage to readout queue
               currentPagesCounted = 0;
               mChannel->popSuperpage();
@@ -580,7 +580,7 @@ class ProgramDmaBench : public Program
             readoutBytes += pageSize;
           }
 
-          if (readoutBytes > mSuperpageSize && false) { //TODO: Might this check fail, if the page is not full? readoutBytes will go over the reported superpage size by the driver
+          if (readoutBytes > mSuperpageSize) {
             mDmaLoopBreak = true;
             BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("RDH reports cumulative dma page sizes that exceed the superpage size"));
           }
@@ -621,7 +621,7 @@ class ProgramDmaBench : public Program
       auto size = mChannel->getReadyQueueSize();
       for (int i = 0; i < size; ++i) {
         auto superpage = mChannel->popSuperpage();
-        if ((mLoopback == LoopbackMode::None) || (mLoopback == LoopbackMode::Ddg)) { // TODO: CRORC? -> Should be good for crorc
+        if ((mLoopback == LoopbackMode::None) || (mLoopback == LoopbackMode::Ddg)) {
           auto superpageAddress = mBufferBaseAddress + superpage.getOffset();
           size_t readoutBytes = 0;
           while ((readoutBytes < superpage.getReceived()) && !isSigInt()) { // At least one more dma page fits in the superpage
@@ -631,12 +631,11 @@ class ProgramDmaBench : public Program
             readoutBytes += pageSize;
           }
 
-          if (readoutBytes > mSuperpageSize && false) { //TODO: Might this check fail, if the page is not full? readoutBytes will go over the reported superpage size by the driver
+          if (readoutBytes > mSuperpageSize) {
             BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("RDH reports cumulative dma page sizes that exceed the superpage size"));
           }
         }
-        std::cout << "[popped superpage " << i << " ], size= " << superpage.getSize() << " received= " << superpage.getReceived() << " isFilled=" <<
-          superpage.isFilled() << " isReady=" << superpage.isReady() << std::endl;
+        std::cout << "[popped superpage " << i << " ], size= " << superpage.getSize() << " received= " << superpage.getReceived() << " isFilled=" << superpage.isFilled() << " isReady=" << superpage.isReady() << std::endl;
       }
       popped += size;
     }
@@ -895,7 +894,7 @@ class ProgramDmaBench : public Program
 
     // Skip the RDH
     auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress + DataFormat::getHeaderSize());
-    
+
     uint32_t offset = dataCounter;
 
     bool foundError = false;

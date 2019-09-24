@@ -344,11 +344,6 @@ void CrorcDmaChannel::pushSuperpage(Superpage superpage)
 {
   checkSuperpage(superpage);
 
-  if (superpage.getSize() != SUPERPAGE_SIZE) {
-    BOOST_THROW_EXCEPTION(CrorcException()
-                          << ErrorInfo::Message("Could not enqueue superpage, the C-RORC backend only supports superpage sizes of 1 MiB"));
-  }
-
   if (mTransferQueue.size() >= TRANSFER_QUEUE_CAPACITY) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not push superpage, transfer queue was full"));
   }
@@ -360,7 +355,7 @@ void CrorcDmaChannel::pushSuperpage(Superpage superpage)
 
   auto busAddress = getBusOffsetAddress(superpage.getOffset());
   pushFreeFifoPage(mFreeFifoFront, busAddress, superpage.getSize());
-  mFreeFifoSize++; // I might need a check here
+  mFreeFifoSize++;
   mFreeFifoFront = (mFreeFifoFront + 1) % MAX_SUPERPAGE_DESCRIPTORS;
 
   mTransferQueue.push_back(superpage);
