@@ -349,7 +349,7 @@ void programFlash(RegisterReadWriteInterface& channel, std::string dataFilePath,
   }
 }
 
-int Crorc::armDataGenerator(uint32_t initEventNumber, uint32_t initDataWord, GeneratorPattern::type dataPattern,
+int Crorc::armDataGenerator(int dataPattern, uint32_t initEventNumber, uint32_t initDataWord,
                             int dataSize, int seed)
 {
   int eventLen = dataSize / 4;

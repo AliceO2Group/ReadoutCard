@@ -46,13 +46,7 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
     mSTBRD(parameters.getStbrdEnabled().get_value_or(false)),                              //TODO: Set as a parameter
     mUseFeeAddress(false),                                                                 // Not sure
     mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)), // Internal loopback by default
-    mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)),                // Use data generator by default
-    mGeneratorPattern(parameters.getGeneratorPattern().get_value_or(GeneratorPattern::Incremental)),
-    mGeneratorMaximumEvents(0),                                                   // Infinite events
-    mGeneratorInitialValue(0),                                                    // Start from 0
-    mGeneratorInitialWord(0),                                                     // First word
-    mGeneratorSeed(mGeneratorPattern == GeneratorPattern::Random ? 1 : 0),        // We use a seed for random only
-    mGeneratorDataSize(parameters.getGeneratorDataSize().get_value_or(mPageSize)) // Can use page size
+    mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true))                 // Use data generator by default
 {
   // Check that the DMA page is valid
   if (mPageSize != DMA_PAGE_SIZE) {
@@ -286,8 +280,7 @@ void CrorcDmaChannel::armDdl(ResetLevel::type resetLevel)
 
 void CrorcDmaChannel::startDataGenerator()
 {
-  getCrorc().armDataGenerator(mGeneratorInitialValue, mGeneratorInitialWord, mGeneratorPattern, mGeneratorDataSize,
-                              mGeneratorSeed); //TODO: To be simplified
+  getCrorc().armDataGenerator(mPageSize); //TODO: To be simplified
 
   if (LoopbackMode::Internal == mLoopbackMode) {
     getCrorc().setLoopbackOn();
@@ -308,7 +301,7 @@ void CrorcDmaChannel::startDataGenerator()
     getCrorc().diuCommand(Ddl::RandCIFST);
   }
 
-  getCrorc().startDataGenerator(mGeneratorMaximumEvents);
+  getCrorc().startDataGenerator();
 }
 
 void CrorcDmaChannel::startDataReceiving()

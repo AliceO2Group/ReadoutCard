@@ -67,14 +67,11 @@ class CruBar final : public BarInterfaceBase
   void setDataEmulatorEnabled(bool enabled);
   void resetDataGeneratorCounter();
   void resetCard();
-  void setDataGeneratorPattern(GeneratorPattern::type pattern, size_t size, bool randomEnabled);
   void dataGeneratorInjectError();
   void setDataSource(uint32_t source);
   FirmwareFeatures getFirmwareFeatures();
 
   static FirmwareFeatures convertToFirmwareFeatures(uint32_t reg);
-
-  static void setDataGeneratorPatternBits(uint32_t& bits, GeneratorPattern::type pattern);
 
   static void setDataGeneratorSizeBits(uint32_t& bits, size_t size);
   static void setDataGeneratorEnableBits(uint32_t& bits, bool enabled);

@@ -148,19 +148,6 @@ void CruBar::resetCard()
   writeRegister(Cru::Registers::RESET_CONTROL.index, 0x1);
 }
 
-/// Sets the pattern for the card's internal data generator
-/// \param pattern Data generator pattern
-/// \param size Size in bytes
-/// \param randomEnabled Give true to enable random data size. In this case, the given size is the maximum size (?)
-void CruBar::setDataGeneratorPattern(GeneratorPattern::type pattern, size_t size, bool randomEnabled)
-{
-  uint32_t bits = readRegister(Cru::Registers::DATA_GENERATOR_CONTROL.index);
-  setDataGeneratorPatternBits(bits, pattern);
-  setDataGeneratorSizeBits(bits, size);
-  setDataGeneratorRandomSizeBits(bits, randomEnabled);
-  writeRegister(Cru::Registers::DATA_GENERATOR_CONTROL.index, bits);
-}
-
 /// Injects a single error into the generated data stream
 void CruBar::dataGeneratorInjectError()
 {
@@ -374,30 +361,6 @@ FirmwareFeatures CruBar::convertToFirmwareFeatures(uint32_t reg)
     features.chipId = true;
   }
   return features;
-}
-
-/// Sets the bits for the data generator pattern in the given integer
-/// \param bits Integer with bits to set
-/// \param pattern Pattern to set
-void CruBar::setDataGeneratorPatternBits(uint32_t& bits, GeneratorPattern::type pattern)
-{
-  switch (pattern) {
-    case GeneratorPattern::Incremental:
-      Utilities::setBit(bits, 1, true);
-      Utilities::setBit(bits, 2, false);
-      break;
-    case GeneratorPattern::Alternating:
-      Utilities::setBit(bits, 1, false);
-      Utilities::setBit(bits, 2, true);
-      break;
-    case GeneratorPattern::Constant:
-      Utilities::setBit(bits, 1, true);
-      Utilities::setBit(bits, 2, true);
-      break;
-    default:
-      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Unsupported generator pattern for CRU")
-                                        << ErrorInfo::GeneratorPattern(pattern));
-  }
 }
 
 /// Sets the bits for the data generator size in the given integer

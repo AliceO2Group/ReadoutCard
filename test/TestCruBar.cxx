@@ -71,15 +71,12 @@ BOOST_AUTO_TEST_CASE(TestDataGeneratorConfiguration)
     uint32_t bits = 0;
     CruBar::setDataGeneratorEnableBits(bits, true);
     BOOST_CHECK(bits == 0x1);
-    CruBar::setDataGeneratorPatternBits(bits, GeneratorPattern::Incremental);
-    BOOST_CHECK(bits == 0x3);
     CruBar::setDataGeneratorSizeBits(bits, 8 * 1024);
     BOOST_CHECK(bits == 0xff03);
   }
   {
     uint32_t bits = 0;
     CruBar::setDataGeneratorEnableBits(bits, true);
-    CruBar::setDataGeneratorPatternBits(bits, GeneratorPattern::Incremental);
     CruBar::setDataGeneratorSizeBits(bits, 32);
     BOOST_CHECK(bits == 0x0003);
   }
