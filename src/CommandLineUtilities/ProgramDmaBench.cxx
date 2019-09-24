@@ -650,7 +650,7 @@ class ProgramDmaBench : public Program
 
   size_t readoutPage(uintptr_t pageAddress, int64_t readoutCount)
   {
-    size_t pageSize = DataFormat::getOffset(reinterpret_cast<const char*>(pageAddress));
+    size_t pageSize = (mLoopback == LoopbackMode::Internal) ? mPageSize : DataFormat::getOffset(reinterpret_cast<const char*>(pageAddress));
 
     // Read out to file
     printToFile(pageAddress, pageSize, readoutCount);
@@ -660,7 +660,7 @@ class ProgramDmaBench : public Program
 
       // Get link ID if needed
       uint32_t linkId = 0; // Use 0 for non-CRU cards
-      if (mCardType == CardType::Cru) {
+      if (mCardType == CardType::Cru && mLoopback != LoopbackMode::Internal) {
         linkId = DataFormat::getLinkId(reinterpret_cast<const char*>(pageAddress));
         if (linkId >= mDataGeneratorCounters.size()) {
           BOOST_THROW_EXCEPTION(Exception()
@@ -716,15 +716,13 @@ class ProgramDmaBench : public Program
   bool checkErrorsCruInternal(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
   {
     // pcie internal pattern
-    // Every 256-bit word is built as follows:
-    // 32 bits counter + 32 bits counter + 32-bit counter + 32 bit counter
-    // 32 bits counter + 32 bits counter + 32-bit counter + 32 bit counter
+    // 32 bits counter + 32 bits (counter + 1) + ...
 
-    // Get dataCounter value only if page is valid...
+    // Get initial data counter value from page
     if (mDataGeneratorCounters[linkId] == DATA_COUNTER_INITIAL_VALUE) {
       auto dataCounter = getDataGeneratorCounterFromPage(pageAddress, 0x0); // no header!
       mErrorStream << b::format("resync dataCounter for e:%d l:%d cnt:%x\n") % eventNumber % linkId % dataCounter;
-      mDataGeneratorCounters[linkId] = dataCounter;
+      mDataGeneratorCounters[linkId] = dataCounter - 1; // -- so that the for loop offset incrementer logic is consistent
     }
 
     const uint32_t dataCounter = mDataGeneratorCounters[linkId];
@@ -741,22 +739,14 @@ class ProgramDmaBench : public Program
 
     // Check iterating through 256-bit words
     uint32_t offset = (dataCounter % (0x100000000)); // mod 0xffffffff + 1
-    uint32_t i = 0;
 
-    while ((i * 4) < pageSize) { //this is indexing, it has nothing to do with iterating step
-      uint32_t word32 = i;       // 32-bit word pointer
+    for (uint32_t i = 0; (i * 4) < pageSize; i++) { // iterate every 32bit word in the page
+      uint32_t word32 = i;                          // 32-bit word pointer
+      if (i % 8 == 0) {
+        offset = (offset + 1) % (0x100000000); //Increment dataCounter for every 8th wordth - mod 0xffffffff + 1
+      }
 
-      checkValue(word32 + 0, offset, payload[word32 + 0]); //32-bit counter
-      checkValue(word32 + 1, offset, payload[word32 + 1]); //32-bit counter
-      checkValue(word32 + 2, offset, payload[word32 + 2]); //32-bit counter
-      checkValue(word32 + 3, offset, payload[word32 + 3]); //32-bit counter
-      checkValue(word32 + 4, offset, payload[word32 + 4]); //32-bit counter
-      checkValue(word32 + 5, offset, payload[word32 + 5]); //32-bit counter
-      checkValue(word32 + 6, offset, payload[word32 + 6]); //32-bit counter
-      checkValue(word32 + 7, offset, payload[word32 + 7]); //32-bit counter
-
-      offset = (offset + 1) % (0x100000000); //Increase dataCounter by 1 - mod 0xffffffff + 1
-      i += 8;                                // 8 = expected 2*sizeof(uint32_t);
+      checkValue(word32, offset, payload[word32]);
     }
 
     mDataGeneratorCounters[linkId] = offset;
