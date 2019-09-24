@@ -303,7 +303,7 @@ void CruDmaChannel::transferSuperpageFromLinkToReady(Link& link)
   }
 
   link.queue.front().setReady(true);
-  link.queue.front().setReceived(link.queue.front().getSize());
+  link.queue.front().setReceived(link.queue.front().getSize()); //TODO: Update this with the effective superpage size when available
   mReadyQueue.push_back(link.queue.front());
   link.queue.pop_front();
   link.superpageCounter++;

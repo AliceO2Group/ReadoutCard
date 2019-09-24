@@ -21,6 +21,8 @@ namespace AliceO2
 namespace roc
 {
 
+static constexpr int MAX_SUPERPAGE_DESCRIPTORS = 128;
+
 namespace Rorc
 {
 constexpr int RCSR = 0;     ///< RORC Control and Status register

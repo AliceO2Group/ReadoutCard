@@ -76,7 +76,7 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
   static constexpr size_t DMA_PAGE_SIZE = 8 * 1024;
 
   /// Max amount of superpages in the transfer queue (i.e. pending transfer).
-  static constexpr size_t TRANSFER_QUEUE_CAPACITY = SUPERPAGE_SIZE / (READYFIFO_ENTRIES * DMA_PAGE_SIZE);
+  static constexpr size_t TRANSFER_QUEUE_CAPACITY = MAX_SUPERPAGE_DESCRIPTORS;
 
   /// Max amount of superpages in the ready queue (i.e. finished transfer).
   /// This is an arbitrary size, can easily be increased if more headroom is needed.
@@ -117,7 +117,7 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
   /// Pushes a page to the CRORC's Free FIFO
   /// \param readyFifoIndex Index of the Ready FIFO to write the page's transfer status to
   /// \param pageBusAddress Address on the bus to push the page to
-  void pushFreeFifoPage(int readyFifoIndex, uintptr_t pageBusAddress);
+  void pushFreeFifoPage(int readyFifoIndex, uintptr_t pageBusAddress, int pageSize);
 
   /// Check if data has arrived
   DataArrivalStatus::type dataArrived(int index);
@@ -154,7 +154,10 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
   /// Bus address of FIFO in DMA buffer
   uintptr_t mReadyFifoAddressBus;
 
-  /// Back index of the firmware FIFO
+  /// Front index of the firmware FIFO (WRITE)
+  int mFreeFifoFront = 0;
+
+  /// Back index of the firmware FIFO (READ)
   int mFreeFifoBack = 0;
 
   /// Amount of elements in the firmware FIFO

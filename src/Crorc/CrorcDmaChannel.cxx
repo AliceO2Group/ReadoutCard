@@ -138,6 +138,7 @@ void CrorcDmaChannel::deviceStartDma()
 
   log("DMA start deferred until enough superpages available");
 
+  mFreeFifoFront = 0;
   mFreeFifoBack = 0;
   mFreeFifoSize = 0;
   mReadyQueue.clear();
@@ -292,7 +293,7 @@ void CrorcDmaChannel::armDdl(ResetLevel::type resetLevel)
 void CrorcDmaChannel::startDataGenerator()
 {
   getCrorc().armDataGenerator(mGeneratorInitialValue, mGeneratorInitialWord, mGeneratorPattern, mGeneratorDataSize,
-                              mGeneratorSeed);
+                              mGeneratorSeed); //TODO: To be simplified
 
   if (LoopbackMode::Internal == mLoopbackMode) {
     getCrorc().setLoopbackOn();
@@ -343,26 +344,20 @@ void CrorcDmaChannel::pushSuperpage(Superpage superpage)
 {
   checkSuperpage(superpage);
 
-  if (superpage.getSize() != SUPERPAGE_SIZE) {
-    BOOST_THROW_EXCEPTION(CrorcException()
-                          << ErrorInfo::Message("Could not enqueue superpage, the C-RORC backend only supports superpage sizes of 1 MiB"));
-  }
-
   if (mTransferQueue.size() >= TRANSFER_QUEUE_CAPACITY) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not push superpage, transfer queue was full"));
   }
 
-  if (mFreeFifoSize >= READYFIFO_ENTRIES) {
+  if (mFreeFifoSize >= MAX_SUPERPAGE_DESCRIPTORS) {
     BOOST_THROW_EXCEPTION(Exception()
                           << ErrorInfo::Message("Could not push superpage, firmware queue was full (this should never happen)"));
   }
 
-  for (int i = 0; i < READYFIFO_ENTRIES; i++) { // *always* push 128 FIFO entries
-    auto busAddress = getBusOffsetAddress(superpage.getOffset() + i * mPageSize);
-    pushFreeFifoPage(i, busAddress);
-  }
-  mFreeFifoSize = READYFIFO_ENTRIES;
-  ;
+  auto busAddress = getBusOffsetAddress(superpage.getOffset());
+  pushFreeFifoPage(mFreeFifoFront, busAddress, superpage.getSize());
+  mFreeFifoSize++;
+  mFreeFifoFront = (mFreeFifoFront + 1) % MAX_SUPERPAGE_DESCRIPTORS;
+
   mTransferQueue.push_back(superpage);
 }
 
@@ -388,39 +383,26 @@ void CrorcDmaChannel::fillSuperpages()
   }
 
   // Check for arrivals & handle them
-  if (!mTransferQueue.empty()) {
+  if (!mTransferQueue.empty()) { // i.e. If something is pushed to the CRORC
     auto isArrived = [&](int descriptorIndex) { return dataArrived(descriptorIndex) == DataArrivalStatus::WholeArrived; };
     auto resetDescriptor = [&](int descriptorIndex) { getReadyFifoUser()->entries[descriptorIndex].reset(); };
+    auto getLength = [&](int descriptorIndex) { return getReadyFifoUser()->entries[descriptorIndex].length * 4; }; // length in 4B words
 
     while (mFreeFifoSize > 0) {
       if (isArrived(mFreeFifoBack)) {
-        uint32_t length = getReadyFifoUser()->entries[mFreeFifoBack].getSize();
-
-        // Write length of the DMA page in the RDH
-        auto writeRdhLength = [](uintptr_t dmaPageAddress, uint32_t length) {
-          auto writeTo = reinterpret_cast<volatile uint32_t*>(dmaPageAddress + sizeof(uint32_t) * 2); //writeTo the 3rd word
-          uint32_t shiftedLength = (length << 16) & 0xffff0000;
-          *writeTo |= shiftedLength; //Only the 16 MSBs
-        };
-
-        // Write the length of the DMA page in its RDH
-        if ((mLoopbackMode == LoopbackMode::None) && mRDYRX) { //Don't write the header for STBRD
-          auto superpage = mTransferQueue.front();
-          auto dmaPageAddress = mDmaBufferUserspace + superpage.getOffset() + mFreeFifoBack * mPageSize;
-          writeRdhLength(dmaPageAddress, length);
-        }
+        //size_t superpageFilled = SUPERPAGE_SIZE; // Get the length before updating our descriptor index
+        size_t superpageFilled = getLength(mFreeFifoBack); // Get the length before updating our descriptor index
         resetDescriptor(mFreeFifoBack);
 
         mFreeFifoSize--;
-        mFreeFifoBack = (mFreeFifoBack + 1) % READYFIFO_ENTRIES;
+        mFreeFifoBack = (mFreeFifoBack + 1) % MAX_SUPERPAGE_DESCRIPTORS;
 
-        if (mFreeFifoBack == 0) { // Push the superpage after all of the 128 fifo entries are pushed
-          auto superpage = mTransferQueue.front();
-          superpage.setReceived(mPageSize * READYFIFO_ENTRIES); // Always full Superpages
-          superpage.setReady(true);
-          mReadyQueue.push_back(superpage);
-          mTransferQueue.pop_front();
-        }
+        // Push Superpage
+        auto superpage = mTransferQueue.front();
+        superpage.setReceived(superpageFilled);
+        superpage.setReady(true);
+        mReadyQueue.push_back(superpage);
+        mTransferQueue.pop_front();
       } else {
         // If the back one hasn't arrived yet, the next ones will certainly not have arrived either...
         break;
@@ -449,9 +431,9 @@ int32_t CrorcDmaChannel::getDroppedPackets()
   return -1;
 }
 
-void CrorcDmaChannel::pushFreeFifoPage(int readyFifoIndex, uintptr_t pageBusAddress)
+void CrorcDmaChannel::pushFreeFifoPage(int readyFifoIndex, uintptr_t pageBusAddress, int pageSize)
 {
-  size_t pageWords = mPageSize / 4; // Size in 32-bit words
+  size_t pageWords = pageSize / 4; // Size in 32-bit words
   getCrorc().pushRxFreeFifo(pageBusAddress, pageWords, readyFifoIndex);
 }
 
