@@ -73,7 +73,6 @@ class CruBar final : public BarInterfaceBase
 
   static FirmwareFeatures convertToFirmwareFeatures(uint32_t reg);
 
-  static void setDataGeneratorSizeBits(uint32_t& bits, size_t size);
   static void setDataGeneratorEnableBits(uint32_t& bits, bool enabled);
   static void setDataGeneratorRandomSizeBits(uint32_t& bits, bool enabled);
 

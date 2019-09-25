@@ -153,9 +153,6 @@ class ProgramDmaBench : public Program
     options.add_options()("generator",
                           po::value<bool>(&mOptions.generatorEnabled)->default_value(true),
                           "Enable data generator");
-    options.add_options()("generator-size",
-                          SuffixOption<size_t>::make(&mOptions.dataGeneratorSize)->default_value("0"),
-                          "Data generator data size. 0 will use internal driver default.");
     Options::addOptionCardId(options);
     options.add_options()("links",
                           po::value<std::string>(&mOptions.links)->default_value("0"),
@@ -1101,7 +1098,6 @@ class ProgramDmaBench : public Program
     std::string links;
     bool generatorEnabled = false;
     bool bufferFullCheck = false;
-    size_t dataGeneratorSize;
     size_t dmaPageSize;
     std::string loopbackModeString;
     std::string timeLimitString;

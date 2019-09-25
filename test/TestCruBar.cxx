@@ -60,31 +60,4 @@ BOOST_AUTO_TEST_CASE(TestDataGeneratorConfiguration)
     CruBar::setDataGeneratorEnableBits(bits, false);
     BOOST_CHECK(bits == 0x0);
   }
-  {
-    uint32_t bits = 0;
-    CruBar::setDataGeneratorRandomSizeBits(bits, true);
-    BOOST_CHECK(bits == (1 << 16));
-    CruBar::setDataGeneratorRandomSizeBits(bits, false);
-    BOOST_CHECK(bits != (1 << 16));
-  }
-  {
-    uint32_t bits = 0;
-    CruBar::setDataGeneratorEnableBits(bits, true);
-    BOOST_CHECK(bits == 0x1);
-    CruBar::setDataGeneratorSizeBits(bits, 8 * 1024);
-    BOOST_CHECK(bits == 0xff03);
-  }
-  {
-    uint32_t bits = 0;
-    CruBar::setDataGeneratorEnableBits(bits, true);
-    CruBar::setDataGeneratorSizeBits(bits, 32);
-    BOOST_CHECK(bits == 0x0003);
-  }
-  {
-    uint32_t bits = 0;
-    // Too high value
-    BOOST_CHECK_THROW(CruBar::setDataGeneratorSizeBits(bits, 8 * 1024 + 1), std::exception);
-    // Not a multiple of 256 bits
-    BOOST_CHECK_THROW(CruBar::setDataGeneratorSizeBits(bits, 257), std::exception);
-  }
 }
