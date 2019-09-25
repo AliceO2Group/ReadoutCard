@@ -363,43 +363,12 @@ FirmwareFeatures CruBar::convertToFirmwareFeatures(uint32_t reg)
   return features;
 }
 
-/// Sets the bits for the data generator size in the given integer
-/// \param bits Integer with bits to set
-/// \param size Size to set
-void CruBar::setDataGeneratorSizeBits(uint32_t& bits, size_t size)
-{
-  if (!Utilities::isMultiple(size, 32ul)) {
-    BOOST_THROW_EXCEPTION(Exception()
-                          << ErrorInfo::Message("Unsupported generator data size for CRU; must be multiple of 32 bytes")
-                          << ErrorInfo::GeneratorEventLength(size));
-  }
-
-  if (size < 32 || size > Cru::DMA_PAGE_SIZE) {
-    BOOST_THROW_EXCEPTION(Exception()
-                          << ErrorInfo::Message("Unsupported generator data size for CRU; must be >= 32 bytes and <= 8 KiB")
-                          << ErrorInfo::GeneratorEventLength(size));
-  }
-
-  // We set the size in 256-bit (32 byte) words and do -1 because that's how it works.
-  uint32_t sizeValue = ((size / 32) - 1) << 8;
-  bits &= ~(uint32_t(0xff00));
-  bits += sizeValue;
-}
-
 /// Sets the bits for the data generator enabled in the given integer
 /// \param bits Integer with bits to set
 /// \param enabled Generator enabled or not
 void CruBar::setDataGeneratorEnableBits(uint32_t& bits, bool enabled)
 {
   Utilities::setBit(bits, 0, enabled);
-}
-
-/// Sets the bits for the data generator random size in the given integer
-/// \param bits Integer with bits to set
-/// \param enabled Random enabled or not
-void CruBar::setDataGeneratorRandomSizeBits(uint32_t& bits, bool enabled)
-{
-  Utilities::setBit(bits, 16, enabled);
 }
 
 /// Reports the CRU status
