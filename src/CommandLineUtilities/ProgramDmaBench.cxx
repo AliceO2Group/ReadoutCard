@@ -256,19 +256,18 @@ class ProgramDmaBench : public Program
     getLogger() << "IOMMU " << (AliceO2::Common::Iommu::isEnabled() ? "enabled" : "not enabled") << endm;
 
     // Create channel buffer
-    {
-      if (mBufferSize < mSuperpageSize) {
-        BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("Buffer size smaller than superpage size"));
-      }
 
-      std::string bufferName = (b::format("roc-bench-dma_id=%s_chan=%s_pages") % map["id"].as<std::string>() % mOptions.dmaChannel).str();
-
-      Utilities::HugepageType hugepageType;
-      mMemoryMappedFile = Utilities::tryMapFile(mBufferSize, bufferName, !mOptions.noRemovePagesFile, &hugepageType);
-
-      mBufferBaseAddress = reinterpret_cast<uintptr_t>(mMemoryMappedFile->getAddress());
-      getLogger() << "Using buffer file path: " << mMemoryMappedFile->getFileName() << endm;
+    if (mBufferSize < mSuperpageSize) {
+      BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("Buffer size smaller than superpage size"));
     }
+
+    std::string bufferName = (b::format("roc-bench-dma_id=%s_chan=%s_pages") % map["id"].as<std::string>() % mOptions.dmaChannel).str();
+
+    Utilities::HugepageType hugepageType;
+    mMemoryMappedFile = Utilities::tryMapFile(mBufferSize, bufferName, !mOptions.noRemovePagesFile, &hugepageType);
+
+    mBufferBaseAddress = reinterpret_cast<uintptr_t>(mMemoryMappedFile->getAddress());
+    getLogger() << "Using buffer file path: " << mMemoryMappedFile->getFileName() << endm;
 
     // Set up channel parameters
     mPageSize = params.getDmaPageSize().get();
@@ -279,20 +278,18 @@ class ProgramDmaBench : public Program
     params.setLinkMask(Parameters::linkMaskFromString(mOptions.links));
 
     mInfinitePages = (mOptions.maxBytes <= 0);
-    mMaxPages = mOptions.maxBytes / mPageSize;
+    mSuperpageLimit = mOptions.maxBytes / mSuperpageSize;
 
     if (!Utilities::isMultiple(mSuperpageSize, mPageSize)) {
       throw ParameterException() << ErrorInfo::Message("Superpage size not a multiple of page size");
     }
 
-    mMaxSuperpages = mBufferSize / mSuperpageSize;
-    mPagesPerSuperpage = mSuperpageSize / mPageSize;
+    mSuperpagesInBuffer = mBufferSize / mSuperpageSize;
     getLogger() << "Buffer size: " << mBufferSize << endm;
     getLogger() << "Superpage size: " << mSuperpageSize << endm;
-    getLogger() << "Superpages in buffer: " << mMaxSuperpages << endm;
-    getLogger() << "Page size: " << mPageSize << endm;
-    getLogger() << "Page limit: " << mMaxPages << endm;
-    getLogger() << "Pages per superpage: " << mPagesPerSuperpage << endm;
+    getLogger() << "Superpages in buffer: " << mSuperpagesInBuffer << endm;
+    getLogger() << "Superpage limit: " << mSuperpageLimit << endm;
+    getLogger() << "DMA page size: " << mPageSize << endm;
     if (mOptions.bufferFullCheck) {
       getLogger() << "Buffer-Full Check enabled" << endm;
       mBufferFullCheck = true;
@@ -358,8 +355,8 @@ class ProgramDmaBench : public Program
 
     std::cout << "\n\n";
     mChannel->stopDma();
-    int popped = freeExcessPages(10ms);
-    getLogger() << "Popped " << popped << " remaining superpages" << endm;
+    int numPopped = freeExcessPages(10ms);
+    getLogger() << "Popped " << numPopped << " remaining superpages" << endm;
 
     outputErrors();
     outputStats();
@@ -369,18 +366,18 @@ class ProgramDmaBench : public Program
  private:
   void dmaLoop()
   {
-    if (mMaxSuperpages < 1) {
+    if (mSuperpagesInBuffer < 1) {
       throw std::runtime_error("Buffer too small");
     }
 
     // Lock-free queues. Usable size is (size-1), so we add 1
     /// Queue for passing filled superpages from the push thread to the readout thread
-    folly::ProducerConsumerQueue<SuperpageInfo> readoutQueue{ static_cast<uint32_t>(mMaxSuperpages) + 1 };
+    folly::ProducerConsumerQueue<SuperpageInfo> readoutQueue{ static_cast<uint32_t>(mSuperpagesInBuffer) + 1 };
     /// Queue for free superpages. This starts out as full, then the readout thread consumes them. When superpages
     /// arrive, they are passed via the readoutQueue to the readout thread. When the readout thread is done with it,
     /// it is put back in the freeQueue.
-    folly::ProducerConsumerQueue<size_t> freeQueue{ static_cast<uint32_t>(mMaxSuperpages) + 1 };
-    for (size_t i = 0; i < mMaxSuperpages; ++i) {
+    folly::ProducerConsumerQueue<size_t> freeQueue{ static_cast<uint32_t>(mSuperpagesInBuffer) + 1 };
+    for (size_t i = 0; i < mSuperpagesInBuffer; ++i) {
       size_t offset = i * mSuperpageSize;
       if (!freeQueue.write(offset)) {
         BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Something went horribly wrong"));
@@ -404,14 +401,13 @@ class ProgramDmaBench : public Program
           }
 
           // If there's a time limit, check it
-          if (auto limit = mTimeLimitOptional) {
-            if (std::chrono::steady_clock::now() >= limit) {
-              mDmaLoopBreak = true;
-              return;
-            }
+          auto limit = mTimeLimitOptional;
+          if (limit && std::chrono::steady_clock::now() >= limit) {
+            mDmaLoopBreak = true;
+            return;
           }
 
-          if (mPushCount.load(std::memory_order_relaxed) != 0) {
+          if (mSuperpagesPushed.load(std::memory_order_relaxed) != 0) {
 
             // Start our run timer when DMA starts
             if (!mRunTimeStarted) {
@@ -439,11 +435,10 @@ class ProgramDmaBench : public Program
     auto pushFuture = std::async(std::launch::async, [&] {
       try {
         RandomPauses pauses;
-        int currentPagesCounted = 0;
 
         while (!isStopDma()) {
-          // Check if we need to stop in the case of a page limit
-          if (!mInfinitePages && mPushCount.load(std::memory_order_relaxed) >= mMaxPages && (currentPagesCounted == 0)) {
+          // Check if we need to stop in the case of a superpage limit
+          if (!mInfinitePages && mSuperpagesPushed.load(std::memory_order_relaxed) >= mSuperpageLimit) {
             break;
           }
           if (mOptions.randomPause) {
@@ -453,50 +448,38 @@ class ProgramDmaBench : public Program
           // Keep the driver's queue filled
           mChannel->fillSuperpages();
 
-          auto shouldRest = false;
+          bool shouldRest = true;
 
-          // Give free superpages to the driver
-          if (mChannel->getTransferQueueAvailable() != 0) {
-            while (mChannel->getTransferQueueAvailable() != 0) {
-              Superpage superpage;
-              size_t offsetRead;
-              if (freeQueue.read(offsetRead)) {
-                superpage.setSize(mSuperpageSize);
-                superpage.setOffset(offsetRead);
-                mChannel->pushSuperpage(superpage);
-              } else {
-                // No free pages available, so take a little break
-                shouldRest = true;
-                break;
-              }
+          while (mChannel->getTransferQueueAvailable() != 0) {
+            Superpage superpage;
+            size_t offsetRead;
+
+            if (freeQueue.read(offsetRead)) {
+              superpage.setSize(mSuperpageSize);
+              superpage.setOffset(offsetRead);
+              mChannel->pushSuperpage(superpage);
+            } else {
+              // freeQueue is backed up and we should rest
+              shouldRest = true;
+              break;
             }
-          } else {
-            // No transfer queue slots available on the card
-            shouldRest = true;
           }
 
           // Check for filled superpages
           while (mChannel->getReadyQueueSize() != 0) {
             auto superpage = mChannel->getSuperpage();
-            // We do partial updates of the mPushCount because we can have very large superpages, which would otherwise
-            // cause hiccups in the display
-            int pages = superpage.getReceived() / mPageSize;
-            int pagesToCount = pages - currentPagesCounted;
-            mPushCount.fetch_add(pagesToCount, std::memory_order_relaxed);
+            fetchAddSuperpagesPushed();
 
-            if (mBufferFullCheck && (mPushCount.load(std::memory_order_relaxed) == mMaxSuperpages * mPagesPerSuperpage)) {
+            if (mBufferFullCheck && (mSuperpagesPushed.load(std::memory_order_relaxed) == mSuperpageLimit)) {
               mBufferFullTimeFinish = std::chrono::high_resolution_clock::now();
               mDmaLoopBreak = true;
             }
 
-            currentPagesCounted += pagesToCount;
-
+            // Move full superpage to readout queue
             if (superpage.isReady() && readoutQueue.write(SuperpageInfo{ superpage.getOffset(), superpage.getReceived() })) {
-              // Move full superpage to readout queue
-              currentPagesCounted = 0;
               mChannel->popSuperpage();
             } else {
-              // Readout is backed up, so rest a while
+              // readyQueue(=readout) is backed up, so rest a while
               shouldRest = true;
               break;
             }
@@ -517,10 +500,11 @@ class ProgramDmaBench : public Program
       RandomPauses pauses;
 
       while (!isStopDma()) {
-        if (!mInfinitePages && mReadoutCount.load(std::memory_order_relaxed) >= mMaxPages) {
+        if (!mInfinitePages && mSuperpagesReadOut.load(std::memory_order_relaxed) >= mSuperpageLimit) {
           mDmaLoopBreak = true;
           break;
         }
+
         if (mOptions.randomPause) {
           pauses.pauseIfNeeded();
         }
@@ -532,11 +516,11 @@ class ProgramDmaBench : public Program
           size_t readoutBytes = 0;
           auto superpageAddress = mBufferBaseAddress + superpageInfo.bufferOffset;
 
-          //std::cout << superpageInfo.effectiveSize << std::endl;
+          fetchAddSuperpagesReadOut();
 
           while ((readoutBytes < superpageInfo.effectiveSize) && !isStopDma()) {
             auto pageAddress = superpageAddress + readoutBytes;
-            auto readoutCount = fetchAddReadoutCount();
+            auto readoutCount = fetchAddDmaPagesReadOut();
             size_t pageSize = readoutPage(pageAddress, readoutCount);
 
             if (mOptions.byteCountEnabled && !(mOptions.loopbackModeString == "INTERNAL")) {
@@ -570,13 +554,6 @@ class ProgramDmaBench : public Program
     lowPriorityFuture.get();
   }
 
-  /// Atomically fetch and increment the readout count. We do this because it is accessed by multiple threads.
-  /// Although there is currently only one writer at a time and a regular increment probably would be OK.
-  uint64_t fetchAddReadoutCount()
-  {
-    return mReadoutCount.fetch_add(1, std::memory_order_relaxed);
-  }
-
   /// Free the pages that remain after stopping DMA (these may not be filled)
   int freeExcessPages(std::chrono::milliseconds timeout)
   {
@@ -586,12 +563,13 @@ class ProgramDmaBench : public Program
       auto size = mChannel->getReadyQueueSize();
       for (int i = 0; i < size; ++i) {
         auto superpage = mChannel->popSuperpage();
+        fetchAddSuperpagesReadOut();
         if ((mLoopback == LoopbackMode::None) || (mLoopback == LoopbackMode::Ddg)) {
           auto superpageAddress = mBufferBaseAddress + superpage.getOffset();
           size_t readoutBytes = 0;
           while ((readoutBytes < superpage.getReceived()) && !isSigInt()) { // At least one more dma page fits in the superpage
             auto pageAddress = superpageAddress + readoutBytes;
-            auto readoutCount = fetchAddReadoutCount();
+            auto readoutCount = fetchAddDmaPagesReadOut();
             size_t pageSize = readoutPage(pageAddress, readoutCount);
             readoutBytes += pageSize;
           }
@@ -866,15 +844,6 @@ class ProgramDmaBench : public Program
     return foundError;
   }
 
-  void resetPage(uintptr_t pageAddress, size_t pageSize) //TODO: Is this still relevant?
-  {
-    auto page = reinterpret_cast<volatile uint32_t*>(pageAddress);
-    auto pageSize32 = pageSize / sizeof(uint32_t);
-    for (size_t i = 0; i < pageSize32; i++) {
-      page[i] = BUFFER_DEFAULT_VALUE;
-    }
-  }
-
   void updateStatusDisplay()
   {
     if (!mHeaderPrinted) {
@@ -890,11 +859,11 @@ class ProgramDmaBench : public Program
 
     auto format = b::format(PROGRESS_FORMAT);
     format % hour % minute % second; // Time
-    format % (mPushCount.load(std::memory_order_relaxed) / mPagesPerSuperpage);
-    format % (mReadoutCount.load(std::memory_order_relaxed) / mPagesPerSuperpage);
+    format % mSuperpagesPushed.load(std::memory_order_relaxed);
+    format % mSuperpagesReadOut.load(std::memory_order_relaxed);
 
     double runTime = std::chrono::duration<double>(steady_clock::now() - mRunTime.start).count();
-    double bytes = mOptions.byteCountEnabled ? double(mByteCount.load(std::memory_order_relaxed)) : double(mReadoutCount.load(std::memory_order_relaxed)) * mPageSize;
+    double bytes = mOptions.byteCountEnabled ? double(mByteCount.load(std::memory_order_relaxed)) : double(mSuperpagesReadOut.load(std::memory_order_relaxed)) * mSuperpageSize;
     double Gb = bytes * 8 / (1000 * 1000 * 1000);
     double Gbps = Gb / runTime;
     format % Gbps;
@@ -941,7 +910,7 @@ class ProgramDmaBench : public Program
   {
     // Calculating throughput
     double runTime = std::chrono::duration<double>(mRunTime.end - mRunTime.start).count();
-    double bytes = mOptions.byteCountEnabled ? double(mByteCount.load()) : double(mReadoutCount.load()) * mPageSize;
+    double bytes = mOptions.byteCountEnabled ? double(mByteCount.load()) : double(mSuperpagesReadOut.load() * mSuperpageSize);
     double GB = bytes / (1000 * 1000 * 1000);
     double GBs = GB / runTime;
     double GiB = bytes / (1024 * 1024 * 1024);
@@ -951,10 +920,10 @@ class ProgramDmaBench : public Program
     auto put = [&](auto label, auto value) { cout << b::format("  %-24s  %-10s\n") % label % value; };
     cout << '\n';
     put("Seconds", runTime);
-    put("Superpages", mReadoutCount.load() / mPagesPerSuperpage);
-    put("Superpage Latency(s)", runTime / (mReadoutCount.load() / mPagesPerSuperpage));
-    put("DMA Pages", mReadoutCount.load());
-    put("DMA Page Latency(s)", runTime / mReadoutCount.load());
+    put("Superpages", mSuperpagesReadOut.load());
+    put("Superpage Latency(s)", runTime / mSuperpagesReadOut.load());
+    put("DMA Pages", mDmaPagesReadOut.load());
+    put("DMA Page Latency(s)", runTime / mDmaPagesReadOut.load());
     if (bytes > 0.00001) {
       put("Bytes", bytes);
       put("GB", GB);
@@ -1056,6 +1025,24 @@ class ProgramDmaBench : public Program
     return limit;
   }
 
+  /// Atomically fetch and increment the Superpage and DMA page read out and pushed counts.
+  /// We do this because they are accessed by multiple threads.
+  /// Although there is currently only one writer at a time and a regular increment probably would be OK.
+  uint64_t fetchAddDmaPagesReadOut()
+  {
+    return mDmaPagesReadOut.fetch_add(1, std::memory_order_relaxed);
+  }
+
+  uint64_t fetchAddSuperpagesReadOut()
+  {
+    return mSuperpagesReadOut.fetch_add(1, std::memory_order_relaxed);
+  }
+
+  uint64_t fetchAddSuperpagesPushed()
+  {
+    return mSuperpagesPushed.fetch_add(1, std::memory_order_relaxed);
+  }
+
   struct RandomPauses {
     static constexpr int NEXT_PAUSE_MIN = 10;    ///< Minimum random pause interval in milliseconds
     static constexpr int NEXT_PAUSE_MAX = 2000;  ///< Maximum random pause interval in milliseconds
@@ -1123,12 +1110,19 @@ class ProgramDmaBench : public Program
   // Event counter per link
   std::array<std::atomic<uint32_t>, MAX_LINKS> mEventCounters;
 
-  // Keep these as DMA page counters for better granularity
+  // Superpage counters
+  /// Amount of Superpages pushed
+  std::atomic<uint64_t> mSuperpagesPushed{ 0 };
+
+  // Amount of Superpages read out
+  std::atomic<uint64_t> mSuperpagesReadOut{ 0 };
+
+  // DMA page counters for better granularity
   /// Amount of DMA pages pushed
-  std::atomic<uint64_t> mPushCount{ 0 };
+  //std::atomic<uint64_t> mDmaPagesPushed{ 0 };
 
   // Amount of DMA pages read out
-  std::atomic<uint64_t> mReadoutCount{ 0 };
+  std::atomic<uint64_t> mDmaPagesReadOut{ 0 };
 
   // Amount of bytes read out (as reported in the RDH)
   std::atomic<uint64_t> mByteCount{ 0 };
@@ -1142,17 +1136,14 @@ class ProgramDmaBench : public Program
   /// Size of superpages
   size_t mSuperpageSize = 0;
 
-  /// Maximum amount of superpages
-  size_t mMaxSuperpages = 0;
+  /// Maximum amount of superpages to exchange
+  size_t mSuperpageLimit = 0;
 
-  /// Amount of DMA pages per superpage
-  size_t mPagesPerSuperpage = 0;
+  /// Maximum amount of superpages in buffer
+  size_t mSuperpagesInBuffer = 0;
 
   /// Maximum size of pages
   size_t mPageSize;
-
-  /// Maximum amount of pages to transfer
-  size_t mMaxPages;
 
   /// The size of the channel DMA buffer
   size_t mBufferSize;
