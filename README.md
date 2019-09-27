@@ -405,10 +405,12 @@ Dependencies
 
 In order to use a CRU the package versions have to adhere to the following table.
 
-| ReadoutCard | PDA Driver | PDA Library  | CRU firmware |
-| ----------- | ---------- | ------------ | ------------ |
-| v0.10.*     | v1.0.3+    | v12.0.0      | v3.0.0/v3.1.0|
-| v0.11.*     | v1.0.4+    | v12.0.0      | v3.0.0/v3.1.0|
+| ReadoutCard | CRU firmware  | CRORC firmware | PDA Driver  | PDA Library  |
+| ----------- | ------------- | -------------- | ----------- | ------------ |
+| v0.10.*     | v3.0.0/v3.1.0 | -              | v1.0.3+     | v12.0.0      |
+| v0.11.*     | v3.0.0/v3.1.0 | -              | v1.0.4+     | v12.0.0      | 
+| v0.12.*     | v3.2.0+       | -              | v1.0.4+     | v12.0.0      | 
+| v0.13.*     | v3.2.0+       | release TBA    | v1.0.4+     | v12.0.0      | 
 
 The _PDA Driver_ entry refers to the `pda-kadapter-dkms-*.rpm` package which is availabe through the [o2-daq-yum](http://alice-daq-yum-o2.web.cern.ch/alice-daq-yum-o2/cc7_64/) repo as an RPM.
 
