@@ -17,6 +17,7 @@
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
 #include "Cru/CruBar.h"
+#include "FirmwareChecker.h"
 #include "ReadoutCard/CardConfigurator.h"
 #include "ReadoutCard/ChannelFactory.h"
 #include "ReadoutCard/Exception.h"
@@ -101,6 +102,7 @@ class ProgramConfig : public Program
         std::cout << " __== " << card.pciAddress.toString() << " ==__ " << std::endl;
         auto params = Parameters::makeParameters(card.pciAddress, 2);
         try {
+          checkFirmwareCompatibility(params);
           CardConfigurator(card.pciAddress, mOptions.configFile, mOptions.forceConfig);
         } catch (const Exception& e) {
           std::cout << boost::diagnostic_information(e) << std::endl;
@@ -111,6 +113,12 @@ class ProgramConfig : public Program
 
     // Configure specific card
     auto cardId = Options::getOptionCardId(map);
+    try {
+      checkFirmwareCompatibility(cardId);
+    } catch (const Exception& e) {
+      std::cout << boost::diagnostic_information(e) << std::endl;
+      return;
+    }
 
     if (mOptions.configFile == "") {
       std::cout << "Configuring with command line arguments" << std::endl;
