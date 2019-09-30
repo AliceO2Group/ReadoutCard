@@ -40,11 +40,11 @@ class I2c
   void configurePll();
   uint32_t getSelectedClock();
   void getOpticalPower(std::map<int, Link>& linkMap);
+  uint32_t readI2c(uint32_t address);
 
  private:
   //std::map<uint32_t, uint32_t> readRegisterMap(std::string file);
   void writeI2c(uint32_t address, uint32_t data);
-  uint32_t readI2c(uint32_t address);
   void waitForI2cReady();
   std::vector<uint32_t> getChipAddresses();
 

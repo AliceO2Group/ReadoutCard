@@ -67,6 +67,7 @@ roc_regs = {
 'add_flowctrl_ctrlreg':'FLOW_CONTROL_REGISTER',
 'add_gbt_wrapper_atx_pll':'GBT_WRAPPER_ATX_PLL',
 'add_gbt_bank_fpll':'GBT_BANK_FPLL',
+'add_bsp_i2c_eeprom':"BSP_I2C_EEPROM",
 'add_bsp_i2c_minipods':"BSP_I2C_MINIPODS",
 'add_bsp_i2c_si5345_1':'SI5345_1',
 'add_bsp_i2c_si5345_2':'SI5345_2',

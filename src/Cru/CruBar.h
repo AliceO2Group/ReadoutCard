@@ -88,7 +88,7 @@ class CruBar final : public BarInterfaceBase
   bool getDebugModeEnabled();
 
  private:
-  uint32_t getSerialNumber();
+  boost::optional<int32_t> getSerialNumber();
   uint32_t getTemperatureRaw();
   boost::optional<float> convertTemperatureRaw(uint32_t registerValue);
   boost::optional<float> getTemperatureCelsius();
