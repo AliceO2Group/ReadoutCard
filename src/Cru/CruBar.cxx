@@ -21,6 +21,7 @@
 #include <map>
 #include <thread>
 #include "CruBar.h"
+#include "Eeprom.h"
 #include "Gbt.h"
 #include "I2c.h"
 #include "Ttc.h"
@@ -220,14 +221,11 @@ int32_t CruBar::getLinksPerWrapper(int wrapper)
 /// Gets the serial number from the card.
 /// Note that not all firmwares have a serial number. You should make sure this firmware feature is enabled before
 /// calling this function, or the card may crash. See parseFirmwareFeatures().
-uint32_t CruBar::getSerialNumber()
+boost::optional<int32_t> CruBar::getSerialNumber()
 {
   assertBarIndex(2, "Can only get serial number from BAR 2");
-  auto serial = readRegister(Cru::Registers::SERIAL_NUMBER.index);
-  if (serial == 0xFfffFfff) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("CRU reported invalid serial number 0xffffffff, "
-                                                            "a fatal error may have occurred"));
-  }
+  Eeprom eeprom = Eeprom(mPdaBar);
+  boost::optional<int32_t> serial = eeprom.getSerial();
   return serial;
 }
 
