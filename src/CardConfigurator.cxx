@@ -30,7 +30,7 @@ CardConfigurator::CardConfigurator(Parameters::CardIdType cardId, std::string pa
       bar2->reconfigure();
     }
   } catch (const Exception& e) {
-    throw std::runtime_error(boost::diagnostic_information(e));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(boost::diagnostic_information(e)));
   }
 }
 
@@ -44,7 +44,7 @@ CardConfigurator::CardConfigurator(Parameters& parameters, bool forceConfigure)
       bar2->reconfigure();
     }
   } catch (const Exception& e) {
-    throw std::runtime_error(boost::diagnostic_information(e));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(boost::diagnostic_information(e)));
   }
 }
 

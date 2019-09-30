@@ -22,7 +22,7 @@ namespace AliceO2
 namespace roc
 {
 
-inline std::unordered_map<std::string, std::string> compatibleFirmwareList({ { "20190909-xxxxxx-3f5e11b3", "CRU v3.3.0" },
+inline std::unordered_map<std::string, std::string> compatibleFirmwareList({ { "20190911-150139-3f5e11b3", "CRU v3.3.0" },
                                                                              { "20190718-120712-4c8e6c48", "CRU v3.2.0" },
                                                                              { "0.0:2000-0-0", "CRORC alpha" } });
 

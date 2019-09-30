@@ -166,6 +166,9 @@ static constexpr Register BSP_USER_CONTROL(0x00000018);
 /// Register to access I2C minipod information
 static constexpr Register BSP_I2C_MINIPODS(0x00030300);
 
+/// Register to access the EEPROM flash
+static constexpr Register BSP_I2C_EEPROM(0x00030800);
+
 //** TTC **//
 /// Register for setting the Clock
 static constexpr Register CLOCK_CONTROL(0x00240010);

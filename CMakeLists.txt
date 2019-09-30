@@ -127,6 +127,7 @@ if(PDA_FOUND)
     src/Cru/CruDmaChannel.cxx
     src/Cru/CruBar.cxx
     src/Cru/DatapathWrapper.cxx
+    src/Cru/Eeprom.cxx
     src/Cru/Gbt.cxx
     src/Cru/I2c.cxx
     src/Cru/Ttc.cxx

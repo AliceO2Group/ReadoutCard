@@ -84,14 +84,14 @@ void Gbt::getGbtModes()
   for (auto& el : mLinkMap) {
     auto& link = el.second;
     uint32_t rxControl = mPdaBar->readRegister(getRxControlAddress(link) / 4);
-    if (((rxControl >> 8) & 0x1) == Cru::GBT_MODE_WB) { //TODO: Change with Constants
+    if (((rxControl >> 8) & 0x1) == Cru::GBT_MODE_WB) {
       link.gbtRxMode = GbtMode::type::Wb;
     } else {
       link.gbtRxMode = GbtMode::type::Gbt;
     }
 
     uint32_t txControl = mPdaBar->readRegister(getTxControlAddress(link) / 4);
-    if (((txControl >> 8) & 0x1) == Cru::GBT_MODE_WB) { //TODO: Change with Constants
+    if (((txControl >> 8) & 0x1) == Cru::GBT_MODE_WB) {
       link.gbtTxMode = GbtMode::type::Wb;
     } else {
       link.gbtTxMode = GbtMode::type::Gbt;
