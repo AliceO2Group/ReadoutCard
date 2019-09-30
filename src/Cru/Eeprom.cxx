@@ -35,7 +35,7 @@ std::string Eeprom::readContent()
   i2c.resetI2c();
 
   std::string content;
-  for (int i = 0; i < 1000/8; i++) { // EEPROM size is 1KB
+  for (int i = 0; i < 1000 / 8; i++) { // EEPROM size is 1KB
     uint32_t res = i2c.readI2c(i);
     content += (char)res;
     if ((char)res == '}') {

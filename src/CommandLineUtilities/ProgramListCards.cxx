@@ -48,9 +48,9 @@ class ProgramListCards : public Program
 
     std::ostringstream table;
 
-    auto formatHeader = "  %-3s %-6s %-10s %-13s %-11s %-11s %-5s %-8s %-25s %-17s\n";
-    auto formatRow = "  %-3s %-6s %-10s %-13s 0x%-9s 0x%-9s %-5s %-8s %-25s %-17s\n";
-    auto header = (boost::format(formatHeader) % "#" % "Type" % "PCI Addr" % "Endpoint ID" % "Vendor ID" % "Device ID" % "NUMA" % "Serial" % "FW Version" % "Card ID").str();
+    auto formatHeader = "  %-3s %-6s %-10s %-8s %-13s %-5s %-11s %-11s %-25s %-17s\n";
+    auto formatRow = "  %-3s %-6s %-10s %-8s %-13s %-5s 0x%-9s 0x%-9s %-25s %-17s\n";
+    auto header = (boost::format(formatHeader) % "#" % "Type" % "PCI Addr" % "Serial" % "Endpoint ID" % "NUMA" % "Vendor ID" % "Device ID" % "FW Version" % "Card ID").str();
     auto lineFat = std::string(header.length(), '=') + '\n';
     auto lineThin = std::string(header.length(), '-') + '\n';
 
@@ -78,15 +78,16 @@ class ProgramListCards : public Program
         }
       }
 
-      auto format = boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciAddress.toString() % endpointNumber % card.pciId.vendor % card.pciId.device % card.numaNode;
-
-      if (auto serial = card.serialNumber) {
-        format % serial.get();
+      std::string serial;
+      boost::optional<int32_t> serialCheck = card.serialNumber;
+      if (serialCheck) {
+        serial = std::to_string(serialCheck.get());
       } else {
-        format % "n/a";
+        serial = "n/a";
       }
 
-      format % firmware % cardId;
+      auto format = boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciAddress.toString() % serial % endpointNumber % card.numaNode % card.pciId.vendor % card.pciId.device %
+                    firmware % cardId;
 
       table << format;
       i++;
