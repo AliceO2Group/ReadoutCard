@@ -198,7 +198,7 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
   const LoopbackMode::type mLoopbackMode;
 
   /// Enables the data generator
-  const bool mGeneratorEnabled;
+  bool mGeneratorEnabled;
 
   Crorc::Crorc::DiuConfig mDiuConfig;
 };

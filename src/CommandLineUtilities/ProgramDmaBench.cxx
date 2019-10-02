@@ -150,9 +150,6 @@ class ProgramDmaBench : public Program
     options.add_options()("fast-check",
                           po::bool_switch(&mOptions.fastCheckEnabled),
                           "Enable fast error checking");
-    options.add_options()("generator",
-                          po::value<bool>(&mOptions.generatorEnabled)->default_value(true),
-                          "Enable data generator");
     Options::addOptionCardId(options);
     options.add_options()("links",
                           po::value<std::string>(&mOptions.links)->default_value("0"),
@@ -227,13 +224,9 @@ class ProgramDmaBench : public Program
     auto cardId = Options::getOptionCardId(map);
     auto params = Parameters::makeParameters(cardId, mOptions.dmaChannel);
     params.setDmaPageSize(mOptions.dmaPageSize);
-    params.setGeneratorEnabled(mOptions.generatorEnabled);
-    if (!mOptions.generatorEnabled) { // if generator is not enabled, force loopbackMode=NONE
-      params.setGeneratorLoopback(LoopbackMode::None);
-    } else {
-      params.setGeneratorLoopback(LoopbackMode::fromString(mOptions.loopbackModeString));
-    }
-    mLoopback = params.getGeneratorLoopback().get_value_or(LoopbackMode::None);
+    params.setGeneratorLoopback(LoopbackMode::fromString(mOptions.loopbackModeString));
+
+    mLoopback = params.getGeneratorLoopbackRequired();
 
     params.setStbrdEnabled(mOptions.stbrd); //Set STBRD for the CRORC
 
@@ -1083,7 +1076,6 @@ class ProgramDmaBench : public Program
     std::string fileOutputPathBin;
     std::string fileOutputPathAscii;
     std::string links;
-    bool generatorEnabled = false;
     bool bufferFullCheck = false;
     size_t dmaPageSize;
     std::string loopbackModeString;

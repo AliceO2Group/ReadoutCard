@@ -32,7 +32,6 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
   : DmaChannelPdaBase(parameters, allowedChannels()),                                      //
     mInitialResetLevel(ResetLevel::Internal),                                              // It's good to reset at least the card channel in general
     mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)), // DG loopback mode by default
-    mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true)),                // Use data generator by default
     mDmaPageSize(parameters.getDmaPageSize().get_value_or(Cru::DMA_PAGE_SIZE))
 {
 
@@ -86,10 +85,6 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
     }
     log(stream.str());
   }
-
-  std::stringstream stream;
-  stream << "Generator enabled: " << mGeneratorEnabled << " | Loopback mode: " << LoopbackMode::toString(mLoopbackMode);
-  log(stream.str());
 }
 
 auto CruDmaChannel::allowedChannels() -> AllowedChannels
@@ -114,23 +109,12 @@ void CruDmaChannel::deviceStartDma()
 {
   // Set data source
   uint32_t dataSourceSelection = 0x0;
-  if (mGeneratorEnabled) {
-    if (mLoopbackMode == LoopbackMode::Internal) {
-      enableDebugMode();
-      dataSourceSelection = Cru::Registers::DATA_SOURCE_SELECT_INTERNAL;
-    } else if (mLoopbackMode == LoopbackMode::Ddg) {
-      dataSourceSelection = Cru::Registers::DATA_SOURCE_SELECT_GBT;
-    } else {
-      BOOST_THROW_EXCEPTION(CruException()
-                            << ErrorInfo::Message("CRU only support 'Internal' or 'Ddg' for data generator"));
-    }
-  } else {
-    if (mLoopbackMode == LoopbackMode::None) {
-      dataSourceSelection = Cru::Registers::DATA_SOURCE_SELECT_GBT;
-    } else {
-      BOOST_THROW_EXCEPTION(CruException()
-                            << ErrorInfo::Message("CRU only supports 'None' loopback mode when operating without a data generator"));
-    }
+
+  if (mLoopbackMode == LoopbackMode::Internal) {
+    enableDebugMode();
+    dataSourceSelection = Cru::Registers::DATA_SOURCE_SELECT_INTERNAL;
+  } else { // loopback mode == NONE or DDG
+    dataSourceSelection = Cru::Registers::DATA_SOURCE_SELECT_GBT;
   }
 
   if (mFeatures.dataSelection) {
@@ -362,7 +346,7 @@ int32_t CruDmaChannel::getDroppedPackets()
 
 bool CruDmaChannel::injectError()
 {
-  if (mGeneratorEnabled) {
+  if (!mLoopbackMode == LoopbackMode::None) {
     getBar()->dataGeneratorInjectError();
     return true;
   } else {

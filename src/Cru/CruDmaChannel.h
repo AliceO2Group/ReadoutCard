@@ -149,9 +149,6 @@ class CruDmaChannel final : public DmaChannelPdaBase
   /// Gives the type of loopback
   const LoopbackMode::type mLoopbackMode;
 
-  /// Enables the data generator
-  const bool mGeneratorEnabled;
-
   /// Flag to know if we should reset the debug register after we fiddle with it
   bool mDebugRegisterReset = false;
 
