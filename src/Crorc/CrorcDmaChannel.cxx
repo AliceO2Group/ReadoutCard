@@ -40,13 +40,12 @@ namespace roc
 {
 
 CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
-  : DmaChannelPdaBase(parameters, allowedChannels()),                                      //
-    mPageSize(parameters.getDmaPageSize().get_value_or(DMA_PAGE_SIZE)),                    // 8 kB default for uniformity with CRU
-    mInitialResetLevel(ResetLevel::Internal),                                              // It's good to reset at least the card channel in general
-    mSTBRD(parameters.getStbrdEnabled().get_value_or(false)),                              //TODO: Set as a parameter
-    mUseFeeAddress(false),                                                                 // Not sure
-    mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)), // Internal loopback by default
-    mGeneratorEnabled(parameters.getGeneratorEnabled().get_value_or(true))                 // Use data generator by default
+  : DmaChannelPdaBase(parameters, allowedChannels()),                                     //
+    mPageSize(parameters.getDmaPageSize().get_value_or(DMA_PAGE_SIZE)),                   // 8 kB default for uniformity with CRU
+    mInitialResetLevel(ResetLevel::Internal),                                             // It's good to reset at least the card channel in general
+    mSTBRD(parameters.getStbrdEnabled().get_value_or(false)),                             //TODO: Set as a parameter
+    mUseFeeAddress(false),                                                                // Not sure
+    mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)) // Internal loopback by default
 {
   // Check that the DMA page is valid
   if (mPageSize != DMA_PAGE_SIZE) {
@@ -59,6 +58,8 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
     BOOST_THROW_EXCEPTION(CruException() << ErrorInfo::Message("CRORC does not support given loopback mode")
                                          << ErrorInfo::LoopbackMode(mLoopbackMode));
   }
+
+  mGeneratorEnabled = (mLoopbackMode == LoopbackMode::None) ? false : true;
 
   // Set mRDYRX if generator is disabled and mSTBRD is false
   if (!mGeneratorEnabled) {

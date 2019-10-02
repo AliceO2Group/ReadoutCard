@@ -73,17 +73,8 @@ class Parameters
   /// Type for the DMA page size parameter
   using DmaPageSizeType = size_t;
 
-  /// Type for the generator enabled parameter
-  using GeneratorEnabledType = bool;
-
-  /// Type for the generator data size parameter
-  using GeneratorDataSizeType = size_t;
-
   /// Type for the LoopbackMode parameter
   using GeneratorLoopbackType = LoopbackMode::type;
-
-  /// Type for the generator data size parameter
-  using GeneratorRandomSizeEnabledType = bool;
 
   /// Type for the link mask parameter
   using LinkMaskType = std::set<uint32_t>;
@@ -164,16 +155,6 @@ class Parameters
   /// \return Reference to this object for chaining calls
   auto setDmaPageSize(DmaPageSizeType value) -> Parameters&;
 
-  /// Sets the GeneratorEnabled parameter
-  ///
-  /// If enabled, the card will generate data internally.
-  /// The format and content of this data is controlled by the other generator parameters.
-  /// 'None' loopback mode is not allowed in conjunction with the data generator (see setGeneratorLoopback()).
-  ///
-  /// \param value The value to set
-  /// \return Reference to this object for chaining calls
-  auto setGeneratorEnabled(GeneratorEnabledType value) -> Parameters&;
-
   /// Sets the LinkLoopbackEnabled parameter
   ///
   /// If enabled the link is on loopback mode  enabling the use of the DDG.
@@ -196,20 +177,6 @@ class Parameters
   /// \return Reference to this object for chaining calls
   auto setOnuAddress(OnuAddressType value) -> Parameters&;
 
-  /// Sets the GeneratorDataSize parameter
-  ///
-  /// It controls the size in bytes of the generated data per DMA page.
-  ///
-  /// Supported values:
-  /// * C-RORC: multiples of 4 bytes, up to 2097152 bytes.
-  /// * CRU: multiples of 32 bytes, minimum 64 bytes, up to 8 KiB.
-  ///
-  /// If not set, the driver will default to the DMA page size, i.e. the pages will be filled completely.
-  ///
-  /// \param value The value to set
-  /// \return Reference to this object for chaining calls
-  auto setGeneratorDataSize(GeneratorDataSizeType value) -> Parameters&;
-
   /// Sets the GeneratorLoopback parameter
   ///
   /// Controls the routing of the generated data.
@@ -222,16 +189,6 @@ class Parameters
   /// \param value The value to set
   /// \return Reference to this object for chaining calls
   auto setGeneratorLoopback(GeneratorLoopbackType value) -> Parameters&;
-
-  /// Sets the GeneratorRandomSizeEnabled parameter.
-  ///
-  /// If enabled, the content of the DMA pages will have a random size.
-  /// * C-RORC: currently unsupported
-  /// * CRU: Size varies between 32 bytes and the DMA page size
-  ///
-  /// \param value The value to set
-  /// \return Reference to this object for chaining calls
-  auto setGeneratorRandomSizeEnabled(GeneratorRandomSizeEnabledType value) -> Parameters&;
 
   /// Sets the BufferParameters parameter
   ///
@@ -366,10 +323,6 @@ class Parameters
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
   auto getDmaPageSize() const -> boost::optional<DmaPageSizeType>;
 
-  /// Gets the GeneratorEnabled parameter
-  /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
-  auto getGeneratorEnabled() const -> boost::optional<GeneratorEnabledType>;
-
   /// Gets the LinkLoopbackEnabled parameter
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
   auto getLinkLoopbackEnabled() const -> boost::optional<LinkLoopbackEnabledType>;
@@ -382,17 +335,8 @@ class Parameters
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
   auto getOnuAddress() const -> boost::optional<OnuAddressType>;
 
-  /// Gets the GeneratorDataSize parameter
-  /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
-  auto getGeneratorDataSize() const -> boost::optional<GeneratorDataSizeType>;
-
-  /// Gets the GeneratorLoopback parameter
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
   auto getGeneratorLoopback() const -> boost::optional<GeneratorLoopbackType>;
-
-  /// Gets the GeneratorRandomSizeEnabled parameter
-  /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
-  auto getGeneratorRandomSizeEnabled() const -> boost::optional<GeneratorRandomSizeEnabledType>;
 
   /// Gets the BufferParameters parameter
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
@@ -452,11 +396,6 @@ class Parameters
   /// \return The value
   auto getDmaPageSizeRequired() const -> DmaPageSizeType;
 
-  /// Gets the GeneratorEnabled parameter
-  /// \exception ParameterException The parameter was not present
-  /// \return The value
-  auto getGeneratorEnabledRequired() const -> GeneratorEnabledType;
-
   /// Gets the LinkLoopbackEnabled parameter
   /// \exception ParameterException The parameter was not present
   /// \return The value
@@ -472,20 +411,10 @@ class Parameters
   /// \return The value
   auto getOnuAddressRequired() const -> OnuAddressType;
 
-  /// Gets the GeneratorDataSize parameter
-  /// \exception ParameterException The parameter was not present
-  /// \return The value
-  auto getGeneratorDataSizeRequired() const -> GeneratorDataSizeType;
-
   /// Gets the GeneratorLoopback parameter
   /// \exception ParameterException The parameter was not present
   /// \return The value
   auto getGeneratorLoopbackRequired() const -> GeneratorLoopbackType;
-
-  /// Gets the GeneratorRandomSizeEnabled parameter
-  /// \exception ParameterException The parameter was not present
-  /// \return The value
-  auto getGeneratorRandomSizeEnabledRequired() const -> GeneratorRandomSizeEnabledType;
 
   /// Gets the BufferParameters parameter
   /// \exception ParameterException The parameter was not present

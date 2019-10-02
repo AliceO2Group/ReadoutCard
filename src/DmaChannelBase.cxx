@@ -43,21 +43,8 @@ void DmaChannelBase::checkChannelNumber(const AllowedChannels& allowedChannels)
   }
 }
 
-void DmaChannelBase::checkParameters(Parameters& parameters)
+void DmaChannelBase::checkParameters(Parameters& /*parameters*/) //TODO: Possible use case?
 {
-  // Generator enabled is not allowed in conjunction with none loopback mode: default to Internal
-  auto enabled = parameters.getGeneratorEnabled();
-  auto loopback = parameters.getGeneratorLoopback();
-  if (enabled && loopback && (*enabled && (*loopback == LoopbackMode::None))) {
-    log("Generator enabled, defaulting to LoopbackMode = Internal", InfoLogger::InfoLogger::Warning);
-    parameters.setGeneratorLoopback(LoopbackMode::Internal);
-  }
-
-  // Generator disabled. Loopback mode should be set to None
-  if (enabled && loopback && (!*enabled && (*loopback != LoopbackMode::None))) {
-    log("Generator disabled, defaulting to LoopbackMode = None", InfoLogger::InfoLogger::Warning);
-    parameters.setGeneratorLoopback(LoopbackMode::None);
-  }
 }
 
 void DmaChannelBase::freeUnusedChannelBuffer()
@@ -118,7 +105,7 @@ DmaChannelBase::DmaChannelBase(CardDescriptor cardDescriptor, Parameters& parame
   checkChannelNumber(allowedChannels);
 
   // Do some basic Parameters validity checks
-  checkParameters(parameters);
+  //checkParameters(parameters);
 
   //try to acquire lock
   log("Acquiring DMA channel lock", InfoLogger::InfoLogger::Debug);
