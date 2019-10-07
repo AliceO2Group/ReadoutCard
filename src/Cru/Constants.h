@@ -45,7 +45,7 @@ namespace Registers
 /// * bit 0: Flow control
 static constexpr Register DMA_CONTROL(0x00000200);
 
-/// Interval for link BAR addresses
+/// Link interval for superpage addresses to push
 static constexpr uintptr_t LINK_INTERVAL = 0x10;
 
 /// High address of superpage
@@ -55,13 +55,16 @@ static constexpr IntervalRegister LINK_SUPERPAGE_ADDRESS_HIGH(0x00000204, LINK_I
 static constexpr IntervalRegister LINK_SUPERPAGE_ADDRESS_LOW(0x00000208, LINK_INTERVAL);
 
 /// Size of the superpage in 8KiB pages
-static constexpr IntervalRegister LINK_SUPERPAGE_SIZE(0x0000020c, LINK_INTERVAL);
+static constexpr IntervalRegister LINK_SUPERPAGE_PAGES(0x0000020c, LINK_INTERVAL);
 
-/// Interval for SUPERPAGES_PUSHED addresses
-static constexpr uintptr_t SUPERPAGES_PUSHED_INTERVAL = 0x4;
+/// Link interval for superpage ready addresses
+static constexpr uintptr_t SUPERPAGES_READY_INTERVAL = 0x4;
 
-/// Amount of completely pushed superpages
-static constexpr IntervalRegister LINK_SUPERPAGES_PUSHED(0x00000800, SUPERPAGES_PUSHED_INTERVAL);
+/// Amount of ready superpages
+static constexpr IntervalRegister LINK_SUPERPAGE_COUNT(0x00000800, SUPERPAGES_READY_INTERVAL);
+
+// FIFO containing the size of the ready superpages
+static constexpr IntervalRegister LINK_SUPERPAGE_SIZE(0x00000840, SUPERPAGES_READY_INTERVAL);
 
 /// Enable/disable links
 /// Every bit represents a link. Set a bit to 0 to disable a link.

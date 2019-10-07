@@ -117,14 +117,24 @@ void CruBar::pushSuperpageDescriptor(uint32_t link, uint32_t pages, uintptr_t bu
   writeRegister(Cru::Registers::LINK_SUPERPAGE_ADDRESS_LOW.get(link).index,
                 Utilities::getLower32Bits(busAddress));
   // Set superpage size. This write signals the push of the descriptor into the link's FIFO.
-  writeRegister(Cru::Registers::LINK_SUPERPAGE_SIZE.get(link).index, pages);
+  writeRegister(Cru::Registers::LINK_SUPERPAGE_PAGES.get(link).index, pages);
 }
 
 /// Get amount of superpages pushed by a link
 /// \param link Link number
 uint32_t CruBar::getSuperpageCount(uint32_t link)
 {
-  return readRegister(Cru::Registers::LINK_SUPERPAGES_PUSHED.get(link).index);
+  return readRegister(Cru::Registers::LINK_SUPERPAGE_COUNT.get(link).index);
+}
+
+uint32_t CruBar::getSuperpageSize(uint32_t link)
+{
+  writeRegister(Cru::Registers::LINK_SUPERPAGE_SIZE.get(link).index, 0xbadcafe); // write a dummy value to update the FIFO
+  uint32_t superpageSizeFifo = readRegister(Cru::Registers::LINK_SUPERPAGE_SIZE.get(link).index);
+  uint32_t superpageSize = Utilities::getBits(superpageSizeFifo, 0, 23); // [0-23] -> superpage size (in bytes)
+  //uint32_t superpageIndex = Utilities::getBits(superpageSizeFifo, 24, 31); // [24-31] -> superpage index (0-255) for _testing_
+
+  return superpageSize;
 }
 
 /// Enables the data emulator
