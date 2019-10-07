@@ -32,7 +32,7 @@ namespace roc
 
 /// Variant used for internal storage of parameters
 using Variant = boost::variant<size_t, int32_t, bool, Parameters::BufferParametersType, Parameters::CardIdType,
-                               Parameters::GeneratorLoopbackType, Parameters::LinkMaskType, Parameters::AllowRejectionType,
+                               Parameters::DataSourceType, Parameters::LinkMaskType, Parameters::AllowRejectionType,
                                Parameters::ClockType, Parameters::CruIdType, Parameters::DatapathModeType, Parameters::DownstreamDataType,
                                Parameters::GbtModeType, Parameters::GbtMuxType, Parameters::GbtMuxMapType, Parameters::PonUpstreamEnabledType,
                                Parameters::OnuAddressType>;
@@ -118,7 +118,7 @@ _PARAMETER_FUNCTIONS(BufferParameters, "buffer_parameters")
 _PARAMETER_FUNCTIONS(CardId, "card_id")
 _PARAMETER_FUNCTIONS(ChannelNumber, "channel_number")
 _PARAMETER_FUNCTIONS(DmaPageSize, "dma_page_size")
-_PARAMETER_FUNCTIONS(GeneratorLoopback, "generator_loopback")
+_PARAMETER_FUNCTIONS(DataSource, "data_source")
 _PARAMETER_FUNCTIONS(LinkMask, "link_mask")
 _PARAMETER_FUNCTIONS(AllowRejection, "allow_rejection")
 _PARAMETER_FUNCTIONS(Clock, "clock")

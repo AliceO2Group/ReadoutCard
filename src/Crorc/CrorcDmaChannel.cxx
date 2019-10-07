@@ -40,12 +40,12 @@ namespace roc
 {
 
 CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
-  : DmaChannelPdaBase(parameters, allowedChannels()),                                     //
-    mPageSize(parameters.getDmaPageSize().get_value_or(DMA_PAGE_SIZE)),                   // 8 kB default for uniformity with CRU
-    mInitialResetLevel(ResetLevel::Internal),                                             // It's good to reset at least the card channel in general
-    mSTBRD(parameters.getStbrdEnabled().get_value_or(false)),                             //TODO: Set as a parameter
-    mUseFeeAddress(false),                                                                // Not sure
-    mLoopbackMode(parameters.getGeneratorLoopback().get_value_or(LoopbackMode::Internal)) // Internal loopback by default
+  : DmaChannelPdaBase(parameters, allowedChannels()),                          //
+    mPageSize(parameters.getDmaPageSize().get_value_or(DMA_PAGE_SIZE)),        // 8 kB default for uniformity with CRU
+    mInitialResetLevel(ResetLevel::Internal),                                  // It's good to reset at least the card channel in general
+    mSTBRD(parameters.getStbrdEnabled().get_value_or(false)),                  //TODO: Set as a parameter
+    mUseFeeAddress(false),                                                     // Not sure
+    mDataSource(parameters.getDataSource().get_value_or(DataSource::Internal)) // Internal loopback by default
 {
   // Check that the DMA page is valid
   if (mPageSize != DMA_PAGE_SIZE) {
@@ -53,13 +53,13 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
                                            << ErrorInfo::DmaPageSize(mPageSize));
   }
 
-  // Check that the loopback is valid. If not throw
-  if (mLoopbackMode == LoopbackMode::Ddg) {
-    BOOST_THROW_EXCEPTION(CruException() << ErrorInfo::Message("CRORC does not support given loopback mode")
-                                         << ErrorInfo::LoopbackMode(mLoopbackMode));
+  // Check that the data source is valid. If not throw
+  if (mDataSource == DataSource::Ddg) {
+    BOOST_THROW_EXCEPTION(CruException() << ErrorInfo::Message("CRORC does not support specified data source")
+                                         << ErrorInfo::DataSource(mDataSource));
   }
 
-  mGeneratorEnabled = (mLoopbackMode == LoopbackMode::None) ? false : true;
+  mGeneratorEnabled = (mDataSource == DataSource::Fee) ? false : true;
 
   // Set mRDYRX if generator is disabled and mSTBRD is false
   if (!mGeneratorEnabled) {
@@ -114,9 +114,9 @@ void CrorcDmaChannel::deviceStartDma()
   mDiuConfig = getCrorc().initDiuVersion();
 
   // Arming the DDL, according to the channel parameters
-  if ((mLoopbackMode == LoopbackMode::Siu) || (mLoopbackMode == LoopbackMode::None)) {
+  if ((mDataSource == DataSource::Siu) || (mDataSource == DataSource::Fee)) {
     armDdl(ResetLevel::InternalDiuSiu);
-  } else if (mLoopbackMode == LoopbackMode::Diu) {
+  } else if (mDataSource == DataSource::Diu) {
     armDdl(ResetLevel::InternalDiu);
   } else {
     armDdl(ResetLevel::Internal);
@@ -241,10 +241,10 @@ void CrorcDmaChannel::armDdl(ResetLevel::type resetLevel)
   try {
     getCrorc().resetCommand(Rorc::Reset::RORC, mDiuConfig);
 
-    if (LoopbackMode::isExternal(mLoopbackMode) && (resetLevel != ResetLevel::Internal)) { // At least DIU
+    if (DataSource::isExternal(mDataSource) && (resetLevel != ResetLevel::Internal)) { // At least DIU
       getCrorc().armDdl(Rorc::Reset::DIU, mDiuConfig);
 
-      if ((resetLevel == ResetLevel::InternalDiuSiu) && (mLoopbackMode != LoopbackMode::Diu)) //SIU & NONE
+      if ((resetLevel == ResetLevel::InternalDiuSiu) && (mDataSource != DataSource::Diu)) //SIU & FEE
       {
         // Wait a little before SIU reset.
         std::this_thread::sleep_for(100ms); /// XXX Why???
@@ -256,7 +256,7 @@ void CrorcDmaChannel::armDdl(ResetLevel::type resetLevel)
       getCrorc().armDdl(Rorc::Reset::RORC, mDiuConfig);
       std::this_thread::sleep_for(100ms);
 
-      if ((resetLevel == ResetLevel::InternalDiuSiu) && (mLoopbackMode != LoopbackMode::Diu)) //SIU & NONE
+      if ((resetLevel == ResetLevel::InternalDiuSiu) && (mDataSource != DataSource::Diu)) //SIU & FEE
       {
         getCrorc().assertLinkUp();
         getCrorc().siuCommand(Ddl::RandCIFST);
@@ -271,7 +271,7 @@ void CrorcDmaChannel::armDdl(ResetLevel::type resetLevel)
     getCrorc().assertFreeFifoEmpty();
   } catch (Exception& e) {
     e << ErrorInfo::ResetLevel(resetLevel);
-    e << ErrorInfo::LoopbackMode(mLoopbackMode);
+    e << ErrorInfo::DataSource(mDataSource);
     throw;
   }
 
@@ -283,12 +283,12 @@ void CrorcDmaChannel::startDataGenerator()
 {
   getCrorc().armDataGenerator(mPageSize); //TODO: To be simplified
 
-  if (LoopbackMode::Internal == mLoopbackMode) {
+  if (DataSource::Internal == mDataSource) {
     getCrorc().setLoopbackOn();
     std::this_thread::sleep_for(100ms); // XXX Why???
   }
 
-  if (LoopbackMode::Siu == mLoopbackMode) {
+  if (DataSource::Siu == mDataSource) {
     getCrorc().setSiuLoopback(mDiuConfig);
     std::this_thread::sleep_for(100ms); // XXX Why???
     getCrorc().assertLinkUp();
@@ -296,7 +296,7 @@ void CrorcDmaChannel::startDataGenerator()
     getCrorc().diuCommand(Ddl::RandCIFST);
   }
 
-  if (LoopbackMode::Diu == mLoopbackMode) {
+  if (DataSource::Diu == mDataSource) {
     getCrorc().setDiuLoopback(mDiuConfig);
     std::this_thread::sleep_for(100ms);
     getCrorc().diuCommand(Ddl::RandCIFST);

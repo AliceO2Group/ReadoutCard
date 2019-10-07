@@ -4,7 +4,7 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
 #include "ReadoutCard/CardType.h"
-#include "ReadoutCard/ParameterTypes/LoopbackMode.h"
+#include "ReadoutCard/ParameterTypes/DataSource.h"
 #include "ReadoutCard/ParameterTypes/ResetLevel.h"
 
 #define BOOST_TEST_MODULE RORC_TestEnums
@@ -30,9 +30,9 @@ BOOST_AUTO_TEST_CASE(EnumCardTypeConversion)
   checkEnumConversion<CardType>({ CardType::Crorc, CardType::Cru, CardType::Dummy, CardType::Unknown });
 }
 
-BOOST_AUTO_TEST_CASE(EnumLoopbackModeConversion)
+BOOST_AUTO_TEST_CASE(EnumDataSourceConversion)
 {
-  checkEnumConversion<LoopbackMode>({ LoopbackMode::Diu, LoopbackMode::None, LoopbackMode::Internal, LoopbackMode::Siu });
+  checkEnumConversion<DataSource>({ DataSource::Diu, DataSource::Fee, DataSource::Internal, DataSource::Siu });
 }
 
 BOOST_AUTO_TEST_CASE(EnumResetLevelConversion)

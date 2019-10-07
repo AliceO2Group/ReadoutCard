@@ -23,7 +23,7 @@
 #include <boost/optional.hpp>
 #include <boost/variant.hpp>
 #include "ReadoutCard/ParameterTypes/BufferParameters.h"
-#include "ReadoutCard/ParameterTypes/LoopbackMode.h"
+#include "ReadoutCard/ParameterTypes/DataSource.h"
 #include "ReadoutCard/ParameterTypes/PciAddress.h"
 #include "ReadoutCard/ParameterTypes/PciSequenceNumber.h"
 #include "ReadoutCard/ParameterTypes/Hex.h"
@@ -73,8 +73,8 @@ class Parameters
   /// Type for the DMA page size parameter
   using DmaPageSizeType = size_t;
 
-  /// Type for the LoopbackMode parameter
-  using GeneratorLoopbackType = LoopbackMode::type;
+  /// Type for the DataSource parameter
+  using DataSourceType = DataSource::type;
 
   /// Type for the link mask parameter
   using LinkMaskType = std::set<uint32_t>;
@@ -177,18 +177,18 @@ class Parameters
   /// \return Reference to this object for chaining calls
   auto setOnuAddress(OnuAddressType value) -> Parameters&;
 
-  /// Sets the GeneratorLoopback parameter
+  /// Sets the DataSource parameter
   ///
   /// Controls the routing of the generated data.
-  /// Supported loopback modes:
+  /// Supported data source modes:
   /// * C-RORC: all modes
-  /// * CRU: internal, none (=external)
+  /// * CRU: internal, fee
   ///
   /// If not set, the driver will default to internal loopback.
   ///
   /// \param value The value to set
   /// \return Reference to this object for chaining calls
-  auto setGeneratorLoopback(GeneratorLoopbackType value) -> Parameters&;
+  auto setDataSource(DataSourceType value) -> Parameters&;
 
   /// Sets the BufferParameters parameter
   ///
@@ -336,7 +336,7 @@ class Parameters
   auto getOnuAddress() const -> boost::optional<OnuAddressType>;
 
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
-  auto getGeneratorLoopback() const -> boost::optional<GeneratorLoopbackType>;
+  auto getDataSource() const -> boost::optional<DataSourceType>;
 
   /// Gets the BufferParameters parameter
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
@@ -411,10 +411,10 @@ class Parameters
   /// \return The value
   auto getOnuAddressRequired() const -> OnuAddressType;
 
-  /// Gets the GeneratorLoopback parameter
+  /// Gets the DataSource parameter
   /// \exception ParameterException The parameter was not present
   /// \return The value
-  auto getGeneratorLoopbackRequired() const -> GeneratorLoopbackType;
+  auto getDataSourceRequired() const -> DataSourceType;
 
   /// Gets the BufferParameters parameter
   /// \exception ParameterException The parameter was not present

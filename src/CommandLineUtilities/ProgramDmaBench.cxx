@@ -141,6 +141,9 @@ class ProgramDmaBench : public Program
                           SuffixOption<size_t>::make(&mBufferSize)->default_value("1Gi"),
                           "Buffer size in bytes. Rounded down to 2 MiB multiple. Minimum of 2 MiB. Use 2 MiB hugepage by default; |"
                           "if buffer size is a multiple of 1 GiB, will try to use GiB hugepages");
+    options.add_options()("data-source",
+                          po::value<std::string>(&mOptions.dataSourceString)->default_value("INTERNAL"),
+                          "Data source [FEE, INTERNAL, DIU, SIU, DDG]");
     options.add_options()("dma-channel",
                           po::value<int>(&mOptions.dmaChannel)->default_value(0),
                           "DMA channel selection (note: C-RORC has channels 0 to 5, CRU only 0)");
@@ -154,9 +157,6 @@ class ProgramDmaBench : public Program
     options.add_options()("links",
                           po::value<std::string>(&mOptions.links)->default_value("0"),
                           "Links to open. A comma separated list of integers or ranges, e.g. '0,2,5-10'");
-    options.add_options()("loopback",
-                          po::value<std::string>(&mOptions.loopbackModeString)->default_value("INTERNAL"),
-                          "Generator loopback mode [NONE, INTERNAL, DIU, SIU, DDG]");
     options.add_options()("max-rdh-packetcount",
                           po::value<size_t>(&mOptions.maxRdhPacketCounter)->default_value(255),
                           "Maximum packet counter expected in the RDH");
@@ -224,9 +224,9 @@ class ProgramDmaBench : public Program
     auto cardId = Options::getOptionCardId(map);
     auto params = Parameters::makeParameters(cardId, mOptions.dmaChannel);
     params.setDmaPageSize(mOptions.dmaPageSize);
-    params.setGeneratorLoopback(LoopbackMode::fromString(mOptions.loopbackModeString));
+    params.setDataSource(DataSource::fromString(mOptions.dataSourceString));
 
-    mLoopback = params.getGeneratorLoopbackRequired();
+    mDataSource = params.getDataSourceRequired();
 
     params.setStbrdEnabled(mOptions.stbrd); //Set STBRD for the CRORC
 
@@ -516,7 +516,7 @@ class ProgramDmaBench : public Program
             auto readoutCount = fetchAddDmaPagesReadOut();
             size_t pageSize = readoutPage(pageAddress, readoutCount);
 
-            if (mOptions.byteCountEnabled && !(mOptions.loopbackModeString == "INTERNAL")) {
+            if (mOptions.byteCountEnabled && !(mOptions.dataSourceString == "INTERNAL")) {
               mByteCount.fetch_add(pageSize, std::memory_order_relaxed);
             }
             readoutBytes += pageSize;
@@ -557,7 +557,7 @@ class ProgramDmaBench : public Program
       for (int i = 0; i < size; ++i) {
         auto superpage = mChannel->popSuperpage();
         fetchAddSuperpagesReadOut();
-        if ((mLoopback == LoopbackMode::None) || (mLoopback == LoopbackMode::Ddg)) {
+        if ((mDataSource == DataSource::Fee) || (mDataSource == DataSource::Ddg)) {
           auto superpageAddress = mBufferBaseAddress + superpage.getOffset();
           size_t readoutBytes = 0;
           while ((readoutBytes < superpage.getReceived()) && !isSigInt()) { // At least one more dma page fits in the superpage
@@ -586,7 +586,7 @@ class ProgramDmaBench : public Program
 
   size_t readoutPage(uintptr_t pageAddress, int64_t readoutCount)
   {
-    size_t pageSize = (mLoopback == LoopbackMode::Internal) ? mPageSize : DataFormat::getOffset(reinterpret_cast<const char*>(pageAddress));
+    size_t pageSize = (mDataSource == DataSource::Internal) ? mPageSize : DataFormat::getOffset(reinterpret_cast<const char*>(pageAddress));
 
     // Read out to file
     printToFile(pageAddress, pageSize, readoutCount);
@@ -596,7 +596,7 @@ class ProgramDmaBench : public Program
 
       // Get link ID if needed
       uint32_t linkId = 0; // Use 0 for non-CRU cards
-      if (mCardType == CardType::Cru && mLoopback != LoopbackMode::Internal) {
+      if (mCardType == CardType::Cru && mDataSource != DataSource::Internal) {
         linkId = DataFormat::getLinkId(reinterpret_cast<const char*>(pageAddress));
         if (linkId >= mDataGeneratorCounters.size()) {
           BOOST_THROW_EXCEPTION(Exception()
@@ -635,12 +635,12 @@ class ProgramDmaBench : public Program
 
   bool checkErrorsCru(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
   {
-    if (mLoopback == LoopbackMode::Ddg) {
+    if (mDataSource == DataSource::Ddg) {
       return checkErrorsCruDdg(pageAddress, pageSize, eventNumber, linkId);
-    } else if (mLoopback == LoopbackMode::Internal) {
+    } else if (mDataSource == DataSource::Internal) {
       return checkErrorsCruInternal(pageAddress, pageSize, eventNumber, linkId);
     } else {
-      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("CRU error check: Loopback Mode " + LoopbackMode::toString(mLoopback) + " not supported"));
+      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("CRU error check: Data Source " + DataSource::toString(mDataSource) + " not supported"));
     }
   }
 
@@ -1078,7 +1078,7 @@ class ProgramDmaBench : public Program
     std::string links;
     bool bufferFullCheck = false;
     size_t dmaPageSize;
-    std::string loopbackModeString;
+    std::string dataSourceString;
     std::string timeLimitString;
     uint64_t pausePush;
     uint64_t pauseRead;
@@ -1187,8 +1187,8 @@ class ProgramDmaBench : public Program
   /// Flag to test how quickly the readout buffer gets full in case of error
   bool mBufferFullCheck;
 
-  /// Loopback mode
-  LoopbackMode::type mLoopback;
+  /// Data Source
+  DataSource::type mDataSource;
 };
 
 int main(int argc, char** argv)

@@ -107,19 +107,19 @@ DMA can be paused and resumed at any time using `stopDma()` and `startDma()`
 
 #### CRU
 
-The loopback parameter for the CRU DMA Channel should be used as follows:
+The `Data Source` parameter for the CRU DMA Channel should be used as follows:
 
-| `GeneratorLoopback` | Data Source |
+| `DataSource`        | Data Source |
 | ------------------- | ----------- |
-| `None`              | FEE (GBT)   |
+| `Fee`               | FEE (GBT)   |
 | `Ddg`               | DDG (GBT)   |
 | `Internal`          | DG          |
 
 #### CRORC
 
-| `GeneratorLoopback` | Data Source |
+| `DataSource`        | Data Source |
 | ------------------- | ----------- |
-| `None`              | FEE (GBT)   |
+| `Fee`               | FEE (GBT)   |
 | `SIU`               | SIU         |
 | `DIU`               | DIU         |
 | `INTERNAL`          | DG          |
