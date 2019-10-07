@@ -275,7 +275,12 @@ void CruDmaChannel::transferSuperpageFromLinkToReady(Link& link)
   }
 
   link.queue.front().setReady(true);
-  link.queue.front().setReceived(link.queue.front().getSize()); //TODO: Update this with the effective superpage size when available
+  uint32_t superpageSize = getBar()->getSuperpageSize(link.id);
+  if (superpageSize == 0) {                                       //backwards compatible in case the superpage size register is empty
+    link.queue.front().setReceived(link.queue.front().getSize()); // force the full superpage size
+  } else {
+    link.queue.front().setReceived(getBar()->getSuperpageSize(link.id));
+  }
   mReadyQueue.push_back(link.queue.front());
   link.queue.pop_front();
   link.superpageCounter++;
@@ -285,8 +290,8 @@ void CruDmaChannel::transferSuperpageFromLinkToReady(Link& link)
 void CruDmaChannel::fillSuperpages()
 {
   // Check for arrivals & handle them
-  const auto size = mLinks.size();
-  for (LinkIndex linkIndex = 0; linkIndex < size; ++linkIndex) {
+  const auto links = mLinks.size();
+  for (LinkIndex linkIndex = 0; linkIndex < links; ++linkIndex) {
     auto& link = mLinks[linkIndex];
     uint32_t superpageCount = getBar()->getSuperpageCount(link.id);
     auto available = superpageCount > link.superpageCounter;

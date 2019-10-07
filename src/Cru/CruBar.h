@@ -64,6 +64,7 @@ class CruBar final : public BarInterfaceBase
 
   void pushSuperpageDescriptor(uint32_t link, uint32_t pages, uintptr_t busAddress);
   uint32_t getSuperpageCount(uint32_t link);
+  uint32_t getSuperpageSize(uint32_t link);
   void setDataEmulatorEnabled(bool enabled);
   void resetDataGeneratorCounter();
   void resetCard();
