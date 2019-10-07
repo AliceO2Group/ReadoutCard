@@ -104,7 +104,7 @@ add_library(ReadoutCard SHARED
   src/ParameterTypes/GbtMode.cxx
   src/ParameterTypes/GbtMux.cxx
   src/ParameterTypes/Hex.cxx
-  src/ParameterTypes/LoopbackMode.cxx
+  src/ParameterTypes/DataSource.cxx
   src/ParameterTypes/PciAddress.cxx
   src/ParameterTypes/PciSequenceNumber.cxx
   src/ParameterTypes/ResetLevel.cxx

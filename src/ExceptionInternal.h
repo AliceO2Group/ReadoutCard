@@ -29,7 +29,7 @@
 #include "ReadoutCard/ParameterTypes/PciAddress.h"
 #include "ReadoutCard/ParameterTypes/PciSequenceNumber.h"
 #include "ReadoutCard/ParameterTypes/ResetLevel.h"
-#include "ReadoutCard/ParameterTypes/LoopbackMode.h"
+#include "ReadoutCard/ParameterTypes/DataSource.h"
 
 namespace AliceO2
 {
@@ -64,7 +64,7 @@ DEFINE_ERRINFO(FileSize, size_t);
 DEFINE_ERRINFO(GeneratorEventLength, size_t);
 DEFINE_ERRINFO(Index, size_t);
 DEFINE_ERRINFO(LinkId, uint32_t);
-DEFINE_ERRINFO(LoopbackMode, ::AliceO2::roc::LoopbackMode::type);
+DEFINE_ERRINFO(DataSource, ::AliceO2::roc::DataSource::type);
 DEFINE_ERRINFO(NamedMutexName, std::string);
 DEFINE_ERRINFO(Offset, size_t);
 DEFINE_ERRINFO(PageIndex, int);
@@ -115,7 +115,7 @@ namespace boost
 std::string to_string(const AliceO2::roc::ErrorInfo::CardId& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::CardType& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::Message& e);
-std::string to_string(const AliceO2::roc::ErrorInfo::LoopbackMode& e);
+std::string to_string(const AliceO2::roc::ErrorInfo::DataSource& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::PciAddress& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::PciId& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::PciIds& e);

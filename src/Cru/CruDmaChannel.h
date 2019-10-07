@@ -146,8 +146,8 @@ class CruDmaChannel final : public DmaChannelPdaBase
   /// Reset level on initialization of channel
   const ResetLevel::type mInitialResetLevel;
 
-  /// Gives the type of loopback
-  const LoopbackMode::type mLoopbackMode;
+  /// Gives the data source
+  const DataSource::type mDataSource;
 
   /// Flag to know if we should reset the debug register after we fiddle with it
   bool mDebugRegisterReset = false;

@@ -110,9 +110,9 @@ std::string to_string(const ErrorInfo::PciIds& e)
   }
 }
 
-std::string to_string(const ErrorInfo::LoopbackMode& e)
+std::string to_string(const ErrorInfo::DataSource& e)
 {
-  return toStringHelper("ReadoutCard loopback mode", e.value(), LoopbackMode::toString(e.value()));
+  return toStringHelper("ReadoutCard data source", e.value(), DataSource::toString(e.value()));
 }
 
 std::string to_string(const ErrorInfo::ResetLevel& e)

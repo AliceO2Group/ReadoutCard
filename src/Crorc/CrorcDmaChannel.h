@@ -194,8 +194,8 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
   /// XXX Not sure if this should be a parameter...
   const bool mUseFeeAddress;
 
-  /// Gives the type of loopback
-  const LoopbackMode::type mLoopbackMode;
+  /// Gives the data source
+  const DataSource::type mDataSource;
 
   /// Enables the data generator
   bool mGeneratorEnabled;
