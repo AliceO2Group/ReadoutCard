@@ -120,9 +120,9 @@ The `Data Source` parameter for the CRU DMA Channel should be used as follows:
 | `DataSource`        | Data Source |
 | ------------------- | ----------- |
 | `Fee`               | FEE (GBT)   |
-| `SIU`               | SIU         |
-| `DIU`               | DIU         |
-| `INTERNAL`          | DG          |
+| `Siu`               | SIU         |
+| `Diu`               | DIU         |
+| `Internal`          | DG          |
 
 
 Card Configurator
