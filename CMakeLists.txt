@@ -96,6 +96,7 @@ add_library(ReadoutCard SHARED
   src/Dummy/DummyDmaChannel.cxx
   src/Dummy/DummyBar.cxx
   src/ExceptionInternal.cxx
+  src/FirmwareChecker.cxx
   src/MemoryMappedFile.cxx
   src/Parameters.cxx
   src/ParameterTypes/Clock.cxx
