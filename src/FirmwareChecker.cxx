@@ -13,33 +13,48 @@
 ///
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#include "unordered_map"
-#include "ReadoutCard/ChannelFactory.h"
-#include "ReadoutCard/Parameters.h"
+#include "ReadoutCard/FirmwareChecker.h"
+#include "ExceptionInternal.h"
 
 namespace AliceO2
 {
 namespace roc
 {
 
-inline std::unordered_map<std::string, std::string> compatibleFirmwareList({ { "20190911-150139-3f5e11b3", "CRU v3.3.0" },
-                                                                             { "20190718-120712-4c8e6c48", "CRU v3.2.0" },
-                                                                             { "0.0:2000-0-0", "CRORC alpha" } });
+FirmwareChecker::FirmwareChecker() : mCompatibleFirmwareList({ { "20191014-115705-51882687", "v3.4.0" },
+                                                               { "20190911-150139-3f5e11b3", "v3.3.0" },
+                                                               { "20190718-120712-4c8e6c48", "v3.2.0" },
+                                                               { "0.0:2000-0-0", "alpha" } })
+{
+}
 
-inline std::string getFirmwareCompatibilityList()
+FirmwareChecker::~FirmwareChecker()
+{
+}
+
+std::string FirmwareChecker::resolveFirmwareTag(std::string firmware)
+{
+  if (mCompatibleFirmwareList.find(firmware) != mCompatibleFirmwareList.end()) {
+    return mCompatibleFirmwareList.at(firmware);
+  } else {
+    return firmware;
+  }
+}
+
+std::string FirmwareChecker::getFirmwareCompatibilityList()
 {
   std::string fwStrings;
-  for (auto fwString : compatibleFirmwareList) {
+  for (auto fwString : mCompatibleFirmwareList) {
     fwStrings += "\n" + fwString.second + " - " + fwString.first;
   }
   return fwStrings;
 }
 
-inline void checkFirmwareCompatibilityWrapped(std::shared_ptr<BarInterface> bar2)
+void FirmwareChecker::checkFirmwareCompatibilityWrapped(std::shared_ptr<BarInterface> bar2)
 {
   auto firmware = bar2->getFirmwareInfo().value_or("");
   auto serial = bar2->getSerial().value_or(-1);
-  if (compatibleFirmwareList.find(firmware) == compatibleFirmwareList.end()) {
+  if (mCompatibleFirmwareList.find(firmware) == mCompatibleFirmwareList.end()) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(
                             std::string("Firmware compatibility check failed.\n") +
                             std::string("Serial: " + std::to_string(serial) + "\n") +
@@ -49,13 +64,13 @@ inline void checkFirmwareCompatibilityWrapped(std::shared_ptr<BarInterface> bar2
   }
 }
 
-inline void checkFirmwareCompatibility(Parameters params)
+void FirmwareChecker::checkFirmwareCompatibility(Parameters params)
 {
   auto bar2 = ChannelFactory().getBar(params);
   checkFirmwareCompatibilityWrapped(bar2);
 }
 
-inline void checkFirmwareCompatibility(Parameters::CardIdType cardId)
+void FirmwareChecker::checkFirmwareCompatibility(Parameters::CardIdType cardId)
 {
   auto params = Parameters::makeParameters(cardId, 2); // access bar2 to check the firmware release
   auto bar2 = ChannelFactory().getBar(params);

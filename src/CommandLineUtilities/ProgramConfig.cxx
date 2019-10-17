@@ -17,10 +17,10 @@
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
 #include "Cru/CruBar.h"
-#include "FirmwareChecker.h"
 #include "ReadoutCard/CardConfigurator.h"
 #include "ReadoutCard/ChannelFactory.h"
 #include "ReadoutCard/Exception.h"
+#include "ReadoutCard/FirmwareChecker.h"
 #include "RocPciDevice.h"
 
 using namespace AliceO2::roc::CommandLineUtilities;
@@ -106,7 +106,7 @@ class ProgramConfig : public Program
         auto params = Parameters::makeParameters(card.pciAddress, 2);
         if (!mOptions.bypassFirmwareCheck) {
           try {
-            checkFirmwareCompatibility(params);
+            FirmwareChecker().checkFirmwareCompatibility(params);
             CardConfigurator(card.pciAddress, mOptions.configFile, mOptions.forceConfig);
           } catch (const Exception& e) {
             std::cout << boost::diagnostic_information(e) << std::endl;
@@ -120,7 +120,7 @@ class ProgramConfig : public Program
     auto cardId = Options::getOptionCardId(map);
     if (!mOptions.bypassFirmwareCheck) {
       try {
-        checkFirmwareCompatibility(cardId);
+        FirmwareChecker().checkFirmwareCompatibility(cardId);
       } catch (const Exception& e) {
         std::cout << boost::diagnostic_information(e) << std::endl;
         return;

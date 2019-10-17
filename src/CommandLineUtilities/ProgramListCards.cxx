@@ -20,6 +20,7 @@
 #include "CommandLineUtilities/Program.h"
 #include "RocPciDevice.h"
 #include "ReadoutCard/ChannelFactory.h"
+#include "ReadoutCard/FirmwareChecker.h"
 #include "ReadoutCard/MemoryMappedFile.h"
 #include <boost/format.hpp>
 
@@ -69,6 +70,8 @@ class ProgramListCards : public Program
         Parameters params2 = Parameters::makeParameters(card.pciAddress, 2);
         auto bar2 = ChannelFactory().getBar(params2);
         firmware = bar2->getFirmwareInfo().value_or(na);
+        // Check if the firmware is tagged
+        firmware = FirmwareChecker().resolveFirmwareTag(firmware);
         cardId = bar2->getCardId().value_or(na);
         endpointNumber = bar0->getEndpointNumber();
       } catch (const Exception& e) {
