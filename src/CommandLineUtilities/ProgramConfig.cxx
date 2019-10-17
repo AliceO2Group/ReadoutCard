@@ -82,6 +82,9 @@ class ProgramConfig : public Program
     options.add_options()("force-config",
                           po::bool_switch(&mOptions.forceConfig),
                           "Flag to force configuration and not check if the configuration is already present");
+    options.add_options()("bypass-fw-check",
+                          po::bool_switch(&mOptions.bypassFirmwareCheck),
+                          "Flag to force configuration, bypassing the firmware checker");
     Options::addOptionCardId(options);
   }
 
@@ -101,11 +104,13 @@ class ProgramConfig : public Program
       for (auto const& card : cardsFound) {
         std::cout << " __== " << card.pciAddress.toString() << " ==__ " << std::endl;
         auto params = Parameters::makeParameters(card.pciAddress, 2);
-        try {
-          checkFirmwareCompatibility(params);
-          CardConfigurator(card.pciAddress, mOptions.configFile, mOptions.forceConfig);
-        } catch (const Exception& e) {
-          std::cout << boost::diagnostic_information(e) << std::endl;
+        if (!mOptions.bypassFirmwareCheck) {
+          try {
+            checkFirmwareCompatibility(params);
+            CardConfigurator(card.pciAddress, mOptions.configFile, mOptions.forceConfig);
+          } catch (const Exception& e) {
+            std::cout << boost::diagnostic_information(e) << std::endl;
+          }
         }
       }
       return;
@@ -113,11 +118,13 @@ class ProgramConfig : public Program
 
     // Configure specific card
     auto cardId = Options::getOptionCardId(map);
-    try {
-      checkFirmwareCompatibility(cardId);
-    } catch (const Exception& e) {
-      std::cout << boost::diagnostic_information(e) << std::endl;
-      return;
+    if (!mOptions.bypassFirmwareCheck) {
+      try {
+        checkFirmwareCompatibility(cardId);
+      } catch (const Exception& e) {
+        std::cout << boost::diagnostic_information(e) << std::endl;
+        return;
+      }
     }
 
     if (mOptions.configFile == "") {
@@ -163,6 +170,7 @@ class ProgramConfig : public Program
     std::string gbtMux = "ttc";
     std::string links = "0";
     bool allowRejection = false;
+    bool bypassFirmwareCheck = false;
     bool configAll = false;
     bool forceConfig = false;
     bool linkLoopbackEnabled = false;
