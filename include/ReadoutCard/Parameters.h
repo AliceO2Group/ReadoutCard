@@ -109,6 +109,9 @@ class Parameters
   /// Type for the PON upstream enabled parameter
   using PonUpstreamEnabledType = bool;
 
+  /// Type for the Dynamic Offset enabled parameter
+  using DynamicOffsetEnabledType = bool;
+
   /// Type for the ONU address parameter
   using OnuAddressType = Hex::type;
 
@@ -170,6 +173,14 @@ class Parameters
   /// \param value The value to set
   /// \return Reference to this object for chaining calls
   auto setPonUpstreamEnabled(PonUpstreamEnabledType value) -> Parameters&;
+
+  /// Sets the DynamicOffsetEnabled parameter
+  ///
+  /// If enabled the PON upstream is used.
+  ///
+  /// \param value The value to set
+  /// \return Reference to this object for chaining calls
+  auto setDynamicOffsetEnabled(DynamicOffsetEnabledType value) -> Parameters&;
 
   /// Sets the OnuAddress parameter
   ///
@@ -331,6 +342,10 @@ class Parameters
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
   auto getPonUpstreamEnabled() const -> boost::optional<PonUpstreamEnabledType>;
 
+  /// Gets the DynamicOffsetEnabled parameter
+  /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+  auto getDynamicOffsetEnabled() const -> boost::optional<DynamicOffsetEnabledType>;
+
   /// Gets the OnuAddress parameter
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
   auto getOnuAddress() const -> boost::optional<OnuAddressType>;
@@ -405,6 +420,11 @@ class Parameters
   /// \exception ParameterException The parameter was not present
   /// \return The value
   auto getPonUpstreamEnabledRequired() const -> PonUpstreamEnabledType;
+
+  /// Gets the DynamicOffsetEnabled parameter
+  /// \exception ParameterException The parameter was not present
+  /// \return The value
+  auto getDynamicOffsetEnabledRequired() const -> DynamicOffsetEnabledType;
 
   /// Gets the OnuAddress parameter
   /// \exception ParameterException The parameter was not present

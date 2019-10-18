@@ -47,7 +47,8 @@ CruBar::CruBar(const Parameters& parameters)
     mLinkMask(parameters.getLinkMask().get_value_or(std::set<uint32_t>{ 0 })),
     mGbtMuxMap(parameters.getGbtMuxMap().get_value_or(std::map<uint32_t, GbtMux::type>{})),
     mPonUpstream(parameters.getPonUpstreamEnabled().get_value_or(false)),
-    mOnuAddress(parameters.getOnuAddress().get_value_or(0x0))
+    mOnuAddress(parameters.getOnuAddress().get_value_or(0x0)),
+    mDynamicOffset(parameters.getDynamicOffsetEnabled().get_value_or(false))
 {
   if (getIndex() == 0) {
     mFeatures = parseFirmwareFeatures();
@@ -507,6 +508,15 @@ void CruBar::configure()
 
   log("Setting packet arbitration");
   datapathWrapper.setPacketArbitration(mWrapperCount, 0);
+
+  if (mDynamicOffset) {
+    log("Setting dynamic offset");
+    datapathWrapper.setDynamicOffset(0, true);
+    datapathWrapper.setDynamicOffset(1, true);
+  } else {
+    datapathWrapper.setDynamicOffset(0, false);
+    datapathWrapper.setDynamicOffset(1, false);
+  }
 
   log("CRU configuration done.");
 }

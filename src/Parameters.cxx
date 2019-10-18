@@ -35,7 +35,7 @@ using Variant = boost::variant<size_t, int32_t, bool, Parameters::BufferParamete
                                Parameters::DataSourceType, Parameters::LinkMaskType, Parameters::AllowRejectionType,
                                Parameters::ClockType, Parameters::CruIdType, Parameters::DatapathModeType, Parameters::DownstreamDataType,
                                Parameters::GbtModeType, Parameters::GbtMuxType, Parameters::GbtMuxMapType, Parameters::PonUpstreamEnabledType,
-                               Parameters::OnuAddressType>;
+                               Parameters::OnuAddressType, Parameters::DynamicOffsetEnabledType>;
 
 using KeyType = const char*;
 
@@ -130,6 +130,7 @@ _PARAMETER_FUNCTIONS(GbtMux, "gbt_mux")
 _PARAMETER_FUNCTIONS(GbtMuxMap, "gbt_mux_map")
 _PARAMETER_FUNCTIONS(LinkLoopbackEnabled, "link_loopback_enabled")
 _PARAMETER_FUNCTIONS(PonUpstreamEnabled, "pon_upstream_enabled")
+_PARAMETER_FUNCTIONS(DynamicOffsetEnabled, "dynamic_offset_enabled")
 _PARAMETER_FUNCTIONS(OnuAddress, "onu_address")
 _PARAMETER_FUNCTIONS(StbrdEnabled, "stbrd_enabled")
 #undef _PARAMETER_FUNCTIONS
