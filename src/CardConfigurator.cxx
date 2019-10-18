@@ -60,6 +60,7 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
   bool allowRejection = false;
   bool loopback = false;
   bool ponUpstream = false;
+  bool dynamicOffset = false;
   uint32_t onuAddress = 0x0;
   uint16_t cruId = 0x0;
   GbtMode::type gbtMode = GbtMode::type::Gbt;
@@ -121,6 +122,12 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
     }
 
     try {
+      dynamicOffset = configFile.getValue<bool>(globalGroup + ".dynamicoffset");
+    } catch (...) {
+      throw("Invalid or missing dynamicoffset property");
+    }
+
+    try {
       parsedString = configFile.getValue<std::string>(globalGroup + ".onuaddress");
       onuAddress = Hex::fromString(parsedString);
     } catch (...) {
@@ -147,6 +154,7 @@ void CardConfigurator::parseConfigFile(std::string pathToConfigFile, Parameters&
   parameters.setDownstreamData(downstreamData);
   parameters.setLinkLoopbackEnabled(loopback);
   parameters.setPonUpstreamEnabled(ponUpstream);
+  parameters.setDynamicOffsetEnabled(dynamicOffset);
   parameters.setOnuAddress(onuAddress);
   parameters.setCruId(cruId);
   parameters.setAllowRejection(allowRejection);

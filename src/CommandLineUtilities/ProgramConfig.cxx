@@ -73,6 +73,9 @@ class ProgramConfig : public Program
     options.add_options()("pon-upstream",
                           po::bool_switch(&mOptions.ponUpstreamEnabled),
                           "Flag to enable use of the PON upstream");
+    options.add_options()("dyn-offset",
+                          po::bool_switch(&mOptions.dynamicOffsetEnabled),
+                          "Flag to enable the dynamic offset");
     options.add_options()("onu-address",
                           po::value<uint32_t>(&mOptions.onuAddress)->default_value(0x0),
                           "ONU address for PON upstream");
@@ -140,6 +143,7 @@ class ProgramConfig : public Program
       params.setGbtMux(GbtMux::fromString(mOptions.gbtMux));
       params.setLinkLoopbackEnabled(mOptions.linkLoopbackEnabled);
       params.setPonUpstreamEnabled(mOptions.ponUpstreamEnabled);
+      params.setDynamicOffsetEnabled(mOptions.dynamicOffsetEnabled);
       params.setOnuAddress(mOptions.onuAddress);
 
       try {
@@ -175,6 +179,7 @@ class ProgramConfig : public Program
     bool forceConfig = false;
     bool linkLoopbackEnabled = false;
     bool ponUpstreamEnabled = false;
+    bool dynamicOffsetEnabled = false;
     uint32_t onuAddress = 0x0;
     uint16_t cruId = 0x0;
   } mOptions;

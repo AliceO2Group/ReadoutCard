@@ -159,6 +159,8 @@ The Parameters that affect the configuration of the CRU and their possible value
 
 `OnuAddress (0x01234567)`
 
+`DynamicOffsetEnabled (true | false)`
+
 To set any of the above parameters the usual template can be followed.
 
 ```
@@ -176,12 +178,13 @@ params.setClock(Parameters::Clock::type::Local);
 The above parameters will be set for the enabled links, as specified by the `LinkMask` parameter. See the [LinkMask](#linkmask) section
 for more info.
 
-Note that for `AllowRejection`, `LinkLoopbackEnabled` and `PonUpstreamEnabled` it is sufficient to do the following, as they are simply booleans.
+Note that for `AllowRejection`, `LinkLoopbackEnabled`, `PonUpstreamEnabled` and `DynamicOffsetEnabled` it is sufficient to do the following, as they are simply booleans.
 
 ```
 params.setAllowRejection(true);
 params.setLinkLoopbackEnabled(true);
 params.setPonUpstreamEnabled(true);
+params.setDynamicOffsetEnabled(true);
 ```
 
 Likewise for `OnuAddress`, passing the hex is enough.

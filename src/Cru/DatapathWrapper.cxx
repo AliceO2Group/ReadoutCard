@@ -176,5 +176,18 @@ void DatapathWrapper::enableDataGenerator(bool enable)
   }
 }
 
+void DatapathWrapper::setDynamicOffset(int wrapper, bool enable)
+{
+  // Enable dynamic offset setting of the RDH (instead of fixed 0x2000)
+  uint32_t address = getDatapathWrapperBaseAddress(wrapper) +
+                     Cru::Registers::DWRAPPER_GREGS.address +
+                     Cru::Registers::DWRAPPER_ENREG.address;
+  if (enable) {
+    mPdaBar->modifyRegister(address / 4, 31, 1, 0x1);
+  } else {
+    mPdaBar->modifyRegister(address / 4, 31, 1, 0x0);
+  }
+}
+
 } // namespace roc
 } // namespace AliceO2
