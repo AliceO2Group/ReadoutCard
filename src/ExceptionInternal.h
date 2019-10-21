@@ -52,6 +52,7 @@ DEFINE_ERRINFO(BarSize, size_t);
 DEFINE_ERRINFO(CardId, ::AliceO2::roc::Parameters::CardIdType);
 DEFINE_ERRINFO(CardType, ::AliceO2::roc::CardType::type);
 DEFINE_ERRINFO(ChannelNumber, int);
+DEFINE_ERRINFO(ConfigParse, std::string);
 DEFINE_ERRINFO(DdlResetMask, std::string);
 DEFINE_ERRINFO(Directory, std::string);
 DEFINE_ERRINFO(DiuCommand, int);
@@ -114,6 +115,7 @@ namespace boost
 // These functions convert the errinfos to strings for diagnostic messages
 std::string to_string(const AliceO2::roc::ErrorInfo::CardId& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::CardType& e);
+std::string to_string(const AliceO2::roc::ErrorInfo::ConfigParse& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::Message& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::DataSource& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::PciAddress& e);

@@ -149,4 +149,9 @@ std::string to_string(const ErrorInfo::CardId& e)
   return toStringHelper("ReadoutCard PCI address", message);
 }
 
+std::string to_string(const ErrorInfo::ConfigParse& e)
+{
+  return b::str(b::format("Invalid or missing property for group [%s]") % e.value());
+}
+
 } // namespace boost

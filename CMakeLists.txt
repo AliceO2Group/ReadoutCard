@@ -81,6 +81,7 @@ find_package(Boost 1.56
 
 find_package(Git QUIET)
 find_package(Common REQUIRED)
+find_package(Configuration REQUIRED)
 find_package(InfoLogger REQUIRED)
 find_package(PDA)
 
@@ -155,6 +156,7 @@ target_link_libraries(ReadoutCard
   PUBLIC
     AliceO2::InfoLogger
     AliceO2::Common
+    AliceO2::Configuration
     $<$<BOOL:${Python2_FOUND}>:Boost::python27>
     $<$<BOOL:${Python2_FOUND}>:Python2::Python>
     $<$<BOOL:${Python3_FOUND}>:Boost::python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}>
