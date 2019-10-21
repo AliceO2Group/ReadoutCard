@@ -30,7 +30,7 @@ class CardConfigurator
   CardConfigurator(Parameters& parameters, bool forceConfigure = false);
 
  private:
-  void parseConfigFile(std::string pathToConfigFile, Parameters& parameters);
+  void parseConfigUri(std::string configUri, Parameters& parameters);
 };
 
 } // namespace roc

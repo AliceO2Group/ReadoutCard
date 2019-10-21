@@ -64,9 +64,9 @@ class ProgramConfig : public Program
     options.add_options()("links",
                           po::value<std::string>(&mOptions.links)->default_value("0"),
                           "Links to enable");
-    options.add_options()("config-file",
-                          po::value<std::string>(&mOptions.configFile)->default_value(""),
-                          "Configuration file [file:*.cfg]");
+    options.add_options()("config-uri",
+                          po::value<std::string>(&mOptions.configUri)->default_value(""),
+                          "Configuration URI ('ini://[path]', 'json://[path]' or 'consul://[host][:port][/path]'");
     options.add_options()("loopback",
                           po::bool_switch(&mOptions.linkLoopbackEnabled),
                           "Flag to enable link loopback for DDG");
@@ -98,8 +98,8 @@ class ProgramConfig : public Program
     if (mOptions.configAll) {
       std::cout << "Running RoC Configuration for all cards" << std::endl;
       std::vector<CardDescriptor> cardsFound;
-      if (mOptions.configFile == "") {
-        std::cout << "A configuration file is necessary with the startup-config flag set" << std::endl;
+      if (mOptions.configUri == "") {
+        std::cout << "A configuration URI is necessary with the startup-config flag set" << std::endl;
         return;
       }
 
@@ -110,7 +110,7 @@ class ProgramConfig : public Program
         if (!mOptions.bypassFirmwareCheck) {
           try {
             FirmwareChecker().checkFirmwareCompatibility(params);
-            CardConfigurator(card.pciAddress, mOptions.configFile, mOptions.forceConfig);
+            CardConfigurator(card.pciAddress, mOptions.configUri, mOptions.forceConfig);
           } catch (const Exception& e) {
             std::cout << boost::diagnostic_information(e) << std::endl;
           }
@@ -130,7 +130,7 @@ class ProgramConfig : public Program
       }
     }
 
-    if (mOptions.configFile == "") {
+    if (mOptions.configUri == "") {
       std::cout << "Configuring with command line arguments" << std::endl;
       auto params = Parameters::makeParameters(cardId, 2);
       params.setLinkMask(Parameters::linkMaskFromString(mOptions.links));
@@ -151,23 +151,20 @@ class ProgramConfig : public Program
       } catch (const Exception& e) {
         std::cout << boost::diagnostic_information(e) << std::endl;
       }
-    } else if (!strncmp(mOptions.configFile.c_str(), "file:", 5)) {
+    } else {
       std::cout << "Configuring with config file" << std::endl;
       try {
-        CardConfigurator(cardId, mOptions.configFile, mOptions.forceConfig);
+        CardConfigurator(cardId, mOptions.configUri, mOptions.forceConfig);
       } catch (std::runtime_error e) {
-        std::cout << "Something went badly reading the configuration file..." << e.what() << std::endl;
+        std::cout << "Error parsing the configuration..." << boost::diagnostic_information(e) << std::endl;
       }
-    } else {
-      std::cout << "Configuration file path should start with 'file:'" << std::endl;
     }
-
     return;
   }
 
   struct OptionsStruct {
     std::string clock = "local";
-    std::string configFile = "";
+    std::string configUri = "";
     std::string datapathMode = "packet";
     std::string downstreamData = "Ctp";
     std::string gbtMode = "gbt";
