@@ -21,7 +21,6 @@
 #include <cstddef>
 #include "Cru/Constants.h"
 #include "ReadoutCard/ChannelFactory.h"
-#include "Swt/Swt.h"
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
 
@@ -29,8 +28,6 @@ using namespace AliceO2::roc::CommandLineUtilities;
 using namespace AliceO2::roc;
 using namespace AliceO2::InfoLogger;
 namespace po = boost::program_options;
-
-constexpr uint32_t SWT_WR_WORD_L = 0x0f00040 / 4;
 
 class ProgramBarStress : public Program
 {
