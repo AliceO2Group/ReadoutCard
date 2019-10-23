@@ -91,26 +91,26 @@ void CardConfigurator::parseConfigUri(std::string configUri, Parameters& paramet
         parsedString = conf->get<std::string>("clock");
         clock = Clock::fromString(parsedString);
 
-        parsedString = conf->get<std::string>("datapathmode");
+        parsedString = conf->get<std::string>("datapathMode");
         datapathMode = DatapathMode::fromString(parsedString);
 
-        parsedString = conf->get<std::string>("gbtmode");
+        parsedString = conf->get<std::string>("gbtMode");
         gbtMode = GbtMode::fromString(parsedString);
 
-        parsedString = conf->get<std::string>("downstreamdata");
+        parsedString = conf->get<std::string>("downstreamData");
         downstreamData = DownstreamData::fromString(parsedString);
 
         loopback = conf->get<bool>("loopback");
-        ponUpstream = conf->get<bool>("ponupstream");
-        dynamicOffset = conf->get<bool>("dynamicoffset");
+        ponUpstream = conf->get<bool>("ponUpstream");
+        dynamicOffset = conf->get<bool>("dynamicOffset");
 
-        parsedString = conf->get<std::string>("onuaddress");
+        parsedString = conf->get<std::string>("onuAddress");
         onuAddress = Hex::fromString(parsedString);
 
-        parsedString = conf->get<std::string>("cruid");
+        parsedString = conf->get<std::string>("cruId");
         cruId = Hex::fromString(parsedString);
 
-        allowRejection = conf->get<bool>("allowrejection");
+        allowRejection = conf->get<bool>("allowRejection");
 
         conf->setPrefix("");
 
@@ -136,7 +136,7 @@ void CardConfigurator::parseConfigUri(std::string configUri, Parameters& paramet
           }
         }
 
-        gbtMux = conf->get<std::string>("gbtmux");
+        gbtMux = conf->get<std::string>("gbtMux");
         for (int i = 0; i < 24; i++) {
           gbtMuxMap.insert(std::make_pair((uint32_t)i, GbtMux::fromString(gbtMux)));
         }
@@ -157,7 +157,7 @@ void CardConfigurator::parseConfigUri(std::string configUri, Parameters& paramet
           linkMask.erase(linkIndex);
         }
 
-        gbtMux = conf->get<std::string>("gbtmux");
+        gbtMux = conf->get<std::string>("gbtMux");
         if (gbtMuxMap.find(linkIndex) != gbtMuxMap.end()) {
           gbtMuxMap[linkIndex] = GbtMux::fromString(gbtMux);
         } else {

@@ -152,7 +152,7 @@ class ProgramConfig : public Program
         std::cout << boost::diagnostic_information(e) << std::endl;
       }
     } else {
-      std::cout << "Configuring with config file" << std::endl;
+      std::cout << "Configuring with config uri" << std::endl;
       try {
         CardConfigurator(cardId, mOptions.configUri, mOptions.forceConfig);
       } catch (std::runtime_error e) {
