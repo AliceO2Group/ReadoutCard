@@ -137,7 +137,6 @@ if(PDA_FOUND)
     src/Pda/PdaDevice.cxx
     src/Pda/PdaDmaBuffer.cxx
     src/RocPciDevice.cxx
-    src/Swt/Swt.cxx
     $<$<BOOL:${Python2_FOUND}>:src/PythonInterface.cxx>
     $<$<BOOL:${Python3_FOUND}>:src/PythonInterface.cxx>
   )
@@ -211,7 +210,6 @@ if(PDA_FOUND)
     ProgramMetrics.cxx
     ProgramSiuStatus.cxx
     ProgramStatus.cxx
-    ProgramSwtStress.cxx
   )
   list(APPEND EXE_NAMES
     roc-bar-stress
@@ -224,7 +222,6 @@ if(PDA_FOUND)
     roc-metrics
     roc-siu-status
     roc-status
-    roc-swt-stress
   )
 endif()
 
