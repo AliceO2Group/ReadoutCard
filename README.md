@@ -202,18 +202,18 @@ The "global" parameters are:
 
 ```
 clock
-cruid
-datapathmode
+cruId
+datapathMode
 loopback
-gbtmode
-downstreamdata
-ponupstream
+gbtMode
+downstreamData
+ponUpstream
 ```
 
 The "per link" parameters are
 ```
 enabled
-gbtmux
+gbtMux
 ```
 
 The configuration file separates the parameter into three groups.
@@ -230,7 +230,7 @@ The configuration file separates the parameter into three groups.
     ```
     [links]
     enabled=true
-    gbtmux=swt
+    gbtMux=swt
     ```
 
 3. `[link*]`
@@ -239,10 +239,10 @@ The configuration file separates the parameter into three groups.
     ```
     [link4]
     enabled=true
-    gbtmux=ttc
+    gbtMux=ttc
     ```
 
-An example configuration file is provided with [roc_example.cfg](roc_example.cfg).
+An example configuration file is provided with [cru_template.cfg](cru_template.cfg).
 
 ---
 
