@@ -511,10 +511,13 @@ class ProgramDmaBench : public Program
 
           fetchAddSuperpagesReadOut();
 
+          bool atStartOfSuperpage = true;
           while ((readoutBytes < superpageInfo.effectiveSize) && !isStopDma()) {
             auto pageAddress = superpageAddress + readoutBytes;
             auto readoutCount = fetchAddDmaPagesReadOut();
-            size_t pageSize = readoutPage(pageAddress, readoutCount);
+            size_t pageSize = readoutPage(pageAddress, readoutCount, atStartOfSuperpage);
+
+            atStartOfSuperpage = false; //Update the boolean value as soon as we move...
 
             if (mOptions.byteCountEnabled && !(mOptions.dataSourceString == "INTERNAL")) {
               mByteCount.fetch_add(pageSize, std::memory_order_relaxed);
@@ -560,10 +563,12 @@ class ProgramDmaBench : public Program
         if ((mDataSource == DataSource::Fee) || (mDataSource == DataSource::Ddg)) {
           auto superpageAddress = mBufferBaseAddress + superpage.getOffset();
           size_t readoutBytes = 0;
+          bool atStartOfSuperpage = true;
           while ((readoutBytes < superpage.getReceived()) && !isSigInt()) { // At least one more dma page fits in the superpage
             auto pageAddress = superpageAddress + readoutBytes;
             auto readoutCount = fetchAddDmaPagesReadOut();
-            size_t pageSize = readoutPage(pageAddress, readoutCount);
+            size_t pageSize = readoutPage(pageAddress, readoutCount, atStartOfSuperpage);
+            atStartOfSuperpage = false; // Update the boolean value as soon as we move...
             readoutBytes += pageSize;
           }
 
@@ -584,7 +589,7 @@ class ProgramDmaBench : public Program
     return payload[0];
   };
 
-  size_t readoutPage(uintptr_t pageAddress, int64_t readoutCount)
+  size_t readoutPage(uintptr_t pageAddress, int64_t readoutCount, bool atStartOfSuperpage)
   {
     size_t pageSize = (mDataSource == DataSource::Internal) ? mPageSize : DataFormat::getOffset(reinterpret_cast<const char*>(pageAddress));
 
@@ -614,7 +619,7 @@ class ProgramDmaBench : public Program
             hasError = checkErrorsCrorc(pageAddress, pageSize, readoutCount, linkId);
             break;
           case CardType::Cru:
-            hasError = checkErrorsCru(pageAddress, pageSize, readoutCount, linkId);
+            hasError = checkErrorsCru(pageAddress, pageSize, readoutCount, linkId, atStartOfSuperpage);
             break;
           default:
             BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Error checking unsupported for this card type"));
@@ -633,12 +638,12 @@ class ProgramDmaBench : public Program
     return pageSize;
   }
 
-  bool checkErrorsCru(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
+  bool checkErrorsCru(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId, bool atStartOfSuperpage)
   {
     if (mDataSource == DataSource::Ddg) {
-      return checkErrorsCruDdg(pageAddress, pageSize, eventNumber, linkId);
+      return checkErrorsCruDdg(pageAddress, pageSize, eventNumber, linkId, atStartOfSuperpage);
     } else if (mDataSource == DataSource::Internal) {
-      return checkErrorsCruInternal(pageAddress, pageSize, eventNumber, linkId);
+      return checkErrorsCruInternal(pageAddress, pageSize, eventNumber, linkId); //TODO: Update internal err checking with bool for sp start
     } else {
       BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("CRU error check: Data Source " + DataSource::toString(mDataSource) + " not supported"));
     }
@@ -684,7 +689,7 @@ class ProgramDmaBench : public Program
     return foundError;
   }
 
-  bool checkErrorsCruDdg(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
+  bool checkErrorsCruDdg(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId, bool atStartOfSuperpage)
   {
     // Get memsize from the header
     const auto memBytes = DataFormat::getMemsize(reinterpret_cast<const char*>(pageAddress)); // Memory size [RDH, Payload]
@@ -713,8 +718,20 @@ class ProgramDmaBench : public Program
       }
       return true;
     } else {
-      //mErrorStream << b::format("packet_cnt:%d mpacket_cnt:%d freq:%d en:%d\n") % packetCounter % mPacketCounters[linkId] % mErrorCheckFrequency % eventNumber;
       mPacketCounters[linkId] = packetCounter; // same as = (mPacketCounters + mErrorCheckFrequency) % mMaxRdhPacketCounter
+    }
+
+    // check that the TimeFrame starts at the beginning of the superpage
+    const auto triggerType = DataFormat::getTriggerType(reinterpret_cast<const char*>(pageAddress));
+
+    if (Utilities::getBit(triggerType, 11) == 0x1 &&
+        packetCounter == 0x0 &&
+        !atStartOfSuperpage) {
+      // log TF not at the beginning of the superpage error
+      mErrorCount++;
+      if (mErrorCount < MAX_RECORDED_ERRORS) {
+        mErrorStream << b::format("[RDHERR]\tevent:%1% l:%2% payloadBytes:%3% size:%4% packet_cnt:%5% mpacket_cnt:%6% levent:%7% TF unaligned w/ start of superpage\n") % eventNumber % linkId % memBytes % pageSize % packetCounter % mPacketCounters[linkId] % mEventCounters[linkId];
+      }
     }
 
     // Skip data check if fast check enabled

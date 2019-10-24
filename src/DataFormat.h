@@ -39,22 +39,32 @@ uint32_t getWord(const char* data, int i)
 
 uint32_t getLinkId(const char* data)
 {
-  return Utilities::getBits(getWord(data, 3), 0, 7); //bits #[96-103] from RDH
+  return Utilities::getBits(getWord(data, 3), 0, 7); //bits #[96-103] from RDH word 0
 }
 
 uint32_t getMemsize(const char* data)
 {
-  return Utilities::getBits(getWord(data, 2), 16, 31); //bits #[80-95] from RDH
+  return Utilities::getBits(getWord(data, 2), 16, 31); //bits #[80-95] from RDH word 0
 }
 
 uint32_t getPacketCounter(const char* data)
 {
-  return Utilities::getBits(getWord(data, 3), 8, 15); //bits #[104-111] from RDH
+  return Utilities::getBits(getWord(data, 3), 8, 15); //bits #[104-111] from RDH word 0
 }
 
 uint32_t getOffset(const char* data)
 {
-  return Utilities::getBits(getWord(data, 2), 0, 15); //bits #[64-79] from RDH
+  return Utilities::getBits(getWord(data, 2), 0, 15); //bits #[64-79] from RDH word 0
+}
+
+uint32_t getTriggerType(const char* data)
+{
+  return Utilities::getBits(getWord(data, 9), 0, 31); //bits #[32-63] from RDH word 2
+}
+
+uint32_t getPagesCounter(const char* data)
+{
+  return Utilities::getBits(getWord(data, 13), 8, 22); //bits #[40-55] from RDH word 3
 }
 
 /// Get header size in bytes
