@@ -723,9 +723,10 @@ class ProgramDmaBench : public Program
 
     // check that the TimeFrame starts at the beginning of the superpage
     const auto triggerType = DataFormat::getTriggerType(reinterpret_cast<const char*>(pageAddress));
+    const auto pagesCounter = DataFormat::getPagesCounter(reinterpret_cast<const char*>(pageAddress));
 
     if (Utilities::getBit(triggerType, 11) == 0x1 &&
-        packetCounter == 0x0 &&
+        pagesCounter == 0x0 &&
         !atStartOfSuperpage) {
       // log TF not at the beginning of the superpage error
       mErrorCount++;
