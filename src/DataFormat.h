@@ -64,7 +64,7 @@ uint32_t getTriggerType(const char* data)
 
 uint32_t getPagesCounter(const char* data)
 {
-  return Utilities::getBits(getWord(data, 13), 8, 22); //bits #[40-55] from RDH word 3
+  return Utilities::getBits(getWord(data, 13), 8, 23); //bits #[40-55] from RDH word 3
 }
 
 /// Get header size in bytes
