@@ -526,7 +526,9 @@ class ProgramDmaBench : public Program
           }
 
           if (readoutBytes > mSuperpageSize) {
-            mDmaLoopBreak = true;
+            mDmaLoopBreak = true; // Dump superpage somewhere
+            mReadoutStream.open("RDH_CUMULATIVE_SP_SIZE_FAILURE.bin");
+            mReadoutStream.write(reinterpret_cast<const char*>(superpageAddress), mSuperpageSize);
             BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("RDH reports cumulative dma page sizes that exceed the superpage size"));
           }
 
@@ -604,6 +606,8 @@ class ProgramDmaBench : public Program
       if (mCardType == CardType::Cru && mDataSource != DataSource::Internal) {
         linkId = DataFormat::getLinkId(reinterpret_cast<const char*>(pageAddress));
         if (linkId >= mDataGeneratorCounters.size()) {
+          mReadoutStream.open("LINK_ID_OUT_OF_RANGE.bin");
+          mReadoutStream.write(reinterpret_cast<const char*>(pageAddress), mSuperpageSize);
           BOOST_THROW_EXCEPTION(Exception()
                                 << ErrorInfo::Message("Link ID from superpage out of range")
                                 << ErrorInfo::Index(linkId));
