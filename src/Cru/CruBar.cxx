@@ -133,7 +133,7 @@ uint32_t CruBar::getSuperpageSize(uint32_t link)
   writeRegister(Cru::Registers::LINK_SUPERPAGE_SIZE.get(link).index, 0xbadcafe); // write a dummy value to update the FIFO
   uint32_t superpageSizeFifo = readRegister(Cru::Registers::LINK_SUPERPAGE_SIZE.get(link).index);
   uint32_t superpageSize = Utilities::getBits(superpageSizeFifo, 0, 23); // [0-23] -> superpage size (in bytes)
-  //uint32_t superpageIndex = Utilities::getBits(superpageSizeFifo, 24, 31); // [24-31] -> superpage index (0-255) for _testing_
+  //uint32_t superpageIndex = Utilities::getBits(superpageSizeFifo, 24, 31); // [24-31] -> superpage index (0-255) _for testing_
 
   return superpageSize;
 }
@@ -440,7 +440,7 @@ void CruBar::reconfigure()
       static_cast<uint32_t>(mDownstreamData) == reportInfo.downstreamData &&
       std::equal(mLinkMap.begin(), mLinkMap.end(), reportInfo.linkMap.begin()) &&
       checkPonUpstreamStatusExpected(reportInfo.ponStatusRegister, reportInfo.onuAddress) &&
-      mCruId == reportInfo.cruId) {
+      mCruId == reportInfo.cruId) { //TODO: Add the dynamic offset in reconfigure
     log("No need to reconfigure further");
   } else {
     log("Reconfiguring");

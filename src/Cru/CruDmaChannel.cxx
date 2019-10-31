@@ -279,7 +279,7 @@ void CruDmaChannel::transferSuperpageFromLinkToReady(Link& link)
   if (superpageSize == 0) {                                       //backwards compatible in case the superpage size register is empty
     link.queue.front().setReceived(link.queue.front().getSize()); // force the full superpage size
   } else {
-    link.queue.front().setReceived(getBar()->getSuperpageSize(link.id));
+    link.queue.front().setReceived(superpageSize);
   }
   mReadyQueue.push_back(link.queue.front());
   link.queue.pop_front();
