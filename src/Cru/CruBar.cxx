@@ -133,7 +133,19 @@ uint32_t CruBar::getSuperpageSize(uint32_t link)
   writeRegister(Cru::Registers::LINK_SUPERPAGE_SIZE.get(link).index, 0xbadcafe); // write a dummy value to update the FIFO
   uint32_t superpageSizeFifo = readRegister(Cru::Registers::LINK_SUPERPAGE_SIZE.get(link).index);
   uint32_t superpageSize = Utilities::getBits(superpageSizeFifo, 0, 23); // [0-23] -> superpage size (in bytes)
-  //uint32_t superpageIndex = Utilities::getBits(superpageSizeFifo, 24, 31); // [24-31] -> superpage index (0-255) _for testing_
+  if (superpageSize == 0) {                                              // No reason to check for index -> superpageSize == 0 -> CRU FW < v3.4.0
+    return 0;
+  }
+  uint32_t superpageSizeIndex = Utilities::getBits(superpageSizeFifo, 24, 31); // [24-31] -> superpage index (0-255)
+
+  while (superpageSizeIndex != mSuperpageSizeIndexCounter[link]) { // In case the PCIe bus wasn't fast enough
+    //std::cout << "[SP INDEX] link " << link << " : " << superpageSizeIndex << " instead of " << mSuperpageSizeIndexCounter[link] << std::endl;
+    superpageSizeFifo = readRegister(Cru::Registers::LINK_SUPERPAGE_SIZE.get(link).index);
+    superpageSize = Utilities::getBits(superpageSizeFifo, 0, 23);
+    superpageSizeIndex = Utilities::getBits(superpageSizeFifo, 24, 31);
+  }
+
+  mSuperpageSizeIndexCounter[link] = (superpageSizeIndex + 1) % 256;
 
   return superpageSize;
 }
