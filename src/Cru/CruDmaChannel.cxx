@@ -173,8 +173,13 @@ void CruDmaChannel::deviceStopDma()
       if (mReadyQueue.size() >= READY_QUEUE_CAPACITY) {
         break;
       }
-      if (!link.queue.empty()) { // care for the extra filled superpage
-        transferSuperpageFromLinkToReady(link, true);
+
+      if (!link.queue.empty()) {    // care for the extra filled superpage
+        if (i == amountAvailable) { // Propagate that it is the last popped to set the size only to the RDH (eox)
+          transferSuperpageFromLinkToReady(link, true);
+        } else {
+          transferSuperpageFromLinkToReady(link);
+        }
         moved++;
       }
     }
@@ -278,14 +283,18 @@ void CruDmaChannel::transferSuperpageFromLinkToReady(Link& link, bool isPopped)
   }
 
   link.queue.front().setReady(true);
-  uint32_t superpageSize = getBar()->getSuperpageSize(link.id);
-  if (isPopped) { // Only RDH in case it is popped
-    link.queue.front().setReceived(0x40);
-  } else if (superpageSize == 0) {                                //backwards compatible in case the superpage size register is empty
-    link.queue.front().setReceived(link.queue.front().getSize()); // force the full superpage size
+
+  if (isPopped) {
+    link.queue.front().setReceived(0x40); // Only RDH in case it's popped
   } else {
-    link.queue.front().setReceived(superpageSize);
+    uint32_t superpageSize = getBar()->getSuperpageSize(link.id);
+    if (superpageSize == 0) {
+      link.queue.front().setReceived(link.queue.front().getSize()); // force the full superpage size for backwards compatibility
+    } else {
+      link.queue.front().setReceived(superpageSize);
+    }
   }
+
   mReadyQueue.push_back(link.queue.front());
   link.queue.pop_front();
   link.superpageCounter++;
