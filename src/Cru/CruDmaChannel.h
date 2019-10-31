@@ -115,7 +115,7 @@ class CruDmaChannel final : public DmaChannelPdaBase
   void pushSuperpageToLink(Link& link, const Superpage& superpage);
 
   /// Mark the front superpage of a link ready and transfer it to the ready queue
-  void transferSuperpageFromLinkToReady(Link& link);
+  void transferSuperpageFromLinkToReady(Link& link, bool isPopped = false);
 
   /// Enable debug mode by writing to the appropriate CRU register
   void enableDebugMode();
