@@ -15,6 +15,7 @@
 
 #include "Constants.h"
 #include "DatapathWrapper.h"
+#include "Utilities/Util.h"
 
 namespace AliceO2
 {
@@ -187,6 +188,20 @@ void DatapathWrapper::setDynamicOffset(int wrapper, bool enable)
   } else {
     mPdaBar->modifyRegister(address / 4, 31, 1, 0x0);
   }
+}
+
+bool DatapathWrapper::getDynamicOffsetEnabled(int wrapper)
+{
+  // Enable dynamic offset setting of the RDH (instead of fixed 0x2000)
+  uint32_t address = getDatapathWrapperBaseAddress(wrapper) +
+                     Cru::Registers::DWRAPPER_GREGS.address +
+                     Cru::Registers::DWRAPPER_ENREG.address;
+
+  uint32_t value = mPdaBar->readRegister(address / 4);
+  if (Utilities::getBit(value, 31) == 0x1) {
+    return true;
+  }
+  return false;
 }
 
 } // namespace roc

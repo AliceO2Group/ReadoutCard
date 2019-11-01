@@ -83,6 +83,7 @@ struct ReportInfo {
   uint32_t ponStatusRegister;
   uint32_t onuAddress;
   uint16_t cruId;
+  bool dynamicOffset;
 };
 
 uint32_t getWrapperBaseAddress(int wrapper);

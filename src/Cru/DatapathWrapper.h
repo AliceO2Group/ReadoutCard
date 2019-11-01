@@ -45,6 +45,7 @@ class DatapathWrapper
   void useDataGeneratorSource(bool enable);
   void enableDataGenerator(bool enable);
   void setDynamicOffset(int wrapper, bool enable);
+  bool getDynamicOffsetEnabled(int wrapper);
 
  private:
   uint32_t getDatapathWrapperBaseAddress(int wrapper);
