@@ -83,9 +83,14 @@ class ProgramStatus : public Program
     if (!mOptions.csvOut) {
       std::string clock = (reportInfo.ttcClock == 0 ? "TTC" : "Local");
       ;
-      std::cout << "------------" << std::endl;
-      std::cout << clock << " clock" << std::endl;
-      std::cout << "------------" << std::endl;
+      std::cout << "----------------------------" << std::endl;
+      std::cout << clock << " clock | ";
+      if (reportInfo.dynamicOffset) {
+        std::cout << "Dynamic offset" << std::endl;
+      } else {
+        std::cout << "Fixed offset" << std::endl;
+      }
+      std::cout << "----------------------------" << std::endl;
     }
 
     for (const auto& el : reportInfo.linkMap) {
