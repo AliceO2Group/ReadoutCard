@@ -428,6 +428,7 @@ Cru::ReportInfo CruBar::report()
   uint32_t ponStatusRegister = getPonStatusRegister();
   uint32_t onuAddress = getOnuAddress();
   uint16_t cruId = getCruId();
+  bool dynamicOffset = datapathWrapper.getDynamicOffsetEnabled(0) && datapathWrapper.getDynamicOffsetEnabled(1); // should be enabled for both wrappers
 
   Cru::ReportInfo reportInfo = {
     linkMap,
@@ -436,6 +437,7 @@ Cru::ReportInfo CruBar::report()
     ponStatusRegister,
     onuAddress,
     cruId,
+    dynamicOffset,
   };
 
   return reportInfo;
@@ -452,7 +454,8 @@ void CruBar::reconfigure()
       static_cast<uint32_t>(mDownstreamData) == reportInfo.downstreamData &&
       std::equal(mLinkMap.begin(), mLinkMap.end(), reportInfo.linkMap.begin()) &&
       checkPonUpstreamStatusExpected(reportInfo.ponStatusRegister, reportInfo.onuAddress) &&
-      mCruId == reportInfo.cruId) { //TODO: Add the dynamic offset in reconfigure
+      mCruId == reportInfo.cruId &&
+      mDynamicOffset == reportInfo.dynamicOffset) {
     log("No need to reconfigure further");
   } else {
     log("Reconfiguring");
