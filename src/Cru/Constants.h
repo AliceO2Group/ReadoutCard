@@ -151,14 +151,6 @@ static constexpr Register FPGA_CHIP_HIGH(0x00010014);
 /// Must be accessed on BAR 2
 static constexpr Register FPGA_CHIP_LOW(0x00010018);
 
-/// Registers containing the number of dropped packets
-/// Must be accessed on BAR 2
-/// Endpoint resolution must be done *manually*
-/// HARDCODED
-static constexpr Register NUM_DROPPED_PACKETS_ENDPOINT0(0x0060001C);
-
-static constexpr Register NUM_DROPPED_PACKETS_ENDPOINT1(0x0070001C);
-
 /// Registers for controlling the DDG
 static constexpr Register DDG_CTRL0(0x00d00000);
 static constexpr Register DDG_CTRL2(0x00d00004);
@@ -271,6 +263,16 @@ static constexpr Register DATALINK_OFFSET(0x00002000);
 static constexpr Register DATALINK_CONTROL(0x00000000);
 /*static constexpr uint32_t GBT_PACKET(0x1); 
 static constexpr uint32_t GBT_CONTINUOUS(0x0);*/
+
+/// Register containing the number of dropped packets
+static constexpr Register DWRAPPER_DROPPED_PACKETS(0x0000001c);
+
+/// Register containing the number of total packets per second
+static constexpr Register DWRAPPER_TOTAL_PACKETS_PER_SEC(0x0000002c);
+
+static constexpr Register DATALINK_PACKETS_ACCEPTED(0x0000000c);
+static constexpr Register DATALINK_PACKETS_REJECTED(0x00000008);
+static constexpr Register DATALINK_PACKETS_FORCED(0x00000010);
 
 /// Registers to set the Flow Control
 static constexpr Register FLOW_CONTROL_OFFSET(0x000c0000);

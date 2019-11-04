@@ -86,6 +86,22 @@ struct ReportInfo {
   bool dynamicOffset;
 };
 
+struct LinkPacketInfo {
+  uint32_t accepted;
+  uint32_t rejected;
+  uint32_t forced;
+};
+
+struct WrapperPacketInfo {
+  uint32_t dropped;
+  uint32_t totalPacketsPerSec;
+};
+
+struct PacketMonitoringInfo {
+  std::map<int, LinkPacketInfo> linkPacketInfoMap;
+  std::map<int, WrapperPacketInfo> wrapperPacketInfoMap;
+};
+
 uint32_t getWrapperBaseAddress(int wrapper);
 uint32_t getXcvrRegisterAddress(int wrapper, int bank, int link, int reg = 0);
 void atxcal0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress);

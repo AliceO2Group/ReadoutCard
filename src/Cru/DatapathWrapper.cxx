@@ -204,5 +204,53 @@ bool DatapathWrapper::getDynamicOffsetEnabled(int wrapper)
   return false;
 }
 
+uint32_t DatapathWrapper::getDroppedPackets(int wrapper)
+{
+  uint32_t address = getDatapathWrapperBaseAddress(wrapper) +
+                     Cru::Registers::DWRAPPER_GREGS.address +
+                     Cru::Registers::DWRAPPER_DROPPED_PACKETS.address;
+
+  return mPdaBar->readRegister(address / 4);
+}
+
+uint32_t DatapathWrapper::getTotalPacketsPerSecond(int wrapper)
+{
+  uint32_t address = getDatapathWrapperBaseAddress(wrapper) +
+                     Cru::Registers::DWRAPPER_GREGS.address +
+                     Cru::Registers::DWRAPPER_TOTAL_PACKETS_PER_SEC.address;
+
+  return mPdaBar->readRegister(address / 4);
+}
+
+uint32_t DatapathWrapper::getAcceptedPackets(Link link)
+{
+  uint32_t address = getDatapathWrapperBaseAddress(link.dwrapper) +
+                     Cru::Registers::DATAPATHLINK_OFFSET.address +
+                     Cru::Registers::DATALINK_OFFSET.address * link.dwrapperId +
+                     Cru::Registers::DATALINK_PACKETS_ACCEPTED.address;
+
+  return mPdaBar->readRegister(address / 4);
+}
+
+uint32_t DatapathWrapper::getRejectedPackets(Link link)
+{
+  uint32_t address = getDatapathWrapperBaseAddress(link.dwrapper) +
+                     Cru::Registers::DATAPATHLINK_OFFSET.address +
+                     Cru::Registers::DATALINK_OFFSET.address * link.dwrapperId +
+                     Cru::Registers::DATALINK_PACKETS_REJECTED.address;
+
+  return mPdaBar->readRegister(address / 4);
+}
+
+uint32_t DatapathWrapper::getForcedPackets(Link link)
+{
+  uint32_t address = getDatapathWrapperBaseAddress(link.dwrapper) +
+                     Cru::Registers::DATAPATHLINK_OFFSET.address +
+                     Cru::Registers::DATALINK_OFFSET.address * link.dwrapperId +
+                     Cru::Registers::DATALINK_PACKETS_FORCED.address;
+
+  return mPdaBar->readRegister(address / 4);
+}
+
 } // namespace roc
 } // namespace AliceO2

@@ -190,16 +190,17 @@ FirmwareFeatures CruBar::getFirmwareFeatures()
   return mFeatures;
 }
 
-/// Get number of dropped packets on endpoint 2
-int32_t CruBar::getDroppedPackets(int endpoint)
+/// Get number of dropped packets
+uint32_t CruBar::getDroppedPackets(int endpoint)
 {
-  if (endpoint == 0) {
-    return readRegister(Cru::Registers::NUM_DROPPED_PACKETS_ENDPOINT0.index);
-  } else if (endpoint == 1) {
-    return readRegister(Cru::Registers::NUM_DROPPED_PACKETS_ENDPOINT1.index);
-  } else {
-    return -1;
-  }
+  DatapathWrapper datapathWrapper = DatapathWrapper(mPdaBar);
+  return datapathWrapper.getDroppedPackets(endpoint);
+}
+
+uint32_t CruBar::getTotalPacketsPerSecond(int endpoint)
+{
+  DatapathWrapper datapathWrapper = DatapathWrapper(mPdaBar);
+  return datapathWrapper.getTotalPacketsPerSecond(endpoint);
 }
 
 // Get CTP clock (Hz)
@@ -441,6 +442,29 @@ Cru::ReportInfo CruBar::report()
   };
 
   return reportInfo;
+}
+
+Cru::PacketMonitoringInfo CruBar::monitorPackets()
+{
+  std::map<int, Cru::LinkPacketInfo> linkPacketInfoMap;
+  std::map<int, Cru::WrapperPacketInfo> wrapperPacketInfoMap;
+
+  DatapathWrapper datapathWrapper = DatapathWrapper(mPdaBar);
+  std::map<int, Link> linkMap = initializeLinkMap();
+  for (auto& el : linkMap) {
+    uint32_t accepted = datapathWrapper.getAcceptedPackets(el.second);
+    uint32_t rejected = datapathWrapper.getRejectedPackets(el.second);
+    uint32_t forced = datapathWrapper.getForcedPackets(el.second);
+    linkPacketInfoMap.insert({ el.first, { accepted, rejected, forced } });
+  }
+
+  for (int wrap = 0; wrap < 2; wrap++) {
+    uint32_t dropped = datapathWrapper.getDroppedPackets(wrap);
+    uint32_t totalPerSecond = datapathWrapper.getTotalPacketsPerSecond(wrap);
+    wrapperPacketInfoMap.insert({ wrap, { dropped, totalPerSecond } });
+  }
+
+  return { linkPacketInfoMap, wrapperPacketInfoMap };
 }
 
 void CruBar::reconfigure()

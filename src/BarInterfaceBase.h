@@ -77,7 +77,13 @@ class BarInterfaceBase : public BarInterface
   }
 
   /// Default implementation for optional function
-  virtual int32_t getDroppedPackets(int /*endpoint*/) override
+  virtual uint32_t getDroppedPackets(int /*endpoint*/) override
+  {
+    return 0;
+  }
+
+  /// Default implementation for optional function
+  virtual uint32_t getTotalPacketsPerSecond(int /*endpoint*/) override
   {
     return 0;
   }
