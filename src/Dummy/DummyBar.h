@@ -73,7 +73,12 @@ class DummyBar : public BarInterface
     return {};
   }
 
-  virtual int32_t getDroppedPackets(int /*endpoint*/) override
+  virtual uint32_t getDroppedPackets(int /*endpoint*/) override
+  {
+    return 0;
+  }
+
+  virtual uint32_t getTotalPacketsPerSecond(int /*endpoint*/) override
   {
     return 0;
   }
