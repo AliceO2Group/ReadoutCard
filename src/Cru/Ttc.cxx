@@ -14,7 +14,6 @@
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
 #include <thread>
-#include "Common.h"
 #include "Constants.h"
 #include "I2c.h"
 #include "Ttc.h"
@@ -188,6 +187,140 @@ uint32_t Ttc::getPllClock()
   I2c p2 = I2c(Cru::Registers::SI5345_2.address, chipAddress, mPdaBar); // no register map for this
   uint32_t clock = p2.getSelectedClock();
   return clock;
+}
+
+/*** CTP EMULATOR METHODS ***/
+void Ttc::resetCtpEmulator(bool doReset)
+{
+  if (doReset) {
+    mPdaBar->writeRegister(Cru::Registers::CTP_EMU_RUNMODE.index, 0x3); // go idle
+    mPdaBar->modifyRegister(Cru::Registers::CTP_EMU_CTRL.index, 31, 1, 0x1);
+  } else {
+    mPdaBar->modifyRegister(Cru::Registers::CTP_EMU_CTRL.index, 31, 1, 0x0);
+  }
+}
+
+void Ttc::setEmulatorTriggerMode(Cru::TriggerMode mode)
+{
+  mPdaBar->modifyRegister(Cru::Registers::CTP_EMU_RUNMODE.index, 0, 2, 0x3); // always go through idle
+
+  if (mode == Cru::TriggerMode::Manual) {
+    mPdaBar->modifyRegister(Cru::Registers::CTP_EMU_RUNMODE.index, 0, 2, 0x0);
+  } else if (mode == Cru::TriggerMode::Periodic) {
+    mPdaBar->modifyRegister(Cru::Registers::CTP_EMU_RUNMODE.index, 0, 2, 0x1);
+  } else if (mode == Cru::TriggerMode::Continuous) {
+    mPdaBar->modifyRegister(Cru::Registers::CTP_EMU_RUNMODE.index, 0, 2, 0x2);
+  }
+}
+
+void Ttc::doManualPhyTrigger()
+{
+  mPdaBar->modifyRegister(Cru::Registers::CTP_EMU_RUNMODE.index, 8, 1, 0x1); // set bit
+  mPdaBar->modifyRegister(Cru::Registers::CTP_EMU_RUNMODE.index, 8, 1, 0x0); // clear bit
+}
+
+void Ttc::setEmulatorContinuousMode()
+{
+  mPdaBar->modifyRegister(Cru::Registers::CTP_EMU_RUNMODE.index, 0, 2, 0x3); // always go through idle
+  mPdaBar->modifyRegister(Cru::Registers::CTP_EMU_RUNMODE.index, 0, 2, 0x2);
+}
+
+void Ttc::setEmulatorIdleMode()
+{
+  mPdaBar->modifyRegister(Cru::Registers::CTP_EMU_RUNMODE.index, 0, 2, 0x3);
+}
+
+void Ttc::setEmulatorStandaloneFlowControl(bool allow)
+{
+  uint32_t value = (allow ? 0x1 : 0x0);
+  mPdaBar->modifyRegister(Cru::Registers::CTP_EMU_RUNMODE.index, 2, 1, value);
+}
+
+void Ttc::setEmulatorBCMAX(uint32_t bcmax)
+{
+  if (bcmax > MAX_BCID) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD BCMAX VALUE " + bcmax));
+  } else {
+    mPdaBar->writeRegister(Cru::Registers::CTP_EMU_BCMAX.index, bcmax);
+  }
+}
+
+void Ttc::setEmulatorHBMAX(uint32_t hbmax)
+{
+  if (hbmax > ((0x1 << 16) - 1)) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD HBMAX VALUE " + hbmax));
+  } else {
+    mPdaBar->writeRegister(Cru::Registers::CTP_EMU_HBMAX.index, hbmax);
+  }
+}
+
+/// Specify number of Heartbeat Frames to keep and drop
+/// Cycles always start with keep and alternate with HB to keep and to drop
+void Ttc::setEmulatorPrescaler(uint32_t hbkeep, uint32_t hbdrop)
+{
+  if (hbkeep > ((0x1 << 16) - 1) || hbkeep < 2) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD HBKEEP VALUE must be >=2 and < 0xffff : " + hbkeep));
+  }
+
+  if (hbdrop > ((0x1 << 16) - 1) || hbdrop < 2) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD HBDROP VALUE must be >=2 and < 0xffff : " + hbdrop));
+  }
+
+  mPdaBar->writeRegister(Cru::Registers::CTP_EMU_PRESCALER.index, (hbdrop << 16) | hbkeep);
+}
+
+/// Generate a physics trigger every PHYSDIV ticks (max 28bit), larger than 7 to activate
+void Ttc::setEmulatorPHYSDIV(uint32_t physdiv)
+{
+  if (physdiv > ((0x1 << 28) - 1)) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD PHYSDIV VALUE " + physdiv));
+  }
+
+  mPdaBar->writeRegister(Cru::Registers::CTP_EMU_PHYSDIV.index, physdiv);
+}
+
+/// Generate a calibration trigger every CALDIV ticks (max 28bit), larger than 18 to activate
+void Ttc::setEmulatorCALDIV(uint32_t caldiv)
+{
+  if (caldiv > ((0x1 << 28) - 1)) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD CALDIV VALUE " + caldiv));
+  }
+
+  mPdaBar->writeRegister(Cru::Registers::CTP_EMU_CALDIV.index, caldiv);
+}
+
+/// Generate a healthcheck trigger every HCDIV ticks (max 28bit), larger than 10 to activate
+void Ttc::setEmulatorHCDIV(uint32_t hcdiv)
+{
+  if (hcdiv > ((0x1 << 28) - 1)) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD HCDIV VALUE " + hcdiv));
+  }
+
+  mPdaBar->writeRegister(Cru::Registers::CTP_EMU_HCDIV.index, hcdiv);
+}
+
+/// Set trigger at fixed bunch crossings. Always at 9 values, a value of 0 deactivates the slot
+void Ttc::setFixedBCTrigger(std::vector<uint32_t> FBCTVector)
+{
+  if (FBCTVector.size() != 9) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD FBCT VECTOR LENGTH " + FBCTVector.size()));
+  } else {
+    for (auto& value : FBCTVector) {
+      uint32_t newValue;
+
+      if (value > MAX_BCID) {
+        BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("INVALID FBCT VALUE"));
+      } else if (value == 0) {
+        newValue = 0;
+      } else if (value <= 2) {
+        newValue = MAX_BCID - (2 - value);
+      } else {
+        newValue = value - 2;
+      }
+
+      mPdaBar->writeRegister(Cru::Registers::CTP_EMU_FBCT.index, newValue);
+    }
+  }
 }
 
 // Currently unused by RoC

@@ -730,5 +730,51 @@ uint16_t CruBar::getCruId()
   return (readRegister(Cru::Registers::BSP_USER_CONTROL.index) >> 16) & 0x0fff;
 }
 
+void CruBar::emulateCtp(Cru::CtpInfo ctpInfo)
+{
+  Ttc ttc = Ttc(mPdaBar);
+  if (ctpInfo.generateEox) {
+    ttc.setEmulatorIdleMode();
+  } else if (ctpInfo.generateSingleTrigger) {
+    ttc.doManualPhyTrigger();
+  } else {
+    ttc.resetCtpEmulator(true);
+
+    if (ctpInfo.triggerMode == Cru::TriggerMode::Periodic) {
+      ttc.setEmulatorPHYSDIV(ctpInfo.triggerFrequency);
+      ttc.setEmulatorHCDIV(5);
+      ttc.setEmulatorCALDIV(5);
+    } else if (ctpInfo.triggerMode == Cru::TriggerMode::Hc) {
+      ctpInfo.triggerMode = Cru::TriggerMode::Periodic;
+      ttc.setEmulatorPHYSDIV(5);
+      ttc.setEmulatorHCDIV(ctpInfo.triggerFrequency);
+      ttc.setEmulatorCALDIV(5);
+    } else if (ctpInfo.triggerMode == Cru::TriggerMode::Cal) {
+      ctpInfo.triggerMode = Cru::TriggerMode::Periodic;
+      ttc.setEmulatorPHYSDIV(5);
+      ttc.setEmulatorHCDIV(5);
+      ttc.setEmulatorCALDIV(ctpInfo.triggerFrequency);
+    } else if (ctpInfo.triggerMode == Cru::TriggerMode::Fixed) {
+      ctpInfo.triggerMode = Cru::TriggerMode::Periodic;
+
+      // Don't send PHYS continuously (no PHY trigger if rate < 7)
+      ttc.setEmulatorPHYSDIV(5);
+      std::vector<uint32_t> bunchCrossings = { 0x10, 0x14d, 0x29a, 0x3e7, 0x534, 0x681, 0x7ce, 0x91b, 0xa68 };
+      ttc.setFixedBCTrigger(bunchCrossings);
+    }
+
+    ttc.setEmulatorTriggerMode(ctpInfo.triggerMode);
+
+    ttc.setEmulatorBCMAX(ctpInfo.bcMax);
+    ttc.setEmulatorHBMAX(ctpInfo.hbMax);
+    ttc.setEmulatorPrescaler(ctpInfo.hbKeep, ctpInfo.hbDrop);
+
+    //ttc.setEmulatorHCDIV(38); // to generate periodic hc triggers
+    //ttc.setEmulatorCALDIV(5); // to generate periodic cal triggers
+
+    ttc.resetCtpEmulator(false);
+  }
+}
+
 } // namespace roc
 } // namespace AliceO2

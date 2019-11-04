@@ -278,6 +278,17 @@ static constexpr Register DATALINK_PACKETS_FORCED(0x00000010);
 static constexpr Register FLOW_CONTROL_OFFSET(0x000c0000);
 static constexpr Register FLOW_CONTROL_REGISTER(0x00000000);
 
+/// Register for the CTP Emulator
+static constexpr Register CTP_EMU_RUNMODE(0x00280010);
+static constexpr Register CTP_EMU_CTRL(0x00280000);
+static constexpr Register CTP_EMU_BCMAX(0x00280004);
+static constexpr Register CTP_EMU_HBMAX(0x00280008);
+static constexpr Register CTP_EMU_PRESCALER(0x0028000c);
+static constexpr Register CTP_EMU_PHYSDIV(0x00280014);
+static constexpr Register CTP_EMU_CALDIV(0x00280020);
+static constexpr Register CTP_EMU_HCDIV(0x00280018);
+static constexpr Register CTP_EMU_FBCT(0x00280024);
+
 //** I2C **//
 /// I2C base addresses
 static constexpr Register SI5345_1(0x00030500);
