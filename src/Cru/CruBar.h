@@ -83,6 +83,7 @@ class CruBar final : public BarInterfaceBase
   void reconfigure() override;
   Cru::ReportInfo report();
   Cru::PacketMonitoringInfo monitorPackets();
+  void emulateCtp(Cru::CtpInfo);
 
   void enableDataTaking();
   void disableDataTaking();

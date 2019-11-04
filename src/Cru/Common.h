@@ -102,6 +102,28 @@ struct PacketMonitoringInfo {
   std::map<int, WrapperPacketInfo> wrapperPacketInfoMap;
 };
 
+enum TriggerMode {
+  Manual,
+  Periodic,
+  Continuous,
+  Fixed,
+  Hc,
+  Cal,
+};
+
+struct CtpInfo {
+  uint32_t bcMax;
+  uint32_t hbDrop;
+  uint32_t hbKeep;
+  uint32_t hbMax;
+
+  TriggerMode triggerMode;
+  uint32_t triggerFrequency;
+
+  bool generateEox;
+  bool generateSingleTrigger;
+};
+
 uint32_t getWrapperBaseAddress(int wrapper);
 uint32_t getXcvrRegisterAddress(int wrapper, int bank, int link, int reg = 0);
 void atxcal0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress);
