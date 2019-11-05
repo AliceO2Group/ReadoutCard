@@ -161,6 +161,8 @@ The Parameters that affect the configuration of the CRU and their possible value
 
 `DynamicOffsetEnabled (true | false)`
 
+`TriggerWindowSize (0 - 4095)`
+
 To set any of the above parameters the usual template can be followed.
 
 ```
@@ -208,6 +210,9 @@ loopback
 gbtMode
 downstreamData
 ponUpstream
+onuAddress
+dynamicOffsetEnabled
+triggerWindowSize
 ```
 
 The "per link" parameters are

@@ -65,6 +65,7 @@ roc_regs = {
 'add_dwrapper_enreg':'DWRAPPER_ENREG',
 'add_dwrapper_drop_pkts':'DWRAPPER_DROPPED',
 'add_dwrapper_tot_per_sec':'DWRAPPER_TOTAL_PACKETS_PER_SEC',
+'add_dwrapper_trigsize':'DWRAPPER_TRIGGER_SIZE',
 'add_ddg_ctrl':'DDG_CTRL0',
 'add_ddg_ctrl2':'DDG_CTRL2',
 'add_pon_wrapper_tx':'PON_WRAPPER_TX',

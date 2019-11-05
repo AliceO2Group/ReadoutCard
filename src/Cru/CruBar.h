@@ -134,6 +134,7 @@ class CruBar final : public BarInterfaceBase
   bool mPonUpstream;
   uint32_t mOnuAddress;
   bool mDynamicOffset;
+  uint32_t mTriggerWindowSize;
 
   /// Per-link counter to verify superpage sizes received are valid
   uint32_t mSuperpageSizeIndexCounter[Cru::MAX_LINKS] = { 0 };

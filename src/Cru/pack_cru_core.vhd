@@ -131,29 +131,32 @@ constant add_gbt_link_rx_ctrl_offset : unsigned(31 downto 0) := x"0000_003C";
 -------------------------------------------------------------------------------
 -- GBTSCA wrapper pages
 constant add_gbt_sc	        		: unsigned(31 downto 0):=X"00f0_0000";
--- WR
+-- SCA WR
 constant add_gbt_sca_wr_data        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0000";
 constant add_gbt_sca_wr_cmd        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0004";
 constant add_gbt_sca_wr_ctr        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0008";
--- RD
+-- SCA RD
 constant add_gbt_sca_rd_data        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0010";
 constant add_gbt_sca_rd_cmd        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0014";
 constant add_gbt_sca_rd_ctr        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0018";
 constant add_gbt_sca_rd_mon        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_001c";
+-- IC
+constant add_gbt_ic_wr_data        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0020";
+constant add_gbt_ic_wr_cfg        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0024";
+constant add_gbt_ic_wr_cmd        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0028";
+--
+constant add_gbt_ic_rd_data        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0030";
 -- SWT
 constant add_gbt_swt_wr_l                       : unsigned(31 downto 0):=add_gbt_sc+X"0000_0040";
 constant add_gbt_swt_wr_m                       : unsigned(31 downto 0):=add_gbt_sc+X"0000_0044";
 constant add_gbt_swt_wr_h                       : unsigned(31 downto 0):=add_gbt_sc+X"0000_0048";
-
 constant add_gbt_swt_cmd                        : unsigned(31 downto 0):=add_gbt_sc+X"0000_004c";
-
 constant add_gbt_swt_rd_l                       : unsigned(31 downto 0):=add_gbt_sc+X"0000_0050";
 constant add_gbt_swt_rd_m                       : unsigned(31 downto 0):=add_gbt_sc+X"0000_0054";
 constant add_gbt_swt_rd_h                       : unsigned(31 downto 0):=add_gbt_sc+X"0000_0058";
-
 constant add_gbt_swt_mon                        : unsigned(31 downto 0):=add_gbt_sc+X"0000_005c";
 constant add_gbt_swt_word_mon                   : unsigned(31 downto 0):=add_gbt_sc+X"0000_0060";
-
+--
 constant add_gbt_sc_link                        : unsigned(31 downto 0):=add_gbt_sc+X"0000_0078";
 constant add_gbt_sc_rst                         : unsigned(31 downto 0):=add_gbt_sc+X"0000_007c";
 
@@ -173,17 +176,22 @@ constant add_ttc_data_ctrl		: unsigned(31 downto 0):=add_ttc_regs+X"0000_0000";
 constant add_ttc_hbtrig_ltu	    : unsigned(31 downto 0):=add_ttc_regs+X"0000_0004";
 constant add_ttc_phystrig_ltu	: unsigned(31 downto 0):=add_ttc_regs+X"0000_0008";
 constant add_ttc_eox_sox_ltu	: unsigned(31 downto 0):=add_ttc_regs+X"0000_000C";
+constant add_ttc_ttcok	                : unsigned(31 downto 0):=add_ttc_regs+X"0000_0010";
+constant add_ttc_onuerror_sticky        : unsigned(31 downto 0):=add_ttc_regs+X"0000_0014";
 
 constant add_ttc_clkgen_ttc240freq	: unsigned(31 downto 0):=add_ttc_clkgen+X"0000_0000";
 constant add_ttc_clkgen_glb240freq	: unsigned(31 downto 0):=add_ttc_clkgen+X"0000_0004";
-constant add_ttc_clkgen_ref240freq	: unsigned(31 downto 0):=add_ttc_clkgen+X"0000_0008";
-constant add_ttc_clkgen_clknotokcnt  	: unsigned(31 downto 0):=add_ttc_clkgen+X"0000_000C";
+constant add_ttc_clkgen_rxref240freq	: unsigned(31 downto 0):=add_ttc_clkgen+X"0000_0008";
+constant add_ttc_clkgen_txref240freq  	: unsigned(31 downto 0):=add_ttc_clkgen+X"0000_000C";
 constant add_ttc_clkgen_clkctrl 	: unsigned(31 downto 0):=add_ttc_clkgen+X"0000_0010";
 constant add_ttc_clkgen_clkstat 	: unsigned(31 downto 0):=add_ttc_clkgen+X"0000_0014";
 constant add_ttc_clkgen_pllctrlonu 	: unsigned(31 downto 0):=add_ttc_clkgen+X"0000_0018";
 constant add_ttc_clkgen_pllstatonu 	: unsigned(31 downto 0):=add_ttc_clkgen+X"0000_001C";
 constant add_ttc_clkgen_phasecnt 	: unsigned(31 downto 0):=add_ttc_clkgen+X"0000_0020";
 constant add_ttc_clkgen_phasestat 	: unsigned(31 downto 0):=add_ttc_clkgen+X"0000_0024";
+constant add_ttc_clkgen_phasehist 	: unsigned(31 downto 0):=add_ttc_clkgen+X"0000_002C";
+constant add_ttc_clkgen_clknotokcnt 	: unsigned(31 downto 0):=add_ttc_clkgen+X"0000_0028";
+
 
 constant add_ttc_clkgen_onufpll 	: unsigned(31 downto 0):=add_ttc_clkgen+X"0000_8000";
 
@@ -196,10 +204,6 @@ constant add_pon_wrapper_pll	        : unsigned(31 downto 0):=add_ttc_onu+X"0000
 constant add_pon_wrapper_tx		: unsigned(31 downto 0):=add_ttc_onu+X"0000_6000";
 constant add_onu_user_logic	        : unsigned(31 downto 0):=add_ttc_onu+X"0000_A000";
 constant add_onu_freq_meas		: unsigned(31 downto 0):=add_ttc_onu+X"0000_E000";
-
-constant add_onu_rxref_freq		: unsigned(31 downto 0):=add_onu_freq_meas+X"0000_0000";
-constant add_onu_trxuser_freq	        : unsigned(31 downto 0):=add_onu_freq_meas+X"0000_0004";
-constant add_onu_txref_freq	        : unsigned(31 downto 0):=add_onu_freq_meas+X"0000_0008";
 
 
 -- Pattern player
@@ -276,6 +280,8 @@ constant add_dwrapper_clockcore    : unsigned(31 downto 0):=X"0000_0024"; -- RO
 constant add_dwrapper_clockcore_free: unsigned(31 downto 0):=X"0000_0028"; -- RO
 constant add_dwrapper_tot_per_sec  : unsigned(31 downto 0):=X"0000_002C"; -- RO
 constant add_dwrapper_drop_per_sec : unsigned(31 downto 0):=X"0000_0030"; -- RO
+constant add_dwrapper_trigsize     : unsigned(31 downto 0):=X"0000_0034"; -- WO
+
 --datapath link registers
 constant add_datalink_ctrl	      : unsigned(31 downto 0):=X"0000_0000";
 
@@ -288,12 +294,22 @@ constant add_flowctrl_ctrlreg		: unsigned(31 downto 0):=X"0000_0000";
 constant add_flowctrl_pkt_rej		: unsigned(31 downto 0):=X"0000_0004";
 constant add_flowctrl_pkt_tot		: unsigned(31 downto 0):=X"0000_0008";
 
+
+-------------------------------------------------------------------------------
+-- Serial Flash address tables
+-------------------------------------------------------------------------------
+constant add_serial_flash_csr     : unsigned(31 downto 0):=X"00A0_0000";
+constant add_serial_flash_wr_rst  : unsigned(31 downto 0):=X"00B0_0000";
+constant add_serial_flash_wr_data : unsigned(31 downto 0):=X"00B0_0004";
+
+
 -------------------------------------------------------------------------------
 -- BSP address tables
 -------------------------------------------------------------------------------
 constant add_bsp		          : unsigned(31 downto 0):=X"0000_0000";
 constant add_bsp_info	          : unsigned(31 downto 0):=add_bsp+X"0000_0000";
 constant add_bsp_hkeeping	      : unsigned(31 downto 0):=add_bsp+X"0001_0000";
+constant add_bsp_rsu     	      : unsigned(31 downto 0):=add_bsp+X"0002_0000";
 constant add_bsp_i2c	          : unsigned(31 downto 0):=add_bsp+X"0003_0000";
 
 constant add_bsp_info_dirtystatus  : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0000";
@@ -313,6 +329,13 @@ constant add_bsp_hkeeping_hwlimit  : unsigned(31 downto 0)   :=add_bsp_hkeeping+
 constant add_bsp_hkeeping_chipid_high : unsigned(31 downto 0):=add_bsp_hkeeping+X"0000_0014";
 constant add_bsp_hkeeping_chipid_low  : unsigned(31 downto 0):=add_bsp_hkeeping+X"0000_0018";
 constant add_bsp_hkeeping_spare_in    : unsigned(31 downto 0):=add_bsp_hkeeping+X"0000_001C";
+
+constant add_bsp_rsu_reconf_cond      : unsigned(31 downto 0)   :=add_bsp_rsu+X"0000_0000";
+constant add_bsp_rsu_watchdog_timeout : unsigned(31 downto 0)   :=add_bsp_rsu+X"0000_0008";
+constant add_bsp_rsu_watchdog_enable  : unsigned(31 downto 0)   :=add_bsp_rsu+X"0000_000C";
+constant add_bsp_rsu_pagesel          : unsigned(31 downto 0)   :=add_bsp_rsu+X"0000_0010";
+constant add_bsp_rsu_conf_mode        : unsigned(31 downto 0)   :=add_bsp_rsu+X"0000_0014";
+constant add_bsp_rsu_ctrl             : unsigned(31 downto 0)   :=add_bsp_rsu+X"0000_0018";
 
 constant add_bsp_i2c_tsensor      : unsigned(31 downto 0):=add_bsp_i2c+X"0000_0000";
 constant add_bsp_i2c_cpcie        : unsigned(31 downto 0):=add_bsp_i2c+X"0000_0100";
@@ -370,7 +393,7 @@ component bsp is
     MMS_CLK     : in  std_logic;
     MMS_RESET   : in  std_logic;
     MMS_WAITREQ : out std_logic;
-    MMS_ADDR    : in  std_logic_vector(23 downto 0);
+    MMS_ADDR    : in  std_logic_vector(19 downto 0);
     MMS_WR      : in  std_logic;
     MMS_WRDATA  : in  std_logic_vector(31 downto 0);
     MMS_RD      : in  std_logic;
@@ -435,7 +458,6 @@ end component freqmeas;
 
 component ddg is
   generic (
-    g_TTC_DOWNLINK_BITS : integer := 192;
     g_NUM_GBT_LINKS     : integer := 4
     );
   port(
@@ -457,7 +479,7 @@ component ddg is
     TTC_RXCLK      : in  std_logic;
     TTC_RXRST      : in  std_logic;
     TTC_RXVALID    : in  std_logic;
-    TTC_RXD        : in  std_logic_vector(G_TTC_DOWNLINK_BITS-1 downto 0);
+    TTC_RXD        : in  std_logic_vector(199 downto 0);
     --------------------------------------------------------------------------------
     -- GBT Downlink (CRU -> FE)
     --------------------------------------------------------------------------------
@@ -582,6 +604,7 @@ component datapath_wrapper is
     USERSOP     : in  std_logic;
     USEREOP     : in  std_logic;
     USERD       : in  std_logic_vector(255 downto 0);
+    AFULL_UL    : out std_logic;
     ---------------------------------------------------------------------------
 	-- RO protocol port (for ack or decision message). clocked by TTCRXCLK 
     ROPROT_VAL     : in  std_logic;
@@ -692,6 +715,7 @@ component cdcbus is
     CLKI : in  std_logic;               -- input clock domain's clk
     E    : in  std_logic;
     I    : in  std_logic_vector(W - 1 downto 0);
+    RSTVAL : in std_logic_vector(W-1 downto 0):=(others=>'0');
     --
     CLKO : in  std_logic;               -- output clock domain's clk
     RSTO : in  std_logic := '0';

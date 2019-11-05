@@ -31,7 +31,7 @@ CardConfigurator::CardConfigurator(Parameters::CardIdType cardId, std::string co
       bar2->reconfigure();
     }
   } catch (const Exception& e) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(boost::diagnostic_information(e)));
+    BOOST_THROW_EXCEPTION(e);
   }
 }
 
@@ -45,7 +45,7 @@ CardConfigurator::CardConfigurator(Parameters& parameters, bool forceConfigure)
       bar2->reconfigure();
     }
   } catch (const Exception& e) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(boost::diagnostic_information(e)));
+    BOOST_THROW_EXCEPTION(e);
   }
 }
 
@@ -65,6 +65,7 @@ void CardConfigurator::parseConfigUri(std::string configUri, Parameters& paramet
   uint16_t cruId = 0x0;
   GbtMode::type gbtMode = GbtMode::type::Gbt;
   DownstreamData::type downstreamData = DownstreamData::type::Ctp;
+  uint32_t triggerWindowSize = 1000;
 
   bool enabled = false;
   std::string gbtMux = "ttc";
@@ -112,6 +113,8 @@ void CardConfigurator::parseConfigUri(std::string configUri, Parameters& paramet
 
         allowRejection = conf->get<bool>("allowRejection");
 
+        triggerWindowSize = conf->get<int>("triggerWindowSize");
+
         conf->setPrefix("");
 
         parameters.setClock(clock);
@@ -124,6 +127,7 @@ void CardConfigurator::parseConfigUri(std::string configUri, Parameters& paramet
         parameters.setOnuAddress(onuAddress);
         parameters.setCruId(cruId);
         parameters.setAllowRejection(allowRejection);
+        parameters.setTriggerWindowSize(triggerWindowSize);
 
       } else if (group == "links") { // Configure all links with default values
 

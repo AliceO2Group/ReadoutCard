@@ -48,7 +48,8 @@ CruBar::CruBar(const Parameters& parameters)
     mGbtMuxMap(parameters.getGbtMuxMap().get_value_or(std::map<uint32_t, GbtMux::type>{})),
     mPonUpstream(parameters.getPonUpstreamEnabled().get_value_or(false)),
     mOnuAddress(parameters.getOnuAddress().get_value_or(0x0)),
-    mDynamicOffset(parameters.getDynamicOffsetEnabled().get_value_or(false))
+    mDynamicOffset(parameters.getDynamicOffsetEnabled().get_value_or(false)),
+    mTriggerWindowSize(parameters.getTriggerWindowSize().get_value_or(1000))
 {
   if (getIndex() == 0) {
     mFeatures = parseFirmwareFeatures();
@@ -430,6 +431,10 @@ Cru::ReportInfo CruBar::report()
   uint32_t onuAddress = getOnuAddress();
   uint16_t cruId = getCruId();
   bool dynamicOffset = datapathWrapper.getDynamicOffsetEnabled(0) && datapathWrapper.getDynamicOffsetEnabled(1); // should be enabled for both wrappers
+  uint32_t triggerWindowSize = datapathWrapper.getTriggerWindowSize(0);
+  if (triggerWindowSize != datapathWrapper.getTriggerWindowSize(1)) { // in case trigger window size is different between wrappers
+    triggerWindowSize = 4096;                                         //invalid trigger window size to force reconfigure
+  }
 
   Cru::ReportInfo reportInfo = {
     linkMap,
@@ -439,6 +444,7 @@ Cru::ReportInfo CruBar::report()
     onuAddress,
     cruId,
     dynamicOffset,
+    triggerWindowSize
   };
 
   return reportInfo;
@@ -479,7 +485,8 @@ void CruBar::reconfigure()
       std::equal(mLinkMap.begin(), mLinkMap.end(), reportInfo.linkMap.begin()) &&
       checkPonUpstreamStatusExpected(reportInfo.ponStatusRegister, reportInfo.onuAddress) &&
       mCruId == reportInfo.cruId &&
-      mDynamicOffset == reportInfo.dynamicOffset) {
+      mDynamicOffset == reportInfo.dynamicOffset &&
+      mTriggerWindowSize == reportInfo.triggerWindowSize) {
     log("No need to reconfigure further");
   } else {
     log("Reconfiguring");
@@ -544,6 +551,10 @@ void CruBar::configure()
     }
     datapathWrapper.setFlowControl(link.dwrapper, mAllowRejection); //Set flow control anyway as it's per dwrapper
   }
+
+  log("Setting trigger window size");
+  datapathWrapper.setTriggerWindowSize(0, mTriggerWindowSize);
+  datapathWrapper.setTriggerWindowSize(1, mTriggerWindowSize);
 
   log("Setting packet arbitration");
   datapathWrapper.setPacketArbitration(mWrapperCount, 0);

@@ -239,7 +239,7 @@ void Ttc::setEmulatorStandaloneFlowControl(bool allow)
 void Ttc::setEmulatorBCMAX(uint32_t bcmax)
 {
   if (bcmax > MAX_BCID) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD BCMAX VALUE " + bcmax));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD BCMAX VALUE") << ErrorInfo::ConfigValue(bcmax));
   } else {
     mPdaBar->writeRegister(Cru::Registers::CTP_EMU_BCMAX.index, bcmax);
   }
@@ -248,7 +248,7 @@ void Ttc::setEmulatorBCMAX(uint32_t bcmax)
 void Ttc::setEmulatorHBMAX(uint32_t hbmax)
 {
   if (hbmax > ((0x1 << 16) - 1)) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD HBMAX VALUE " + hbmax));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD HBMAX VALUE") << ErrorInfo::ConfigValue(hbmax));
   } else {
     mPdaBar->writeRegister(Cru::Registers::CTP_EMU_HBMAX.index, hbmax);
   }
@@ -259,11 +259,13 @@ void Ttc::setEmulatorHBMAX(uint32_t hbmax)
 void Ttc::setEmulatorPrescaler(uint32_t hbkeep, uint32_t hbdrop)
 {
   if (hbkeep > ((0x1 << 16) - 1) || hbkeep < 2) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD HBKEEP VALUE must be >=2 and < 0xffff : " + hbkeep));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD HBKEEP VALUE must be >= 2 and < 0xffff")
+                                      << ErrorInfo::ConfigValue(hbkeep));
   }
 
   if (hbdrop > ((0x1 << 16) - 1) || hbdrop < 2) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD HBDROP VALUE must be >=2 and < 0xffff : " + hbdrop));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD HBDROP VALUE must be >= 2 and < 0xffff")
+                                      << ErrorInfo::ConfigValue(hbdrop));
   }
 
   mPdaBar->writeRegister(Cru::Registers::CTP_EMU_PRESCALER.index, (hbdrop << 16) | hbkeep);
@@ -273,7 +275,7 @@ void Ttc::setEmulatorPrescaler(uint32_t hbkeep, uint32_t hbdrop)
 void Ttc::setEmulatorPHYSDIV(uint32_t physdiv)
 {
   if (physdiv > ((0x1 << 28) - 1)) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD PHYSDIV VALUE " + physdiv));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD PHYSDIV VALUE") << ErrorInfo::ConfigValue(physdiv));
   }
 
   mPdaBar->writeRegister(Cru::Registers::CTP_EMU_PHYSDIV.index, physdiv);
@@ -283,7 +285,7 @@ void Ttc::setEmulatorPHYSDIV(uint32_t physdiv)
 void Ttc::setEmulatorCALDIV(uint32_t caldiv)
 {
   if (caldiv > ((0x1 << 28) - 1)) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD CALDIV VALUE " + caldiv));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD CALDIV VALUE") << ErrorInfo::ConfigValue(caldiv));
   }
 
   mPdaBar->writeRegister(Cru::Registers::CTP_EMU_CALDIV.index, caldiv);
@@ -293,7 +295,7 @@ void Ttc::setEmulatorCALDIV(uint32_t caldiv)
 void Ttc::setEmulatorHCDIV(uint32_t hcdiv)
 {
   if (hcdiv > ((0x1 << 28) - 1)) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD HCDIV VALUE " + hcdiv));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD HCDIV VALUE") << ErrorInfo::ConfigValue(hcdiv));
   }
 
   mPdaBar->writeRegister(Cru::Registers::CTP_EMU_HCDIV.index, hcdiv);
@@ -303,7 +305,7 @@ void Ttc::setEmulatorHCDIV(uint32_t hcdiv)
 void Ttc::setFixedBCTrigger(std::vector<uint32_t> FBCTVector)
 {
   if (FBCTVector.size() != 9) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD FBCT VECTOR LENGTH " + FBCTVector.size()));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD FBCT VECTOR LENGTH") << ErrorInfo::ConfigValue(FBCTVector.size()));
   } else {
     for (auto& value : FBCTVector) {
       uint32_t newValue;

@@ -88,6 +88,9 @@ class ProgramConfig : public Program
     options.add_options()("bypass-fw-check",
                           po::bool_switch(&mOptions.bypassFirmwareCheck),
                           "Flag to force configuration, bypassing the firmware checker");
+    options.add_options()("trigger-window-size",
+                          po::value<uint32_t>(&mOptions.triggerWindowSize),
+                          "Flag to set the size of the trigger window in GBT words");
     Options::addOptionCardId(options);
   }
 
@@ -145,6 +148,7 @@ class ProgramConfig : public Program
       params.setPonUpstreamEnabled(mOptions.ponUpstreamEnabled);
       params.setDynamicOffsetEnabled(mOptions.dynamicOffsetEnabled);
       params.setOnuAddress(mOptions.onuAddress);
+      params.setTriggerWindowSize(mOptions.triggerWindowSize);
 
       try {
         CardConfigurator(params, mOptions.forceConfig);
@@ -179,6 +183,7 @@ class ProgramConfig : public Program
     bool dynamicOffsetEnabled = false;
     uint32_t onuAddress = 0x0;
     uint16_t cruId = 0x0;
+    uint32_t triggerWindowSize = 1000;
   } mOptions;
 
  private:

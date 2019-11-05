@@ -118,6 +118,9 @@ class Parameters
   /// Type for the STBRD enabled parameter
   using StbrdEnabledType = bool;
 
+  // Type for the Trigger Window Size parameter
+  using TriggerWindowSizeType = uint32_t;
+
   // Setters
 
   /// Sets the CardId parameter
@@ -312,6 +315,12 @@ class Parameters
   /// \return Reference to this object for chaining calls
   auto setStbrdEnabled(StbrdEnabledType value) -> Parameters&;
 
+  /// Sets the TriggerWindowSize parameter
+  ///
+  /// \param value The value to set
+  /// \return Reference to this object for chaining calls
+  auto setTriggerWindowSize(TriggerWindowSizeType value) -> Parameters&;
+
   // on-throwing getters
 
   /// Gets the AllowRejection parameter
@@ -388,6 +397,10 @@ class Parameters
   /// Gets the StbrdEnabled parameter
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
   auto getStbrdEnabled() const -> boost::optional<StbrdEnabledType>;
+
+  /// Gets the TriggerWindowSize parameter
+  /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+  auto getTriggerWindowSize() const -> boost::optional<TriggerWindowSizeType>;
 
   // Throwing getters
 
@@ -485,6 +498,11 @@ class Parameters
   /// \exception ParameterException The parameter was not present
   /// \return The value
   auto getStbrdEnabledRequired() const -> StbrdEnabledType;
+
+  /// Gets the TriggerWindowSize parameter
+  /// \exception ParameterException The parameter was not present
+  /// \return The value
+  auto getTriggerWindowSizeRequired() const -> TriggerWindowSizeType;
 
   // Helper functions
 
