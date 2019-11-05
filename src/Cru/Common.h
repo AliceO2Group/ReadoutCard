@@ -16,10 +16,12 @@
 #ifndef ALICEO2_READOUTCARD_CRU_COMMON_H_
 #define ALICEO2_READOUTCARD_CRU_COMMON_H_
 
+#include <boost/multiprecision/cpp_int.hpp>
+
 #include "Constants.h"
 #include "Pda/PdaBar.h"
 
-#include <iostream>
+using namespace boost::multiprecision;
 
 namespace AliceO2
 {
@@ -123,6 +125,20 @@ struct CtpInfo {
 
   bool generateEox;
   bool generateSingleTrigger;
+};
+
+struct PatternPlayerInfo {
+  uint128_t syncPattern = 0x0;
+  uint128_t resetPattern = 0x0;
+  uint128_t idlePattern = 0x0;
+  uint32_t syncLength = 1;
+  uint32_t syncDelay = 0;
+  uint32_t resetLength = 1;
+  uint32_t resetTriggerSelect = 30;
+  uint32_t syncTriggerSelect = 29;
+  bool syncAtStart = false;
+  bool triggerSync = false;
+  bool triggerReset = false;
 };
 
 uint32_t getWrapperBaseAddress(int wrapper);

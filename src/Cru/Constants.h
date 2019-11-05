@@ -292,6 +292,22 @@ static constexpr Register CTP_EMU_CALDIV(0x00280020);
 static constexpr Register CTP_EMU_HCDIV(0x00280018);
 static constexpr Register CTP_EMU_FBCT(0x00280024);
 
+/// Registers for the Pattern Player
+static constexpr Register PATPLAYER_CFG(0x00260000);
+static constexpr Register PATPLAYER_IDLE_PATTERN_0(0x00260004);
+static constexpr Register PATPLAYER_IDLE_PATTERN_1(0x00260008);
+static constexpr Register PATPLAYER_IDLE_PATTERN_2(0x0026000c);
+static constexpr Register PATPLAYER_SYNC_PATTERN_0(0x00260010);
+static constexpr Register PATPLAYER_SYNC_PATTERN_1(0x00260014);
+static constexpr Register PATPLAYER_SYNC_PATTERN_2(0x00260018);
+static constexpr Register PATPLAYER_RESET_PATTERN_0(0x0026001c);
+static constexpr Register PATPLAYER_RESET_PATTERN_1(0x00260020);
+static constexpr Register PATPLAYER_RESET_PATTERN_2(0x00260024);
+static constexpr Register PATPLAYER_SYNC_CNT(0x00260028);
+static constexpr Register PATPLAYER_DELAY_CNT(0x0026002c);
+static constexpr Register PATPLAYER_RESET_CNT(0x00260030);
+static constexpr Register PATPLAYER_TRIGGER_SEL(0x00260034);
+
 //** I2C **//
 /// I2C base addresses
 static constexpr Register SI5345_1(0x00030500);

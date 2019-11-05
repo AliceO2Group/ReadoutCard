@@ -25,6 +25,7 @@
 #include "Gbt.h"
 #include "I2c.h"
 #include "Ttc.h"
+#include "PatternPlayer.h"
 #include "DatapathWrapper.h"
 #include "boost/format.hpp"
 #include "Utilities/Util.h"
@@ -784,6 +785,43 @@ void CruBar::emulateCtp(Cru::CtpInfo ctpInfo)
     //ttc.setEmulatorCALDIV(5); // to generate periodic cal triggers
 
     ttc.resetCtpEmulator(false);
+  }
+}
+
+void CruBar::patternPlayer(Cru::PatternPlayerInfo info)
+{
+  Ttc ttc = Ttc(mPdaBar);
+  ttc.selectDownstreamData(DownstreamData::Pattern);
+
+  PatternPlayer pp = PatternPlayer(mPdaBar);
+  pp.configure(true);
+
+  if (info.idlePattern) {
+    pp.setIdlePattern(info.idlePattern);
+  }
+
+  if (info.syncPattern) {
+    pp.setSyncPattern(info.syncPattern);
+  }
+
+  if (info.resetPattern) {
+    pp.setResetPattern(info.resetPattern);
+  }
+
+  pp.configureSync(info.syncLength, info.syncDelay);
+  pp.configureReset(info.resetLength);
+
+  pp.selectPatternTrigger(info.syncTriggerSelect, info.resetTriggerSelect);
+  pp.configure(false);
+
+  pp.enableSyncAtStart(info.syncAtStart);
+
+  if (info.triggerReset) {
+    pp.triggerReset();
+  }
+
+  if (info.triggerSync) {
+    pp.triggerSync();
   }
 }
 

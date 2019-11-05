@@ -132,6 +132,7 @@ if(PDA_FOUND)
     src/Cru/Eeprom.cxx
     src/Cru/Gbt.cxx
     src/Cru/I2c.cxx
+    src/Cru/PatternPlayer.cxx
     src/Cru/Ttc.cxx
     src/Pda/PdaBar.cxx
     src/Pda/PdaDevice.cxx
@@ -210,6 +211,7 @@ if(PDA_FOUND)
     ProgramListCards.cxx
     ProgramMetrics.cxx
     ProgramPacketMonitor.cxx
+    ProgramPatternPlayer.cxx
     ProgramSiuStatus.cxx
     ProgramStatus.cxx
   )
@@ -224,6 +226,7 @@ if(PDA_FOUND)
     roc-list-cards
     roc-metrics
     roc-pkt-monitor
+    roc-pat-player
     roc-siu-status
     roc-status
   )
