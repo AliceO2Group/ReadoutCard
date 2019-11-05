@@ -84,6 +84,7 @@ class CruBar final : public BarInterfaceBase
   Cru::ReportInfo report();
   Cru::PacketMonitoringInfo monitorPackets();
   void emulateCtp(Cru::CtpInfo);
+  void patternPlayer(Cru::PatternPlayerInfo patternPlayerInfo);
 
   void enableDataTaking();
   void disableDataTaking();
