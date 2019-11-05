@@ -252,5 +252,28 @@ uint32_t DatapathWrapper::getForcedPackets(Link link)
   return mPdaBar->readRegister(address / 4);
 }
 
+/// size in gbt words
+void DatapathWrapper::setTriggerWindowSize(int wrapper, uint32_t size)
+{
+  if (size > 4095) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD TRIGSIZE, should be less or equal to 4095") << ErrorInfo::ConfigValue(size));
+  }
+  uint32_t address = getDatapathWrapperBaseAddress(wrapper) +
+                     Cru::Registers::DWRAPPER_GREGS.address +
+                     Cru::Registers::DWRAPPER_TRIGGER_SIZE.address;
+
+  mPdaBar->writeRegister(address / 4, size);
+}
+
+/// size in gbt words
+uint32_t DatapathWrapper::getTriggerWindowSize(int wrapper)
+{
+  uint32_t address = getDatapathWrapperBaseAddress(wrapper) +
+                     Cru::Registers::DWRAPPER_GREGS.address +
+                     Cru::Registers::DWRAPPER_TRIGGER_SIZE.address;
+
+  return mPdaBar->readRegister(address / 4);
+}
+
 } // namespace roc
 } // namespace AliceO2

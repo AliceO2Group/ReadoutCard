@@ -270,6 +270,9 @@ static constexpr Register DWRAPPER_DROPPED_PACKETS(0x0000001c);
 /// Register containing the number of total packets per second
 static constexpr Register DWRAPPER_TOTAL_PACKETS_PER_SEC(0x0000002c);
 
+/// Register to set the trigger window size in gbt words
+static constexpr Register DWRAPPER_TRIGGER_SIZE(0x00000034);
+
 static constexpr Register DATALINK_PACKETS_ACCEPTED(0x0000000c);
 static constexpr Register DATALINK_PACKETS_REJECTED(0x00000008);
 static constexpr Register DATALINK_PACKETS_FORCED(0x00000010);

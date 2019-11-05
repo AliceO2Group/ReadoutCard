@@ -53,6 +53,7 @@ DEFINE_ERRINFO(CardId, ::AliceO2::roc::Parameters::CardIdType);
 DEFINE_ERRINFO(CardType, ::AliceO2::roc::CardType::type);
 DEFINE_ERRINFO(ChannelNumber, int);
 DEFINE_ERRINFO(ConfigParse, std::string);
+DEFINE_ERRINFO(ConfigValue, uint32_t);
 DEFINE_ERRINFO(DdlResetMask, std::string);
 DEFINE_ERRINFO(Directory, std::string);
 DEFINE_ERRINFO(DiuCommand, int);
