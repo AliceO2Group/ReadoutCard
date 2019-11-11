@@ -644,7 +644,7 @@ class ProgramDmaBench : public Program
 
   bool checkErrorsCru(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId, bool atStartOfSuperpage)
   {
-    if (mDataSource == DataSource::Ddg) {
+    if (mDataSource == DataSource::Ddg || mDataSource == DataSource::Fee) {
       return checkErrorsCruDdg(pageAddress, pageSize, eventNumber, linkId, atStartOfSuperpage);
     } else if (mDataSource == DataSource::Internal) {
       return checkErrorsCruInternal(pageAddress, pageSize, eventNumber, linkId); //TODO: Update internal err checking with bool for sp start
@@ -739,8 +739,8 @@ class ProgramDmaBench : public Program
       }
     }
 
-    // Skip data check if fast check enabled
-    if (mFastCheckEnabled) {
+    // Skip data check if fast check enabled or FEE data source selected
+    if (mFastCheckEnabled || mDataSource == DataSource::Fee) {
       return false;
     }
 
