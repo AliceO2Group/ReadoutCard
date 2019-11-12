@@ -415,7 +415,7 @@ bool CrorcDmaChannel::isReadyQueueFull()
 
 int32_t CrorcDmaChannel::getDroppedPackets()
 {
-  //log("No support for dropped packets in CRORC yet", InfoLogger::InfoLogger::Warning);
+  log("No support for dropped packets in CRORC yet", InfoLogger::InfoLogger::Warning);
   return -1;
 }
 
