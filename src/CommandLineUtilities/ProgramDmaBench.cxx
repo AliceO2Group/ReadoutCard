@@ -73,8 +73,6 @@ constexpr auto EVENT_COUNTER_INITIAL_VALUE = std::numeric_limits<uint32_t>::max(
 constexpr auto MAX_LINKS = 32;
 /// Interval for low priority thread (display updates, etc)
 constexpr auto LOW_PRIORITY_INTERVAL = 10ms;
-/// Buffer value to reset to
-constexpr uint32_t BUFFER_DEFAULT_VALUE = 0xCcccCccc;
 /// Fields: Time(hour:minute:second), Pages pushed, Pages read, Errors, °C
 const std::string PROGRESS_FORMAT_HEADER("  %-8s   %-12s  %-12s %-18s  %-12s  %-5.1f");
 /// Fields: Time(hour:minute:second), Pages pushed, Pages read, Errors, °C
