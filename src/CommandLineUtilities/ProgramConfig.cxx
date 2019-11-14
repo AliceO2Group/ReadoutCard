@@ -13,6 +13,7 @@
 ///
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
+#include <fstream>
 #include <iostream>
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
@@ -91,6 +92,9 @@ class ProgramConfig : public Program
     options.add_options()("trigger-window-size",
                           po::value<uint32_t>(&mOptions.triggerWindowSize),
                           "Flag to set the size of the trigger window in GBT words");
+    options.add_options()("gen-cfg-file",
+                          po::value<std::string>(&mOptions.genConfigFile),
+                          "If set generates a configuration file from the command line options. [DOES NOT CONFIGURE]");
     Options::addOptionCardId(options);
   }
 
@@ -134,7 +138,6 @@ class ProgramConfig : public Program
     }
 
     if (mOptions.configUri == "") {
-      std::cout << "Configuring with command line arguments" << std::endl;
       auto params = Parameters::makeParameters(cardId, 2);
       params.setLinkMask(Parameters::linkMaskFromString(mOptions.links));
       params.setAllowRejection(mOptions.allowRejection);
@@ -150,6 +153,40 @@ class ProgramConfig : public Program
       params.setOnuAddress(mOptions.onuAddress);
       params.setTriggerWindowSize(mOptions.triggerWindowSize);
 
+      // Generate a configuration file base on the parameters provided
+      if (mOptions.genConfigFile != "") {
+        std::cout << "Generating a configuration file at: " << mOptions.genConfigFile << std::endl;
+        std::ofstream cfgFile;
+        cfgFile.open(mOptions.genConfigFile);
+
+        cfgFile << "[cru]\n";
+        cfgFile << "allowRejection=" << std::boolalpha << mOptions.allowRejection << "\n";
+        cfgFile << "clock=" << mOptions.clock << "\n";
+        cfgFile << "cruId=" << mOptions.cruId << "\n";
+        cfgFile << "datapathMode=" << mOptions.datapathMode << "\n";
+        cfgFile << "loopback=" << std::boolalpha << mOptions.linkLoopbackEnabled << "\n";
+        cfgFile << "gbtMode=" << mOptions.gbtMode << "\n";
+        cfgFile << "downstreamData=" << mOptions.downstreamData << "\n";
+        cfgFile << "ponUpstream=" << std::boolalpha << mOptions.ponUpstreamEnabled << "\n";
+        cfgFile << "onuAddress=" << mOptions.onuAddress << "\n";
+        cfgFile << "dynamicOffset=" << std::boolalpha << mOptions.dynamicOffsetEnabled << "\n";
+        cfgFile << "triggerWindowSize=" << mOptions.triggerWindowSize << "\n";
+
+        cfgFile << "[links]\n";
+        cfgFile << "enabled=false\n";
+        cfgFile << "gbtMux=TTC\n";
+
+        for (const auto& link : params.getLinkMaskRequired()) {
+          cfgFile << "[link" << link << "]\n";
+          cfgFile << "enabled=true\n";
+          cfgFile << "gbtMux=" << mOptions.gbtMux << "\n";
+        }
+
+        cfgFile.close();
+        return;
+      }
+
+      std::cout << "Configuring with command line arguments" << std::endl;
       try {
         CardConfigurator(params, mOptions.forceConfig);
       } catch (const Exception& e) {
@@ -173,6 +210,7 @@ class ProgramConfig : public Program
     std::string downstreamData = "Ctp";
     std::string gbtMode = "gbt";
     std::string gbtMux = "ttc";
+    std::string genConfigFile = "";
     std::string links = "0";
     bool allowRejection = false;
     bool bypassFirmwareCheck = false;
