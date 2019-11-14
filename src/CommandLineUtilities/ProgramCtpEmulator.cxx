@@ -45,7 +45,7 @@ class ProgramCtpEmulator : public Program
                           "Sets the maximum Bunch Crossing value");
     options.add_options()("hbmax",
                           po::value<uint32_t>(&mOptions.hbMax)->default_value(8),
-                          "Sets the maximum HeartBeat value");
+                          "Sets the maximum number of Hearteats within a Timeframe");
     options.add_options()("hbdrop",
                           po::value<uint32_t>(&mOptions.hbDrop)->default_value(15000),
                           "Sets the number of Heartbeats to keep");
@@ -54,7 +54,7 @@ class ProgramCtpEmulator : public Program
                           "Sets the number Heartbeats to drop");
     options.add_options()("trigger-mode",
                           po::value<std::string>(&mOptions.triggerModeString)->default_value("periodic"),
-                          "Sets the trigger mode. Options are periodic, manual and continuous");
+                          "Sets the trigger mode. Options are periodic, manual, continuous and fixed");
     options.add_options()("trigger-freq",
                           po::value<uint32_t>(&mOptions.triggerFrequency)->default_value(8),
                           "Sets the physics trigger frequency.");
