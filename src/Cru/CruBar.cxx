@@ -681,6 +681,9 @@ void CruBar::populateLinkMap(std::map<int, Link>& linkMap)
 
       link.datapathMode = mDatapathMode;
       link.allowRejection = mAllowRejection;
+    } else {
+      link.loopback = false; // disabled links should NOT be in loopback
+      gbt.setLoopback(link, link.loopback);
     }
   }
 }
