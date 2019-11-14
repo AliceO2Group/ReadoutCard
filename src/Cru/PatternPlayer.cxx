@@ -41,14 +41,14 @@ void PatternPlayer::setIdlePattern(uint128_t pattern)
 {
   mPdaBar->writeRegister(Cru::Registers::PATPLAYER_IDLE_PATTERN_0.index, uint32_t(pattern & 0xffffffff));
   mPdaBar->writeRegister(Cru::Registers::PATPLAYER_IDLE_PATTERN_1.index, uint32_t((pattern >> 32) & 0xffffffff));
-  mPdaBar->writeRegister(Cru::Registers::PATPLAYER_IDLE_PATTERN_0.index, uint32_t((pattern >> 64) & 0xffff));
+  mPdaBar->writeRegister(Cru::Registers::PATPLAYER_IDLE_PATTERN_2.index, uint32_t((pattern >> 64) & 0xffff));
 }
 
 void PatternPlayer::setSyncPattern(uint128_t pattern)
 {
   mPdaBar->writeRegister(Cru::Registers::PATPLAYER_SYNC_PATTERN_0.index, uint32_t(pattern & 0xffffffff));
   mPdaBar->writeRegister(Cru::Registers::PATPLAYER_SYNC_PATTERN_1.index, uint32_t((pattern >> 32) & 0xffffffff));
-  mPdaBar->writeRegister(Cru::Registers::PATPLAYER_SYNC_PATTERN_0.index, uint32_t((pattern >> 64) & 0xffff));
+  mPdaBar->writeRegister(Cru::Registers::PATPLAYER_SYNC_PATTERN_2.index, uint32_t((pattern >> 64) & 0xffff));
 }
 
 void PatternPlayer::configureSync(uint32_t length, uint32_t delay)
@@ -61,7 +61,7 @@ void PatternPlayer::setResetPattern(uint128_t pattern)
 {
   mPdaBar->writeRegister(Cru::Registers::PATPLAYER_RESET_PATTERN_0.index, uint32_t(pattern & 0xffffffff));
   mPdaBar->writeRegister(Cru::Registers::PATPLAYER_RESET_PATTERN_1.index, uint32_t((pattern >> 32) & 0xffffffff));
-  mPdaBar->writeRegister(Cru::Registers::PATPLAYER_RESET_PATTERN_0.index, uint32_t((pattern >> 64) & 0xffff));
+  mPdaBar->writeRegister(Cru::Registers::PATPLAYER_RESET_PATTERN_2.index, uint32_t((pattern >> 64) & 0xffff));
 }
 
 void PatternPlayer::configureReset(uint32_t length)
