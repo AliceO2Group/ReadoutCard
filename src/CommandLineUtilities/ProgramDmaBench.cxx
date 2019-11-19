@@ -564,7 +564,7 @@ class ProgramDmaBench : public Program
           auto superpageAddress = mBufferBaseAddress + superpage.getOffset();
           size_t readoutBytes = 0;
           bool atStartOfSuperpage = true;
-          while ((readoutBytes < superpage.getReceived()) && !isSigInt()) { // At least one more dma page fits in the superpage
+          while ((readoutBytes < superpage.getReceived())) { // At least one more dma page fits in the superpage
             auto pageAddress = superpageAddress + readoutBytes;
             auto readoutCount = fetchAddDmaPagesReadOut();
             size_t pageSize = readoutPage(pageAddress, readoutCount, atStartOfSuperpage);
