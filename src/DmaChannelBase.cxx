@@ -19,6 +19,7 @@
 #include <iostream>
 //#include "ChannelPaths.h"
 #include "Common/System.h"
+#include "Pda/Util.h"
 #include "Utilities/SmartPointer.h"
 #include "Visitor.h"
 
@@ -45,52 +46,6 @@ void DmaChannelBase::checkChannelNumber(const AllowedChannels& allowedChannels)
 
 void DmaChannelBase::checkParameters(Parameters& /*parameters*/) //TODO: Possible use case?
 {
-}
-
-void DmaChannelBase::freeUnusedChannelBuffer()
-{
-  namespace bfs = boost::filesystem;
-  InfoLogger::InfoLogger logger;
-
-  try {
-    Pda::PdaLock lock{}; // We're messing around with PDA buffers so we need this even though we hold the DMA lock
-  } catch (const LockException& exception) {
-    log("Failed to acquire PDA lock", InfoLogger::InfoLogger::Debug);
-    throw;
-  }
-
-  try {
-    std::string pciPath = "/sys/bus/pci/drivers/uio_pci_dma/";
-    if (boost::filesystem::exists(pciPath)) {
-      for (auto& entry : boost::make_iterator_range(bfs::directory_iterator(pciPath), {})) {
-        auto filename = entry.path().filename().string();
-        if (filename.size() == 12) {
-          // The PCI directory names are 12 characters long
-          auto pciAddress = filename.substr(5); // Remove leading '0000:'
-
-          if (PciAddress::fromString(pciAddress) && (pciAddress == mCardDescriptor.pciAddress.toString())) {
-            // This is a valid PCI address and it's *ours*
-            std::string dmaPath("/sys/bus/pci/drivers/uio_pci_dma/" + filename + "/dma");
-            for (auto& entry : boost::make_iterator_range(bfs::directory_iterator(dmaPath), {})) {
-              auto bufferId = entry.path().filename().string();
-              if (bfs::is_directory(entry)) {
-                if ((mCardDescriptor.cardType == CardType::Crorc) && (stoi(bufferId) != getChannelNumber())) { // don't free another channel's buffer
-                  continue;
-                }
-                std::string mapPath = dmaPath + "/" + bufferId + "/map";
-                std::string freePath = dmaPath + "/free";
-                logger << "Freeing PDA buffer '" + mapPath + "'" << InfoLogger::InfoLogger::endm;
-                AliceO2::Common::System::executeCommand("echo " + bufferId + " > " + freePath);
-              }
-            }
-          }
-        }
-      }
-    }
-  } catch (const boost::filesystem::filesystem_error& e) {
-    logger << "Failed to free buffers: " << e.what() << InfoLogger::InfoLogger::endm;
-    throw;
-  }
 }
 
 DmaChannelBase::DmaChannelBase(CardDescriptor cardDescriptor, Parameters& parameters,
@@ -122,13 +77,12 @@ DmaChannelBase::DmaChannelBase(CardDescriptor cardDescriptor, Parameters& parame
   }
 
   log("Acquired DMA channel lock", InfoLogger::InfoLogger::Debug);
-
-  freeUnusedChannelBuffer();
+  Pda::freePdaDmaBuffers(mCardDescriptor, getChannelNumber());
 }
 
 DmaChannelBase::~DmaChannelBase()
 {
-  freeUnusedChannelBuffer();
+  Pda::freePdaDmaBuffers(mCardDescriptor, getChannelNumber());
   log("Releasing DMA channel lock", InfoLogger::InfoLogger::Debug);
 }
 
