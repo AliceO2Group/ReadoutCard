@@ -15,16 +15,21 @@
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/filesystem.hpp>
 #include <iostream>
+#include "Common/System.h"
 #include "ReadoutCard/ChannelFactory.h"
 #include "CommandLineUtilities/Common.h"
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
+#include "Pda/Util.h"
+#include "ReadoutCard/CardDescriptor.h"
 
 using namespace AliceO2::roc::CommandLineUtilities;
 using namespace AliceO2::roc;
 namespace algo = boost::algorithm;
 namespace po = boost::program_options;
+namespace bfs = boost::filesystem;
 
 class ProgramCleanup : public Program
 {
@@ -45,8 +50,9 @@ class ProgramCleanup : public Program
               << "\033[0m" << std::endl;
     std::cout << std::endl;
     std::cout << "Execution of this tool will:" << std::endl;
-    std::cout << "1. Clean all hugepage resources under /var/lib/hugetlbfs/global/pagesize-{2MB, 1GB}/ which match readout* and roc-bench-dma*" << std::endl;
-    std::cout << "2. Remove and reinsert the uio_pci_dma kernel module" << std::endl;
+    std::cout << "1. Free PDA DMA buffers" << std::endl;
+    std::cout << "2. Clean all hugepage resources under /var/lib/hugetlbfs/global/pagesize-{2MB, 1GB}/ which match readout* and roc-bench-dma*" << std::endl;
+    std::cout << "3. Remove and reinsert the uio_pci_dma kernel module" << std::endl;
     std::cout << std::endl;
     std::cout << "In case instances of readout.exe or roc-bench-dma are running, they will fail." << std::endl;
     std::cout << std::endl;
@@ -58,6 +64,8 @@ class ProgramCleanup : public Program
       std::cout << "Terminated" << std::endl;
       return;
     }
+
+    Pda::freePdaDmaBuffers();
 
     std::cout << "Removing readout 2MB hugepage mappings" << std::endl;
     system("rm /var/lib/hugetlbfs/global/pagesize-2MB/readout*");
