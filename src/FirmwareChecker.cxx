@@ -21,7 +21,8 @@ namespace AliceO2
 namespace roc
 {
 
-FirmwareChecker::FirmwareChecker() : mCompatibleFirmwareList({ { "20191014-115705-51882687", "v3.4.0" },
+FirmwareChecker::FirmwareChecker() : mCompatibleFirmwareList({ { "20191114-171438-5b162edd", "v3.5.0" },
+                                                               { "20191014-115705-51882687", "v3.4.0" },
                                                                { "20190911-150139-3f5e11b3", "v3.3.0" },
                                                                { "20190718-120712-4c8e6c48", "v3.2.0" },
                                                                { "0.0:2000-0-0", "alpha" } })
