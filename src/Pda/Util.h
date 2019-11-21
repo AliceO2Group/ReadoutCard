@@ -17,10 +17,8 @@
 #ifndef ALICEO2_SRC_READOUTCARD_PDA_UTIL_H_
 #define ALICEO2_SRC_READOUTCARD_PDA_UTIL_H_
 
-#include <stdlib.h>
 #include <boost/filesystem.hpp>
 #include <vector>
-#include <pda.h>
 #include <InfoLogger/InfoLogger.hxx>
 #include "Common/System.h"
 #include "Pda/PdaDevice.h"
