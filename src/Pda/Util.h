@@ -21,7 +21,6 @@
 #include <vector>
 #include <InfoLogger/InfoLogger.hxx>
 #include "Common/System.h"
-#include "Pda/PdaDevice.h"
 #include "Pda/PdaLock.h"
 #include "ReadoutCard/CardDescriptor.h"
 
