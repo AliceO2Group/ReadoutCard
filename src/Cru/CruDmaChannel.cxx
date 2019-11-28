@@ -147,14 +147,14 @@ void CruDmaChannel::deviceStartDma()
 /// Set buffer to ready
 void CruDmaChannel::setBufferReady()
 {
-  getBar()->setDataEmulatorEnabled(true);
+  getBar()->startDmaEngine();
   std::this_thread::sleep_for(10ms);
 }
 
 /// Set buffer to non-ready
 void CruDmaChannel::setBufferNonReady()
 {
-  getBar()->setDataEmulatorEnabled(false);
+  getBar()->stopDmaEngine();
 }
 
 void CruDmaChannel::deviceStopDma()
@@ -171,7 +171,7 @@ void CruDmaChannel::deviceStopDma()
         break;
       }
 
-      if (!link.queue.empty()) {    // care for the extra filled superpage
+      if (!link.queue.empty()) { // care for the extra filled superpage
         transferSuperpageFromLinkToReady(link);
         moved++;
       }

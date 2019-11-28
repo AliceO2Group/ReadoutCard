@@ -66,7 +66,8 @@ class CruBar final : public BarInterfaceBase
   void pushSuperpageDescriptor(uint32_t link, uint32_t pages, uintptr_t busAddress);
   uint32_t getSuperpageCount(uint32_t link);
   uint32_t getSuperpageSize(uint32_t link);
-  void setDataEmulatorEnabled(bool enabled);
+  void startDmaEngine();
+  void stopDmaEngine();
   void resetDataGeneratorCounter();
   void resetCard();
   void dataGeneratorInjectError();
@@ -74,9 +75,6 @@ class CruBar final : public BarInterfaceBase
   FirmwareFeatures getFirmwareFeatures();
 
   static FirmwareFeatures convertToFirmwareFeatures(uint32_t reg);
-
-  static void setDataGeneratorEnableBits(uint32_t& bits, bool enabled);
-  static void setDataGeneratorRandomSizeBits(uint32_t& bits, bool enabled);
 
   void setWrapperCount();
   void configure() override;

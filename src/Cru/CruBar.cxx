@@ -152,14 +152,19 @@ uint32_t CruBar::getSuperpageSize(uint32_t link)
   return superpageSize;
 }
 
-/// Enables the data emulator
-/// \param enabled true for enabled
-void CruBar::setDataEmulatorEnabled(bool enabled)
+/// Signals the CRU DMA engine to start
+void CruBar::startDmaEngine()
 {
-  writeRegister(Cru::Registers::DMA_CONTROL.index, enabled ? 0x1 : 0x0);
-  uint32_t bits = readRegister(Cru::Registers::DATA_GENERATOR_CONTROL.index);
-  setDataGeneratorEnableBits(bits, enabled);
-  writeRegister(Cru::Registers::DATA_GENERATOR_CONTROL.index, bits);
+  writeRegister(Cru::Registers::DMA_CONTROL.index, 0x11);                  // send DMA start (bit #0)
+                                                                           // dyn offset enabled (bit #4)
+  modifyRegister(Cru::Registers::DATA_GENERATOR_CONTROL.index, 0, 1, 0x1); // enable data generator
+}
+
+/// Signals the CRU DMA engine to stop
+void CruBar::stopDmaEngine()
+{
+  modifyRegister(Cru::Registers::DMA_CONTROL.index, 8, 1, 0x1);            // send DMA flush to the CRU
+  modifyRegister(Cru::Registers::DATA_GENERATOR_CONTROL.index, 0, 1, 0x0); // disable data generator
 }
 
 /// Resets the data generator counter
@@ -385,14 +390,6 @@ FirmwareFeatures CruBar::convertToFirmwareFeatures(uint32_t reg)
     features.chipId = true;
   }
   return features;
-}
-
-/// Sets the bits for the data generator enabled in the given integer
-/// \param bits Integer with bits to set
-/// \param enabled Generator enabled or not
-void CruBar::setDataGeneratorEnableBits(uint32_t& bits, bool enabled)
-{
-  Utilities::setBit(bits, 0, enabled);
 }
 
 /// Reports the CRU status
