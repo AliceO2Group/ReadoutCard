@@ -346,6 +346,8 @@ class ProgramDmaBench : public Program
 
     std::cout << "\n\n";
     mChannel->stopDma();
+    int numPopped = freeExcessPages(10ms);
+    getLogger() << "Popped " << numPopped << " remaining superpages" << endm;
 
     outputErrors();
     outputStats();
@@ -546,6 +548,39 @@ class ProgramDmaBench : public Program
 
     pushFuture.get();
     lowPriorityFuture.get();
+  }
+
+  /// Free the pages that remain after stopping DMA (these may not be filled)
+  int freeExcessPages(std::chrono::milliseconds timeout)
+  {
+    auto start = std::chrono::steady_clock::now();
+    int popped = 0;
+    while ((std::chrono::steady_clock::now() - start) < timeout) {
+      auto size = mChannel->getReadyQueueSize();
+      for (int i = 0; i < size; ++i) {
+        auto superpage = mChannel->popSuperpage();
+        fetchAddSuperpagesReadOut();
+        if ((mDataSource == DataSource::Fee) || (mDataSource == DataSource::Ddg)) {
+          auto superpageAddress = mBufferBaseAddress + superpage.getOffset();
+          size_t readoutBytes = 0;
+          bool atStartOfSuperpage = true;
+          while ((readoutBytes < superpage.getReceived())) { // At least one more dma page fits in the superpage
+            auto pageAddress = superpageAddress + readoutBytes;
+            auto readoutCount = fetchAddDmaPagesReadOut();
+            size_t pageSize = readoutPage(pageAddress, readoutCount, atStartOfSuperpage);
+            atStartOfSuperpage = false; // Update the boolean value as soon as we move...
+            readoutBytes += pageSize;
+          }
+
+          if (readoutBytes > mSuperpageSize) {
+            BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("RDH reports cumulative dma page sizes that exceed the superpage size"));
+          }
+        }
+        std::cout << "[popped superpage " << i << " ], size= " << superpage.getSize() << " received= " << superpage.getReceived() << " isFilled=" << superpage.isFilled() << " isReady=" << superpage.isReady() << std::endl;
+      }
+      popped += size;
+    }
+    return popped;
   }
 
   uint32_t getDataGeneratorCounterFromPage(uintptr_t pageAddress, size_t headerSize)

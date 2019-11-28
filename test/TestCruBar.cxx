@@ -50,14 +50,3 @@ BOOST_AUTO_TEST_CASE(TestFirmwareFeatures)
     BOOST_CHECK(!CruBar::convertToFirmwareFeatures(0x40005AFE + (1 << 19)).firmwareInfo);
   }
 }
-
-BOOST_AUTO_TEST_CASE(TestDataGeneratorConfiguration)
-{
-  {
-    uint32_t bits = 0;
-    CruBar::setDataGeneratorEnableBits(bits, true);
-    BOOST_CHECK(bits == 0x1);
-    CruBar::setDataGeneratorEnableBits(bits, false);
-    BOOST_CHECK(bits == 0x0);
-  }
-}
