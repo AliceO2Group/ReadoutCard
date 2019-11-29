@@ -176,6 +176,7 @@ void CruDmaChannel::deviceStopDma()
         moved++;
       }
     }
+    
     assert(link.queue.empty());
   }
   assert(mLinkQueuesTotalAvailable == LINK_QUEUE_CAPACITY * mLinks.size());
@@ -314,7 +315,7 @@ void CruDmaChannel::fillSuperpages()
         if (mReadyQueue.size() >= READY_QUEUE_CAPACITY) {
           break;
         }
-
+        
         // Front superpage has arrived
         transferSuperpageFromLinkToReady(link);
       }
