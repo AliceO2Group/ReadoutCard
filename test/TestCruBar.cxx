@@ -2,6 +2,7 @@
 /// \brief Tests for CruBar
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \author Kostas Alexopoulos
 
 #define BOOST_TEST_MODULE RORC_TestCruBar
 #define BOOST_TEST_MAIN
