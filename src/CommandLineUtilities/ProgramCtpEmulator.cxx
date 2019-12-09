@@ -41,10 +41,10 @@ class ProgramCtpEmulator : public Program
   {
     Options::addOptionCardId(options);
     options.add_options()("bcmax",
-                          po::value<uint32_t>(&mOptions.bcMax)->default_value(3560),
+                          po::value<uint32_t>(&mOptions.bcMax)->default_value(3563),
                           "Sets the maximum Bunch Crossing value");
     options.add_options()("hbmax",
-                          po::value<uint32_t>(&mOptions.hbMax)->default_value(8),
+                          po::value<uint32_t>(&mOptions.hbMax)->default_value(255),
                           "Sets the maximum number of Hearteats within a Timeframe");
     options.add_options()("hbdrop",
                           po::value<uint32_t>(&mOptions.hbDrop)->default_value(15000),
@@ -110,10 +110,10 @@ class ProgramCtpEmulator : public Program
 
  private:
   struct OptionsStruct {
-    uint32_t bcMax = 3560;
+    uint32_t bcMax = 3563;
     uint32_t hbDrop = 15000;
     uint32_t hbKeep = 15000;
-    uint32_t hbMax = 8;
+    uint32_t hbMax = 255;
 
     std::string triggerModeString = "periodic";
     uint32_t triggerFrequency = 8;
