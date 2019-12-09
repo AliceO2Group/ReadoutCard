@@ -21,12 +21,15 @@ namespace AliceO2
 namespace roc
 {
 
-FirmwareChecker::FirmwareChecker() : mCompatibleFirmwareList({ { "20191126-124721-6baf11da", "v3.5.1" },
-                                                               { "20191114-171438-5b162edd", "v3.5.0" },
-                                                               { "20191014-115705-51882687", "v3.4.0" },
-                                                               { "20190911-150139-3f5e11b3", "v3.3.0" },
-                                                               { "20190718-120712-4c8e6c48", "v3.2.0" },
-                                                               { "0.0:2000-0-0", "alpha" } })
+FirmwareChecker::FirmwareChecker() : mCompatibleFirmwareList({ /* CRU */
+                                                               { "d458317e", "v3.5.2" },
+                                                               { "6baf11da", "v3.5.1" },
+                                                               { "5b162edd", "v3.5.0" },
+                                                               { "51882687", "v3.4.0" },
+                                                               { "3f5e11b3", "v3.3.0" },
+                                                               { "4c8e6c48", "v3.2.0" },
+                                                               /* CRORC */
+                                                               { "0", "alpha" } })
 {
 }
 
@@ -36,6 +39,7 @@ FirmwareChecker::~FirmwareChecker()
 
 std::string FirmwareChecker::resolveFirmwareTag(std::string firmware)
 {
+  firmware = firmware.substr(firmware.find_last_of("-") + 1);
   if (mCompatibleFirmwareList.find(firmware) != mCompatibleFirmwareList.end()) {
     return mCompatibleFirmwareList.at(firmware);
   } else {
@@ -55,6 +59,7 @@ std::string FirmwareChecker::getFirmwareCompatibilityList()
 void FirmwareChecker::checkFirmwareCompatibilityWrapped(std::shared_ptr<BarInterface> bar2)
 {
   auto firmware = bar2->getFirmwareInfo().value_or("");
+  firmware = firmware.substr(firmware.find_last_of("-") + 1);
   auto serial = bar2->getSerial().value_or(-1);
   if (mCompatibleFirmwareList.find(firmware) == mCompatibleFirmwareList.end()) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(
