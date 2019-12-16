@@ -52,8 +52,6 @@ class ProgramListCards : public Program
 
   virtual void run(const boost::program_options::variables_map&)
   {
-    auto cardsFound = AliceO2::roc::RocPciDevice::findSystemDevices();
-
     std::ostringstream table;
 
     auto formatHeader = "  %-3s %-6s %-10s %-8s %-13s %-5s %-11s %-11s %-25s %-17s\n";
@@ -68,6 +66,8 @@ class ProgramListCards : public Program
 
     // initialize ptree
     pt::ptree root;
+
+    auto cardsFound = AliceO2::roc::RocPciDevice::findSystemDevices();
 
     int i = 0;
     for (const auto& card : cardsFound) {
