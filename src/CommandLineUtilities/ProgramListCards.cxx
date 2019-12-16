@@ -23,11 +23,13 @@
 #include "ReadoutCard/FirmwareChecker.h"
 #include "ReadoutCard/MemoryMappedFile.h"
 #include <boost/format.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 
 using namespace AliceO2::roc::CommandLineUtilities;
 using namespace AliceO2::roc;
-using std::cout;
-using std::endl;
+namespace pt = boost::property_tree;
+namespace po = boost::program_options;
 
 namespace
 {
@@ -36,11 +38,16 @@ class ProgramListCards : public Program
  public:
   virtual Description getDescription()
   {
-    return { "List Cards", "Lists installed cards and some basic information about them", "roc-list-cards" };
+    return { "List Cards", "Lists installed cards and some basic information about them",
+             "roc-list-cards\n"
+             "roc-list-cards --json" };
   }
 
-  virtual void addOptions(boost::program_options::options_description&)
+  virtual void addOptions(boost::program_options::options_description& options)
   {
+    options.add_options()("json-out",
+                          po::bool_switch(&mOptions.jsonOut),
+                          "Toggle json-formatted output");
   }
 
   virtual void run(const boost::program_options::variables_map&)
@@ -55,7 +62,12 @@ class ProgramListCards : public Program
     auto lineFat = std::string(header.length(), '=') + '\n';
     auto lineThin = std::string(header.length(), '-') + '\n';
 
-    table << lineFat << header << lineThin;
+    if (!mOptions.jsonOut) {
+      table << lineFat << header << lineThin;
+    }
+
+    // initialize ptree
+    pt::ptree root;
 
     int i = 0;
     for (const auto& card : cardsFound) {
@@ -76,8 +88,8 @@ class ProgramListCards : public Program
         endpointNumber = bar0->getEndpointNumber();
       } catch (const Exception& e) {
         if (isVerbose()) {
-          cout << "Error parsing card information through BAR\n"
-               << boost::diagnostic_information(e) << '\n';
+          std::cout << "Error parsing card information through BAR\n"
+                    << boost::diagnostic_information(e) << '\n';
         }
       }
 
@@ -89,16 +101,42 @@ class ProgramListCards : public Program
         serial = "n/a";
       }
 
-      auto format = boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciAddress.toString() % serial % endpointNumber % card.numaNode % card.pciId.vendor % card.pciId.device %
-                    firmware % cardId;
+      if (!mOptions.jsonOut) {
+        auto format = boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciAddress.toString() % serial % endpointNumber % card.numaNode % card.pciId.vendor % card.pciId.device %
+                      firmware % cardId;
 
-      table << format;
+        table << format;
+      } else {
+        pt::ptree cardNode;
+
+        // add kv pairs for this card
+        cardNode.put("type", CardType::toString(card.cardType));
+        cardNode.put("pciAddress", card.pciAddress.toString());
+        cardNode.put("serial", serial);
+        cardNode.put("endpoint", std::to_string(endpointNumber));
+        cardNode.put("numa", std::to_string(card.numaNode));
+        cardNode.put("firmware", firmware);
+
+        // add the card node to the tree
+        root.add_child(std::to_string(i), cardNode);
+      }
+
+      // Update sequence number
       i++;
     }
 
-    table << lineFat;
-    cout << table.str();
+    if (!mOptions.jsonOut) {
+      table << lineFat;
+      std::cout << table.str();
+    } else {
+      pt::write_json(std::cout, root);
+    }
   }
+
+ private:
+  struct OptionsStruct {
+    bool jsonOut = false;
+  } mOptions;
 };
 } // Anonymous namespace
 
