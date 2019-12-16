@@ -21,10 +21,12 @@
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
 #include <boost/format.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 
 using namespace AliceO2::roc::CommandLineUtilities;
 using namespace AliceO2::roc;
-using namespace AliceO2::InfoLogger;
+namespace pt = boost::property_tree;
 namespace po = boost::program_options;
 
 class ProgramStatus : public Program
@@ -33,19 +35,41 @@ class ProgramStatus : public Program
   virtual Description getDescription()
   {
     return { "Status", "Return current RoC configuration status",
-             "roc-status --id 42:00.0\n" };
+             "roc-status --id 42:00.0\n"
+             "roc-status --id 42:00.0 --json" };
   }
 
   virtual void addOptions(boost::program_options::options_description& options)
   {
     Options::addOptionCardId(options);
-    options.add_options()("csv-out",
-                          po::bool_switch(&mOptions.csvOut),
-                          "Toggle csv-formatted output");
+    options.add_options()("json-out",
+                          po::bool_switch(&mOptions.jsonOut),
+                          "Toggle json-formatted output");
   }
 
   virtual void run(const boost::program_options::variables_map& map)
   {
+    auto enforcePrecision = [](auto flo) {
+      std::ostringstream precisionEnforcer;
+      precisionEnforcer << std::fixed;
+      precisionEnforcer << std::setprecision(2);
+      precisionEnforcer << flo;
+      return precisionEnforcer.str();
+    };
+
+    std::ostringstream table;
+    auto formatHeader = "  %-9s %-16s %-10s %-14s %-15s %-10s %-14s %-14s %-8s %-19s\n";
+    auto formatRow = "  %-9s %-16s %-10s %-14s %-15s %-10s %-14.2f %-14.2f %-8s %-19.1f\n";
+    auto header = (boost::format(formatHeader) % "Link ID" % "GBT Mode Tx/Rx" % "Loopback" % "GBT MUX" % "Datapath Mode" % "Datapath" % "RX freq(MHz)" % "TX freq(MHz)" % "Status" % "Optical power(uW)").str();
+    auto lineFat = std::string(header.length(), '=') + '\n';
+    auto lineThin = std::string(header.length(), '-') + '\n';
+
+    if (!mOptions.jsonOut) {
+      table << lineFat << header << lineThin;
+    }
+
+    // initialize ptree
+    pt::ptree root;
 
     auto cardId = Options::getOptionCardId(map);
     auto params = Parameters::makeParameters(cardId, 2); //status available on BAR2
@@ -66,23 +90,9 @@ class ProgramStatus : public Program
 
     Cru::ReportInfo reportInfo = cruBar2->report();
 
-    std::ostringstream table;
-    auto formatHeader = "  %-9s %-16s %-10s %-14s %-15s %-10s %-14s %-14s %-8s %-19s\n";
-    auto formatRow = "  %-9s %-16s %-10s %-14s %-15s %-10s %-14.2f %-14.2f %-8s %-19.1f\n";
-    auto header = (boost::format(formatHeader) % "Link ID" % "GBT Mode Tx/Rx" % "Loopback" % "GBT MUX" % "Datapath Mode" % "Datapath" % "RX freq(MHz)" % "TX freq(MHz)" % "Status" % "Optical power(uW)").str();
-    auto lineFat = std::string(header.length(), '=') + '\n';
-    auto lineThin = std::string(header.length(), '-') + '\n';
+    std::string clock = (reportInfo.ttcClock == 0 ? "TTC" : "Local");
 
-    if (mOptions.csvOut) {
-      auto csvHeader = "Link ID,GBT Mode,Loopback,GBT Mux,Datapath Mode,Datapath,RX Freq(MHz),TX Freq(MHz),Status,Optical Power(uW)\n";
-      std::cout << csvHeader;
-    } else {
-      table << lineFat << header << lineThin;
-    }
-
-    if (!mOptions.csvOut) {
-      std::string clock = (reportInfo.ttcClock == 0 ? "TTC" : "Local");
-      ;
+    if (!mOptions.jsonOut) {
       std::cout << "----------------------------" << std::endl;
       std::cout << clock << " clock | ";
       if (reportInfo.dynamicOffset) {
@@ -91,6 +101,13 @@ class ProgramStatus : public Program
         std::cout << "Fixed offset" << std::endl;
       }
       std::cout << "----------------------------" << std::endl;
+    } else {
+      root.put("clock", clock);
+      if (reportInfo.dynamicOffset) {
+        root.put("offset", "Dynamic");
+      } else {
+        root.put("offset", "Fixed");
+      }
     }
 
     for (const auto& el : reportInfo.linkMap) {
@@ -133,26 +150,40 @@ class ProgramStatus : public Program
 
       float opticalPower = link.opticalPower;
 
-      if (mOptions.csvOut) {
-        auto csvLine = std::to_string(globalId) + "," + gbtTxRxMode + "," + loopback + "," + gbtMux + "," + datapathMode + "," + enabled + "," +
-                       std::to_string(rxFreq) + "," + std::to_string(txFreq) + "," + linkStatus + "," + std::to_string(opticalPower) + "\n";
-        std::cout << csvLine;
-      } else {
+      if (!mOptions.jsonOut) {
         auto format = boost::format(formatRow) % globalId % gbtTxRxMode % loopback % gbtMux % datapathMode % enabled % rxFreq % txFreq % linkStatus % opticalPower;
         table << format;
+      } else {
+        pt::ptree linkNode;
+
+        // add kv pairs for this card
+        linkNode.put("gbtMode", gbtTxRxMode);
+        linkNode.put("loopback", loopback);
+        linkNode.put("gbtMux", gbtMux);
+        linkNode.put("datapathMode", datapathMode);
+        linkNode.put("datapath", enabled);
+        linkNode.put("rxFreq", enforcePrecision(rxFreq));
+        linkNode.put("txFreq", enforcePrecision(txFreq));
+        linkNode.put("status", linkStatus);
+        linkNode.put("opticalPower", enforcePrecision(opticalPower));
+
+        // add the link node to the tree
+        root.add_child(std::to_string(globalId), linkNode);
       }
     }
 
-    if (!mOptions.csvOut) {
+    if (!mOptions.jsonOut) {
       auto lineFat = std::string(header.length(), '=') + '\n';
       table << lineFat;
       std::cout << table.str();
+    } else {
+      pt::write_json(std::cout, root);
     }
   }
 
  private:
   struct OptionsStruct {
-    bool csvOut = false;
+    bool jsonOut = false;
   } mOptions;
 };
 
