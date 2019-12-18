@@ -179,6 +179,13 @@ void CruBar::resetCard()
   writeRegister(Cru::Registers::RESET_CONTROL.index, 0x1);
 }
 
+/// Resets internal counters
+void CruBar::resetInternalCounters()
+{
+  // clear internal superpage size index counter array
+  std::fill(mSuperpageSizeIndexCounter, mSuperpageSizeIndexCounter + Cru::MAX_LINKS, 0);
+}
+
 /// Injects a single error into the generated data stream
 void CruBar::dataGeneratorInjectError()
 {

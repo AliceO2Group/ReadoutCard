@@ -76,6 +76,7 @@ class CruBar final : public BarInterfaceBase
 
   static FirmwareFeatures convertToFirmwareFeatures(uint32_t reg);
 
+  void resetInternalCounters();
   void setWrapperCount();
   void configure() override;
   void reconfigure() override;
