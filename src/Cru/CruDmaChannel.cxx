@@ -201,6 +201,7 @@ void CruDmaChannel::resetCru()
   std::this_thread::sleep_for(100ms);
   getBar()->resetCard();
   std::this_thread::sleep_for(100ms);
+  getBar()->resetInternalCounters();
 }
 
 auto CruDmaChannel::getNextLinkIndex() -> LinkIndex
