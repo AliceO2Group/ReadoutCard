@@ -36,7 +36,8 @@ class ProgramStatus : public Program
   {
     return { "Status", "Return current RoC configuration status",
              "roc-status --id 42:00.0\n"
-             "roc-status --id 42:00.0 --json" };
+             "roc-status --id 42:00.0 --json"
+             "roc-status --id 42:00.0 --csv" };
   }
 
   virtual void addOptions(boost::program_options::options_description& options)
@@ -45,6 +46,9 @@ class ProgramStatus : public Program
     options.add_options()("json-out",
                           po::bool_switch(&mOptions.jsonOut),
                           "Toggle json-formatted output");
+    options.add_options()("csv-out",
+                          po::bool_switch(&mOptions.csvOut),
+                          "Toggle csv-formatted output");
   }
 
   virtual void run(const boost::program_options::variables_map& map)
@@ -64,7 +68,10 @@ class ProgramStatus : public Program
     auto lineFat = std::string(header.length(), '=') + '\n';
     auto lineThin = std::string(header.length(), '-') + '\n';
 
-    if (!mOptions.jsonOut) {
+    if (mOptions.csvOut) {
+      auto csvHeader = "Link ID,GBT Mode,Loopback,GBT Mux,Datapath Mode,Datapath,RX Freq(MHz),TX Freq(MHz),Status,Optical Power(uW)\n";
+      std::cout << csvHeader;
+    } else if (!mOptions.jsonOut) {
       table << lineFat << header << lineThin;
     }
 
@@ -92,7 +99,14 @@ class ProgramStatus : public Program
 
     std::string clock = (reportInfo.ttcClock == 0 ? "TTC" : "Local");
 
-    if (!mOptions.jsonOut) {
+    if (mOptions.jsonOut) {
+      root.put("clock", clock);
+      if (reportInfo.dynamicOffset) {
+        root.put("offset", "Dynamic");
+      } else {
+        root.put("offset", "Fixed");
+      }
+    } else if (!mOptions.csvOut) {
       std::cout << "----------------------------" << std::endl;
       std::cout << clock << " clock | ";
       if (reportInfo.dynamicOffset) {
@@ -101,13 +115,6 @@ class ProgramStatus : public Program
         std::cout << "Fixed offset" << std::endl;
       }
       std::cout << "----------------------------" << std::endl;
-    } else {
-      root.put("clock", clock);
-      if (reportInfo.dynamicOffset) {
-        root.put("offset", "Dynamic");
-      } else {
-        root.put("offset", "Fixed");
-      }
     }
 
     for (const auto& el : reportInfo.linkMap) {
@@ -150,10 +157,7 @@ class ProgramStatus : public Program
 
       float opticalPower = link.opticalPower;
 
-      if (!mOptions.jsonOut) {
-        auto format = boost::format(formatRow) % globalId % gbtTxRxMode % loopback % gbtMux % datapathMode % enabled % rxFreq % txFreq % linkStatus % opticalPower;
-        table << format;
-      } else {
+      if (mOptions.jsonOut) {
         pt::ptree linkNode;
 
         // add kv pairs for this card
@@ -169,21 +173,29 @@ class ProgramStatus : public Program
 
         // add the link node to the tree
         root.add_child(std::to_string(globalId), linkNode);
+      } else if (mOptions.csvOut) {
+        auto csvLine = std::to_string(globalId) + "," + gbtTxRxMode + "," + loopback + "," + gbtMux + "," + datapathMode + "," + enabled + "," +
+                       std::to_string(rxFreq) + "," + std::to_string(txFreq) + "," + linkStatus + "," + std::to_string(opticalPower) + "\n";
+        std::cout << csvLine;
+      } else {
+        auto format = boost::format(formatRow) % globalId % gbtTxRxMode % loopback % gbtMux % datapathMode % enabled % rxFreq % txFreq % linkStatus % opticalPower;
+        table << format;
       }
     }
 
-    if (!mOptions.jsonOut) {
+    if (mOptions.jsonOut) {
+      pt::write_json(std::cout, root);
+    } else if (!mOptions.jsonOut) {
       auto lineFat = std::string(header.length(), '=') + '\n';
       table << lineFat;
       std::cout << table.str();
-    } else {
-      pt::write_json(std::cout, root);
     }
   }
 
  private:
   struct OptionsStruct {
     bool jsonOut = false;
+    bool csvOut = false;
   } mOptions;
 };
 
