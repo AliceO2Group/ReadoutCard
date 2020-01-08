@@ -34,10 +34,7 @@ namespace
 
 CardDescriptor createCardDescriptor(const Parameters& parameters)
 {
-  return Visitor::apply<CardDescriptor>(parameters.getCardIdRequired(),
-                                        [&](int serial) { return RocPciDevice(serial).getCardDescriptor(); },
-                                        [&](const PciAddress& address) { return RocPciDevice(address).getCardDescriptor(); },
-                                        [&](const PciSequenceNumber& sequenceNumber) { return RocPciDevice(sequenceNumber).getCardDescriptor(); });
+  return RocPciDevice(parameters.getCardIdRequired()).getCardDescriptor();
 }
 
 } // namespace
@@ -68,6 +65,8 @@ DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
                                                                                     log("Initializing with null DMA buffer", InfoLogger::InfoLogger::Debug);
                                                                                     return std::make_unique<NullDmaBufferProvider>();
                                                                                   });
+    //TODO: This can be simplified as only the
+    //first case is used...
   } else {
     BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("DmaChannel requires buffer_parameters"));
   }

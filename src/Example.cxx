@@ -40,7 +40,7 @@ int main(int, char**)
 
     // Create parameters object for channel
     auto parameters = roc::Parameters()
-                        .setCardId(-1)                                                                         // Dummy card
+                        .setCardId(roc::SerialId{ -1, 0 })                                                     // Dummy card
                         .setChannelNumber(0)                                                                   // DMA channel 0
                         .setBufferParameters(roc::buffer_parameters::Memory{ file.getAddress(), bufferSize }); // Register our buffer
 

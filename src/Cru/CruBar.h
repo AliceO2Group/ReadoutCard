@@ -40,7 +40,7 @@ class CruBar final : public BarInterfaceBase
   using Link = Cru::Link;
 
  public:
-  CruBar(const Parameters& parameters);
+  CruBar(const Parameters& parameters, std::unique_ptr<RocPciDevice> rocPciDevice);
   CruBar(std::shared_ptr<Pda::PdaBar> bar);
   virtual ~CruBar();
   //virtual void checkReadSafe(int index) override;

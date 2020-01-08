@@ -22,18 +22,12 @@ namespace AliceO2
 namespace roc
 {
 
-BarInterfaceBase::BarInterfaceBase(const Parameters& parameters)
-  : mBarIndex(parameters.getChannelNumberRequired())
+BarInterfaceBase::BarInterfaceBase(const Parameters& parameters, std::unique_ptr<RocPciDevice> rocPciDevice)
+  : mBarIndex(parameters.getChannelNumberRequired()),
+    mRocPciDevice(std::move(rocPciDevice))
 {
-  auto id = parameters.getCardIdRequired();
-  if (auto serial = boost::get<int>(&id)) {
-    Utilities::resetSmartPtr(mRocPciDevice, *serial);
-  } else if (auto address = boost::get<PciAddress>(&id)) {
-    Utilities::resetSmartPtr(mRocPciDevice, *address);
-  } else if (auto sequenceNumber = boost::get<PciSequenceNumber>(&id)) {
-    Utilities::resetSmartPtr(mRocPciDevice, *sequenceNumber);
-  }
   Utilities::resetSmartPtr(mPdaBar, mRocPciDevice->getPciDevice(), mBarIndex);
+  mPdaBar = std::move(mRocPciDevice->getBar(mBarIndex));
 }
 
 BarInterfaceBase::BarInterfaceBase(std::shared_ptr<Pda::PdaBar> bar)

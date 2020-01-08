@@ -60,4 +60,4 @@ class PciSequenceNumber
 } // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_READOUTCARD_INCLUDE_READOUTCARD_H_
+#endif // ALICEO2_READOUTCARD_INCLUDE_PCISEQUENCENUMBER_H_

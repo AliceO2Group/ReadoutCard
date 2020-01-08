@@ -33,7 +33,7 @@ namespace roc
 class FilePdaDmaBufferProvider : public DmaBufferProviderInterface
 {
  public:
-  FilePdaDmaBufferProvider(Pda::PdaDevice::PdaPciDevice pciDevice, std::string path, size_t size, int dmaBufferId,
+  FilePdaDmaBufferProvider(PciDevice* pciDevice, std::string path, size_t size, int dmaBufferId,
                            bool requireHugepage)
     : mMappedFile(path, size), mAddress(mMappedFile.getAddress()), mSize(mMappedFile.getSize()), mPdaBuffer(pciDevice, mAddress, mSize, dmaBufferId, requireHugepage)
   {

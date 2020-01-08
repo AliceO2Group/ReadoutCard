@@ -32,7 +32,7 @@ namespace roc
 class PdaDmaBufferProvider : public DmaBufferProviderInterface
 {
  public:
-  PdaDmaBufferProvider(Pda::PdaDevice::PdaPciDevice pciDevice, void* userBufferAddress, size_t userBufferSize,
+  PdaDmaBufferProvider(PciDevice* pciDevice, void* userBufferAddress, size_t userBufferSize,
                        int dmaBufferId, bool requireHugepage)
     : mAddress(userBufferAddress), mSize(userBufferSize), mPdaBuffer(pciDevice, userBufferAddress, userBufferSize, dmaBufferId, requireHugepage)
   {

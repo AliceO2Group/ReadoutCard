@@ -101,7 +101,7 @@ void freePdaDmaBuffersWrapped(const CardDescriptor cardDescriptor, const int cha
 
 void freePdaDmaBuffers()
 {
-  const CardDescriptor cardDescriptor = { CardType::Cru, -1, PciId{ "-1", "-1" }, PciAddress{ 0, 0, 0 }, -1 }; // a dummy card descriptor - call is anyway forced
+  const CardDescriptor cardDescriptor = { CardType::Cru, SerialId{ SERIAL_DUMMY, ENDPOINT_DUMMY }, PciId{ "-1", "-1" }, PciAddress{ 0, 0, 0 }, -1 }; // a dummy card descriptor - call is anyway forced
   freePdaDmaBuffersWrapped(cardDescriptor, -1, true);
 }
 

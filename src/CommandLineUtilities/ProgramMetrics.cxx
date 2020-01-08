@@ -49,21 +49,13 @@ class ProgramMetrics : public Program
   {
 
     auto cardId = Options::getOptionCardId(map);
-
     std::vector<CardDescriptor> cardsFound;
 
-    if (auto serial = boost::get<int>(&cardId)) {
-      if (*serial == -1) {
-        cardsFound = RocPciDevice::findSystemDevices();
-      } else {
-        cardsFound = RocPciDevice::findSystemDevices(*serial);
-      }
-    } else if (auto pciAddress = boost::get<PciAddress>(&cardId)) {
-      cardsFound = RocPciDevice::findSystemDevices(*pciAddress);
-    } else if (auto pciSequenceNumber = boost::get<PciSequenceNumber>(&cardId)) {
-      cardsFound = RocPciDevice::findSystemDevices(*pciSequenceNumber);
-    } else {
-      std::cout << "Something went wrong parsing the card id" << std::endl;
+    try {
+      cardsFound.push_back(RocPciDevice(cardId).getCardDescriptor());
+    } catch (boost::exception& e) {
+      std::cout << boost::diagnostic_information(e);
+      return;
     }
 
     std::ostringstream table;

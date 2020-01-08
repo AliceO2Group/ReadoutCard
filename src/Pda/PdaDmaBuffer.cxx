@@ -28,7 +28,7 @@ namespace roc
 namespace Pda
 {
 
-PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAddress, size_t userBufferSize,
+PdaDmaBuffer::PdaDmaBuffer(PciDevice* pciDevice, void* userBufferAddress, size_t userBufferSize,
                            int dmaBufferId, bool requireHugepage) : mPciDevice(pciDevice)
 {
   // Safeguard against PDA kernel module deadlocks, since it does not like parallel buffer registration
@@ -41,28 +41,28 @@ PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAd
 
   try {
     // Tell PDA we're using our already allocated userspace buffer.
-    if (PciDevice_registerDMABuffer(pciDevice.get(), dmaBufferId, userBufferAddress, userBufferSize,
+    if (PciDevice_registerDMABuffer(pciDevice, dmaBufferId, userBufferAddress, userBufferSize,
                                     &mDmaBuffer) != PDA_SUCCESS) {
       // Failed to register it. Usually, this means a DMA buffer wasn't cleaned up properly (such as after a crash).
       // So, try to clean things up.
 
       // Get the previous buffer
       DMABuffer* tempDmaBuffer;
-      if (PciDevice_getDMABuffer(pciDevice.get(), dmaBufferId, &tempDmaBuffer) != PDA_SUCCESS) {
+      if (PciDevice_getDMABuffer(pciDevice, dmaBufferId, &tempDmaBuffer) != PDA_SUCCESS) {
         // Give up
         BOOST_THROW_EXCEPTION(PdaException() << ErrorInfo::Message(
                                 "Failed to register external DMA buffer; Failed to get previous buffer for cleanup"));
       }
 
       // Free it
-      if (PciDevice_deleteDMABuffer(pciDevice.get(), tempDmaBuffer) != PDA_SUCCESS) {
+      if (PciDevice_deleteDMABuffer(pciDevice, tempDmaBuffer) != PDA_SUCCESS) {
         // Give up
         BOOST_THROW_EXCEPTION(PdaException() << ErrorInfo::Message(
                                 "Failed to register external DMA buffer; Failed to delete previous buffer for cleanup"));
       }
 
       // Retry the registration of our new buffer
-      if (PciDevice_registerDMABuffer(pciDevice.get(), dmaBufferId, userBufferAddress, userBufferSize,
+      if (PciDevice_registerDMABuffer(pciDevice, dmaBufferId, userBufferAddress, userBufferSize,
                                       &mDmaBuffer) != PDA_SUCCESS) {
         // Give up
         BOOST_THROW_EXCEPTION(PdaException() << ErrorInfo::Message(
@@ -107,7 +107,7 @@ PdaDmaBuffer::PdaDmaBuffer(PdaDevice::PdaPciDevice pciDevice, void* userBufferAd
                               "Failed to initialize scatter-gather list, was empty"));
     }
   } catch (const PdaException&) {
-    PciDevice_deleteDMABuffer(mPciDevice.get(), mDmaBuffer);
+    PciDevice_deleteDMABuffer(mPciDevice, mDmaBuffer);
     throw;
   }
 }
@@ -125,7 +125,7 @@ PdaDmaBuffer::~PdaDmaBuffer()
   }
 
   try {
-    PciDevice_deleteDMABuffer(mPciDevice.get(), mDmaBuffer);
+    PciDevice_deleteDMABuffer(mPciDevice, mDmaBuffer);
   } catch (std::exception& e) {
     // Nothing to be done?
     InfoLogger::InfoLogger() << "PdaDmaBuffer::~PdaDmaBuffer() failed: " << e.what() << InfoLogger::InfoLogger::endm;

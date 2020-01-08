@@ -16,11 +16,12 @@
 #ifndef ALICEO2_INCLUDE_READOUTCARD_CHANNELFACTORY_H_
 #define ALICEO2_INCLUDE_READOUTCARD_CHANNELFACTORY_H_
 
-#include "ReadoutCard/Parameters.h"
 #include <memory>
 #include <string>
-#include "ReadoutCard/DmaChannelInterface.h"
 #include "ReadoutCard/BarInterface.h"
+#include "ReadoutCard/DmaChannelInterface.h"
+#include "ReadoutCard/Parameters.h"
+#include "ReadoutCard/ParameterTypes/SerialId.h"
 
 namespace AliceO2
 {
@@ -56,9 +57,9 @@ class ChannelFactory
     return getBar(Parameters::makeParameters(cardId, channel));
   }
 
-  static int getDummySerialNumber()
+  static SerialId getDummySerialId()
   {
-    return -1;
+    return { SERIAL_DUMMY, ENDPOINT_DUMMY };
   }
 };
 
