@@ -129,6 +129,8 @@ class DmaChannelInterface
   /// \return Serial number if available, else an empty optional
   virtual boost::optional<int32_t> getSerial() = 0;
 
+  //TODO: Add a getEndpoint interface
+
   /// Gets card temperature in °C if available
   /// \return Temperature in °C if available, else an empty optional
   virtual boost::optional<float> getTemperature() = 0;

@@ -75,17 +75,13 @@ class ProgramListCards : public Program
       std::string firmware = na;
       std::string cardId = na;
       std::string numaNode = std::to_string(card.numaNode);
-      int endpointNumber = -1;
       try {
-        Parameters params0 = Parameters::makeParameters(card.pciAddress, 0);
-        auto bar0 = ChannelFactory().getBar(params0);
         Parameters params2 = Parameters::makeParameters(card.pciAddress, 2);
         auto bar2 = ChannelFactory().getBar(params2);
         firmware = bar2->getFirmwareInfo().value_or(na);
         // Check if the firmware is tagged
         firmware = FirmwareChecker().resolveFirmwareTag(firmware);
         cardId = bar2->getCardId().value_or(na);
-        endpointNumber = bar0->getEndpointNumber();
       } catch (const Exception& e) {
         if (isVerbose()) {
           std::cout << "Error parsing card information through BAR\n"
@@ -93,16 +89,11 @@ class ProgramListCards : public Program
         }
       }
 
-      std::string serial;
-      boost::optional<int32_t> serialCheck = card.serialNumber;
-      if (serialCheck) {
-        serial = std::to_string(serialCheck.get());
-      } else {
-        serial = "n/a";
-      }
+      std::string serial = std::to_string(card.serialId.getSerial());
+      std::string endpoint = std::to_string(card.serialId.getEndpoint());
 
       if (!mOptions.jsonOut) {
-        auto format = boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciAddress.toString() % serial % endpointNumber % card.numaNode % card.pciId.vendor % card.pciId.device %
+        auto format = boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciAddress.toString() % serial % endpoint % card.numaNode % card.pciId.vendor % card.pciId.device %
                       firmware % cardId;
 
         table << format;
@@ -113,7 +104,7 @@ class ProgramListCards : public Program
         cardNode.put("type", CardType::toString(card.cardType));
         cardNode.put("pciAddress", card.pciAddress.toString());
         cardNode.put("serial", serial);
-        cardNode.put("endpoint", std::to_string(endpointNumber));
+        cardNode.put("endpoint", endpoint);
         cardNode.put("numa", std::to_string(card.numaNode));
         cardNode.put("firmware", firmware);
 

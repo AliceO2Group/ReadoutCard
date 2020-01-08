@@ -14,7 +14,8 @@
 
 using namespace AliceO2::roc;
 
-constexpr auto SERIAL_NUMBER = 1;
+constexpr auto SERIAL_NUMBER = 10000;
+constexpr auto ENDPOINT_NUMBER = 0;
 constexpr auto CHANNEL_NUMBER = 2;
 //constexpr auto DMA_BUFFER_SIZE = 3ul;
 constexpr auto DMA_PAGE_SIZE = 4ul;
@@ -25,12 +26,12 @@ BOOST_AUTO_TEST_CASE(ParametersConstructors)
   Parameters p;
   Parameters p2 = p;
   Parameters p3 = std::move(p2);
-  Parameters p4 = Parameters::makeParameters(SERIAL_NUMBER, CHANNEL_NUMBER);
+  Parameters p4 = Parameters::makeParameters({ SERIAL_NUMBER, ENDPOINT_NUMBER }, CHANNEL_NUMBER); //TODO: Check makeParameters
 }
 
 BOOST_AUTO_TEST_CASE(ParametersPutGetTest)
 {
-  Parameters p = Parameters::makeParameters(SERIAL_NUMBER, CHANNEL_NUMBER)
+  Parameters p = Parameters::makeParameters({ SERIAL_NUMBER, ENDPOINT_NUMBER }, CHANNEL_NUMBER)
                    .setDmaPageSize(DMA_PAGE_SIZE)
                    .setDataSource(DATA_SOURCE)
                    .setBufferParameters(buffer_parameters::File{ "/my/file.shm", 0 });
@@ -51,7 +52,7 @@ BOOST_AUTO_TEST_CASE(ParametersPutGetTest)
 
 BOOST_AUTO_TEST_CASE(ParametersThrowTest)
 {
-  auto p = Parameters::makeParameters(SERIAL_NUMBER, CHANNEL_NUMBER);
+  auto p = Parameters::makeParameters({ SERIAL_NUMBER, ENDPOINT_NUMBER }, CHANNEL_NUMBER);
 }
 
 BOOST_AUTO_TEST_CASE(ParametersLinkMaskFromString)

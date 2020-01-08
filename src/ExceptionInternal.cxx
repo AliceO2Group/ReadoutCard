@@ -135,18 +135,27 @@ std::string to_string(const ErrorInfo::PciSequenceNumber& e)
   return toStringHelper("ReadoutCard PCI sequence number", e.value().toString());
 }
 
+std::string to_string(const ErrorInfo::SerialId& e)
+{
+  return toStringHelper("ReadoutCard Serial ID", e.value().toString());
+}
+
 std::string to_string(const ErrorInfo::CardId& e)
 {
   std::string message;
-  if (auto serialMaybe = boost::get<int>(&e.value())) {
-    message = std::to_string(*serialMaybe);
+  if (auto serialIdMaybe = boost::get<SerialId>(&e.value())) {
+    auto serialId = *serialIdMaybe;
+    message = serialId.toString();
   } else if (auto addressMaybe = boost::get<PciAddress>(&e.value())) {
     auto address = *addressMaybe;
     message = address.toString();
+  } else if (auto sequenceNumberMaybe = boost::get<PciSequenceNumber>(&e.value())) {
+    auto sequenceNumber = *sequenceNumberMaybe;
+    message = sequenceNumber.toString();
   } else {
     message = "unknown";
   }
-  return toStringHelper("ReadoutCard PCI address", message);
+  return toStringHelper("ReadoutCard Card ID", message);
 }
 
 std::string to_string(const ErrorInfo::ConfigParse& e)

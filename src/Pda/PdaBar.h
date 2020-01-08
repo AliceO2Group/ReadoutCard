@@ -38,7 +38,7 @@ class PdaBar : public BarInterface
  public:
   PdaBar();
 
-  PdaBar(PdaDevice::PdaPciDevice pciDevice, int barNumber);
+  PdaBar(PciDevice* pciDevice, int barNumber);
 
   virtual uint32_t readRegister(int index)
   {

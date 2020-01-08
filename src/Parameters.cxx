@@ -211,19 +211,15 @@ auto Parameters::linkMaskFromString(const std::string& string) -> LinkMaskType
 
 auto Parameters::cardIdFromString(const std::string& string) -> CardIdType
 {
-  std::regex e("^#[0-9]+$");
   if (auto pciAddressMaybe = PciAddress::fromString(string)) {
     return *pciAddressMaybe;
   } else if (auto pciSequenceNumberMaybe = PciSequenceNumber::fromString(string)) {
     return *pciSequenceNumberMaybe;
+  } else if (auto serialIdMaybe = SerialId::fromString(string)) {
+    return *serialIdMaybe;
   } else {
-    int serial = 0;
-    if (!boost::conversion::try_lexical_convert<int>(string, serial)) {
-      BOOST_THROW_EXCEPTION(
-        ParseException() << ErrorInfo::Message("Failed to parse card ID as PCI address ,serial number or sequence number"));
-    } else {
-      return serial;
-    }
+    BOOST_THROW_EXCEPTION(
+      ParseException() << ErrorInfo::Message("Failed to parse card ID as PCI address, sequence number or serial ID"));
   }
 }
 

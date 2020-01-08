@@ -34,7 +34,7 @@ namespace roc
 class BarInterfaceBase : public BarInterface
 {
  public:
-  BarInterfaceBase(const Parameters& parameters);
+  BarInterfaceBase(const Parameters& parameters, std::unique_ptr<RocPciDevice> rocPciDevice);
   BarInterfaceBase(std::shared_ptr<Pda::PdaBar> bar);
   virtual ~BarInterfaceBase();
 

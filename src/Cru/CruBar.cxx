@@ -37,8 +37,8 @@ namespace roc
 
 using Link = Cru::Link;
 
-CruBar::CruBar(const Parameters& parameters)
-  : BarInterfaceBase(parameters),
+CruBar::CruBar(const Parameters& parameters, std::unique_ptr<RocPciDevice> rocPciDevice)
+  : BarInterfaceBase(parameters, std::move(rocPciDevice)),
     mClock(parameters.getClock().get_value_or(Clock::Local)),
     mCruId(parameters.getCruId().get_value_or(0x0)),
     mDatapathMode(parameters.getDatapathMode().get_value_or(DatapathMode::Packet)),
