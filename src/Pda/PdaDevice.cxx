@@ -12,6 +12,7 @@
 /// \brief Implementation of the PdaDevice class.
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
 #include "PdaDevice.h"
 #include <iostream>
@@ -41,31 +42,39 @@ namespace Pda
 namespace b = boost;
 namespace bfs = boost::filesystem;
 
-PdaDevice::PdaDevice(const PciId& pciId) : mDeviceOperator(nullptr)
+PdaDevice::PdaDevice() : mDeviceOperator(nullptr)
 {
   try {
     THROW_IF_BAD_STATUS(PDAInit(), PdaException() << ErrorInfo::Message("Failed to initialize PDA"));
 
-    // The terminating \0 is important, PDA is not C++
-    const std::string id = pciId.getVendorId() + " " + pciId.getDeviceId() + '\0';
-    const char* ids[2] = { id.data(), nullptr };
+    const std::vector<PciType> pciTypes = {
+      { CardType::Crorc, { "0033", "10dc" } },
+      { CardType::Cru, { "e001", "1172" } }
+    };
 
-    mDeviceOperator = DeviceOperator_new(ids, PDA_DONT_ENUMERATE_DEVICES);
-    if (mDeviceOperator == nullptr) {
-      BOOST_THROW_EXCEPTION(PdaException()
-                            << ErrorInfo::Message("Failed to get DeviceOperator")
-                            << ErrorInfo::PossibleCauses({ "Invalid PCI ID",
-                                                           "Insufficient permissions (must be root or member of group 'pda')" }));
-    }
+    for (const PciType& pciType : pciTypes) {
+      const PciId pciId = pciType.pciId;
 
-    uint64_t deviceCount = getPciDeviceCount();
+      // The terminating \0 is important, PDA is not C++
+      const std::string id = pciId.getVendorId() + " " + pciId.getDeviceId() + '\0';
+      const char* ids[2] = { id.data(), nullptr };
 
-    for (uint64_t i = 0; i < deviceCount; ++i) {
-      PciDevice* pciDevice = getPciDevice(i);
-      mPciDevices.push_back(pciDevice);
+      mDeviceOperator = DeviceOperator_new(ids, PDA_DONT_ENUMERATE_DEVICES);
+      if (mDeviceOperator == nullptr) {
+        BOOST_THROW_EXCEPTION(PdaException()
+                              << ErrorInfo::Message("Failed to get DeviceOperator")
+                              << ErrorInfo::PossibleCauses({ "Invalid PCI ID",
+                                                             "Insufficient permissions (must be root or member of group 'pda')" }));
+      }
+
+      uint64_t deviceCount = getPciDeviceCount();
+
+      for (uint64_t i = 0; i < deviceCount; ++i) {
+        PciDevice* pciDevice = getPciDevice(i);
+        mPciDevices.push_back({ pciType.cardType, pciDevice });
+      }
     }
   } catch (boost::exception& e) {
-    e << ErrorInfo::PciId(pciId);
     addPossibleCauses(e, { "Driver module not inserted (> modprobe uio_pci_dma)",
                            "PDA kernel module version doesn't match kernel version",
                            "PDA userspace library version incompatible with PDA kernel module version (> modinfo uio_pci_dma)" });

@@ -24,7 +24,6 @@
 #include <iostream>
 #include "Crorc/Crorc.h"
 #include "Cru/CruBar.h"
-#include "Pda/PdaBar.h"
 #include "Pda/PdaDevice.h"
 #include "ReadoutCard/ChannelFactory.h"
 #include "ReadoutCard/Exception.h"
@@ -36,28 +35,31 @@ namespace AliceO2
 namespace roc
 {
 
-boost::optional<int32_t> crorcGetSerial(Pda::PdaDevice::PdaPciDevice pciDevice);
-boost::optional<int32_t> cruGetSerial(Pda::PdaDevice::PdaPciDevice pciDevice);
+int crorcGetSerial(std::shared_ptr<Pda::PdaBar> pdaBar);
+int crorcGetEndpoint(std::shared_ptr<Pda::PdaBar> pdaBar);
+int cruGetSerial(std::shared_ptr<Pda::PdaBar> pdaBar);
+int cruGetEndpoint(std::shared_ptr<Pda::PdaBar> pdaBar);
 
 namespace
 {
 struct DeviceType {
   CardType::type cardType;
-  const PciId pciId;
-  std::function<boost::optional<int32_t>(Pda::PdaDevice::PdaPciDevice pciDevice)> getSerial;
+  PciId pciId;
+  std::function<int(std::shared_ptr<Pda::PdaBar> pdaBar)> getSerial;
+  std::function<int(std::shared_ptr<Pda::PdaBar> pdaBar)> getEndpoint;
 };
 
 const std::vector<DeviceType> deviceTypes = {
-  { CardType::Crorc, { "0033", "10dc" }, crorcGetSerial }, // C-RORC
-  { CardType::Cru, { "e001", "1172" }, cruGetSerial },     // Altera dev board CRU
+  { CardType::Crorc, { "0033", "10dc" }, crorcGetSerial, crorcGetEndpoint }, // C-RORC
+  { CardType::Cru, { "e001", "1172" }, cruGetSerial, cruGetEndpoint },       // Altera dev board CRU
 };
 
-PciAddress addressFromDevice(Pda::PdaDevice::PdaPciDevice pciDevice)
+PciAddress addressFromDevice(PciDevice* pciDevice)
 {
   uint8_t busId;
   uint8_t deviceId;
   uint8_t functionId;
-  if (PciDevice_getBusID(pciDevice.get(), &busId) || PciDevice_getDeviceID(pciDevice.get(), &deviceId) || PciDevice_getFunctionID(pciDevice.get(), &functionId)) {
+  if (PciDevice_getBusID(pciDevice, &busId) || PciDevice_getDeviceID(pciDevice, &deviceId) || PciDevice_getFunctionID(pciDevice, &functionId)) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Failed to retrieve device address"));
   }
   PciAddress address(busId, deviceId, functionId);
@@ -66,27 +68,53 @@ PciAddress addressFromDevice(Pda::PdaDevice::PdaPciDevice pciDevice)
 
 CardDescriptor defaultDescriptor()
 {
-  return { CardType::Unknown, -1, { "unknown", "unknown" }, PciAddress(0, 0, 0), -1 };
+  return { CardType::Unknown, SerialId(-1, 0), { "unknown", "unknown" }, PciAddress(0, 0, 0), -1 };
 }
 } // Anonymous namespace
 
-void RocPciDevice::initWithSerial(int serialNumber)
+RocPciDevice::RocPciDevice(const Parameters::CardIdType& cardId)
+  : mDescriptor(defaultDescriptor())
+{
+  if (auto serialId = boost::get<SerialId>(&cardId)) {
+    initWithSerialId(*serialId);
+  } else if (auto address = boost::get<PciAddress>(&cardId)) {
+    initWithAddress(*address);
+  } else if (auto sequenceNumber = boost::get<PciSequenceNumber>(&cardId)) {
+    initWithSequenceNumber(*sequenceNumber);
+  } else {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not _parse_ Card ID"));
+  }
+}
+
+RocPciDevice::~RocPciDevice()
+{
+}
+
+void RocPciDevice::initWithSerialId(const SerialId& serialId)
 {
   try {
-    for (const auto& type : deviceTypes) {
-      mPdaDevice = Pda::PdaDevice::getPdaDevice(type.pciId);
-      for (auto& pciDevice : mPdaDevice->getPciDevices(mPdaDevice)) {
-        if (type.getSerial(pciDevice) == serialNumber) {
-          Utilities::resetSmartPtr(mPciDevice, pciDevice);
-          mDescriptor = CardDescriptor{ type.cardType, serialNumber, type.pciId, addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice.get()) };
-          return;
-        }
+    for (const auto& typedPciDevice : Pda::PdaDevice::getPciDevices()) {
+      PciDevice* pciDevice = typedPciDevice.pciDevice;
+      DeviceType type;
+      if (typedPciDevice.cardType == CardType::Crorc) {
+        type = DeviceType(deviceTypes.at(0));
+      } else {
+        type = DeviceType(deviceTypes.at(1));
+      }
+
+      Utilities::resetSmartPtr(mPdaBar0, pciDevice, 0);
+      Utilities::resetSmartPtr(mPdaBar2, pciDevice, 2);
+
+      if (type.getSerial(mPdaBar2) == serialId.getSerial() && type.getEndpoint(mPdaBar0) == serialId.getEndpoint()) {
+        mPciDevice = pciDevice;
+        mDescriptor = CardDescriptor{ type.cardType, serialId, type.pciId, addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice) };
+        return;
       }
     }
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not find card"));
   } catch (boost::exception& e) {
-    e << ErrorInfo::SerialNumber(serialNumber);
-    addPossibleCauses(e, { "Invalid serial number search target" });
+    e << ErrorInfo::SerialId(serialId);
+    addPossibleCauses(e, { "Invalid serial and/or endpoint" });
     throw;
   }
 }
@@ -94,20 +122,28 @@ void RocPciDevice::initWithSerial(int serialNumber)
 void RocPciDevice::initWithAddress(const PciAddress& address)
 {
   try {
-    for (const auto& type : deviceTypes) {
-      mPdaDevice = Pda::PdaDevice::getPdaDevice(type.pciId);
-      for (const auto& pciDevice : mPdaDevice->getPciDevices(mPdaDevice)) {
-        if (addressFromDevice(pciDevice) == address) {
-          Utilities::resetSmartPtr(mPciDevice, pciDevice);
-          mDescriptor = CardDescriptor{ type.cardType, type.getSerial(pciDevice), type.pciId, address, PciDevice_getNumaNode(pciDevice.get()) };
-          return;
+    for (const auto& typedPciDevice : Pda::PdaDevice::getPciDevices()) {
+      PciDevice* pciDevice = typedPciDevice.pciDevice;
+      DeviceType type;
+      if (addressFromDevice(pciDevice) == address) {
+        if (typedPciDevice.cardType == CardType::Crorc) {
+          type = DeviceType(deviceTypes.at(0));
+        } else {
+          type = DeviceType(deviceTypes.at(1));
         }
+
+        Utilities::resetSmartPtr(mPdaBar0, pciDevice, 0);
+        Utilities::resetSmartPtr(mPdaBar2, pciDevice, 2);
+
+        mPciDevice = pciDevice;
+        mDescriptor = CardDescriptor{ type.cardType, SerialId{ type.getSerial(mPdaBar2), type.getEndpoint(mPdaBar0) }, type.pciId, address, PciDevice_getNumaNode(pciDevice) };
+        return;
       }
     }
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not find card"));
   } catch (boost::exception& e) {
     e << ErrorInfo::PciAddress(address);
-    addPossibleCauses(e, { "Invalid PCI address search target" });
+    addPossibleCauses(e, { "Invalid PCI address" });
     throw;
   }
 }
@@ -116,129 +152,55 @@ void RocPciDevice::initWithSequenceNumber(const PciSequenceNumber& sequenceNumbe
 {
   int sequenceCounter = 0;
   try {
-    for (const auto& type : deviceTypes) {
-      mPdaDevice = Pda::PdaDevice::getPdaDevice(type.pciId);
-      for (const auto& pciDevice : mPdaDevice->getPciDevices(mPdaDevice)) {
-        if (sequenceNumber == sequenceCounter) {
-          Utilities::resetSmartPtr(mPciDevice, pciDevice);
-          mDescriptor = CardDescriptor{ type.cardType, type.getSerial(pciDevice), type.pciId, addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice.get()) };
-          return;
+    for (const auto& typedPciDevice : Pda::PdaDevice::getPciDevices()) {
+      PciDevice* pciDevice = typedPciDevice.pciDevice;
+      DeviceType type;
+      if (sequenceNumber == sequenceCounter) {
+        if (typedPciDevice.cardType == CardType::Crorc) {
+          type = DeviceType(deviceTypes.at(0));
+        } else {
+          type = DeviceType(deviceTypes.at(1));
         }
-        sequenceCounter++;
+
+        Utilities::resetSmartPtr(mPdaBar0, pciDevice, 0);
+        Utilities::resetSmartPtr(mPdaBar2, pciDevice, 2);
+
+        mPciDevice = pciDevice;
+        mDescriptor = CardDescriptor{ type.cardType, SerialId{ type.getSerial(mPdaBar2), type.getEndpoint(mPdaBar0) }, type.pciId, addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice) };
+        return;
       }
+      sequenceCounter++;
     }
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not find card"));
   } catch (boost::exception& e) {
     e << ErrorInfo::PciSequenceNumber(sequenceNumber);
-    addPossibleCauses(e, { "Invalid PCI address search target" });
+    addPossibleCauses(e, { "Invalid sequence number" });
     throw;
   }
-}
-
-RocPciDevice::RocPciDevice(int serialNumber)
-  : mDescriptor(defaultDescriptor())
-{
-  initWithSerial(serialNumber);
-}
-
-RocPciDevice::RocPciDevice(const PciAddress& address)
-  : mDescriptor(defaultDescriptor())
-{
-  initWithAddress(address);
-}
-
-RocPciDevice::RocPciDevice(const PciSequenceNumber& sequenceNumber)
-  : mDescriptor(defaultDescriptor())
-{
-  initWithSequenceNumber(sequenceNumber);
-}
-
-RocPciDevice::RocPciDevice(const Parameters::CardIdType& cardId)
-  : mDescriptor(defaultDescriptor())
-{
-  if (auto serial = boost::get<int>(&cardId)) {
-    initWithSerial(*serial);
-  } else {
-    initWithAddress(boost::get<PciAddress>(cardId));
-  }
-}
-
-RocPciDevice::~RocPciDevice()
-{
 }
 
 std::vector<CardDescriptor> RocPciDevice::findSystemDevices()
 {
   std::vector<CardDescriptor> cards;
-  for (const auto& type : deviceTypes) {
-    for (const auto& pciDevice : Pda::PdaDevice::getPciDevices(type.pciId)) {
-      try {
-        cards.push_back(CardDescriptor{ type.cardType, type.getSerial(pciDevice), type.pciId,
-                                        addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice.get()) });
-      } catch (boost::exception& e) {
-        std::cout << boost::diagnostic_information(e);
-      }
+  for (const auto& typedPciDevice : Pda::PdaDevice::getPciDevices()) {
+    PciDevice* pciDevice = typedPciDevice.pciDevice;
+    DeviceType type;
+    if (typedPciDevice.cardType == CardType::Crorc) {
+      type = DeviceType(deviceTypes.at(0));
+    } else {
+      type = DeviceType(deviceTypes.at(1));
     }
-  }
-  return cards;
-}
 
-std::vector<CardDescriptor> RocPciDevice::findSystemDevices(int serialNumber)
-{
-  std::vector<CardDescriptor> cards;
-  try {
-    for (const auto& type : deviceTypes) {
-      for (const auto& pciDevice : Pda::PdaDevice::getPciDevices(type.pciId)) {
-        if (type.getSerial(pciDevice) == serialNumber) {
-          cards.push_back(CardDescriptor{ type.cardType, type.getSerial(pciDevice), type.pciId,
-                                          addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice.get()) });
-        }
-      }
-    }
-  } catch (boost::exception& e) {
-    e << ErrorInfo::SerialNumber(serialNumber);
-    addPossibleCauses(e, { "Invalid serial number search target" });
-    throw;
-  }
-  return cards;
-}
+    std::shared_ptr<Pda::PdaBar> pdaBar0;
+    Utilities::resetSmartPtr(pdaBar0, pciDevice, 0);
+    std::shared_ptr<Pda::PdaBar> pdaBar2;
+    Utilities::resetSmartPtr(pdaBar2, pciDevice, 2);
 
-std::vector<CardDescriptor> RocPciDevice::findSystemDevices(const PciAddress& address)
-{
-  std::vector<CardDescriptor> cards;
-  try {
-    for (const auto& type : deviceTypes) {
-      for (const auto& pciDevice : Pda::PdaDevice::getPciDevices(type.pciId)) {
-        if (addressFromDevice(pciDevice) == address) {
-          cards.push_back(CardDescriptor{ type.cardType, type.getSerial(pciDevice), type.pciId, address, PciDevice_getNumaNode(pciDevice.get()) });
-        }
-      }
+    try {
+      cards.push_back(CardDescriptor{ type.cardType, SerialId{ type.getSerial(pdaBar2), type.getEndpoint(pdaBar0) }, type.pciId, addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice) });
+    } catch (boost::exception& e) {
+      std::cout << boost::diagnostic_information(e);
     }
-  } catch (boost::exception& e) {
-    e << ErrorInfo::PciAddress(address);
-    addPossibleCauses(e, { "Invalid PCI address search target" });
-    throw;
-  }
-  return cards;
-}
-
-std::vector<CardDescriptor> RocPciDevice::findSystemDevices(const PciSequenceNumber& sequenceNumber)
-{
-  int sequenceCounter = 0;
-  std::vector<CardDescriptor> cards;
-  try {
-    for (const auto& type : deviceTypes) {
-      for (const auto& pciDevice : Pda::PdaDevice::getPciDevices(type.pciId)) {
-        if (sequenceNumber == sequenceCounter) {
-          cards.push_back(CardDescriptor{ type.cardType, type.getSerial(pciDevice), type.pciId, addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice.get()) });
-        }
-        sequenceCounter++;
-      }
-    }
-  } catch (boost::exception& e) {
-    e << ErrorInfo::PciSequenceNumber(sequenceNumber);
-    addPossibleCauses(e, { "Invalid Sequence Number search target" });
-    throw;
   }
   return cards;
 }
@@ -250,7 +212,7 @@ void RocPciDevice::printDeviceInfo(std::ostream& ostream)
   uint8_t functionId;
   const PciBarTypes* pciBarTypesPtr;
 
-  if (PciDevice_getDomainID(mPciDevice->get(), &domainId) || PciDevice_getBusID(mPciDevice->get(), &busId) || PciDevice_getFunctionID(mPciDevice->get(), &functionId) || PciDevice_getBarTypes(mPciDevice->get(), &pciBarTypesPtr)) {
+  if (PciDevice_getDomainID(mPciDevice, &domainId) || PciDevice_getBusID(mPciDevice, &busId) || PciDevice_getFunctionID(mPciDevice, &functionId) || PciDevice_getBarTypes(mPciDevice, &pciBarTypesPtr)) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Failed to retrieve device info"));
   }
 
@@ -265,17 +227,25 @@ void RocPciDevice::printDeviceInfo(std::ostream& ostream)
   ostream << f % "BAR type" << barTypeString;
 }
 
-boost::optional<int32_t> cruGetSerial(Pda::PdaDevice::PdaPciDevice pciDevice)
+int cruGetSerial(std::shared_ptr<Pda::PdaBar> pdaBar2)
 {
-  std::shared_ptr<Pda::PdaBar> pdaBar2;
-  Utilities::resetSmartPtr(pdaBar2, pciDevice, 2);
-  return CruBar(pdaBar2).getSerial();
+  int serial = CruBar(pdaBar2).getSerial().get();
+  return serial;
 }
 
-boost::optional<int32_t> crorcGetSerial(Pda::PdaDevice::PdaPciDevice pciDevice)
+int crorcGetSerial(std::shared_ptr<Pda::PdaBar> pdaBar0)
 {
-  Pda::PdaBar pdaBar(pciDevice, 0); // Must use BAR 0 to access flash
-  return Crorc::getSerial(pdaBar);
+  return Crorc::getSerial(*pdaBar0.get()).get();
+}
+
+int cruGetEndpoint(std::shared_ptr<Pda::PdaBar> pdaBar0)
+{
+  return CruBar(pdaBar0).getEndpointNumber();
+}
+
+int crorcGetEndpoint(std::shared_ptr<Pda::PdaBar> /*pdaBar0*/)
+{
+  return 0;
 }
 
 } // namespace roc

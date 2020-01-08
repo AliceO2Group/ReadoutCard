@@ -27,7 +27,7 @@ namespace
 {
 CardDescriptor makeDummyDescriptor()
 {
-  return { CardType::Dummy, ChannelFactory::getDummySerialNumber(), PciId{ "dummy", "dummy" }, PciAddress{ 0, 0, 0 }, -1 };
+  return { CardType::Dummy, ChannelFactory::getDummySerialId(), PciId{ "dummy", "dummy" }, PciAddress{ 0, 0, 0 }, -1 };
 }
 
 constexpr size_t TRANSFER_QUEUE_CAPACITY = 16;
@@ -174,7 +174,7 @@ int32_t DummyDmaChannel::getDroppedPackets()
 
 boost::optional<int32_t> DummyDmaChannel::getSerial()
 {
-  return ChannelFactory::getDummySerialNumber();
+  return ChannelFactory::getDummySerialId().getSerial();
 }
 
 boost::optional<float> DummyDmaChannel::getTemperature()

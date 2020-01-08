@@ -30,7 +30,7 @@ namespace roc
 class CrorcBar final : public BarInterfaceBase
 {
  public:
-  CrorcBar(const Parameters& parameters);
+  CrorcBar(const Parameters& parameters, std::unique_ptr<RocPciDevice> rocPciDevice);
   virtual ~CrorcBar();
   //virtual void checkReadSafe(int index) override;
   //virtual void checkWriteSafe(int index, uint32_t value) override;

@@ -87,9 +87,14 @@ class DmaChannelBase : public DmaChannelInterface
     return mChannelNumber;
   }
 
-  boost::optional<int32_t> getSerialNumber() const
+  int getSerialNumber() const
   {
-    return mCardDescriptor.serialNumber;
+    return mCardDescriptor.serialId.getSerial();
+  }
+
+  int getEndpointNumber() const
+  {
+    return mCardDescriptor.serialId.getEndpoint();
   }
 
   const CardDescriptor& getCardDescriptor() const

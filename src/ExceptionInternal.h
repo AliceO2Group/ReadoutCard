@@ -26,10 +26,11 @@
 #include "ReadoutCard/PciId.h"
 #include "ReadoutCard/CardType.h"
 #include "ReadoutCard/Parameters.h"
+#include "ReadoutCard/ParameterTypes/DataSource.h"
 #include "ReadoutCard/ParameterTypes/PciAddress.h"
 #include "ReadoutCard/ParameterTypes/PciSequenceNumber.h"
 #include "ReadoutCard/ParameterTypes/ResetLevel.h"
-#include "ReadoutCard/ParameterTypes/DataSource.h"
+#include "ReadoutCard/ParameterTypes/SerialId.h"
 
 namespace AliceO2
 {
@@ -87,6 +88,9 @@ DEFINE_ERRINFO(ReadyFifoLength, int32_t);
 DEFINE_ERRINFO(ReadyFifoStatus, int);
 DEFINE_ERRINFO(ResetLevel, ::AliceO2::roc::ResetLevel::type);
 DEFINE_ERRINFO(ScatterGatherEntrySize, size_t);
+DEFINE_ERRINFO(SerialId, ::AliceO2::roc::SerialId);
+DEFINE_ERRINFO(SerialIdEndpoint, int);
+DEFINE_ERRINFO(SerialIdSerial, int);
 DEFINE_ERRINFO(SerialNumber, int);
 DEFINE_ERRINFO(SharedBufferFile, std::string);
 DEFINE_ERRINFO(SharedFifoFile, std::string);
@@ -126,6 +130,7 @@ std::string to_string(const AliceO2::roc::ErrorInfo::PciSequenceNumber& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::PossibleCauses& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::ReadyFifoStatus& e);
 std::string to_string(const AliceO2::roc::ErrorInfo::ResetLevel& e);
+std::string to_string(const AliceO2::roc::ErrorInfo::SerialId& e);
 
 } // namespace boost
 

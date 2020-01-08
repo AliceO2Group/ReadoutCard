@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <string>
+#include "Pda/PdaBar.h"
 #include "Pda/PdaDevice.h"
 #include "ReadoutCard/CardType.h"
 #include "ReadoutCard/CardDescriptor.h"
@@ -34,13 +35,7 @@ namespace roc
 class RocPciDevice
 {
  public:
-  RocPciDevice(int serialNumber);
-
-  RocPciDevice(const PciAddress& address);
-
   RocPciDevice(const Parameters::CardIdType& cardId);
-
-  RocPciDevice(const PciSequenceNumber& sequenceNumber);
 
   ~RocPciDevice();
 
@@ -59,19 +54,29 @@ class RocPciDevice
     return mDescriptor.cardType;
   }
 
-  boost::optional<int> getSerialNumber() const
-  {
-    return mDescriptor.serialNumber;
-  }
-
   PciAddress getPciAddress() const
   {
     return mDescriptor.pciAddress;
   }
 
-  Pda::PdaDevice::PdaPciDevice getPciDevice() const
+  PciDevice* getPciDevice() const
   {
-    return *mPciDevice.get();
+    return mPciDevice;
+  }
+
+  int getSerialId() const //TODO: Could be used for logging?
+  {
+    return mDescriptor.serialId.getSerial();
+  }
+
+  std::shared_ptr<Pda::PdaBar> getBar(int barIndex)
+  {
+    if (barIndex == 0) {
+      return std::move(mPdaBar0);
+    } else if (barIndex == 2) {
+      return std::move(mPdaBar2);
+    }
+    return nullptr;
   }
 
   void printDeviceInfo(std::ostream& ostream);
@@ -79,23 +84,18 @@ class RocPciDevice
   // Finds ReadoutCard devices on the system
   static std::vector<CardDescriptor> findSystemDevices();
 
-  // Finds ReadoutCard devices on the system with the given serial number
-  static std::vector<CardDescriptor> findSystemDevices(int serialNumber);
-
-  // Finds ReadoutCard devices on the system with the given address
-  static std::vector<CardDescriptor> findSystemDevices(const PciAddress& address);
-
-  // Finds ReadoutCard devices on the system with the given sequence number
-  static std::vector<CardDescriptor> findSystemDevices(const PciSequenceNumber& sequenceNumber);
+  // Finds ReadoutCard devices on the system with the given card id //TODO: Used for what?
+  //static std::vector<CardDescriptor> findSystemDevices(const Parameters::CardIdType& cardId);
 
  private:
-  void initWithSerial(int serialNumber);
+  void initWithSerialId(const SerialId& serialId);
   void initWithAddress(const PciAddress& address);
   void initWithSequenceNumber(const PciSequenceNumber& sequenceNumber);
 
-  Pda::PdaDevice::SharedPdaDevice mPdaDevice;
-  std::unique_ptr<Pda::PdaDevice::PdaPciDevice> mPciDevice;
+  PciDevice* mPciDevice;
   CardDescriptor mDescriptor;
+  std::shared_ptr<Pda::PdaBar> mPdaBar0;
+  std::shared_ptr<Pda::PdaBar> mPdaBar2;
 };
 
 } // namespace roc

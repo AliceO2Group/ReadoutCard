@@ -21,8 +21,8 @@ namespace AliceO2
 namespace roc
 {
 
-CrorcBar::CrorcBar(const Parameters& parameters)
-  : BarInterfaceBase(parameters)
+CrorcBar::CrorcBar(const Parameters& parameters, std::unique_ptr<RocPciDevice> rocPciDevice)
+  : BarInterfaceBase(parameters, std::move(rocPciDevice))
 {
 }
 
