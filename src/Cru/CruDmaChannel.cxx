@@ -159,9 +159,6 @@ void CruDmaChannel::setBufferNonReady()
 
 void CruDmaChannel::deviceStopDma()
 {
-  // Block further pushes; transfer queue has no available place anymore
-  mLinkQueuesTotalAvailable = 0;
-
   // Disable data taking
   setBufferNonReady();
   getBar2()->disableDataTaking();
@@ -178,7 +175,7 @@ void CruDmaChannel::deviceStopDma()
       }
 
       if (!link.queue.empty()) {
-        transferSuperpageFromLinkToReady(link, true);
+        transferSuperpageFromLinkToReady(link);
         moved++;
       }
       amountAvailable--;
@@ -189,7 +186,7 @@ void CruDmaChannel::deviceStopDma()
   for (auto& link : mLinks) {
     while (!link.queue.empty()) {
       link.queue.front().setReceived(0);
-      link.queue.front().setReady(true);
+      link.queue.front().setReady(false);
       mReadyQueue.push_back(link.queue.front());
       link.queue.pop_front();
     }
@@ -295,7 +292,7 @@ void CruDmaChannel::pushSuperpageToLink(Link& link, const Superpage& superpage)
   link.queue.push_back(superpage);
 }
 
-void CruDmaChannel::transferSuperpageFromLinkToReady(Link& link, bool stopping)
+void CruDmaChannel::transferSuperpageFromLinkToReady(Link& link)
 {
   if (link.queue.empty()) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not transfer Superpage from link to ready queue, link queue is empty"));
@@ -313,9 +310,7 @@ void CruDmaChannel::transferSuperpageFromLinkToReady(Link& link, bool stopping)
   mReadyQueue.push_back(link.queue.front());
   link.queue.pop_front();
   link.superpageCounter++;
-  if (!stopping) {
-    mLinkQueuesTotalAvailable++;
-  }
+  mLinkQueuesTotalAvailable++;
 }
 
 void CruDmaChannel::fillSuperpages()
