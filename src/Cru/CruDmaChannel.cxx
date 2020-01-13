@@ -189,16 +189,13 @@ void CruDmaChannel::deviceStopDma()
       link.queue.front().setReady(false);
       mReadyQueue.push_back(link.queue.front());
       link.queue.pop_front();
+      mLinkQueuesTotalAvailable++;
     }
 
     if (!link.queue.empty()) {
       log((format("Superpage queue of link %1% not empty after DMA stop. Superpages unclaimed.") % link.id).str(),
           InfoLogger::InfoLogger::Error);
     }
-  }
-
-  if (getTransferQueueAvailable()) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Transfer queue not full when it should be"));
   }
 
   log((format("Moved %1% remaining superpage(s) to ready queue") % moved).str());
