@@ -67,7 +67,7 @@ class DmaChannelInterface
   /// driver once it is pushed.
   ///
   /// \param superpage Superpage to push
-  virtual void pushSuperpage(Superpage superpage) = 0;
+  virtual bool pushSuperpage(Superpage superpage) = 0;
 
   /// Gets the superpage at the front of the "ready queue". Does not pop it.
   /// Note that it returns a copy of the Superpage's values.

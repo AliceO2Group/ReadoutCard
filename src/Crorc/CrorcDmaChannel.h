@@ -49,7 +49,7 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
   virtual boost::optional<int32_t> getSerial() override;
   virtual boost::optional<std::string> getFirmwareInfo() override;
 
-  virtual void pushSuperpage(Superpage superpage) override;
+  virtual bool pushSuperpage(Superpage superpage) override;
 
   virtual int getTransferQueueAvailable() override;
   virtual int getReadyQueueSize() override;

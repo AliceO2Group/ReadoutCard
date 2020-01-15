@@ -37,7 +37,7 @@ class DummyDmaChannel final : public DmaChannelBase
   DummyDmaChannel(const Parameters& parameters);
   virtual ~DummyDmaChannel();
 
-  virtual void pushSuperpage(Superpage) override;
+  virtual bool pushSuperpage(Superpage) override;
   virtual Superpage getSuperpage() override;
   virtual Superpage popSuperpage() override;
   virtual void fillSuperpages() override;

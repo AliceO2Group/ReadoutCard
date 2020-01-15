@@ -98,7 +98,7 @@ boost::optional<std::string> DummyDmaChannel::getFirmwareInfo()
   return std::string("Dummy");
 }
 
-void DummyDmaChannel::pushSuperpage(Superpage superpage)
+bool DummyDmaChannel::pushSuperpage(Superpage superpage)
 {
   if (getTransferQueueAvailable() == 0) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not push superpage, transfer queue was full"));
@@ -124,6 +124,7 @@ void DummyDmaChannel::pushSuperpage(Superpage superpage)
   }
 
   mTransferQueue.push_back(superpage);
+  return true;
 }
 
 Superpage DummyDmaChannel::getSuperpage()

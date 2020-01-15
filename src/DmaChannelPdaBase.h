@@ -113,12 +113,13 @@ class DmaChannelPdaBase : public DmaChannelBase
     return *(mRocPciDevice.get());
   }
 
+ protected:
+  /// Current state of the DMA
+  DmaState::type mDmaState;
+
  private:
   /// Contains addresses & size of the buffer
   std::unique_ptr<DmaBufferProviderInterface> mBufferProvider;
-
-  /// Current state of the DMA
-  DmaState::type mDmaState;
 
   /// PDA device objects
   boost::scoped_ptr<RocPciDevice> mRocPciDevice;
