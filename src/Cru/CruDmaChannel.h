@@ -40,7 +40,7 @@ class CruDmaChannel final : public DmaChannelPdaBase
 
   virtual CardType::type getCardType() override;
 
-  virtual void pushSuperpage(Superpage) override;
+  virtual bool pushSuperpage(Superpage) override;
 
   virtual int getTransferQueueAvailable() override;
   virtual int getReadyQueueSize() override;

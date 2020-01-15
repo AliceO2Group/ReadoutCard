@@ -328,8 +328,12 @@ auto CrorcDmaChannel::getSuperpage() -> Superpage
   return mReadyQueue.front();
 }
 
-void CrorcDmaChannel::pushSuperpage(Superpage superpage)
+bool CrorcDmaChannel::pushSuperpage(Superpage superpage)
 {
+  if (mDmaState != DmaState::STARTED) {
+    return false;
+  }
+
   checkSuperpage(superpage);
 
   if (mTransferQueue.size() >= TRANSFER_QUEUE_CAPACITY) {
@@ -347,6 +351,8 @@ void CrorcDmaChannel::pushSuperpage(Superpage superpage)
   mFreeFifoFront = (mFreeFifoFront + 1) % MAX_SUPERPAGE_DESCRIPTORS;
 
   mTransferQueue.push_back(superpage);
+
+  return true;
 }
 
 auto CrorcDmaChannel::popSuperpage() -> Superpage

@@ -239,8 +239,12 @@ auto CruDmaChannel::getNextLinkIndex() -> LinkIndex
   return smallestQueueIndex;
 }
 
-void CruDmaChannel::pushSuperpage(Superpage superpage)
+bool CruDmaChannel::pushSuperpage(Superpage superpage)
 {
+  if (mDmaState != DmaState::STARTED) {
+    return false;
+  }
+
   checkSuperpage(superpage);
 
   if (mLinkQueuesTotalAvailable == 0) {
@@ -263,6 +267,8 @@ void CruDmaChannel::pushSuperpage(Superpage superpage)
   auto dmaPages = superpage.getSize() / mDmaPageSize;
   auto busAddress = getBusOffsetAddress(superpage.getOffset());
   getBar()->pushSuperpageDescriptor(link.id, dmaPages, busAddress);
+
+  return true;
 }
 
 auto CruDmaChannel::getSuperpage() -> Superpage
