@@ -185,7 +185,7 @@ class ProgramStatus : public Program
 
     if (mOptions.jsonOut) {
       pt::write_json(std::cout, root);
-    } else if (!mOptions.jsonOut) {
+    } else if (!mOptions.csvOut) {
       auto lineFat = std::string(header.length(), '=') + '\n';
       table << lineFat;
       std::cout << table.str();
