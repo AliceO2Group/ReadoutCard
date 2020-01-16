@@ -140,13 +140,14 @@ void DmaChannelPdaBase::startDma()
 // Checks DMA state and forwards call to subclass if necessary
 void DmaChannelPdaBase::stopDma()
 {
-  mDmaState = DmaState::STOPPED;
   if (mDmaState == DmaState::UNKNOWN) {
     log("Unknown DMA state");
+    mDmaState = DmaState::STOPPED;
   } else if (mDmaState == DmaState::STOPPED) {
     log("Warning: DMA already stopped. Ignoring stopDma() call");
   } else {
     log("Stopping DMA", InfoLogger::InfoLogger::Debug);
+    mDmaState = DmaState::STOPPED;
     deviceStopDma();
   }
 }
