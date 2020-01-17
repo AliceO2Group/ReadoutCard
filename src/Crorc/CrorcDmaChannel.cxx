@@ -184,6 +184,18 @@ void CrorcDmaChannel::deviceStopDma()
     }
   }
   getCrorc().stopDataReceiver();
+
+  // Return any filled superpages
+  fillSuperpages();
+
+  // Return any superpages that have been pushed up in the meantime but won't get filled
+  while (mTransferQueue.size()) {
+    auto superpage = mTransferQueue.front();
+    superpage.setReceived(0);
+    superpage.setReady(false);
+    mReadyQueue.push_back(superpage);
+    mTransferQueue.pop_front();
+  }
 }
 
 void CrorcDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)

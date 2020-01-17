@@ -164,23 +164,7 @@ void CruDmaChannel::deviceStopDma()
   getBar2()->disableDataTaking();
 
   // Transfer remaining (filled) superpages to ReadyQueue
-  int moved = 0;
-  for (auto& link : mLinks) {
-    int32_t superpageCount = getBar()->getSuperpageCount(link.id);
-    uint32_t amountAvailable = superpageCount - link.superpageCounter;
-    //log((format("superpageCount %1% amountAvailable %2%") % superpageCount % amountAvailable).str());
-    while (amountAvailable) {
-      if (mReadyQueue.size() >= READY_QUEUE_CAPACITY) {
-        break;
-      }
-
-      if (!link.queue.empty()) {
-        transferSuperpageFromLinkToReady(link);
-        moved++;
-      }
-      amountAvailable--;
-    }
-  }
+  fillSuperpages();
 
   // Return any superpages that have been pushed up in the meantime but won't get filled
   for (auto& link : mLinks) {
@@ -197,8 +181,6 @@ void CruDmaChannel::deviceStopDma()
           InfoLogger::InfoLogger::Error);
     }
   }
-
-  log((format("Moved %1% remaining superpage(s) to ready queue") % moved).str());
 }
 
 void CruDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)
@@ -319,30 +301,27 @@ void CruDmaChannel::transferSuperpageFromLinkToReady(Link& link)
 void CruDmaChannel::fillSuperpages()
 {
   // Check for arrivals & handle them
-  const auto links = mLinks.size();
-  for (LinkIndex linkIndex = 0; linkIndex < links; ++linkIndex) {
-    auto& link = mLinks[linkIndex];
-    uint32_t superpageCount = getBar()->getSuperpageCount(link.id);
-    auto available = superpageCount > link.superpageCounter;
-    if (available) {
-      uint32_t amountAvailable = superpageCount - link.superpageCounter;
-      if (amountAvailable > link.queue.size()) {
-        std::stringstream stream;
-        stream << "FATAL: Firmware reported more superpages available (" << amountAvailable << ") than should be present in FIFO (" << link.queue.size() << "); "
-               << link.superpageCounter << " superpages received from link " << int(link.id) << " according to driver, "
-               << superpageCount << " pushed according to firmware";
-        log(stream.str(), InfoLogger::InfoLogger::Error);
-        BOOST_THROW_EXCEPTION(Exception()
-                              << ErrorInfo::Message("FATAL: Firmware reported more superpages available than should be present in FIFO"));
+  for (auto& link : mLinks) {
+    int32_t superpageCount = getBar()->getSuperpageCount(link.id);
+    uint32_t amountAvailable = superpageCount - link.superpageCounter;
+    if (amountAvailable > link.queue.size()) {
+
+      std::stringstream stream;
+      stream << "FATAL: Firmware reported more superpages available (" << amountAvailable << ") than should be present in FIFO (" << link.queue.size() << "); "
+             << link.superpageCounter << " superpages received from link " << int(link.id) << " according to driver, "
+             << superpageCount << " pushed according to firmware";
+      log(stream.str(), InfoLogger::InfoLogger::Error);
+      BOOST_THROW_EXCEPTION(Exception()
+                            << ErrorInfo::Message("FATAL: Firmware reported more superpages available than should be present in FIFO"));
+    }
+
+    while (amountAvailable) {
+      if (mReadyQueue.size() >= READY_QUEUE_CAPACITY) {
+        break;
       }
 
-      for (uint32_t i = 0; i < amountAvailable; ++i) {
-        if (mReadyQueue.size() >= READY_QUEUE_CAPACITY) {
-          break;
-        }
-        // Front superpage has arrived
-        transferSuperpageFromLinkToReady(link);
-      }
+      transferSuperpageFromLinkToReady(link);
+      amountAvailable--;
     }
   }
 }
