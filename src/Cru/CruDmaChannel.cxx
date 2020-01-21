@@ -29,7 +29,7 @@ namespace roc
 {
 
 CruDmaChannel::CruDmaChannel(const Parameters& parameters)
-  : DmaChannelPdaBase(parameters, allowedChannels()),                           //
+  : DmaChannelPdaBase(parameters, allowedChannels()),
     mInitialResetLevel(ResetLevel::Internal),                                   // It's good to reset at least the card channel in general
     mDataSource(parameters.getDataSource().get_value_or(DataSource::Internal)), // DG loopback mode by default
     mDmaPageSize(parameters.getDmaPageSize().get_value_or(Cru::DMA_PAGE_SIZE))
@@ -81,7 +81,10 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
                                               << ErrorInfo::LinkId(id));
       }
       stream << id << " ";
-      mLinks.push_back({ static_cast<LinkId>(id) });
+      //Implicit constructors are deleted for the folly Queue. Workaround to keep the Link struct with a queue * field.
+      std::shared_ptr<SuperpageQueue> linkQueue = std::make_shared<SuperpageQueue>(LINK_QUEUE_CAPACITY);
+      Link newLink = { static_cast<LinkId>(id), 0, linkQueue };
+      mLinks.push_back(newLink);
     }
     log(stream.str());
   }
@@ -96,8 +99,8 @@ auto CruDmaChannel::allowedChannels() -> AllowedChannels
 CruDmaChannel::~CruDmaChannel()
 {
   setBufferNonReady();
-  if (mReadyQueue.size() > 0) {
-    log((format("Remaining superpages in the ready queue: %1%") % mReadyQueue.size()).str());
+  if (mReadyQueue.sizeGuess() > 0) {
+    log((format("Remaining superpages in the ready queue: %1%") % mReadyQueue.sizeGuess()).str());
   }
 
   if (mDataSource == DataSource::Internal) {
@@ -128,10 +131,15 @@ void CruDmaChannel::deviceStartDma()
 
   // Initialize link queues
   for (auto& link : mLinks) {
-    link.queue.clear();
+    //link.queue->clear();
+    while (!link.queue->isEmpty()) {
+      link.queue->popFront();
+    }
     link.superpageCounter = 0;
   }
-  mReadyQueue.clear();
+  while (!mReadyQueue.isEmpty()) {
+    mReadyQueue.popFront();
+  }
   mLinkQueuesTotalAvailable = LINK_QUEUE_CAPACITY * mLinks.size();
 
   // Start DMA
@@ -167,16 +175,17 @@ void CruDmaChannel::deviceStopDma()
   fillSuperpages();
 
   // Return any superpages that have been pushed up in the meantime but won't get filled
+  reclaimSuperpages();
+}
+
+void CruDmaChannel::reclaimSuperpages()
+{
   for (auto& link : mLinks) {
-    while (!link.queue.empty()) {
-      link.queue.front().setReceived(0);
-      link.queue.front().setReady(false);
-      mReadyQueue.push_back(link.queue.front());
-      link.queue.pop_front();
-      mLinkQueuesTotalAvailable++;
+    while (!link.queue->isEmpty()) {
+      transferSuperpageFromLinkToReady(link, true); // Reclaim pages, do *not* set as ready
     }
 
-    if (!link.queue.empty()) {
+    if (!link.queue->isEmpty()) {
       log((format("Superpage queue of link %1% not empty after DMA stop. Superpages unclaimed.") % link.id).str(),
           InfoLogger::InfoLogger::Error);
     }
@@ -211,7 +220,7 @@ auto CruDmaChannel::getNextLinkIndex() -> LinkIndex
   auto smallestQueueSize = std::numeric_limits<size_t>::max();
 
   for (size_t i = 0; i < mLinks.size(); ++i) {
-    auto queueSize = mLinks[i].queue.size();
+    auto queueSize = mLinks[i].queue->sizeGuess();
     if (queueSize < smallestQueueSize) {
       smallestQueueIndex = i;
       smallestQueueSize = queueSize;
@@ -238,7 +247,7 @@ bool CruDmaChannel::pushSuperpage(Superpage superpage)
   // Get the next link to push
   auto& link = mLinks[getNextLinkIndex()];
 
-  if (link.queue.size() >= LINK_QUEUE_CAPACITY) {
+  if (link.queue->sizeGuess() >= LINK_QUEUE_CAPACITY) {
     // Is the link's FIFO out of space?
     // This should never happen
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not push superpage, link queue was full"));
@@ -255,59 +264,69 @@ bool CruDmaChannel::pushSuperpage(Superpage superpage)
 
 auto CruDmaChannel::getSuperpage() -> Superpage
 {
-  if (mReadyQueue.empty()) {
+  if (mReadyQueue.isEmpty()) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not get superpage, ready queue was empty"));
   }
-  return mReadyQueue.front();
+  return *mReadyQueue.frontPtr();
 }
 
 auto CruDmaChannel::popSuperpage() -> Superpage
 {
-  if (mReadyQueue.empty()) {
+  if (mReadyQueue.isEmpty()) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not pop superpage, ready queue was empty"));
   }
-  auto superpage = mReadyQueue.front();
-  mReadyQueue.pop_front();
+  auto superpage = *mReadyQueue.frontPtr();
+  mReadyQueue.popFront();
+
   return superpage;
 }
 
 void CruDmaChannel::pushSuperpageToLink(Link& link, const Superpage& superpage)
 {
   mLinkQueuesTotalAvailable--;
-  link.queue.push_back(superpage);
+  link.queue->write(superpage);
 }
 
-void CruDmaChannel::transferSuperpageFromLinkToReady(Link& link)
+void CruDmaChannel::transferSuperpageFromLinkToReady(Link& link, bool reclaim)
 {
-  if (link.queue.empty()) {
+  if (link.queue->isEmpty()) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not transfer Superpage from link to ready queue, link queue is empty"));
   }
 
-  link.queue.front().setReady(true);
-
-  uint32_t superpageSize = getBar()->getSuperpageSize(link.id);
-  if (superpageSize == 0) {
-    link.queue.front().setReceived(link.queue.front().getSize()); // force the full superpage size for backwards compatibility
+  if (!reclaim) {
+    link.queue->frontPtr()->setReady(true);
+    uint32_t superpageSize = getBar()->getSuperpageSize(link.id);
+    if (superpageSize == 0) {
+      link.queue->frontPtr()->setReceived(link.queue->frontPtr()->getSize()); // force the full superpage size for backwards compatibility
+    } else {
+      link.queue->frontPtr()->setReceived(superpageSize);
+    }
   } else {
-    link.queue.front().setReceived(superpageSize);
+    link.queue->frontPtr()->setReady(false);
+    link.queue->frontPtr()->setReceived(0);
   }
 
-  mReadyQueue.push_back(link.queue.front());
-  link.queue.pop_front();
+  mReadyQueue.write(*link.queue->frontPtr());
+  link.queue->popFront();
   link.superpageCounter++;
   mLinkQueuesTotalAvailable++;
 }
 
 void CruDmaChannel::fillSuperpages()
 {
+
+  /*if (mDmaState != DmaState::STARTED) { //Would block fillSuperpages from deviceStopDma()
+    //return;
+  }*/
+
   // Check for arrivals & handle them
   for (auto& link : mLinks) {
     int32_t superpageCount = getBar()->getSuperpageCount(link.id);
     uint32_t amountAvailable = superpageCount - link.superpageCounter;
-    if (amountAvailable > link.queue.size()) {
+    if (amountAvailable > link.queue->sizeGuess()) {
 
       std::stringstream stream;
-      stream << "FATAL: Firmware reported more superpages available (" << amountAvailable << ") than should be present in FIFO (" << link.queue.size() << "); "
+      stream << "FATAL: Firmware reported more superpages available (" << amountAvailable << ") than should be present in FIFO (" << link.queue->sizeGuess() << "); "
              << link.superpageCounter << " superpages received from link " << int(link.id) << " according to driver, "
              << superpageCount << " pushed according to firmware";
       log(stream.str(), InfoLogger::InfoLogger::Error);
@@ -316,7 +335,7 @@ void CruDmaChannel::fillSuperpages()
     }
 
     while (amountAvailable) {
-      if (mReadyQueue.size() >= READY_QUEUE_CAPACITY) {
+      if (mReadyQueue.sizeGuess() >= READY_QUEUE_CAPACITY) {
         break;
       }
 
@@ -340,14 +359,14 @@ bool CruDmaChannel::isTransferQueueEmpty()
 
 int CruDmaChannel::getReadyQueueSize()
 {
-  return mReadyQueue.size();
+  return mReadyQueue.sizeGuess();
 }
 
 // Return a boolean that denotes whether the ready queue is full
 // The ready queue is full when the CRU has filled it up
 bool CruDmaChannel::isReadyQueueFull()
 {
-  return mReadyQueue.size() == READY_QUEUE_CAPACITY;
+  return mReadyQueue.isFull();
 }
 
 int32_t CruDmaChannel::getDroppedPackets()

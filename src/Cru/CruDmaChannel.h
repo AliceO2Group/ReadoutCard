@@ -25,6 +25,7 @@
 #include "Cru/CruBar.h"
 #include "Cru/FirmwareFeatures.h"
 #include "ReadoutCard/Parameters.h"
+#include "folly/ProducerConsumerQueue.h"
 
 namespace AliceO2
 {
@@ -74,7 +75,7 @@ class CruDmaChannel final : public DmaChannelPdaBase
   static constexpr size_t READY_QUEUE_CAPACITY = Cru::MAX_SUPERPAGE_DESCRIPTORS * Cru::MAX_LINKS;
 
   /// Queue for one link
-  using SuperpageQueue = boost::circular_buffer<Superpage>;
+  using SuperpageQueue = folly::ProducerConsumerQueue<Superpage>;
 
   /// Index into mLinks
   using LinkIndex = uint32_t;
@@ -91,7 +92,7 @@ class CruDmaChannel final : public DmaChannelPdaBase
     uint32_t superpageCounter = 0;
 
     /// The superpage queue
-    SuperpageQueue queue{ LINK_QUEUE_CAPACITY };
+    std::shared_ptr<SuperpageQueue> queue;
   };
 
   void resetCru();
@@ -115,13 +116,16 @@ class CruDmaChannel final : public DmaChannelPdaBase
   void pushSuperpageToLink(Link& link, const Superpage& superpage);
 
   /// Mark the front superpage of a link ready and transfer it to the ready queue
-  void transferSuperpageFromLinkToReady(Link& link);
+  void transferSuperpageFromLinkToReady(Link& link, bool reclaim = false);
 
   /// Enable debug mode by writing to the appropriate CRU register
   void enableDebugMode();
 
   /// Reset debug mode to the state it was in prior to the start of execution
   void resetDebugMode();
+
+  /// Reclaims superpages pushed to the CRU but not filled on DMA stop
+  void reclaimSuperpages();
 
   /// BAR 0 is needed for DMA engine interaction and various other functions
   std::shared_ptr<CruBar> cruBar;
