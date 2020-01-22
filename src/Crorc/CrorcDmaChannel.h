@@ -19,13 +19,13 @@
 
 #include <mutex>
 #include <unordered_map>
-#include <boost/circular_buffer.hpp>
 #include <boost/scoped_ptr.hpp>
 #include "DmaChannelPdaBase.h"
 #include "Crorc.h"
 #include "CrorcBar.h"
 #include "ReadoutCard/Parameters.h"
 #include "ReadyFifo.h"
+#include "folly/ProducerConsumerQueue.h"
 
 namespace AliceO2
 {
@@ -77,16 +77,18 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
 
   /// Max amount of superpages in the transfer queue (i.e. pending transfer).
   static constexpr size_t TRANSFER_QUEUE_CAPACITY = MAX_SUPERPAGE_DESCRIPTORS;
+  static constexpr size_t TRANSFER_QUEUE_CAPACITY_ALLOCATIONS = TRANSFER_QUEUE_CAPACITY + 1; // folly Queue needs + 1
 
   /// Max amount of superpages in the ready queue (i.e. finished transfer).
   /// This is an arbitrary size, can easily be increased if more headroom is needed.
   static constexpr size_t READY_QUEUE_CAPACITY = TRANSFER_QUEUE_CAPACITY;
+  static constexpr size_t READY_QUEUE_CAPACITY_ALLOCATIONS = TRANSFER_QUEUE_CAPACITY_ALLOCATIONS;
 
   /// Minimum number of superpages needed to bootstrap DMA
   //static constexpr size_t DMA_START_REQUIRED_SUPERPAGES = 1;
   //static constexpr size_t DMA_START_REQUIRED_SUPERPAGES = READYFIFO_ENTRIES;
 
-  using SuperpageQueue = boost::circular_buffer<Superpage>;
+  using SuperpageQueue = folly::ProducerConsumerQueue<Superpage>;
 
   /// Namespace for enum describing the status of a page's arrival
   struct DataArrivalStatus {
@@ -164,10 +166,10 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
   int mFreeFifoSize = 0;
 
   /// Queue for superpages that are pushed to the firmware FIFO
-  SuperpageQueue mTransferQueue{ TRANSFER_QUEUE_CAPACITY };
+  SuperpageQueue mTransferQueue{ TRANSFER_QUEUE_CAPACITY_ALLOCATIONS };
 
   /// Queue for superpages that are filled
-  SuperpageQueue mReadyQueue{ READY_QUEUE_CAPACITY };
+  SuperpageQueue mReadyQueue{ READY_QUEUE_CAPACITY_ALLOCATIONS };
 
   /// Address of DMA buffer in userspace
   uintptr_t mDmaBufferUserspace = 0;

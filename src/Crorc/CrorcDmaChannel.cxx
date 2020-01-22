@@ -130,8 +130,12 @@ void CrorcDmaChannel::deviceStartDma()
   mFreeFifoFront = 0;
   mFreeFifoBack = 0;
   mFreeFifoSize = 0;
-  mReadyQueue.clear();
-  mTransferQueue.clear();
+  while (!mReadyQueue.isEmpty()) {
+    mReadyQueue.popFront();
+  }
+  while (!mTransferQueue.isEmpty()) {
+    mTransferQueue.popFront();
+  }
   mPendingDmaStart = true;
 }
 
@@ -141,7 +145,7 @@ void CrorcDmaChannel::startPendingDma()
     return;
   }
 
-  if (mTransferQueue.empty()) { // We should never end up in here
+  if (mTransferQueue.isEmpty()) { // We should never end up in here
     log("Insufficient superpages to start pending DMA");
     return;
   }
@@ -189,12 +193,12 @@ void CrorcDmaChannel::deviceStopDma()
   fillSuperpages();
 
   // Return any superpages that have been pushed up in the meantime but won't get filled
-  while (mTransferQueue.size()) {
-    auto superpage = mTransferQueue.front();
-    superpage.setReceived(0);
-    superpage.setReady(false);
-    mReadyQueue.push_back(superpage);
-    mTransferQueue.pop_front();
+  while (mTransferQueue.sizeGuess()) {
+    auto superpage = mTransferQueue.frontPtr();
+    superpage->setReceived(0);
+    superpage->setReady(false);
+    mReadyQueue.write(*superpage);
+    mTransferQueue.popFront();
   }
 }
 
@@ -324,20 +328,20 @@ void CrorcDmaChannel::startDataReceiving()
 
 int CrorcDmaChannel::getTransferQueueAvailable()
 {
-  return TRANSFER_QUEUE_CAPACITY - mTransferQueue.size();
+  return TRANSFER_QUEUE_CAPACITY - mTransferQueue.sizeGuess();
 }
 
 int CrorcDmaChannel::getReadyQueueSize()
 {
-  return mReadyQueue.size();
+  return mReadyQueue.sizeGuess();
 }
 
 auto CrorcDmaChannel::getSuperpage() -> Superpage
 {
-  if (mReadyQueue.empty()) {
+  if (mReadyQueue.isEmpty()) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not get superpage, ready queue was empty"));
   }
-  return mReadyQueue.front();
+  return *mReadyQueue.frontPtr();
 }
 
 bool CrorcDmaChannel::pushSuperpage(Superpage superpage)
@@ -348,7 +352,7 @@ bool CrorcDmaChannel::pushSuperpage(Superpage superpage)
 
   checkSuperpage(superpage);
 
-  if (mTransferQueue.size() >= TRANSFER_QUEUE_CAPACITY) {
+  if (mTransferQueue.sizeGuess() >= TRANSFER_QUEUE_CAPACITY) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not push superpage, transfer queue was full"));
   }
 
@@ -362,25 +366,25 @@ bool CrorcDmaChannel::pushSuperpage(Superpage superpage)
   mFreeFifoSize++;
   mFreeFifoFront = (mFreeFifoFront + 1) % MAX_SUPERPAGE_DESCRIPTORS;
 
-  mTransferQueue.push_back(superpage);
+  mTransferQueue.write(superpage);
 
   return true;
 }
 
 auto CrorcDmaChannel::popSuperpage() -> Superpage
 {
-  if (mReadyQueue.empty()) {
+  if (mReadyQueue.isEmpty()) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not pop superpage, ready queue was empty"));
   }
-  auto superpage = mReadyQueue.front();
-  mReadyQueue.pop_front();
-  return superpage;
+  auto superpage = mReadyQueue.frontPtr();
+  mReadyQueue.popFront();
+  return *superpage;
 }
 
 void CrorcDmaChannel::fillSuperpages()
 {
   if (mPendingDmaStart) {
-    if (!mTransferQueue.empty()) {
+    if (!mTransferQueue.isEmpty()) {
       startPendingDma();
     } else {
       // Waiting on enough superpages to start DMA...
@@ -389,7 +393,7 @@ void CrorcDmaChannel::fillSuperpages()
   }
 
   // Check for arrivals & handle them
-  if (!mTransferQueue.empty()) { // i.e. If something is pushed to the CRORC
+  if (!mTransferQueue.isEmpty()) { // i.e. If something is pushed to the CRORC
     auto isArrived = [&](int descriptorIndex) { return dataArrived(descriptorIndex) == DataArrivalStatus::WholeArrived; };
     auto resetDescriptor = [&](int descriptorIndex) { getReadyFifoUser()->entries[descriptorIndex].reset(); };
     auto getLength = [&](int descriptorIndex) { return getReadyFifoUser()->entries[descriptorIndex].length * 4; }; // length in 4B words
@@ -404,11 +408,11 @@ void CrorcDmaChannel::fillSuperpages()
         mFreeFifoBack = (mFreeFifoBack + 1) % MAX_SUPERPAGE_DESCRIPTORS;
 
         // Push Superpage
-        auto superpage = mTransferQueue.front();
-        superpage.setReceived(superpageFilled);
-        superpage.setReady(true);
-        mReadyQueue.push_back(superpage);
-        mTransferQueue.pop_front();
+        auto superpage = mTransferQueue.frontPtr();
+        superpage->setReceived(superpageFilled);
+        superpage->setReady(true);
+        mReadyQueue.write(*superpage);
+        mTransferQueue.popFront();
       } else {
         // If the back one hasn't arrived yet, the next ones will certainly not have arrived either...
         break;
@@ -421,14 +425,14 @@ void CrorcDmaChannel::fillSuperpages()
 // The transfer queue is empty when all its slots are available
 bool CrorcDmaChannel::isTransferQueueEmpty()
 {
-  return mTransferQueue.empty();
+  return mTransferQueue.isEmpty();
 }
 
 // Return a boolean that denotes whether the ready queue is full
 // The ready queue is full when the CRORC has filled it up
 bool CrorcDmaChannel::isReadyQueueFull()
 {
-  return mReadyQueue.size() == READY_QUEUE_CAPACITY;
+  return mReadyQueue.sizeGuess() == READY_QUEUE_CAPACITY;
 }
 
 int32_t CrorcDmaChannel::getDroppedPackets()
