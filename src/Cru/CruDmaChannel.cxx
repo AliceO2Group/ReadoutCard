@@ -82,7 +82,7 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
       }
       stream << id << " ";
       //Implicit constructors are deleted for the folly Queue. Workaround to keep the Link struct with a queue * field.
-      std::shared_ptr<SuperpageQueue> linkQueue = std::make_shared<SuperpageQueue>(LINK_QUEUE_CAPACITY);
+      std::shared_ptr<SuperpageQueue> linkQueue = std::make_shared<SuperpageQueue>(LINK_QUEUE_CAPACITY_ALLOCATIONS);
       Link newLink = { static_cast<LinkId>(id), 0, linkQueue };
       mLinks.push_back(newLink);
     }
