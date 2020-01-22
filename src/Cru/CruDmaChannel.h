@@ -69,10 +69,12 @@ class CruDmaChannel final : public DmaChannelPdaBase
   /// Max amount of superpages per link.
   /// This may not exceed the limit determined by the firmware capabilities.
   static constexpr size_t LINK_QUEUE_CAPACITY = Cru::MAX_SUPERPAGE_DESCRIPTORS;
+  static constexpr size_t LINK_QUEUE_CAPACITY_ALLOCATIONS = LINK_QUEUE_CAPACITY + 1; // folly Queue needs + 1
 
   /// Max amount of superpages in the ready queue.
   /// This is an arbitrary size, can easily be increased if more headroom is needed.
   static constexpr size_t READY_QUEUE_CAPACITY = Cru::MAX_SUPERPAGE_DESCRIPTORS * Cru::MAX_LINKS;
+  static constexpr size_t READY_QUEUE_CAPACITY_ALLOCATIONS = READY_QUEUE_CAPACITY + 1; // folly Queue needs + 1
 
   /// Queue for one link
   using SuperpageQueue = folly::ProducerConsumerQueue<Superpage>;
@@ -143,7 +145,7 @@ class CruDmaChannel final : public DmaChannelPdaBase
   size_t mLinkQueuesTotalAvailable;
 
   /// Queue for superpages that have been transferred and are waiting for popping by the user
-  SuperpageQueue mReadyQueue{ READY_QUEUE_CAPACITY };
+  SuperpageQueue mReadyQueue{ READY_QUEUE_CAPACITY_ALLOCATIONS };
 
   // These variables are configuration parameters
 
