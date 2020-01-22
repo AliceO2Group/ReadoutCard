@@ -131,7 +131,6 @@ void CruDmaChannel::deviceStartDma()
 
   // Initialize link queues
   for (auto& link : mLinks) {
-    //link.queue->clear();
     while (!link.queue->isEmpty()) {
       link.queue->popFront();
     }
