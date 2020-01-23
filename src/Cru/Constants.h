@@ -27,7 +27,7 @@ namespace Cru
 {
 
 /// Maximum amount of available links
-static constexpr int MAX_LINKS = 32;
+static constexpr int MAX_LINKS = 12;
 
 /// Amount of available superpage descriptors per link
 static constexpr int MAX_SUPERPAGE_DESCRIPTORS = 128;

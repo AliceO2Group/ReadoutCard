@@ -67,6 +67,8 @@ CruBar::CruBar(const Parameters& parameters, std::unique_ptr<RocPciDevice> rocPc
   } else {
     mAllowRejection = 0x0;
   }
+
+  mEndpoint = mRocPciDevice->getSerialId().getEndpoint();
 }
 
 CruBar::CruBar(std::shared_ptr<Pda::PdaBar> bar)
@@ -141,7 +143,6 @@ uint32_t CruBar::getSuperpageSize(uint32_t link)
   uint32_t superpageSizeIndex = Utilities::getBits(superpageSizeFifo, 24, 31); // [24-31] -> superpage index (0-255)
 
   while (superpageSizeIndex != mSuperpageSizeIndexCounter[link]) { // In case the PCIe bus wasn't fast enough
-    //std::cout << "[SP INDEX] link " << link << " : " << superpageSizeIndex << " instead of " << mSuperpageSizeIndexCounter[link] << std::endl;
     superpageSizeFifo = readRegister(Cru::Registers::LINK_SUPERPAGE_SIZE.get(link).index);
     superpageSize = Utilities::getBits(superpageSizeFifo, 0, 23);
     superpageSizeIndex = Utilities::getBits(superpageSizeFifo, 24, 31);
@@ -606,7 +607,10 @@ std::map<int, Link> CruBar::initializeLinkMap()
     uint32_t address = Cru::getWrapperBaseAddress(wrapper) + Cru::Registers::GBT_WRAPPER_CONF0.address;
     uint32_t wrapperConfig = readRegister(address / 4);
 
-    for (int bank = 0; bank < 6; bank++) {
+    for (int bank = mEndpoint * 2; bank < (mEndpoint * 2 + 2); bank++) {
+      //for (int bank = 0; bank < 4; bank++) { //for 0-23 range
+      // endpoint 0 -> banks {0,1}
+      // endpoint 1 -> banks {2,3}
       int dwrapper = (bank < 2) ? 0 : 1;
       int lpbLSB = (4 * bank) + 4;
       int lpbMSB = lpbLSB + 4 - 1;
@@ -638,7 +642,8 @@ std::map<int, Link> CruBar::initializeLinkMap()
   std::map<int, Link> newLinkMap;
   for (std::size_t i = 0; i < links.size(); i++) {
     Link link = links.at(i);
-    int newPos = (i - link.bank * 6) * 2 + 12 * (int)(link.bank / 2) + (link.bank % 2);
+    int newPos = (i - (link.bank - mEndpoint * 2) * 6) * 2 + (link.bank % 2);
+    //int newPos = (i - link.bank * 6) * 2 + + 12 * (int)(link.bank/2) + (link.bank % 2); //for 0-23 range
     link.dwrapperId = newPos % 12;
     newLinkMap.insert({ newPos, link });
   }
