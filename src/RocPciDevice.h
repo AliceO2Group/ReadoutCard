@@ -24,6 +24,7 @@
 #include "ReadoutCard/CardDescriptor.h"
 #include "ReadoutCard/Parameters.h"
 #include "ReadoutCard/ParameterTypes/PciAddress.h"
+#include "ReadoutCard/ParameterTypes/SerialId.h"
 #include "ReadoutCard/PciId.h"
 
 namespace AliceO2
@@ -64,9 +65,9 @@ class RocPciDevice
     return mPciDevice;
   }
 
-  int getSerialId() const //TODO: Could be used for logging?
+  SerialId getSerialId() const
   {
-    return mDescriptor.serialId.getSerial();
+    return mDescriptor.serialId;
   }
 
   std::shared_ptr<Pda::PdaBar> getBar(int barIndex)

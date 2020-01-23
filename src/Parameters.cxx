@@ -180,6 +180,14 @@ auto Parameters::linkMaskFromString(const std::string& string) -> LinkMaskType
 {
   std::set<uint32_t> links;
 
+  auto checkLink = [](int link) {
+    if (!(link >= 0 && link < 12)) {
+      BOOST_THROW_EXCEPTION(
+        ParseException() << ErrorInfo::Message(std::string("Link: " + std::to_string(link) + " out of [0-11] range")));
+    }
+    return;
+  };
+
   try {
     // Separate by comma
     std::vector<std::string> commaSeparateds;
@@ -195,9 +203,12 @@ auto Parameters::linkMaskFromString(const std::string& string) -> LinkMaskType
         auto start = boost::lexical_cast<uint32_t>(dashSeparateds[0]);
         auto end = boost::lexical_cast<uint32_t>(dashSeparateds[1]);
         for (uint32_t i = start; i <= end; ++i) {
+          checkLink(i);
           links.insert(i);
         }
       } else {
+        uint32_t link = boost::lexical_cast<uint32_t>(commaSeparated);
+        checkLink(link);
         links.insert(boost::lexical_cast<uint32_t>(commaSeparated));
       }
     }

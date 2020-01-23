@@ -77,7 +77,7 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
     mLinks.reserve(linkMask.size());
     for (uint32_t id : linkMask) {
       if (id >= Cru::MAX_LINKS) {
-        BOOST_THROW_EXCEPTION(InvalidLinkId() << ErrorInfo::Message("CRU does not support given link ID")
+        BOOST_THROW_EXCEPTION(InvalidLinkId() << ErrorInfo::Message("Each endpoint supports up to 12 links.")
                                               << ErrorInfo::LinkId(id));
       }
       stream << id << " ";
