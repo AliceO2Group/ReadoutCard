@@ -40,7 +40,7 @@ class Gbt
   void setTxMode(Link link, uint32_t mode);
   void setRxMode(Link link, uint32_t mode);
   void setLoopback(Link link, uint32_t enabled);
-  void calibrateGbt();
+  void calibrateGbt(std::map<int, Link> linkMap);
   void getGbtModes();
   void getGbtMuxes();
   void getLoopbacks();
@@ -57,9 +57,9 @@ class Gbt
   uint32_t getAtxPllRegisterAddress(int wrapper, uint32_t reg);
 
   void atxcal(uint32_t baseAddress = 0x0);
-  void cdrref(uint32_t refClock);
-  void txcal();
-  void rxcal();
+  void cdrref(std::map<int, Link> linkMap, uint32_t refClock);
+  void txcal(std::map<int, Link> linkMap);
+  void rxcal(std::map<int, Link> linkMap);
 
   void resetStickyBit(Link link);
 

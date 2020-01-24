@@ -76,6 +76,11 @@ struct Link {
               allowRejection == dlink.allowRejection);
     }
   }
+
+  bool operator!=(const Link& dlink) const
+  {
+    return !operator==(dlink);
+  }
 };
 
 struct ReportInfo {

@@ -61,14 +61,9 @@ void DummyBar::modifyRegister(int /*index*/, int /*position*/, int /*width*/, ui
   //  width " << width ", value:" << value << ")\n";
 }
 
-void DummyBar::configure()
+void DummyBar::configure(bool /*force*/)
 {
   std::cout << "Configure unavailable for dummy interfaces" << std::endl;
-}
-
-void DummyBar::reconfigure()
-{
-  std::cout << "Reconfigure unavailable for dummy interfaces" << std::endl;
 }
 } // namespace roc
 } // namespace AliceO2

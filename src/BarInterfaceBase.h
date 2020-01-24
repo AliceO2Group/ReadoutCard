@@ -118,14 +118,9 @@ class BarInterfaceBase : public BarInterface
   }
 
   /// Default implementation for optional function
-  void configure() override
+  void configure(bool /*force*/) override
   {
     log("Configure unavailable for this interface", InfoLogger::InfoLogger::Error);
-  }
-  /// Default implementation for optional function
-  void reconfigure() override
-  {
-    log("Reconfigure unavailable for this interface", InfoLogger::InfoLogger::Error);
   }
 
  protected:
