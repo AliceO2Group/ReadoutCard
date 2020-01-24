@@ -74,9 +74,7 @@ class BarInterface : public virtual RegisterReadWriteInterface
 
   virtual int getEndpointNumber() = 0;
 
-  virtual void configure() = 0;
-
-  virtual void reconfigure() = 0;
+  virtual void configure(bool force) = 0;
 };
 
 } // namespace roc

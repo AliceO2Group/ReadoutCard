@@ -70,13 +70,13 @@ void Gbt::setLoopback(Link link, uint32_t enabled)
   mPdaBar->modifyRegister(address / 4, 4, 1, enabled);
 }
 
-void Gbt::calibrateGbt()
+void Gbt::calibrateGbt(std::map<int, Link> linkMap)
 {
-  Cru::fpllref(mLinkMap, mPdaBar, 2);
-  Cru::fpllcal(mLinkMap, mPdaBar);
-  cdrref(2);
-  txcal();
-  rxcal();
+  //Cru::fpllref(linkMap, mPdaBar, 2); //Has been bound with clock configuration
+  //Cru::fpllcal(linkMap, mPdaBar); //same
+  cdrref(linkMap, 2);
+  txcal(linkMap);
+  rxcal(linkMap);
 }
 
 void Gbt::getGbtModes()
@@ -144,9 +144,9 @@ void Gbt::atxcal(uint32_t baseAddress)
   }
 }
 
-void Gbt::cdrref(uint32_t refClock)
+void Gbt::cdrref(std::map<int, Link> linkMap, uint32_t refClock)
 {
-  for (auto const& el : mLinkMap) {
+  for (auto const& el : linkMap) {
     auto& link = el.second;
     //uint32_t reg141 = readRegister(getXcvrRegisterAddress(link.wrapper, link.bank, link.id, 0x141)/4);
     uint32_t data = mPdaBar->readRegister(Cru::getXcvrRegisterAddress(link.wrapper, link.bank, link.id, 0x16A + refClock) / 4);
@@ -154,17 +154,17 @@ void Gbt::cdrref(uint32_t refClock)
   }
 }
 
-void Gbt::rxcal()
+void Gbt::rxcal(std::map<int, Link> linkMap)
 {
-  for (auto const& el : mLinkMap) {
+  for (auto const& el : linkMap) {
     auto& link = el.second;
     Cru::rxcal0(mPdaBar, link.baseAddress);
   }
 }
 
-void Gbt::txcal()
+void Gbt::txcal(std::map<int, Link> linkMap)
 {
-  for (auto const& el : mLinkMap) {
+  for (auto const& el : linkMap) {
     auto& link = el.second;
     Cru::txcal0(mPdaBar, link.baseAddress);
   }

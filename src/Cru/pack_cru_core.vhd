@@ -16,7 +16,9 @@ type Array2bit is array(natural range <>) of std_logic_vector(1 downto 0);
 type Array4bit is array(natural range <>) of std_logic_vector(3 downto 0);
 type Array8bit is array(natural range <>) of std_logic_vector(7 downto 0);
 type Array16bit is array(natural range <>) of std_logic_vector(15 downto 0);
+type Array24bit is array(natural range <>) of std_logic_vector(23 downto 0);
 type Array32bit is array(natural range <>) of std_logic_vector(31 downto 0);
+type Array33bit is array(natural range <>) of std_logic_vector(32 downto 0);
 type Array64bit is array(natural range <>) of std_logic_vector(63 downto 0);
 type Array80bit is array(natural range <>) of std_logic_vector(79 downto 0);
 type Array84bit is array(natural range <>) of std_logic_vector(83 downto 0);
@@ -329,6 +331,19 @@ constant add_bsp_hkeeping_hwlimit  : unsigned(31 downto 0)   :=add_bsp_hkeeping+
 constant add_bsp_hkeeping_chipid_high : unsigned(31 downto 0):=add_bsp_hkeeping+X"0000_0014";
 constant add_bsp_hkeeping_chipid_low  : unsigned(31 downto 0):=add_bsp_hkeeping+X"0000_0018";
 constant add_bsp_hkeeping_spare_in    : unsigned(31 downto 0):=add_bsp_hkeeping+X"0000_001C";
+                                                                                   
+constant add_A10_meas_vcc             : unsigned(31 downto 0):= add_bsp_hkeeping + x"0000_0020";
+constant add_A10_meas_1v8_all         : unsigned(31 downto 0):= add_bsp_hkeeping + x"0000_0024";
+constant add_A10_meas_VCCR            : unsigned(31 downto 0):= add_bsp_hkeeping + x"0000_0028";
+constant add_A10_meas_VCCT            : unsigned(31 downto 0):= add_bsp_hkeeping + x"0000_002C";
+constant add_A10_meas_VCCPT           : unsigned(31 downto 0):= add_bsp_hkeeping + x"0000_0030";
+constant add_A10_meas_1v8             : unsigned(31 downto 0):= add_bsp_hkeeping + x"0000_0034";
+constant add_A10_meas_3v3             : unsigned(31 downto 0):= add_bsp_hkeeping + x"0000_0038";
+constant add_A10_meas_2v5             : unsigned(31 downto 0):= add_bsp_hkeeping + x"0000_003C";
+constant add_A10_meas_12v             : unsigned(31 downto 0):= add_bsp_hkeeping + x"0000_0040";
+constant add_A10_meas_12v_ATX         : unsigned(31 downto 0):= add_bsp_hkeeping + x"0000_0044";
+constant add_A10_meas_ext_ADC         : unsigned(31 downto 0):= add_bsp_hkeeping + x"0000_0048";
+constant add_A10_meas_constant        : unsigned(31 downto 0):= add_bsp_hkeeping + x"0000_0058";
 
 constant add_bsp_rsu_reconf_cond      : unsigned(31 downto 0)   :=add_bsp_rsu+X"0000_0000";
 constant add_bsp_rsu_watchdog_timeout : unsigned(31 downto 0)   :=add_bsp_rsu+X"0000_0008";
@@ -338,7 +353,6 @@ constant add_bsp_rsu_conf_mode        : unsigned(31 downto 0)   :=add_bsp_rsu+X"
 constant add_bsp_rsu_ctrl             : unsigned(31 downto 0)   :=add_bsp_rsu+X"0000_0018";
 
 constant add_bsp_i2c_tsensor      : unsigned(31 downto 0):=add_bsp_i2c+X"0000_0000";
-constant add_bsp_i2c_cpcie        : unsigned(31 downto 0):=add_bsp_i2c+X"0000_0100";
 constant add_bsp_i2c_sfp1         : unsigned(31 downto 0):=add_bsp_i2c+X"0000_0200";
 constant add_bsp_i2c_minipods     : unsigned(31 downto 0):=add_bsp_i2c+X"0000_0300";
 constant add_bsp_i2c_si5344       : unsigned(31 downto 0):=add_bsp_i2c+X"0000_0400";
@@ -393,7 +407,7 @@ component bsp is
     MMS_CLK     : in  std_logic;
     MMS_RESET   : in  std_logic;
     MMS_WAITREQ : out std_logic;
-    MMS_ADDR    : in  std_logic_vector(19 downto 0);
+    MMS_ADDR    : in  std_logic_vector(23 downto 0);
     MMS_WR      : in  std_logic;
     MMS_WRDATA  : in  std_logic_vector(31 downto 0);
     MMS_RD      : in  std_logic;
@@ -417,9 +431,18 @@ component bsp is
     SCL_O       : out std_logic_vector(15 downto 0);
     SDA_I       : in  std_logic_vector(15 downto 0)  := (others => '1');
     SDA_T       : out std_logic_vector(15 downto 0);
-    SDA_O       : out std_logic_vector(15 downto 0)
+    SDA_O       : out std_logic_vector(15 downto 0);
    ---------------------------------------------------------------------------
-    );
+    L2418_SPI_nCS : out std_logic;  -- LTC 2418 Interface (24 bits ADC)
+    L2418_SPI_SCK : out std_logic;
+    L2418_SPI_SDI : out std_logic;
+    L2418_SPI_SDO : in  std_logic;
+    
+    L2498_SPI_nCS : out std_logic;  -- LTC 2498 Interface (24 bits ADC)
+    L2498_SPI_SCK : out std_logic;
+    L2498_SPI_SDI : out std_logic;
+    L2498_SPI_SDO : in  std_logic
+   );
 end component bsp;
 
 component syncgen is

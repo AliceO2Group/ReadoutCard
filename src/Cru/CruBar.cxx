@@ -436,11 +436,8 @@ Cru::ReportInfo CruBar::report()
   uint32_t ponStatusRegister = getPonStatusRegister();
   uint32_t onuAddress = getOnuAddress();
   uint16_t cruId = getCruId();
-  bool dynamicOffset = datapathWrapper.getDynamicOffsetEnabled(0) && datapathWrapper.getDynamicOffsetEnabled(1); // should be enabled for both wrappers
-  uint32_t triggerWindowSize = datapathWrapper.getTriggerWindowSize(0);
-  if (triggerWindowSize != datapathWrapper.getTriggerWindowSize(1)) { // in case trigger window size is different between wrappers
-    triggerWindowSize = 4096;                                         //invalid trigger window size to force reconfigure
-  }
+  bool dynamicOffset = datapathWrapper.getDynamicOffsetEnabled(mEndpoint);
+  uint32_t triggerWindowSize = datapathWrapper.getTriggerWindowSize(mEndpoint);
 
   Cru::ReportInfo reportInfo = {
     linkMap,
@@ -488,11 +485,11 @@ Cru::PacketMonitoringInfo CruBar::monitorPackets()
   return { linkPacketInfoMap, wrapperPacketInfoMap };
 }
 
-void CruBar::reconfigure()
+/// Configures the CRU according to the parameters passed on init
+void CruBar::configure(bool force)
 {
   // Get current info
   Cru::ReportInfo reportInfo = report();
-
   populateLinkMap(mLinkMap);
 
   if (static_cast<uint32_t>(mClock) == reportInfo.ttcClock &&
@@ -501,86 +498,95 @@ void CruBar::reconfigure()
       checkPonUpstreamStatusExpected(reportInfo.ponStatusRegister, reportInfo.onuAddress) &&
       mCruId == reportInfo.cruId &&
       mDynamicOffset == reportInfo.dynamicOffset &&
-      mTriggerWindowSize == reportInfo.triggerWindowSize) {
+      mTriggerWindowSize == reportInfo.triggerWindowSize &&
+      !force) {
     log("No need to reconfigure further");
-  } else {
-    log("Reconfiguring");
-    configure();
-  }
-}
-
-/// Configures the CRU according to the parameters passed on init
-void CruBar::configure()
-{
-  if (mLinkMap.empty()) {
-    populateLinkMap(mLinkMap);
+    return;
   }
 
-  /* TTC */
+  log("Reconfiguring");
+
   Ttc ttc = Ttc(mPdaBar);
-
-  log("Setting the clock");
-  ttc.setClock(mClock);
-
-  log("Calibrating TTC");
-  if (mClock == Clock::Ttc) {
-    ttc.calibrateTtc();
-  }
-
-  if (mPonUpstream) {
-    ttc.resetFpll();
-    if (!ttc.configurePonTx(mOnuAddress)) {
-      log("PON TX fPLL phase scan failed", InfoLogger::InfoLogger::Error);
-    }
-  }
-
-  log("Setting downstream data");
-  ttc.selectDownstreamData(mDownstreamData);
-
-  /* GBT */
-  log("Calibrating GBT");
-  Gbt gbt = Gbt(mPdaBar, mLinkMap, mWrapperCount);
-  gbt.calibrateGbt();
-
-  /* BSP */
-  setCruId(mCruId);
-
-  disableDataTaking();
-
   DatapathWrapper datapathWrapper = DatapathWrapper(mPdaBar);
 
-  // Disable DWRAPPER datagenerator (in case of restart)
-  datapathWrapper.resetDataGeneratorPulse();
-  datapathWrapper.useDataGeneratorSource(false);
-  datapathWrapper.enableDataGenerator(false);
-  // Disable all links
-  datapathWrapper.setLinksEnabled(0, 0x0);
-  datapathWrapper.setLinksEnabled(1, 0x0);
+  /* TTC */
+  if (static_cast<uint32_t>(mClock) != reportInfo.ttcClock || force) {
+    log("Setting the clock");
+    ttc.setClock(mClock);
 
-  log("Enabling links and setting datapath mode and flow control");
-  for (auto const& el : mLinkMap) {
-    auto& link = el.second;
-    if (link.enabled) {
-      datapathWrapper.setLinkEnabled(link);
-      datapathWrapper.setDatapathMode(link, mDatapathMode);
+    log("Calibrating TTC");
+    if (mClock == Clock::Ttc) {
+      ttc.calibrateTtc();
+
+      if (!checkPonUpstreamStatusExpected(reportInfo.ponStatusRegister, reportInfo.onuAddress) || force) {
+        ttc.resetFpll();
+        if (!ttc.configurePonTx(mOnuAddress)) {
+          log("PON TX fPLL phase scan failed", InfoLogger::InfoLogger::Error);
+        }
+      }
     }
-    datapathWrapper.setFlowControl(link.dwrapper, mAllowRejection); //Set flow control anyway as it's per dwrapper
+
+    log("Calibrating the fPLLs");
+    Cru::fpllref(mLinkMap, mPdaBar, 2);
+    Cru::fpllcal(mLinkMap, mPdaBar);
   }
 
-  log("Setting trigger window size");
-  datapathWrapper.setTriggerWindowSize(0, mTriggerWindowSize);
-  datapathWrapper.setTriggerWindowSize(1, mTriggerWindowSize);
+  if (static_cast<uint32_t>(mDownstreamData) != reportInfo.downstreamData || force) {
+    log("Setting downstream data");
+    ttc.selectDownstreamData(mDownstreamData);
+  }
 
-  log("Setting packet arbitration");
-  datapathWrapper.setPacketArbitration(mWrapperCount, 0);
+  /* GBT */
+  if (!std::equal(mLinkMap.begin(), mLinkMap.end(), reportInfo.linkMap.begin()) || force) {
+    log("Calibrating GBT");
+    Gbt gbt = Gbt(mPdaBar, mLinkMap, mWrapperCount);
 
-  if (mDynamicOffset) {
-    log("Setting dynamic offset");
-    datapathWrapper.setDynamicOffset(0, true);
-    datapathWrapper.setDynamicOffset(1, true);
-  } else {
-    datapathWrapper.setDynamicOffset(0, false);
-    datapathWrapper.setDynamicOffset(1, false);
+    /* BSP */
+    disableDataTaking();
+
+    // Disable DWRAPPER datagenerator (in case of restart)
+    datapathWrapper.resetDataGeneratorPulse();
+    datapathWrapper.useDataGeneratorSource(false);
+    datapathWrapper.enableDataGenerator(false);
+    // Disable all links
+    //datapathWrapper.setLinksEnabled(0, 0x0);
+    //datapathWrapper.setLinksEnabled(1, 0x0);
+
+    log("Enabling links and setting datapath mode and flow control");
+    for (auto const& el : mLinkMap) {
+      auto& link = el.second;
+      auto& linkPrevState = reportInfo.linkMap.at(el.first);
+      if (linkPrevState != link || force) {
+        // link mismatch
+        // -> toggle enabled status
+        if (link.enabled != linkPrevState.enabled || force) {
+          gbt.calibrateGbt({ std::pair<int, Link>(el.first, el.second) });
+          // toggle enable/disable
+          if (linkPrevState.enabled) {
+            datapathWrapper.setLinkDisabled(link);
+          } else {
+            datapathWrapper.setLinkEnabled(link);
+          }
+        }
+        datapathWrapper.setDatapathMode(link, mDatapathMode);
+      }
+      datapathWrapper.setFlowControl(link.dwrapper, mAllowRejection); //Set flow control anyway as it's per dwrapper
+    }
+  }
+
+  /* BSP */
+  if (mCruId != reportInfo.cruId || force) {
+    setCruId(mCruId);
+  }
+
+  if (mTriggerWindowSize != reportInfo.triggerWindowSize || force) {
+    log("Setting trigger window size");
+    datapathWrapper.setTriggerWindowSize(mEndpoint, mTriggerWindowSize);
+  }
+
+  if (mDynamicOffset != reportInfo.dynamicOffset || force) {
+    log("Toggling fixed/dynamic offset");
+    datapathWrapper.setDynamicOffset(mEndpoint, mDynamicOffset);
   }
 
   log("CRU configuration done.");
@@ -671,7 +677,6 @@ void CruBar::populateLinkMap(std::map<int, Link>& linkMap)
 
   Gbt gbt = Gbt(mPdaBar, linkMap, mWrapperCount);
 
-  log("Configuring GBT");
   for (auto& el : linkMap) {
     auto& link = el.second;
 

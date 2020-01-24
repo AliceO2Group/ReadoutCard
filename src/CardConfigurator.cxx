@@ -25,11 +25,7 @@ CardConfigurator::CardConfigurator(Parameters::CardIdType cardId, std::string co
 
   auto bar2 = ChannelFactory().getBar(parameters);
   try {
-    if (forceConfigure) {
-      bar2->configure();
-    } else {
-      bar2->reconfigure();
-    }
+    bar2->configure(forceConfigure);
   } catch (const Exception& e) {
     BOOST_THROW_EXCEPTION(e);
   }
@@ -39,11 +35,7 @@ CardConfigurator::CardConfigurator(Parameters& parameters, bool forceConfigure)
 {
   auto bar2 = ChannelFactory().getBar(parameters);
   try {
-    if (forceConfigure) {
-      bar2->configure();
-    } else {
-      bar2->reconfigure();
-    }
+    bar2->configure(forceConfigure);
   } catch (const Exception& e) {
     BOOST_THROW_EXCEPTION(e);
   }

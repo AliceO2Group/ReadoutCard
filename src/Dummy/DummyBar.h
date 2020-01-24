@@ -108,9 +108,7 @@ class DummyBar : public BarInterface
     return -1;
   }
 
-  void configure() override;
-
-  void reconfigure() override;
+  void configure(bool /*force*/) override;
 
  private:
   int mBarIndex;

@@ -44,6 +44,15 @@ void DatapathWrapper::setLinkEnabled(Link link)
   mPdaBar->modifyRegister(address / 4, link.dwrapperId, 1, 0x1);
 }
 
+/// Set particular link's enabled bit
+void DatapathWrapper::setLinkDisabled(Link link)
+{
+  uint32_t address = getDatapathWrapperBaseAddress(link.dwrapper) +
+                     Cru::Registers::DWRAPPER_GREGS.address +
+                     Cru::Registers::DWRAPPER_ENREG.address;
+  mPdaBar->modifyRegister(address / 4, link.dwrapperId, 1, 0x0);
+}
+
 /// Get particular link's enabled bit
 bool DatapathWrapper::getLinkEnabled(Link link)
 {
@@ -89,7 +98,7 @@ DatapathMode::type DatapathWrapper::getDatapathMode(Link link)
 }
 
 /// Set Packet Arbitration
-void DatapathWrapper::setPacketArbitration(int wrapperCount, int arbitrationMode)
+/*void DatapathWrapper::setPacketArbitration(int wrapperCount, int arbitrationMode)
 {
   uint32_t value = 0x0;
   value |= (arbitrationMode << 15);
@@ -101,7 +110,7 @@ void DatapathWrapper::setPacketArbitration(int wrapperCount, int arbitrationMode
 
     mPdaBar->writeRegister(address / 4, value);
   }
-}
+}*/
 
 /// Set Flow Control
 void DatapathWrapper::setFlowControl(int wrapper, int allowReject)
