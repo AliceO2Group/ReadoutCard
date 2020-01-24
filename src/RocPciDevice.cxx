@@ -126,17 +126,22 @@ void RocPciDevice::initWithAddress(const PciAddress& address)
       PciDevice* pciDevice = typedPciDevice.pciDevice;
       DeviceType type;
       if (addressFromDevice(pciDevice) == address) {
-        if (typedPciDevice.cardType == CardType::Crorc) {
-          type = DeviceType(deviceTypes.at(0));
-        } else {
-          type = DeviceType(deviceTypes.at(1));
-        }
-
         Utilities::resetSmartPtr(mPdaBar0, pciDevice, 0);
         Utilities::resetSmartPtr(mPdaBar2, pciDevice, 2);
 
+        int serial;
+        int endpoint;
+        if (typedPciDevice.cardType == CardType::Crorc) {
+          type = DeviceType(deviceTypes.at(0));
+          serial = type.getSerial(mPdaBar0);
+        } else {
+          type = DeviceType(deviceTypes.at(1));
+          serial = type.getSerial(mPdaBar2);
+        }
+        endpoint = type.getEndpoint(mPdaBar0);
+
         mPciDevice = pciDevice;
-        mDescriptor = CardDescriptor{ type.cardType, SerialId{ type.getSerial(mPdaBar2), type.getEndpoint(mPdaBar0) }, type.pciId, address, PciDevice_getNumaNode(pciDevice) };
+        mDescriptor = CardDescriptor{ type.cardType, SerialId{ serial, endpoint }, type.pciId, address, PciDevice_getNumaNode(pciDevice) };
         return;
       }
     }
@@ -156,17 +161,22 @@ void RocPciDevice::initWithSequenceNumber(const PciSequenceNumber& sequenceNumbe
       PciDevice* pciDevice = typedPciDevice.pciDevice;
       DeviceType type;
       if (sequenceNumber == sequenceCounter) {
-        if (typedPciDevice.cardType == CardType::Crorc) {
-          type = DeviceType(deviceTypes.at(0));
-        } else {
-          type = DeviceType(deviceTypes.at(1));
-        }
-
         Utilities::resetSmartPtr(mPdaBar0, pciDevice, 0);
         Utilities::resetSmartPtr(mPdaBar2, pciDevice, 2);
 
+        int serial;
+        int endpoint;
+        if (typedPciDevice.cardType == CardType::Crorc) {
+          type = DeviceType(deviceTypes.at(0));
+          serial = type.getSerial(mPdaBar0);
+        } else {
+          type = DeviceType(deviceTypes.at(1));
+          serial = type.getSerial(mPdaBar2);
+        }
+        endpoint = type.getEndpoint(mPdaBar0);
+
         mPciDevice = pciDevice;
-        mDescriptor = CardDescriptor{ type.cardType, SerialId{ type.getSerial(mPdaBar2), type.getEndpoint(mPdaBar0) }, type.pciId, addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice) };
+        mDescriptor = CardDescriptor{ type.cardType, SerialId{ serial, endpoint }, type.pciId, addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice) };
         return;
       }
       sequenceCounter++;
@@ -185,19 +195,25 @@ std::vector<CardDescriptor> RocPciDevice::findSystemDevices()
   for (const auto& typedPciDevice : Pda::PdaDevice::getPciDevices()) {
     PciDevice* pciDevice = typedPciDevice.pciDevice;
     DeviceType type;
-    if (typedPciDevice.cardType == CardType::Crorc) {
-      type = DeviceType(deviceTypes.at(0));
-    } else {
-      type = DeviceType(deviceTypes.at(1));
-    }
 
     std::shared_ptr<Pda::PdaBar> pdaBar0;
     Utilities::resetSmartPtr(pdaBar0, pciDevice, 0);
     std::shared_ptr<Pda::PdaBar> pdaBar2;
     Utilities::resetSmartPtr(pdaBar2, pciDevice, 2);
 
+    int serial;
+    int endpoint;
+    if (typedPciDevice.cardType == CardType::Crorc) {
+      type = DeviceType(deviceTypes.at(0));
+      serial = type.getSerial(pdaBar0);
+    } else {
+      type = DeviceType(deviceTypes.at(1));
+      serial = type.getSerial(pdaBar2);
+    }
+    endpoint = type.getEndpoint(pdaBar0);
+
     try {
-      cards.push_back(CardDescriptor{ type.cardType, SerialId{ type.getSerial(pdaBar2), type.getEndpoint(pdaBar0) }, type.pciId, addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice) });
+      cards.push_back(CardDescriptor{ type.cardType, SerialId{ serial, endpoint }, type.pciId, addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice) });
     } catch (boost::exception& e) {
       std::cout << boost::diagnostic_information(e);
     }
