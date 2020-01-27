@@ -470,11 +470,20 @@ Cru::PacketMonitoringInfo CruBar::monitorPackets()
     linkPacketInfoMap.insert({ el.first, { accepted, rejected, forced } });
   }
 
-  for (int wrap = 0; wrap < 2; wrap++) {
-    uint32_t dropped = datapathWrapper.getDroppedPackets(wrap);
-    uint32_t totalPerSecond = datapathWrapper.getTotalPacketsPerSecond(wrap);
-    wrapperPacketInfoMap.insert({ wrap, { dropped, totalPerSecond } });
-  }
+  // Insert the UL link at 15
+  Link uLLink = {};
+  // dwrapper 0 on endpoint 0, dwrapper 1 on endpoint 1
+  uLLink.dwrapper = mEndpoint;
+  uLLink.dwrapperId = 15;
+  uint32_t accepted = datapathWrapper.getAcceptedPackets(uLLink);
+  uint32_t rejected = datapathWrapper.getRejectedPackets(uLLink);
+  uint32_t forced = datapathWrapper.getForcedPackets(uLLink);
+  linkPacketInfoMap.insert({ 15, { accepted, rejected, forced } });
+
+  int wrapper = mEndpoint;
+  uint32_t dropped = datapathWrapper.getDroppedPackets(wrapper);
+  uint32_t totalPerSecond = datapathWrapper.getTotalPacketsPerSecond(wrapper);
+  wrapperPacketInfoMap.insert({ wrapper, { dropped, totalPerSecond } });
 
   return { linkPacketInfoMap, wrapperPacketInfoMap };
 }
