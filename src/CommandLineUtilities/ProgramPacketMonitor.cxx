@@ -87,6 +87,18 @@ class ProgramPacketMonitor : public Program
       uint32_t rejected = linkMonitoringInfoMap.rejected;
       uint32_t forced = linkMonitoringInfoMap.forced;
 
+      /* UL HEADER */
+      if (globalId == 15) {
+        auto uLHeader = (boost::format(formatHeader) % "ULL ID " % "Accepted" % "Rejected" % "Forced").str();
+
+        if (mOptions.csvOut) {
+          auto uLHeader = "Link ID,Accepted,Rejected,Forced\n";
+          std::cout << uLHeader;
+        } else {
+          table << lineFat << uLHeader << lineThin;
+        }
+      }
+
       if (mOptions.csvOut) {
         auto csvLine = std::to_string(globalId) + "," + std::to_string(accepted) + "," + std::to_string(rejected) + "," + std::to_string(forced) + "\n";
         std::cout << csvLine;
