@@ -73,7 +73,7 @@ SerialId::SerialId(const std::string& string)
 SerialId::SerialId(int serial, int endpoint)
   : mSerial(serial),
     mEndpoint(endpoint),
-    mSerialIdString(serial + ":" + endpoint)
+    mSerialIdString(std::to_string(serial) + ":" + std::to_string(endpoint))
 {
   checkRanges(mSerial, mEndpoint);
 }
@@ -81,7 +81,7 @@ SerialId::SerialId(int serial, int endpoint)
 SerialId::SerialId(int serial)
   : mSerial(serial),
     mEndpoint(ENDPOINT_DEFAULT),
-    mSerialIdString(serial + ":0")
+    mSerialIdString(std::to_string(serial) + ":0")
 {
   checkRanges(mSerial, mEndpoint);
 }
