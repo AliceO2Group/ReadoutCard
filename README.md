@@ -137,31 +137,31 @@ The `CardConfigurator` utilizes the `Parameters` class, the same class where Par
 Card Configurator, the parameters need to be initialized for the card on BAR2. The command that
 achieves that is `makeParameters(cardId, 2)`. Refer to the [Parameters](#parameters-1) section for more information.
 
-The Parameters that affect the configuration of the CRU and their possible values are as follows:
+The Parameters that affect the configuration of the CRU, their possible values (in ()) and their default values (in []) are as follows:
 
-`AllowRejection (true | false)`
+`AllowRejection (true | false) [false]`
 
-`CruId (0x42)`
+`CruId (0x42) [0x0]`
 
-`Clock (LOCAL | TTC)`
+`Clock (LOCAL | TTC) [LOCAL]`
 
-`DatapathMode (PACKET | CONTINUOUS)`
+`DatapathMode (PACKET | CONTINUOUS) [PACKET]`
 
-`DownstreamData (CTP | PATTERN | MIDTRG)`
+`DownstreamData (CTP | PATTERN | MIDTRG) [CTP]`
 
-`GbtMode (GBT | WB)`
+`GbtMode (GBT | WB) [GBT]`
 
-`GbtMux (TTC | DDG | SWT)`
+`GbtMux (TTC | DDG | SWT) [TTC]`
 
-`LinkLoopbackEnabled (true | false)`
+`LinkLoopbackEnabled (true | false) [false]`
 
-`PonUpstreamEnabled (true | false)`
+`PonUpstreamEnabled (true | false) [false]`
 
-`OnuAddress (0x01234567)`
+`OnuAddress (0x01234567) [0x0]`
 
-`DynamicOffsetEnabled (true | false)`
+`DynamicOffsetEnabled (true | false) [false]`
 
-`TriggerWindowSize (0 - 4095)`
+`TriggerWindowSize (0 - 4095) [1000]`
 
 To set any of the above parameters the usual template can be followed.
 
