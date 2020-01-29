@@ -66,7 +66,7 @@ static Option<int> channel("channel", "BAR channel number");
 static Option<std::string> registerAddress("address", "Register address in hex format");
 static Option<int> registerRange("range", "Amount of registers to print past given address");
 static Option<std::string> registerValue("value", "Register value, either in decimal or hex (prefix with 0x)");
-static Option<std::string> cardId("id", "Card ID: PCI Address or sequence number, as reported by `roc-list-cards`");
+static Option<std::string> cardId("id", "Card ID: PCI Address, Serial ID, or sequence number, as reported by `roc-list-cards`");
 static Option<std::string> resetLevel("reset", "Reset level [NOTHING, INTERNAL, INTERNAL_DIU, INTERNAL_DIU_SIU]");
 } // namespace option
 

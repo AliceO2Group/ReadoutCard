@@ -18,9 +18,11 @@
 #include <string>
 #include "ReadoutCard/ChannelFactory.h"
 #include "Crorc/Crorc.h"
+#include "Crorc/CrorcBar.h"
 #include "ExceptionInternal.h"
 
 using namespace AliceO2::roc::CommandLineUtilities;
+using namespace AliceO2::roc;
 using std::cout;
 using std::endl;
 namespace po = boost::program_options;
@@ -38,7 +40,8 @@ class ProgramCrorcFlash : public Program
   virtual void addOptions(po::options_description& options)
   {
     Options::addOptionCardId(options);
-    options.add_options()("file", po::value<std::string>(&mFilePath)->required(), "Path of file to flash");
+    options.add_options()("file", po::value<std::string>(&mFilePath), "Path of firmware file to flash");
+    options.add_options()("serial", po::value<std::string>(&mSerial), "Serial number to flash");
   }
 
   virtual void run(const boost::program_options::variables_map& map)
@@ -54,10 +57,34 @@ class ProgramCrorcFlash : public Program
       BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Only C-RORC supported for now"));
     }
 
-    Crorc::programFlash(*(channel.get()), mFilePath, 0, std::cout, &Program::getInterruptFlag());
+    if (mSerial != "") {
+      if (mFilePath != "") {
+        std::cout << "The tool supports either flashing the serial or flashing the firmware;" << std::endl
+                  << "Both operations not supported in parallel" << std::endl;
+        return;
+      }
+
+      int serial = std::stoi(mSerial);
+      if (serial < 0 || serial > 99999) {
+        std::cerr << "Invalid serial; Legal values: [0-99999]." << std::endl;
+        return;
+      }
+
+      std::cout << "Setting the serial for the CRORC: " << mSerial << std::endl;
+      auto crorcBar = std::dynamic_pointer_cast<CrorcBar>(channel);
+      crorcBar->setSerial(serial);
+
+    } else if (mFilePath != "") {
+      std::cout << "Flashing the CRORC from file: " << mFilePath << std::endl;
+      Crorc::programFlash(*(channel.get()), mFilePath, 0, std::cout, &Program::getInterruptFlag());
+
+    } else {
+      std::cout << "--file or --serial needs to be provided" << std::endl;
+    }
   }
 
   std::string mFilePath;
+  std::string mSerial = "";
 };
 } // Anonymous namespace
 
