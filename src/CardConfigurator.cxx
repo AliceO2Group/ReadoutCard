@@ -127,13 +127,13 @@ void CardConfigurator::parseConfigUri(std::string configUri, Parameters& paramet
         enabled = conf->get<bool>("enabled");
 
         if (enabled) {
-          for (int i = 0; i < 24; i++) {
+          for (int i = 0; i < 12; i++) {
             linkMask.insert((uint32_t)i);
           }
         }
 
         gbtMux = conf->get<std::string>("gbtMux");
-        for (int i = 0; i < 24; i++) {
+        for (int i = 0; i < 12; i++) {
           gbtMuxMap.insert(std::make_pair((uint32_t)i, GbtMux::fromString(gbtMux)));
         }
 
@@ -143,6 +143,10 @@ void CardConfigurator::parseConfigUri(std::string configUri, Parameters& paramet
 
         std::string linkIndexString = group.substr(group.find("k") + 1);
         uint32_t linkIndex = std::stoul(linkIndexString, NULL, 10);
+
+        if (linkIndex > 11) {
+          BOOST_THROW_EXCEPTION(ParseException() << ErrorInfo::ConfigParse(group));
+        }
 
         conf->setPrefix(group);
 
