@@ -33,6 +33,8 @@
 #include "ExceptionInternal.h"
 #include "ReadoutCard/RegisterReadWriteInterface.h"
 
+#include <boost/optional/optional_io.hpp>
+
 using namespace std::chrono_literals;
 using std::this_thread::sleep_for;
 namespace b = boost;
@@ -80,6 +82,8 @@ constexpr int MAX_WAIT = 1000000;
 constexpr int REGISTER_DATA_STATUS = Rorc::Flash::IFDSR;
 constexpr int REGISTER_ADDRESS = Rorc::Flash::IADR;
 constexpr int REGISTER_READY = Rorc::Flash::LRD;
+constexpr int DDL_MAX_HW_ID = 64;
+constexpr int SN_POS = 33;
 
 // TODO figure out what these are/do
 constexpr int MAGIC_VALUE_0 = 0x80;
@@ -168,13 +172,13 @@ void eraseBlock(RegisterReadWriteInterface& bar0, uint32_t address)
 }
 
 /// Currently unused, but we'll keep it as "documentation"
-/*void writeWord(RegisterReadWriteInterface& bar0, uint32_t address, int value)
+void writeWord(RegisterReadWriteInterface& bar0, uint32_t address, int value)
 {
   writeStatusSleep(bar0, address);
   writeStatusSleep(bar0, MAGIC_VALUE_9);
   writeStatusSleep(bar0, value);
   checkStatus(bar0);
-}*/
+}
 
 /// Reads a 16-bit flash word and writes it into the given buffer
 void readWord(RegisterReadWriteInterface& bar0, uint32_t address, char* data)
@@ -1028,6 +1032,39 @@ boost::optional<int32_t> getSerial(RegisterReadWriteInterface& bar0)
   }
 
   return { int32_t(serial) };
+}
+
+void setSerial(RegisterReadWriteInterface& bar0, int serial)
+{
+
+  uint32_t address = Rorc::Serial::FLASH_ADDRESS;
+  Flash::init(bar0, address);
+  Flash::unlockBlock(bar0, address);
+  Flash::eraseBlock(bar0, address);
+
+  // Prepare the data string
+  // It needs to be DDL_MAX_HW_ID long and
+  // initialized with ' '
+  char serialCString[Flash::DDL_MAX_HW_ID + 1];
+  serialCString[0] = '\0';
+
+  for (int i = 0; i < Flash::DDL_MAX_HW_ID - 1; i++) {
+    serialCString[i] = ' ';
+  }
+
+  // "S/N: vwxyz" needs to start at SN_POS
+  // followed by a ' '
+  sprintf(&serialCString[Flash::SN_POS - 5], "S/N: %05d", serial);
+  serialCString[Flash::SN_POS + 5] = ' ';
+  serialCString[Flash::DDL_MAX_HW_ID - 1] = '\0';
+
+  // Write the data to the flash
+  uint32_t hexValue = 0x0;
+  for (int i = 0; i < Flash::DDL_MAX_HW_ID; i += 2, address++) {
+    hexValue = Flash::MAGIC_VALUE_13 +
+               (serialCString[i] << 8) + serialCString[i + 1];
+    Flash::writeWord(bar0, address, hexValue);
+  }
 }
 
 uint8_t Crorc::ddlReadHw(int destination, int address, long long int time)

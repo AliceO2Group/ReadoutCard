@@ -36,6 +36,9 @@ namespace Crorc
 /// Note that the BAR must be from channel 0, other channels do not have access to the flash.
 boost::optional<int32_t> getSerial(RegisterReadWriteInterface& bar0);
 
+/// Set the serial number on the C-RORC's flash memory.
+void setSerial(RegisterReadWriteInterface& bar0, int serial);
+
 /// Program flash using given data file
 void programFlash(RegisterReadWriteInterface& bar0, std::string dataFilePath, int addressFlash, std::ostream& out,
                   const std::atomic<bool>* interrupt = nullptr);

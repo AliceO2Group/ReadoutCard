@@ -62,5 +62,10 @@ int CrorcBar::getEndpointNumber()
   return 0;
 }
 
+void CrorcBar::setSerial(int serial)
+{
+  Crorc::setSerial(*(mPdaBar.get()), serial);
+}
+
 } // namespace roc
 } // namespace AliceO2

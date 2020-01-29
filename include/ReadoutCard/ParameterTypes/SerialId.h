@@ -65,7 +65,8 @@ class SerialId
   std::string mSerialIdString;
 };
 
-static constexpr int SERIAL_RANGE_LOW(10000);
+//TODO: To be updated with sensible values when things are stable.
+static constexpr int SERIAL_RANGE_LOW(0);
 static constexpr int SERIAL_RANGE_HIGH(100000);
 
 static constexpr int SERIAL_DUMMY(-1);

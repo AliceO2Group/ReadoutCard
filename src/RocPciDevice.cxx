@@ -96,16 +96,22 @@ void RocPciDevice::initWithSerialId(const SerialId& serialId)
     for (const auto& typedPciDevice : Pda::PdaDevice::getPciDevices()) {
       PciDevice* pciDevice = typedPciDevice.pciDevice;
       DeviceType type;
-      if (typedPciDevice.cardType == CardType::Crorc) {
-        type = DeviceType(deviceTypes.at(0));
-      } else {
-        type = DeviceType(deviceTypes.at(1));
-      }
 
       Utilities::resetSmartPtr(mPdaBar0, pciDevice, 0);
       Utilities::resetSmartPtr(mPdaBar2, pciDevice, 2);
 
-      if (type.getSerial(mPdaBar2) == serialId.getSerial() && type.getEndpoint(mPdaBar0) == serialId.getEndpoint()) {
+      int serial;
+      int endpoint;
+      if (typedPciDevice.cardType == CardType::Crorc) {
+        type = DeviceType(deviceTypes.at(0));
+        serial = type.getSerial(mPdaBar0);
+      } else {
+        type = DeviceType(deviceTypes.at(1));
+        serial = type.getSerial(mPdaBar2);
+      }
+      endpoint = type.getEndpoint(mPdaBar0);
+
+      if (serial == serialId.getSerial() && endpoint == serialId.getEndpoint()) {
         mPciDevice = pciDevice;
         mDescriptor = CardDescriptor{ type.cardType, serialId, type.pciId, addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice) };
         return;
