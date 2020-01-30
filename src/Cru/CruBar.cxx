@@ -527,6 +527,8 @@ void CruBar::configure(bool force)
     }
 
     log("Calibrating the fPLLs");
+    Gbt gbt = Gbt(mPdaBar, mLinkMap, mWrapperCount);
+    gbt.calibrateGbt(mLinkMap);
     Cru::fpllref(mLinkMap, mPdaBar, 2);
     Cru::fpllcal(mLinkMap, mPdaBar);
   }
@@ -538,8 +540,9 @@ void CruBar::configure(bool force)
 
   /* GBT */
   if (!std::equal(mLinkMap.begin(), mLinkMap.end(), reportInfo.linkMap.begin()) || force) {
-    log("Calibrating GBT");
-    Gbt gbt = Gbt(mPdaBar, mLinkMap, mWrapperCount);
+    //log("Calibrating GBT");
+    //Gbt gbt = Gbt(mPdaBar, mLinkMap, mWrapperCount);
+    //gbt.calibrateGbt({ std::pair<int, Link>(el.first, el.second) });
 
     /* BSP */
     disableDataTaking();
@@ -560,7 +563,6 @@ void CruBar::configure(bool force)
         // link mismatch
         // -> toggle enabled status
         if (link.enabled != linkPrevState.enabled || force) {
-          gbt.calibrateGbt({ std::pair<int, Link>(el.first, el.second) });
           // toggle enable/disable
           if (linkPrevState.enabled) {
             datapathWrapper.setLinkDisabled(link);
