@@ -58,9 +58,9 @@ void Ttc::configurePlls(uint32_t clock)
     registerMap2 = getTtcClockPll2RegisterMap();
   }
 
-  I2c p1 = I2c(Cru::Registers::SI5345_1.address, chipAddress, mPdaBar, registerMap1);
-  I2c p2 = I2c(Cru::Registers::SI5345_2.address, chipAddress, mPdaBar, registerMap2);
-  I2c p3 = I2c(Cru::Registers::SI5344.address, chipAddress, mPdaBar, registerMap3);
+  I2c p1 = I2c(Cru::Registers::SI5345_1.address, chipAddress, mPdaBar, 0, registerMap1);
+  I2c p2 = I2c(Cru::Registers::SI5345_2.address, chipAddress, mPdaBar, 0, registerMap2);
+  I2c p3 = I2c(Cru::Registers::SI5344.address, chipAddress, mPdaBar, 0, registerMap3);
 
   p1.configurePll();
   p2.configurePll();

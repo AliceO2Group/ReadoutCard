@@ -33,6 +33,7 @@ class I2c
  public:
   I2c(uint32_t baseAddress, uint32_t chipAddress,
       std::shared_ptr<Pda::PdaBar> pdaBar,
+      int endpoint = 0,
       std::vector<std::pair<uint32_t, uint32_t>> registerMap = {});
   ~I2c();
 
@@ -57,6 +58,7 @@ class I2c
   uint32_t mChipAddressEnd = 0x7f;
 
   std::shared_ptr<Pda::PdaBar> mPdaBar;
+  int mEndpoint = 0;
   std::vector<std::pair<uint32_t, uint32_t>> mRegisterMap;
 };
 
