@@ -424,7 +424,7 @@ Cru::ReportInfo CruBar::report()
   }
 
   // Update the link map with optical power information through I2C
-  I2c i2c = I2c(Cru::Registers::BSP_I2C_MINIPODS.address, 0x0, mPdaBar);
+  I2c i2c = I2c(Cru::Registers::BSP_I2C_MINIPODS.address, 0x0, mPdaBar, mEndpoint);
   i2c.getOpticalPower(linkMap);
 
   Ttc ttc = Ttc(mPdaBar);

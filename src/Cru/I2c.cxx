@@ -28,6 +28,7 @@ namespace roc
 
 I2c::I2c(uint32_t baseAddress, uint32_t chipAddress,
          std::shared_ptr<Pda::PdaBar> pdaBar,
+         int endpoint,
          std::vector<std::pair<uint32_t, uint32_t>> registerMap)
   : mI2cConfig(baseAddress),
     mI2cCommand(baseAddress + 0x4),
@@ -36,6 +37,7 @@ I2c::I2c(uint32_t baseAddress, uint32_t chipAddress,
     mChipAddressStart(0x0),
     mChipAddressEnd(0x7f),
     mPdaBar(pdaBar),
+    mEndpoint(endpoint),
     mRegisterMap(registerMap)
 {
 }
@@ -226,17 +228,13 @@ void I2c::getOpticalPower(std::map<int, Link>& linkMap)
    *                             value 23 -> chip1 but link 23
    *                             ... */
 
-  int chipIndex = 11;
+  int chipIndex = (mEndpoint == 0) ? 11 : 23;
   for (auto& el : linkMap) {
     auto& link = el.second;
     if (opticalPowers.empty()) { //Means no chip found
       link.opticalPower = 0.0;
     } else {
       link.opticalPower = opticalPowers[chipIndex--];
-
-      if (chipIndex == -1) {
-        chipIndex = 23; //move to second chip
-      }
     }
   }
 
