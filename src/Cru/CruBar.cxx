@@ -560,11 +560,11 @@ void CruBar::configure(bool force)
         // link mismatch
         // -> toggle enabled status
         if (link.enabled != linkPrevState.enabled || force) {
-          gbt.calibrateGbt({ std::pair<int, Link>(el.first, el.second) });
           // toggle enable/disable
           if (linkPrevState.enabled) {
             datapathWrapper.setLinkDisabled(link);
           } else {
+            gbt.calibrateGbt({ std::pair<int, Link>(el.first, el.second) });
             datapathWrapper.setLinkEnabled(link);
           }
         }
