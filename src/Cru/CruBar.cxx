@@ -853,5 +853,11 @@ void CruBar::patternPlayer(Cru::PatternPlayerInfo info)
   }
 }
 
+Cru::OnuStatus CruBar::reportOnuStatus()
+{
+  Ttc ttc = Ttc(mPdaBar);
+  return ttc.onuStatus();
+}
+
 } // namespace roc
 } // namespace AliceO2

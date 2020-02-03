@@ -90,6 +90,8 @@ class CruBar final : public BarInterfaceBase
   void setDebugModeEnabled(bool enabled);
   bool getDebugModeEnabled();
 
+  Cru::OnuStatus reportOnuStatus();
+
  private:
   boost::optional<int32_t> getSerialNumber();
   uint32_t getTemperatureRaw();

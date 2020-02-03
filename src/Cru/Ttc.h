@@ -41,6 +41,8 @@ class Ttc
   void setEmulatorHCDIV(uint32_t hcdiv);
   void setFixedBCTrigger(std::vector<uint32_t> FBCTVector);
 
+  Cru::OnuStatus onuStatus();
+
  private:
   void configurePlls(uint32_t clock);
   void setRefGen(int frequency = 240);
