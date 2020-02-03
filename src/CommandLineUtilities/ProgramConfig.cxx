@@ -48,7 +48,7 @@ class ProgramConfig : public Program
                           po::value<std::string>(&mOptions.clock)->default_value("LOCAL"),
                           "Clock [LOCAL, TTC]");
     options.add_options()("cru-id",
-                          po::value<uint16_t>(&mOptions.cruId)->default_value(0x0),
+                          po::value<std::string>(&mOptions.cruId)->default_value("0x0"),
                           "12-bit CRU ID");
     options.add_options()("datapathmode",
                           po::value<std::string>(&mOptions.datapathMode)->default_value("PACKET"),
@@ -78,7 +78,7 @@ class ProgramConfig : public Program
                           po::bool_switch(&mOptions.dynamicOffsetEnabled),
                           "Flag to enable the dynamic offset");
     options.add_options()("onu-address",
-                          po::value<uint32_t>(&mOptions.onuAddress)->default_value(0x0),
+                          po::value<std::string>(&mOptions.onuAddress)->default_value("0x0"),
                           "ONU address for PON upstream");
     options.add_options()("config-all",
                           po::bool_switch(&mOptions.configAll),
@@ -142,7 +142,7 @@ class ProgramConfig : public Program
       params.setLinkMask(Parameters::linkMaskFromString(mOptions.links));
       params.setAllowRejection(mOptions.allowRejection);
       params.setClock(Clock::fromString(mOptions.clock));
-      params.setCruId(mOptions.cruId);
+      params.setCruId(strtoul(mOptions.cruId.c_str(), NULL, 16));
       params.setDatapathMode(DatapathMode::fromString(mOptions.datapathMode));
       params.setDownstreamData(DownstreamData::fromString(mOptions.downstreamData));
       params.setGbtMode(GbtMode::fromString(mOptions.gbtMode));
@@ -150,7 +150,7 @@ class ProgramConfig : public Program
       params.setLinkLoopbackEnabled(mOptions.linkLoopbackEnabled);
       params.setPonUpstreamEnabled(mOptions.ponUpstreamEnabled);
       params.setDynamicOffsetEnabled(mOptions.dynamicOffsetEnabled);
-      params.setOnuAddress(mOptions.onuAddress);
+      params.setOnuAddress(strtoul(mOptions.onuAddress.c_str(), NULL, 16));
       params.setTriggerWindowSize(mOptions.triggerWindowSize);
 
       // Generate a configuration file base on the parameters provided
@@ -219,8 +219,8 @@ class ProgramConfig : public Program
     bool linkLoopbackEnabled = false;
     bool ponUpstreamEnabled = false;
     bool dynamicOffsetEnabled = false;
-    uint32_t onuAddress = 0x0;
-    uint16_t cruId = 0x0;
+    std::string onuAddress = "0x0";
+    std::string cruId = "0x0";
     uint32_t triggerWindowSize = 1000;
   } mOptions;
 
