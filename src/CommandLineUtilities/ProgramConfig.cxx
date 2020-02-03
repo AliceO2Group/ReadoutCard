@@ -91,7 +91,7 @@ class ProgramConfig : public Program
                           "Flag to force configuration, bypassing the firmware checker");
     options.add_options()("trigger-window-size",
                           po::value<uint32_t>(&mOptions.triggerWindowSize),
-                          "Flag to set the size of the trigger window in GBT words");
+                          "The size of the trigger window in GBT words");
     options.add_options()("gen-cfg-file",
                           po::value<std::string>(&mOptions.genConfigFile),
                           "If set generates a configuration file from the command line options. [DOES NOT CONFIGURE]");
