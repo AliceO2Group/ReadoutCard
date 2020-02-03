@@ -94,6 +94,18 @@ struct ReportInfo {
   uint32_t triggerWindowSize;
 };
 
+struct OnuStatus {
+  uint32_t onuAddress;
+  bool rx40Locked;
+  bool phaseGood;
+  bool rxLocked;
+  bool operational;
+  bool mgtTxReady;
+  bool mgtRxReady;
+  bool mgtTxPllLocked;
+  bool mgtRxPllLocked;
+};
+
 struct LinkPacketInfo {
   uint32_t accepted;
   uint32_t rejected;
