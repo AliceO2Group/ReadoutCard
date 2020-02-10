@@ -97,6 +97,9 @@ class ProgramListCards : public Program
                       firmware % cardId;
 
         table << format;
+        std::cout << table.str();
+        table.str("");
+        table.clear();
       } else {
         pt::ptree cardNode;
 
@@ -116,7 +119,7 @@ class ProgramListCards : public Program
       i++;
     }
 
-    if (!mOptions.jsonOut) {
+    if (!mOptions.jsonOut && i) {
       table << lineFat;
       std::cout << table.str();
     } else {
