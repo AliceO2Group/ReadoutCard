@@ -562,7 +562,7 @@ void CruBar::configure(bool force)
       if (linkPrevState != link || force) {
         // link mismatch
         // -> toggle enabled status
-        if (link.enabled != linkPrevState.enabled || force) {
+        if (link.enabled != linkPrevState.enabled) {
           // toggle enable/disable
           if (linkPrevState.enabled) {
             datapathWrapper.setLinkDisabled(link);
