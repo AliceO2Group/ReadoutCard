@@ -139,7 +139,7 @@ bool Ttc::configurePonTx(uint32_t onuAddress)
 
 Cru::OnuStatus Ttc::onuStatus()
 {
-  uint32_t calStatus = mPdaBar->readRegister(Cru::Registers::ONU_USER_LOGIC.index) + 0xc;
+  uint32_t calStatus = mPdaBar->readRegister(Cru::Registers::ONU_USER_LOGIC.index + 0xc / 4);
   uint32_t onuAddress = mPdaBar->readRegister(Cru::Registers::ONU_USER_LOGIC.index) >> 1;
 
   Cru::OnuStatus onuStatus = {
@@ -153,6 +153,7 @@ Cru::OnuStatus Ttc::onuStatus()
     calStatus >> 6 & 0x1,
     calStatus >> 7 & 0x1
   };
+
   return onuStatus;
 }
 
