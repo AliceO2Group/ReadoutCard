@@ -141,7 +141,7 @@ The Parameters that affect the configuration of the CRU, their possible values (
 
 `AllowRejection (true | false) [false]`
 
-`CruId (0x42) [0x0]`
+`CruId (0x0-0xffff) [0x0]`
 
 `Clock (LOCAL | TTC) [LOCAL]`
 
@@ -157,7 +157,7 @@ The Parameters that affect the configuration of the CRU, their possible values (
 
 `PonUpstreamEnabled (true | false) [false]`
 
-`OnuAddress (0x01234567) [0x0]`
+`OnuAddress (0-4294967296) [0]`
 
 `DynamicOffsetEnabled (true | false) [false]`
 

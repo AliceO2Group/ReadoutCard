@@ -78,7 +78,7 @@ class ProgramConfig : public Program
                           po::bool_switch(&mOptions.dynamicOffsetEnabled),
                           "Flag to enable the dynamic offset");
     options.add_options()("onu-address",
-                          po::value<std::string>(&mOptions.onuAddress)->default_value("0x0"),
+                          po::value<uint32_t>(&mOptions.onuAddress)->default_value(0),
                           "ONU address for PON upstream");
     options.add_options()("config-all",
                           po::bool_switch(&mOptions.configAll),
@@ -150,7 +150,7 @@ class ProgramConfig : public Program
       params.setLinkLoopbackEnabled(mOptions.linkLoopbackEnabled);
       params.setPonUpstreamEnabled(mOptions.ponUpstreamEnabled);
       params.setDynamicOffsetEnabled(mOptions.dynamicOffsetEnabled);
-      params.setOnuAddress(strtoul(mOptions.onuAddress.c_str(), NULL, 16));
+      params.setOnuAddress(mOptions.onuAddress);
       params.setTriggerWindowSize(mOptions.triggerWindowSize);
 
       // Generate a configuration file base on the parameters provided
@@ -219,7 +219,7 @@ class ProgramConfig : public Program
     bool linkLoopbackEnabled = false;
     bool ponUpstreamEnabled = false;
     bool dynamicOffsetEnabled = false;
-    std::string onuAddress = "0x0";
+    uint32_t onuAddress = 0;
     std::string cruId = "0x0";
     uint32_t triggerWindowSize = 1000;
   } mOptions;
