@@ -3,7 +3,6 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-//TODO: Update this for the socket lock
 #define BOOST_TEST_MODULE RORC_TestFileSharedObject
 #define BOOST_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
@@ -16,9 +15,8 @@
 #include <condition_variable>
 #include <iostream>
 #include <boost/test/unit_test.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/exception/all.hpp>
-#include "InterprocessLock.h"
+#include "ReadoutCard/InterprocessLock.h"
 
 #include "ReadoutCard/Exception.h"
 
@@ -26,9 +24,6 @@ namespace
 {
 
 using namespace ::AliceO2::roc;
-namespace b = boost;
-namespace bip = boost::interprocess;
-namespace bfs = boost::filesystem;
 
 struct TestObject {
   TestObject(const std::string& s, int i) : string(s), integer(i) {}
@@ -36,17 +31,10 @@ struct TestObject {
   int integer;
 };
 
-const std::string namedMutexName("AliceO2_InterprocessMutex_Test");
-const bfs::path lockFilePath("/tmp/AliceO2_InterprocessMutex_Test.lock");
-
-void cleanupFiles()
-{
-  bip::named_mutex::remove(namedMutexName.c_str());
-  bfs::remove(lockFilePath);
-}
+const std::string lockName("AliceO2_InterprocessMutex_Test");
 
 #define CONSTRUCT_LOCK() \
-  Interprocess::Lock _test_lock { lockFilePath, namedMutexName }
+  Interprocess::Lock _test_lock { lockName }
 
 void doLock()
 {
@@ -56,8 +44,6 @@ void doLock()
 // Test the intraprocess locking
 BOOST_AUTO_TEST_CASE(InterprocessMutexTestIntraprocess)
 {
-  cleanupFiles();
-
   std::condition_variable conditionVariable;
   std::atomic<bool> childAcquired(false);
 
@@ -68,7 +54,7 @@ BOOST_AUTO_TEST_CASE(InterprocessMutexTestIntraprocess)
       childAcquired = true;
       conditionVariable.notify_all();
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    } catch (const LockException& e) {
+    } catch (const SocketLockException& e) {
       BOOST_FAIL("Child failed to acquire FileSharedObject");
     }
   });
@@ -80,7 +66,7 @@ BOOST_AUTO_TEST_CASE(InterprocessMutexTestIntraprocess)
   if (!status) {
     BOOST_FAIL("Timed out or child failed to acquire lock");
   }
-  BOOST_CHECK_THROW(doLock(), NamedMutexLockException);
+  BOOST_CHECK_THROW(doLock(), SocketLockException);
 
   // Wait on child thread
   future.get();
@@ -93,8 +79,6 @@ BOOST_AUTO_TEST_CASE(InterprocessMutexTestIntraprocess)
 // - The parent tries to acquire while the child has it -> it should fail
 BOOST_AUTO_TEST_CASE(InterprocessMutexTestInterprocess)
 {
-  cleanupFiles();
-
   pid_t pid = fork();
 
   if (pid == 0) {
@@ -103,7 +87,6 @@ BOOST_AUTO_TEST_CASE(InterprocessMutexTestInterprocess)
       CONSTRUCT_LOCK();
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    cleanupFiles();
     exit(0);
   } else if (pid > 0) {
     // Parent

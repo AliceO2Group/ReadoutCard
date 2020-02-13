@@ -26,22 +26,22 @@ BOOST_AUTO_TEST_CASE(ParametersConstructors)
   Parameters p;
   Parameters p2 = p;
   Parameters p3 = std::move(p2);
-  Parameters p4 = Parameters::makeParameters({ SERIAL_NUMBER, ENDPOINT_NUMBER }, CHANNEL_NUMBER); //TODO: Check makeParameters
+  Parameters p4 = Parameters::makeParameters(SerialId{ SERIAL_NUMBER, ENDPOINT_NUMBER }, CHANNEL_NUMBER); //TODO: Check makeParameters
 }
 
 BOOST_AUTO_TEST_CASE(ParametersPutGetTest)
 {
-  Parameters p = Parameters::makeParameters({ SERIAL_NUMBER, ENDPOINT_NUMBER }, CHANNEL_NUMBER)
+  Parameters p = Parameters::makeParameters(SerialId{ SERIAL_NUMBER, ENDPOINT_NUMBER }, CHANNEL_NUMBER)
                    .setDmaPageSize(DMA_PAGE_SIZE)
                    .setDataSource(DATA_SOURCE)
                    .setBufferParameters(buffer_parameters::File{ "/my/file.shm", 0 });
 
-  BOOST_REQUIRE(boost::get<int>(p.getCardId().get()) == SERIAL_NUMBER);
+  BOOST_REQUIRE(boost::get<SerialId>(p.getCardId().get()) == (SerialId{ SERIAL_NUMBER, ENDPOINT_NUMBER }));
   BOOST_REQUIRE(p.getChannelNumber().get_value_or(0) == CHANNEL_NUMBER);
   BOOST_REQUIRE(p.getDmaPageSize().get_value_or(0) == DMA_PAGE_SIZE);
   BOOST_REQUIRE(p.getDataSource().get_value_or(DataSource::Fee) == DATA_SOURCE);
 
-  BOOST_REQUIRE(boost::get<int>(p.getCardIdRequired()) == SERIAL_NUMBER);
+  BOOST_REQUIRE(boost::get<SerialId>(p.getCardIdRequired()) == (SerialId{ SERIAL_NUMBER, ENDPOINT_NUMBER }));
   BOOST_REQUIRE(p.getChannelNumberRequired() == CHANNEL_NUMBER);
   BOOST_REQUIRE(p.getDmaPageSizeRequired() == DMA_PAGE_SIZE);
   BOOST_REQUIRE(p.getDataSourceRequired() == DATA_SOURCE);
@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(ParametersPutGetTest)
 
 BOOST_AUTO_TEST_CASE(ParametersThrowTest)
 {
-  auto p = Parameters::makeParameters({ SERIAL_NUMBER, ENDPOINT_NUMBER }, CHANNEL_NUMBER);
+  auto p = Parameters::makeParameters(SerialId{ SERIAL_NUMBER, ENDPOINT_NUMBER }, CHANNEL_NUMBER);
 }
 
 BOOST_AUTO_TEST_CASE(ParametersLinkMaskFromString)

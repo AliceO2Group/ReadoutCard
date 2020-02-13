@@ -46,7 +46,7 @@ struct LockException : virtual Exception {
 };
 struct FileLockException : virtual LockException {
 };
-struct NamedMutexLockException : virtual LockException {
+struct SocketLockException : virtual LockException {
 };
 struct DeviceFinderException : virtual Exception {
 };
