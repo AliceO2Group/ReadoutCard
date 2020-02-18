@@ -91,6 +91,12 @@ class CruBar final : public BarInterfaceBase
   bool getDebugModeEnabled();
 
   Cru::OnuStatus reportOnuStatus();
+  std::map<int, Link> initializeLinkMap();
+
+  std::shared_ptr<Pda::PdaBar> getPdaBar()
+  {
+    return mPdaBar;
+  }
 
  private:
   boost::optional<int32_t> getSerialNumber();
@@ -107,7 +113,6 @@ class CruBar final : public BarInterfaceBase
   uint32_t getPonStatusRegister();
   uint32_t getOnuAddress();
   bool checkPonUpstreamStatusExpected(uint32_t ponUpstreamRegister, uint32_t onuAddress);
-  std::map<int, Link> initializeLinkMap();
   void populateLinkMap(std::map<int, Link>& linkMap);
 
   uint32_t getDdgBurstLength();
