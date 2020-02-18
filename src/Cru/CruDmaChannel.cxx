@@ -17,6 +17,7 @@
 #include <thread>
 #include <boost/format.hpp>
 #include "CruDmaChannel.h"
+#include "DatapathWrapper.h"
 #include "ExceptionInternal.h"
 #include "ReadoutCard/ChannelFactory.h"
 
@@ -71,8 +72,11 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
 
   // Insert links
   {
+    DatapathWrapper dwrapper = DatapathWrapper(getBar2()->getPdaBar());
+    auto linkMap = getBar2()->initializeLinkMap();
+
     std::stringstream stream;
-    stream << "Enabling link(s): ";
+    stream << "Using link(s): ";
     auto linkMask = parameters.getLinkMask().value_or(Parameters::LinkMaskType{ 0 });
     mLinks.reserve(linkMask.size());
     for (uint32_t id : linkMask) {
@@ -80,6 +84,12 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
         BOOST_THROW_EXCEPTION(InvalidLinkId() << ErrorInfo::Message("Each endpoint supports up to 12 links.")
                                               << ErrorInfo::LinkId(id));
       }
+      // If the link is not enabled, skip it
+      if (!dwrapper.getLinkEnabled(linkMap.at(id))) {
+        log((format("Will not push superpages to link #%1% (disabled)") % id).str(), InfoLogger::InfoLogger::Warning);
+        continue;
+      }
+
       stream << id << " ";
       //Implicit constructors are deleted for the folly Queue. Workaround to keep the Link struct with a queue * field.
       std::shared_ptr<SuperpageQueue> linkQueue = std::make_shared<SuperpageQueue>(LINK_QUEUE_CAPACITY_ALLOCATIONS);
