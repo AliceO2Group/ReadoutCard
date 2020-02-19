@@ -499,15 +499,16 @@ StWord Crorc::ddlReadCTSTW(int transid, int destination, long long int time)
   return stw;
 }
 
-StWord Crorc::ddlReadSiu(int transid, long long int time)
+//TODO: Transid could be set automatically here
+StWord Crorc::ddlReadSiu(int transid, long long int time) //TODO: This to be kept like this -> clean wherever possible
 {
   // prepare and send DDL command
   int destination = Ddl::Destination::SIU;
-  ddlSendCommand(destination, Rorc::RandCIFST, transid, 0, time);
+  ddlSendCommand(destination, Rorc::RandCIFST, transid, 0, time); //TODO: A bar write
 
   // read and check the answer
-  ddlWaitStatus(time);
-  StWord stw = ddlReadStatus();
+  ddlWaitStatus(time);          //TODO: Keep reading to check the status
+  StWord stw = ddlReadStatus(); //TODO: Read once
   if (stw.part.code != Rorc::IFSTW || stw.part.trid != transid || stw.part.dest != destination) {
     BOOST_THROW_EXCEPTION(
       Exception() << ErrorInfo::Message("Unexpected SIU STW (not IFSTW)")
@@ -516,7 +517,7 @@ StWord Crorc::ddlReadSiu(int transid, long long int time)
   }
 
   StWord ret = stw;
-  stw = ddlReadStatus();
+  stw = ddlReadStatus(); //TODO: Read twice
   if ((stw.part.code != Rorc::CTSTW && stw.part.code != Rorc::ILCMD && stw.part.code != Rorc::CTSTW_TO) || stw.part.trid != transid || stw.part.dest != destination) {
     BOOST_THROW_EXCEPTION(
       Exception() << ErrorInfo::Message("Unexpected SIU STW (not CTSTW)")
@@ -698,18 +699,6 @@ void Crorc::resetCommand(int option, const DiuConfig& diuConfig)
   if (option & Rorc::Reset::DIU) {
     command |= Rorc::CcsrCommand::RESET_DIU;
   }
-  if (option & Rorc::Reset::FF) {
-    command |= Rorc::CcsrCommand::CLEAR_RXFF | Rorc::CcsrCommand::CLEAR_TXFF;
-  }
-  if (option & Rorc::Reset::FIFOS) {
-    command |= Rorc::CcsrCommand::CLEAR_FIFOS;
-  }
-  if (option & Rorc::Reset::ERROR) {
-    command |= Rorc::CcsrCommand::CLEAR_ERROR;
-  }
-  if (option & Rorc::Reset::COUNTERS) {
-    command |= Rorc::CcsrCommand::CLEAR_COUNTERS;
-  }
   if (command) {
     write(Rorc::C_CSR, (uint32_t)command);
   }
@@ -724,41 +713,40 @@ void Crorc::resetCommand(int option, const DiuConfig& diuConfig)
   }
 }
 
-/// Try to empty D-RORC's data FIFOs
-/// \param timeoutMicroseconds Time-out value in usecs
-void Crorc::emptyDataFifos(int timeoutMicroseconds)
+void Crorc::armDdl(/*int resetMask, const DiuConfig& diuConfig*/)
 {
-  auto endTime = chrono::steady_clock::now() + chrono::microseconds(timeoutMicroseconds);
+  //auto reset = [&](uint32_t command) { resetCommand(command, diuConfig); };
 
-  while (chrono::steady_clock::now() < endTime) {
-    if (!checkRxData()) {
-      return;
-    }
-    write(Rorc::C_CSR, (uint32_t)Rorc::CcsrCommand::CLEAR_FIFOS);
-  }
-
-  if (checkRxData()) {
-    BOOST_THROW_EXCEPTION(TimeoutException() << ErrorInfo::Message("Timed out emptying data FIFOs"));
-  }
-}
-
-void Crorc::armDdl(int resetMask, const DiuConfig& diuConfig)
-{
-  auto reset = [&](uint32_t command) { resetCommand(command, diuConfig); };
-
-  if (resetMask & Rorc::Reset::FEE) {
+  /*  if (resetMask & Rorc::Reset::FEE) { //TODO: Remove
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Command not allowed"));
   }
-  if (resetMask & Rorc::Reset::SIU) {
+  if (resetMask & Rorc::Reset::SIU) { //TODO: Remove
     ddlResetSiu(3, Ddl::RESPONSE_TIME * diuConfig.pciLoopPerUsec);
+  }*/
+  /* SHOULD BE ONLY THIS u*/
+  if (true) { //TODO: Test only with this
+    //reset(Rorc::Reset::RORC);
+    //reset(Rorc::Reset::SIU); //TODO: This doesn't happen now
+
+    //  write(0x0, 0x1); //CRORC device
+    write(0x0, 0x2);       //CRORC channel
+    write(0x18 / 4, 0xf1); //SIU
+    //sleep_for(100ms);
+    write(0x18 / 4, 0xf1); //SIU
+    write(0x0, 0x2);       //CRORC channel
+    // write(0x0, 0x1); //CRORC device
+    sleep_for(100ms); //TODO: Make this into a timeout
+    //reset(Rorc::Reset::SIU);
+    //reset(Rorc::Reset::RORC);
+    assertLinkUp();
   }
-  if (resetMask & Rorc::Reset::LINK_UP) {
+
+  /*  if (resetMask & Rorc::Reset::LINK_UP) {
     reset(Rorc::Reset::RORC);
     reset(Rorc::Reset::DIU);
     reset(Rorc::Reset::SIU);
     sleep_for(100ms);
     assertLinkUp();
-    emptyDataFifos(100000);
 
     reset(Rorc::Reset::SIU);
     reset(Rorc::Reset::DIU);
@@ -774,7 +762,7 @@ void Crorc::armDdl(int resetMask, const DiuConfig& diuConfig)
   }
   if (resetMask & Rorc::Reset::RORC) {
     reset(Rorc::Reset::RORC);
-  }
+  }*/
 }
 
 auto Crorc::initDiuVersion() -> DiuConfig
@@ -908,13 +896,16 @@ void Crorc::setDiuLoopback(const DiuConfig& diuConfig)
 }
 
 void Crorc::startTrigger(const DiuConfig& diuConfig, uint32_t command)
+//void Crorc::startTrigger(uint32_t command)
 {
   if ((command != Fee::RDYRX) && (command != Fee::STBRD)) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Trigger can only be started with RDYRX or STBRD."));
   }
   uint64_t timeout = Ddl::RESPONSE_TIME * diuConfig.pciLoopPerUsec;
   ddlSendCommand(Ddl::Destination::FEE, command, 0, 0, timeout);
+  //ddlSendCommand(Ddl::Destination::FEE, command, 0, 0, 0);
   ddlWaitStatus(timeout);
+  //ddlWaitStatus(0);
   ddlReadStatus();
 }
 
@@ -1128,8 +1119,8 @@ uint32_t Crorc::ddlPrintStatus(int destination, int time)
 std::tuple<std::string, uint32_t> Crorc::siuStatus()
 {
   DiuConfig diuConfig = initDiuVersion();
-  resetCommand(Rorc::Reset::SIU, diuConfig);
-  sleep_for(100ms);
+  //  resetCommand(Rorc::Reset::SIU, diuConfig);
+  //  sleep_for(100ms);
 
   long long int time = Ddl::RESPONSE_TIME * diuConfig.pciLoopPerUsec;
 

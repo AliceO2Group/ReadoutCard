@@ -68,7 +68,7 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
 
   // Prep for BAR
   auto bar = ChannelFactory().getBar(parameters);
-  crorcBar = std::move(std::dynamic_pointer_cast<CrorcBar>(bar)); // Initialize bar0
+  crorcBar = std::move(std::dynamic_pointer_cast<CrorcBar>(bar)); // Initialize bar
 
   // Create and register our ReadyFIFO buffer
   log("Initializing ReadyFIFO DMA buffer", InfoLogger::InfoLogger::Debug);
@@ -95,7 +95,7 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
   getReadyFifoUser()->reset();
   mDmaBufferUserspace = getBufferProvider().getAddress();
 
-  deviceResetChannel(mInitialResetLevel);
+  deviceResetChannel();
 }
 
 auto CrorcDmaChannel::allowedChannels() -> AllowedChannels
@@ -105,24 +105,11 @@ auto CrorcDmaChannel::allowedChannels() -> AllowedChannels
 
 CrorcDmaChannel::~CrorcDmaChannel()
 {
-  //deviceStopDma();
 }
 
 void CrorcDmaChannel::deviceStartDma()
 {
-  // Find DIU version, required for armDdl()
-  mDiuConfig = getCrorc().initDiuVersion();
-
-  // Arming the DDL, according to the channel parameters
-  if ((mDataSource == DataSource::Siu) || (mDataSource == DataSource::Fee)) {
-    armDdl(ResetLevel::InternalDiuSiu);
-  } else if (mDataSource == DataSource::Diu) {
-    armDdl(ResetLevel::InternalDiu);
-  } else {
-    armDdl(ResetLevel::Internal);
-  }
-
-  // Setting the card to be able to receive data
+  mDiuConfig = getCrorc().initDiuVersion(); //does nothing
   startDataReceiving();
 
   log("DMA start deferred until enough superpages available");
@@ -154,20 +141,17 @@ void CrorcDmaChannel::startPendingDma()
 
   if (mGeneratorEnabled) {
     log("Starting data generator");
-    startDataGenerator();
+    startDataGenerator(); //TODO: To be removed completely? Updated with instructions from PiPPo
   } else {
     if (mRDYRX || mSTBRD) {
       log("Starting trigger");
 
       // Clearing SIU/DIU status.
-      getCrorc().assertLinkUp();
-      getCrorc().siuCommand(Ddl::RandCIFST);
-      getCrorc().diuCommand(Ddl::RandCIFST);
-
-      uint32_t command = (mRDYRX) ? Fee::RDYRX : Fee::STBRD;
+      getBar()->assertLinkUp();
 
       // RDYRX command to FEE
-      getCrorc().startTrigger(mDiuConfig, command);
+      uint32_t command = (mRDYRX) ? Fee::RDYRX : Fee::STBRD;
+      getBar()->startTrigger(command);
     }
   }
 
@@ -184,10 +168,10 @@ void CrorcDmaChannel::deviceStopDma()
   } else {
     if (mRDYRX || mSTBRD) {
       // Sending EOBTR to FEE.
-      getCrorc().stopTrigger(mDiuConfig);
+      getBar()->stopTrigger();
     }
   }
-  getCrorc().stopDataReceiver();
+  getBar()->stopDataReceiver();
 
   // Return any filled superpages
   fillSuperpages();
@@ -204,98 +188,13 @@ void CrorcDmaChannel::deviceStopDma()
 
 void CrorcDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)
 {
-  mDiuConfig = getCrorc().initDiuVersion();
-  uint32_t command;
-  StWord status;
-  long long int timeout = Ddl::RESPONSE_TIME * mDiuConfig.pciLoopPerUsec;
-
-  if (resetLevel == ResetLevel::Internal) {
-    log("Resetting CRORC");
-    log("Clearing Free FIFO");
-    log("Clearing other FIFOS");
-    log("Clearing CRORC's byte counters");
-    command = Rorc::Reset::RORC | Rorc::Reset::FF | Rorc::Reset::FIFOS | Rorc::Reset::ERROR | Rorc::Reset::COUNTERS;
-    getCrorc().resetCommand(command, mDiuConfig);
-  } else if (resetLevel == ResetLevel::InternalDiu) {
-    log("Resetting CRORC & DIU");
-    command = Rorc::Reset::RORC | Rorc::Reset::DIU;
-    getCrorc().resetCommand(command, mDiuConfig);
-  } else if (resetLevel == ResetLevel::InternalDiuSiu) {
-    log("Resetting SIU...");
-    log("Switching off CRORC loopback");
-    getCrorc().setLoopbackOff();
-    std::this_thread::sleep_for(100ms);
-
-    log("Resetting DIU");
-    getCrorc().resetCommand(Rorc::Reset::DIU, mDiuConfig);
-    std::this_thread::sleep_for(100ms);
-
-    log("Resetting SIU");
-    getCrorc().resetCommand(Rorc::Reset::SIU, mDiuConfig);
-    std::this_thread::sleep_for(100ms);
-
-    status = getCrorc().ddlReadDiu(0, timeout);
-    if (((status.stw >> 15) & 0x7) == 0x6) {
-      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("SIU in no signal state (probably not connected), unable to reset SIU."));
-    }
-
-    status = getCrorc().ddlReadSiu(0, timeout);
-    /*if (status.stw == -1) { // Comparing unsigned with -1?
-      BOOST_THROW_EXCEPTION(Exception() << 
-          ErrorInfo::Message("Error: Timeout - SIU not responding, unable to reset SIU."));
-    }*/
-  }
-  log("Done!");
-}
-
-void CrorcDmaChannel::armDdl(ResetLevel::type resetLevel)
-{
   if (resetLevel == ResetLevel::Nothing) {
     return;
   }
-
-  try {
-    getCrorc().resetCommand(Rorc::Reset::RORC, mDiuConfig);
-
-    if (DataSource::isExternal(mDataSource) && (resetLevel != ResetLevel::Internal)) { // At least DIU
-      getCrorc().armDdl(Rorc::Reset::DIU, mDiuConfig);
-
-      if ((resetLevel == ResetLevel::InternalDiuSiu) && (mDataSource != DataSource::Diu)) //SIU & FEE
-      {
-        // Wait a little before SIU reset.
-        std::this_thread::sleep_for(100ms); /// XXX Why???
-        // Reset SIU.
-        getCrorc().armDdl(Rorc::Reset::SIU, mDiuConfig);
-        getCrorc().armDdl(Rorc::Reset::DIU, mDiuConfig);
-      }
-
-      getCrorc().armDdl(Rorc::Reset::RORC, mDiuConfig);
-      std::this_thread::sleep_for(100ms);
-
-      if ((resetLevel == ResetLevel::InternalDiuSiu) && (mDataSource != DataSource::Diu)) //SIU & FEE
-      {
-        getCrorc().assertLinkUp();
-        getCrorc().siuCommand(Ddl::RandCIFST);
-      }
-
-      getCrorc().diuCommand(Ddl::RandCIFST);
-      std::this_thread::sleep_for(100ms);
-    }
-
-    getCrorc().resetCommand(Rorc::Reset::FF, mDiuConfig);
-    std::this_thread::sleep_for(100ms); /// XXX Give card some time to reset the FreeFIFO
-    getCrorc().assertFreeFifoEmpty();
-  } catch (Exception& e) {
-    e << ErrorInfo::ResetLevel(resetLevel);
-    e << ErrorInfo::DataSource(mDataSource);
-    throw;
-  }
-
-  // Wait a little after reset.
-  std::this_thread::sleep_for(100ms); /// XXX Why???
+  getBar()->resetDevice();
 }
 
-void CrorcDmaChannel::startDataGenerator()
+void CrorcDmaChannel::startDataGenerator() //TODO: Update this
 {
   getCrorc().armDataGenerator(mPageSize); //TODO: To be simplified
 
@@ -323,7 +222,7 @@ void CrorcDmaChannel::startDataGenerator()
 
 void CrorcDmaChannel::startDataReceiving()
 {
-  getCrorc().startDataReceiver(mReadyFifoAddressBus);
+  getBar()->startDataReceiver(mReadyFifoAddressBus);
 }
 
 int CrorcDmaChannel::getTransferQueueAvailable()
@@ -444,7 +343,7 @@ int32_t CrorcDmaChannel::getDroppedPackets()
 void CrorcDmaChannel::pushFreeFifoPage(int readyFifoIndex, uintptr_t pageBusAddress, int pageSize)
 {
   size_t pageWords = pageSize / 4; // Size in 32-bit words
-  getCrorc().pushRxFreeFifo(pageBusAddress, pageWords, readyFifoIndex);
+  getBar()->pushRxFreeFifo(pageBusAddress, pageWords, readyFifoIndex);
 }
 
 CrorcDmaChannel::DataArrivalStatus::type CrorcDmaChannel::dataArrived(int index)

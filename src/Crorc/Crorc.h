@@ -64,7 +64,7 @@ class Crorc
   /// Arms DDL
   /// \param resetMask The reset mask. See the RORC_RESET_* macros in rorc.h
   /// \param diuConfig DIU configuration
-  void armDdl(int resetMask, const DiuConfig& diuConfig);
+  void armDdl(/*int resetMask, const DiuConfig& diuConfig*/);
 
   /// Arms C-RORC data generator
   int armDataGenerator(int dataSize,
@@ -111,6 +111,7 @@ class Crorc
 
   /// Starts the trigger (RDYRX or STBRD)
   void startTrigger(const DiuConfig& diuConfig, uint32_t command);
+  //void startTrigger(uint32_t command);
 
   /// Stops the trigger
   void stopTrigger(const DiuConfig& diuConfig);
@@ -207,7 +208,6 @@ class Crorc
   long long int ddlWaitStatus(long long int timeout);
   StWord ddlReadStatus();
   StWord ddlReadCTSTW(int transid, int destination, long long int time);
-  void emptyDataFifos(int timeoutMicroseconds);
   StWord ddlSetSiuLoopBack(const DiuConfig& diuConfig);
   StWord ddlSetDiuLoopBack(const DiuConfig& diuConfig);
   std::vector<std::string> ddlInterpretIFSTW(uint32_t ifstw);

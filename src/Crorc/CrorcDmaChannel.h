@@ -66,7 +66,7 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
  protected:
   virtual void deviceStartDma() override;
   virtual void deviceStopDma() override;
-  virtual void deviceResetChannel(ResetLevel::type resetLevel) override;
+  virtual void deviceResetChannel(ResetLevel::type resetLevel = ResetLevel::InternalDiuSiu) override;
 
  private:
   /// Superpage size supported by the CRORC backend
@@ -138,9 +138,6 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
   /// Starts pending DMA with given superpage for the initial pages
   void startPendingDma();
 
-  /// Arms the DDL
-  void armDdl(ResetLevel::type resetLevel);
-
   /// BAR used for DMA engine and configuration
   std::shared_ptr<CrorcBar> crorcBar;
 
@@ -184,7 +181,7 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
   const size_t mPageSize;
 
   /// Reset level on initialization of channel
-  const ResetLevel::type mInitialResetLevel;
+  ResetLevel::type mInitialResetLevel;
 
   /// Allows sending the RDYRX and EOBTR commands.
   bool mRDYRX;
