@@ -46,6 +46,7 @@ class ProgramReset : public Program
 
     auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
     params.setBufferParameters(AliceO2::roc::buffer_parameters::Null());
+    params.setFirmwareCheckEnabled(false);
     auto channel = AliceO2::roc::ChannelFactory().getDmaChannel(params);
     channel->resetChannel(resetLevel);
   }

@@ -50,9 +50,23 @@ class CrorcBar final : public BarInterfaceBase
   void configure(bool force = false) override;
   Crorc::ReportInfo report();
 
+  void resetDevice();
+  void startDataReceiver(uintptr_t readyFifoBusAddress);
+  void stopDataReceiver();
+  void startTrigger(uint32_t command);
+  void stopTrigger();
+  bool isLinkUp(int barIndex);
+  bool checkLinkUp();
+  void assertLinkUp();
+  void pushRxFreeFifo(uintptr_t blockAddress, uint32_t blockLength, uint32_t readyFifoIndex);
+
  private:
   std::map<int, Crorc::Link> initializeLinkMap();
-  bool isLinkUp(int barIndex);
+
+  bool arch64()
+  {
+    return (sizeof(void*) > 4);
+  }
 
   void setQsfpEnabled();
   bool getQsfpEnabled();
@@ -65,6 +79,10 @@ class CrorcBar final : public BarInterfaceBase
   void setTimeFrameDetectionEnabled(bool enabled);
   bool getTimeFrameDetectionEnabled();
   void getOpticalPowers(std::map<int, Crorc::Link>& linkMap);
+
+  void resetSiu();
+  void resetCard();
+  void sendDdlCommand(uint32_t address, uint32_t command);
 
   uint16_t mCrorcId;
   bool mDynamicOffset;

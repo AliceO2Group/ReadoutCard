@@ -213,6 +213,8 @@ void CruDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)
 {
   if (resetLevel == ResetLevel::Nothing) {
     return;
+  } else if (resetLevel != ResetLevel::Internal) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("The CRU can only be reset internally"));
   }
   resetCru();
 }

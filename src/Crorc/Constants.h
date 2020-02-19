@@ -129,10 +129,6 @@ constexpr int CLEAR_RORC_ERROR = 0x00000008; ///< bit  3
 namespace CcsrCommand
 {
 constexpr int RESET_DIU = 0x00000001;      ///< bit  0
-constexpr int CLEAR_FIFOS = 0x00000002;    ///< bit  1
-constexpr int CLEAR_RXFF = 0x00000004;     ///< bit  2
-constexpr int CLEAR_TXFF = 0x00000008;     ///< bit  3
-constexpr int CLEAR_ERROR = 0x00000010;    ///< bit  4
 constexpr int CLEAR_COUNTERS = 0x00000020; ///< bit  5
 constexpr int DATA_TX_ON_OFF = 0x00000100; ///< bit  8
 constexpr int DATA_RX_ON_OFF = 0x00000200; ///< bit  9
@@ -170,9 +166,7 @@ constexpr int DIU = 4;          ///< reset DIU
 constexpr int SIU = 8;          ///< reset SIU
 constexpr int LINK_UP = 16;     ///< init link
 constexpr int FEE = 32;         ///< reset Front-End
-constexpr int FIFOS = 64;       ///< reset RORC's FIFOS (not Free FIFO)
 constexpr int ERROR = 128;      ///< reset RORC's error register
-constexpr int COUNTERS = 256;   ///< reset RORC's event number counters
 constexpr int ALL = 0x000001FF; ///< bits 8-0
 } // namespace Reset
 
@@ -365,17 +359,45 @@ static constexpr Register I2C_CMD(0x000000D0);
 static constexpr Register CFG_CONTROL(0x000001f0);
 
 // Register that contains the firmware hash
-static constexpr Register FIRMWARE_HASH(0x0000019C);
+static constexpr Register FIRMWARE_HASH(0x0000019c);
+
+// CRORC Control & Status Register
+static constexpr Register CRORC_CSR(0x00000000);
+
+// CHANNEL Control & Status Register
+// [9] -> data receive ON / OFF
+// [23] -> FIFO NOT EMPTY
+static constexpr Register CHAN_CSR(0x00000010);
+static constexpr uint32_t DATA_RX_ON_OFF(0x00000200);
+static constexpr uint32_t RXSTAT_NOT_EMPTY(0x00800000);
 
 // Channel Control & Status Register
-static constexpr Register C_CSR(0x00000010);
+// [1] -> CRORC
+// [2] -> CHANNEL (can be used together - e.g. 0x3)
+static constexpr Register CHANNEL_CSR(0x00000010);
+static constexpr uint32_t CRORC_RESET(0x00000003);
+
+// Channel Receive Report Base Address
+static constexpr Register CHANNEL_RRBAR(0x00000034);
+// Channel Receive Report Base Address Extension
+static constexpr Register CHANNEL_RRBARX(0x00000084);
+
+// Register to send DDL commands
+static constexpr Register DDL_COMMAND(0x00000018); //TODO: Find a better name
+static constexpr Register DDL_STATUS(0x0000001C);
+static constexpr uint32_t SIU_RESET(0x000000f1);
 
 // At bit 13
 static constexpr uint32_t LINK_DOWN(0x00002000);
 
+// Registers containing Optical Power information
 static constexpr IntervalRegister OPT_POWER_QSFP0(0x00000144, 0x4);
 static constexpr IntervalRegister OPT_POWER_QSFP1(0x00000158, 0x4);
 
+// Registers for RX FIFO configuration
+static constexpr Register RX_FIFO_ADDR_LOW(0x00000038);
+static constexpr Register RX_FIFO_ADDR_HIGH(0x0000003c);
+static constexpr Register RX_FIFO_ADDR_EXT(0x00000080);
 } // namespace Registers
 } //namespace Crorc
 

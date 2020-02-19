@@ -14,6 +14,9 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
+#include <chrono>
+#include <thread>
+
 #include "Crorc/Constants.h"
 #include "Crorc/Crorc.h"
 #include "Crorc/CrorcBar.h"
@@ -109,11 +112,26 @@ std::map<int, Crorc::Link> CrorcBar::initializeLinkMap()
   return linkMap;
 }
 
+bool CrorcBar::checkLinkUp()
+{
+  return !((mPdaBar->readRegister(Crorc::Registers::CHANNEL_CSR.index) & Crorc::Registers::LINK_DOWN));
+}
+
+void CrorcBar::assertLinkUp()
+{
+  auto timeOut = std::chrono::steady_clock::now() + std::chrono::milliseconds(100);
+  while ((std::chrono::steady_clock::now() < timeOut) && !checkLinkUp()) {
+  }
+  if (!checkLinkUp()) {
+    BOOST_THROW_EXCEPTION(CrorcCheckLinkException() << ErrorInfo::Message("Link was not up"));
+  }
+}
+
 bool CrorcBar::isLinkUp(int barIndex)
 {
-  auto params = Parameters::makeParameters(SerialId{ getSerial().get(), getEndpointNumber() }, barIndex);
+  auto params = Parameters::makeParameters(SerialId{ getSerial().get(), getEndpointNumber() }, barIndex); // TODO: This is problematic...
   auto bar = ChannelFactory().getBar(params);
-  return !((bar->readRegister(Crorc::Registers::C_CSR.index) & Crorc::Registers::LINK_DOWN));
+  return !((bar->readRegister(Crorc::Registers::CHANNEL_CSR.index) & Crorc::Registers::LINK_DOWN));
 }
 
 void CrorcBar::setQsfpEnabled()
@@ -185,6 +203,98 @@ void CrorcBar::getOpticalPowers(std::map<int, Crorc::Link>& linkMap)
     link.opticalPower /= 10;
   }
 }
+
+void CrorcBar::sendDdlCommand(uint32_t address, uint32_t command) // TODO: Is the address here always Crorc::Registers::DDL_COMMAND?
+{
+  writeRegister(address / 4, command);
+
+  auto checkFifoEmpty = [&]() {
+    return readRegister(Crorc::Registers::CHAN_CSR.index) & Crorc::Registers::RXSTAT_NOT_EMPTY;
+  };
+
+  auto timeOut = std::chrono::steady_clock::now() + std::chrono::milliseconds(100);
+  while ((std::chrono::steady_clock::now() < timeOut) && !checkFifoEmpty()) {
+  }
+  if (!checkFifoEmpty()) {
+    BOOST_THROW_EXCEPTION(CrorcCheckLinkException() << ErrorInfo::Message("Link was not up"));
+  } else {
+    readRegister(Crorc::Registers::DDL_STATUS.index);
+  }
+}
+
+void CrorcBar::resetSiu()
+{
+  sendDdlCommand(Crorc::Registers::DDL_COMMAND.address, Crorc::Registers::SIU_RESET);
+}
+
+void CrorcBar::startTrigger(uint32_t command) //TODO: Rename this
+{
+  sendDdlCommand(Crorc::Registers::DDL_COMMAND.address, command);
+}
+
+void CrorcBar::stopTrigger()
+{
+  try {
+    sendDdlCommand(Crorc::Registers::DDL_COMMAND.address, Fee::EOBTR);
+  } catch (const Exception& e) {
+    log("Stopping DDL trigger timed out");
+  }
+}
+
+void CrorcBar::resetCard()
+{
+  writeRegister(Crorc::Registers::CRORC_CSR.index, Crorc::Registers::CRORC_RESET);
+}
+
+void CrorcBar::resetDevice()
+{
+  resetCard();
+  resetSiu();
+  assertLinkUp();
+
+  resetSiu();
+  resetCard();
+  assertLinkUp();
+
+  return;
+}
+
+void CrorcBar::startDataReceiver(uintptr_t readyFifoBusAddress)
+{
+  writeRegister(Crorc::Registers::CHANNEL_RRBAR.index, (readyFifoBusAddress & 0xffffffff));
+  if (sizeof(uintptr_t) > 4) {
+    writeRegister(Crorc::Registers::CHANNEL_RRBARX.index, (readyFifoBusAddress >> 32));
+  } else {
+    writeRegister(Crorc::Registers::CHANNEL_RRBARX.index, 0x0);
+  }
+
+  if (!(readRegister(Crorc::Registers::CHAN_CSR.index) & Crorc::Registers::DATA_RX_ON_OFF)) {
+    writeRegister(Crorc::Registers::CHAN_CSR.index, Crorc::Registers::DATA_RX_ON_OFF);
+  }
+}
+
+void CrorcBar::stopDataReceiver()
+{
+  if (readRegister(Crorc::Registers::CHAN_CSR.index) & Crorc::Registers::DATA_RX_ON_OFF) {
+    writeRegister(Crorc::Registers::CHAN_CSR.index, Crorc::Registers::DATA_RX_ON_OFF);
+  }
+}
+
+void CrorcBar::pushRxFreeFifo(uintptr_t blockAddress, uint32_t blockLength, uint32_t readyFifoIndex)
+{
+  writeRegister(Crorc::Registers::RX_FIFO_ADDR_EXT.index, arch64() ? (blockAddress >> 32) : 0x0);
+  writeRegister(Crorc::Registers::RX_FIFO_ADDR_HIGH.index, blockAddress & 0xffffffff);
+  writeRegister(Crorc::Registers::RX_FIFO_ADDR_LOW.index, (blockLength << 8) | readyFifoIndex);
+}
+
+/*void CrorcBar::startDataGenerator()
+{
+}
+
+void CrorcBar::stopDataGenerator()
+{
+}
+*/
 
 } // namespace roc
 } // namespace AliceO2
