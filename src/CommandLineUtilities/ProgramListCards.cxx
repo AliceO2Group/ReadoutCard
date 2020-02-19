@@ -54,9 +54,9 @@ class ProgramListCards : public Program
   {
     std::ostringstream table;
 
-    auto formatHeader = "  %-3s %-6s %-10s %-8s %-13s %-5s %-11s %-11s %-25s %-17s\n";
-    auto formatRow = "  %-3s %-6s %-10s %-8s %-13s %-5s 0x%-9s 0x%-9s %-25s %-17s\n";
-    auto header = (boost::format(formatHeader) % "#" % "Type" % "PCI Addr" % "Serial" % "Endpoint ID" % "NUMA" % "Vendor ID" % "Device ID" % "FW Version" % "Card ID").str();
+    auto formatHeader = "  %-3s %-6s %-10s %-8s %-10s %-5s %-12s\n";
+    auto formatRow = "  %-3s %-6s %-10s %-8s %-10s %-5s %-12s\n";
+    auto header = (boost::format(formatHeader) % "#" % "Type" % "PCI Addr" % "Serial" % "Endpoint" % "NUMA" % "FW Version").str();
     auto lineFat = std::string(header.length(), '=') + '\n';
     auto lineThin = std::string(header.length(), '-') + '\n';
 
@@ -73,7 +73,6 @@ class ProgramListCards : public Program
     for (const auto& card : cardsFound) {
       const std::string na = "n/a";
       std::string firmware = na;
-      std::string cardId = na;
       std::string numaNode = std::to_string(card.numaNode);
       try {
         Parameters params2 = Parameters::makeParameters(card.pciAddress, 2);
@@ -81,7 +80,6 @@ class ProgramListCards : public Program
         firmware = bar2->getFirmwareInfo().value_or(na);
         // Check if the firmware is tagged
         firmware = FirmwareChecker().resolveFirmwareTag(firmware);
-        cardId = bar2->getCardId().value_or(na);
       } catch (const Exception& e) {
         if (isVerbose()) {
           std::cout << "Error parsing card information through BAR\n"
@@ -93,8 +91,8 @@ class ProgramListCards : public Program
       std::string endpoint = std::to_string(card.serialId.getEndpoint());
 
       if (!mOptions.jsonOut) {
-        auto format = boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciAddress.toString() % serial % endpoint % card.numaNode % card.pciId.vendor % card.pciId.device %
-                      firmware % cardId;
+        auto format = boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciAddress.toString() % serial %
+          endpoint % card.numaNode % firmware;
 
         table << format;
         std::cout << table.str();
