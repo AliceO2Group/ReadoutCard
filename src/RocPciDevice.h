@@ -26,6 +26,7 @@
 #include "ReadoutCard/ParameterTypes/PciAddress.h"
 #include "ReadoutCard/ParameterTypes/SerialId.h"
 #include "ReadoutCard/PciId.h"
+#include "Utilities/SmartPointer.h"
 
 namespace AliceO2
 {
@@ -76,6 +77,10 @@ class RocPciDevice
       return std::move(mPdaBar0);
     } else if (barIndex == 2) {
       return std::move(mPdaBar2);
+    } else if (barIndex > 0 && barIndex < 6) {
+      std::shared_ptr<Pda::PdaBar> mPdaBarX;
+      Utilities::resetSmartPtr(mPdaBarX, mPciDevice, barIndex);
+      return std::move(mPdaBarX);
     }
     return nullptr;
   }
