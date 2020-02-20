@@ -89,6 +89,9 @@ class Parameters
   /// Type for the clock parameter
   using ClockType = Clock::type;
 
+  /// Type for the CRORC ID
+  using CrorcIdType = Hex::type;
+
   /// Type for the CRU ID
   using CruIdType = Hex::type;
 
@@ -258,6 +261,12 @@ class Parameters
   /// \return Reference to this object for chaining calls
   auto setClock(ClockType value) -> Parameters&;
 
+  /// Sets the CrorcId parameter
+  ///
+  /// \param value The value to set
+  /// \return Reference to this object for chaining calls
+  auto setCrorcId(CrorcIdType value) -> Parameters&;
+
   /// Sets the CruId parameter
   ///
   /// \param value The value to set
@@ -331,6 +340,10 @@ class Parameters
   /// Gets the CardId parameter
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
   auto getCardId() const -> boost::optional<CardIdType>;
+
+  /// Gets the CrorcId parameter
+  /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+  auto getCrorcId() const -> boost::optional<CrorcIdType>;
 
   /// Gets the CruId parameter
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
@@ -464,6 +477,11 @@ class Parameters
   /// \exception ParameterException The parameter was not present
   /// \return The value
   auto getClockRequired() const -> ClockType;
+
+  /// Gets the CrorcId parameter
+  /// \exception ParameterException The parameter was not present
+  /// \return The value
+  auto getCrorcIdRequired() const -> CrorcIdType;
 
   /// Gets the CruId parameter
   /// \exception ParameterException The parameter was not present

@@ -16,6 +16,7 @@
 #ifndef ALICEO2_INCLUDE_READOUTCARD_CARDCONFIGURATOR_H_
 #define ALICEO2_INCLUDE_READOUTCARD_CARDCONFIGURATOR_H_
 
+#include "ReadoutCard/CardType.h"
 #include "ReadoutCard/Parameters.h"
 
 namespace AliceO2
@@ -30,7 +31,9 @@ class CardConfigurator
   CardConfigurator(Parameters& parameters, bool forceConfigure = false);
 
  private:
-  void parseConfigUri(std::string configUri, Parameters& parameters);
+  void parseConfigUri(CardType::type cardType, std::string configUri, Parameters& parameters);
+  void parseConfigUriCru(std::string configUri, Parameters& parameters);
+  void parseConfigUriCrorc(std::string configUri, Parameters& parameters);
 };
 
 } // namespace roc

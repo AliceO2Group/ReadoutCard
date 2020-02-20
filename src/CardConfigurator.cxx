@@ -8,17 +8,26 @@
 #include "Cru/CruBar.h"
 #include "ReadoutCard/CardConfigurator.h"
 #include "ReadoutCard/ChannelFactory.h"
+#include "RocPciDevice.h"
 
 namespace AliceO2
 {
 namespace roc
 {
 
-CardConfigurator::CardConfigurator(Parameters::CardIdType cardId, std::string configUri, bool forceConfigure)
+CardConfigurator::CardConfigurator(Parameters::CardIdType cardId, std::string configUri, bool forceConfigure) //TODO: Currently only supports the CRU
 {
-  auto parameters = Parameters::makeParameters(cardId, 2); //have to make parameters for this case, bar2
+  auto cardType = RocPciDevice(cardId).getCardDescriptor().cardType;
+  Parameters parameters;
+  if (cardType == CardType::Cru) {
+    parameters = Parameters::makeParameters(cardId, 2); //have to make parameters for this case, bar2
+  } else if (cardType == CardType::Crorc) {
+    parameters = Parameters::makeParameters(cardId, 0); //have to make parameters for this case, bar0
+  } else {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Unknown card type"));
+  }
   try {
-    parseConfigUri(configUri, parameters);
+    parseConfigUri(cardType, configUri, parameters);
   } catch (...) {
     throw;
   }
@@ -33,16 +42,39 @@ CardConfigurator::CardConfigurator(Parameters::CardIdType cardId, std::string co
 
 CardConfigurator::CardConfigurator(Parameters& parameters, bool forceConfigure)
 {
-  auto bar2 = ChannelFactory().getBar(parameters);
+  auto cardType = RocPciDevice(parameters.getCardId().get()).getCardDescriptor().cardType;
   try {
-    bar2->configure(forceConfigure);
+    if (cardType == CardType::Cru) {
+      auto bar2 = ChannelFactory().getBar(parameters);
+      bar2->configure(forceConfigure);
+    } else if (cardType == CardType::Crorc) {
+      parameters.setChannelNumber(0); // we need to change bar 0
+      auto bar0 = ChannelFactory().getBar(parameters);
+      bar0->configure(forceConfigure);
+    }
   } catch (const Exception& e) {
     BOOST_THROW_EXCEPTION(e);
   }
 }
 
+void CardConfigurator::parseConfigUri(CardType::type cardType, std::string configUri, Parameters& parameters)
+{
+  if (cardType == CardType::Cru) {
+    parseConfigUriCru(configUri, parameters);
+  } else if (cardType == CardType::Crorc) {
+    parseConfigUriCrorc(configUri, parameters);
+  } else {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Unknown card type"));
+  }
+}
+
+void CardConfigurator::parseConfigUriCrorc(std::string /*configUri*/, Parameters& /*parameters*/) //TODO: Fill me
+{
+  std::cout << "Non-parameter configuration not supported for the CRORC yet" << std::endl;
+  BOOST_THROW_EXCEPTION(Exception());
+}
 /// configUri has to start with "ini://", "json://" or "consul://"
-void CardConfigurator::parseConfigUri(std::string configUri, Parameters& parameters)
+void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& parameters)
 {
   std::set<uint32_t> linkMask;
   std::map<uint32_t, GbtMux::type> gbtMuxMap;

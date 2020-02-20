@@ -12,9 +12,12 @@
 /// \brief Definitions of RORC related constants
 /// Based on ddl_def.h and rorc.h
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
+/// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
 #ifndef ALICEO2_SRC_READOUTCARD_CRORC_CONSTANTS_H_
 #define ALICEO2_SRC_READOUTCARD_CRORC_CONSTANTS_H_
+
+#include "ReadoutCard/Register.h"
 
 namespace AliceO2
 {
@@ -343,6 +346,29 @@ constexpr int OFFL = 0x00001000;   ///< SIU in Offline state
 constexpr int POR = 0x00000000;    ///< SIU in Power On Reset state
 } // namespace PortState
 } // namespace Siu
+
+namespace Crorc
+{
+namespace Registers
+{
+///*** bar0 ***///
+
+// Register to check the status of the link
+static constexpr Register LINK_STATUS(0x000000A0);
+
+// Register to send an I2C command
+static constexpr Register I2C_CMD(0x000000D0);
+
+// Register to control CRORC configuration
+// [15-4] -> CRORC ID
+// [0]    -> FIXED/DYNAMIC OFFSET
+static constexpr Register CFG_CONTROL(0x000001f0);
+
+// Register that contains the firmware hash
+static constexpr Register FIRMWARE_HASH(0x0000019C);
+} // namespace Registers
+} //namespace Crorc
+
 } // namespace roc
 } // namespace AliceO2
 

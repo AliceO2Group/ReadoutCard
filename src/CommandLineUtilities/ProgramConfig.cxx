@@ -34,9 +34,10 @@ class ProgramConfig : public Program
  public:
   virtual Description getDescription()
   {
-    return { "Config", "Configure the CRU(s)",
+    return { "Config", "Configure the ReadoutCard(s)",
              "roc-config --config-uri ini:///home/flp/roc.cfg\n"
-             "roc-config --id 42:00.0 --links 0-23 --clock local --datapathmode packet --loopback --gbtmux ttc\n" };
+             "roc-config --id 42:00.0 --links 0-23 --clock local --datapathmode packet --loopback --gbtmux ttc #CRU\n"
+             "roc-config --id #0 --crorc-id 0x42 --dyn-offset #CRORC\n" };
   }
 
   virtual void addOptions(boost::program_options::options_description& options)
@@ -47,6 +48,9 @@ class ProgramConfig : public Program
     options.add_options()("clock",
                           po::value<std::string>(&mOptions.clock)->default_value("LOCAL"),
                           "Clock [LOCAL, TTC]");
+    options.add_options()("crorc-id",
+                          po::value<std::string>(&mOptions.crorcId)->default_value("0x0"),
+                          "12-bit CRORC ID");
     options.add_options()("cru-id",
                           po::value<std::string>(&mOptions.cruId)->default_value("0x0"),
                           "12-bit CRU ID");
@@ -127,7 +131,7 @@ class ProgramConfig : public Program
     }
 
     // Configure specific card
-    auto cardId = Options::getOptionCardId(map);
+    auto cardId = Options::getOptionCardId(map); //TODO: Parameters not planned for the CRORC should throw an exception when used
     if (!mOptions.bypassFirmwareCheck) {
       try {
         FirmwareChecker().checkFirmwareCompatibility(cardId);
@@ -142,6 +146,7 @@ class ProgramConfig : public Program
       params.setLinkMask(Parameters::linkMaskFromString(mOptions.links));
       params.setAllowRejection(mOptions.allowRejection);
       params.setClock(Clock::fromString(mOptions.clock));
+      params.setCrorcId(strtoul(mOptions.crorcId.c_str(), NULL, 16)); //TODO: Clean up common / per type parameters
       params.setCruId(strtoul(mOptions.cruId.c_str(), NULL, 16));
       params.setDatapathMode(DatapathMode::fromString(mOptions.datapathMode));
       params.setDownstreamData(DownstreamData::fromString(mOptions.downstreamData));
@@ -154,7 +159,7 @@ class ProgramConfig : public Program
       params.setTriggerWindowSize(mOptions.triggerWindowSize);
 
       // Generate a configuration file base on the parameters provided
-      if (mOptions.genConfigFile != "") {
+      if (mOptions.genConfigFile != "") { //TODO: To be updated for the CRORC
         std::cout << "Generating a configuration file at: " << mOptions.genConfigFile << std::endl;
         std::ofstream cfgFile;
         cfgFile.open(mOptions.genConfigFile);
@@ -221,6 +226,7 @@ class ProgramConfig : public Program
     bool dynamicOffsetEnabled = false;
     uint32_t onuAddress = 0;
     std::string cruId = "0x0";
+    std::string crorcId = "0x0";
     uint32_t triggerWindowSize = 1000;
   } mOptions;
 
