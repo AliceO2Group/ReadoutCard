@@ -28,7 +28,6 @@
 #include "ReadoutCard/ChannelFactory.h"
 #include "ReadoutCard/Exception.h"
 #include "ReadoutCard/Parameters.h"
-#include "Utilities/SmartPointer.h"
 
 namespace AliceO2
 {
