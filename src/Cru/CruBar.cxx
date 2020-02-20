@@ -102,7 +102,8 @@ boost::optional<float> CruBar::getTemperature()
 
 boost::optional<std::string> CruBar::getFirmwareInfo()
 {
-  return (boost::format("%x-%x-%x") % getFirmwareDate() % getFirmwareTime() % getFirmwareGitHash()).str();
+  //return (boost::format("%x-%x-%x") % getFirmwareDate() % getFirmwareTime() % getFirmwareGitHash()).str();
+  return (boost::format("%x") % getFirmwareGitHash()).str();
 }
 
 boost::optional<std::string> CruBar::getCardId()

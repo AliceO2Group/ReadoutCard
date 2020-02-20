@@ -14,7 +14,10 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
+#include "Crorc/Constants.h"
 #include "Crorc/CrorcBar.h"
+
+#include "boost/format.hpp"
 
 namespace AliceO2
 {
@@ -22,7 +25,9 @@ namespace roc
 {
 
 CrorcBar::CrorcBar(const Parameters& parameters, std::unique_ptr<RocPciDevice> rocPciDevice)
-  : BarInterfaceBase(parameters, std::move(rocPciDevice))
+  : BarInterfaceBase(parameters, std::move(rocPciDevice)),
+    mCrorcId(parameters.getCrorcId().get_value_or(0x0)),
+    mDynamicOffset(parameters.getDynamicOffsetEnabled().get_value_or(false))
 {
 }
 
@@ -30,31 +35,20 @@ CrorcBar::~CrorcBar()
 {
 }
 
+boost::optional<std::string> CrorcBar::getFirmwareInfo()
+{
+  uint32_t fwHash = readRegister(Crorc::Registers::FIRMWARE_HASH.index);
+  return (boost::format("%x") % fwHash).str();
+}
+
 boost::optional<int32_t> CrorcBar::getSerial()
 {
   return Crorc::getSerial(*(mPdaBar.get()));
 }
 
-boost::optional<std::string> CrorcBar::getFirmwareInfo()
+void CrorcBar::setSerial(int serial)
 {
-  uint32_t version = mPdaBar->readRegister(Rorc::RFID);
-  auto bits = [&](int lsb, int msb) { return Utilities::getBits(version, lsb, msb); };
-
-  uint32_t reserved = bits(24, 31);
-  uint32_t major = bits(20, 23);
-  uint32_t minor = bits(13, 19);
-  uint32_t year = bits(9, 12) + 2000;
-  uint32_t month = bits(5, 8);
-  uint32_t day = bits(0, 4);
-
-  if (reserved != 0x2) {
-    BOOST_THROW_EXCEPTION(CrorcException()
-                          << ErrorInfo::Message("Static field of version register did not equal 0x2"));
-  }
-
-  std::ostringstream stream;
-  stream << major << '.' << minor << ':' << year << '-' << month << '-' << day;
-  return stream.str();
+  Crorc::setSerial(*(mPdaBar.get()), serial);
 }
 
 int CrorcBar::getEndpointNumber()
@@ -62,9 +56,52 @@ int CrorcBar::getEndpointNumber()
   return 0;
 }
 
-void CrorcBar::setSerial(int serial)
+void CrorcBar::configure(bool /*force*/)
 {
-  Crorc::setSerial(*(mPdaBar.get()), serial);
+  // enable laser
+  log("Enabling the laser");
+  setQsfpEnabled();
+
+  log("Configuring fixed/dynamic offset");
+  // choose between fixed and dynamic offset
+  setDynamicOffsetEnabled(mDynamicOffset);
+
+  // set crorc id
+  log("Setting the CRORC ID");
+  setCrorcId(mCrorcId);
+}
+
+void CrorcBar::setQsfpEnabled()
+{
+  uint32_t qsfpStatus = (readRegister(Crorc::Registers::LINK_STATUS.index) >> 31) & 0x1;
+  if (qsfpStatus == 0) {
+    writeRegister(Crorc::Registers::I2C_CMD.index, 0x80);
+  }
+}
+
+bool CrorcBar::getQsfpEnabled()
+{
+  return (readRegister(Crorc::Registers::LINK_STATUS.index) >> 31) & 0x1;
+}
+
+void CrorcBar::setCrorcId(uint16_t crorcId)
+{
+  modifyRegister(Crorc::Registers::CFG_CONTROL.index, 4, 12, crorcId);
+}
+
+uint16_t CrorcBar::getCrorcId()
+{
+  return (readRegister(Crorc::Registers::CFG_CONTROL.index) >> 4) & 0x0fff;
+}
+
+void CrorcBar::setDynamicOffsetEnabled(bool enabled)
+{
+  modifyRegister(Crorc::Registers::CFG_CONTROL.index, 0, 1, enabled ? 0x1 : 0x0);
+}
+
+bool CrorcBar::getDynamicOffsetEnabled()
+{
+  return (readRegister(Crorc::Registers::CFG_CONTROL.index) & 0x1);
 }
 
 } // namespace roc

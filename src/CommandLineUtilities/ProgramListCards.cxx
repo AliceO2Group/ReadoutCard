@@ -92,7 +92,7 @@ class ProgramListCards : public Program
 
       if (!mOptions.jsonOut) {
         auto format = boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciAddress.toString() % serial %
-          endpoint % card.numaNode % firmware;
+                      endpoint % card.numaNode % firmware;
 
         table << format;
         std::cout << table.str();

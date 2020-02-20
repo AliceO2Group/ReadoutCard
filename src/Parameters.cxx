@@ -33,8 +33,9 @@ namespace roc
 /// Variant used for internal storage of parameters
 using Variant = boost::variant<size_t, uint32_t, int32_t, bool, Parameters::BufferParametersType, Parameters::CardIdType,
                                Parameters::DataSourceType, Parameters::LinkMaskType, Parameters::AllowRejectionType,
-                               Parameters::ClockType, Parameters::CruIdType, Parameters::DatapathModeType, Parameters::DownstreamDataType,
-                               Parameters::GbtModeType, Parameters::GbtMuxType, Parameters::GbtMuxMapType, Parameters::PonUpstreamEnabledType,
+                               Parameters::ClockType, Parameters::CrorcIdType, Parameters::CruIdType,
+                               Parameters::DatapathModeType, Parameters::DownstreamDataType, Parameters::GbtModeType,
+                               Parameters::GbtMuxType, Parameters::GbtMuxMapType, Parameters::PonUpstreamEnabledType,
                                Parameters::OnuAddressType, Parameters::DynamicOffsetEnabledType>;
 
 using KeyType = const char*;
@@ -122,6 +123,7 @@ _PARAMETER_FUNCTIONS(DataSource, "data_source")
 _PARAMETER_FUNCTIONS(LinkMask, "link_mask")
 _PARAMETER_FUNCTIONS(AllowRejection, "allow_rejection")
 _PARAMETER_FUNCTIONS(Clock, "clock")
+_PARAMETER_FUNCTIONS(CrorcId, "crorc_id")
 _PARAMETER_FUNCTIONS(CruId, "cru_id")
 _PARAMETER_FUNCTIONS(DatapathMode, "datapath_mode")
 _PARAMETER_FUNCTIONS(DownstreamData, "downstream_data")

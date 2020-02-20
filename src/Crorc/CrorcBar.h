@@ -45,6 +45,19 @@ class CrorcBar final : public BarInterfaceBase
   virtual int getEndpointNumber() override;
 
   void setSerial(int serial);
+
+  void configure(bool force = false) override;
+
+ private:
+  void setQsfpEnabled();
+  bool getQsfpEnabled();
+  void setDynamicOffsetEnabled(bool enabled);
+  bool getDynamicOffsetEnabled();
+  void setCrorcId(uint16_t cruId);
+  uint16_t getCrorcId();
+
+  uint16_t mCrorcId;
+  bool mDynamicOffset;
 };
 
 } // namespace roc
