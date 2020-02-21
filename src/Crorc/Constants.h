@@ -366,6 +366,13 @@ static constexpr Register CFG_CONTROL(0x000001f0);
 
 // Register that contains the firmware hash
 static constexpr Register FIRMWARE_HASH(0x0000019C);
+
+// Channel Control & Status Register
+static constexpr Register C_CSR(0x00000010);
+
+// At bit 13
+static constexpr uint32_t LINK_DOWN(0x00002000);
+
 } // namespace Registers
 } //namespace Crorc
 

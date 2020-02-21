@@ -19,6 +19,7 @@
 
 #include "BarInterfaceBase.h"
 #include "Crorc.h"
+#include "Crorc/Common.h"
 #include "Crorc/Constants.h"
 #include "Utilities/Util.h"
 
@@ -47,8 +48,12 @@ class CrorcBar final : public BarInterfaceBase
   void setSerial(int serial);
 
   void configure(bool force = false) override;
+  Crorc::ReportInfo report();
 
  private:
+  std::map<int, Crorc::Link> initializeLinkMap();
+  bool isLinkUp(int barIndex);
+
   void setQsfpEnabled();
   bool getQsfpEnabled();
   void setDynamicOffsetEnabled(bool enabled);
