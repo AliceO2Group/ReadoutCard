@@ -15,7 +15,11 @@
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
 #include "Crorc/Constants.h"
+#include "Crorc/Crorc.h"
 #include "Crorc/CrorcBar.h"
+
+#include "ReadoutCard/ChannelFactory.h"
+#include "ReadoutCard/ParameterTypes/SerialId.h"
 
 #include "boost/format.hpp"
 
@@ -69,6 +73,35 @@ void CrorcBar::configure(bool /*force*/)
   // set crorc id
   log("Setting the CRORC ID");
   setCrorcId(mCrorcId);
+}
+
+Crorc::ReportInfo CrorcBar::report()
+{
+  std::map<int, Crorc::Link> linkMap = initializeLinkMap();
+  Crorc::ReportInfo reportInfo = {
+    linkMap,
+    getCrorcId(),
+    getQsfpEnabled(),
+    getDynamicOffsetEnabled()
+  };
+  return reportInfo;
+}
+
+std::map<int, Crorc::Link> CrorcBar::initializeLinkMap()
+{
+  std::map<int, Crorc::Link> linkMap;
+  for (int bar = 0; bar < 6; bar++) {
+    Crorc::Link newLink = { isLinkUp(bar) ? Crorc::LinkStatus::Up : Crorc::LinkStatus::Down, 0.0 };
+    linkMap.insert({ bar, newLink });
+  }
+  return linkMap;
+}
+
+bool CrorcBar::isLinkUp(int barIndex)
+{
+  auto params = Parameters::makeParameters(SerialId{ getSerial().get(), getEndpointNumber() }, barIndex);
+  auto bar = ChannelFactory().getBar(params);
+  return !((bar->readRegister(Crorc::Registers::C_CSR.index) & Crorc::Registers::LINK_DOWN));
 }
 
 void CrorcBar::setQsfpEnabled()
