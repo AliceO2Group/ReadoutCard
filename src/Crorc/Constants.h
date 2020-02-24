@@ -373,6 +373,9 @@ static constexpr Register C_CSR(0x00000010);
 // At bit 13
 static constexpr uint32_t LINK_DOWN(0x00002000);
 
+static constexpr IntervalRegister OPT_POWER_QSFP0(0x00000144, 0x4);
+static constexpr IntervalRegister OPT_POWER_QSFP1(0x00000158, 0x4);
+
 } // namespace Registers
 } //namespace Crorc
 

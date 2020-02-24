@@ -60,6 +60,7 @@ class CrorcBar final : public BarInterfaceBase
   bool getDynamicOffsetEnabled();
   void setCrorcId(uint16_t cruId);
   uint16_t getCrorcId();
+  void getOpticalPowers(std::map<int, Crorc::Link>& linkMap);
 
   uint16_t mCrorcId;
   bool mDynamicOffset;
