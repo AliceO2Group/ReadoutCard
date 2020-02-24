@@ -36,8 +36,8 @@ struct Link {
 struct ReportInfo {
   std::map<int, Link> linkMap;
   uint16_t crorcId;
-  bool dynamicOffset;
   bool qsfpEnabled;
+  bool dynamicOffset;
 };
 
 } // namespace Crorc
