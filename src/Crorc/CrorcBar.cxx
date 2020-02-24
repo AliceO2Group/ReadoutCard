@@ -78,6 +78,7 @@ void CrorcBar::configure(bool /*force*/)
 Crorc::ReportInfo CrorcBar::report()
 {
   std::map<int, Crorc::Link> linkMap = initializeLinkMap();
+  getOpticalPowers(linkMap);
   Crorc::ReportInfo reportInfo = {
     linkMap,
     getCrorcId(),
@@ -135,6 +136,20 @@ void CrorcBar::setDynamicOffsetEnabled(bool enabled)
 bool CrorcBar::getDynamicOffsetEnabled()
 {
   return (readRegister(Crorc::Registers::CFG_CONTROL.index) & 0x1);
+}
+
+void CrorcBar::getOpticalPowers(std::map<int, Crorc::Link>& linkMap)
+{
+  for (auto& el : linkMap) {
+    auto linkNo = el.first;
+    auto& link = el.second;
+    if (linkNo < 4) {
+      link.opticalPower = readRegister(Crorc::Registers::OPT_POWER_QSFP0.get(linkNo).index) & 0xffff;
+    } else {
+      link.opticalPower = readRegister(Crorc::Registers::OPT_POWER_QSFP1.get(linkNo % 4).index) & 0xffff;
+    }
+    link.opticalPower /= 10;
+  }
 }
 
 } // namespace roc
