@@ -18,6 +18,7 @@
 #define ALICEO2_SRC_READOUTCARD_UTILITIES_UTIL_H_
 
 #include <cstdint>
+#include <iomanip>
 #include <iostream>
 #include <bitset>
 
@@ -109,6 +110,17 @@ inline int getRandRange(int min, int max)
 inline bool checkAlignment(void* address, uint64_t alignment)
 {
   return (uint64_t(address) % alignment) == 0;
+}
+
+// Converts a number to a string with enforced precision
+template <typename T>
+std::string toPreciseString(T flo, int precision = 2)
+{
+  std::ostringstream precisionEnforcer;
+  precisionEnforcer << std::fixed;
+  precisionEnforcer << std::setprecision(precision);
+  precisionEnforcer << flo;
+  return precisionEnforcer.str();
 }
 
 } // namespace Utilities
