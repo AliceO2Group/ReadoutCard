@@ -90,6 +90,8 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
   GbtMode::type gbtMode = GbtMode::type::Gbt;
   DownstreamData::type downstreamData = DownstreamData::type::Ctp;
   uint32_t triggerWindowSize = 1000;
+  bool gbtEnabled = false;
+  bool userLogicEnabled = false;
 
   bool enabled = false;
   std::string gbtMux = "ttc";
@@ -139,6 +141,9 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
 
         triggerWindowSize = conf->get<int>("triggerWindowSize");
 
+        gbtEnabled = conf->get<bool>("gbtEnabled");
+        userLogicEnabled = conf->get<bool>("userLogicEnabled");
+
         conf->setPrefix("");
 
         parameters.setClock(clock);
@@ -152,6 +157,8 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
         parameters.setCruId(cruId);
         parameters.setAllowRejection(allowRejection);
         parameters.setTriggerWindowSize(triggerWindowSize);
+        parameters.setGbtEnabled(gbtEnabled);
+        parameters.setUserLogicEnabled(userLogicEnabled);
 
       } else if (group == "links") { // Configure all links with default values
 

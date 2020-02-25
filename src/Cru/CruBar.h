@@ -90,6 +90,8 @@ class CruBar final : public BarInterfaceBase
   void setDebugModeEnabled(bool enabled);
   bool getDebugModeEnabled();
 
+  void toggleUserLogicLink(bool mUserLogicEnabled);
+
   Cru::OnuStatus reportOnuStatus();
   std::map<int, Link> initializeLinkMap();
 
@@ -141,6 +143,8 @@ class CruBar final : public BarInterfaceBase
   uint32_t mOnuAddress;
   bool mDynamicOffset;
   uint32_t mTriggerWindowSize;
+  bool mGbtEnabled;
+  bool mUserLogicEnabled;
 
   int mEndpoint;
 

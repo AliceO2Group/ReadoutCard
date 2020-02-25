@@ -92,6 +92,8 @@ struct ReportInfo {
   uint16_t cruId;
   bool dynamicOffset;
   uint32_t triggerWindowSize;
+  bool gbtEnabled;
+  bool userLogicEnabled;
 };
 
 struct OnuStatus {

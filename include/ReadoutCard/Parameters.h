@@ -116,6 +116,12 @@ class Parameters
   /// Type for the Dynamic Offset enabled parameter
   using DynamicOffsetEnabledType = bool;
 
+  /// Type for the User Logic enabled parameter
+  using UserLogicEnabledType = bool;
+
+  /// Type for the GBT enabled parameter
+  using GbtEnabledType = bool;
+
   /// Type for the ONU address parameter
   using OnuAddressType = Hex::type;
 
@@ -183,11 +189,27 @@ class Parameters
 
   /// Sets the DynamicOffsetEnabled parameter
   ///
-  /// If enabled the PON upstream is used.
+  /// If enabled the Dynamic Offset is used.
   ///
   /// \param value The value to set
   /// \return Reference to this object for chaining calls
   auto setDynamicOffsetEnabled(DynamicOffsetEnabledType value) -> Parameters&;
+
+  /// Sets the GbtEnabled parameter
+  ///
+  /// If enabled the GBT is used.
+  ///
+  /// \param value The value to set
+  /// \return Reference to this object for chaining calls
+  auto setGbtEnabled(GbtEnabledType value) -> Parameters&;
+
+  /// Sets the UserLogicEnabled parameter
+  ///
+  /// If enabled the User Logic is used.
+  ///
+  /// \param value The value to set
+  /// \return Reference to this object for chaining calls
+  auto setUserLogicEnabled(UserLogicEnabledType value) -> Parameters&;
 
   /// Sets the OnuAddress parameter
   ///
@@ -369,6 +391,14 @@ class Parameters
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
   auto getDynamicOffsetEnabled() const -> boost::optional<DynamicOffsetEnabledType>;
 
+  /// Gets the GbtEnabled parameter
+  /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+  auto getGbtEnabled() const -> boost::optional<GbtEnabledType>;
+
+  /// Gets the UserLogicEnabled parameter
+  /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+  auto getUserLogicEnabled() const -> boost::optional<UserLogicEnabledType>;
+
   /// Gets the OnuAddress parameter
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
   auto getOnuAddress() const -> boost::optional<OnuAddressType>;
@@ -452,6 +482,16 @@ class Parameters
   /// \exception ParameterException The parameter was not present
   /// \return The value
   auto getDynamicOffsetEnabledRequired() const -> DynamicOffsetEnabledType;
+
+  /// Gets the GbtEnabled parameter
+  /// \exception ParameterException The parameter was not present
+  /// \return The value
+  auto getGbtEnabledRequired() const -> GbtEnabledType;
+
+  /// Gets the UserLogicEnabled parameter
+  /// \exception ParameterException The parameter was not present
+  /// \return The value
+  auto getUserLogicEnabledRequired() const -> UserLogicEnabledType;
 
   /// Gets the OnuAddress parameter
   /// \exception ParameterException The parameter was not present

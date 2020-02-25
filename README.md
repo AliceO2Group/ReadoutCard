@@ -163,6 +163,10 @@ The Parameters that affect the configuration of the CRU, their possible values (
 
 `TriggerWindowSize (0 - 4095) [1000]`
 
+`GbtEnabled (true | false) [true]`
+
+`UserLogicEnabled (true | false) [false]`
+
 To set any of the above parameters the usual template can be followed.
 
 ```
@@ -180,13 +184,14 @@ params.setClock(Parameters::Clock::type::Local);
 The above parameters will be set for the enabled links, as specified by the `LinkMask` parameter. See the [LinkMask](#linkmask) section
 for more info.
 
-Note that for `AllowRejection`, `LinkLoopbackEnabled`, `PonUpstreamEnabled` and `DynamicOffsetEnabled` it is sufficient to do the following, as they are simply booleans.
+Note that for `AllowRejection`, `LinkLoopbackEnabled`, `PonUpstreamEnabled`, `DynamicOffsetEnabled`, `GbtEnabled` and `UserLogicEnabled` it is sufficient to do the following, as they are simply booleans.
 
 ```
 params.setAllowRejection(true);
 params.setLinkLoopbackEnabled(true);
 params.setPonUpstreamEnabled(true);
 params.setDynamicOffsetEnabled(true);
+...
 ```
 
 Likewise for `OnuAddress`, passing the hex is enough.
@@ -213,6 +218,8 @@ ponUpstream
 onuAddress
 dynamicOffsetEnabled
 triggerWindowSize
+gbtEnabled
+UserLogicEnabled
 ```
 
 The "per link" parameters are
