@@ -21,10 +21,13 @@
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
 #include <boost/format.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 
 using namespace AliceO2::roc::CommandLineUtilities;
 using namespace AliceO2::roc;
 using namespace AliceO2::InfoLogger;
+namespace pt = boost::property_tree;
 namespace po = boost::program_options;
 
 class ProgramPacketMonitor : public Program
@@ -39,6 +42,9 @@ class ProgramPacketMonitor : public Program
   virtual void addOptions(boost::program_options::options_description& options)
   {
     Options::addOptionCardId(options);
+    options.add_options()("json-out",
+                          po::bool_switch(&mOptions.jsonOut),
+                          "Toggle json-formatted output");
     options.add_options()("csv-out",
                           po::bool_switch(&mOptions.csvOut),
                           "Toggle csv-formatted output");
@@ -75,9 +81,14 @@ class ProgramPacketMonitor : public Program
     if (mOptions.csvOut) {
       auto csvHeader = "Link ID,Accepted,Rejected,Forced\n";
       std::cout << csvHeader;
-    } else {
+    } else if (!mOptions.jsonOut) {
       table << lineFat << header << lineThin;
     }
+
+    // initialize ptrees
+    pt::ptree root;
+    pt::ptree gbtLinks;
+    pt::ptree ulLink;
 
     /* TABLE */
     for (const auto& el : packetMonitoringInfo.linkPacketInfoMap) {
@@ -91,7 +102,9 @@ class ProgramPacketMonitor : public Program
       if (globalId == 15) {
         auto uLHeader = (boost::format(formatHeader) % "ULL ID " % "Accepted" % "Rejected" % "Forced").str();
 
-        if (mOptions.csvOut) {
+        if (mOptions.jsonOut) {
+
+        } else if (mOptions.csvOut) {
           auto uLHeader = "Link ID,Accepted,Rejected,Forced\n";
           std::cout << uLHeader;
         } else {
@@ -99,7 +112,22 @@ class ProgramPacketMonitor : public Program
         }
       }
 
-      if (mOptions.csvOut) {
+      if (mOptions.jsonOut) {
+        pt::ptree linkNode;
+
+        // add kv pairs for this link
+        linkNode.put("linkId", std::to_string(globalId));
+        linkNode.put("accepted", std::to_string(accepted));
+        linkNode.put("rejected", std::to_string(rejected));
+        linkNode.put("forced", std::to_string(forced));
+
+        // append to the links (or UL link)
+        if (globalId == 15) {
+          ulLink.add_child(std::to_string(globalId), linkNode);
+        } else {
+          gbtLinks.add_child(std::to_string(globalId), linkNode);
+        }
+      } else if (mOptions.csvOut) {
         auto csvLine = std::to_string(globalId) + "," + std::to_string(accepted) + "," + std::to_string(rejected) + "," + std::to_string(forced) + "\n";
         std::cout << csvLine;
       } else {
@@ -107,6 +135,10 @@ class ProgramPacketMonitor : public Program
         table << format;
       }
     }
+
+    // add links nodes to the tree
+    root.add_child("gbtLinks", gbtLinks);
+    root.add_child("userLogicLink", ulLink);
 
     /* PRINT */
     if (!mOptions.csvOut) {
@@ -128,6 +160,8 @@ class ProgramPacketMonitor : public Program
       otherTable << lineFat << header << lineThin;
     }
 
+    pt::ptree ulLinks;
+
     /* TABLE */
     for (const auto& el : packetMonitoringInfo.wrapperPacketInfoMap) {
       int wrapper = el.first;
@@ -135,6 +169,17 @@ class ProgramPacketMonitor : public Program
       uint32_t dropped = wrapperMonitoringInfoMap.dropped;
       uint32_t totalPacketsPerSec = wrapperMonitoringInfoMap.totalPacketsPerSec;
 
+      if (mOptions.jsonOut) {
+        pt::ptree wrapperNode;
+
+        // add kv pairs for this wrapper
+        wrapperNode.put("wrapperId", std::to_string(wrapper));
+        wrapperNode.put("dropped", std::to_string(dropped));
+        wrapperNode.put("totalPacketsPerSec", std::to_string(totalPacketsPerSec));
+
+        // add the wrapper node to the tree
+        root.add_child("wrapper", wrapperNode);
+      }
       if (mOptions.csvOut) {
         auto csvLine = std::to_string(wrapper) + "," + std::to_string(dropped) + "," + std::to_string(totalPacketsPerSec) + "\n";
         std::cout << csvLine;
@@ -145,7 +190,9 @@ class ProgramPacketMonitor : public Program
     }
 
     /* BREAK + PRINT */
-    if (!mOptions.csvOut) {
+    if (mOptions.jsonOut) {
+      pt::write_json(std::cout, root);
+    } else if (!mOptions.csvOut) {
       auto lineFat = std::string(header.length(), '=') + '\n';
       otherTable << lineFat;
       std::cout << otherTable.str();
@@ -154,6 +201,7 @@ class ProgramPacketMonitor : public Program
 
  private:
   struct OptionsStruct {
+    bool jsonOut = false;
     bool csvOut = false;
   } mOptions;
 };

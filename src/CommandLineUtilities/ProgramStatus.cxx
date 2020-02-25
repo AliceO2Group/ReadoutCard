@@ -22,6 +22,7 @@
 #include "ReadoutCard/ChannelFactory.h"
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
+#include "Utilities/Util.h"
 #include <boost/format.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
@@ -55,14 +56,6 @@ class ProgramStatus : public Program
 
   virtual void run(const boost::program_options::variables_map& map)
   {
-    auto enforcePrecision = [](auto flo) {
-      std::ostringstream precisionEnforcer;
-      precisionEnforcer << std::fixed;
-      precisionEnforcer << std::setprecision(2);
-      precisionEnforcer << flo;
-      return precisionEnforcer.str();
-    };
-
     std::ostringstream table;
     std::string formatHeader;
     std::string formatRow;
@@ -141,7 +134,7 @@ class ProgramStatus : public Program
 
           // add kv pairs for this card
           linkNode.put("status", linkStatus);
-          linkNode.put("opticalPower", enforcePrecision(opticalPower));
+          linkNode.put("opticalPower", Utilities::toPreciseString(opticalPower));
 
           // add the link node to the tree
           root.add_child(std::to_string(id), linkNode);
@@ -247,10 +240,10 @@ class ProgramStatus : public Program
           linkNode.put("gbtMux", gbtMux);
           linkNode.put("datapathMode", datapathMode);
           linkNode.put("datapath", enabled);
-          linkNode.put("rxFreq", enforcePrecision(rxFreq));
-          linkNode.put("txFreq", enforcePrecision(txFreq));
+          linkNode.put("rxFreq", Utilities::toPreciseString(rxFreq));
+          linkNode.put("txFreq", Utilities::toPreciseString(txFreq));
           linkNode.put("status", linkStatus);
-          linkNode.put("opticalPower", enforcePrecision(opticalPower));
+          linkNode.put("opticalPower", Utilities::toPreciseString(opticalPower));
 
           // add the link node to the tree
           root.add_child(std::to_string(globalId), linkNode);
