@@ -99,6 +99,12 @@ class ProgramConfig : public Program
     options.add_options()("gen-cfg-file",
                           po::value<std::string>(&mOptions.genConfigFile),
                           "If set generates a configuration file from the command line options. [DOES NOT CONFIGURE]");
+    options.add_options()("no-gbt",
+                          po::bool_switch(&mOptions.noGbt),
+                          "Flag to switch off GBT");
+    options.add_options()("user-logic",
+                          po::bool_switch(&mOptions.userLogicEnabled),
+                          "Flag to enable the User Logic link");
     Options::addOptionCardId(options);
   }
 
@@ -157,6 +163,8 @@ class ProgramConfig : public Program
       params.setDynamicOffsetEnabled(mOptions.dynamicOffsetEnabled);
       params.setOnuAddress(mOptions.onuAddress);
       params.setTriggerWindowSize(mOptions.triggerWindowSize);
+      params.setGbtEnabled(!mOptions.noGbt);
+      params.setUserLogicEnabled(mOptions.userLogicEnabled);
 
       // Generate a configuration file base on the parameters provided
       if (mOptions.genConfigFile != "") { //TODO: To be updated for the CRORC
@@ -228,6 +236,8 @@ class ProgramConfig : public Program
     std::string cruId = "0x0";
     std::string crorcId = "0x0";
     uint32_t triggerWindowSize = 1000;
+    bool userLogicEnabled = false;
+    bool noGbt = false;
   } mOptions;
 
  private:

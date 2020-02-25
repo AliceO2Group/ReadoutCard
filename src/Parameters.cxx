@@ -35,8 +35,7 @@ using Variant = boost::variant<size_t, uint32_t, int32_t, bool, Parameters::Buff
                                Parameters::DataSourceType, Parameters::LinkMaskType, Parameters::AllowRejectionType,
                                Parameters::ClockType, Parameters::CrorcIdType, Parameters::CruIdType,
                                Parameters::DatapathModeType, Parameters::DownstreamDataType, Parameters::GbtModeType,
-                               Parameters::GbtMuxType, Parameters::GbtMuxMapType, Parameters::PonUpstreamEnabledType,
-                               Parameters::OnuAddressType, Parameters::DynamicOffsetEnabledType>;
+                               Parameters::GbtMuxType, Parameters::GbtMuxMapType, Parameters::OnuAddressType>;
 
 using KeyType = const char*;
 
@@ -133,6 +132,8 @@ _PARAMETER_FUNCTIONS(GbtMuxMap, "gbt_mux_map")
 _PARAMETER_FUNCTIONS(LinkLoopbackEnabled, "link_loopback_enabled")
 _PARAMETER_FUNCTIONS(PonUpstreamEnabled, "pon_upstream_enabled")
 _PARAMETER_FUNCTIONS(DynamicOffsetEnabled, "dynamic_offset_enabled")
+_PARAMETER_FUNCTIONS(GbtEnabled, "gbt_enabled")
+_PARAMETER_FUNCTIONS(UserLogicEnabled, "user_logic_enabled")
 _PARAMETER_FUNCTIONS(OnuAddress, "onu_address")
 _PARAMETER_FUNCTIONS(StbrdEnabled, "stbrd_enabled")
 _PARAMETER_FUNCTIONS(TriggerWindowSize, "trigger_window_size")
@@ -183,9 +184,9 @@ auto Parameters::linkMaskFromString(const std::string& string) -> LinkMaskType
   std::set<uint32_t> links;
 
   auto checkLink = [](int link) {
-    if (!(link >= 0 && link < 12)) {
+    if (!(link >= 0 && link < 16)) {
       BOOST_THROW_EXCEPTION(
-        ParseException() << ErrorInfo::Message(std::string("Link: " + std::to_string(link) + " out of [0-11] range")));
+        ParseException() << ErrorInfo::Message(std::string("Link: " + std::to_string(link) + " out of [0-16] range")));
     }
     return;
   };

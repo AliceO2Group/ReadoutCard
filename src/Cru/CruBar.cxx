@@ -50,7 +50,9 @@ CruBar::CruBar(const Parameters& parameters, std::unique_ptr<RocPciDevice> rocPc
     mPonUpstream(parameters.getPonUpstreamEnabled().get_value_or(false)),
     mOnuAddress(parameters.getOnuAddress().get_value_or(0x0)),
     mDynamicOffset(parameters.getDynamicOffsetEnabled().get_value_or(false)),
-    mTriggerWindowSize(parameters.getTriggerWindowSize().get_value_or(1000))
+    mTriggerWindowSize(parameters.getTriggerWindowSize().get_value_or(1000)),
+    mGbtEnabled(parameters.getGbtEnabled().get_value_or(true)),
+    mUserLogicEnabled(parameters.getUserLogicEnabled().get_value_or(false))
 {
   if (getIndex() == 0) {
     mFeatures = parseFirmwareFeatures();
@@ -406,6 +408,7 @@ Cru::ReportInfo CruBar::report()
 {
   std::map<int, Link> linkMap = initializeLinkMap();
 
+  bool gbtEnabled = false;
   // Update linkMap
   Gbt gbt = Gbt(mPdaBar, linkMap, mWrapperCount);
   gbt.getGbtModes();
@@ -422,6 +425,10 @@ Cru::ReportInfo CruBar::report()
     link.stickyBit = gbt.getStickyBit(link);
     link.rxFreq = gbt.getRxClockFrequency(link) / 1e6; // Hz -> Mhz
     link.txFreq = gbt.getTxClockFrequency(link) / 1e6; // Hz -> Mhz
+
+    if (link.enabled) {
+      gbtEnabled = true;
+    }
   }
 
   // Update the link map with optical power information through I2C
@@ -440,6 +447,12 @@ Cru::ReportInfo CruBar::report()
   bool dynamicOffset = datapathWrapper.getDynamicOffsetEnabled(mEndpoint);
   uint32_t triggerWindowSize = datapathWrapper.getTriggerWindowSize(mEndpoint);
 
+  Link userLogicLink;
+  userLogicLink.dwrapper = mEndpoint;
+  userLogicLink.dwrapperId = 15;
+
+  bool userLogicEnabled = datapathWrapper.getLinkEnabled(userLogicLink);
+
   Cru::ReportInfo reportInfo = {
     linkMap,
     clock,
@@ -448,7 +461,9 @@ Cru::ReportInfo CruBar::report()
     onuAddress,
     cruId,
     dynamicOffset,
-    triggerWindowSize
+    triggerWindowSize,
+    gbtEnabled,
+    userLogicEnabled
   };
 
   return reportInfo;
@@ -500,6 +515,8 @@ void CruBar::configure(bool force)
       mCruId == reportInfo.cruId &&
       mDynamicOffset == reportInfo.dynamicOffset &&
       mTriggerWindowSize == reportInfo.triggerWindowSize &&
+      mUserLogicEnabled == reportInfo.userLogicEnabled &&
+      mGbtEnabled == reportInfo.gbtEnabled &&
       !force) {
     log("No need to reconfigure further");
     return;
@@ -527,11 +544,13 @@ void CruBar::configure(bool force)
       }
     }
 
-    log("Calibrating the fPLLs");
-    Gbt gbt = Gbt(mPdaBar, mLinkMap, mWrapperCount);
-    gbt.calibrateGbt(mLinkMap);
-    Cru::fpllref(mLinkMap, mPdaBar, 2);
-    Cru::fpllcal(mLinkMap, mPdaBar);
+    if (mGbtEnabled) {
+      log("Calibrating the fPLLs");
+      Gbt gbt = Gbt(mPdaBar, mLinkMap, mWrapperCount);
+      gbt.calibrateGbt(mLinkMap);
+      Cru::fpllref(mLinkMap, mPdaBar, 2);
+      Cru::fpllcal(mLinkMap, mPdaBar);
+    }
   }
 
   if (static_cast<uint32_t>(mDownstreamData) != reportInfo.downstreamData || force) {
@@ -540,11 +559,11 @@ void CruBar::configure(bool force)
   }
 
   /* GBT */
-  if (!std::equal(mLinkMap.begin(), mLinkMap.end(), reportInfo.linkMap.begin()) || force) {
-    //log("Calibrating GBT");
-    //Gbt gbt = Gbt(mPdaBar, mLinkMap, mWrapperCount);
-    //gbt.calibrateGbt({ std::pair<int, Link>(el.first, el.second) });
-
+  if (!mGbtEnabled && ((mGbtEnabled != reportInfo.gbtEnabled) || force)) {
+    // Disable all links
+    datapathWrapper.setLinksEnabled(mEndpoint, 0x0);
+    toggleUserLogicLink(reportInfo.userLogicEnabled); // Make sure the user logic link retains its state
+  } else if (mGbtEnabled && (!std::equal(mLinkMap.begin(), mLinkMap.end(), reportInfo.linkMap.begin()) || force)) {
     /* BSP */
     disableDataTaking();
 
@@ -577,8 +596,15 @@ void CruBar::configure(bool force)
     }
   }
 
+  /* USER LOGIC */
+  if (mUserLogicEnabled != reportInfo.userLogicEnabled || force) {
+    log("Toggling the User Logic link");
+    toggleUserLogicLink(mUserLogicEnabled);
+  }
+
   /* BSP */
   if (mCruId != reportInfo.cruId || force) {
+    log("Setting the CRU ID");
     setCruId(mCruId);
   }
 
@@ -625,7 +651,7 @@ std::map<int, Link> CruBar::initializeLinkMap()
     uint32_t address = Cru::getWrapperBaseAddress(wrapper) + Cru::Registers::GBT_WRAPPER_CONF0.address;
     uint32_t wrapperConfig = readRegister(address / 4);
 
-    for (int bank = mEndpoint * 2; bank < (mEndpoint * 2 + 2); bank++) {
+    for (int bank = mEndpoint * 2; bank < (mEndpoint * 2 + 4); bank++) {
       //for (int bank = 0; bank < 4; bank++) { //for 0-23 range
       // endpoint 0 -> banks {0,1}
       // endpoint 1 -> banks {2,3}
@@ -858,6 +884,21 @@ Cru::OnuStatus CruBar::reportOnuStatus()
 {
   Ttc ttc = Ttc(mPdaBar);
   return ttc.onuStatus();
+}
+
+void CruBar::toggleUserLogicLink(bool userLogicEnabled)
+{
+  Link userLogicLink;
+  userLogicLink.dwrapper = mEndpoint;
+  userLogicLink.dwrapperId = 15;
+
+  DatapathWrapper datapathWrapper = DatapathWrapper(mPdaBar);
+  if (userLogicEnabled) {
+    datapathWrapper.setLinkEnabled(userLogicLink);
+  } else {
+    datapathWrapper.setLinkDisabled(userLogicLink);
+  }
+  datapathWrapper.setDatapathMode(userLogicLink, mDatapathMode);
 }
 
 } // namespace roc

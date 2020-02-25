@@ -187,6 +187,11 @@ class ProgramStatus : public Program
         } else {
           std::cout << "Fixed offset" << std::endl;
         }
+        if (reportInfo.userLogicEnabled) {
+          std::cout << "User Logic Enabled" << std::endl;
+        } else {
+          std::cout << "User Logic Disabled" << std::endl;
+        }
         std::cout << "----------------------------" << std::endl;
       }
 
