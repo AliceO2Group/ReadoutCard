@@ -77,31 +77,20 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
 
     std::stringstream stream;
     stream << "Using link(s): ";
-    auto linkMask = parameters.getLinkMask().value_or(Parameters::LinkMaskType{ 0 });
-    mLinks.reserve(linkMask.size());
-    for (uint32_t id : linkMask) {
-      if (id >= Cru::MAX_LINKS) {
-        BOOST_THROW_EXCEPTION(InvalidLinkId() << ErrorInfo::Message("Each endpoint supports up to 16 links.")
-                                              << ErrorInfo::LinkId(id));
-      }
 
-      if (id == 15) {
-        Cru::Link userLogicLink;
-        userLogicLink.dwrapper = getBar()->getEndpointNumber();
-        userLogicLink.dwrapperId = 15;
-        if (!dwrapper.getLinkEnabled(userLogicLink)) {
-          log((format("Will not push superpages to link #%1% (disabled)") % id).str(), InfoLogger::InfoLogger::Warning);
-          continue;
-        }
-      } else if (id > 11 && id < 15) {
-        log((format("Will not push superpages to link #%1% (unsupported)") % id).str(), InfoLogger::InfoLogger::Warning);
+    Cru::Link userLogicLink;
+    userLogicLink.dwrapper = getBar()->getEndpointNumber();
+    userLogicLink.dwrapperId = 15;
+    if (dwrapper.getLinkEnabled(userLogicLink)) {
+      linkMap.insert({ 15, userLogicLink });
+    }
+
+    for (const auto& el : linkMap) {
+      auto id = el.first;
+      auto link = el.second;
+      if (!dwrapper.getLinkEnabled(link)) {
+        //log((format("Will not push superpages to link #%1% (disabled)") % id).str(), InfoLogger::InfoLogger::Warning);
         continue;
-      } else {
-        // If the link is not enabled, skip it
-        if (!dwrapper.getLinkEnabled(linkMap.at(id))) {
-          log((format("Will not push superpages to link #%1% (disabled)") % id).str(), InfoLogger::InfoLogger::Warning);
-          continue;
-        }
       }
 
       stream << id << " ";
@@ -110,6 +99,11 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
       Link newLink = { static_cast<LinkId>(id), 0, linkQueue };
       mLinks.push_back(newLink);
     }
+
+    if (mLinks.empty()) {
+      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("No links are enabled. Check with roc-status. Configure with roc-config."));
+    }
+
     log(stream.str());
   }
 }
