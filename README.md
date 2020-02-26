@@ -299,6 +299,12 @@ integers or ranges. For example: `0,1,2,8-10` or `0-19,21-23`.
 params.setLinkMask(LinkMaskFromString(linkMaskString));
 ```
 
+### FirmwareCheck
+The firmware check parameter is by default enabled. It can be used to disable the firmware check when opening a DMA channel.
+```
+params.setFirmwareCheckEnabled(true);
+```
+
 ### Other parameters
 Operations on all other parameters can be done through setter, getter and getterRequired() functions, as seen in [Parameters.h](include/ReadoutCard/Parameters.h)
 
