@@ -81,13 +81,27 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
     mLinks.reserve(linkMask.size());
     for (uint32_t id : linkMask) {
       if (id >= Cru::MAX_LINKS) {
-        BOOST_THROW_EXCEPTION(InvalidLinkId() << ErrorInfo::Message("Each endpoint supports up to 12 links.")
+        BOOST_THROW_EXCEPTION(InvalidLinkId() << ErrorInfo::Message("Each endpoint supports up to 16 links.")
                                               << ErrorInfo::LinkId(id));
       }
-      // If the link is not enabled, skip it
-      if (!dwrapper.getLinkEnabled(linkMap.at(id))) {
-        log((format("Will not push superpages to link #%1% (disabled)") % id).str(), InfoLogger::InfoLogger::Warning);
+
+      if (id == 15) {
+        Cru::Link userLogicLink;
+        userLogicLink.dwrapper = getBar()->getEndpointNumber();
+        userLogicLink.dwrapperId = 15;
+        if (!dwrapper.getLinkEnabled(userLogicLink)) {
+          log((format("Will not push superpages to link #%1% (disabled)") % id).str(), InfoLogger::InfoLogger::Warning);
+          continue;
+        }
+      } else if (id > 11 && id < 15) {
+        log((format("Will not push superpages to link #%1% (unsupported)") % id).str(), InfoLogger::InfoLogger::Warning);
         continue;
+      } else {
+        // If the link is not enabled, skip it
+        if (!dwrapper.getLinkEnabled(linkMap.at(id))) {
+          log((format("Will not push superpages to link #%1% (disabled)") % id).str(), InfoLogger::InfoLogger::Warning);
+          continue;
+        }
       }
 
       stream << id << " ";
