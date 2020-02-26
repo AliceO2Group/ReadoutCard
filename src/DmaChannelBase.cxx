@@ -20,6 +20,7 @@
 //#include "ChannelPaths.h"
 #include "Common/System.h"
 #include "Pda/Util.h"
+#include "ReadoutCard/FirmwareChecker.h"
 #include "Utilities/SmartPointer.h"
 #include "Visitor.h"
 
@@ -58,6 +59,13 @@ DmaChannelBase::DmaChannelBase(CardDescriptor cardDescriptor, Parameters& parame
 
   // Check the channel number is allowed
   checkChannelNumber(allowedChannels);
+
+  // Check that the firmware is compatible with the software
+  auto parameters2 = parameters;
+  parameters2.setChannelNumber(2);
+  if (parameters.getFirmwareCheckEnabled().get_value_or(true)) {
+    FirmwareChecker().checkFirmwareCompatibility(parameters2);
+  }
 
   // Do some basic Parameters validity checks
   //checkParameters(parameters);

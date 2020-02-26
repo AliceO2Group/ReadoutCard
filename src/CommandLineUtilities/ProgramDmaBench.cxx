@@ -201,6 +201,9 @@ class ProgramDmaBench : public Program
     options.add_options()("to-file-bin",
                           po::value<std::string>(&mOptions.fileOutputPathBin),
                           "Read out to given file in binary format (only contains raw data from pages)");
+    options.add_options()("bypass-fw-check",
+                          po::bool_switch(&mOptions.bypassFirmwareCheck),
+                          "Flag to bypass the firmware checker");
   }
 
   virtual void run(const po::variables_map& map)
@@ -223,6 +226,7 @@ class ProgramDmaBench : public Program
     auto params = Parameters::makeParameters(cardId, mOptions.dmaChannel);
     params.setDmaPageSize(mOptions.dmaPageSize);
     params.setDataSource(DataSource::fromString(mOptions.dataSourceString));
+    params.setFirmwareCheckEnabled(!mOptions.bypassFirmwareCheck);
 
     mDataSource = params.getDataSourceRequired();
 
@@ -1105,6 +1109,7 @@ class ProgramDmaBench : public Program
     size_t maxRdhPacketCounter;
     bool stbrd = false;
     bool byteCountEnabled = false;
+    bool bypassFirmwareCheck = false;
   } mOptions;
 
   /// The DMA channel
