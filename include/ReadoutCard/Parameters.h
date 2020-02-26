@@ -122,6 +122,9 @@ class Parameters
   /// Type for the GBT enabled parameter
   using GbtEnabledType = bool;
 
+  /// Type for the GBT enabled parameter
+  using FirmwareCheckEnabledType = bool;
+
   /// Type for the ONU address parameter
   using OnuAddressType = Hex::type;
 
@@ -202,6 +205,14 @@ class Parameters
   /// \param value The value to set
   /// \return Reference to this object for chaining calls
   auto setGbtEnabled(GbtEnabledType value) -> Parameters&;
+
+  /// Sets the FirmwareCheckEnabled parameter
+  ///
+  /// If enabled the Firmware check is enforced.
+  ///
+  /// \param value The value to set
+  /// \return Reference to this object for chaining calls
+  auto setFirmwareCheckEnabled(FirmwareCheckEnabledType value) -> Parameters&;
 
   /// Sets the UserLogicEnabled parameter
   ///
@@ -395,6 +406,10 @@ class Parameters
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
   auto getGbtEnabled() const -> boost::optional<GbtEnabledType>;
 
+  /// Gets the FirmwareCheckEnabled parameter
+  /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+  auto getFirmwareCheckEnabled() const -> boost::optional<FirmwareCheckEnabledType>;
+
   /// Gets the UserLogicEnabled parameter
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
   auto getUserLogicEnabled() const -> boost::optional<UserLogicEnabledType>;
@@ -487,6 +502,11 @@ class Parameters
   /// \exception ParameterException The parameter was not present
   /// \return The value
   auto getGbtEnabledRequired() const -> GbtEnabledType;
+
+  /// Gets the FirmwareCheckEnabled parameter
+  /// \exception ParameterException The parameter was not present
+  /// \return The value
+  auto getFirmwareCheckEnabledRequired() const -> FirmwareCheckEnabledType;
 
   /// Gets the UserLogicEnabled parameter
   /// \exception ParameterException The parameter was not present
