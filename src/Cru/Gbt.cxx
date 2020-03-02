@@ -25,14 +25,18 @@ namespace roc
 using Link = Cru::Link;
 using LinkStatus = Cru::LinkStatus;
 
-Gbt::Gbt(std::shared_ptr<Pda::PdaBar> pdaBar, std::map<int, Link>& linkMap, int wrapperCount) : mPdaBar(pdaBar),
-                                                                                                mLinkMap(linkMap),
-                                                                                                mWrapperCount(wrapperCount)
+Gbt::Gbt(std::shared_ptr<Pda::PdaBar> pdaBar, std::map<int, Link>& linkMap, int wrapperCount, int endpoint) : mPdaBar(pdaBar),
+                                                                                                              mLinkMap(linkMap),
+                                                                                                              mWrapperCount(wrapperCount),
+                                                                                                              mEndpoint(endpoint)
 {
 }
 
 void Gbt::setMux(int index, uint32_t mux)
 {
+  if (mEndpoint == 1) {
+    index += 12;
+  }
   uint32_t reg = index / 16;
   uint32_t bitOffset = (index % 16) * 2;
   uint32_t address = Cru::Registers::GBT_MUX_SELECT.address + (reg * 4);
@@ -103,6 +107,9 @@ void Gbt::getGbtMuxes()
 {
   for (auto& el : mLinkMap) {
     int index = el.first;
+    if (mEndpoint == 1) {
+      index += 12;
+    }
     auto& link = el.second;
     uint32_t reg = (index / 16);
     uint32_t bitOffset = (index % 16) * 2;
