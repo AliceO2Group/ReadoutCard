@@ -34,7 +34,7 @@ class Gbt
 
  public:
   //Gbt(std::shared_ptr<Pda::PdaBar> pdaBar, std::vector<Link> &mLinkList, int wrapperCount);
-  Gbt(std::shared_ptr<Pda::PdaBar> pdaBar, std::map<int, Link>& mLinkMap, int wrapperCount);
+  Gbt(std::shared_ptr<Pda::PdaBar> pdaBar, std::map<int, Link>& mLinkMap, int wrapperCount, int endpoint);
   void setMux(int link, uint32_t mux);
   void setInternalDataGenerator(Link link, uint32_t value);
   void setTxMode(Link link, uint32_t mode);
@@ -66,6 +66,7 @@ class Gbt
   std::shared_ptr<Pda::PdaBar> mPdaBar;
   std::map<int, Link>& mLinkMap;
   int mWrapperCount;
+  int mEndpoint;
 };
 } // namespace roc
 } // namespace AliceO2

@@ -410,7 +410,7 @@ Cru::ReportInfo CruBar::report()
 
   bool gbtEnabled = false;
   // Update linkMap
-  Gbt gbt = Gbt(mPdaBar, linkMap, mWrapperCount);
+  Gbt gbt = Gbt(mPdaBar, linkMap, mWrapperCount, mEndpoint);
   gbt.getGbtModes();
   gbt.getGbtMuxes();
   gbt.getLoopbacks();
@@ -546,7 +546,7 @@ void CruBar::configure(bool force)
 
     if (mGbtEnabled) {
       log("Calibrating the fPLLs");
-      Gbt gbt = Gbt(mPdaBar, mLinkMap, mWrapperCount);
+      Gbt gbt = Gbt(mPdaBar, mLinkMap, mWrapperCount, mEndpoint);
       gbt.calibrateGbt(mLinkMap);
       Cru::fpllref(mLinkMap, mPdaBar, 2);
       Cru::fpllcal(mLinkMap, mPdaBar);
@@ -704,7 +704,7 @@ void CruBar::populateLinkMap(std::map<int, Link>& linkMap)
 {
   linkMap = initializeLinkMap();
 
-  Gbt gbt = Gbt(mPdaBar, linkMap, mWrapperCount);
+  Gbt gbt = Gbt(mPdaBar, linkMap, mWrapperCount, mEndpoint);
 
   for (auto& el : linkMap) {
     auto& link = el.second;
