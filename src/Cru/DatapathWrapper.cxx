@@ -264,8 +264,8 @@ uint32_t DatapathWrapper::getForcedPackets(Link link)
 /// size in gbt words
 void DatapathWrapper::setTriggerWindowSize(int wrapper, uint32_t size)
 {
-  if (size > 4095) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD TRIGSIZE, should be less or equal to 4095") << ErrorInfo::ConfigValue(size));
+  if (size > 65535) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD TRIGSIZE, should be less or equal to 65536") << ErrorInfo::ConfigValue(size));
   }
   uint32_t address = getDatapathWrapperBaseAddress(wrapper) +
                      Cru::Registers::DWRAPPER_GREGS.address +
