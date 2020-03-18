@@ -161,7 +161,7 @@ The Parameters that affect the configuration of the CRU, their possible values (
 
 `DynamicOffsetEnabled (true | false) [false]`
 
-`TriggerWindowSize (0 - 4095) [1000]`
+`TriggerWindowSize (0 - 65535) [1000]`
 
 `GbtEnabled (true | false) [true]`
 
