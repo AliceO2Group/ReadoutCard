@@ -266,9 +266,31 @@ int32_t CruBar::getLinksPerWrapper(int wrapper)
 boost::optional<int32_t> CruBar::getSerialNumber()
 {
   assertBarIndex(2, "Can only get serial number from BAR 2");
-  Eeprom eeprom = Eeprom(mPdaBar);
-  boost::optional<int32_t> serial = eeprom.getSerial();
-  return serial;
+  uint32_t serial = readRegister(Cru::Registers::SERIAL_NUMBER.index);
+  if (serial == 0x0) { // Try to populate the serial register in case it's empty
+    writeRegister(Cru::Registers::SERIAL_NUMBER_CTRL.index, Cru::Registers::SERIAL_NUMBER_TRG);
+    serial = readRegister(Cru::Registers::SERIAL_NUMBER.index);
+  }
+
+  if (serial == 0x0) { // Pre v3.6.3 scheme; we need to support it for now
+    Eeprom eeprom = Eeprom(mPdaBar);
+    boost::optional<int32_t> serial = eeprom.getSerial();
+    return serial;
+  } else { // v3.6.3+
+
+    std::string serialString;
+
+    for (int i = 0; i < 3; i++) { // The serial number consists of 3 digits
+      serialString += char(serial & 0xff);
+      serial = serial >> 8;
+    }
+
+    try {
+      return std::stol(serialString, NULL, 0);
+    } catch (...) {
+      return {};
+    }
+  }
 }
 
 /// Get raw data from the temperature register
