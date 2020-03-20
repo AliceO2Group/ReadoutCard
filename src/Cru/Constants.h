@@ -112,7 +112,9 @@ static constexpr Register ENDPOINT_ID(0x00000500);
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /// Board serial number
 /// Must be accessed on BAR 2
-static constexpr Register SERIAL_NUMBER(0x20002c);
+static constexpr Register SERIAL_NUMBER_CTRL(0x00030804);
+static constexpr uint32_t SERIAL_NUMBER_TRG(0x2);
+static constexpr Register SERIAL_NUMBER(0x00030818);
 
 /// Register containing compilation info of the firmware
 /// Can be used as a sort of version number
