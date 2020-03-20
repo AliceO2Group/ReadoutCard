@@ -31,7 +31,7 @@ class SerialId
  public:
   /// Constructs a SerialId object using a string in the sssss[:e] format
   /// For example: "10241", "10241:1"
-  /// \param string String of format "^[ \t]*[0-9]{5}:?[0-1]?[ \t]*$"
+  /// \param string String of format "^[ \t]*([0-9]{3}|[0-9]{5}):?[0-1]?[ \t]*$"
   SerialId(const std::string& string);
 
   SerialId(int serial, int endpoint);

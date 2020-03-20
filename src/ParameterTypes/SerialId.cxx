@@ -27,7 +27,7 @@ namespace
 
 bool parseSerialIdString(const std::string string, int& serial, int& endpoint)
 {
-  std::regex expression("^[ \t]*[0-9]{5}:?[0-1]?[ \t]*$");
+  std::regex expression("^[ \t]*([0-9]{3}|[0-9]{5}):?[0-1]?[ \t]*$");
   if (std::regex_search(string, expression)) {
     serial = stoi(string.substr(0, string.find(':'))); // Will return the SerialId struct
     endpoint = stoi(string.substr(string.find(':') + 1));
