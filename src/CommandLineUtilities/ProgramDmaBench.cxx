@@ -195,6 +195,9 @@ class ProgramDmaBench : public Program
     options.add_options()("time",
                           po::value<std::string>(&mOptions.timeLimitString),
                           "Time limit for benchmark. Any combination of [n]h, [n]m, & [n]s. For example: '5h30m', '10s', '1s2h3m'.");
+    options.add_options()("timeframe-length",
+                          po::value<uint32_t>(&mOptions.timeFrameLength)->default_value(256),
+                          "Time Frame length");
     options.add_options()("to-file-ascii",
                           po::value<std::string>(&mOptions.fileOutputPathAscii),
                           "Read out to given file in ASCII format");
@@ -622,7 +625,7 @@ class ProgramDmaBench : public Program
       if (mEventCounters[linkId] % mErrorCheckFrequency == 0) {
         switch (mCardType) {
           case CardType::Crorc:
-            hasError = checkErrorsCrorc(pageAddress, pageSize, readoutCount, linkId);
+            hasError = checkErrorsCrorc(pageAddress, pageSize, readoutCount, linkId, atStartOfSuperpage);
             break;
           case CardType::Cru:
             hasError = checkErrorsCru(pageAddress, pageSize, readoutCount, linkId, atStartOfSuperpage);
@@ -799,7 +802,7 @@ class ProgramDmaBench : public Program
     }
   }
 
-  bool checkErrorsCrorc(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId)
+  bool checkErrorsCrorc(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId, bool atStartOfSuperpage)
   {
     const auto memBytes = DataFormat::getMemsize(reinterpret_cast<const char*>(pageAddress));
     if (memBytes > pageSize) {
@@ -824,6 +827,32 @@ class ProgramDmaBench : public Program
       return true;
     } else {
       mPacketCounters[linkId] = packetCounter;
+    }
+
+    // check that the TimeFrame starts at the beginning of the superpage
+    const auto triggerType = DataFormat::getTriggerType(reinterpret_cast<const char*>(pageAddress));
+    const auto orbit = DataFormat::getOrbit(reinterpret_cast<const char*>(pageAddress));
+    const auto pagesCounter = DataFormat::getPagesCounter(reinterpret_cast<const char*>(pageAddress));
+    const auto bunchCrossing = DataFormat::getBunchCrossing(reinterpret_cast<const char*>(pageAddress));
+
+    //std::cout << atStartOfSuperpage << " " << triggerType << " " << orbit << " " << mNextTFOrbit << " " << bunchCrossing << " " << pagesCounter << std::endl;
+    //std::cout << atStartOfSuperpage << " " << orbit << " " << mNextTFOrbit << std::endl;
+
+    if (Utilities::getBit(triggerType, 9) == 0x1 || Utilities::getBit(triggerType, 7) == 0x1) { // If SOX, use current orbit as the first one
+      mNextTFOrbit = (orbit + mOptions.timeFrameLength) % (0x100000000);
+      //std::cout << mNextTFOrbit << std::endl;
+    } else if (orbit >= mNextTFOrbit) {                                                // next orbit should be previous orbit + time frame length
+      if (!atStartOfSuperpage || (orbit >= (mNextTFOrbit + mOptions.timeFrameLength) % (0x100000000))) { // but not more than orbit + 2 * time frame length
+        // log TF not at the beginning of the superpage error
+        mErrorCount++;
+        //std::cout << "ERROR" << std::endl;
+        if (mErrorCount < MAX_RECORDED_ERRORS) {
+          mErrorStream << b::format("[RDHERR]\tevent:%1% l:%2% payloadBytes:%3% size:%4% packet_cnt:%5% mpacket_cnt:%6% levent:%7% orbit:%8%: TF unaligned w/ start of superpage\n") % eventNumber % linkId % memBytes % pageSize % packetCounter % mPacketCounters[linkId] % mEventCounters[linkId] % orbit;
+        }
+      }
+      // Update next TF orbit expected
+      mNextTFOrbit = (mNextTFOrbit + mOptions.timeFrameLength) % (0x100000000);
+      //std::cout << mNextTFOrbit << std::endl;
     }
 
     if (mFastCheckEnabled) {
@@ -1110,6 +1139,7 @@ class ProgramDmaBench : public Program
     bool stbrd = false;
     bool byteCountEnabled = false;
     bool bypassFirmwareCheck = false;
+    uint32_t timeFrameLength = 256;
   } mOptions;
 
   /// The DMA channel
@@ -1214,6 +1244,9 @@ class ProgramDmaBench : public Program
 
   /// Data Source
   DataSource::type mDataSource;
+
+  /// The orbit number that coincides with the next TimeFrame
+  uint32_t mNextTFOrbit = 0x0;
 };
 
 int main(int argc, char** argv)
