@@ -36,6 +36,8 @@ struct Link {
 struct ReportInfo {
   std::map<int, Link> linkMap;
   uint16_t crorcId;
+  uint16_t timeFrameLength;
+  bool timeFrameDetectionEnabled;
   bool qsfpEnabled;
   bool dynamicOffset;
 };

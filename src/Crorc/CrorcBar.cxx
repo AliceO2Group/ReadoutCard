@@ -31,7 +31,9 @@ namespace roc
 CrorcBar::CrorcBar(const Parameters& parameters, std::unique_ptr<RocPciDevice> rocPciDevice)
   : BarInterfaceBase(parameters, std::move(rocPciDevice)),
     mCrorcId(parameters.getCrorcId().get_value_or(0x0)),
-    mDynamicOffset(parameters.getDynamicOffsetEnabled().get_value_or(false))
+    mDynamicOffset(parameters.getDynamicOffsetEnabled().get_value_or(false)),
+    mTimeFrameLength(parameters.getTimeFrameLength().get_value_or(0x100)),
+    mTimeFrameDetectionEnabled(parameters.getTimeFrameDetectionEnabled().get_value_or(true))
 {
 }
 
@@ -73,6 +75,13 @@ void CrorcBar::configure(bool /*force*/)
   // set crorc id
   log("Setting the CRORC ID");
   setCrorcId(mCrorcId);
+
+  // set timeframe length
+  log("Setting the Time Frame length");
+  setTimeFrameLength(mTimeFrameLength);
+
+  log("Configuring Time Frame detection");
+  setTimeFrameDetectionEnabled(mTimeFrameDetectionEnabled);
 }
 
 Crorc::ReportInfo CrorcBar::report()
@@ -82,8 +91,10 @@ Crorc::ReportInfo CrorcBar::report()
   Crorc::ReportInfo reportInfo = {
     linkMap,
     getCrorcId(),
+    getTimeFrameLength(),
+    getTimeFrameDetectionEnabled(),
     getQsfpEnabled(),
-    getDynamicOffsetEnabled()
+    getDynamicOffsetEnabled(),
   };
   return reportInfo;
 }
@@ -136,6 +147,29 @@ void CrorcBar::setDynamicOffsetEnabled(bool enabled)
 bool CrorcBar::getDynamicOffsetEnabled()
 {
   return (readRegister(Crorc::Registers::CFG_CONTROL.index) & 0x1);
+}
+
+void CrorcBar::setTimeFrameLength(uint16_t timeFrameLength)
+{
+  if (timeFrameLength > 256) {
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD TF LENGTH, should be less or equal to 256") << ErrorInfo::ConfigValue(timeFrameLength));
+  }
+  modifyRegister(Crorc::Registers::CFG_CONTROL.index, 16, 12, timeFrameLength);
+}
+
+uint16_t CrorcBar::getTimeFrameLength()
+{
+  return (readRegister(Crorc::Registers::CFG_CONTROL.index) >> 16) & 0x0fff;
+}
+
+void CrorcBar::setTimeFrameDetectionEnabled(bool enabled)
+{
+  modifyRegister(Crorc::Registers::CFG_CONTROL.index, 28, 1, enabled ? 0x1 : 0x0);
+}
+
+bool CrorcBar::getTimeFrameDetectionEnabled()
+{
+  return (readRegister(Crorc::Registers::CFG_CONTROL.index) >> 28) & 0x1;
 }
 
 void CrorcBar::getOpticalPowers(std::map<int, Crorc::Link>& linkMap)

@@ -138,6 +138,8 @@ _PARAMETER_FUNCTIONS(UserLogicEnabled, "user_logic_enabled")
 _PARAMETER_FUNCTIONS(OnuAddress, "onu_address")
 _PARAMETER_FUNCTIONS(StbrdEnabled, "stbrd_enabled")
 _PARAMETER_FUNCTIONS(TriggerWindowSize, "trigger_window_size")
+_PARAMETER_FUNCTIONS(TimeFrameLength, "timeframe_length")
+_PARAMETER_FUNCTIONS(TimeFrameDetectionEnabled, "timeframe_detection_enabled")
 #undef _PARAMETER_FUNCTIONS
 
 Parameters::Parameters() : mPimpl(std::make_unique<ParametersPimpl>())

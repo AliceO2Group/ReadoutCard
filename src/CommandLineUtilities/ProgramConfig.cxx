@@ -37,7 +37,7 @@ class ProgramConfig : public Program
     return { "Config", "Configure the ReadoutCard(s)",
              "roc-config --config-uri ini:///home/flp/roc.cfg\n"
              "roc-config --id 42:00.0 --links 0-23 --clock local --datapathmode packet --loopback --gbtmux ttc #CRU\n"
-             "roc-config --id #0 --crorc-id 0x42 --dyn-offset #CRORC\n" };
+             "roc-config --id #0 --crorc-id 0x42 --dyn-offset --tf-length 255 #CRORC\n" };
   }
 
   virtual void addOptions(boost::program_options::options_description& options)
@@ -96,6 +96,12 @@ class ProgramConfig : public Program
     options.add_options()("trigger-window-size",
                           po::value<uint32_t>(&mOptions.triggerWindowSize),
                           "The size of the trigger window in GBT words");
+    options.add_options()("tf-length",
+                          po::value<uint32_t>(&mOptions.timeFrameLength),
+                          "Sets the length of the Time Frame");
+    options.add_options()("no-tf-detection",
+                          po::bool_switch(&mOptions.timeFrameDetectionDisabled),
+                          "Flag to enable the Time Frame Detection");
     options.add_options()("gen-cfg-file",
                           po::value<std::string>(&mOptions.genConfigFile),
                           "If set generates a configuration file from the command line options. [DOES NOT CONFIGURE]");
@@ -165,6 +171,8 @@ class ProgramConfig : public Program
       params.setTriggerWindowSize(mOptions.triggerWindowSize);
       params.setGbtEnabled(!mOptions.noGbt);
       params.setUserLogicEnabled(mOptions.userLogicEnabled);
+      params.setTimeFrameLength(mOptions.timeFrameLength);
+      params.setTimeFrameDetectionEnabled(!mOptions.timeFrameDetectionDisabled);
 
       // Generate a configuration file base on the parameters provided
       if (mOptions.genConfigFile != "") { //TODO: To be updated for the CRORC
@@ -236,6 +244,8 @@ class ProgramConfig : public Program
     std::string cruId = "0x0";
     std::string crorcId = "0x0";
     uint32_t triggerWindowSize = 1000;
+    uint32_t timeFrameLength = 0x100;
+    bool timeFrameDetectionDisabled = false;
     bool userLogicEnabled = false;
     bool noGbt = false;
   } mOptions;
