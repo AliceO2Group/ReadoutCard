@@ -57,14 +57,24 @@ uint32_t getOffset(const char* data)
   return Utilities::getBits(getWord(data, 2), 0, 15); //bits #[64-79] from RDH word 0
 }
 
+uint32_t getOrbit(const char* data)
+{
+  return Utilities::getBits(getWord(data, 5), 0, 31); //bits #[64-95] from RDH word 1
+}
+
 uint32_t getTriggerType(const char* data)
 {
-  return Utilities::getBits(getWord(data, 9), 0, 31); //bits #[32-63] from RDH word 2
+  return Utilities::getBits(getWord(data, 8), 0, 31); //bits #[0-31] from RDH word 3
 }
 
 uint32_t getPagesCounter(const char* data)
 {
-  return Utilities::getBits(getWord(data, 13), 8, 23); //bits #[40-55] from RDH word 3
+  return Utilities::getBits(getWord(data, 9), 0, 15); //bits #[40-55] from RDH word 3
+}
+
+uint32_t getBunchCrossing(const char* data)
+{
+  return Utilities::getBits(getWord(data, 4), 0, 31);
 }
 
 /// Get header size in bytes
