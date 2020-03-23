@@ -77,7 +77,7 @@ class ProgramStatus : public Program
       lineThin = std::string(header.length(), '-') + '\n';
 
       if (mOptions.csvOut) {
-        auto csvHeader = "Link ID,Status,Optical Power(uW),QSFP Enabled,Offset\n";
+        auto csvHeader = "Link ID,Status,Optical Power(uW),QSFP Enabled,Offset,Time Frame Detection, Time Frame Length\n";
         std::cout << csvHeader;
       } else if (!mOptions.jsonOut) {
         table << lineFat << header << lineThin;
@@ -102,11 +102,19 @@ class ProgramStatus : public Program
         } else {
           root.put("offset", "Fixed");
         }
+
+        if (reportInfo.timeFrameDetectionEnabled) {
+          root.put("timeFrameDetection", "Enabled");
+        } else {
+          root.put("timeFrameDetection", "Disabled");
+        }
+
+        root.put("timeFrameLength", reportInfo.timeFrameLength);
       } else if (mOptions.csvOut) {
-        auto csvLine = std::string(",,,") + (reportInfo.qsfpEnabled ? "Enabled" : "Disabled") + "," + (reportInfo.dynamicOffset ? "Dynamic" : "Fixed") + "\n";
+        auto csvLine = std::string(",,,") + (reportInfo.qsfpEnabled ? "Enabled" : "Disabled") + "," + (reportInfo.dynamicOffset ? "Dynamic" : "Fixed") + "," + (reportInfo.timeFrameDetectionEnabled ? "Enabled" : "Disabled") + "," + std::to_string(reportInfo.timeFrameLength) + "\n";
         std::cout << csvLine;
       } else {
-        std::cout << "----------------------------" << std::endl;
+        std::cout << "-----------------------------" << std::endl;
         if (reportInfo.qsfpEnabled) {
           std::cout << "QSFP enabled | ";
         } else {
@@ -118,7 +126,18 @@ class ProgramStatus : public Program
         } else {
           std::cout << "Fixed offset" << std::endl;
         }
-        std::cout << "----------------------------" << std::endl;
+
+        std::cout << "-----------------------------" << std::endl;
+
+        if (reportInfo.timeFrameDetectionEnabled) {
+          std::cout << "Time Frame Detection enabled" << std::endl;
+        } else {
+          std::cout << "Time Frame Detection disabled" << std::endl;
+        }
+
+        std::cout << "Time Frame Length: " << reportInfo.timeFrameLength << std::endl;
+
+        std::cout << "-----------------------------" << std::endl;
       }
 
       /* PARAMETERS PER LINK */

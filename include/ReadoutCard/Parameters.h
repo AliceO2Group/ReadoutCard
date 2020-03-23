@@ -134,6 +134,12 @@ class Parameters
   // Type for the Trigger Window Size parameter
   using TriggerWindowSizeType = uint32_t;
 
+  // Type for the Time Frame Length parameter
+  using TimeFrameLengthType = uint32_t;
+
+  /// Type for the Time Frame Detection enabled parameter
+  using TimeFrameDetectionEnabledType = bool;
+
   // Setters
 
   /// Sets the CardId parameter
@@ -364,6 +370,18 @@ class Parameters
   /// \return Reference to this object for chaining calls
   auto setTriggerWindowSize(TriggerWindowSizeType value) -> Parameters&;
 
+  /// Sets the TimeFrameLength parameter
+  ///
+  /// \param value The value to set
+  /// \return Reference to this object for chaining calls
+  auto setTimeFrameLength(TimeFrameLengthType value) -> Parameters&;
+
+  /// Sets the TimeFrameDetectionEnabled parameter
+  ///
+  /// \param value The value to set
+  /// \return Reference to this object for chaining calls
+  auto setTimeFrameDetectionEnabled(TimeFrameDetectionEnabledType value) -> Parameters&;
+
   // on-throwing getters
 
   /// Gets the AllowRejection parameter
@@ -460,6 +478,14 @@ class Parameters
   /// Gets the TriggerWindowSize parameter
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
   auto getTriggerWindowSize() const -> boost::optional<TriggerWindowSizeType>;
+
+  /// Gets the TimeFrameLength parameter
+  /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+  auto getTimeFrameLength() const -> boost::optional<TimeFrameLengthType>;
+
+  /// Gets the TimeFrameDetectionEnabled parameter
+  /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+  auto getTimeFrameDetectionEnabled() const -> boost::optional<TimeFrameDetectionEnabledType>;
 
   // Throwing getters
 
@@ -582,6 +608,16 @@ class Parameters
   /// \exception ParameterException The parameter was not present
   /// \return The value
   auto getTriggerWindowSizeRequired() const -> TriggerWindowSizeType;
+
+  /// Gets the TimeFrameLength parameter
+  /// \exception ParameterException The parameter was not present
+  /// \return The value
+  auto getTimeFrameLengthRequired() const -> TimeFrameLengthType;
+
+  /// Gets the TimeFrameDetectionEnabled parameter
+  /// \exception ParameterException The parameter was not present
+  /// \return The value
+  auto getTimeFrameDetectionEnabledRequired() const -> TimeFrameDetectionEnabledType;
 
   // Helper functions
 

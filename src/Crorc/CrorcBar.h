@@ -58,12 +58,18 @@ class CrorcBar final : public BarInterfaceBase
   bool getQsfpEnabled();
   void setDynamicOffsetEnabled(bool enabled);
   bool getDynamicOffsetEnabled();
-  void setCrorcId(uint16_t cruId);
+  void setCrorcId(uint16_t crorcId);
   uint16_t getCrorcId();
+  void setTimeFrameLength(uint16_t timeFrameLength);
+  uint16_t getTimeFrameLength();
+  void setTimeFrameDetectionEnabled(bool enabled);
+  bool getTimeFrameDetectionEnabled();
   void getOpticalPowers(std::map<int, Crorc::Link>& linkMap);
 
   uint16_t mCrorcId;
   bool mDynamicOffset;
+  uint16_t mTimeFrameLength;
+  bool mTimeFrameDetectionEnabled;
 };
 
 } // namespace roc
