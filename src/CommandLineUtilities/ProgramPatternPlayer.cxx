@@ -19,6 +19,7 @@
 #include "Cru/Constants.h"
 #include "Cru/CruBar.h"
 #include "ReadoutCard/ChannelFactory.h"
+#include "ReadoutCard/PatternPlayer.h"
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
 #include "Utilities/Enum.h"

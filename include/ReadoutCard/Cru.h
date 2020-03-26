@@ -17,6 +17,7 @@
 #define ALICEO2_INCLUDE_READOUTCARD_CRU_H_
 
 #include <cstdint>
+
 #include "Register.h"
 
 namespace AliceO2

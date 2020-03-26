@@ -7,7 +7,7 @@
 #define ALICEO2_READOUTCARD_CRU_TTC_H_
 
 #include "Common.h"
-#include "Pda/PdaBar.h"
+#include "ReadoutCard/BarInterface.h"
 
 namespace AliceO2
 {
@@ -17,7 +17,7 @@ namespace roc
 class Ttc
 {
  public:
-  Ttc(std::shared_ptr<Pda::PdaBar> pdaBar);
+  Ttc(std::shared_ptr<BarInterface> bar);
 
   void calibrateTtc();
   void setClock(uint32_t clock);
@@ -46,7 +46,7 @@ class Ttc
  private:
   void configurePlls(uint32_t clock);
   void setRefGen(int frequency = 240);
-  std::shared_ptr<Pda::PdaBar> mPdaBar;
+  std::shared_ptr<BarInterface> mBar;
 
   static constexpr uint32_t MAX_BCID = 3564 - 1;
 };
