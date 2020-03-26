@@ -27,7 +27,7 @@ namespace roc
 {
 
 I2c::I2c(uint32_t baseAddress, uint32_t chipAddress,
-         std::shared_ptr<Pda::PdaBar> pdaBar,
+         std::shared_ptr<BarInterface> bar,
          int endpoint,
          std::vector<std::pair<uint32_t, uint32_t>> registerMap)
   : mI2cConfig(baseAddress),
@@ -36,7 +36,7 @@ I2c::I2c(uint32_t baseAddress, uint32_t chipAddress,
     mChipAddress(chipAddress),
     mChipAddressStart(0x0),
     mChipAddressEnd(0x7f),
-    mPdaBar(pdaBar),
+    mBar(bar),
     mEndpoint(endpoint),
     mRegisterMap(registerMap)
 {
@@ -48,8 +48,8 @@ I2c::~I2c()
 
 void I2c::resetI2c()
 {
-  mPdaBar->writeRegister(mI2cCommand / 4, 0x8);
-  mPdaBar->writeRegister(mI2cCommand / 4, 0x0);
+  mBar->writeRegister(mI2cCommand / 4, 0x8);
+  mBar->writeRegister(mI2cCommand / 4, 0x0);
 }
 
 void I2c::configurePll()
@@ -129,10 +129,10 @@ uint32_t I2c::getSelectedClock()
 void I2c::writeI2c(uint32_t address, uint32_t data)
 {
   uint32_t value = (mChipAddress << 16) | (address << 8) | data;
-  mPdaBar->writeRegister(mI2cConfig / 4, value);
+  mBar->writeRegister(mI2cConfig / 4, value);
 
-  mPdaBar->writeRegister(mI2cCommand / 4, 0x1);
-  mPdaBar->writeRegister(mI2cCommand / 4, 0x0);
+  mBar->writeRegister(mI2cCommand / 4, 0x1);
+  mBar->writeRegister(mI2cCommand / 4, 0x0);
 
   waitForI2cReady();
 }
@@ -140,13 +140,13 @@ void I2c::writeI2c(uint32_t address, uint32_t data)
 uint32_t I2c::readI2c(uint32_t address)
 {
   uint32_t readCommand = (mChipAddress << 16) + (address << 8) + 0x0;
-  mPdaBar->writeRegister(mI2cConfig / 4, readCommand);
+  mBar->writeRegister(mI2cConfig / 4, readCommand);
 
-  mPdaBar->writeRegister(mI2cCommand / 4, 0x2);
-  mPdaBar->writeRegister(mI2cCommand / 4, 0x0);
+  mBar->writeRegister(mI2cCommand / 4, 0x2);
+  mBar->writeRegister(mI2cCommand / 4, 0x0);
 
   waitForI2cReady();
-  uint32_t readValue = mPdaBar->readRegister(mI2cData / 4);
+  uint32_t readValue = mBar->readRegister(mI2cData / 4);
   readValue &= 0xff;
 
   return readValue;
@@ -157,7 +157,7 @@ void I2c::waitForI2cReady()
   int done = 0;
   uint32_t readValue = 0;
   while (readValue == 0 && done < 10) {
-    readValue = mPdaBar->readRegister(mI2cData / 4);
+    readValue = mBar->readRegister(mI2cData / 4);
     readValue = Utilities::getBit(readValue, 31);
     std::this_thread::sleep_for(std::chrono::microseconds(100));
     done++;
@@ -171,14 +171,14 @@ std::vector<uint32_t> I2c::getChipAddresses()
   for (uint32_t addr = mChipAddressStart; addr <= mChipAddressEnd; addr++) { //Get valid chip addresses
     resetI2c();
     uint32_t val32 = ((addr << 16) | 0x0);
-    mPdaBar->writeRegister(mI2cConfig / 4, int(val32)); //so far so good
+    mBar->writeRegister(mI2cConfig / 4, int(val32)); //so far so good
 
-    mPdaBar->writeRegister(mI2cCommand / 4, 0x4);
-    mPdaBar->writeRegister(mI2cCommand / 4, 0x0);
+    mBar->writeRegister(mI2cCommand / 4, 0x4);
+    mBar->writeRegister(mI2cCommand / 4, 0x0);
 
     waitForI2cReady();
 
-    uint32_t addrValue = mPdaBar->readRegister(mI2cData / 4);
+    uint32_t addrValue = mBar->readRegister(mI2cData / 4);
     //addrValue = addrValue < 0 ? addrValue + pow(2, 32) : addrValue; //unsigned is never negative : what was the idea here?
     if ((addrValue >> 31) == 0x1) {
       chipAddresses.push_back(addr);
@@ -195,7 +195,7 @@ void I2c::getOpticalPower(std::map<int, Link>& linkMap)
 
   for (uint32_t chipAddr : chipAddresses) {
     // Open I2c for specific chip addr
-    I2c minipod = I2c(Cru::Registers::BSP_I2C_MINIPODS.address, chipAddr, mPdaBar);
+    I2c minipod = I2c(Cru::Registers::BSP_I2C_MINIPODS.address, chipAddr, mBar);
 
     minipod.resetI2c();
 

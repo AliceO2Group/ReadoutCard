@@ -16,12 +16,9 @@
 #ifndef ALICEO2_READOUTCARD_CRU_COMMON_H_
 #define ALICEO2_READOUTCARD_CRU_COMMON_H_
 
-#include <boost/multiprecision/cpp_int.hpp>
-
 #include "Constants.h"
-#include "Pda/PdaBar.h"
-
-using namespace boost::multiprecision;
+#include "ExceptionInternal.h"
+#include "ReadoutCard/BarInterface.h"
 
 namespace AliceO2
 {
@@ -146,31 +143,17 @@ struct CtpInfo {
   bool generateSingleTrigger;
 };
 
-struct PatternPlayerInfo {
-  uint128_t syncPattern = 0x0;
-  uint128_t resetPattern = 0x0;
-  uint128_t idlePattern = 0x0;
-  uint32_t syncLength = 1;
-  uint32_t syncDelay = 0;
-  uint32_t resetLength = 1;
-  uint32_t resetTriggerSelect = 30;
-  uint32_t syncTriggerSelect = 29;
-  bool syncAtStart = false;
-  bool triggerSync = false;
-  bool triggerReset = false;
-};
-
 uint32_t getWrapperBaseAddress(int wrapper);
 uint32_t getXcvrRegisterAddress(int wrapper, int bank, int link, int reg = 0);
-void atxcal0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress);
-void txcal0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress);
-void rxcal0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress);
-void fpllref0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress, uint32_t refClock);
-void fpllcal0(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t baseAddress, bool configCompensation = true);
-void fpllref(std::map<int, Link> linkMap, std::shared_ptr<Pda::PdaBar> mPdaBar, uint32_t refClock, uint32_t baseAddress = 0);
-void fpllcal(std::map<int, Link> linkMap, std::shared_ptr<Pda::PdaBar> mPdaBar, uint32_t baseAddress = 0, bool configCompensation = true);
+void atxcal0(std::shared_ptr<BarInterface> bar, uint32_t baseAddress);
+void txcal0(std::shared_ptr<BarInterface> bar, uint32_t baseAddress);
+void rxcal0(std::shared_ptr<BarInterface> bar, uint32_t baseAddress);
+void fpllref0(std::shared_ptr<BarInterface> bar, uint32_t baseAddress, uint32_t refClock);
+void fpllcal0(std::shared_ptr<BarInterface> bar, uint32_t baseAddress, bool configCompensation = true);
+void fpllref(std::map<int, Link> linkMap, std::shared_ptr<BarInterface> bar, uint32_t refClock, uint32_t baseAddress = 0);
+void fpllcal(std::map<int, Link> linkMap, std::shared_ptr<BarInterface> bar, uint32_t baseAddress = 0, bool configCompensation = true);
 uint32_t getBankPllRegisterAddress(int wrapper, int bank);
-uint32_t waitForBit(std::shared_ptr<Pda::PdaBar> pdaBar, uint32_t address, uint32_t position, uint32_t value);
+uint32_t waitForBit(std::shared_ptr<BarInterface> bar, uint32_t address, uint32_t position, uint32_t value);
 
 } // namespace Cru
 } // namespace roc

@@ -28,6 +28,7 @@
 #include "ExceptionInternal.h"
 #include "Pda/PdaBar.h"
 #include "ReadoutCard/Parameters.h"
+#include "ReadoutCard/PatternPlayer.h"
 #include "Utilities/Util.h"
 
 namespace AliceO2
@@ -82,7 +83,7 @@ class CruBar final : public BarInterfaceBase
   Cru::ReportInfo report();
   Cru::PacketMonitoringInfo monitorPackets();
   void emulateCtp(Cru::CtpInfo);
-  void patternPlayer(Cru::PatternPlayerInfo patternPlayerInfo);
+  void patternPlayer(PatternPlayer::Info patternPlayerInfo);
 
   void enableDataTaking();
   void disableDataTaking();

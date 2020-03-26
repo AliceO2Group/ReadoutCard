@@ -25,9 +25,9 @@
 #include "Gbt.h"
 #include "I2c.h"
 #include "Ttc.h"
-#include "PatternPlayer.h"
 #include "DatapathWrapper.h"
 #include "boost/format.hpp"
+#include "ReadoutCard/PatternPlayer.h"
 #include "Utilities/Util.h"
 
 using namespace std::literals;
@@ -868,41 +868,10 @@ void CruBar::emulateCtp(Cru::CtpInfo ctpInfo)
   }
 }
 
-void CruBar::patternPlayer(Cru::PatternPlayerInfo info)
+void CruBar::patternPlayer(PatternPlayer::Info info)
 {
-  Ttc ttc = Ttc(mPdaBar);
-  ttc.selectDownstreamData(DownstreamData::Pattern);
-
   PatternPlayer pp = PatternPlayer(mPdaBar);
-  pp.configure(true);
-
-  if (info.idlePattern) {
-    pp.setIdlePattern(info.idlePattern);
-  }
-
-  if (info.syncPattern) {
-    pp.setSyncPattern(info.syncPattern);
-  }
-
-  if (info.resetPattern) {
-    pp.setResetPattern(info.resetPattern);
-  }
-
-  pp.configureSync(info.syncLength, info.syncDelay);
-  pp.configureReset(info.resetLength);
-
-  pp.selectPatternTrigger(info.syncTriggerSelect, info.resetTriggerSelect);
-  pp.configure(false);
-
-  pp.enableSyncAtStart(info.syncAtStart);
-
-  if (info.triggerReset) {
-    pp.triggerReset();
-  }
-
-  if (info.triggerSync) {
-    pp.triggerSync();
-  }
+  pp.play(info);
 }
 
 Cru::OnuStatus CruBar::reportOnuStatus()

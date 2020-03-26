@@ -3,10 +3,11 @@
 ///
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef ALICEO2_READOUTCARD_CRU_PATTERNPLAYER_H_
-#define ALICEO2_READOUTCARD_CRU_PATTERNPLAYER_H_
+#ifndef ALICEO2_INCLUDE_READOUTCARD_PATTERNPLAYER_H_
+#define ALICEO2_INCLUDE_READOUTCARD_PATTERNPLAYER_H_
 
-#include "Pda/PdaBar.h"
+#include "ReadoutCard/Cru.h"
+#include "ReadoutCard/BarInterface.h"
 #include <boost/multiprecision/cpp_int.hpp>
 
 using namespace boost::multiprecision;
@@ -19,8 +20,24 @@ namespace roc
 class PatternPlayer
 {
  public:
-  PatternPlayer(std::shared_ptr<Pda::PdaBar> pdaBar);
+  struct Info {
+    uint128_t syncPattern = 0x0;
+    uint128_t resetPattern = 0x0;
+    uint128_t idlePattern = 0x0;
+    uint32_t syncLength = 1;
+    uint32_t syncDelay = 0;
+    uint32_t resetLength = 1;
+    uint32_t resetTriggerSelect = 30;
+    uint32_t syncTriggerSelect = 29;
+    bool syncAtStart = false;
+    bool triggerSync = false;
+    bool triggerReset = false;
+  };
 
+  PatternPlayer(std::shared_ptr<BarInterface> bar);
+  void play(PatternPlayer::Info info);
+
+ private:
   void configure(bool startConfig);
   void setIdlePattern(uint128_t pattern);
   void setSyncPattern(uint128_t pattern);
@@ -32,11 +49,10 @@ class PatternPlayer
   void triggerSync();
   void triggerReset();
 
- private:
-  std::shared_ptr<Pda::PdaBar> mPdaBar;
+  std::shared_ptr<BarInterface> mBar;
 };
 
 } // namespace roc
 } // namespace AliceO2
 
-#endif // ALICEO2_READOUTCARD_CRU_PATTERNPLAYER_H_
+#endif // ALICEO2_INCLUDE_READOUTCARD_PATTERNPLAYER_H_
