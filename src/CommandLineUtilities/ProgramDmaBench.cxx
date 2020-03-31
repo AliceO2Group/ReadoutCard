@@ -304,7 +304,9 @@ class ProgramDmaBench : public Program
         getLogger() << "Fast check enabled" << endm;
       }
       mMaxRdhPacketCounter = mOptions.maxRdhPacketCounter;
-      getLogger() << "Maximum RDH packet counter" << mMaxRdhPacketCounter << endm;
+      getLogger() << "Maximum RDH packet counter " << mMaxRdhPacketCounter << endm;
+      mTimeFrameLength = mOptions.timeFrameLength;
+      getLogger() << "TimeFrame length " << mTimeFrameLength << endm;
     }
 
     // Get DMA channel object
@@ -835,23 +837,21 @@ class ProgramDmaBench : public Program
     const auto pagesCounter = DataFormat::getPagesCounter(reinterpret_cast<const char*>(pageAddress));
     const auto bunchCrossing = DataFormat::getBunchCrossing(reinterpret_cast<const char*>(pageAddress));
 
-    //std::cout << atStartOfSuperpage << " " << triggerType << " " << orbit << " " << mNextTFOrbit << " " << bunchCrossing << " " << pagesCounter << std::endl;
-    //std::cout << atStartOfSuperpage << " " << orbit << " " << mNextTFOrbit << std::endl;
+    //std::cout << atStartOfSuperpage << " 0x" << std::hex << orbit << " 0x" << std::hex << mNextTFOrbit << std::endl;
 
     if (Utilities::getBit(triggerType, 9) == 0x1 || Utilities::getBit(triggerType, 7) == 0x1) { // If SOX, use current orbit as the first one
-      mNextTFOrbit = (orbit + mOptions.timeFrameLength) % (0x100000000);
-      //std::cout << mNextTFOrbit << std::endl;
-    } else if (orbit >= mNextTFOrbit) {                                                // next orbit should be previous orbit + time frame length
-      if (!atStartOfSuperpage || (orbit >= (mNextTFOrbit + mOptions.timeFrameLength) % (0x100000000))) { // but not more than orbit + 2 * time frame length
+      mNextTFOrbit = (orbit + mTimeFrameLength) % (0x100000000);
+    } else if (orbit >= mNextTFOrbit) {
+      // next orbit should be previous orbit + time frame length
+      if (!atStartOfSuperpage) { // but not more than orbit + 2 * time frame length
         // log TF not at the beginning of the superpage error
         mErrorCount++;
-        //std::cout << "ERROR" << std::endl;
         if (mErrorCount < MAX_RECORDED_ERRORS) {
-          mErrorStream << b::format("[RDHERR]\tevent:%1% l:%2% payloadBytes:%3% size:%4% packet_cnt:%5% mpacket_cnt:%6% levent:%7% orbit:%8%: TF unaligned w/ start of superpage\n") % eventNumber % linkId % memBytes % pageSize % packetCounter % mPacketCounters[linkId] % mEventCounters[linkId] % orbit;
+          mErrorStream << b::format("[RDHERR]\tevent:%1% l:%2% payloadBytes:%3% size:%4% packet_cnt:%5% orbit:%6$#x nextTForbit:%7$#x atSPStart:%8% TF unaligned w/ start of superpage\n") % eventNumber % linkId % memBytes % pageSize % packetCounter % orbit % mNextTFOrbit % atStartOfSuperpage;
         }
       }
       // Update next TF orbit expected
-      mNextTFOrbit = (mNextTFOrbit + mOptions.timeFrameLength) % (0x100000000);
+      mNextTFOrbit = (orbit / mTimeFrameLength) * (mTimeFrameLength + 1);
       //std::cout << mNextTFOrbit << std::endl;
     }
 
@@ -1247,6 +1247,9 @@ class ProgramDmaBench : public Program
 
   /// The orbit number that coincides with the next TimeFrame
   uint32_t mNextTFOrbit = 0x0;
+
+  /// The orbit number that coincides with the next TimeFrame
+  uint32_t mTimeFrameLength = 0x0;
 };
 
 int main(int argc, char** argv)
