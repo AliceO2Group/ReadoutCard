@@ -182,6 +182,9 @@ class ProgramDmaBench : public Program
     options.add_options()("pause-read",
                           po::value<uint64_t>(&mOptions.pauseRead)->default_value(10),
                           "Readout thread pause time in microseconds if no work can be done");
+    options.add_options()("print-sp-change",
+                          po::bool_switch(&mOptions.printSuperpageChange),
+                          "Print superpage change market when printing to file");
     options.add_options()("random-pause",
                           po::bool_switch(&mOptions.randomPause),
                           "Randomly pause readout");
@@ -603,7 +606,7 @@ class ProgramDmaBench : public Program
     size_t pageSize = (mDataSource == DataSource::Internal) ? mPageSize : DataFormat::getOffset(reinterpret_cast<const char*>(pageAddress));
 
     // Read out to file
-    printToFile(pageAddress, pageSize, readoutCount);
+    printToFile(pageAddress, pageSize, readoutCount, atStartOfSuperpage);
 
     // Data error checking
     if (!mOptions.noErrorCheck) {
@@ -834,8 +837,8 @@ class ProgramDmaBench : public Program
     // check that the TimeFrame starts at the beginning of the superpage
     const auto triggerType = DataFormat::getTriggerType(reinterpret_cast<const char*>(pageAddress));
     const auto orbit = DataFormat::getOrbit(reinterpret_cast<const char*>(pageAddress));
-    const auto pagesCounter = DataFormat::getPagesCounter(reinterpret_cast<const char*>(pageAddress));
-    const auto bunchCrossing = DataFormat::getBunchCrossing(reinterpret_cast<const char*>(pageAddress));
+    //const auto pagesCounter = DataFormat::getPagesCounter(reinterpret_cast<const char*>(pageAddress));
+    //const auto bunchCrossing = DataFormat::getBunchCrossing(reinterpret_cast<const char*>(pageAddress));
 
     //std::cout << atStartOfSuperpage << " 0x" << std::hex << orbit << " 0x" << std::hex << mNextTFOrbit << std::endl;
 
@@ -843,7 +846,7 @@ class ProgramDmaBench : public Program
       mNextTFOrbit = (orbit + mTimeFrameLength) % (0x100000000);
     } else if (orbit >= mNextTFOrbit) {
       // next orbit should be previous orbit + time frame length
-      if (!atStartOfSuperpage) { // but not more than orbit + 2 * time frame length
+      if (!atStartOfSuperpage) {
         // log TF not at the beginning of the superpage error
         mErrorCount++;
         if (mErrorCount < MAX_RECORDED_ERRORS) {
@@ -1014,12 +1017,15 @@ class ProgramDmaBench : public Program
   }
 
   /// Prints the page to a file in ASCII or binary format if such output is enabled
-  void printToFile(uintptr_t pageAddress, size_t pageSize, int64_t pageNumber)
+  void printToFile(uintptr_t pageAddress, size_t pageSize, int64_t pageNumber, bool atStartOfSuperpage)
   {
     auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
     auto pageSize32 = pageSize / sizeof(uint32_t);
 
     if (mOptions.fileOutputAscii) {
+      if (atStartOfSuperpage && mOptions.printSuperpageChange) {
+        mReadoutStream << "New Superpage\n";
+      }
       mReadoutStream << "Event #" << pageNumber << '\n';
       uint32_t perLine = 8;
 
@@ -1031,6 +1037,12 @@ class ProgramDmaBench : public Program
       }
       mReadoutStream << '\n';
     } else if (mOptions.fileOutputBin) {
+      if (atStartOfSuperpage && mOptions.printSuperpageChange) {
+        uint32_t newSP = 0x0badf00d;
+        for (int i = 0; i < 4; i++) { // Marker is 128bits long
+          mReadoutStream.write(reinterpret_cast<const char*>(&newSP), sizeof(newSP));
+        }
+      }
       // TODO Is there a more elegant way to write from volatile memory?
       mReadoutStream.write(reinterpret_cast<const char*>(pageAddress), pageSize);
     }
@@ -1140,6 +1152,7 @@ class ProgramDmaBench : public Program
     bool byteCountEnabled = false;
     bool bypassFirmwareCheck = false;
     uint32_t timeFrameLength = 256;
+    bool printSuperpageChange = false;
   } mOptions;
 
   /// The DMA channel
