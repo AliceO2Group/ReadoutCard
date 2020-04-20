@@ -67,7 +67,7 @@ static Option<std::string> registerAddress("address", "Register address in hex f
 static Option<int> registerRange("range", "Amount of registers to print past given address");
 static Option<std::string> registerValue("value", "Register value, either in decimal or hex (prefix with 0x)");
 static Option<std::string> cardId("id", "Card ID: PCI Address, Serial ID, or sequence number, as reported by `roc-list-cards`");
-static Option<std::string> resetLevel("reset", "Reset level [NOTHING, INTERNAL, INTERNAL_DIU, INTERNAL_DIU_SIU]");
+static Option<std::string> resetLevel("reset", "Reset level [NOTHING, INTERNAL, INTERNAL_SIU]");
 } // namespace option
 
 /// Adds the given Option to the options_description
