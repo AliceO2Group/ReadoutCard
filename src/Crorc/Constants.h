@@ -385,7 +385,10 @@ static constexpr Register CHANNEL_RRBARX(0x00000084);
 // Register to send DDL commands
 static constexpr Register DDL_COMMAND(0x00000018); //TODO: Find a better name
 static constexpr Register DDL_STATUS(0x0000001C);
-static constexpr uint32_t SIU_RESET(0x000000f1);
+static constexpr uint32_t SIU_RESET(0x000000F1);
+static constexpr uint32_t RDYRX(0x00000014);
+static constexpr uint32_t STBRD(0x00000054);
+static constexpr uint32_t EOBTR(0x000000B4);
 
 // At bit 13
 static constexpr uint32_t LINK_DOWN(0x00002000);

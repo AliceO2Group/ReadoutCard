@@ -50,7 +50,7 @@ class CrorcBar final : public BarInterfaceBase
   void configure(bool force = false) override;
   Crorc::ReportInfo report();
 
-  void resetDevice();
+  void resetDevice(bool withSiu);
   void startDataReceiver(uintptr_t readyFifoBusAddress);
   void stopDataReceiver();
   void startTrigger(uint32_t command);

@@ -40,10 +40,9 @@ namespace roc
 {
 
 CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
-  : DmaChannelPdaBase(parameters, allowedChannels()),                          //
-    mPageSize(parameters.getDmaPageSize().get_value_or(DMA_PAGE_SIZE)),        // 8 kB default for uniformity with CRU
-    mInitialResetLevel(ResetLevel::Internal),                                  // It's good to reset at least the card channel in general
-    mSTBRD(parameters.getStbrdEnabled().get_value_or(false)),                  //TODO: Set as a parameter
+  : DmaChannelPdaBase(parameters, allowedChannels()),
+    mPageSize(parameters.getDmaPageSize().get_value_or(DMA_PAGE_SIZE)), // 8 kB default for uniformity with CRU
+    mSTBRD(parameters.getStbrdEnabled().get_value_or(false)),
     mUseFeeAddress(false),                                                     // Not sure
     mDataSource(parameters.getDataSource().get_value_or(DataSource::Internal)) // Internal loopback by default
 {
@@ -95,7 +94,11 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
   getReadyFifoUser()->reset();
   mDmaBufferUserspace = getBufferProvider().getAddress();
 
-  deviceResetChannel();
+  if (mDataSource == DataSource::Fee || mDataSource == DataSource::Siu) {
+    deviceResetChannel(ResetLevel::InternalSiu);
+  } else {
+    deviceResetChannel(ResetLevel::Internal);
+  }
 }
 
 auto CrorcDmaChannel::allowedChannels() -> AllowedChannels
@@ -150,7 +153,7 @@ void CrorcDmaChannel::startPendingDma()
       getBar()->assertLinkUp();
 
       // RDYRX command to FEE
-      uint32_t command = (mRDYRX) ? Fee::RDYRX : Fee::STBRD;
+      uint32_t command = (mRDYRX) ? Crorc::Registers::RDYRX : Crorc::Registers::STBRD;
       getBar()->startTrigger(command);
     }
   }
@@ -191,7 +194,9 @@ void CrorcDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)
   if (resetLevel == ResetLevel::Nothing) {
     return;
   }
-  getBar()->resetDevice();
+
+  bool resetSiu = (resetLevel == ResetLevel::InternalSiu) ? true : false;
+  getBar()->resetDevice(resetSiu);
 }
 
 void CrorcDmaChannel::startDataGenerator() //TODO: Update this
@@ -207,7 +212,7 @@ void CrorcDmaChannel::startDataGenerator() //TODO: Update this
     getCrorc().setSiuLoopback(mDiuConfig);
     std::this_thread::sleep_for(100ms); // XXX Why???
     getCrorc().assertLinkUp();
-    getCrorc().siuCommand(Ddl::RandCIFST);
+    getCrorc().siuCommand(Ddl::RandCIFST); //TODO: To be removed
     getCrorc().diuCommand(Ddl::RandCIFST);
   }
 

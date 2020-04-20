@@ -26,10 +26,9 @@ namespace roc
 /// Namespace for the RORC reset level enum, and supporting functions
 struct ResetLevel {
   enum type {
-    Nothing = 0,        ///< No reset
-    Internal = 1,       ///< Reset internally only
-    InternalDiu = 2,    ///< Reset internally, and the DIU
-    InternalDiuSiu = 3, ///< Reset internally, the DIU, and the SIU
+    Nothing = 0,     ///< No reset
+    Internal = 1,    ///< Reset internally only (+DIU for the CRORC)
+    InternalSiu = 2, ///< Reset internally, the DIU, and the SIU (n/a for the CRU)
   };
 
   /// Converts a ResetLevel to a string
@@ -38,7 +37,7 @@ struct ResetLevel {
   /// Converts a string to a ResetLevel
   static ResetLevel::type fromString(const std::string& string);
 
-  /// Returns true if the reset level includes external resets (SIU and/or DIU)
+  /// Returns true if the reset level includes external resets (SIU)
   static bool includesExternal(const ResetLevel::type& level);
 };
 

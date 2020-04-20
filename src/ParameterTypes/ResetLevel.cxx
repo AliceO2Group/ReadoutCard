@@ -26,15 +26,14 @@ namespace
 static const auto converter = Utilities::makeEnumConverter<ResetLevel::type>("ResetLevel", {
                                                                                              { ResetLevel::Nothing, "NOTHING" },
                                                                                              { ResetLevel::Internal, "INTERNAL" },
-                                                                                             { ResetLevel::InternalDiu, "INTERNAL_DIU" },
-                                                                                             { ResetLevel::InternalDiuSiu, "INTERNAL_DIU_SIU" },
+                                                                                             { ResetLevel::InternalSiu, "INTERNAL_SIU" },
                                                                                            });
 
 } // Anonymous namespace
 
 bool ResetLevel::includesExternal(const ResetLevel::type& mode)
 {
-  return mode == ResetLevel::InternalDiu || mode == ResetLevel::InternalDiuSiu;
+  return mode == ResetLevel::InternalSiu;
 }
 
 std::string ResetLevel::toString(const ResetLevel::type& level)
