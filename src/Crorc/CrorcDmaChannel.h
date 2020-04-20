@@ -66,7 +66,7 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
  protected:
   virtual void deviceStartDma() override;
   virtual void deviceStopDma() override;
-  virtual void deviceResetChannel(ResetLevel::type resetLevel = ResetLevel::InternalDiuSiu) override;
+  virtual void deviceResetChannel(ResetLevel::type resetLevel = ResetLevel::InternalSiu) override;
 
  private:
   /// Superpage size supported by the CRORC backend
@@ -179,9 +179,6 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
 
   /// DMA page size
   const size_t mPageSize;
-
-  /// Reset level on initialization of channel
-  ResetLevel::type mInitialResetLevel;
 
   /// Allows sending the RDYRX and EOBTR commands.
   bool mRDYRX;

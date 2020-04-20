@@ -31,7 +31,6 @@ namespace roc
 
 CruDmaChannel::CruDmaChannel(const Parameters& parameters)
   : DmaChannelPdaBase(parameters, allowedChannels()),
-    mInitialResetLevel(ResetLevel::Internal),                                   // It's good to reset at least the card channel in general
     mDataSource(parameters.getDataSource().get_value_or(DataSource::Internal)), // DG loopback mode by default
     mDmaPageSize(parameters.getDmaPageSize().get_value_or(Cru::DMA_PAGE_SIZE))
 {

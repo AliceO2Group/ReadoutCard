@@ -235,7 +235,7 @@ void CrorcBar::startTrigger(uint32_t command) //TODO: Rename this
 void CrorcBar::stopTrigger()
 {
   try {
-    sendDdlCommand(Crorc::Registers::DDL_COMMAND.address, Fee::EOBTR);
+    sendDdlCommand(Crorc::Registers::DDL_COMMAND.address, Crorc::Registers::EOBTR);
   } catch (const Exception& e) {
     log("Stopping DDL trigger timed out");
   }
@@ -246,17 +246,19 @@ void CrorcBar::resetCard()
   writeRegister(Crorc::Registers::CRORC_CSR.index, Crorc::Registers::CRORC_RESET);
 }
 
-void CrorcBar::resetDevice()
+void CrorcBar::resetDevice(bool withSiu)
 {
   resetCard();
-  resetSiu();
+  if (withSiu) {
+    resetSiu();
+  }
   assertLinkUp();
 
-  resetSiu();
+  if (withSiu) {
+    resetSiu();
+  }
   resetCard();
   assertLinkUp();
-
-  return;
 }
 
 void CrorcBar::startDataReceiver(uintptr_t readyFifoBusAddress)

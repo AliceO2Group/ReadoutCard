@@ -37,6 +37,5 @@ BOOST_AUTO_TEST_CASE(EnumDataSourceConversion)
 
 BOOST_AUTO_TEST_CASE(EnumResetLevelConversion)
 {
-  checkEnumConversion<ResetLevel>({ ResetLevel::Nothing, ResetLevel::Internal, ResetLevel::InternalDiu,
-                                    ResetLevel::InternalDiuSiu });
+  checkEnumConversion<ResetLevel>({ ResetLevel::Nothing, ResetLevel::Internal, ResetLevel::InternalSiu });
 }

@@ -149,9 +149,6 @@ class CruDmaChannel final : public DmaChannelPdaBase
 
   // These variables are configuration parameters
 
-  /// Reset level on initialization of channel
-  const ResetLevel::type mInitialResetLevel;
-
   /// Gives the data source
   const DataSource::type mDataSource;
 
