@@ -109,42 +109,40 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
   try {
     for (auto it : tree) {
       group = it.first;
+      auto subtree = it.second;
 
       if (group == "cru") { // Configure the CRU globally
 
         std::string parsedString;
-        conf->setPrefix(group);
 
-        parsedString = conf->get<std::string>("clock");
+        parsedString = subtree.get<std::string>("clock");
         clock = Clock::fromString(parsedString);
 
-        parsedString = conf->get<std::string>("datapathMode");
+        parsedString = subtree.get<std::string>("datapathMode");
         datapathMode = DatapathMode::fromString(parsedString);
 
-        parsedString = conf->get<std::string>("gbtMode");
+        parsedString = subtree.get<std::string>("gbtMode");
         gbtMode = GbtMode::fromString(parsedString);
 
-        parsedString = conf->get<std::string>("downstreamData");
+        parsedString = subtree.get<std::string>("downstreamData");
         downstreamData = DownstreamData::fromString(parsedString);
 
-        loopback = conf->get<bool>("loopback");
-        ponUpstream = conf->get<bool>("ponUpstream");
-        dynamicOffset = conf->get<bool>("dynamicOffset");
+        loopback = subtree.get<bool>("loopback");
+        ponUpstream = subtree.get<bool>("ponUpstream");
+        dynamicOffset = subtree.get<bool>("dynamicOffset");
 
-        parsedString = conf->get<std::string>("onuAddress");
+        parsedString = subtree.get<std::string>("onuAddress");
         onuAddress = Hex::fromString(parsedString);
 
-        parsedString = conf->get<std::string>("cruId");
+        parsedString = subtree.get<std::string>("cruId");
         cruId = Hex::fromString(parsedString);
 
-        allowRejection = conf->get<bool>("allowRejection");
+        allowRejection = subtree.get<bool>("allowRejection");
 
-        triggerWindowSize = conf->get<int>("triggerWindowSize");
+        triggerWindowSize = subtree.get<int>("triggerWindowSize");
 
-        gbtEnabled = conf->get<bool>("gbtEnabled");
-        userLogicEnabled = conf->get<bool>("userLogicEnabled");
-
-        conf->setPrefix("");
+        gbtEnabled = subtree.get<bool>("gbtEnabled");
+        userLogicEnabled = subtree.get<bool>("userLogicEnabled");
 
         parameters.setClock(clock);
         parameters.setDatapathMode(datapathMode);
@@ -162,8 +160,7 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
 
       } else if (group == "links") { // Configure all links with default values
 
-        conf->setPrefix(group);
-        enabled = conf->get<bool>("enabled");
+        enabled = subtree.get<bool>("enabled");
 
         if (enabled) {
           for (int i = 0; i < 12; i++) {
@@ -171,12 +168,10 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
           }
         }
 
-        gbtMux = conf->get<std::string>("gbtMux");
+        gbtMux = subtree.get<std::string>("gbtMux");
         for (int i = 0; i < 12; i++) {
           gbtMuxMap.insert(std::make_pair((uint32_t)i, GbtMux::fromString(gbtMux)));
         }
-
-        conf->setPrefix("");
 
       } else if (!group.find("link")) { // Configure individual links
 
@@ -187,23 +182,19 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
           BOOST_THROW_EXCEPTION(ParseException() << ErrorInfo::ConfigParse(group));
         }
 
-        conf->setPrefix(group);
-
-        enabled = conf->get<bool>("enabled");
+        enabled = subtree.get<bool>("enabled");
         if (enabled) {
           linkMask.insert(linkIndex);
         } else {
           linkMask.erase(linkIndex);
         }
 
-        gbtMux = conf->get<std::string>("gbtMux");
+        gbtMux = subtree.get<std::string>("gbtMux");
         if (gbtMuxMap.find(linkIndex) != gbtMuxMap.end()) {
           gbtMuxMap[linkIndex] = GbtMux::fromString(gbtMux);
         } else {
           gbtMuxMap.insert(std::make_pair(linkIndex, GbtMux::fromString(gbtMux)));
         }
-
-        conf->setPrefix("");
       }
     }
 
