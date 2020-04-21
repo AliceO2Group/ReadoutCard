@@ -11,6 +11,7 @@
 /// \file Crorc/Constants.h
 /// \brief Definitions of RORC related constants
 /// Based on ddl_def.h and rorc.h
+
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
@@ -356,39 +357,43 @@ static constexpr Register I2C_CMD(0x000000D0);
 // Register to control CRORC configuration
 // [15-4] -> CRORC ID
 // [0]    -> FIXED/DYNAMIC OFFSET
-static constexpr Register CFG_CONTROL(0x000001f0);
+static constexpr Register CFG_CONTROL(0x000001F0);
 
 // Register that contains the firmware hash
-static constexpr Register FIRMWARE_HASH(0x0000019c);
+static constexpr Register FIRMWARE_HASH(0x000001Cc);
 
 // CRORC Control & Status Register
 static constexpr Register CRORC_CSR(0x00000000);
 
 // CHANNEL Control & Status Register
-// [9] -> data receive ON / OFF
-// [23] -> FIFO NOT EMPTY
-static constexpr Register CHAN_CSR(0x00000010);
-static constexpr uint32_t DATA_RX_ON_OFF(0x00000200);
-static constexpr uint32_t RXSTAT_NOT_EMPTY(0x00800000);
-
-// Channel Control & Status Register
 // [1] -> CRORC
 // [2] -> CHANNEL (can be used together - e.g. 0x3)
+// [9] -> data receive ON / OFF
+// [12] -> LOOPBACK ON OFF
+// [23] -> FIFO NOT EMPTY
 static constexpr Register CHANNEL_CSR(0x00000010);
 static constexpr uint32_t CRORC_RESET(0x00000003);
+static constexpr uint32_t DATA_RX_ON_OFF(0x00000200);
+static constexpr uint32_t RXSTAT_NOT_EMPTY(0x00800000);
+static constexpr uint32_t LOOPBACK_ON_OFF = 0x00001000;
 
 // Channel Receive Report Base Address
 static constexpr Register CHANNEL_RRBAR(0x00000034);
 // Channel Receive Report Base Address Extension
 static constexpr Register CHANNEL_RRBARX(0x00000084);
 
-// Register to send DDL commands
-static constexpr Register DDL_COMMAND(0x00000018); //TODO: Find a better name
+// Registers to send DDL commands
+static constexpr Register DDL_COMMAND(0x00000018);
 static constexpr Register DDL_STATUS(0x0000001C);
 static constexpr uint32_t SIU_RESET(0x000000F1);
 static constexpr uint32_t RDYRX(0x00000014);
 static constexpr uint32_t STBRD(0x00000054);
 static constexpr uint32_t EOBTR(0x000000B4);
+static constexpr uint32_t DIU_LOOPBACK(0x00000091);
+static constexpr uint32_t SIU_LOOPBACK(0x00000092);
+// Read & Clear Interface Status Word
+static constexpr uint32_t DIU_RANDCIFST(0x00000001);
+static constexpr uint32_t SIU_RANDCIFST(0x00000002);
 
 // At bit 13
 static constexpr uint32_t LINK_DOWN(0x00002000);
@@ -401,6 +406,12 @@ static constexpr IntervalRegister OPT_POWER_QSFP1(0x00000158, 0x4);
 static constexpr Register RX_FIFO_ADDR_LOW(0x00000038);
 static constexpr Register RX_FIFO_ADDR_HIGH(0x0000003c);
 static constexpr Register RX_FIFO_ADDR_EXT(0x00000080);
+
+// Data transmission status word
+static constexpr uint32_t DTSW(0x00000082);
+
+// Register to configure the Data Generator
+static constexpr Register DATA_GENERATOR_CFG(0x00000020);
 } // namespace Registers
 } //namespace Crorc
 

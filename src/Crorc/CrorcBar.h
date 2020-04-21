@@ -18,7 +18,6 @@
 #define ALICEO2_SRC_READOUTCARD_CRORC_CRORCBAR_H_
 
 #include "BarInterfaceBase.h"
-#include "Crorc.h"
 #include "Crorc/Common.h"
 #include "Crorc/Constants.h"
 #include "Utilities/Util.h"
@@ -53,12 +52,17 @@ class CrorcBar final : public BarInterfaceBase
   void resetDevice(bool withSiu);
   void startDataReceiver(uintptr_t readyFifoBusAddress);
   void stopDataReceiver();
+  void startDataGenerator();
+  void stopDataGenerator();
   void startTrigger(uint32_t command);
   void stopTrigger();
   bool isLinkUp(int barIndex);
   bool checkLinkUp();
   void assertLinkUp();
   void pushRxFreeFifo(uintptr_t blockAddress, uint32_t blockLength, uint32_t readyFifoIndex);
+  void setLoopback();
+  void setDiuLoopback();
+  void setSiuLoopback();
 
  private:
   std::map<int, Crorc::Link> initializeLinkMap();

@@ -21,7 +21,6 @@
 #include <unordered_map>
 #include <boost/scoped_ptr.hpp>
 #include "DmaChannelPdaBase.h"
-#include "Crorc.h"
 #include "CrorcBar.h"
 #include "ReadoutCard/Parameters.h"
 #include "ReadyFifo.h"
@@ -98,12 +97,6 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
       WholeArrived,
     };
   };
-
-  /// C-RORC function helper
-  Crorc::Crorc getCrorc()
-  {
-    return { *(getBar()) };
-  }
 
   ReadyFifo* getReadyFifoUser()
   {
@@ -195,8 +188,6 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
 
   /// Enables the data generator
   bool mGeneratorEnabled;
-
-  Crorc::Crorc::DiuConfig mDiuConfig;
 };
 
 } // namespace roc
