@@ -204,12 +204,12 @@ void CrorcBar::getOpticalPowers(std::map<int, Crorc::Link>& linkMap)
   }
 }
 
-void CrorcBar::sendDdlCommand(uint32_t address, uint32_t command) // TODO: Is the address here always Crorc::Registers::DDL_COMMAND?
+void CrorcBar::sendDdlCommand(uint32_t address, uint32_t command)
 {
   writeRegister(address / 4, command);
 
   auto checkFifoEmpty = [&]() {
-    return readRegister(Crorc::Registers::CHAN_CSR.index) & Crorc::Registers::RXSTAT_NOT_EMPTY;
+    return readRegister(Crorc::Registers::CHANNEL_CSR.index) & Crorc::Registers::RXSTAT_NOT_EMPTY;
   };
 
   auto timeOut = std::chrono::steady_clock::now() + std::chrono::milliseconds(100);
@@ -270,15 +270,15 @@ void CrorcBar::startDataReceiver(uintptr_t readyFifoBusAddress)
     writeRegister(Crorc::Registers::CHANNEL_RRBARX.index, 0x0);
   }
 
-  if (!(readRegister(Crorc::Registers::CHAN_CSR.index) & Crorc::Registers::DATA_RX_ON_OFF)) {
-    writeRegister(Crorc::Registers::CHAN_CSR.index, Crorc::Registers::DATA_RX_ON_OFF);
+  if (!(readRegister(Crorc::Registers::CHANNEL_CSR.index) & Crorc::Registers::DATA_RX_ON_OFF)) {
+    writeRegister(Crorc::Registers::CHANNEL_CSR.index, Crorc::Registers::DATA_RX_ON_OFF);
   }
 }
 
 void CrorcBar::stopDataReceiver()
 {
-  if (readRegister(Crorc::Registers::CHAN_CSR.index) & Crorc::Registers::DATA_RX_ON_OFF) {
-    writeRegister(Crorc::Registers::CHAN_CSR.index, Crorc::Registers::DATA_RX_ON_OFF);
+  if (readRegister(Crorc::Registers::CHANNEL_CSR.index) & Crorc::Registers::DATA_RX_ON_OFF) {
+    writeRegister(Crorc::Registers::CHANNEL_CSR.index, Crorc::Registers::DATA_RX_ON_OFF);
   }
 }
 
@@ -289,14 +289,34 @@ void CrorcBar::pushRxFreeFifo(uintptr_t blockAddress, uint32_t blockLength, uint
   writeRegister(Crorc::Registers::RX_FIFO_ADDR_LOW.index, (blockLength << 8) | readyFifoIndex);
 }
 
-/*void CrorcBar::startDataGenerator()
+void CrorcBar::startDataGenerator()
 {
+  modifyRegister(Crorc::Registers::DATA_GENERATOR_CFG.index, 31, 1, 0x1);
 }
 
 void CrorcBar::stopDataGenerator()
 {
+  modifyRegister(Crorc::Registers::DATA_GENERATOR_CFG.index, 31, 1, 0x0);
 }
-*/
+
+void CrorcBar::setLoopback()
+{
+  if ((readRegister(Crorc::Registers::CHANNEL_CSR.index) & Crorc::Registers::LOOPBACK_ON_OFF) == 0x0) {
+    writeRegister(Crorc::Registers::CHANNEL_CSR.index, Crorc::Registers::LOOPBACK_ON_OFF);
+  }
+}
+
+void CrorcBar::setDiuLoopback()
+{
+  sendDdlCommand(Crorc::Registers::DDL_COMMAND.address, Crorc::Registers::DIU_LOOPBACK);
+  //  sendDdlCommand(Crorc::Registers::DDL_COMMAND.address, Crorc::Registers::DIU_RANDCIFST);
+}
+
+void CrorcBar::setSiuLoopback()
+{
+  sendDdlCommand(Crorc::Registers::DDL_COMMAND.address, Crorc::Registers::SIU_LOOPBACK);
+  //  sendDdlCommand(Crorc::Registers::DDL_COMMAND.address, Crorc::Registers::SIU_RANDCIFST);
+}
 
 } // namespace roc
 } // namespace AliceO2

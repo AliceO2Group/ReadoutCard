@@ -112,7 +112,6 @@ CrorcDmaChannel::~CrorcDmaChannel()
 
 void CrorcDmaChannel::deviceStartDma()
 {
-  mDiuConfig = getCrorc().initDiuVersion(); //does nothing
   startDataReceiving();
 
   log("DMA start deferred until enough superpages available");
@@ -144,7 +143,8 @@ void CrorcDmaChannel::startPendingDma()
 
   if (mGeneratorEnabled) {
     log("Starting data generator");
-    startDataGenerator(); //TODO: To be removed completely? Updated with instructions from PiPPo
+    //getBar()->startDataGenerator();
+    startDataGenerator();
   } else {
     if (mRDYRX || mSTBRD) {
       log("Starting trigger");
@@ -167,7 +167,7 @@ void CrorcDmaChannel::startPendingDma()
 void CrorcDmaChannel::deviceStopDma()
 {
   if (mGeneratorEnabled) {
-    getCrorc().stopDataGenerator();
+    getBar()->stopDataGenerator();
   } else {
     if (mRDYRX || mSTBRD) {
       // Sending EOBTR to FEE.
@@ -201,28 +201,19 @@ void CrorcDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)
 
 void CrorcDmaChannel::startDataGenerator() //TODO: Update this
 {
-  getCrorc().armDataGenerator(mPageSize); //TODO: To be simplified
-
   if (DataSource::Internal == mDataSource) {
-    getCrorc().setLoopbackOn();
-    std::this_thread::sleep_for(100ms); // XXX Why???
-  }
-
-  if (DataSource::Siu == mDataSource) {
-    getCrorc().setSiuLoopback(mDiuConfig);
-    std::this_thread::sleep_for(100ms); // XXX Why???
-    getCrorc().assertLinkUp();
-    getCrorc().siuCommand(Ddl::RandCIFST); //TODO: To be removed
-    getCrorc().diuCommand(Ddl::RandCIFST);
+    getBar()->setLoopback(); //TODO: Is there a way to test this?
   }
 
   if (DataSource::Diu == mDataSource) {
-    getCrorc().setDiuLoopback(mDiuConfig);
-    std::this_thread::sleep_for(100ms);
-    getCrorc().diuCommand(Ddl::RandCIFST);
+    getBar()->setDiuLoopback();
   }
 
-  getCrorc().startDataGenerator();
+  if (DataSource::Siu == mDataSource) {
+    getBar()->setSiuLoopback();
+  }
+
+  getBar()->startDataGenerator();
 }
 
 void CrorcDmaChannel::startDataReceiving()
@@ -360,7 +351,7 @@ CrorcDmaChannel::DataArrivalStatus::type CrorcDmaChannel::dataArrived(int index)
     return DataArrivalStatus::NoneArrived;
   } else if (status == 0) {
     return DataArrivalStatus::PartArrived;
-  } else if ((status & 0xff) == Ddl::DTSW) {
+  } else if ((status & 0xff) == Crorc::Registers::DTSW) {
     // Note: when internal loopback is used, the length of the event in words is also stored in the status word.
     // For example, the status word could be 0x400082 for events of size 4 kiB
     if ((status & (1 << 31)) != 0) {
