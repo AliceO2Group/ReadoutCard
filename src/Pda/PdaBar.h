@@ -113,6 +113,14 @@ class PdaBar : public BarInterface
     return mBarLength;
   }
 
+  /// Checks if this is the correct BAR. Used to check for BAR 2 for special functions.
+  void assertBarIndex(int index, std::string message) const
+  {
+    if (getIndex() != index) {
+      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(message) << ErrorInfo::BarIndex(getIndex()));
+    }
+  }
+
   virtual boost::optional<int32_t> getSerial() override
   {
     return {};
@@ -195,7 +203,6 @@ class PdaBar : public BarInterface
   {
     return reinterpret_cast<void*>(mUserspaceAddress + byteOffset);
   }
-
   /// PDA object for the PCI BAR
   Bar* mPdaBar;
 

@@ -87,7 +87,12 @@ class ProgramListCards : public Program
         }
       }
 
-      std::string serial = std::to_string(card.serialId.getSerial());
+      // Pad the serial with 0s if necessary
+      // It should always be used as 3 chars to avoid conflicts with the sequence id
+      boost::format serialFormat("%03d");
+      serialFormat % std::to_string(card.serialId.getSerial());
+
+      std::string serial = serialFormat.str();
       std::string endpoint = std::to_string(card.serialId.getEndpoint());
 
       if (!mOptions.jsonOut) {

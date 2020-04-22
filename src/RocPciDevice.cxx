@@ -22,7 +22,7 @@
 #include <boost/format.hpp>
 #include <functional>
 #include <iostream>
-#include "Crorc/Crorc.h"
+#include "Crorc/CrorcBar.h"
 #include "Cru/CruBar.h"
 #include "Pda/PdaDevice.h"
 #include "ReadoutCard/ChannelFactory.h"
@@ -256,7 +256,8 @@ int cruGetSerial(std::shared_ptr<Pda::PdaBar> pdaBar2)
 
 int crorcGetSerial(std::shared_ptr<Pda::PdaBar> pdaBar0)
 {
-  return Crorc::getSerial(*pdaBar0.get()).get();
+  int serial = CrorcBar(pdaBar0).getSerial().get();
+  return serial;
 }
 
 int cruGetEndpoint(std::shared_ptr<Pda::PdaBar> pdaBar0)

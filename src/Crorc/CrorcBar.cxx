@@ -26,6 +26,8 @@
 
 #include "boost/format.hpp"
 
+using namespace std::literals;
+
 namespace AliceO2
 {
 namespace roc
@@ -37,6 +39,11 @@ CrorcBar::CrorcBar(const Parameters& parameters, std::unique_ptr<RocPciDevice> r
     mDynamicOffset(parameters.getDynamicOffsetEnabled().get_value_or(false)),
     mTimeFrameLength(parameters.getTimeFrameLength().get_value_or(0x100)),
     mTimeFrameDetectionEnabled(parameters.getTimeFrameDetectionEnabled().get_value_or(true))
+{
+}
+
+CrorcBar::CrorcBar(std::shared_ptr<Pda::PdaBar> bar)
+  : BarInterfaceBase(bar)
 {
 }
 
@@ -52,12 +59,41 @@ boost::optional<std::string> CrorcBar::getFirmwareInfo()
 
 boost::optional<int32_t> CrorcBar::getSerial()
 {
-  return Crorc::getSerial(*(mPdaBar.get()));
+  return getSerialNumber();
 }
 
 void CrorcBar::setSerial(int serial)
 {
   Crorc::setSerial(*(mPdaBar.get()), serial);
+}
+
+boost::optional<int32_t> CrorcBar::getSerialNumber()
+{
+  //  mPdaBar->assertBarIndex(0, "Can only get serial from Bar 0");
+  uint32_t serial = readRegister(Crorc::Registers::SERIAL_NUMBER.index);
+  if (serial == 0x0 || true) {
+    writeRegister(Crorc::Registers::SERIAL_NUMBER_CTRL.index, Crorc::Registers::SERIAL_NUMBER_TRG);
+    std::this_thread::sleep_for(500ms);
+    serial = readRegister(Crorc::Registers::SERIAL_NUMBER.index);
+  }
+
+  if (serial == 0x0) { // Previous S/N scheme
+    return Crorc::getSerial(*(mPdaBar.get()));
+  } else {
+    // Register format e.g. 0x32343932
+    // transltes to -> 2942 -> 942 (keep 3)
+    std::stringstream serialString;
+
+    serialString << char(serial & 0xff)
+                 << char((serial & 0xff00) >> 8)
+                 << char((serial & 0xff0000) >> 16);
+
+    try {
+      return std::stoi(serialString.str());
+    } catch (...) {
+      return {};
+    }
+  }
 }
 
 int CrorcBar::getEndpointNumber()
