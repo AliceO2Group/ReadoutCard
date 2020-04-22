@@ -737,16 +737,24 @@ class ProgramDmaBench : public Program
 
     // check that the TimeFrame starts at the beginning of the superpage
     const auto triggerType = DataFormat::getTriggerType(reinterpret_cast<const char*>(pageAddress));
-    const auto pagesCounter = DataFormat::getPagesCounter(reinterpret_cast<const char*>(pageAddress));
+    const auto orbit = DataFormat::getOrbit(reinterpret_cast<const char*>(pageAddress));
+    //const auto pagesCounter = DataFormat::getPagesCounter(reinterpret_cast<const char*>(pageAddress));
 
-    if (Utilities::getBit(triggerType, 11) == 0x1 &&
-        pagesCounter == 0x0 &&
-        !atStartOfSuperpage) {
-      // log TF not at the beginning of the superpage error
-      mErrorCount++;
-      if (mErrorCount < MAX_RECORDED_ERRORS) {
-        mErrorStream << b::format("[RDHERR]\tevent:%1% l:%2% payloadBytes:%3% size:%4% packet_cnt:%5% mpacket_cnt:%6% levent:%7% TF unaligned w/ start of superpage\n") % eventNumber % linkId % memBytes % pageSize % packetCounter % mPacketCounters[linkId] % mEventCounters[linkId];
+    //std::cout << atStartOfSuperpage << " 0x" << std::hex << orbit << " 0x" << std::hex << mNextTFOrbit << std::endl;
+
+    if (Utilities::getBit(triggerType, 9) == 0x1 || Utilities::getBit(triggerType, 7) == 0x1) { // If SOX, use current orbit as the first one
+      mNextTFOrbit = (orbit + mTimeFrameLength) % (0x100000000);
+    } else if (orbit >= mNextTFOrbit) {
+      // next orbit should be previous orbit + time frame length
+      if (!atStartOfSuperpage) {
+        // log TF not at the beginning of the superpage error
+        mErrorCount++;
+        if (mErrorCount < MAX_RECORDED_ERRORS) {
+          mErrorStream << b::format("[RDHERR]\tevent:%1% l:%2% payloadBytes:%3% size:%4% packet_cnt:%5% orbit:%6$#x nextTForbit:%7$#x atSPStart:%8% TF unaligned w/ start of superpage\n") % eventNumber % linkId % memBytes % pageSize % packetCounter % orbit % mNextTFOrbit % atStartOfSuperpage;
+        }
       }
+      // Update next TF orbit expected
+      mNextTFOrbit = (orbit + mTimeFrameLength) % (0x100000000);
     }
 
     // Skip data check if fast check enabled or FEE data source selected
@@ -854,8 +862,7 @@ class ProgramDmaBench : public Program
         }
       }
       // Update next TF orbit expected
-      mNextTFOrbit = (orbit / mTimeFrameLength) * (mTimeFrameLength + 1);
-      //std::cout << mNextTFOrbit << std::endl;
+      mNextTFOrbit = (orbit + mTimeFrameLength) % (0x100000000);
     }
 
     if (mFastCheckEnabled) {
