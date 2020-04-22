@@ -151,14 +151,6 @@ class CruBar final : public BarInterfaceBase
 
   /// Per-link counter to verify superpage sizes received are valid
   uint32_t mSuperpageSizeIndexCounter[Cru::MAX_LINKS] = { 0 };
-
-  /// Checks if this is the correct BAR. Used to check for BAR 2 for special functions.
-  void assertBarIndex(int index, std::string message) const
-  {
-    if (mPdaBar->getIndex() != index) {
-      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(message) << ErrorInfo::BarIndex(mPdaBar->getIndex()));
-    }
-  }
 };
 
 } // namespace roc

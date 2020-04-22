@@ -31,6 +31,7 @@ class CrorcBar final : public BarInterfaceBase
 {
  public:
   CrorcBar(const Parameters& parameters, std::unique_ptr<RocPciDevice> rocPciDevice);
+  CrorcBar(std::shared_ptr<Pda::PdaBar> bar);
   virtual ~CrorcBar();
   //virtual void checkReadSafe(int index) override;
   //virtual void checkWriteSafe(int index, uint32_t value) override;
@@ -44,6 +45,7 @@ class CrorcBar final : public BarInterfaceBase
   virtual boost::optional<std::string> getFirmwareInfo() override;
   virtual int getEndpointNumber() override;
 
+  boost::optional<int32_t> getSerialNumber();
   void setSerial(int serial);
 
   void configure(bool force = false) override;

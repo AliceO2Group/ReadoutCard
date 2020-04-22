@@ -412,6 +412,12 @@ static constexpr uint32_t DTSW(0x00000082);
 
 // Register to configure the Data Generator
 static constexpr Register DATA_GENERATOR_CFG(0x00000020);
+
+// Registers used to read the Serial Number
+static constexpr Register SERIAL_NUMBER_CTRL(0x000000F0);
+static constexpr uint32_t SERIAL_NUMBER_TRG(0xC0000000);
+static constexpr Register SERIAL_NUMBER(0x000000FC);
+
 } // namespace Registers
 } //namespace Crorc
 

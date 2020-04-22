@@ -267,7 +267,7 @@ int32_t CruBar::getLinksPerWrapper(int wrapper)
 /// calling this function, or the card may crash. See parseFirmwareFeatures().
 boost::optional<int32_t> CruBar::getSerialNumber()
 {
-  assertBarIndex(2, "Can only get serial number from BAR 2");
+  mPdaBar->assertBarIndex(2, "Can only get serial number from BAR 2");
   uint32_t serial = readRegister(Cru::Registers::SERIAL_NUMBER.index);
   if (serial == 0x0) { // Try to populate the serial register in case it's empty
     writeRegister(Cru::Registers::SERIAL_NUMBER_CTRL.index, Cru::Registers::SERIAL_NUMBER_TRG);
@@ -280,16 +280,16 @@ boost::optional<int32_t> CruBar::getSerialNumber()
     boost::optional<int32_t> serial = eeprom.getSerial();
     return serial;
   } else { // v3.6.3+
+    // Register format e.g. 0x343230
+    // translates to -> 024
+    std::stringstream serialString;
 
-    std::string serialString;
-
-    for (int i = 0; i < 3; i++) { // The serial number consists of 3 digits
-      serialString += char(serial & 0xff);
-      serial = serial >> 8;
-    }
+    serialString << char(serial & 0xff)
+                 << char((serial & 0xff00) >> 8)
+                 << char((serial & 0xff0000) >> 16);
 
     try {
-      return std::stol(serialString, NULL, 0);
+      return std::stoi(serialString.str());
     } catch (...) {
       return {};
     }
@@ -299,7 +299,7 @@ boost::optional<int32_t> CruBar::getSerialNumber()
 /// Get raw data from the temperature register
 uint32_t CruBar::getTemperatureRaw()
 {
-  assertBarIndex(2, "Can only get temperature from BAR 2");
+  mPdaBar->assertBarIndex(2, "Can only get temperature from BAR 2");
   // Only use lower 10 bits
   return readRegister(Cru::Registers::TEMPERATURE.index) & 0x3ff;
 }
@@ -332,55 +332,55 @@ boost::optional<float> CruBar::getTemperatureCelsius()
 
 uint32_t CruBar::getFirmwareCompileInfo()
 {
-  assertBarIndex(0, "Can only get firmware compile info from BAR 0");
+  mPdaBar->assertBarIndex(0, "Can only get firmware compile info from BAR 0");
   return readRegister(Cru::Registers::FIRMWARE_COMPILE_INFO.index);
 }
 
 uint32_t CruBar::getFirmwareGitHash()
 {
-  assertBarIndex(2, "Can only get git hash from BAR 2");
+  mPdaBar->assertBarIndex(2, "Can only get git hash from BAR 2");
   return readRegister(Cru::Registers::FIRMWARE_GIT_HASH.index);
 }
 
 uint32_t CruBar::getFirmwareDateEpoch()
 {
-  assertBarIndex(2, "Can only get firmware epoch from BAR 2");
+  mPdaBar->assertBarIndex(2, "Can only get firmware epoch from BAR 2");
   return readRegister(Cru::Registers::FIRMWARE_EPOCH.index);
 }
 
 uint32_t CruBar::getFirmwareDate()
 {
-  assertBarIndex(2, "Can only get firmware date from BAR 2");
+  mPdaBar->assertBarIndex(2, "Can only get firmware date from BAR 2");
   return readRegister(Cru::Registers::FIRMWARE_DATE.index);
 }
 
 uint32_t CruBar::getFirmwareTime()
 {
-  assertBarIndex(2, "Can only get firmware time from BAR 2");
+  mPdaBar->assertBarIndex(2, "Can only get firmware time from BAR 2");
   return readRegister(Cru::Registers::FIRMWARE_TIME.index);
 }
 
 uint32_t CruBar::getFpgaChipHigh()
 {
-  assertBarIndex(2, "Can only get FPGA chip ID from BAR 2");
+  mPdaBar->assertBarIndex(2, "Can only get FPGA chip ID from BAR 2");
   return readRegister(Cru::Registers::FPGA_CHIP_HIGH.index);
 }
 
 uint32_t CruBar::getFpgaChipLow()
 {
-  assertBarIndex(2, "Can only get FPGA chip ID from BAR 2");
+  mPdaBar->assertBarIndex(2, "Can only get FPGA chip ID from BAR 2");
   return readRegister(Cru::Registers::FPGA_CHIP_LOW.index);
 }
 
 uint32_t CruBar::getPonStatusRegister()
 {
-  assertBarIndex(2, "Can only get PON status register from BAR 2");
+  mPdaBar->assertBarIndex(2, "Can only get PON status register from BAR 2");
   return readRegister((Cru::Registers::ONU_USER_LOGIC.address + 0x0c) / 4);
 }
 
 uint32_t CruBar::getOnuAddress()
 {
-  assertBarIndex(2, "Can only get PON status register from BAR 2");
+  mPdaBar->assertBarIndex(2, "Can only get PON status register from BAR 2");
   return readRegister(Cru::Registers::ONU_USER_LOGIC.index) >> 1;
 }
 
@@ -399,7 +399,7 @@ bool CruBar::checkPonUpstreamStatusExpected(uint32_t ponUpstreamRegister, uint32
 /// Get the enabled features for the card's firmware.
 FirmwareFeatures CruBar::parseFirmwareFeatures()
 {
-  assertBarIndex(0, "Can only get firmware features from BAR 0");
+  mPdaBar->assertBarIndex(0, "Can only get firmware features from BAR 0");
   return convertToFirmwareFeatures(readRegister(Cru::Registers::FIRMWARE_FEATURES.index));
 }
 
