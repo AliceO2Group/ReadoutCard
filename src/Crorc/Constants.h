@@ -360,7 +360,7 @@ static constexpr Register I2C_CMD(0x000000D0);
 static constexpr Register CFG_CONTROL(0x000001F0);
 
 // Register that contains the firmware hash
-static constexpr Register FIRMWARE_HASH(0x000001Cc);
+static constexpr Register FIRMWARE_HASH(0x0000019C);
 
 // CRORC Control & Status Register
 static constexpr Register CRORC_CSR(0x00000000);
