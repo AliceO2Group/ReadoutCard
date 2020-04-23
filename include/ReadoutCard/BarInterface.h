@@ -22,8 +22,6 @@
 #include "ReadoutCard/Parameters.h"
 #include "boost/optional.hpp"
 
-#include "ReadoutCard/Cru.h"
-
 namespace AliceO2
 {
 namespace roc
