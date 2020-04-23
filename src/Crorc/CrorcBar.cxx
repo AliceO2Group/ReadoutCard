@@ -71,7 +71,7 @@ boost::optional<int32_t> CrorcBar::getSerialNumber()
 {
   //  mPdaBar->assertBarIndex(0, "Can only get serial from Bar 0");
   uint32_t serial = readRegister(Crorc::Registers::SERIAL_NUMBER.index);
-  if (serial == 0x0 || true) {
+  if (serial == 0x0) {
     writeRegister(Crorc::Registers::SERIAL_NUMBER_CTRL.index, Crorc::Registers::SERIAL_NUMBER_TRG);
     std::this_thread::sleep_for(500ms);
     serial = readRegister(Crorc::Registers::SERIAL_NUMBER.index);
