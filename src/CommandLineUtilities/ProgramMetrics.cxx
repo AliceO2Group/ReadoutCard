@@ -80,7 +80,7 @@ class ProgramMetrics : public Program
     // Monitoring instance to send metrics
     std::unique_ptr<Monitoring> monitoring;
     if (mOptions.monitoring) {
-      monitoring = MonitoringFactory::Get("stdout://");
+      monitoring = MonitoringFactory::Get(getMonitoringUri());
       monitoring->addGlobalTag(tags::Key::Subsystem, tags::Value::CRU);
     }
 
