@@ -63,7 +63,7 @@ class Program : public AliceO2::Common::Program
  private:
   InfoLogger::InfoLogger mLogger;
   InfoLogger::InfoLogger::Severity mLogLevel = InfoLogger::InfoLogger::Severity::Info;
-  
+
   const std::string MONITORING_URI = "stdout://";
 };
 

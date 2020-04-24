@@ -27,6 +27,9 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
+#include "Monitoring/MonitoringFactory.h"
+using namespace o2::monitoring;
+
 using namespace AliceO2::roc::CommandLineUtilities;
 using namespace AliceO2::roc;
 namespace pt = boost::property_tree;
@@ -39,8 +42,9 @@ class ProgramStatus : public Program
   {
     return { "Status", "Return current RoC configuration status",
              "roc-status --id 42:00.0\n"
-             "roc-status --id 42:00.0 --json"
-             "roc-status --id 42:00.0 --csv" };
+             "roc-status --id 42:00.0 --json\n"
+             "roc-status --id 42:00.0 --csv\n"
+             "roc-status --id 42:00.0 --monitoring\n" };
   }
 
   virtual void addOptions(boost::program_options::options_description& options)
@@ -52,6 +56,9 @@ class ProgramStatus : public Program
     options.add_options()("csv-out",
                           po::bool_switch(&mOptions.csvOut),
                           "Toggle csv-formatted output");
+    options.add_options()("monitoring",
+                          po::bool_switch(&mOptions.monitoring),
+                          "Toggle monitoring metrics sending");
   }
 
   virtual void run(const boost::program_options::variables_map& map)
@@ -67,7 +74,16 @@ class ProgramStatus : public Program
     pt::ptree root;
 
     auto cardId = Options::getOptionCardId(map);
-    auto cardType = RocPciDevice(cardId).getCardDescriptor().cardType;
+    auto cardIdString = Options::getOptionCardIdString(map);
+    auto card = RocPciDevice(cardId).getCardDescriptor();
+    auto cardType = card.cardType;
+
+    // Monitoring instance to send metrics
+    std::unique_ptr<Monitoring> monitoring;
+    if (mOptions.monitoring) {
+      monitoring = MonitoringFactory::Get(getMonitoringUri());
+      monitoring->addGlobalTag(tags::Key::Subsystem, tags::Value::CRU);
+    }
 
     if (cardType == CardType::type::Crorc) {
       formatHeader = "  %-9s %-8s %-19s\n";
@@ -88,55 +104,32 @@ class ProgramStatus : public Program
       auto crorcBar0 = std::dynamic_pointer_cast<CrorcBar>(bar0);
 
       Crorc::ReportInfo reportInfo = crorcBar0->report();
+      std::string qsfpEnabled = reportInfo.qsfpEnabled ? "Enabled" : "Disabled";
+      std::string offset = reportInfo.dynamicOffset ? "Dynamic" : "Fixed";
+      std::string timeFrameDetectionEnabled = reportInfo.timeFrameDetectionEnabled ? "Enabled" : "Disabled";
 
       /* GENERAL PARAMETERS */
-      if (mOptions.jsonOut) {
-        if (reportInfo.qsfpEnabled) {
-          root.put("qsfp", "Enabled");
-        } else {
-          root.put("qsfp", "Disabled");
-        }
-
-        if (reportInfo.dynamicOffset) {
-          root.put("offset", "Dynamic");
-        } else {
-          root.put("offset", "Fixed");
-        }
-
-        if (reportInfo.timeFrameDetectionEnabled) {
-          root.put("timeFrameDetection", "Enabled");
-        } else {
-          root.put("timeFrameDetection", "Disabled");
-        }
-
+      if (mOptions.monitoring) {
+        monitoring->send(Metric{ cardIdString, "CRORC" }
+                           .addValue(qsfpEnabled, "qsfp")
+                           .addValue(offset, "offset")
+                           .addValue(timeFrameDetectionEnabled, "timeFrameDetection")
+                           .addValue(reportInfo.timeFrameLength, "timeFrameLength"));
+      } else if (mOptions.jsonOut) {
+        root.put("qsfp", qsfpEnabled);
+        root.put("offset", offset);
+        root.put("timeFrameDetection", timeFrameDetectionEnabled);
         root.put("timeFrameLength", reportInfo.timeFrameLength);
       } else if (mOptions.csvOut) {
-        auto csvLine = std::string(",,,") + (reportInfo.qsfpEnabled ? "Enabled" : "Disabled") + "," + (reportInfo.dynamicOffset ? "Dynamic" : "Fixed") + "," + (reportInfo.timeFrameDetectionEnabled ? "Enabled" : "Disabled") + "," + std::to_string(reportInfo.timeFrameLength) + "\n";
+        auto csvLine = std::string(",,,") + qsfpEnabled + "," + offset + "," + timeFrameDetectionEnabled + "," + std::to_string(reportInfo.timeFrameLength) + "\n";
         std::cout << csvLine;
       } else {
         std::cout << "-----------------------------" << std::endl;
-        if (reportInfo.qsfpEnabled) {
-          std::cout << "QSFP enabled | ";
-        } else {
-          std::cout << "QSFP disabled | ";
-        }
-
-        if (reportInfo.dynamicOffset) {
-          std::cout << "Dynamic offset" << std::endl;
-        } else {
-          std::cout << "Fixed offset" << std::endl;
-        }
-
+        std::cout << "QSFP " << qsfpEnabled << std::endl;
+        std::cout << offset << " offset" << std::endl;
         std::cout << "-----------------------------" << std::endl;
-
-        if (reportInfo.timeFrameDetectionEnabled) {
-          std::cout << "Time Frame Detection enabled" << std::endl;
-        } else {
-          std::cout << "Time Frame Detection disabled" << std::endl;
-        }
-
+        std::cout << "Time Frame Detection " << timeFrameDetectionEnabled << std::endl;
         std::cout << "Time Frame Length: " << reportInfo.timeFrameLength << std::endl;
-
         std::cout << "-----------------------------" << std::endl;
       }
 
@@ -148,7 +141,11 @@ class ProgramStatus : public Program
         std::string linkStatus = link.status == Crorc::LinkStatus::Up ? "UP" : "DOWN";
         float opticalPower = link.opticalPower;
 
-        if (mOptions.jsonOut) {
+        if (mOptions.monitoring) {
+          monitoring->send(Metric{ id, "link" }
+                             .addValue(linkStatus, "status")
+                             .addValue(opticalPower, "opticalPower"));
+        } else if (mOptions.jsonOut) {
           pt::ptree linkNode;
 
           // add kv pairs for this card
@@ -177,7 +174,7 @@ class ProgramStatus : public Program
       auto cruBar2 = std::dynamic_pointer_cast<CruBar>(bar2);
 
       if (mOptions.csvOut) {
-        auto csvHeader = "Link ID,GBT Mode,Loopback,GBT Mux,Datapath Mode,Datapath,RX Freq(MHz),TX Freq(MHz),Status,Optical Power(uW),Clock,Offset\n";
+        auto csvHeader = "Link ID,GBT Mode,Loopback,GBT Mux,Datapath Mode,Datapath,RX Freq(MHz),TX Freq(MHz),Status,Optical Power(uW),Clock,Offset,UserLogic\n";
         std::cout << csvHeader;
       } else if (!mOptions.jsonOut) {
         table << lineFat << header << lineThin;
@@ -186,31 +183,27 @@ class ProgramStatus : public Program
       Cru::ReportInfo reportInfo = cruBar2->report();
 
       std::string clock = (reportInfo.ttcClock == 0 ? "TTC" : "Local");
+      std::string offset = (reportInfo.dynamicOffset ? "Dynamic" : "Fixed");
+      std::string userLogic = (reportInfo.userLogicEnabled ? "Enabled" : "Disabled");
 
       /* GENERAL PARAMETERS */
-      if (mOptions.jsonOut) {
+      if (mOptions.monitoring) {
+        monitoring->send(Metric{ cardIdString, "CRU" }
+                           .addValue(clock, "clock")
+                           .addValue(offset, "offset")
+                           .addValue(userLogic, "userLogic"));
+      } else if (mOptions.jsonOut) {
         root.put("clock", clock);
-        if (reportInfo.dynamicOffset) {
-          root.put("offset", "Dynamic");
-        } else {
-          root.put("offset", "Fixed");
-        }
+        root.put("offset", offset);
+        root.put("userLogic", userLogic);
       } else if (mOptions.csvOut) {
-        auto csvLine = ",,,,,,,,,," + clock + "," + (reportInfo.dynamicOffset ? "Dynamic" : "Fixed") + "\n";
+        auto csvLine = ",,,,,,,,,," + clock + "," + offset + "," + userLogic + "\n";
         std::cout << csvLine;
       } else {
         std::cout << "----------------------------" << std::endl;
         std::cout << clock << " clock | ";
-        if (reportInfo.dynamicOffset) {
-          std::cout << "Dynamic offset" << std::endl;
-        } else {
-          std::cout << "Fixed offset" << std::endl;
-        }
-        if (reportInfo.userLogicEnabled) {
-          std::cout << "User Logic Enabled" << std::endl;
-        } else {
-          std::cout << "User Logic Disabled" << std::endl;
-        }
+        std::cout << offset << " offset" << std::endl;
+        std::cout << "User Logic " << userLogic << std::endl;
         std::cout << "----------------------------" << std::endl;
       }
 
@@ -255,7 +248,18 @@ class ProgramStatus : public Program
 
         float opticalPower = link.opticalPower;
 
-        if (mOptions.jsonOut) {
+        if (mOptions.monitoring) {
+          monitoring->send(Metric{ globalId, "link" }
+                             .addValue(gbtTxRxMode, "gbtMode")
+                             .addValue(loopback, "loopback")
+                             .addValue(gbtMux, "gbtMux")
+                             .addValue(datapathMode, "datapathMode")
+                             .addValue(enabled, "datapath")
+                             .addValue(rxFreq, "rxFreq")
+                             .addValue(txFreq, "txFreq")
+                             .addValue(linkStatus, "status")
+                             .addValue(opticalPower, "opticalPower"));
+        } else if (mOptions.jsonOut) {
           pt::ptree linkNode;
 
           // add kv pairs for this card
@@ -287,7 +291,7 @@ class ProgramStatus : public Program
 
     if (mOptions.jsonOut) {
       pt::write_json(std::cout, root);
-    } else if (!mOptions.csvOut) {
+    } else if (!mOptions.csvOut && !mOptions.monitoring) {
       auto lineFat = std::string(header.length(), '=') + '\n';
       table << lineFat;
       std::cout << table.str();
@@ -298,6 +302,7 @@ class ProgramStatus : public Program
   struct OptionsStruct {
     bool jsonOut = false;
     bool csvOut = false;
+    bool monitoring = false;
   } mOptions;
 };
 
