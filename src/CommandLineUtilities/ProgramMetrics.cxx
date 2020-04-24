@@ -25,6 +25,9 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
+#include <Monitoring/MonitoringFactory.h>
+using namespace o2::monitoring;
+
 using namespace AliceO2::roc::CommandLineUtilities;
 using namespace AliceO2::roc;
 using namespace AliceO2::InfoLogger;
@@ -37,7 +40,9 @@ class ProgramMetrics : public Program
   virtual Description getDescription()
   {
     return { "Metrics", "Return current RoC parameters",
-             "roc-metrics \n" };
+             "roc-metrics \n"
+             "roc-metrics --json \n"
+             "roc-metrics --monitoring\n" };
   }
 
   virtual void addOptions(boost::program_options::options_description& options)
@@ -48,6 +53,9 @@ class ProgramMetrics : public Program
     options.add_options()("csv-out",
                           po::bool_switch(&mOptions.csvOut),
                           "Toggle csv-formatted output");
+    options.add_options()("monitoring",
+                          po::bool_switch(&mOptions.monitoring),
+                          "Toggle monitoring metrics sending");
   }
 
   virtual void run(const boost::program_options::variables_map& /*map*/)
@@ -69,6 +77,14 @@ class ProgramMetrics : public Program
 
     auto cardsFound = AliceO2::roc::RocPciDevice::findSystemDevices();
 
+    // Monitoring instance to send metrics
+    std::unique_ptr<Monitoring> monitoring;
+    if (mOptions.monitoring) {
+      monitoring = MonitoringFactory::Get("stdout://");
+      monitoring->addGlobalTag(tags::Key::Subsystem, tags::Value::CRU);
+    }
+
+    // Used for the JSON output
     pt::ptree root;
     int i = 0;
     for (const auto& card : cardsFound) {
@@ -87,7 +103,17 @@ class ProgramMetrics : public Program
       float localClock = bar2->getLocalClock() / 1e6;
       uint32_t totalPacketsPerSecond = bar2->getTotalPacketsPerSecond(0);
 
-      if (mOptions.jsonOut) {
+      if (mOptions.monitoring) {
+        monitoring->send(Metric{ std::to_string(i), "card" }
+                           .addValue(CardType::toString(card.cardType), "type")
+                           .addValue(card.pciAddress.toString(), "pciAddress")
+                           .addValue(temperature, "temperature")
+                           .addValue(dropped, "droppedPackets")
+                           .addValue(ctpClock, "ctpClock")
+                           .addValue(localClock, "localClock")
+                           .addValue((int)totalPacketsPerSecond, "totalPacketsPerSecond"));
+
+      } else if (mOptions.jsonOut) {
         pt::ptree cardNode;
 
         // add kv pairs for this card
@@ -116,7 +142,7 @@ class ProgramMetrics : public Program
 
     if (mOptions.jsonOut) {
       pt::write_json(std::cout, root);
-    } else if (!mOptions.csvOut) {
+    } else if (!mOptions.csvOut && !mOptions.monitoring) {
       auto lineFat = std::string(header.length(), '=') + '\n';
       table << lineFat;
       std::cout << table.str();
@@ -127,6 +153,7 @@ class ProgramMetrics : public Program
   struct OptionsStruct {
     bool jsonOut = false;
     bool csvOut = false;
+    bool monitoring = false;
   } mOptions;
 };
 
