@@ -5,6 +5,7 @@ include(CMakeFindDependencyMacro)
 
 set(Common_CMAKE_DIR @Common_DIR@)
 set(Configuration_CMAKE_DIR @Configuration_DIR@)
+set(Monitoring_CMAKE_DIR @Monitoring_DIR@)
 set(InfoLogger_CMAKE_DIR @InfoLogger_ROOT@)
 
 if(NOT APPLE)
@@ -21,6 +22,7 @@ endif()
 
 find_dependency(Common CONFIG HINTS ${Common_CMAKE_DIR})
 find_dependency(Configuration CONFIG HINTS ${Configuration_CMAKE_DIR})
+find_dependency(Monitoring CONFIG HINTS ${Monitoring_CMAKE_DIR})
 find_dependency(InfoLogger CONFIG HINTS ${InfoLogger_CMAKE_DIR})
 
 # find package must be used as Common already looks for boost and set Boost_FOUND
