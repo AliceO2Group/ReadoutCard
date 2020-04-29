@@ -35,6 +35,7 @@ struct CardDescriptor {
   PciId pciId;
   PciAddress pciAddress;
   int32_t numaNode;
+  int sequenceId;
 };
 
 } // namespace roc

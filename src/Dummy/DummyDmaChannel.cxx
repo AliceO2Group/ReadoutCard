@@ -27,7 +27,7 @@ namespace
 {
 CardDescriptor makeDummyDescriptor()
 {
-  return { CardType::Dummy, ChannelFactory::getDummySerialId(), PciId{ "dummy", "dummy" }, PciAddress{ 0, 0, 0 }, -1 };
+  return { CardType::Dummy, ChannelFactory::getDummySerialId(), PciId{ "dummy", "dummy" }, PciAddress{ 0, 0, 0 }, -1, -1 };
 }
 
 constexpr size_t TRANSFER_QUEUE_CAPACITY = 16;
