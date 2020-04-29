@@ -71,6 +71,11 @@ class RocPciDevice
     return mDescriptor.serialId;
   }
 
+  int getSequenceId() const
+  {
+    return mDescriptor.sequenceId;
+  }
+
   std::shared_ptr<Pda::PdaBar> getBar(int barIndex)
   {
     if (barIndex == 0) {

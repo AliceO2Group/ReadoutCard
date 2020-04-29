@@ -67,7 +67,7 @@ PciAddress addressFromDevice(PciDevice* pciDevice)
 
 CardDescriptor defaultDescriptor()
 {
-  return { CardType::Unknown, SerialId(-1, 0), { "unknown", "unknown" }, PciAddress(0, 0, 0), -1 };
+  return { CardType::Unknown, SerialId(-1, 0), { "unknown", "unknown" }, PciAddress(0, 0, 0), -1, -1 };
 }
 } // Anonymous namespace
 
@@ -91,6 +91,7 @@ RocPciDevice::~RocPciDevice()
 
 void RocPciDevice::initWithSerialId(const SerialId& serialId)
 {
+  int sequenceCounter = 0;
   try {
     for (const auto& typedPciDevice : Pda::PdaDevice::getPciDevices()) {
       PciDevice* pciDevice = typedPciDevice.pciDevice;
@@ -112,9 +113,10 @@ void RocPciDevice::initWithSerialId(const SerialId& serialId)
 
       if (serial == serialId.getSerial() && endpoint == serialId.getEndpoint()) {
         mPciDevice = pciDevice;
-        mDescriptor = CardDescriptor{ type.cardType, serialId, type.pciId, addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice) };
+        mDescriptor = CardDescriptor{ type.cardType, serialId, type.pciId, addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice), sequenceCounter };
         return;
       }
+      sequenceCounter++;
     }
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not find card"));
   } catch (boost::exception& e) {
@@ -126,6 +128,7 @@ void RocPciDevice::initWithSerialId(const SerialId& serialId)
 
 void RocPciDevice::initWithAddress(const PciAddress& address)
 {
+  int sequenceCounter = 0;
   try {
     for (const auto& typedPciDevice : Pda::PdaDevice::getPciDevices()) {
       PciDevice* pciDevice = typedPciDevice.pciDevice;
@@ -146,9 +149,10 @@ void RocPciDevice::initWithAddress(const PciAddress& address)
         endpoint = type.getEndpoint(mPdaBar0);
 
         mPciDevice = pciDevice;
-        mDescriptor = CardDescriptor{ type.cardType, SerialId{ serial, endpoint }, type.pciId, address, PciDevice_getNumaNode(pciDevice) };
+        mDescriptor = CardDescriptor{ type.cardType, SerialId{ serial, endpoint }, type.pciId, address, PciDevice_getNumaNode(pciDevice), sequenceCounter };
         return;
       }
+      sequenceCounter++;
     }
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not find card"));
   } catch (boost::exception& e) {
@@ -181,7 +185,7 @@ void RocPciDevice::initWithSequenceNumber(const PciSequenceNumber& sequenceNumbe
         endpoint = type.getEndpoint(mPdaBar0);
 
         mPciDevice = pciDevice;
-        mDescriptor = CardDescriptor{ type.cardType, SerialId{ serial, endpoint }, type.pciId, addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice) };
+        mDescriptor = CardDescriptor{ type.cardType, SerialId{ serial, endpoint }, type.pciId, addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice), sequenceCounter };
         return;
       }
       sequenceCounter++;
@@ -196,6 +200,7 @@ void RocPciDevice::initWithSequenceNumber(const PciSequenceNumber& sequenceNumbe
 
 std::vector<CardDescriptor> RocPciDevice::findSystemDevices()
 {
+  int sequenceCounter = 0;
   std::vector<CardDescriptor> cards;
   for (const auto& typedPciDevice : Pda::PdaDevice::getPciDevices()) {
     PciDevice* pciDevice = typedPciDevice.pciDevice;
@@ -218,10 +223,11 @@ std::vector<CardDescriptor> RocPciDevice::findSystemDevices()
     endpoint = type.getEndpoint(pdaBar0);
 
     try {
-      cards.push_back(CardDescriptor{ type.cardType, SerialId{ serial, endpoint }, type.pciId, addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice) });
+      cards.push_back(CardDescriptor{ type.cardType, SerialId{ serial, endpoint }, type.pciId, addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice), sequenceCounter });
     } catch (boost::exception& e) {
       std::cout << boost::diagnostic_information(e);
     }
+    sequenceCounter++;
   }
   return cards;
 }
