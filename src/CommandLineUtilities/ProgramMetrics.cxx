@@ -104,14 +104,15 @@ class ProgramMetrics : public Program
       uint32_t totalPacketsPerSecond = bar2->getTotalPacketsPerSecond(0);
 
       if (mOptions.monitoring) {
-        monitoring->send(Metric{ std::to_string(i), "card" }
-                           .addValue(CardType::toString(card.cardType), "type")
+        monitoring->send(Metric{ "card" }
                            .addValue(card.pciAddress.toString(), "pciAddress")
                            .addValue(temperature, "temperature")
                            .addValue(dropped, "droppedPackets")
                            .addValue(ctpClock, "ctpClock")
                            .addValue(localClock, "localClock")
-                           .addValue((int)totalPacketsPerSecond, "totalPacketsPerSecond"));
+                           .addValue((int)totalPacketsPerSecond, "totalPacketsPerSecond")
+                           .addTag(tags::Key::ID, i)
+                           .addTag(tags::Key::Type, tags::Value::CRU));
 
       } else if (mOptions.jsonOut) {
         pt::ptree cardNode;

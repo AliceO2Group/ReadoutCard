@@ -110,11 +110,14 @@ class ProgramStatus : public Program
 
       /* GENERAL PARAMETERS */
       if (mOptions.monitoring) {
-        monitoring->send(Metric{ cardIdString, "CRORC" }
+        monitoring->send(Metric{ "CRORC" }
+                           .addValue(card.pciAddress.toString(), "pciAddress")
                            .addValue(qsfpEnabled, "qsfp")
                            .addValue(offset, "offset")
                            .addValue(timeFrameDetectionEnabled, "timeFrameDetection")
-                           .addValue(reportInfo.timeFrameLength, "timeFrameLength"));
+                           .addValue(reportInfo.timeFrameLength, "timeFrameLength")
+                           .addTag(tags::Key::ID, card.sequenceId)
+                           .addTag(tags::Key::Type, tags::Value::CRORC));
       } else if (mOptions.jsonOut) {
         root.put("qsfp", qsfpEnabled);
         root.put("offset", offset);
@@ -122,6 +125,7 @@ class ProgramStatus : public Program
         root.put("timeFrameLength", reportInfo.timeFrameLength);
       } else if (mOptions.csvOut) {
         auto csvLine = std::string(",,,") + qsfpEnabled + "," + offset + "," + timeFrameDetectionEnabled + "," + std::to_string(reportInfo.timeFrameLength) + "\n";
+
         std::cout << csvLine;
       } else {
         std::cout << "-----------------------------" << std::endl;
@@ -142,9 +146,12 @@ class ProgramStatus : public Program
         float opticalPower = link.opticalPower;
 
         if (mOptions.monitoring) {
-          monitoring->send(Metric{ id, "link" }
+          monitoring->send(Metric{ "link" }
+                             .addValue(card.pciAddress.toString(), "pciAddress")
                              .addValue(linkStatus, "status")
-                             .addValue(opticalPower, "opticalPower"));
+                             .addValue(opticalPower, "opticalPower")
+                             .addTag(tags::Key::CRORC, card.sequenceId)
+                             .addTag(tags::Key::ID, id));
         } else if (mOptions.jsonOut) {
           pt::ptree linkNode;
 
@@ -188,10 +195,13 @@ class ProgramStatus : public Program
 
       /* GENERAL PARAMETERS */
       if (mOptions.monitoring) {
-        monitoring->send(Metric{ cardIdString, "CRU" }
+        monitoring->send(Metric{ "CRU" }
+                           .addValue(card.pciAddress.toString(), "pciAddress")
                            .addValue(clock, "clock")
                            .addValue(offset, "offset")
-                           .addValue(userLogic, "userLogic"));
+                           .addValue(userLogic, "userLogic")
+                           .addTag(tags::Key::ID, card.sequenceId)
+                           .addTag(tags::Key::Type, tags::Value::CRU));
       } else if (mOptions.jsonOut) {
         root.put("clock", clock);
         root.put("offset", offset);
@@ -249,7 +259,8 @@ class ProgramStatus : public Program
         float opticalPower = link.opticalPower;
 
         if (mOptions.monitoring) {
-          monitoring->send(Metric{ globalId, "link" }
+          monitoring->send(Metric{ "link" }
+                             .addValue(card.pciAddress.toString(), "pciAddress")
                              .addValue(gbtTxRxMode, "gbtMode")
                              .addValue(loopback, "loopback")
                              .addValue(gbtMux, "gbtMux")
@@ -258,7 +269,9 @@ class ProgramStatus : public Program
                              .addValue(rxFreq, "rxFreq")
                              .addValue(txFreq, "txFreq")
                              .addValue(linkStatus, "status")
-                             .addValue(opticalPower, "opticalPower"));
+                             .addValue(opticalPower, "opticalPower")
+                             .addTag(tags::Key::CRU, card.sequenceId)
+                             .addTag(tags::Key::ID, globalId));
         } else if (mOptions.jsonOut) {
           pt::ptree linkNode;
 
