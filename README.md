@@ -365,6 +365,25 @@ and firmware version.
 ### roc-metrics
 Outputs metrics for the ReadoutCards.
 
+#### Monitoring metrics
+
+To directly send metrics to the Alice O2 Monitoring library, the argument `--monitoring` is necessary.
+
+###### Metric: `"card"`
+
+| Value name                | Value | type   |
+| ------------------------- | ----- | ------ |
+| `"temperature"`           | -     | double |
+| `"droppedPackets"`        | -     | int    |
+| `"ctpClock"`              | -     | double |
+| `"localClock"`            | -     | double |
+| `"totalPacketsPerSecond"` | -     | int    |
+
+| Tag key            | Value            |
+| ------------------ | ---------------- |
+| `tags::Key::ID`    | ID of the card   |
+| `tags::Key::Type`  | Type of the card |
+
 ### roc-reg-[read, read-range, write]
 Writes and reads registers to/from a card's BAR. 
 By convention, registers are 32-bit unsigned integers.
@@ -384,9 +403,78 @@ Run a Python script that can use a simple interface to use the library.
 Setup hugetlbfs directories & mounts. If using hugepages, should be run once per boot.
 
 ### roc-status
-Reports status of the card's configuration. Only argument is the card's PCI Address or serial number. Currently only implemented
-for the CRU.
+Reports status of the card's configuration.
 
+#### Monitoring status
+
+To directly send metrics from `roc-status` to the Alice O2 Monitoring library, the argument `--monitoring` is necessary. The
+metric format for the CRORC and the CRU is different, as different parameters are relevant for each card type.
+
+##### CRORC
+
+###### Metric: `"CRORC"`
+
+| Value name             | Value                    | Type   |
+| ---------------------- | ------------------------ | ------ |
+| `"pciAddress"`         | -                        | string |
+| `"qsfp"`               | "Enabled" or "Disabled"  | string |
+| `"offset"`             | "Dynamic" or "Fixed"     | string |
+| `"timeFrameDetection"` | "Enabled" or "Disabled"  | string |
+| `"timeFrameLength"`    | -                        | int    |
+
+| Tag key           | Value                |
+| ----------------- | -------------------- |
+| `tags::Key::ID`   | ID of the card       | 
+| `tags::Key::Type` | `tags::Value::CRORC` |
+
+###### Metric: `"link"`
+
+| Value name       | Value          | Type   |
+| ---------------- | -------------- | ------ |
+| `"pciAddress"`   | -              | string |
+| `"status"`       | "UP" or "DOWN" | string |
+| `"opticalPower"` | -              | double |
+
+| Tag key            | Value           |
+| ------------------ | --------------- |
+| `tags::Key::CRORC` | ID of the CRORC |
+| `tags::Key::ID`    | ID of the link  |
+
+##### CRU
+
+###### Metric: `"CRU"`
+
+| Value name     | Value                   | Type   | 
+| -------------- | ----------------------- | ------ | 
+| `"pciAddress"` | -                       | string |
+| `"clock"`      | "TTC" or "local"        | string |
+| `"offset"`     | "Dynamic" or "Fixed"    | string |
+| `"userLogic"`  | "Enabled" or "Disabled" | string |
+
+| Tag key           | Value              |
+| ----------------- | ------------------ |
+| `tags::Key::ID`   | ID of the card     |
+| `tags::Key::Type` | `tags::Value::CRU` |
+
+###### Metric: `"link"`
+
+| Value name       | Value                                                   | Type   | 
+| ---------------- | ------------------------------------------------------- | ------ | 
+| `"pciAddress"`   | -                                                       | string |
+| `"gbtMode"`      | "GBT/GBT" or "GBT/WB"                                   | string |
+| `"loopback"`     | "Enabled" or "None"                                     | string |
+| `"gbtMux"`       | "DDG", "SWT", "TTC:CTP", "TTC:PATTERN", or "TTC:MIDTRG" | string |
+| `"datapathMode"` | "PACKET" or "CONTINUOUS"                                | string |
+| `"datapath"`     | "Enabled" or "Disabled"                                 | string |
+| `"rxFreq"`       | -                                                       | double |
+| `"txFreq"`       | -                                                       | double |
+| `"status"`       | "UP" or "DOWN"                                          | double |
+| `"opticalPower"` | -                                                       | double |
+
+| Tag key          | Value          |
+| ---------------- | ---------------|
+| `tags::Key::CRU` | ID of the CRU  |
+| `tags::Key::ID`  | ID of the link |
 
 Exceptions
 -------------------
