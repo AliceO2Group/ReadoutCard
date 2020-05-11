@@ -27,7 +27,8 @@ FirmwareChecker::FirmwareChecker() : mCompatibleFirmwareList({ /* CRU */
                                                                { "d458317e", "v3.5.2" },
                                                                { "6baf11da", "v3.5.1" },
                                                                /* CRORC */
-                                                               { "72cdb92", "v2.4.1" } })
+                                                               { "72cdb92", "v2.4.1" },
+                                                               { "8e3a98e", "v2.6.1" } })
 {
 }
 
