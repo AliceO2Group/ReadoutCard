@@ -468,7 +468,7 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | `"datapath"`     | "Enabled" or "Disabled"                                 | string |
 | `"rxFreq"`       | -                                                       | double |
 | `"txFreq"`       | -                                                       | double |
-| `"status"`       | "UP", "DOWN" or "UP (was DOWN)"                         | double |
+| `"status"`       | "UP", "DOWN" or "UP (was DOWN)"                         | string |
 | `"opticalPower"` | -                                                       | double |
 
 | Tag key          | Value          |
