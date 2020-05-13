@@ -28,8 +28,8 @@ namespace Cru
 {
 
 enum LinkStatus {
-  Up,
   Down,
+  Up,
   UpWasDown
 };
 

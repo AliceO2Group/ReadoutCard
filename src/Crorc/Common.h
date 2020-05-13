@@ -24,8 +24,8 @@ namespace Crorc
 {
 
 enum LinkStatus {
-  Up,
   Down,
+  Up,
 };
 
 struct Link {
