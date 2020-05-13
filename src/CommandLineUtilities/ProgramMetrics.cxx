@@ -81,7 +81,6 @@ class ProgramMetrics : public Program
     std::unique_ptr<Monitoring> monitoring;
     if (mOptions.monitoring) {
       monitoring = MonitoringFactory::Get(getMonitoringUri());
-      monitoring->addGlobalTag(tags::Key::Subsystem, tags::Value::CRU);
     }
 
     // Used for the JSON output
@@ -111,7 +110,7 @@ class ProgramMetrics : public Program
                            .addValue(ctpClock, "ctpClock")
                            .addValue(localClock, "localClock")
                            .addValue((int)totalPacketsPerSecond, "totalPacketsPerSecond")
-                           .addTag(tags::Key::ID, i)
+                           .addTag(tags::Key::ID, card.sequenceId)
                            .addTag(tags::Key::Type, tags::Value::CRU));
 
       } else if (mOptions.jsonOut) {

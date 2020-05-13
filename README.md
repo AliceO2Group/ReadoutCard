@@ -417,9 +417,9 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | Value name             | Value                    | Type   |
 | ---------------------- | ------------------------ | ------ |
 | `"pciAddress"`         | -                        | string |
-| `"qsfp"`               | "Enabled" or "Disabled"  | string |
-| `"offset"`             | "Dynamic" or "Fixed"     | string |
-| `"timeFrameDetection"` | "Enabled" or "Disabled"  | string |
+| `"qsfp"`               | 0/1 (Disabled/Enabled)   | int    |
+| `"dynamicOffset"`      | 0/1 (Disabled/Enabled)   | int    |
+| `"timeFrameDetection"` | 0/1 (Disabled/Enabled)   | int    |
 | `"timeFrameLength"`    | -                        | int    |
 
 | Tag key           | Value                |
@@ -429,27 +429,28 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 
 ###### Metric: `"link"`
 
-| Value name       | Value          | Type   |
-| ---------------- | -------------- | ------ |
-| `"pciAddress"`   | -              | string |
-| `"status"`       | "UP" or "DOWN" | string |
-| `"opticalPower"` | -              | double |
+| Value name       | Value              | Type   |
+| ---------------- | --------------     | ------ |
+| `"pciAddress"`   | -                  | string |
+| `"status"`       | 0/1 (DOWN/UP)      | int    |
+| `"opticalPower"` | -                  | double |
 
-| Tag key            | Value           |
-| ------------------ | --------------- |
-| `tags::Key::CRORC` | ID of the CRORC |
-| `tags::Key::ID`    | ID of the link  |
+| Tag key            | Value                |
+| ------------------ | -------------------- |
+| `tags::Key::CRORC` | ID of the CRORC      |
+| `tags::Key::ID`    | ID of the link       |
+| `tags::Key::Type`  | `tags::Value::CRORC` |
 
 ##### CRU
 
 ###### Metric: `"CRU"`
 
-| Value name     | Value                   | Type   | 
-| -------------- | ----------------------- | ------ | 
-| `"pciAddress"` | -                       | string |
-| `"clock"`      | "TTC" or "local"        | string |
-| `"offset"`     | "Dynamic" or "Fixed"    | string |
-| `"userLogic"`  | "Enabled" or "Disabled" | string |
+| Value name        | Value                   | Type   | 
+| ----------------- | ----------------------- | ------ | 
+| `"pciAddress"`    | -                       | string |
+| `"clock"`         | "TTC" or "Local"        | string |
+| `"dynamicOffset"` | 0/1 (Disabled/Enabled)  | int    |
+| `"userLogic"`     | 0/1 (Disabled/Enabled)  | int    |
 
 | Tag key           | Value              |
 | ----------------- | ------------------ |
@@ -462,19 +463,20 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | ---------------- | ------------------------------------------------------- | ------ | 
 | `"pciAddress"`   | -                                                       | string |
 | `"gbtMode"`      | "GBT/GBT" or "GBT/WB"                                   | string |
-| `"loopback"`     | "Enabled" or "None"                                     | string |
+| `"loopback"`     | 0/1 (Enabled/Disabled)                                  | int    |
 | `"gbtMux"`       | "DDG", "SWT", "TTC:CTP", "TTC:PATTERN", or "TTC:MIDTRG" | string |
 | `"datapathMode"` | "PACKET" or "CONTINUOUS"                                | string |
-| `"datapath"`     | "Enabled" or "Disabled"                                 | string |
+| `"datapath"`     | 0/1 (Disabled/Enabled)                                  | int    |
 | `"rxFreq"`       | -                                                       | double |
 | `"txFreq"`       | -                                                       | double |
-| `"status"`       | "UP", "DOWN" or "UP (was DOWN)"                         | string |
+| `"status"`       | 0/1/2 (DOWN/UP/UP was DOWN)                             | int    |
 | `"opticalPower"` | -                                                       | double |
 
-| Tag key          | Value          |
-| ---------------- | ---------------|
-| `tags::Key::CRU` | ID of the CRU  |
-| `tags::Key::ID`  | ID of the link |
+| Tag key           | Value              |
+| ----------------- | ------------------ |
+| `tags::Key::CRU`  | ID of the CRU      |
+| `tags::Key::ID`   | ID of the link     |
+| `tags::Key::Type` | `tags::Value::CRU` |
 
 Exceptions
 -------------------

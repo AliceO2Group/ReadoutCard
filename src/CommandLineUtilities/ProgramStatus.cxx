@@ -82,7 +82,6 @@ class ProgramStatus : public Program
     std::unique_ptr<Monitoring> monitoring;
     if (mOptions.monitoring) {
       monitoring = MonitoringFactory::Get(getMonitoringUri());
-      monitoring->addGlobalTag(tags::Key::Subsystem, tags::Value::CRU);
     }
 
     if (cardType == CardType::type::Crorc) {
@@ -112,9 +111,9 @@ class ProgramStatus : public Program
       if (mOptions.monitoring) {
         monitoring->send(Metric{ "CRORC" }
                            .addValue(card.pciAddress.toString(), "pciAddress")
-                           .addValue(qsfpEnabled, "qsfp")
-                           .addValue(offset, "offset")
-                           .addValue(timeFrameDetectionEnabled, "timeFrameDetection")
+                           .addValue(reportInfo.qsfpEnabled, "qsfp")
+                           .addValue(reportInfo.dynamicOffset, "dynamicOffset")
+                           .addValue(reportInfo.timeFrameDetectionEnabled, "timeFrameDetection")
                            .addValue(reportInfo.timeFrameLength, "timeFrameLength")
                            .addTag(tags::Key::ID, card.sequenceId)
                            .addTag(tags::Key::Type, tags::Value::CRORC));
@@ -148,10 +147,11 @@ class ProgramStatus : public Program
         if (mOptions.monitoring) {
           monitoring->send(Metric{ "link" }
                              .addValue(card.pciAddress.toString(), "pciAddress")
-                             .addValue(linkStatus, "status")
+                             .addValue(link.status, "status")
                              .addValue(opticalPower, "opticalPower")
                              .addTag(tags::Key::CRORC, card.sequenceId)
-                             .addTag(tags::Key::ID, id));
+                             .addTag(tags::Key::ID, id)
+                             .addTag(tags::Key::Type, tags::Value::CRORC));
         } else if (mOptions.jsonOut) {
           pt::ptree linkNode;
 
@@ -198,8 +198,8 @@ class ProgramStatus : public Program
         monitoring->send(Metric{ "CRU" }
                            .addValue(card.pciAddress.toString(), "pciAddress")
                            .addValue(clock, "clock")
-                           .addValue(offset, "offset")
-                           .addValue(userLogic, "userLogic")
+                           .addValue(reportInfo.dynamicOffset, "dynamicOffset")
+                           .addValue(reportInfo.userLogicEnabled, "userLogic")
                            .addTag(tags::Key::ID, card.sequenceId)
                            .addTag(tags::Key::Type, tags::Value::CRU));
       } else if (mOptions.jsonOut) {
@@ -262,16 +262,17 @@ class ProgramStatus : public Program
           monitoring->send(Metric{ "link" }
                              .addValue(card.pciAddress.toString(), "pciAddress")
                              .addValue(gbtTxRxMode, "gbtMode")
-                             .addValue(loopback, "loopback")
+                             .addValue(link.loopback, "loopback")
                              .addValue(gbtMux, "gbtMux")
                              .addValue(datapathMode, "datapathMode")
-                             .addValue(enabled, "datapath")
+                             .addValue(link.enabled, "datapath")
                              .addValue(rxFreq, "rxFreq")
                              .addValue(txFreq, "txFreq")
-                             .addValue(linkStatus, "status")
+                             .addValue(link.stickyBit, "status")
                              .addValue(opticalPower, "opticalPower")
                              .addTag(tags::Key::CRU, card.sequenceId)
-                             .addTag(tags::Key::ID, globalId));
+                             .addTag(tags::Key::ID, globalId)
+                             .addTag(tags::Key::Type, tags::Value::CRU));
         } else if (mOptions.jsonOut) {
           pt::ptree linkNode;
 
