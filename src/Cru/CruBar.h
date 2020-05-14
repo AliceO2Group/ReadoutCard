@@ -92,6 +92,7 @@ class CruBar final : public BarInterfaceBase
   bool getDebugModeEnabled();
 
   void toggleUserLogicLink(bool mUserLogicEnabled);
+  boost::optional<std::string> getUserLogicVersion();
 
   Cru::OnuStatus reportOnuStatus();
   std::map<int, Link> initializeLinkMap();

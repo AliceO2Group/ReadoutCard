@@ -910,5 +910,11 @@ void CruBar::toggleUserLogicLink(bool userLogicEnabled)
   datapathWrapper.setDatapathMode(userLogicLink, mDatapathMode);
 }
 
+boost::optional<std::string> CruBar::getUserLogicVersion()
+{
+  uint32_t firmwareHash = readRegister(Cru::Registers::USERLOGIC_GIT_HASH.index);
+  return (boost::format("%x") % firmwareHash).str();
+}
+
 } // namespace roc
 } // namespace AliceO2

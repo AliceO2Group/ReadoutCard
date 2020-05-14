@@ -18,6 +18,7 @@
 #include <sstream>
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
+#include "Cru/CruBar.h"
 #include "RocPciDevice.h"
 #include "ReadoutCard/ChannelFactory.h"
 #include "ReadoutCard/FirmwareChecker.h"
@@ -54,9 +55,9 @@ class ProgramListCards : public Program
   {
     std::ostringstream table;
 
-    auto formatHeader = "  %-3s %-6s %-10s %-8s %-10s %-5s %-12s\n";
-    auto formatRow = "  %-3s %-6s %-10s %-8s %-10s %-5s %-12s\n";
-    auto header = (boost::format(formatHeader) % "#" % "Type" % "PCI Addr" % "Serial" % "Endpoint" % "NUMA" % "FW Version").str();
+    auto formatHeader = "  %-3s %-6s %-10s %-8s %-10s %-5s %-12s %-12s\n";
+    auto formatRow = "  %-3s %-6s %-10s %-8s %-10s %-5s %-12s %-12s\n";
+    auto header = (boost::format(formatHeader) % "#" % "Type" % "PCI Addr" % "Serial" % "Endpoint" % "NUMA" % "FW Version" % "UL Version").str();
     auto lineFat = std::string(header.length(), '=') + '\n';
     auto lineThin = std::string(header.length(), '-') + '\n';
 
@@ -73,11 +74,15 @@ class ProgramListCards : public Program
     for (const auto& card : cardsFound) {
       const std::string na = "n/a";
       std::string firmware = na;
+      std::string userLogicVersion = na;
       std::string numaNode = std::to_string(card.numaNode);
       try {
         Parameters params2 = Parameters::makeParameters(card.pciAddress, 2);
         auto bar2 = ChannelFactory().getBar(params2);
         firmware = bar2->getFirmwareInfo().value_or(na);
+        if (card.cardType == CardType::type::Cru) {
+          userLogicVersion = std::dynamic_pointer_cast<CruBar>(bar2)->getUserLogicVersion().value_or(na);
+        }
         // Check if the firmware is tagged
         firmware = FirmwareChecker().resolveFirmwareTag(firmware);
       } catch (const Exception& e) {
@@ -97,7 +102,7 @@ class ProgramListCards : public Program
 
       if (!mOptions.jsonOut) {
         auto format = boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciAddress.toString() % serial %
-                      endpoint % card.numaNode % firmware;
+                      endpoint % card.numaNode % firmware % userLogicVersion;
 
         table << format;
         std::cout << table.str();
@@ -113,6 +118,7 @@ class ProgramListCards : public Program
         cardNode.put("endpoint", endpoint);
         cardNode.put("numa", std::to_string(card.numaNode));
         cardNode.put("firmware", firmware);
+        cardNode.put("userLogicVersion", userLogicVersion);
 
         // add the card node to the tree
         root.add_child(std::to_string(i), cardNode);
