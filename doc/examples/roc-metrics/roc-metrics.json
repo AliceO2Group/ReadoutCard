@@ -1,0 +1,38 @@
+{
+    "0": {
+        "type": "CRU",
+        "pciAddress": "af:00.0",
+        "temperature": "40.89",
+        "droppedPackets": "0",
+        "ctpClock": "0.77",
+        "localClock": "240.47",
+        "totalPacketsPerSecond": "0"
+    },
+    "1": {
+        "type": "CRU",
+        "pciAddress": "3b:00.0",
+        "temperature": "40.89",
+        "droppedPackets": "79307",
+        "ctpClock": "1.14",
+        "localClock": "240.47",
+        "totalPacketsPerSecond": "0"
+    },
+    "2": {
+        "type": "CRU",
+        "pciAddress": "3c:00.0",
+        "temperature": "40.89",
+        "droppedPackets": "0",
+        "ctpClock": "1.14",
+        "localClock": "240.47",
+        "totalPacketsPerSecond": "0"
+    },
+    "3": {
+        "type": "CRU",
+        "pciAddress": "b0:00.0",
+        "temperature": "40.89",
+        "droppedPackets": "0",
+        "ctpClock": "0.77",
+        "localClock": "240.47",
+        "totalPacketsPerSecond": "0"
+    }
+}

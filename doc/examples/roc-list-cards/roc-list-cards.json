@@ -1,0 +1,47 @@
+{
+    "0": {
+        "type": "CRORC",
+        "pciAddress": "d8:00.0",
+        "serial": "942",
+        "endpoint": "0",
+        "numa": "1",
+        "firmware": "v2.6.1",
+        "userLogicVersion": "n\/a"
+    },
+    "1": {
+        "type": "CRU",
+        "pciAddress": "af:00.0",
+        "serial": "10243",
+        "endpoint": "0",
+        "numa": "1",
+        "firmware": "51882687",
+        "userLogicVersion": "51882687"
+    },
+    "2": {
+        "type": "CRU",
+        "pciAddress": "3b:00.0",
+        "serial": "10241",
+        "endpoint": "0",
+        "numa": "0",
+        "firmware": "v3.5.2",
+        "userLogicVersion": "d458317e"
+    },
+    "3": {
+        "type": "CRU",
+        "pciAddress": "3c:00.0",
+        "serial": "10241",
+        "endpoint": "1",
+        "numa": "0",
+        "firmware": "v3.5.2",
+        "userLogicVersion": "d458317e"
+    },
+    "4": {
+        "type": "CRU",
+        "pciAddress": "b0:00.0",
+        "serial": "10243",
+        "endpoint": "1",
+        "numa": "1",
+        "firmware": "51882687",
+        "userLogicVersion": "51882687"
+    }
+}

@@ -1,0 +1,137 @@
+{
+    "clock": "Local",
+    "offset": "Fixed",
+    "userLogic": "Enabled",
+    "0": {
+        "gbtMode": "GBT\/GBT",
+        "loopback": "None",
+        "gbtMux": "SWT",
+        "datapathMode": "Continuous",
+        "datapath": "Disabled",
+        "rxFreq": "240.47",
+        "txFreq": "240.47",
+        "status": "UP",
+        "opticalPower": "486.40"
+    },
+    "1": {
+        "gbtMode": "GBT\/GBT",
+        "loopback": "None",
+        "gbtMux": "TTC:CTP",
+        "datapathMode": "Continuous",
+        "datapath": "Disabled",
+        "rxFreq": "240.47",
+        "txFreq": "240.47",
+        "status": "UP",
+        "opticalPower": "563.80"
+    },
+    "2": {
+        "gbtMode": "GBT\/GBT",
+        "loopback": "None",
+        "gbtMux": "TTC:CTP",
+        "datapathMode": "Continuous",
+        "datapath": "Disabled",
+        "rxFreq": "240.47",
+        "txFreq": "240.47",
+        "status": "UP",
+        "opticalPower": "637.70"
+    },
+    "3": {
+        "gbtMode": "GBT\/GBT",
+        "loopback": "None",
+        "gbtMux": "TTC:CTP",
+        "datapathMode": "Continuous",
+        "datapath": "Disabled",
+        "rxFreq": "240.47",
+        "txFreq": "240.47",
+        "status": "UP",
+        "opticalPower": "596.40"
+    },
+    "4": {
+        "gbtMode": "GBT\/GBT",
+        "loopback": "Enabled",
+        "gbtMux": "TTC:CTP",
+        "datapathMode": "Packet",
+        "datapath": "Enabled",
+        "rxFreq": "240.47",
+        "txFreq": "240.47",
+        "status": "UP",
+        "opticalPower": "689.60"
+    },
+    "5": {
+        "gbtMode": "GBT\/GBT",
+        "loopback": "Enabled",
+        "gbtMux": "TTC:CTP",
+        "datapathMode": "Packet",
+        "datapath": "Enabled",
+        "rxFreq": "240.47",
+        "txFreq": "240.47",
+        "status": "UP",
+        "opticalPower": "758.20"
+    },
+    "6": {
+        "gbtMode": "GBT\/GBT",
+        "loopback": "None",
+        "gbtMux": "TTC:CTP",
+        "datapathMode": "Continuous",
+        "datapath": "Disabled",
+        "rxFreq": "240.47",
+        "txFreq": "240.47",
+        "status": "UP",
+        "opticalPower": "665.10"
+    },
+    "7": {
+        "gbtMode": "GBT\/GBT",
+        "loopback": "None",
+        "gbtMux": "TTC:CTP",
+        "datapathMode": "Continuous",
+        "datapath": "Disabled",
+        "rxFreq": "240.47",
+        "txFreq": "240.47",
+        "status": "UP",
+        "opticalPower": "522.80"
+    },
+    "8": {
+        "gbtMode": "GBT\/GBT",
+        "loopback": "None",
+        "gbtMux": "TTC:CTP",
+        "datapathMode": "Continuous",
+        "datapath": "Disabled",
+        "rxFreq": "240.47",
+        "txFreq": "240.47",
+        "status": "UP",
+        "opticalPower": "810.40"
+    },
+    "9": {
+        "gbtMode": "GBT\/GBT",
+        "loopback": "None",
+        "gbtMux": "TTC:CTP",
+        "datapathMode": "Continuous",
+        "datapath": "Disabled",
+        "rxFreq": "240.47",
+        "txFreq": "240.47",
+        "status": "UP",
+        "opticalPower": "550.00"
+    },
+    "10": {
+        "gbtMode": "GBT\/GBT",
+        "loopback": "Enabled",
+        "gbtMux": "TTC:CTP",
+        "datapathMode": "Packet",
+        "datapath": "Enabled",
+        "rxFreq": "240.47",
+        "txFreq": "240.47",
+        "status": "UP",
+        "opticalPower": "732.80"
+    },
+    "11": {
+        "gbtMode": "GBT\/GBT",
+        "loopback": "None",
+        "gbtMux": "TTC:CTP",
+        "datapathMode": "Continuous",
+        "datapath": "Disabled",
+        "rxFreq": "240.47",
+        "txFreq": "240.47",
+        "status": "UP",
+        "opticalPower": "260.70"
+    }
+}
