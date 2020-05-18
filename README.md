@@ -359,11 +359,27 @@ Reads from the card's flash memory.
 Currently only supports the C-RORC.
 
 ### roc-list-cards
-Lists the readout cards present on the system, along with their type, PCI address, vendor ID, device ID, serial number, 
-and firmware version.
+Lists the readout cards present on the system along with information documented in the following table. Every entry represents
+an endpoint. For every physical card present in the system, two endpoint entries should be extended for the CRU and one for the
+CRORC.
+
+| Parameter    | Description                                                                           |
+| ------------ | ------------------------------------------------------------------------------------- |
+| `#`          | Sequence ID. Used for addressing within `ReadoutCard` (int)                           |
+| `Type`       | The card type (`CRU` or `CRORC`)                                                      |
+| `PCI Addr`   | PCI address of the card                                                               |
+| `Serial`     | The serial of the card (3-5 digit int)                                                |
+| `Endpoint`   | Endpoint ID (`0/1` for a CRU, `0` for a CRORC)                                        |
+| `NUMA`       | NUMA node of the card (`0` or `1`)                                                    |
+| `FW Version` | Firmware version installed (`vx.y.z` if identified and supported, git hash otherwise) |
+| `UL Version` | User Logic version installed (git hash)                                               |
+
+Output may be in ASCII table (default), or JSON format (`--json-out` option). Example outputs can be found [here](doc/examples/roc-list-cards/).
 
 ### roc-metrics
-Outputs metrics for the ReadoutCards.
+Outputs metrics for the ReadoutCards. Output may be in an ASCII table (default), in JSON (`--json-out` option), or CSV format (`--csv-out` option). Example outputs can be found [here](doc/examples/roc-metrics/).
+
+Parameter information can be extracted from the monitoring table below.
 
 #### Monitoring metrics
 
@@ -403,7 +419,10 @@ Run a Python script that can use a simple interface to use the library.
 Setup hugetlbfs directories & mounts. If using hugepages, should be run once per boot.
 
 ### roc-status
-Reports status of the card's configuration.
+Reports status on the card's global and per-link configuration. Output may be in an ASCII table (default), in JSON (`--json-out` option), or CSV format (`--csv-out` option). Example outputs can be found [here](doc/examples/roc-status/).
+
+Parameter information can be extracted from the monitoring tables below. Please note that for "UP/DOWN" and "Enabled/Disabled"
+states while the monitoring format is an int (0/1), in all other formats a string representation is used.
 
 #### Monitoring status
 

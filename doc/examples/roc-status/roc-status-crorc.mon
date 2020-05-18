@@ -1,0 +1,8 @@
+2020-05-18 17:18:41	[1;49mInfluxDB backend initialized[0m
+CRORC,hostname=flp-kostas.cern.ch,name=roc-status,id=0,type=CRORC pciAddress="d8:00.0",qsfp=1i,dynamicOffset=0i,timeFrameDetection=1i,timeFrameLength=256i 1589815121114561065
+link,hostname=flp-kostas.cern.ch,name=roc-status,CRORC=0,id=0,type=CRORC pciAddress="d8:00.0",status=1i,opticalPower=0 1589815121114654200
+link,hostname=flp-kostas.cern.ch,name=roc-status,CRORC=0,id=1,type=CRORC pciAddress="d8:00.0",status=1i,opticalPower=0 1589815121114681240
+link,hostname=flp-kostas.cern.ch,name=roc-status,CRORC=0,id=2,type=CRORC pciAddress="d8:00.0",status=1i,opticalPower=0 1589815121114690458
+link,hostname=flp-kostas.cern.ch,name=roc-status,CRORC=0,id=3,type=CRORC pciAddress="d8:00.0",status=1i,opticalPower=0 1589815121114698361
+link,hostname=flp-kostas.cern.ch,name=roc-status,CRORC=0,id=4,type=CRORC pciAddress="d8:00.0",status=0i,opticalPower=0 1589815121114706030
+link,hostname=flp-kostas.cern.ch,name=roc-status,CRORC=0,id=5,type=CRORC pciAddress="d8:00.0",status=0i,opticalPower=0 1589815121114713597

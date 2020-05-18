@@ -1,0 +1,30 @@
+{
+    "qsfp": "Enabled",
+    "offset": "Fixed",
+    "timeFrameDetection": "Enabled",
+    "timeFrameLength": "256",
+    "0": {
+        "status": "UP",
+        "opticalPower": "0.00"
+    },
+    "1": {
+        "status": "UP",
+        "opticalPower": "0.00"
+    },
+    "2": {
+        "status": "UP",
+        "opticalPower": "0.00"
+    },
+    "3": {
+        "status": "UP",
+        "opticalPower": "0.00"
+    },
+    "4": {
+        "status": "DOWN",
+        "opticalPower": "0.00"
+    },
+    "5": {
+        "status": "DOWN",
+        "opticalPower": "0.00"
+    }
+}

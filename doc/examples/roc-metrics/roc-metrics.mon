@@ -1,0 +1,5 @@
+2020-05-18 11:50:57	[1;49mInfluxDB backend initialized[0m
+card,hostname=flp-kostas.cern.ch,name=roc-metrics,id=1,type=CRU pciAddress="af:00.0",temperature=40.8945,droppedPackets=0i,ctpClock=0.76817,localClock=240.471,totalPacketsPerSecond=0i 1589795457315995973
+card,hostname=flp-kostas.cern.ch,name=roc-metrics,id=2,type=CRU pciAddress="3b:00.0",temperature=40.8945,droppedPackets=79307i,ctpClock=1.14019,localClock=240.471,totalPacketsPerSecond=0i 1589795457317687156
+card,hostname=flp-kostas.cern.ch,name=roc-metrics,id=3,type=CRU pciAddress="3c:00.0",temperature=40.8945,droppedPackets=0i,ctpClock=1.14019,localClock=240.471,totalPacketsPerSecond=0i 1589795457319052138
+card,hostname=flp-kostas.cern.ch,name=roc-metrics,id=4,type=CRU pciAddress="b0:00.0",temperature=40.8945,droppedPackets=0i,ctpClock=0.76817,localClock=240.471,totalPacketsPerSecond=0i 1589795457480038339
