@@ -94,7 +94,7 @@ class ProgramListCards : public Program
 
       // Pad the serial with 0s if necessary
       // It should always be used as 3 chars to avoid conflicts with the sequence id
-      boost::format serialFormat("%03d");
+      boost::format serialFormat("%04d");
       serialFormat % std::to_string(card.serialId.getSerial());
 
       std::string serial = serialFormat.str();
