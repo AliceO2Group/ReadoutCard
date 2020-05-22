@@ -81,12 +81,13 @@ boost::optional<int32_t> CrorcBar::getSerialNumber()
     return Crorc::getSerial(*(mPdaBar.get()));
   } else {
     // Register format e.g. 0x32343932
-    // transltes to -> 2942 -> 942 (keep 3)
+    // transltes to -> 2942
     std::stringstream serialString;
 
     serialString << char(serial & 0xff)
                  << char((serial & 0xff00) >> 8)
-                 << char((serial & 0xff0000) >> 16);
+                 << char((serial & 0xff0000) >> 16)
+                 << char((serial & 0xff000000) >> 24);
 
     try {
       return std::stoi(serialString.str());

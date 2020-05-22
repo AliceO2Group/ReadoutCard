@@ -280,13 +280,14 @@ boost::optional<int32_t> CruBar::getSerialNumber()
     boost::optional<int32_t> serial = eeprom.getSerial();
     return serial;
   } else { // v3.6.3+
-    // Register format e.g. 0x343230
-    // translates to -> 024
+    // Register format e.g. 0x35343230
+    // translates to -> 0245
     std::stringstream serialString;
 
     serialString << char(serial & 0xff)
                  << char((serial & 0xff00) >> 8)
-                 << char((serial & 0xff0000) >> 16);
+                 << char((serial & 0xff0000) >> 16)
+                 << char((serial & 0xff000000) >> 24);
 
     try {
       return std::stoi(serialString.str());
