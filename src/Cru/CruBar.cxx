@@ -290,7 +290,11 @@ boost::optional<int32_t> CruBar::getSerialNumber()
                  << char((serial & 0xff000000) >> 24);
 
     try {
-      return std::stoi(serialString.str());
+      if (serialString.str().find("-") != std::string::npos) { // hack for pre production CRUs
+        return 0;
+      } else {
+        return std::stoi(serialString.str());
+      }
     } catch (...) {
       return {};
     }
