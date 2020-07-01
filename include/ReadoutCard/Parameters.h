@@ -382,7 +382,7 @@ class Parameters
   /// \return Reference to this object for chaining calls
   auto setTimeFrameDetectionEnabled(TimeFrameDetectionEnabledType value) -> Parameters&;
 
-  // on-throwing getters
+  // non-throwing getters
 
   /// Gets the AllowRejection parameter
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not

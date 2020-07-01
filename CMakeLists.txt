@@ -63,7 +63,7 @@ if(NOT APPLE)
     set(boost_python_component "python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}")
   else()
     # Backwards compatible. Can be removed once the Python3 recipe is stable
-    message(WARNING "Python 3 was not found: falling back to Python 3")
+    message(WARNING "Python 3 was not found: falling back to Python 2")
     find_package(Python2 2.7 COMPONENTS Development REQUIRED)
     set(boost_python_component "python27")
   endif()
