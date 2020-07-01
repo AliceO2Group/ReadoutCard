@@ -46,10 +46,11 @@ DummyDmaChannel::DummyDmaChannel(const Parameters& params)
 
   if (auto bufferParameters = params.getBufferParameters()) {
     // Create appropriate BufferProvider subclass
-    Visitor::apply(*bufferParameters,
-                   [&](buffer_parameters::Memory parameters) { mBufferSize = parameters.size; },
-                   [&](buffer_parameters::File parameters) { mBufferSize = parameters.size; },
-                   [&](buffer_parameters::Null) { mBufferSize = 0; });
+    Visitor::apply(
+      *bufferParameters,
+      [&](buffer_parameters::Memory parameters) { mBufferSize = parameters.size; },
+      [&](buffer_parameters::File parameters) { mBufferSize = parameters.size; },
+      [&](buffer_parameters::Null) { mBufferSize = 0; });
   } else {
     BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("DmaChannel requires buffer_parameters"));
   }

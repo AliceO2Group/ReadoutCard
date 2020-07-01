@@ -17,6 +17,7 @@
 #define ALICEO2_INCLUDE_READOUTCARD_CARDFINDER_H_
 
 #include "ReadoutCard/CardDescriptor.h"
+#include "ReadoutCard/Parameters.h"
 
 namespace AliceO2
 {
@@ -24,6 +25,8 @@ namespace roc
 {
 
 std::vector<CardDescriptor> findCards(); //Possibly extend with card types (crorc, cru)
+CardDescriptor findCard(const std::string cardId);
+CardDescriptor findCard(const Parameters::CardIdType& cardId);
 
 } // namespace roc
 } // namespace AliceO2

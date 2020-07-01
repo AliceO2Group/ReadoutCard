@@ -27,5 +27,15 @@ std::vector<CardDescriptor> findCards()
   return cards;
 }
 
+CardDescriptor findCard(const std::string cardId)
+{
+  return RocPciDevice(roc::Parameters::cardIdFromString(cardId)).getCardDescriptor();
+}
+
+CardDescriptor findCard(const Parameters::CardIdType& cardId)
+{
+  return RocPciDevice(cardId).getCardDescriptor();
+}
+
 } // namespace roc
 } // namespace AliceO2
