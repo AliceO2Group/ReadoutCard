@@ -27,7 +27,7 @@ namespace
 
 int parseSequenceNumberString(const std::string& string)
 {
-  std::regex expression("^[ \t]*#[0-9]+[ \t]*$");
+  std::regex expression("^[ \t]*#[0-7]+[ \t]*$");
   if (std::regex_search(string, expression)) {
     return stoi(string.substr(string.find('#') + 1));
   } else {
@@ -36,12 +36,28 @@ int parseSequenceNumberString(const std::string& string)
   }
 }
 
+std::string constructSequenceNumberString(const int& number)
+{
+  if (number < 0 || number > 7) {
+    BOOST_THROW_EXCEPTION(ParseException()
+                          << ErrorInfo::Message("Parsing PCI sequence number failed"));
+  }
+
+  return std::string("#" + std::to_string(number));
+}
+
 } // namespace
 
 PciSequenceNumber::PciSequenceNumber(const std::string& string)
 {
   mSequenceNumberString = string;
   mSequenceNumber = parseSequenceNumberString(string);
+}
+
+PciSequenceNumber::PciSequenceNumber(const int& number)
+{
+  mSequenceNumberString = constructSequenceNumberString(number);
+  mSequenceNumber = number;
 }
 
 std::string PciSequenceNumber::toString() const

@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE(ParametersCardIdFromString)
     BOOST_CHECK(Parameters::cardIdFromString("12345") != cardId);
   }
   {
-    Parameters::CardIdType cardId = 12345;
+    Parameters::CardIdType cardId = SerialId(12345);
     BOOST_CHECK(Parameters::cardIdFromString("42:0.0") != cardId);
     BOOST_CHECK(Parameters::cardIdFromString("12345") == cardId);
   }

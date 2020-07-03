@@ -34,6 +34,11 @@ class PciSequenceNumber
   /// \param string String of format "^#[0-9]+$"
   PciSequenceNumber(const std::string& string);
 
+  /// Constructs a PciSequenceNumber object using an int
+  /// For example: 1, 4, 0
+  /// \param number An int between 0-7
+  PciSequenceNumber(const int& number);
+
   /// Converts to a PciSequenceNumber object from a string that matches "^#[0-9]+$"
   /// For example: "#04"
   static boost::optional<PciSequenceNumber> fromString(std::string string);
