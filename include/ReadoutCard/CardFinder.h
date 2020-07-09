@@ -16,6 +16,8 @@
 #ifndef ALICEO2_INCLUDE_READOUTCARD_CARDFINDER_H_
 #define ALICEO2_INCLUDE_READOUTCARD_CARDFINDER_H_
 
+#include <vector>
+
 #include "ReadoutCard/CardDescriptor.h"
 #include "ReadoutCard/Parameters.h"
 
