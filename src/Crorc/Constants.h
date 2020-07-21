@@ -399,8 +399,10 @@ static constexpr uint32_t SIU_RANDCIFST(0x00000002);
 static constexpr uint32_t LINK_DOWN(0x00002000);
 
 // Registers containing Optical Power information
-static constexpr IntervalRegister OPT_POWER_QSFP0(0x00000144, 0x4);
-static constexpr IntervalRegister OPT_POWER_QSFP1(0x00000158, 0x4);
+// Odd link number, bits [31-16], even link number bits [15-0]
+static constexpr Register OPT_POWER_QSFP10(0x00000144);
+static constexpr Register OPT_POWER_QSFP32(0x00000148);
+static constexpr Register OPT_POWER_QSFP54(0x00000158);
 
 // Registers for RX FIFO configuration
 static constexpr Register RX_FIFO_ADDR_LOW(0x00000038);
