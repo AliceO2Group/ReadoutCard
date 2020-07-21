@@ -284,5 +284,19 @@ uint32_t DatapathWrapper::getTriggerWindowSize(int wrapper)
   return mPdaBar->readRegister(address / 4);
 }
 
+void DatapathWrapper::enableUserAndCommonLogic(bool enable, int wrapper)
+{
+  uint32_t value = enable ? 0x1 : 0x0;
+  uint32_t address = (wrapper == 0) ? Cru::Registers::DWRAPPER_BASE0.index : Cru::Registers::DWRAPPER_BASE1.index;
+
+  mPdaBar->modifyRegister(address, 30, 1, value);
+}
+
+bool DatapathWrapper::getUserAndCommonLogicEnabled(int wrapper)
+{
+  uint32_t address = (wrapper == 0) ? Cru::Registers::DWRAPPER_BASE0.index : Cru::Registers::DWRAPPER_BASE1.index;
+  return (Utilities::getBit(mPdaBar->readRegister(address), 30) == 0x1);
+}
+
 } // namespace roc
 } // namespace AliceO2

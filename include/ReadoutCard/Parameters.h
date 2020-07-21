@@ -122,6 +122,9 @@ class Parameters
   /// Type for the Run Statistics enabled parameter
   using RunStatsEnabledType = bool;
 
+  /// Type for the User and Common Logic enabled parameter
+  using UserAndCommonLogicEnabledType = bool;
+
   /// Type for the GBT enabled parameter
   using GbtEnabledType = bool;
 
@@ -238,6 +241,14 @@ class Parameters
   /// \param value The value to set
   /// \return Reference to this object for chaining calls
   auto setRunStatsEnabled(RunStatsEnabledType value) -> Parameters&;
+
+  /// Sets the UserAndCommonLogicEnabled parameter
+  ///
+  /// If enabled both User and Common Logic is enabled
+  ///
+  /// \param value The value to set
+  /// \return Reference to this object for chaining calls
+  auto setUserAndCommonLogicEnabled(UserAndCommonLogicEnabledType value) -> Parameters&;
 
   /// Sets the OnuAddress parameter
   ///
@@ -447,6 +458,10 @@ class Parameters
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
   auto getRunStatsEnabled() const -> boost::optional<RunStatsEnabledType>;
 
+  /// Gets the UserAndCommonLogicEnabled parameter
+  /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+  auto getUserAndCommonLogicEnabled() const -> boost::optional<UserAndCommonLogicEnabledType>;
+
   /// Gets the OnuAddress parameter
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
   auto getOnuAddress() const -> boost::optional<OnuAddressType>;
@@ -558,6 +573,11 @@ class Parameters
   /// \exception ParameterException The parameter was not present
   /// \return The value
   auto getRunStatsEnabledRequired() const -> RunStatsEnabledType;
+
+  /// Gets the UserAndCommonLogicEnabled parameter
+  /// \exception ParameterException The parameter was not present
+  /// \return The value
+  auto getUserAndCommonLogicEnabledRequired() const -> UserAndCommonLogicEnabledType;
 
   /// Gets the OnuAddress parameter
   /// \exception ParameterException The parameter was not present

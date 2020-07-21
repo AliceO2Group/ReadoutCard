@@ -54,6 +54,8 @@ class DatapathWrapper
   uint32_t getForcedPackets(Link link);
   void setTriggerWindowSize(int wrapper, uint32_t size = 1000);
   uint32_t getTriggerWindowSize(int wrapper);
+  void enableUserAndCommonLogic(bool enable, int wrapper);
+  bool getUserAndCommonLogicEnabled(int wrapper);
 
  private:
   uint32_t getDatapathWrapperBaseAddress(int wrapper);

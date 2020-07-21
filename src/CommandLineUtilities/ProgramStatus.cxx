@@ -193,6 +193,7 @@ class ProgramStatus : public Program
       std::string offset = (reportInfo.dynamicOffset ? "Dynamic" : "Fixed");
       std::string userLogic = (reportInfo.userLogicEnabled ? "Enabled" : "Disabled");
       std::string runStats = (reportInfo.runStatsEnabled ? "Enabled" : "Disabled");
+      std::string userAndCommonLogic = (reportInfo.userAndCommonLogicEnabled ? "Enabled" : "Disabled");
 
       /* GENERAL PARAMETERS */
       if (mOptions.monitoring) {
@@ -202,6 +203,7 @@ class ProgramStatus : public Program
                            .addValue(reportInfo.dynamicOffset, "dynamicOffset")
                            .addValue(reportInfo.userLogicEnabled, "userLogic")
                            .addValue(reportInfo.runStatsEnabled, "runStats")
+                           .addValue(reportInfo.userAndCommonLogicEnabled, "userAndCommonLogic")
                            .addTag(tags::Key::ID, card.sequenceId)
                            .addTag(tags::Key::Type, tags::Value::CRU));
       } else if (mOptions.jsonOut) {
@@ -209,6 +211,7 @@ class ProgramStatus : public Program
         root.put("offset", offset);
         root.put("userLogic", userLogic);
         root.put("runStats", runStats);
+        root.put("userAndCommonLogic", userAndCommonLogic);
       } else if (mOptions.csvOut) {
         auto csvLine = ",,,,,,,,,," + clock + "," + offset + "," + userLogic + "," + runStats + "\n";
         std::cout << csvLine;
@@ -218,6 +221,7 @@ class ProgramStatus : public Program
         std::cout << offset << " offset" << std::endl;
         std::cout << "User Logic " << userLogic << std::endl;
         std::cout << "Run statistics " << runStats << std::endl;
+        std::cout << "User and Common logic " << runStats << std::endl;
         std::cout << "----------------------------" << std::endl;
       }
 

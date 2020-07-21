@@ -150,6 +150,7 @@ class CruBar final : public BarInterfaceBase
   bool mGbtEnabled;
   bool mUserLogicEnabled;
   bool mRunStatsEnabled;
+  bool mUserAndCommonLogicEnabled;
 
   int mEndpoint;
 
