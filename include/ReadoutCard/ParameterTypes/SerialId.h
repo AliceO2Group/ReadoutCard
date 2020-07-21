@@ -31,14 +31,14 @@ class SerialId
  public:
   /// Constructs a SerialId object using a string in the sssss[:e] format
   /// For example: "10241", "10241:1"
-  /// \param string String of format "^[ \t]*([0-9]{3}|[0-9]{5}):?[0-1]?[ \t]*$"
+  /// \param string String of format "^[ \t]*([0-9]{3}|[0-9]{4}|[0-9]{5}):?[0-1]?[ \t]*$"
   SerialId(const std::string& string);
 
   SerialId(int serial, int endpoint);
 
   SerialId(int serial);
 
-  /// Converts to a SerialId object from a string that matches "^[ \t]*[0-9]{5}:?[0-1]?[ \t]*$"
+  /// Converts to a SerialId object from a string that matches "^[ \t]*([0-9]{3}|[0-9]{4}|[0-9]{5}):?[0-1]?[ \t]*$"
   /// For example: "10241:0"
   static boost::optional<SerialId> fromString(std::string string);
 
