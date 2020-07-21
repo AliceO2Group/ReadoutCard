@@ -16,6 +16,7 @@
 #include "ReadoutCard/ParameterTypes/PciAddress.h"
 #include <iomanip>
 #include <sstream>
+#include <regex>
 #include <boost/format.hpp>
 #include <boost/spirit/include/qi.hpp>
 #include "ExceptionInternal.h"
@@ -29,6 +30,12 @@ namespace
 {
 bool parseLspciFormat(const std::string& string, int& bus, int& slot, int& function)
 {
+  // Reject a case of the pci address + endpoint ID like "3b:00.0:1"
+  std::regex expr(".*:.*:.*");
+  if (std::regex_search(string, expr)) {
+    return false;
+  }
+
   using namespace boost::spirit::qi;
   return phrase_parse(string.begin(), string.end(), hex >> ":" >> hex >> "." >> hex, space, bus, slot, function);
 }
