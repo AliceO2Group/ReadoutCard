@@ -55,7 +55,8 @@ CruBar::CruBar(const Parameters& parameters, std::unique_ptr<RocPciDevice> rocPc
     mTriggerWindowSize(parameters.getTriggerWindowSize().get_value_or(1000)),
     mGbtEnabled(parameters.getGbtEnabled().get_value_or(true)),
     mUserLogicEnabled(parameters.getUserLogicEnabled().get_value_or(false)),
-    mRunStatsEnabled(parameters.getRunStatsEnabled().get_value_or(false))
+    mRunStatsEnabled(parameters.getRunStatsEnabled().get_value_or(false)),
+    mUserAndCommonLogicEnabled(parameters.getUserAndCommonLogicEnabled().get_value_or(false))
 {
   if (getIndex() == 0) {
     mFeatures = parseFirmwareFeatures();
@@ -502,6 +503,8 @@ Cru::ReportInfo CruBar::report()
   runStatsLink.dwrapperId = (mEndpoint == 0) ? 13 : 14;
   bool runStatsEnabled = datapathWrapper.getLinkEnabled(runStatsLink);
 
+  bool userAndCommonLogicEnabled = datapathWrapper.getUserAndCommonLogicEnabled(mEndpoint);
+
   Cru::ReportInfo reportInfo = {
     linkMap,
     clock,
@@ -513,7 +516,8 @@ Cru::ReportInfo CruBar::report()
     triggerWindowSize,
     gbtEnabled,
     userLogicEnabled,
-    runStatsEnabled
+    runStatsEnabled,
+    userAndCommonLogicEnabled
   };
 
   return reportInfo;
@@ -668,6 +672,12 @@ void CruBar::configure(bool force)
   if (mRunStatsEnabled != reportInfo.runStatsEnabled || force) {
     log("Toggling the Run Statistics link");
     toggleRunStatsLink(mRunStatsEnabled);
+  }
+
+  /* UL + CL */
+  if (mUserAndCommonLogicEnabled != reportInfo.userAndCommonLogicEnabled || force) {
+    log("Enabling User and Common Logic");
+    datapathWrapper.enableUserAndCommonLogic(mUserAndCommonLogicEnabled, mEndpoint);
   }
 
   /* BSP */

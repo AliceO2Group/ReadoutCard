@@ -114,6 +114,9 @@ class ProgramConfig : public Program
     options.add_options()("run-stats",
                           po::bool_switch(&mOptions.runStatsEnabled),
                           "Flag to enable the Run Statistics link");
+    options.add_options()("user-and-common-logic",
+                          po::bool_switch(&mOptions.userAndCommonLogicEnabled),
+                          "Flag to enable the User and Common Logic");
     Options::addOptionCardId(options);
   }
 
@@ -175,6 +178,7 @@ class ProgramConfig : public Program
       params.setGbtEnabled(!mOptions.noGbt);
       params.setUserLogicEnabled(mOptions.userLogicEnabled);
       params.setRunStatsEnabled(mOptions.runStatsEnabled);
+      params.setUserAndCommonLogicEnabled(mOptions.userAndCommonLogicEnabled);
       params.setTimeFrameLength(mOptions.timeFrameLength);
       params.setTimeFrameDetectionEnabled(!mOptions.timeFrameDetectionDisabled);
 
@@ -196,6 +200,10 @@ class ProgramConfig : public Program
         cfgFile << "onuAddress=" << mOptions.onuAddress << "\n";
         cfgFile << "dynamicOffset=" << std::boolalpha << mOptions.dynamicOffsetEnabled << "\n";
         cfgFile << "triggerWindowSize=" << mOptions.triggerWindowSize << "\n";
+        cfgFile << "gbtEnabled=" << std::boolalpha << !mOptions.noGbt << "\n";
+        cfgFile << "userLogicEnabled=" << std::boolalpha << mOptions.userLogicEnabled << "\n";
+        cfgFile << "runStatsEnabled=" << std::boolalpha << mOptions.runStatsEnabled << "\n";
+        cfgFile << "userAndCommonLogicEnabled=" << std::boolalpha << mOptions.userAndCommonLogicEnabled << "\n";
 
         cfgFile << "[links]\n";
         cfgFile << "enabled=false\n";
@@ -252,6 +260,7 @@ class ProgramConfig : public Program
     bool timeFrameDetectionDisabled = false;
     bool userLogicEnabled = false;
     bool runStatsEnabled = false;
+    bool userAndCommonLogicEnabled = false;
     bool noGbt = false;
   } mOptions;
 

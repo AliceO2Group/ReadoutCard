@@ -92,6 +92,7 @@ struct ReportInfo {
   bool gbtEnabled;
   bool userLogicEnabled;
   bool runStatsEnabled;
+  bool userAndCommonLogicEnabled;
 };
 
 struct OnuStatus {
