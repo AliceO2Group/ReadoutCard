@@ -111,6 +111,9 @@ class ProgramConfig : public Program
     options.add_options()("user-logic",
                           po::bool_switch(&mOptions.userLogicEnabled),
                           "Flag to enable the User Logic link");
+    options.add_options()("run-stats",
+                          po::bool_switch(&mOptions.runStatsEnabled),
+                          "Flag to enable the Run Statistics link");
     Options::addOptionCardId(options);
   }
 
@@ -171,6 +174,7 @@ class ProgramConfig : public Program
       params.setTriggerWindowSize(mOptions.triggerWindowSize);
       params.setGbtEnabled(!mOptions.noGbt);
       params.setUserLogicEnabled(mOptions.userLogicEnabled);
+      params.setRunStatsEnabled(mOptions.runStatsEnabled);
       params.setTimeFrameLength(mOptions.timeFrameLength);
       params.setTimeFrameDetectionEnabled(!mOptions.timeFrameDetectionDisabled);
 
@@ -247,6 +251,7 @@ class ProgramConfig : public Program
     uint32_t timeFrameLength = 0x100;
     bool timeFrameDetectionDisabled = false;
     bool userLogicEnabled = false;
+    bool runStatsEnabled = false;
     bool noGbt = false;
   } mOptions;
 

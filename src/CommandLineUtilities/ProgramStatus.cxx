@@ -181,7 +181,7 @@ class ProgramStatus : public Program
       auto cruBar2 = std::dynamic_pointer_cast<CruBar>(bar2);
 
       if (mOptions.csvOut) {
-        auto csvHeader = "Link ID,GBT Mode,Loopback,GBT Mux,Datapath Mode,Datapath,RX Freq(MHz),TX Freq(MHz),Status,Optical Power(uW),Clock,Offset,UserLogic\n";
+        auto csvHeader = "Link ID,GBT Mode,Loopback,GBT Mux,Datapath Mode,Datapath,RX Freq(MHz),TX Freq(MHz),Status,Optical Power(uW),Clock,Offset,UserLogic,RunStats\n";
         std::cout << csvHeader;
       } else if (!mOptions.jsonOut) {
         table << lineFat << header << lineThin;
@@ -192,6 +192,7 @@ class ProgramStatus : public Program
       std::string clock = (reportInfo.ttcClock == 0 ? "TTC" : "Local");
       std::string offset = (reportInfo.dynamicOffset ? "Dynamic" : "Fixed");
       std::string userLogic = (reportInfo.userLogicEnabled ? "Enabled" : "Disabled");
+      std::string runStats = (reportInfo.runStatsEnabled ? "Enabled" : "Disabled");
 
       /* GENERAL PARAMETERS */
       if (mOptions.monitoring) {
@@ -200,20 +201,23 @@ class ProgramStatus : public Program
                            .addValue(clock, "clock")
                            .addValue(reportInfo.dynamicOffset, "dynamicOffset")
                            .addValue(reportInfo.userLogicEnabled, "userLogic")
+                           .addValue(reportInfo.runStatsEnabled, "runStats")
                            .addTag(tags::Key::ID, card.sequenceId)
                            .addTag(tags::Key::Type, tags::Value::CRU));
       } else if (mOptions.jsonOut) {
         root.put("clock", clock);
         root.put("offset", offset);
         root.put("userLogic", userLogic);
+        root.put("runStats", runStats);
       } else if (mOptions.csvOut) {
-        auto csvLine = ",,,,,,,,,," + clock + "," + offset + "," + userLogic + "\n";
+        auto csvLine = ",,,,,,,,,," + clock + "," + offset + "," + userLogic + "," + runStats + "\n";
         std::cout << csvLine;
       } else {
         std::cout << "----------------------------" << std::endl;
         std::cout << clock << " clock | ";
         std::cout << offset << " offset" << std::endl;
         std::cout << "User Logic " << userLogic << std::endl;
+        std::cout << "Run statistics " << runStats << std::endl;
         std::cout << "----------------------------" << std::endl;
       }
 

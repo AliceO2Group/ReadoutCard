@@ -54,7 +54,8 @@ CruBar::CruBar(const Parameters& parameters, std::unique_ptr<RocPciDevice> rocPc
     mDynamicOffset(parameters.getDynamicOffsetEnabled().get_value_or(false)),
     mTriggerWindowSize(parameters.getTriggerWindowSize().get_value_or(1000)),
     mGbtEnabled(parameters.getGbtEnabled().get_value_or(true)),
-    mUserLogicEnabled(parameters.getUserLogicEnabled().get_value_or(false))
+    mUserLogicEnabled(parameters.getUserLogicEnabled().get_value_or(false)),
+    mRunStatsEnabled(parameters.getRunStatsEnabled().get_value_or(false))
 {
   if (getIndex() == 0) {
     mFeatures = parseFirmwareFeatures();
@@ -494,8 +495,12 @@ Cru::ReportInfo CruBar::report()
   Link userLogicLink;
   userLogicLink.dwrapper = mEndpoint;
   userLogicLink.dwrapperId = 15;
-
   bool userLogicEnabled = datapathWrapper.getLinkEnabled(userLogicLink);
+
+  Link runStatsLink;
+  runStatsLink.dwrapper = mEndpoint;
+  runStatsLink.dwrapperId = (mEndpoint == 0) ? 13 : 14;
+  bool runStatsEnabled = datapathWrapper.getLinkEnabled(runStatsLink);
 
   Cru::ReportInfo reportInfo = {
     linkMap,
@@ -507,7 +512,8 @@ Cru::ReportInfo CruBar::report()
     dynamicOffset,
     triggerWindowSize,
     gbtEnabled,
-    userLogicEnabled
+    userLogicEnabled,
+    runStatsEnabled
   };
 
   return reportInfo;
@@ -527,14 +533,23 @@ Cru::PacketMonitoringInfo CruBar::monitorPackets()
     linkPacketInfoMap.insert({ el.first, { accepted, rejected, forced } });
   }
 
+  // Insert the Run Statistics link
+  Link runStatsLink = {};
+  runStatsLink.dwrapper = mEndpoint;
+  runStatsLink.dwrapperId = (mEndpoint == 0) ? 13 : 14;
+  uint32_t accepted = datapathWrapper.getAcceptedPackets(runStatsLink);
+  uint32_t rejected = datapathWrapper.getRejectedPackets(runStatsLink);
+  uint32_t forced = datapathWrapper.getForcedPackets(runStatsLink);
+  linkPacketInfoMap.insert({ runStatsLink.dwrapperId, { accepted, rejected, forced } });
+
   // Insert the UL link at 15
   Link uLLink = {};
   // dwrapper 0 on endpoint 0, dwrapper 1 on endpoint 1
   uLLink.dwrapper = mEndpoint;
   uLLink.dwrapperId = 15;
-  uint32_t accepted = datapathWrapper.getAcceptedPackets(uLLink);
-  uint32_t rejected = datapathWrapper.getRejectedPackets(uLLink);
-  uint32_t forced = datapathWrapper.getForcedPackets(uLLink);
+  accepted = datapathWrapper.getAcceptedPackets(uLLink);
+  rejected = datapathWrapper.getRejectedPackets(uLLink);
+  forced = datapathWrapper.getForcedPackets(uLLink);
   linkPacketInfoMap.insert({ 15, { accepted, rejected, forced } });
 
   int wrapper = mEndpoint;
@@ -561,6 +576,7 @@ void CruBar::configure(bool force)
       mDynamicOffset == reportInfo.dynamicOffset &&
       mTriggerWindowSize == reportInfo.triggerWindowSize &&
       mUserLogicEnabled == reportInfo.userLogicEnabled &&
+      mRunStatsEnabled == reportInfo.runStatsEnabled &&
       mGbtEnabled == reportInfo.gbtEnabled &&
       !force) {
     log("No need to reconfigure further");
@@ -608,6 +624,7 @@ void CruBar::configure(bool force)
     // Disable all links
     datapathWrapper.setLinksEnabled(mEndpoint, 0x0);
     toggleUserLogicLink(reportInfo.userLogicEnabled); // Make sure the user logic link retains its state
+    toggleRunStatsLink(reportInfo.runStatsEnabled);   // Make sure the run stats link retains its state
   } else if (mGbtEnabled && (!std::equal(mLinkMap.begin(), mLinkMap.end(), reportInfo.linkMap.begin()) || force)) {
     /* BSP */
     disableDataTaking();
@@ -645,6 +662,12 @@ void CruBar::configure(bool force)
   if (mUserLogicEnabled != reportInfo.userLogicEnabled || force) {
     log("Toggling the User Logic link");
     toggleUserLogicLink(mUserLogicEnabled);
+  }
+
+  /* RUN STATS */
+  if (mRunStatsEnabled != reportInfo.runStatsEnabled || force) {
+    log("Toggling the Run Statistics link");
+    toggleRunStatsLink(mRunStatsEnabled);
   }
 
   /* BSP */
@@ -913,6 +936,20 @@ void CruBar::toggleUserLogicLink(bool userLogicEnabled)
     datapathWrapper.setLinkDisabled(userLogicLink);
   }
   datapathWrapper.setDatapathMode(userLogicLink, mDatapathMode);
+}
+
+void CruBar::toggleRunStatsLink(bool runStatsLinkEnabled)
+{
+  Link runStatsLink;
+  runStatsLink.dwrapper = mEndpoint;
+  runStatsLink.dwrapperId = (mEndpoint == 0) ? 13 : 14;
+
+  DatapathWrapper datapathWrapper = DatapathWrapper(mPdaBar);
+  if (runStatsLinkEnabled) {
+    datapathWrapper.setLinkEnabled(runStatsLink);
+  } else {
+    datapathWrapper.setLinkDisabled(runStatsLink);
+  }
 }
 
 boost::optional<std::string> CruBar::getUserLogicVersion()

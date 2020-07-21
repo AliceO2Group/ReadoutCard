@@ -91,6 +91,7 @@ struct ReportInfo {
   uint32_t triggerWindowSize;
   bool gbtEnabled;
   bool userLogicEnabled;
+  bool runStatsEnabled;
 };
 
 struct OnuStatus {

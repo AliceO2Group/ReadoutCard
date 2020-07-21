@@ -92,6 +92,7 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
   uint32_t triggerWindowSize = 1000;
   bool gbtEnabled = false;
   bool userLogicEnabled = false;
+  bool runStatsEnabled = false;
 
   bool enabled = false;
   std::string gbtMux = "ttc";
@@ -143,6 +144,7 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
 
         gbtEnabled = subtree.get<bool>("gbtEnabled");
         userLogicEnabled = subtree.get<bool>("userLogicEnabled");
+        runStatsEnabled = subtree.get<bool>("runStatsEnabled");
 
         parameters.setClock(clock);
         parameters.setDatapathMode(datapathMode);
@@ -157,7 +159,7 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
         parameters.setTriggerWindowSize(triggerWindowSize);
         parameters.setGbtEnabled(gbtEnabled);
         parameters.setUserLogicEnabled(userLogicEnabled);
-
+        parameters.setRunStatsEnabled(runStatsEnabled);
       } else if (group == "links") { // Configure all links with default values
 
         enabled = subtree.get<bool>("enabled");
