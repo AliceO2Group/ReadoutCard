@@ -232,12 +232,22 @@ void CrorcBar::getOpticalPowers(std::map<int, Crorc::Link>& linkMap)
   for (auto& el : linkMap) {
     auto linkNo = el.first;
     auto& link = el.second;
-    if (linkNo < 4) {
-      link.opticalPower = readRegister(Crorc::Registers::OPT_POWER_QSFP0.get(linkNo).index) & 0xffff;
+
+    uint32_t opt;
+
+    if (linkNo < 2) {
+      opt = readRegister(Crorc::Registers::OPT_POWER_QSFP10.index);
+    } else if (linkNo < 4) {
+      opt = readRegister(Crorc::Registers::OPT_POWER_QSFP32.index);
     } else {
-      link.opticalPower = readRegister(Crorc::Registers::OPT_POWER_QSFP1.get(linkNo % 4).index) & 0xffff;
+      opt = readRegister(Crorc::Registers::OPT_POWER_QSFP54.index);
     }
-    link.opticalPower /= 10;
+    if (linkNo % 2 == 0) {
+      opt &= 0xffff;
+    } else {
+      opt = (opt & 0xffff0000) >> 16;
+    }
+    link.opticalPower = opt / 10;
   }
 }
 
