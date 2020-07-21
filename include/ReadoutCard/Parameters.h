@@ -119,6 +119,9 @@ class Parameters
   /// Type for the User Logic enabled parameter
   using UserLogicEnabledType = bool;
 
+  /// Type for the Run Statistics enabled parameter
+  using RunStatsEnabledType = bool;
+
   /// Type for the GBT enabled parameter
   using GbtEnabledType = bool;
 
@@ -227,6 +230,14 @@ class Parameters
   /// \param value The value to set
   /// \return Reference to this object for chaining calls
   auto setUserLogicEnabled(UserLogicEnabledType value) -> Parameters&;
+
+  /// Sets the RunStatsEnabled parameter
+  ///
+  /// If enabled the Run Statistics link is enabled
+  ///
+  /// \param value The value to set
+  /// \return Reference to this object for chaining calls
+  auto setRunStatsEnabled(RunStatsEnabledType value) -> Parameters&;
 
   /// Sets the OnuAddress parameter
   ///
@@ -432,6 +443,10 @@ class Parameters
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
   auto getUserLogicEnabled() const -> boost::optional<UserLogicEnabledType>;
 
+  /// Gets the RunStatsEnabled parameter
+  /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+  auto getRunStatsEnabled() const -> boost::optional<RunStatsEnabledType>;
+
   /// Gets the OnuAddress parameter
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
   auto getOnuAddress() const -> boost::optional<OnuAddressType>;
@@ -538,6 +553,11 @@ class Parameters
   /// \exception ParameterException The parameter was not present
   /// \return The value
   auto getUserLogicEnabledRequired() const -> UserLogicEnabledType;
+
+  /// Gets the RunStatsEnabled parameter
+  /// \exception ParameterException The parameter was not present
+  /// \return The value
+  auto getRunStatsEnabledRequired() const -> RunStatsEnabledType;
 
   /// Gets the OnuAddress parameter
   /// \exception ParameterException The parameter was not present

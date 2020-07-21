@@ -88,7 +88,6 @@ class ProgramPacketMonitor : public Program
     // initialize ptrees
     pt::ptree root;
     pt::ptree gbtLinks;
-    pt::ptree ulLink;
 
     /* TABLE */
     for (const auto& el : packetMonitoringInfo.linkPacketInfoMap) {
@@ -97,20 +96,6 @@ class ProgramPacketMonitor : public Program
       uint32_t accepted = linkMonitoringInfoMap.accepted;
       uint32_t rejected = linkMonitoringInfoMap.rejected;
       uint32_t forced = linkMonitoringInfoMap.forced;
-
-      /* UL HEADER */
-      if (globalId == 15) {
-        auto uLHeader = (boost::format(formatHeader) % "ULL ID " % "Accepted" % "Rejected" % "Forced").str();
-
-        if (mOptions.jsonOut) {
-
-        } else if (mOptions.csvOut) {
-          auto uLHeader = "Link ID,Accepted,Rejected,Forced\n";
-          std::cout << uLHeader;
-        } else {
-          table << lineFat << uLHeader << lineThin;
-        }
-      }
 
       if (mOptions.jsonOut) {
         pt::ptree linkNode;
@@ -121,12 +106,7 @@ class ProgramPacketMonitor : public Program
         linkNode.put("rejected", std::to_string(rejected));
         linkNode.put("forced", std::to_string(forced));
 
-        // append to the links (or UL link)
-        if (globalId == 15) {
-          ulLink.add_child(std::to_string(globalId), linkNode);
-        } else {
-          gbtLinks.add_child(std::to_string(globalId), linkNode);
-        }
+        gbtLinks.add_child(std::to_string(globalId), linkNode);
       } else if (mOptions.csvOut) {
         auto csvLine = std::to_string(globalId) + "," + std::to_string(accepted) + "," + std::to_string(rejected) + "," + std::to_string(forced) + "\n";
         std::cout << csvLine;
@@ -138,7 +118,6 @@ class ProgramPacketMonitor : public Program
 
     // add links nodes to the tree
     root.add_child("gbtLinks", gbtLinks);
-    root.add_child("userLogicLink", ulLink);
 
     /* PRINT */
     if (!mOptions.csvOut) {

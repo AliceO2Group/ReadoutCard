@@ -74,15 +74,26 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
     DatapathWrapper dwrapper = DatapathWrapper(getBar2()->getPdaBar());
     auto linkMap = getBar2()->initializeLinkMap();
 
+    int endpoint = getBar()->getEndpointNumber();
+
+    Cru::Link newLink;
+    newLink.dwrapper = endpoint;
+
+    // Insert UL link
+    newLink.dwrapperId = 15;
+    if (dwrapper.getLinkEnabled(newLink)) {
+      linkMap.insert({ 15, newLink });
+    }
+
+    // Insert Run Statistics link
+    newLink.dwrapperId = (endpoint == 0) ? 13 : 14;
+
+    if (dwrapper.getLinkEnabled(newLink)) {
+      linkMap.insert({ newLink.dwrapperId, newLink });
+    }
+
     std::stringstream stream;
     stream << "Using link(s): ";
-
-    Cru::Link userLogicLink;
-    userLogicLink.dwrapper = getBar()->getEndpointNumber();
-    userLogicLink.dwrapperId = 15;
-    if (dwrapper.getLinkEnabled(userLogicLink)) {
-      linkMap.insert({ 15, userLogicLink });
-    }
 
     for (const auto& el : linkMap) {
       auto id = el.first;

@@ -92,6 +92,7 @@ class CruBar final : public BarInterfaceBase
   bool getDebugModeEnabled();
 
   void toggleUserLogicLink(bool mUserLogicEnabled);
+  void toggleRunStatsLink(bool mRunStatsLinkEnabled);
   boost::optional<std::string> getUserLogicVersion();
 
   Cru::OnuStatus reportOnuStatus();
@@ -148,6 +149,7 @@ class CruBar final : public BarInterfaceBase
   uint32_t mTriggerWindowSize;
   bool mGbtEnabled;
   bool mUserLogicEnabled;
+  bool mRunStatsEnabled;
 
   int mEndpoint;
 
