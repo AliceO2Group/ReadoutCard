@@ -40,6 +40,7 @@ void Gbt::setMux(int index, uint32_t mux)
   uint32_t reg = index / 16;
   uint32_t bitOffset = (index % 16) * 2;
   uint32_t address = Cru::Registers::GBT_MUX_SELECT.address + (reg * 4);
+  std::cout << mux << std::endl;
   mPdaBar->modifyRegister(address / 4, bitOffset, 2, mux);
 }
 
@@ -121,6 +122,8 @@ void Gbt::getGbtMuxes()
       link.gbtMux = GbtMux::type::Ddg;
     } else if (txMux == Cru::GBT_MUX_SWT) {
       link.gbtMux = GbtMux::type::Swt;
+    } else if (txMux == Cru::GBT_MUX_TTCUP) {
+      link.gbtMux = GbtMux::type::TtcUp;
     } else {
       link.gbtMux = GbtMux::type::Na;
     }

@@ -65,7 +65,7 @@ class ProgramConfig : public Program
                           "GBT MODE [GBT, WB]");
     options.add_options()("gbtmux",
                           po::value<std::string>(&mOptions.gbtMux)->default_value("TTC"),
-                          "GBT MUX [TTC, DDG, SWT]");
+                          "GBT MUX [TTC, DDG, SWT, TTCUP]");
     options.add_options()("links",
                           po::value<std::string>(&mOptions.links)->default_value("0"),
                           "Links to enable");
