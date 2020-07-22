@@ -30,6 +30,7 @@ struct GbtMux {
     Ttc = Cru::GBT_MUX_TTC,
     Ddg = Cru::GBT_MUX_DDG,
     Swt = Cru::GBT_MUX_SWT,
+    TtcUp = Cru::GBT_MUX_TTCUP,
     Na = -1,
   };
 

@@ -151,7 +151,7 @@ The Parameters that affect the configuration of the CRU, their possible values (
 
 `GbtMode (GBT | WB) [GBT]`
 
-`GbtMux (TTC | DDG | SWT) [TTC]`
+`GbtMux (TTC | DDG | SWT | TTCUP) [TTC]`
 
 `LinkLoopbackEnabled (true | false) [false]`
 
@@ -480,18 +480,18 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 
 ###### Metric: `"link"`
 
-| Value name       | Value                                                   | Type   | 
-| ---------------- | ------------------------------------------------------- | ------ | 
-| `"pciAddress"`   | -                                                       | string |
-| `"gbtMode"`      | "GBT/GBT" or "GBT/WB"                                   | string |
-| `"loopback"`     | 0/1 (Enabled/Disabled)                                  | int    |
-| `"gbtMux"`       | "DDG", "SWT", "TTC:CTP", "TTC:PATTERN", or "TTC:MIDTRG" | string |
-| `"datapathMode"` | "PACKET" or "CONTINUOUS"                                | string |
-| `"datapath"`     | 0/1 (Disabled/Enabled)                                  | int    |
-| `"rxFreq"`       | -                                                       | double |
-| `"txFreq"`       | -                                                       | double |
-| `"status"`       | 0/1/2 (DOWN/UP/UP was DOWN)                             | int    |
-| `"opticalPower"` | -                                                       | double |
+| Value name       | Value                                                             | Type   | 
+| ---------------- | ----------------------------------------------------------------- | ------ | 
+| `"pciAddress"`   | -                                                                 | string |
+| `"gbtMode"`      | "GBT/GBT" or "GBT/WB"                                             | string |
+| `"loopback"`     | 0/1 (Enabled/Disabled)                                            | int    |
+| `"gbtMux"`       | "DDG", "SWT", "TTC:CTP", "TTC:PATTERN", "TTC:MIDTRG", or "TTC UP" | string |
+| `"datapathMode"` | "PACKET" or "CONTINUOUS"                                          | string |
+| `"datapath"`     | 0/1 (Disabled/Enabled)                                            | int    |
+| `"rxFreq"`       | -                                                                 | double |
+| `"txFreq"`       | -                                                                 | double |
+| `"status"`       | 0/1/2 (DOWN/UP/UP was DOWN)                                       | int    |
+| `"opticalPower"` | -                                                                 | double |
 
 | Tag key           | Value              |
 | ----------------- | ------------------ |
