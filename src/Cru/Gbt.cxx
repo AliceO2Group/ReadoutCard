@@ -40,7 +40,6 @@ void Gbt::setMux(int index, uint32_t mux)
   uint32_t reg = index / 16;
   uint32_t bitOffset = (index % 16) * 2;
   uint32_t address = Cru::Registers::GBT_MUX_SELECT.address + (reg * 4);
-  std::cout << mux << std::endl;
   mPdaBar->modifyRegister(address / 4, bitOffset, 2, mux);
 }
 
