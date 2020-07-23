@@ -229,7 +229,6 @@ if(PDA_FOUND)
     ProgramFlashRead.cxx
     ProgramListCards.cxx
     ProgramMetrics.cxx
-    ProgramOnuStatus.cxx
     ProgramPacketMonitor.cxx
     ProgramPatternPlayer.cxx
     ProgramSiuStatus.cxx
@@ -245,7 +244,6 @@ if(PDA_FOUND)
     roc-flash-read
     roc-list-cards
     roc-metrics
-    roc-onu-status
     roc-pkt-monitor
     roc-pat-player
     roc-siu-status
