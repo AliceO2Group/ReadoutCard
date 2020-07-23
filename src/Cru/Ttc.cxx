@@ -28,6 +28,9 @@ namespace AliceO2
 namespace roc
 {
 
+using LinkStatus = Cru::LinkStatus;
+using OnuStatus = Cru::OnuStatus;
+
 Ttc::Ttc(std::shared_ptr<BarInterface> bar) : mBar(bar)
 {
 }
@@ -137,7 +140,22 @@ bool Ttc::configurePonTx(uint32_t onuAddress)
   //TODO: Show calibration status..
 }
 
-Cru::OnuStatus Ttc::onuStatus()
+LinkStatus Ttc::getOnuStickyBit()
+{
+  uint32_t was = mBar->readRegister(Cru::Registers::TTC_ONU_STICKY.index);
+  mBar->modifyRegister(Cru::Registers::TTC_DATA.index, 28, 1, 0x1);
+  mBar->modifyRegister(Cru::Registers::TTC_DATA.index, 28, 1, 0x0);
+  uint32_t is = mBar->readRegister(Cru::Registers::TTC_ONU_STICKY.index);
+
+  if (was == 1 && is == 1) {
+    return LinkStatus::Up;
+  } else if (was == 0 && is == 1) {
+    return LinkStatus::UpWasDown;
+  }
+  return LinkStatus::Down;
+}
+
+OnuStatus Ttc::onuStatus()
 {
   uint32_t calStatus = mBar->readRegister(Cru::Registers::ONU_USER_LOGIC.index + 0xc / 4);
   uint32_t onuAddress = mBar->readRegister(Cru::Registers::ONU_USER_LOGIC.index) >> 1;
@@ -151,7 +169,8 @@ Cru::OnuStatus Ttc::onuStatus()
     calStatus >> 4 & 0x1,
     calStatus >> 5 & 0x1,
     calStatus >> 6 & 0x1,
-    calStatus >> 7 & 0x1
+    calStatus >> 7 & 0x1,
+    getOnuStickyBit()
   };
 
   return onuStatus;

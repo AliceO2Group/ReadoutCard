@@ -481,17 +481,18 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 
 ###### Metric: `"onu"`
 
-| Value name         | Value            | Type   | 
-| -------------------| -----------------| ------ | 
-| `"onuAddress"`     | ONU Address      | string |
-| `"rx40Locked"`     | 0/1 (False/True) | int    |
-| `"phaseGood"`      | 0/1 (False/True) | int    |
-| `"rxLocked"`       | 0/1 (False/True) | int    |
-| `"operational"`    | 0/1 (False/True) | int    |
-| `"mgtTxReady"`     | 0/1 (False/True) | int    |
-| `"mgtRxReady"`     | 0/1 (False/True) | int    |
-| `"mgtTxPllLocked"` | 0/1 (False/True) | int    |
-| `"mgtRxPllLocked"` | 0/1 (False/True) | int    |
+| Value name         | Value                       | Type   | 
+| -------------------| --------------------------- | ------ | 
+| `"onuStatus"`      | 0/1/2 (DOWN/UP/UP was DOWN) | int    |
+| `"onuAddress"`     | ONU Address                 | string |
+| `"rx40Locked"`     | 0/1 (False/True)            | int    |
+| `"phaseGood"`      | 0/1 (False/True)            | int    |
+| `"rxLocked"`       | 0/1 (False/True)            | int    |
+| `"operational"`    | 0/1 (False/True)            | int    |
+| `"mgtTxReady"`     | 0/1 (False/True)            | int    |
+| `"mgtRxReady"`     | 0/1 (False/True)            | int    |
+| `"mgtTxPllLocked"` | 0/1 (False/True)            | int    |
+| `"mgtRxPllLocked"` | 0/1 (False/True)            | int    |
 
 
 ###### Metric: `"link"`

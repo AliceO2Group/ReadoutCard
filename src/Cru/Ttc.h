@@ -16,6 +16,9 @@ namespace roc
 
 class Ttc
 {
+  using OnuStatus = Cru::OnuStatus;
+  using LinkStatus = Cru::LinkStatus;
+
  public:
   Ttc(std::shared_ptr<BarInterface> bar);
 
@@ -41,11 +44,13 @@ class Ttc
   void setEmulatorHCDIV(uint32_t hcdiv);
   void setFixedBCTrigger(std::vector<uint32_t> FBCTVector);
 
-  Cru::OnuStatus onuStatus();
+  OnuStatus onuStatus();
 
  private:
   void configurePlls(uint32_t clock);
   void setRefGen(int frequency = 240);
+  LinkStatus getOnuStickyBit();
+
   std::shared_ptr<BarInterface> mBar;
 
   static constexpr uint32_t MAX_BCID = 3564 - 1;

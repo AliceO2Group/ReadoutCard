@@ -237,9 +237,19 @@ class ProgramStatus : public Program
       /* ONU PARAMETERS */
       if (mOptions.onu) {
         Cru::OnuStatus onuStatus = cruBar2->reportOnuStatus();
+        std::string onuStickyStatus;
+
+        if (onuStatus.stickyBit == Cru::LinkStatus::Up) {
+          onuStickyStatus = "UP";
+        } else if (onuStatus.stickyBit == Cru::LinkStatus::UpWasDown) {
+          onuStickyStatus = "UP (was DOWN)";
+        } else if (onuStatus.stickyBit == Cru::LinkStatus::Down) {
+          onuStickyStatus = "DOWN";
+        }
 
         if (mOptions.monitoring) {
           monitoring->send(Metric{ "onu" }
+                             .addValue(onuStickyStatus, "onuStickyStatus")
                              .addValue(std::to_string(onuStatus.onuAddress), "onuAddress")
                              .addValue(onuStatus.rx40Locked, "rx40Locked")
                              .addValue(onuStatus.phaseGood, "phaseGood")
@@ -250,6 +260,7 @@ class ProgramStatus : public Program
                              .addValue(onuStatus.mgtTxPllLocked, "mgtTxPllLocked")
                              .addValue(onuStatus.mgtRxPllLocked, "mgtRxPllLocked"));
         } else if (mOptions.jsonOut) {
+          root.put("ONU status", onuStickyStatus);
           root.put("ONU address", onuStatus.onuAddress);
           root.put("ONU RX40 locked", onuStatus.rx40Locked);
           root.put("ONU phase good", onuStatus.phaseGood);
@@ -261,6 +272,7 @@ class ProgramStatus : public Program
           root.put("ONU MGT RX PLL locked", onuStatus.mgtRxPllLocked);
         } else {
           std::cout << "=============================" << std::endl;
+          std::cout << "ONU status: \t\t" << onuStickyStatus << std::endl;
           std::cout << "ONU address: \t\t0x" << std::hex << onuStatus.onuAddress << std::endl;
           std::cout << "-----------------------------" << std::endl;
           std::cout << "ONU RX40 locked: \t" << std::boolalpha << onuStatus.rx40Locked << std::endl;
