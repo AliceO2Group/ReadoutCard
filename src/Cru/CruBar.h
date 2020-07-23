@@ -122,7 +122,7 @@ class CruBar final : public BarInterfaceBase
   void populateLinkMap(std::map<int, Link>& linkMap);
 
   uint32_t getDdgBurstLength();
-  //void checkParameters();
+  void checkConfigParameters();
 
   void setCruId(uint16_t cruId);
   uint16_t getCruId();

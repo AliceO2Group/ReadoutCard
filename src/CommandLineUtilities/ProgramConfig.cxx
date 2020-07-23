@@ -110,13 +110,13 @@ class ProgramConfig : public Program
                           "Flag to switch off GBT");
     options.add_options()("user-logic",
                           po::bool_switch(&mOptions.userLogicEnabled),
-                          "Flag to enable the User Logic link");
+                          "Flag to toggle the User Logic link");
     options.add_options()("run-stats",
                           po::bool_switch(&mOptions.runStatsEnabled),
-                          "Flag to enable the Run Statistics link");
+                          "Flag to toggle the Run Statistics link");
     options.add_options()("user-and-common-logic",
                           po::bool_switch(&mOptions.userAndCommonLogicEnabled),
-                          "Flag to enable the User and Common Logic");
+                          "Flag to toggle the User and Common Logic");
     Options::addOptionCardId(options);
   }
 

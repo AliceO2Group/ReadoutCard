@@ -224,14 +224,13 @@ class ProgramStatus : public Program
         std::cout << "CRU ID: " << reportInfo.cruId << std::endl;
         std::cout << clock << " clock | ";
         std::cout << offset << " offset" << std::endl;
-        if (reportInfo.userLogicEnabled) {
+        if (reportInfo.userLogicEnabled && reportInfo.userAndCommonLogicEnabled) {
+          std::cout << "User and Common Logic enabled" << std::endl;
+        } else if (reportInfo.userLogicEnabled) {
           std::cout << "User Logic enabled" << std::endl;
         }
         if (reportInfo.runStatsEnabled) {
           std::cout << "Run statistics enabled" << std::endl;
-        }
-        if (reportInfo.userAndCommonLogicEnabled) {
-          std::cout << "User and Common logic enabled" << std::endl;
         }
       }
 
@@ -241,15 +240,15 @@ class ProgramStatus : public Program
 
         if (mOptions.monitoring) {
           monitoring->send(Metric{ "onu" }
-              .addValue(std::to_string(onuStatus.onuAddress), "onuAddress")
-              .addValue(onuStatus.rx40Locked, "rx40Locked")
-              .addValue(onuStatus.phaseGood, "phaseGood")
-              .addValue(onuStatus.rxLocked, "rxLocked")
-              .addValue(onuStatus.operational, "operational")
-              .addValue(onuStatus.mgtTxReady, "mgtTxReady")
-              .addValue(onuStatus.mgtRxReady, "mgtRxReady")
-              .addValue(onuStatus.mgtTxPllLocked, "mgtTxPllLocked")
-              .addValue(onuStatus.mgtRxPllLocked, "mgtRxPllLocked"));
+                             .addValue(std::to_string(onuStatus.onuAddress), "onuAddress")
+                             .addValue(onuStatus.rx40Locked, "rx40Locked")
+                             .addValue(onuStatus.phaseGood, "phaseGood")
+                             .addValue(onuStatus.rxLocked, "rxLocked")
+                             .addValue(onuStatus.operational, "operational")
+                             .addValue(onuStatus.mgtTxReady, "mgtTxReady")
+                             .addValue(onuStatus.mgtRxReady, "mgtRxReady")
+                             .addValue(onuStatus.mgtTxPllLocked, "mgtTxPllLocked")
+                             .addValue(onuStatus.mgtRxPllLocked, "mgtRxPllLocked"));
         } else if (mOptions.jsonOut) {
           root.put("ONU address", onuStatus.onuAddress);
           root.put("ONU RX40 locked", onuStatus.rx40Locked);
@@ -274,8 +273,6 @@ class ProgramStatus : public Program
           std::cout << "ONU MGT RX PLL locked: \t" << std::boolalpha << onuStatus.mgtRxPllLocked << std::endl;
         }
       }
-
-
 
       /* PARAMETERS PER LINK */
       for (const auto& el : reportInfo.linkMap) {
