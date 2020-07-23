@@ -27,6 +27,7 @@ roc_regs = {
 'add_ttc_clkgen_clkctrl':'CLOCK_CONTROL',
 'add_ttc_data_ctrl':'TTC_DATA',
 'add_ttc_onu_ctrl':'LOCK_CLOCK_TO_REF',
+'add_ttc_onuerror_sticky':'TTC_ONU_STICKY',
 'add_ctp_emu_runmode':'CTP_EMU_RUNMODE',
 'add_ctp_emu_ctrl':'CTP_EMU_CTRL',
 'add_ctp_emu_bc_max':'CTP_EMU_BCMAX',

@@ -105,6 +105,7 @@ struct OnuStatus {
   bool mgtRxReady;
   bool mgtTxPllLocked;
   bool mgtRxPllLocked;
+  LinkStatus stickyBit;
 };
 
 struct LinkPacketInfo {

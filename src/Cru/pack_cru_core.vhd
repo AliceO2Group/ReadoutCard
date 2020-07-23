@@ -13,6 +13,7 @@ package pack_cru_core is
 
 -- type declaration
 type Array2bit is array(natural range <>) of std_logic_vector(1 downto 0);
+type Array3bit is array(natural range <>) of std_logic_vector(2 downto 0);
 type Array4bit is array(natural range <>) of std_logic_vector(3 downto 0);
 type Array8bit is array(natural range <>) of std_logic_vector(7 downto 0);
 type Array16bit is array(natural range <>) of std_logic_vector(15 downto 0);
@@ -74,22 +75,34 @@ type t_cru_gbt_array is array (natural range <>) of t_cru_gbt;
  constant c_GBT         : std_logic_vector(11 downto 0) := x"B69"; -- x"47_42_54"
  constant c_TRD         : std_logic_vector(11 downto 0) := x"978"; -- x"54_52_44"
 
+--------------------------------------------------------------------------------
+-- CRU BASE ADD
+--------------------------------------------------------------------------------
+constant add_bsp                                : unsigned(31 downto 0):=X"0000_0000";
+constant add_ro_protocol_base		        : unsigned(31 downto 0):=X"0010_0000";
+constant add_ttc_pon			        : unsigned(31 downto 0):=X"0020_0000";
+constant add_gbt_wrapper0			: unsigned(31 downto 0):=X"0040_0000";
+constant add_gbt_wrapper1			: unsigned(31 downto 0):=X"0050_0000";
+constant add_base_datapathwrapper0              : unsigned(31 downto 0):=X"0060_0000";
+constant add_base_datapathwrapper1              : unsigned(31 downto 0):=X"0070_0000";
+constant add_serial_flash_csr                   : unsigned(31 downto 0):=X"00A0_0000";
+constant add_serial_flash_wr_rst                : unsigned(31 downto 0):=X"00B0_0000";
+constant add_userlogic    		        : unsigned(31 downto 0):=X"00C0_0000";
+constant add_ddg	                        : unsigned(31 downto 0):=X"00D0_0000";
+constant add_gbt_sc	        		: unsigned(31 downto 0):=X"00F0_0000";
 -------------------------------------------------------------------------------
 -- Redaout protocol address tables
 -------------------------------------------------------------------------------
-constant add_ro_protocol_base		    : unsigned(31 downto 0):=X"0010_0000";
-constant add_ro_prot_conf_reg 		    : unsigned(31 downto 0):=X"0000_0000"+add_ro_protocol_base;
+constant add_ro_prot_conf_reg 		        : unsigned(31 downto 0):=X"0000_0000"+add_ro_protocol_base;
 constant add_ro_prot_check_mask 		: unsigned(31 downto 0):=X"0000_0004"+add_ro_protocol_base;
 constant add_ro_prot_alloc_fail 		: unsigned(31 downto 0):=X"0000_0008"+add_ro_protocol_base;
-constant add_ro_prot_ttc_linkerr 		: unsigned(31 downto 0):=X"0000_000C"+add_ro_protocol_base;
+constant add_ro_prot_ttc_linkerr 	        : unsigned(31 downto 0):=X"0000_000C"+add_ro_protocol_base;
+constant add_ro_prot_nack_dly_reg 	        : unsigned(31 downto 0):=X"0000_0010"+add_ro_protocol_base;
 
 -------------------------------------------------------------------------------
 -- GBT address tables
 -------------------------------------------------------------------------------
 -- GBT wrapper pages
-constant add_gbt_wrapper0			: unsigned(31 downto 0):=X"0040_0000";
-constant add_gbt_wrapper1			: unsigned(31 downto 0):=X"0050_0000";
-
 constant add_gbt_wrapper_gregs		: unsigned(31 downto 0):=X"0000_0000";
 constant add_gbt_wrapper_bank_offset: unsigned(31 downto 0):=X"0002_0000"; -- multiply by 1 to 6 (for 6 banks)
 constant add_gbt_wrapper_atx_pll	: unsigned(31 downto 0):=X"000E_0000"; -- alt_a10_gx_240mhz_atx_pll
@@ -132,7 +145,6 @@ constant add_gbt_link_rx_ctrl_offset : unsigned(31 downto 0) := x"0000_003C";
 -- GBTSC address tables
 -------------------------------------------------------------------------------
 -- GBTSCA wrapper pages
-constant add_gbt_sc	        		: unsigned(31 downto 0):=X"00f0_0000";
 -- SCA WR
 constant add_gbt_sca_wr_data        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0000";
 constant add_gbt_sca_wr_cmd        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0004";
@@ -165,8 +177,6 @@ constant add_gbt_sc_rst                         : unsigned(31 downto 0):=add_gbt
 -------------------------------------------------------------------------------
 -- TTC PON address tables
 -------------------------------------------------------------------------------
-constant add_ttc_pon			: unsigned(31 downto 0):=X"0020_0000";
-
 constant add_ttc_regs			: unsigned(31 downto 0):=add_ttc_pon+X"0000_0000";
 constant add_ttc_onu			: unsigned(31 downto 0):=add_ttc_pon+X"0002_0000";
 constant add_ttc_clkgen			: unsigned(31 downto 0):=add_ttc_pon+X"0004_0000";
@@ -246,7 +256,6 @@ constant add_ctp_emu_fbct	            : unsigned(31 downto 0):=add_ctp_emu_core+
 -------------------------------------------------------------------------------
 -- DDG address tables
 -------------------------------------------------------------------------------
-constant add_ddg	     : unsigned(31 downto 0):=X"00D0_0000";
 constant add_ddg_ctrl	     : unsigned(31 downto 0):=add_ddg+X"0000_0000";
 constant add_ddg_ctrl2	     : unsigned(31 downto 0):=add_ddg+X"0000_0004";
 constant add_ddg_ctrl3	     : unsigned(31 downto 0):=add_ddg+X"0000_0008";
@@ -257,9 +266,6 @@ constant add_ddg_trgmiss_cnt : unsigned(31 downto 0):=add_ddg+X"0000_0014";
 -------------------------------------------------------------------------------
 -- datapath wrapper address tables
 -------------------------------------------------------------------------------
-constant add_base_datapathwrapper0  : unsigned(31 downto 0):=X"0060_0000";
-constant add_base_datapathwrapper1  : unsigned(31 downto 0):=X"0070_0000";
-
 constant add_dwrapper_gregs		  : unsigned(31 downto 0):=X"0000_0000";
 constant add_datapathlink_offset  : unsigned(31 downto 0):=X"0004_0000"; -- add link offset to access it
 constant add_flowctrl_offset	  : unsigned(31 downto 0):=X"000C_0000";
@@ -286,7 +292,7 @@ constant add_dwrapper_trigsize     : unsigned(31 downto 0):=X"0000_0034"; -- WO
 
 --datapath link registers
 constant add_datalink_ctrl	      : unsigned(31 downto 0):=X"0000_0000";
-
+constant add_datalink_feeid	      : unsigned(31 downto 0):=X"0000_0004";
 constant add_datalink_rej_pkt     : unsigned(31 downto 0):=X"0000_0008";
 constant add_datalink_acc_pkt     : unsigned(31 downto 0):=X"0000_000C";
 constant add_datalink_forced_pkt  : unsigned(31 downto 0):=X"0000_0010";
@@ -300,15 +306,13 @@ constant add_flowctrl_pkt_tot		: unsigned(31 downto 0):=X"0000_0008";
 -------------------------------------------------------------------------------
 -- Serial Flash address tables
 -------------------------------------------------------------------------------
-constant add_serial_flash_csr     : unsigned(31 downto 0):=X"00A0_0000";
-constant add_serial_flash_wr_rst  : unsigned(31 downto 0):=X"00B0_0000";
+
 constant add_serial_flash_wr_data : unsigned(31 downto 0):=X"00B0_0004";
 
 
 -------------------------------------------------------------------------------
 -- BSP address tables
 -------------------------------------------------------------------------------
-constant add_bsp		          : unsigned(31 downto 0):=X"0000_0000";
 constant add_bsp_info	          : unsigned(31 downto 0):=add_bsp+X"0000_0000";
 constant add_bsp_hkeeping	      : unsigned(31 downto 0):=add_bsp+X"0001_0000";
 constant add_bsp_rsu     	      : unsigned(31 downto 0):=add_bsp+X"0002_0000";
@@ -364,9 +368,17 @@ constant add_bsp_i2c_eeprom       : unsigned(31 downto 0):=add_bsp_i2c+X"0000_08
 -------------------------------------------------------------------------------
 -- User logic
 -------------------------------------------------------------------------------
-constant add_userlogic			    : unsigned(31 downto 0):=X"00C0_0000";
+constant add_userlogic_info     	: unsigned(31 downto 0):=add_userlogic+X"0000_0000"; 
+constant add_userlogic_ctrl     	: unsigned(31 downto 0):=add_userlogic+X"0008_0000"; 
 
-constant add_userlogic_ctrl     	: unsigned(31 downto 0):=add_userlogic+X"0000_0000"; 
+constant add_user_logic_dirty_idcode  : unsigned(31 downto 0)  :=add_userlogic_info+X"0000_0000";
+constant add_user_logic_shorthash    : unsigned(31 downto 0)   :=add_userlogic_info+X"0000_0004";
+constant add_user_logic_builddate    : unsigned(31 downto 0)   :=add_userlogic_info+X"0000_0008";
+constant add_user_logic_buildtime    : unsigned(31 downto 0)   :=add_userlogic_info+X"0000_000C";
+
+constant add_user_logic_reset     : unsigned(31 downto 0) := add_userlogic_ctrl+X"0000_0000";
+constant add_user_logic_eventsize : unsigned(31 downto 0) := add_userlogic_ctrl+X"0000_0004";
+constant add_user_logic_rand_eventsize_toggle : unsigned(31 downto 0) := add_userlogic_ctrl+X"0000_0008";
 
 --------------------------------------------------------------------------------
 -- BAR 0 REGISTERs (DMA)
@@ -507,21 +519,7 @@ component ddg is
     -- GBT Downlink (CRU -> FE)
     --------------------------------------------------------------------------------
     gbt_tx_ready_i : in  std_logic_vector(g_NUM_GBT_LINKS-1 downto 0);
-
-    gbt_tx_bus_o   : out t_cru_gbt;
-    --------------------------------------------------------------------------------
-    -- GBT Uplink (FE -> CRU)
-    --------------------------------------------------------------------------------
-    gbt_rx_ready_i : in  std_logic_vector(g_NUM_GBT_LINKS-1 downto 0);
-    gbt_rx_bus_i   : in  t_cru_gbt_array (g_NUM_GBT_LINKS-1 downto 0);
-    --------------------------------------------------------------------------------
-    -- DMA interface
-    --------------------------------------------------------------------------------
-    FCLK0          : out std_logic;
-    FVAL0          : out std_logic;
-    FSOP0          : out std_logic;
-    FEOP0          : out std_logic;
-    FD0            : out std_logic_vector(255 downto 0)
+    gbt_tx_bus_o   : out t_cru_gbt
     );
 end component ddg;
 
@@ -648,7 +646,7 @@ component datapath_wrapper is
     ---------------------------------------------------------------------------
     PCIe_CLK        : in  std_logic;        -- clock for this FIFO interface
     PCIe_RST        : in  std_logic;
-    PCIe_AFULL      : in  std_logic;        -- almost full
+    PCIe_RD         : in  std_logic;        -- PCIe RD
     PCIe_SOP        : out std_logic;        -- start of packet
     PCIe_EOP        : out std_logic;        -- end of packet
     PCIe_VAL        : out std_logic;        -- data valid
