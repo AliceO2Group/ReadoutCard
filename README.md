@@ -485,7 +485,7 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | `"pciAddress"`   | -                                                                 | string |
 | `"gbtMode"`      | "GBT/GBT" or "GBT/WB"                                             | string |
 | `"loopback"`     | 0/1 (Enabled/Disabled)                                            | int    |
-| `"gbtMux"`       | "DDG", "SWT", "TTC:CTP", "TTC:PATTERN", "TTC:MIDTRG", or "TTC UP" | string |
+| `"gbtMux"`       | "DDG", "SWT", "TTC:CTP", "TTC:PATTERN", "TTC:MIDTRG", or "TTCUP" | string |
 | `"datapathMode"` | "PACKET" or "CONTINUOUS"                                          | string |
 | `"datapath"`     | 0/1 (Disabled/Enabled)                                            | int    |
 | `"rxFreq"`       | -                                                                 | double |
