@@ -564,6 +564,13 @@ Cru::PacketMonitoringInfo CruBar::monitorPackets()
   return { linkPacketInfoMap, wrapperPacketInfoMap };
 }
 
+void CruBar::checkConfigParameters()
+{
+  if (mUserAndCommonLogicEnabled && !mUserLogicEnabled) {
+    BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("User and Common logic switch invalid when User logic disabled"));
+  }
+}
+
 /// Configures the CRU according to the parameters passed on init
 void CruBar::configure(bool force)
 {
@@ -587,6 +594,7 @@ void CruBar::configure(bool force)
     return;
   }
 
+  checkConfigParameters();
   log("Reconfiguring");
 
   Ttc ttc = Ttc(mPdaBar);
@@ -676,8 +684,8 @@ void CruBar::configure(bool force)
 
   /* UL + CL */
   if (mUserAndCommonLogicEnabled != reportInfo.userAndCommonLogicEnabled || force) {
-    log("Enabling User and Common Logic");
-    datapathWrapper.enableUserAndCommonLogic(mUserAndCommonLogicEnabled, mEndpoint);
+    log("Toggling User and Common Logic");
+    datapathWrapper.toggleUserAndCommonLogic(mUserAndCommonLogicEnabled, mEndpoint);
   }
 
   /* BSP */
