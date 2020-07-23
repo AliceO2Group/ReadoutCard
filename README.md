@@ -467,6 +467,7 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | Value name                  | Value                   | Type   | 
 | --------------------------- | ----------------------- | ------ | 
 | `"pciAddress"`              | -                       | string |
+| `"CRU ID"`                  | Assigned CRU ID         | int    |
 | `"clock"`                   | "TTC" or "Local"        | string |
 | `"dynamicOffset"`           | 0/1 (Disabled/Enabled)  | int    |
 | `"userLogic"`               | 0/1 (Disabled/Enabled)  | int    |
