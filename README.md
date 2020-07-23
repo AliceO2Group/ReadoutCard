@@ -479,6 +479,21 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | `tags::Key::ID`   | ID of the card     |
 | `tags::Key::Type` | `tags::Value::CRU` |
 
+###### Metric: `"onu"`
+
+| Value name         | Value            | Type   | 
+| -------------------| -----------------| ------ | 
+| `"onuAddress"`     | ONU Address      | string |
+| `"rx40Locked"`     | 0/1 (False/True) | int    |
+| `"phaseGood"`      | 0/1 (False/True) | int    |
+| `"rxLocked"`       | 0/1 (False/True) | int    |
+| `"operational"`    | 0/1 (False/True) | int    |
+| `"mgtTxReady"`     | 0/1 (False/True) | int    |
+| `"mgtRxReady"`     | 0/1 (False/True) | int    |
+| `"mgtTxPllLocked"` | 0/1 (False/True) | int    |
+| `"mgtRxPllLocked"` | 0/1 (False/True) | int    |
+
+
 ###### Metric: `"link"`
 
 | Value name       | Value                                                             | Type   | 
@@ -486,7 +501,7 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | `"pciAddress"`   | -                                                                 | string |
 | `"gbtMode"`      | "GBT/GBT" or "GBT/WB"                                             | string |
 | `"loopback"`     | 0/1 (Enabled/Disabled)                                            | int    |
-| `"gbtMux"`       | "DDG", "SWT", "TTC:CTP", "TTC:PATTERN", "TTC:MIDTRG", or "TTCUP" | string |
+| `"gbtMux"`       | "DDG", "SWT", "TTC:CTP", "TTC:PATTERN", "TTC:MIDTRG", or "TTCUP"  | string |
 | `"datapathMode"` | "PACKET" or "CONTINUOUS"                                          | string |
 | `"datapath"`     | 0/1 (Disabled/Enabled)                                            | int    |
 | `"rxFreq"`       | -                                                                 | double |

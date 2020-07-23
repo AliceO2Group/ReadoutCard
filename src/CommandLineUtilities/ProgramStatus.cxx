@@ -59,6 +59,9 @@ class ProgramStatus : public Program
     options.add_options()("monitoring",
                           po::bool_switch(&mOptions.monitoring),
                           "Toggle monitoring metrics sending");
+    options.add_options()("onu-status",
+                          po::bool_switch(&mOptions.onu),
+                          "Toggle ONU status output");
   }
 
   virtual void run(const boost::program_options::variables_map& map)
@@ -217,7 +220,7 @@ class ProgramStatus : public Program
         auto csvLine = ",,,,,,,,,," + clock + "," + offset + "," + userLogic + "," + runStats + "\n";
         std::cout << csvLine;
       } else {
-        std::cout << "----------------------------" << std::endl;
+        std::cout << "-----------------------------" << std::endl;
         std::cout << "CRU ID: " << reportInfo.cruId << std::endl;
         std::cout << clock << " clock | ";
         std::cout << offset << " offset" << std::endl;
@@ -230,8 +233,49 @@ class ProgramStatus : public Program
         if (reportInfo.userAndCommonLogicEnabled) {
           std::cout << "User and Common logic enabled" << std::endl;
         }
-        std::cout << "----------------------------" << std::endl;
       }
+
+      /* ONU PARAMETERS */
+      if (mOptions.onu) {
+        Cru::OnuStatus onuStatus = cruBar2->reportOnuStatus();
+
+        if (mOptions.monitoring) {
+          monitoring->send(Metric{ "onu" }
+              .addValue(std::to_string(onuStatus.onuAddress), "onuAddress")
+              .addValue(onuStatus.rx40Locked, "rx40Locked")
+              .addValue(onuStatus.phaseGood, "phaseGood")
+              .addValue(onuStatus.rxLocked, "rxLocked")
+              .addValue(onuStatus.operational, "operational")
+              .addValue(onuStatus.mgtTxReady, "mgtTxReady")
+              .addValue(onuStatus.mgtRxReady, "mgtRxReady")
+              .addValue(onuStatus.mgtTxPllLocked, "mgtTxPllLocked")
+              .addValue(onuStatus.mgtRxPllLocked, "mgtRxPllLocked"));
+        } else if (mOptions.jsonOut) {
+          root.put("ONU address", onuStatus.onuAddress);
+          root.put("ONU RX40 locked", onuStatus.rx40Locked);
+          root.put("ONU phase good", onuStatus.phaseGood);
+          root.put("ONU RX locked", onuStatus.rxLocked);
+          root.put("ONU operational", onuStatus.operational);
+          root.put("ONU MGT TX ready", onuStatus.mgtTxReady);
+          root.put("ONU MGT RX ready", onuStatus.mgtRxReady);
+          root.put("ONU MGT TX PLL locked", onuStatus.mgtTxPllLocked);
+          root.put("ONU MGT RX PLL locked", onuStatus.mgtRxPllLocked);
+        } else {
+          std::cout << "=============================" << std::endl;
+          std::cout << "ONU address: \t\t0x" << std::hex << onuStatus.onuAddress << std::endl;
+          std::cout << "-----------------------------" << std::endl;
+          std::cout << "ONU RX40 locked: \t" << std::boolalpha << onuStatus.rx40Locked << std::endl;
+          std::cout << "ONU phase good: \t" << std::boolalpha << onuStatus.phaseGood << std::endl;
+          std::cout << "ONU RX locked: \t\t" << std::boolalpha << onuStatus.rxLocked << std::endl;
+          std::cout << "ONU operational: \t" << std::boolalpha << onuStatus.operational << std::endl;
+          std::cout << "ONU MGT TX ready: \t" << std::boolalpha << onuStatus.mgtTxReady << std::endl;
+          std::cout << "ONU MGT RX ready: \t" << std::boolalpha << onuStatus.mgtRxReady << std::endl;
+          std::cout << "ONU MGT TX PLL locked: \t" << std::boolalpha << onuStatus.mgtTxPllLocked << std::endl;
+          std::cout << "ONU MGT RX PLL locked: \t" << std::boolalpha << onuStatus.mgtRxPllLocked << std::endl;
+        }
+      }
+
+
 
       /* PARAMETERS PER LINK */
       for (const auto& el : reportInfo.linkMap) {
@@ -333,6 +377,7 @@ class ProgramStatus : public Program
     bool jsonOut = false;
     bool csvOut = false;
     bool monitoring = false;
+    bool onu = false;
   } mOptions;
 };
 
