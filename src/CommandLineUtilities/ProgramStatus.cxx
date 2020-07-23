@@ -207,6 +207,7 @@ class ProgramStatus : public Program
                            .addTag(tags::Key::ID, card.sequenceId)
                            .addTag(tags::Key::Type, tags::Value::CRU));
       } else if (mOptions.jsonOut) {
+        root.put("cruId", reportInfo.cruId);
         root.put("clock", clock);
         root.put("offset", offset);
         root.put("userLogic", userLogic);
@@ -217,11 +218,18 @@ class ProgramStatus : public Program
         std::cout << csvLine;
       } else {
         std::cout << "----------------------------" << std::endl;
+        std::cout << "CRU ID: " << reportInfo.cruId << std::endl;
         std::cout << clock << " clock | ";
         std::cout << offset << " offset" << std::endl;
-        std::cout << "User Logic " << userLogic << std::endl;
-        std::cout << "Run statistics " << runStats << std::endl;
-        std::cout << "User and Common logic " << runStats << std::endl;
+        if (reportInfo.userLogicEnabled) {
+          std::cout << "User Logic enabled" << std::endl;
+        }
+        if (reportInfo.runStatsEnabled) {
+          std::cout << "Run statistics enabled" << std::endl;
+        }
+        if (reportInfo.userAndCommonLogicEnabled) {
+          std::cout << "User and Common logic enabled" << std::endl;
+        }
         std::cout << "----------------------------" << std::endl;
       }
 
