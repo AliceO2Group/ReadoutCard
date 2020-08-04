@@ -2,8 +2,8 @@
 QSFP Enabled
 Fixed offset
 -----------------------------
-Time Frame Detection Enabled
-Time Frame Length: 256
+Time Frame Detection Disabled
+Time Frame Length: 0
 -----------------------------
 =========================================
   Link ID   Status   Optical power(uW)  

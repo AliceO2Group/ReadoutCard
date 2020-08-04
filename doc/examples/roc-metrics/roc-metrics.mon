@@ -1,5 +1,5 @@
-2020-05-18 11:50:57	[1;49mInfluxDB backend initialized[0m
-card,hostname=flp-kostas.cern.ch,name=roc-metrics,id=1,type=CRU pciAddress="af:00.0",temperature=40.8945,droppedPackets=0i,ctpClock=0.76817,localClock=240.471,totalPacketsPerSecond=0i 1589795457315995973
-card,hostname=flp-kostas.cern.ch,name=roc-metrics,id=2,type=CRU pciAddress="3b:00.0",temperature=40.8945,droppedPackets=79307i,ctpClock=1.14019,localClock=240.471,totalPacketsPerSecond=0i 1589795457317687156
-card,hostname=flp-kostas.cern.ch,name=roc-metrics,id=3,type=CRU pciAddress="3c:00.0",temperature=40.8945,droppedPackets=0i,ctpClock=1.14019,localClock=240.471,totalPacketsPerSecond=0i 1589795457319052138
-card,hostname=flp-kostas.cern.ch,name=roc-metrics,id=4,type=CRU pciAddress="b0:00.0",temperature=40.8945,droppedPackets=0i,ctpClock=0.76817,localClock=240.471,totalPacketsPerSecond=0i 1589795457480038339
+2020-08-04 13:05:22	[1;49mInfluxDB backend initialized[0m
+card,hostname=flp-kostas.cern.ch,id=1,type=CRU pciAddress="af:00.0",serial=10243i,endpoint=0i,temperature=38.1875,droppedPackets=0i,ctpClock=0.790384,localClock=240.471,totalPacketsPerSecond=0i 1596539122722151804
+card,hostname=flp-kostas.cern.ch,id=2,type=CRU pciAddress="3b:00.0",serial=10241i,endpoint=0i,temperature=38.1875,droppedPackets=0i,ctpClock=0.901238,localClock=0,totalPacketsPerSecond=0i 1596539122882675174
+card,hostname=flp-kostas.cern.ch,id=3,type=CRU pciAddress="3c:00.0",serial=10241i,endpoint=1i,temperature=38.1875,droppedPackets=0i,ctpClock=0.901238,localClock=0,totalPacketsPerSecond=0i 1596539123042720898
+card,hostname=flp-kostas.cern.ch,id=4,type=CRU pciAddress="b0:00.0",serial=10243i,endpoint=1i,temperature=38.8643,droppedPackets=0i,ctpClock=0.790384,localClock=240.471,totalPacketsPerSecond=0i 1596539123203288989

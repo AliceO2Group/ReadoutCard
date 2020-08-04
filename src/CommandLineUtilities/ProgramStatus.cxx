@@ -117,7 +117,6 @@ class ProgramStatus : public Program
       } else if (mOptions.jsonOut) {
         root.put("pciAddress", card.pciAddress.toString());
         root.put("serial", card.serialId.getSerial());
-        root.put("endpoint", card.serialId.getEndpoint());
         root.put("qsfp", qsfpEnabled);
         root.put("offset", offset);
         root.put("timeFrameDetection", timeFrameDetectionEnabled);

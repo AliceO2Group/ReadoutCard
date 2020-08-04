@@ -1,8 +1,10 @@
 {
+    "pciAddress": "d8:00.0",
+    "serial": "42942",
     "qsfp": "Enabled",
     "offset": "Fixed",
-    "timeFrameDetection": "Enabled",
-    "timeFrameLength": "256",
+    "timeFrameDetection": "Disabled",
+    "timeFrameLength": "0",
     "0": {
         "status": "UP",
         "opticalPower": "0.00"
