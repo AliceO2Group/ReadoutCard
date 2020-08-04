@@ -50,9 +50,6 @@ class ProgramMetrics : public Program
     options.add_options()("json-out",
                           po::bool_switch(&mOptions.jsonOut),
                           "Toggle json-formatted output");
-    options.add_options()("csv-out",
-                          po::bool_switch(&mOptions.csvOut),
-                          "Toggle csv-formatted output");
     options.add_options()("monitoring",
                           po::bool_switch(&mOptions.monitoring),
                           "Toggle monitoring metrics sending");
@@ -68,10 +65,7 @@ class ProgramMetrics : public Program
     auto lineFat = std::string(header.length(), '=') + '\n';
     auto lineThin = std::string(header.length(), '-') + '\n';
 
-    if (mOptions.csvOut) {
-      auto csvHeader = "#,Type,PCI Addr,Serial,Endpoint,Temp (C),#Dropped Packets,CTP Clock (MHz),Local Clock (MHz),Total Packets per second\n";
-      std::cout << csvHeader;
-    } else if (!mOptions.jsonOut) {
+    if (!mOptions.jsonOut) {
       table << lineFat << header << lineThin;
     }
 
@@ -131,12 +125,6 @@ class ProgramMetrics : public Program
 
         // add the card node to the tree
         root.add_child(std::to_string(i), cardNode);
-      } else if (mOptions.csvOut) {
-        auto csvLine = std::to_string(i) + "," + CardType::toString(card.cardType) + "," + card.pciAddress.toString() + "," +
-                       std::to_string(card.serialId.getSerial()) + "," + std::to_string(card.serialId.getEndpoint()) + "," +
-                       std::to_string(temperature) + "," + std::to_string(dropped) + "," + std::to_string(ctpClock) + "," +
-                       std::to_string(localClock) + "," + std::to_string(totalPacketsPerSecond) + "\n";
-        std::cout << csvLine;
       } else {
         auto format = boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciAddress.toString() % card.serialId.getSerial() % card.serialId.getEndpoint() % temperature % dropped % ctpClock % localClock % totalPacketsPerSecond;
 
@@ -147,7 +135,7 @@ class ProgramMetrics : public Program
 
     if (mOptions.jsonOut) {
       pt::write_json(std::cout, root);
-    } else if (!mOptions.csvOut && !mOptions.monitoring) {
+    } else if (!mOptions.monitoring) {
       auto lineFat = std::string(header.length(), '=') + '\n';
       table << lineFat;
       std::cout << table.str();
@@ -157,7 +145,6 @@ class ProgramMetrics : public Program
  private:
   struct OptionsStruct {
     bool jsonOut = false;
-    bool csvOut = false;
     bool monitoring = false;
   } mOptions;
 };
