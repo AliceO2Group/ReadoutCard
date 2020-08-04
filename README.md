@@ -389,6 +389,9 @@ To directly send metrics to the Alice O2 Monitoring library, the argument `--mon
 
 | Value name                | Value | type   |
 | ------------------------- | ----- | ------ |
+| `"pciAddress"`            | -     | string |
+| `"serial"`                | -     | int    |
+| `"endpoint"`              | -     | int    |
 | `"temperature"`           | -     | double |
 | `"droppedPackets"`        | -     | int    |
 | `"ctpClock"`              | -     | double |
@@ -436,6 +439,7 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | Value name             | Value                    | Type   |
 | ---------------------- | ------------------------ | ------ |
 | `"pciAddress"`         | -                        | string |
+| `"serial"`             | -                        | int    |
 | `"qsfp"`               | 0/1 (Disabled/Enabled)   | int    |
 | `"dynamicOffset"`      | 0/1 (Disabled/Enabled)   | int    |
 | `"timeFrameDetection"` | 0/1 (Disabled/Enabled)   | int    |
@@ -451,6 +455,7 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | Value name       | Value              | Type   |
 | ---------------- | --------------     | ------ |
 | `"pciAddress"`   | -                  | string |
+| `"serial"`       | -                  | int    |
 | `"status"`       | 0/1 (DOWN/UP)      | int    |
 | `"opticalPower"` | -                  | double |
 
@@ -467,6 +472,8 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | Value name                  | Value                   | Type   | 
 | --------------------------- | ----------------------- | ------ | 
 | `"pciAddress"`              | -                       | string |
+| `"serial"`                  | -                       | int    |
+| `"endpoint"`                | -                       | int    |
 | `"CRU ID"`                  | Assigned CRU ID         | int    |
 | `"clock"`                   | "TTC" or "Local"        | string |
 | `"dynamicOffset"`           | 0/1 (Disabled/Enabled)  | int    |
@@ -500,6 +507,8 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | Value name       | Value                                                             | Type   | 
 | ---------------- | ----------------------------------------------------------------- | ------ | 
 | `"pciAddress"`   | -                                                                 | string |
+| `"serial"`       | -                                                                 | int    |
+| `"endpoint"`     | -                                                                 | int    |
 | `"gbtMode"`      | "GBT/GBT" or "GBT/WB"                                             | string |
 | `"loopback"`     | 0/1 (Enabled/Disabled)                                            | int    |
 | `"gbtMux"`       | "DDG", "SWT", "TTC:CTP", "TTC:PATTERN", "TTC:MIDTRG", or "TTCUP"  | string |

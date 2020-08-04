@@ -62,14 +62,14 @@ class ProgramMetrics : public Program
   {
 
     std::ostringstream table;
-    auto formatHeader = "  %-3s %-6s %-10s %-10s %-19s %-20s %-19s %-26s\n";
-    auto formatRow = "  %-3s %-6s %-10s %-10s %-19s %-20s %-19s %-26s\n";
-    auto header = (boost::format(formatHeader) % "#" % "Type" % "PCI Addr" % "Temp (C)" % "#Dropped Packets" % "CTP Clock (MHz)" % "Local Clock (MHz)" % "Total Packets per second").str();
+    auto formatHeader = "  %-3s %-6s %-10s %-8s %-10s %-10s %-19s %-20s %-19s %-26s\n";
+    auto formatRow = "  %-3s %-6s %-10s %-8s %-10s %-10s %-19s %-20s %-19s %-26s\n";
+    auto header = (boost::format(formatHeader) % "#" % "Type" % "PCI Addr" % "Serial" % "Endpoint" % "Temp (C)" % "#Dropped Packets" % "CTP Clock (MHz)" % "Local Clock (MHz)" % "Total Packets per second").str();
     auto lineFat = std::string(header.length(), '=') + '\n';
     auto lineThin = std::string(header.length(), '-') + '\n';
 
     if (mOptions.csvOut) {
-      auto csvHeader = "#,Type,PCI Addr,Temp (C),#Dropped Packets,CTP Clock (MHz),Local Clock (MHz),Total Packets per second\n";
+      auto csvHeader = "#,Type,PCI Addr,Serial,Endpoint,Temp (C),#Dropped Packets,CTP Clock (MHz),Local Clock (MHz),Total Packets per second\n";
       std::cout << csvHeader;
     } else if (!mOptions.jsonOut) {
       table << lineFat << header << lineThin;
@@ -105,6 +105,8 @@ class ProgramMetrics : public Program
       if (mOptions.monitoring) {
         monitoring->send(Metric{ "card" }
                            .addValue(card.pciAddress.toString(), "pciAddress")
+                           .addValue(card.serialId.getSerial(), "serial")
+                           .addValue(card.serialId.getEndpoint(), "endpoint")
                            .addValue(temperature, "temperature")
                            .addValue(dropped, "droppedPackets")
                            .addValue(ctpClock, "ctpClock")
@@ -119,6 +121,8 @@ class ProgramMetrics : public Program
         // add kv pairs for this card
         cardNode.put("type", CardType::toString(card.cardType));
         cardNode.put("pciAddress", card.pciAddress.toString());
+        cardNode.put("serial", card.serialId.getSerial());
+        cardNode.put("endpoint", card.serialId.getEndpoint());
         cardNode.put("temperature", Utilities::toPreciseString(temperature));
         cardNode.put("droppedPackets", std::to_string(dropped));
         cardNode.put("ctpClock", Utilities::toPreciseString(ctpClock));
@@ -129,11 +133,12 @@ class ProgramMetrics : public Program
         root.add_child(std::to_string(i), cardNode);
       } else if (mOptions.csvOut) {
         auto csvLine = std::to_string(i) + "," + CardType::toString(card.cardType) + "," + card.pciAddress.toString() + "," +
+                       std::to_string(card.serialId.getSerial()) + "," + std::to_string(card.serialId.getEndpoint()) + "," +
                        std::to_string(temperature) + "," + std::to_string(dropped) + "," + std::to_string(ctpClock) + "," +
                        std::to_string(localClock) + "," + std::to_string(totalPacketsPerSecond) + "\n";
         std::cout << csvLine;
       } else {
-        auto format = boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciAddress.toString() % temperature % dropped % ctpClock % localClock % totalPacketsPerSecond;
+        auto format = boost::format(formatRow) % i % CardType::toString(card.cardType) % card.pciAddress.toString() % card.serialId.getSerial() % card.serialId.getEndpoint() % temperature % dropped % ctpClock % localClock % totalPacketsPerSecond;
 
         table << format;
       }
