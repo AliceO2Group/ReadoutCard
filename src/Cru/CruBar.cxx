@@ -587,6 +587,7 @@ void CruBar::configure(bool force)
       mDynamicOffset == reportInfo.dynamicOffset &&
       mTriggerWindowSize == reportInfo.triggerWindowSize &&
       mUserLogicEnabled == reportInfo.userLogicEnabled &&
+      mUserAndCommonLogicEnabled == reportInfo.userAndCommonLogicEnabled &&
       mRunStatsEnabled == reportInfo.runStatsEnabled &&
       mGbtEnabled == reportInfo.gbtEnabled &&
       !force) {
