@@ -377,7 +377,7 @@ CRORC.
 Output may be in ASCII table (default), or JSON format (`--json-out` option). Example outputs can be found [here](doc/examples/roc-list-cards/).
 
 ### roc-metrics
-Outputs metrics for the ReadoutCards. Output may be in an ASCII table (default), in JSON (`--json-out` option), or CSV format (`--csv-out` option). Example outputs can be found [here](doc/examples/roc-metrics/).
+Outputs metrics for the ReadoutCards. Output may be in an ASCII table (default) or in JSON (`--json-out` option) format. Example outputs can be found [here](doc/examples/roc-metrics/).
 
 Parameter information can be extracted from the monitoring table below.
 
@@ -422,7 +422,7 @@ Run a Python script that can use a simple interface to use the library.
 Setup hugetlbfs directories & mounts. If using hugepages, should be run once per boot.
 
 ### roc-status
-Reports status on the card's global and per-link configuration. Output may be in an ASCII table (default), in JSON (`--json-out` option), or CSV format (`--csv-out` option). Example outputs can be found [here](doc/examples/roc-status/).
+Reports status on the card's global and per-link configuration. Output may be in an ASCII table (default) or in JSON (`--json-out` option) format. Example outputs can be found [here](doc/examples/roc-status/).
 
 Parameter information can be extracted from the monitoring tables below. Please note that for "UP/DOWN" and "Enabled/Disabled"
 states while the monitoring format is an int (0/1), in all other formats a string representation is used.

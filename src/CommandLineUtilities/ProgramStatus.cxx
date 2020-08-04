@@ -43,7 +43,6 @@ class ProgramStatus : public Program
     return { "Status", "Return current RoC configuration status",
              "roc-status --id 42:00.0\n"
              "roc-status --id 42:00.0 --json\n"
-             "roc-status --id 42:00.0 --csv\n"
              "roc-status --id 42:00.0 --monitoring\n" };
   }
 
@@ -53,9 +52,6 @@ class ProgramStatus : public Program
     options.add_options()("json-out",
                           po::bool_switch(&mOptions.jsonOut),
                           "Toggle json-formatted output");
-    options.add_options()("csv-out",
-                          po::bool_switch(&mOptions.csvOut),
-                          "Toggle csv-formatted output");
     options.add_options()("monitoring",
                           po::bool_switch(&mOptions.monitoring),
                           "Toggle monitoring metrics sending");
@@ -94,10 +90,7 @@ class ProgramStatus : public Program
       lineFat = std::string(header.length(), '=') + '\n';
       lineThin = std::string(header.length(), '-') + '\n';
 
-      if (mOptions.csvOut) {
-        auto csvHeader = "Link ID,Status,Optical Power(uW),QSFP Enabled,Offset,Time Frame Detection, Time Frame Length\n";
-        std::cout << csvHeader;
-      } else if (!mOptions.jsonOut) {
+      if (!mOptions.jsonOut) {
         table << lineFat << header << lineThin;
       }
 
@@ -129,10 +122,6 @@ class ProgramStatus : public Program
         root.put("offset", offset);
         root.put("timeFrameDetection", timeFrameDetectionEnabled);
         root.put("timeFrameLength", reportInfo.timeFrameLength);
-      } else if (mOptions.csvOut) {
-        auto csvLine = std::string(",,,") + qsfpEnabled + "," + offset + "," + timeFrameDetectionEnabled + "," + std::to_string(reportInfo.timeFrameLength) + "\n";
-
-        std::cout << csvLine;
       } else {
         std::cout << "-----------------------------" << std::endl;
         std::cout << "QSFP " << qsfpEnabled << std::endl;
@@ -169,9 +158,6 @@ class ProgramStatus : public Program
 
           // add the link node to the tree
           root.add_child(std::to_string(id), linkNode);
-        } else if (mOptions.csvOut) {
-          auto csvLine = std::to_string(id) + "," + linkStatus + "," + std::to_string(opticalPower) + "\n";
-          std::cout << csvLine;
         } else {
           auto format = boost::format(formatRow) % id % linkStatus % opticalPower;
           table << format;
@@ -188,10 +174,7 @@ class ProgramStatus : public Program
       auto bar2 = ChannelFactory().getBar(params);
       auto cruBar2 = std::dynamic_pointer_cast<CruBar>(bar2);
 
-      if (mOptions.csvOut) {
-        auto csvHeader = "Link ID,GBT Mode,Loopback,GBT Mux,Datapath Mode,Datapath,RX Freq(MHz),TX Freq(MHz),Status,Optical Power(uW),Clock,Offset,UserLogic,RunStats\n";
-        std::cout << csvHeader;
-      } else if (!mOptions.jsonOut) {
+      if (!mOptions.jsonOut) {
         table << lineFat << header << lineThin;
       }
 
@@ -226,9 +209,6 @@ class ProgramStatus : public Program
         root.put("userLogic", userLogic);
         root.put("runStats", runStats);
         root.put("userAndCommonLogic", userAndCommonLogic);
-      } else if (mOptions.csvOut) {
-        auto csvLine = ",,,,,,,,,," + clock + "," + offset + "," + userLogic + "," + runStats + "\n";
-        std::cout << csvLine;
       } else {
         std::cout << "-----------------------------" << std::endl;
         std::cout << "CRU ID: " << reportInfo.cruId << std::endl;
@@ -370,10 +350,6 @@ class ProgramStatus : public Program
 
           // add the link node to the tree
           root.add_child(std::to_string(globalId), linkNode);
-        } else if (mOptions.csvOut) {
-          auto csvLine = std::to_string(globalId) + "," + gbtTxRxMode + "," + loopback + "," + gbtMux + "," + datapathMode + "," + enabled + "," +
-                         std::to_string(rxFreq) + "," + std::to_string(txFreq) + "," + linkStatus + "," + std::to_string(opticalPower) + "\n";
-          std::cout << csvLine;
         } else {
           auto format = boost::format(formatRow) % globalId % gbtTxRxMode % loopback % gbtMux % datapathMode % enabled % rxFreq % txFreq % linkStatus % opticalPower;
           table << format;
@@ -386,7 +362,7 @@ class ProgramStatus : public Program
 
     if (mOptions.jsonOut) {
       pt::write_json(std::cout, root);
-    } else if (!mOptions.csvOut && !mOptions.monitoring) {
+    } else if (!mOptions.monitoring) {
       auto lineFat = std::string(header.length(), '=') + '\n';
       table << lineFat;
       std::cout << table.str();
@@ -396,7 +372,6 @@ class ProgramStatus : public Program
  private:
   struct OptionsStruct {
     bool jsonOut = false;
-    bool csvOut = false;
     bool monitoring = false;
     bool onu = false;
   } mOptions;
