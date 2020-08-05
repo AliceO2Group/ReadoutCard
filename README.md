@@ -151,7 +151,7 @@ The Parameters that affect the configuration of the CRU, their possible values (
 
 `GbtMode (GBT | WB) [GBT]`
 
-`GbtMux (TTC | DDG | SWT | TTCUP) [TTC]`
+`GbtMux (TTC | DDG | SWT | TTCUP |UL) [TTC]`
 
 `LinkLoopbackEnabled (true | false) [false]`
 

@@ -28,6 +28,7 @@ static const auto converter = Utilities::makeEnumConverter<GbtMux::type>("GbtMux
                                                                                      { GbtMux::Ddg, "DDG" },
                                                                                      { GbtMux::Swt, "SWT" },
                                                                                      { GbtMux::TtcUp, "TTCUP" },
+                                                                                     { GbtMux::Ul, "UL" },
                                                                                      { GbtMux::Na, "N/A" },
                                                                                    });
 
