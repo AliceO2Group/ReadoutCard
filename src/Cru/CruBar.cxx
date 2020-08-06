@@ -913,7 +913,8 @@ void CruBar::emulateCtp(Cru::CtpInfo ctpInfo)
 
       // Don't send PHYS continuously (no PHY trigger if rate < 7)
       ttc.setEmulatorPHYSDIV(5);
-      std::vector<uint32_t> bunchCrossings = { 0x10, 0x14d, 0x29a, 0x3e7, 0x534, 0x681, 0x7ce, 0x91b, 0xa68 };
+      //std::vector<uint32_t> bunchCrossings = { 0x10, 0x14d, 0x29a, 0x3e7, 0x534, 0x681, 0x7ce, 0x91b, 0xa68 };
+      std::vector<uint32_t> bunchCrossings = { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
       ttc.setFixedBCTrigger(bunchCrossings);
     }
 
