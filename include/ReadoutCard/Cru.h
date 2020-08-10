@@ -53,13 +53,17 @@ static constexpr Register SCA_WR_DATA(0x00f00000);
 static constexpr Register SCA_WR_CMD(0x00f00004);
 static constexpr Register SCA_WR_CTRL(0x00f00008);
 
-static constexpr Register SCA_RD_DATA(0x00f00010);
+static constexpr Register SCA_RD_DATA(0x00f00000);
+static constexpr Register SCA_RD_CMD(0x00f00004);
+static constexpr Register SCA_RD_CTRL(0x00f00008);
+/*static constexpr Register SCA_RD_DATA(0x00f00010);
 static constexpr Register SCA_RD_CMD(0x00f00014);
-static constexpr Register SCA_RD_CTRL(0x00f00018);
+static constexpr Register SCA_RD_CTRL(0x00f00018);*/
 static constexpr Register SCA_RD_MON(0x00f0001c);
 
 static constexpr Register SC_LINK(0x00f00078);
-static constexpr Register SC_RESET(0x00f0007c);
+static constexpr Register SC_RESET(0x00f0000c);
+//static constexpr Register SC_RESET(0x00f0007c);
 
 static constexpr Register SWT_WR_WORD_L(0x00f00040);
 static constexpr Register SWT_WR_WORD_M(0x00f00044);
