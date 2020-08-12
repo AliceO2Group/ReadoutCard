@@ -35,17 +35,9 @@ void PatternPlayer::play(PatternPlayer::Info info)
 
   configure(true);
 
-  if (info.idlePattern) {
-    setIdlePattern(info.idlePattern);
-  }
-
-  if (info.syncPattern) {
-    setSyncPattern(info.syncPattern);
-  }
-
-  if (info.resetPattern) {
-    setResetPattern(info.resetPattern);
-  }
+  setIdlePattern(info.idlePattern);
+  setSyncPattern(info.syncPattern);
+  setResetPattern(info.resetPattern);
 
   configureSync(info.syncLength, info.syncDelay);
   configureReset(info.resetLength);
