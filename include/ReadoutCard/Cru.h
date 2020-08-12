@@ -43,7 +43,7 @@ static constexpr uint32_t GBT_MODE_GBT(0x0);
 static constexpr uint32_t GBT_MODE_WB(0x1);
 
 static constexpr uint32_t GBT_PACKET(0x1);
-static constexpr uint32_t GBT_CONTINUOUS(0x0);
+static constexpr uint32_t GBT_STREAMING(0x0);
 
 namespace ScRegisters
 {

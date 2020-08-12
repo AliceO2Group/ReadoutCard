@@ -27,7 +27,7 @@ namespace roc
 /// Namespace for the ROC datapath mode enum, and supporting functions
 struct DatapathMode {
   enum type {
-    Continuous = Cru::GBT_CONTINUOUS,
+    Streaming = Cru::GBT_STREAMING,
     Packet = Cru::GBT_PACKET,
   };
 

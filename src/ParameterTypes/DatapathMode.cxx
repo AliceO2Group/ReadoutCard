@@ -25,7 +25,7 @@ namespace
 
 static const auto converter = Utilities::makeEnumConverter<DatapathMode::type>("DatapathMode", {
                                                                                                  { DatapathMode::Packet, "Packet" },
-                                                                                                 { DatapathMode::Continuous, "Continuous" },
+                                                                                                 { DatapathMode::Streaming, "Streaming" },
                                                                                                });
 
 } // Anonymous namespace

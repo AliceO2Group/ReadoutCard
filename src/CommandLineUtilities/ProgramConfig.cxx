@@ -56,7 +56,7 @@ class ProgramConfig : public Program
                           "12-bit CRU ID");
     options.add_options()("datapathmode",
                           po::value<std::string>(&mOptions.datapathMode)->default_value("PACKET"),
-                          "DatapathMode [PACKET, CONTINUOUS]");
+                          "DatapathMode [PACKET, STREAMING]");
     options.add_options()("downstreamdata",
                           po::value<std::string>(&mOptions.downstreamData)->default_value("CTP"),
                           "DownstreamData [CTP, PATTERN, MIDTRG]");

@@ -337,7 +337,7 @@ class Parameters
   /// Sets the DatapathMode Parameter
   ///
   /// The Datapath Mode parameter refers to the selection of the Datapath Mode for the CRU configuration
-  /// The Datapath Mode may be PACKET or CONTINUOUS
+  /// The Datapath Mode may be PACKET or STREAMING
   ///
   /// \param value The value to set
   /// \return Reference to this object for chaining calls

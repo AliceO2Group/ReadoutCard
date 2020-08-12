@@ -87,12 +87,12 @@ DatapathMode::type DatapathWrapper::getDatapathMode(Link link)
                      Cru::Registers::DATALINK_OFFSET.address * link.dwrapperId +
                      Cru::Registers::DATALINK_CONTROL.address;
 
-  uint32_t value = mPdaBar->readRegister(address / 4); //1 = packet | 0 = continuous
+  uint32_t value = mPdaBar->readRegister(address / 4); //1 = packet | 0 = streaming
   DatapathMode::type mode;
   if ((value >> 31) == 0x1) {
     mode = DatapathMode::type::Packet;
   } else {
-    mode = DatapathMode::type::Continuous;
+    mode = DatapathMode::type::Streaming;
   }
   return mode;
 }
