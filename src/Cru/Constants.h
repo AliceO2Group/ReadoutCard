@@ -269,7 +269,7 @@ static constexpr Register DATAPATHLINK_OFFSET(0x00040000);
 static constexpr Register DATALINK_OFFSET(0x00002000);
 static constexpr Register DATALINK_CONTROL(0x00000000);
 /*static constexpr uint32_t GBT_PACKET(0x1); 
-static constexpr uint32_t GBT_CONTINUOUS(0x0);*/
+static constexpr uint32_t GBT_STREAMING(0x0);*/
 
 /// Register containing the number of dropped packets
 static constexpr Register DWRAPPER_DROPPED_PACKETS(0x0000001c);

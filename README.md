@@ -145,7 +145,7 @@ The Parameters that affect the configuration of the CRU, their possible values (
 
 `Clock (LOCAL | TTC) [LOCAL]`
 
-`DatapathMode (PACKET | CONTINUOUS) [PACKET]`
+`DatapathMode (PACKET | STREAMING) [PACKET]`
 
 `DownstreamData (CTP | PATTERN | MIDTRG) [CTP]`
 
@@ -512,7 +512,7 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | `"gbtMode"`      | "GBT/GBT" or "GBT/WB"                                             | string |
 | `"loopback"`     | 0/1 (Enabled/Disabled)                                            | int    |
 | `"gbtMux"`       | "DDG", "SWT", "TTC:CTP", "TTC:PATTERN", "TTC:MIDTRG", or "TTCUP"  | string |
-| `"datapathMode"` | "PACKET" or "CONTINUOUS"                                          | string |
+| `"datapathMode"` | "PACKET" or "STREAMING"                                           | string |
 | `"datapath"`     | 0/1 (Disabled/Enabled)                                            | int    |
 | `"rxFreq"`       | -                                                                 | double |
 | `"txFreq"`       | -                                                                 | double |

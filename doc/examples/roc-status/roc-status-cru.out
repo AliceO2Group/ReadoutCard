@@ -1,20 +1,19 @@
 -----------------------------
 CRU ID: 0
 Local clock | Fixed offset
-User Logic enabled
 =============================================================================================================================================
   Link ID   GBT Mode Tx/Rx   Loopback   GBT MUX        Datapath Mode   Datapath   RX freq(MHz)   TX freq(MHz)   Status   Optical power(uW)  
 ---------------------------------------------------------------------------------------------------------------------------------------------
-  0         GBT/GBT          None       TTC:PATTERN    Continuous      Enabled    240.47         240.47         UP       486.4              
-  1         GBT/GBT          None       TTC:PATTERN    Continuous      Enabled    240.47         240.47         UP       542.6              
-  2         GBT/GBT          None       TTC:PATTERN    Continuous      Enabled    240.47         240.47         UP       657.4              
-  3         GBT/GBT          None       TTC:PATTERN    Continuous      Enabled    240.47         240.47         UP       582.1              
-  4         GBT/GBT          None       TTC:PATTERN    Continuous      Enabled    240.47         240.47         UP       682.6              
-  5         GBT/GBT          None       TTC:PATTERN    Continuous      Enabled    240.47         240.47         UP       750.9              
-  6         GBT/GBT          None       TTC:PATTERN    Continuous      Enabled    240.47         240.47         UP       679.1              
-  7         GBT/GBT          None       TTC:PATTERN    Continuous      Enabled    240.47         240.47         UP       534.1              
-  8         GBT/GBT          None       TTC:PATTERN    Continuous      Enabled    240.47         240.47         UP       793.2              
-  9         GBT/GBT          None       TTC:PATTERN    Continuous      Enabled    240.47         240.47         UP       560.8              
-  10        GBT/GBT          None       TTC:PATTERN    Continuous      Enabled    240.47         240.47         UP       747.4              
-  11        GBT/GBT          None       TTC:PATTERN    Continuous      Enabled    240.47         240.47         UP       246.4              
+  0         GBT/GBT          Enabled    DDG            Streaming       Enabled    240.47         240.47         UP       500.0              
+  1         GBT/GBT          None       TTC:CTP        Streaming       Disabled   240.47         240.47         UP       542.6              
+  2         GBT/GBT          None       TTC:CTP        Streaming       Disabled   240.47         240.47         UP       667.2              
+  3         GBT/GBT          None       TTC:CTP        Streaming       Disabled   240.47         240.47         UP       578.6              
+  4         GBT/GBT          None       TTC:CTP        Streaming       Disabled   240.47         240.47         UP       686.1              
+  5         GBT/GBT          None       TTC:CTP        Streaming       Disabled   240.47         240.47         UP       750.9              
+  6         GBT/GBT          None       TTC:CTP        Streaming       Disabled   240.47         240.47         UP       679.1              
+  7         GBT/GBT          None       TTC:CTP        Streaming       Disabled   240.47         240.47         UP       534.1              
+  8         GBT/GBT          None       TTC:CTP        Streaming       Disabled   240.47         240.47         UP       782.8              
+  9         GBT/GBT          None       TTC:CTP        Streaming       Disabled   240.47         240.47         UP       557.2              
+  10        GBT/GBT          None       TTC:CTP        Streaming       Disabled   240.47         240.47         UP       740.1              
+  11        GBT/GBT          None       TTC:CTP        Streaming       Disabled   240.47         240.47         UP       242.9              
 =============================================================================================================================================
