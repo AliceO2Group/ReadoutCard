@@ -403,6 +403,50 @@ To directly send metrics to the Alice O2 Monitoring library, the argument `--mon
 | `tags::Key::ID`    | ID of the card   |
 | `tags::Key::Type`  | Type of the card |
 
+### roc-pkt-monitor
+Monitors packet statistics per link and per CRU wrapper. Output may be in an ASCII table (default) or in JSON (`json-out` option)
+format. Example outputs can be found [here](doc/examples/roc-pkt-monitor/).
+
+Parameter information can be extracted from the monitoring table below.
+
+#### Monitoring metrics
+
+To directly send metrics to the Alice O2 Monitoring library, the argument `--monitoring` is necessary.
+
+###### Metric: `"link"`
+
+| Value name       | Value  | Type   |
+| ---------------- | ------ | ------ |
+| `"pciAddress"`   | -      | string |
+| `"serial"`       | -      | int    |
+| `"endpoint"`     | -      | int    |
+| `"accepted"`     | -      | int    |
+| `"rejected"`     | -      | int    |
+| `"forced"`       | -      | int    |
+
+| Tag key            | Value                |
+| ------------------ | -------------------- |
+| `tags::Key::CRU`   | ID of the CRU        |
+| `tags::Key::ID`    | ID of the link       |
+| `tags::Key::Type`  | `tags::Value::CRU`   |
+
+##### Metric: `"wrapper"`
+
+| Value name                 | Value  | Type   |
+| -------------------------- | ------ | ------ |
+| `"pciAddress"`             | -      | string |
+| `"serial"`                 | -      | int    |
+| `"endpoint"`               | -      | int    |
+| `"dropped"`                | -      | int    |
+| `"totalPacketsPerSec"`     | -      | int    |
+| `"forced"`                 | -      | int    |
+
+| Tag key            | Value                |
+| ------------------ | -------------------- |
+| `tags::Key::CRU`   | ID of the CRU        |
+| `tags::Key::ID`    | ID of the wrapper    |
+| `tags::Key::Type`  | `tags::Value::CRU`   |
+
 ### roc-reg-[read, read-range, write]
 Writes and reads registers to/from a card's BAR. 
 By convention, registers are 32-bit unsigned integers.

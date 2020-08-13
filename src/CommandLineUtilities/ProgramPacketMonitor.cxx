@@ -24,6 +24,9 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
+#include "Monitoring/MonitoringFactory.h"
+using namespace o2::monitoring;
+
 using namespace AliceO2::roc::CommandLineUtilities;
 using namespace AliceO2::roc;
 using namespace AliceO2::InfoLogger;
@@ -36,7 +39,9 @@ class ProgramPacketMonitor : public Program
   virtual Description getDescription()
   {
     return { "Packet Monitor", "Return RoC packet monitoring information",
-             "roc-pkt-monitor --id 42:00.0\n" };
+             "roc-pkt-monitor --id 42:00.0\n"
+             "roc-pkt-monitor --id 42:00.0 --json\n"
+             "roc-pkt-monitor --id 42:00.0 --monitoring\n" };
   }
 
   virtual void addOptions(boost::program_options::options_description& options)
@@ -45,9 +50,9 @@ class ProgramPacketMonitor : public Program
     options.add_options()("json-out",
                           po::bool_switch(&mOptions.jsonOut),
                           "Toggle json-formatted output");
-    options.add_options()("csv-out",
-                          po::bool_switch(&mOptions.csvOut),
-                          "Toggle csv-formatted output");
+    options.add_options()("monitoring",
+                          po::bool_switch(&mOptions.monitoring),
+                          "Toggle monitoring metrics sending");
   }
 
   virtual void run(const boost::program_options::variables_map& map)
@@ -56,8 +61,9 @@ class ProgramPacketMonitor : public Program
     auto cardId = Options::getOptionCardId(map);
     auto params = Parameters::makeParameters(cardId, 2); //status available on BAR2
     auto bar2 = ChannelFactory().getBar(params);
+    auto card = RocPciDevice(cardId).getCardDescriptor();
+    auto cardType = card.cardType;
 
-    CardType::type cardType = bar2->getCardType();
     if (cardType == CardType::type::Crorc) {
       std::cout << "CRORC packet monitoring not yet supported" << std::endl;
       return;
@@ -67,6 +73,12 @@ class ProgramPacketMonitor : public Program
     }
 
     auto cruBar2 = std::dynamic_pointer_cast<CruBar>(bar2);
+
+    // Monitoring instance to send metrics
+    std::unique_ptr<Monitoring> monitoring;
+    if (mOptions.monitoring) {
+      monitoring = MonitoringFactory::Get(getMonitoringUri());
+    }
 
     Cru::PacketMonitoringInfo packetMonitoringInfo = cruBar2->monitorPackets();
 
@@ -78,10 +90,7 @@ class ProgramPacketMonitor : public Program
     auto lineFat = std::string(header.length(), '=') + '\n';
     auto lineThin = std::string(header.length(), '-') + '\n';
 
-    if (mOptions.csvOut) {
-      auto csvHeader = "Link ID,Accepted,Rejected,Forced\n";
-      std::cout << csvHeader;
-    } else if (!mOptions.jsonOut) {
+    if (!mOptions.jsonOut) {
       table << lineFat << header << lineThin;
     }
 
@@ -97,7 +106,19 @@ class ProgramPacketMonitor : public Program
       uint32_t rejected = linkMonitoringInfoMap.rejected;
       uint32_t forced = linkMonitoringInfoMap.forced;
 
-      if (mOptions.jsonOut) {
+      if (mOptions.monitoring) {
+        monitoring->send(Metric{ "link" }
+                           .addValue(card.pciAddress.toString(), "pciAddress")
+                           .addValue(card.serialId.getSerial(), "serial")
+                           .addValue(card.serialId.getEndpoint(), "endpoint")
+                           .addValue((int)accepted, "accepted")
+                           .addValue((int)rejected, "rejected")
+                           .addValue((int)forced, "forced")
+                           .addTag(tags::Key::CRU, card.sequenceId)
+                           .addTag(tags::Key::ID, globalId)
+                           .addTag(tags::Key::Type, tags::Value::CRU));
+
+      } else if (mOptions.jsonOut) {
         pt::ptree linkNode;
 
         // add kv pairs for this link
@@ -107,9 +128,6 @@ class ProgramPacketMonitor : public Program
         linkNode.put("forced", std::to_string(forced));
 
         gbtLinks.add_child(std::to_string(globalId), linkNode);
-      } else if (mOptions.csvOut) {
-        auto csvLine = std::to_string(globalId) + "," + std::to_string(accepted) + "," + std::to_string(rejected) + "," + std::to_string(forced) + "\n";
-        std::cout << csvLine;
       } else {
         auto format = boost::format(formatRow) % globalId % accepted % rejected % forced;
         table << format;
@@ -120,7 +138,7 @@ class ProgramPacketMonitor : public Program
     root.add_child("gbtLinks", gbtLinks);
 
     /* PRINT */
-    if (!mOptions.csvOut) {
+    if (!mOptions.jsonOut && !mOptions.monitoring) {
       std::cout << table.str();
     }
 
@@ -132,10 +150,7 @@ class ProgramPacketMonitor : public Program
     lineFat = std::string(header.length(), '=') + '\n';
     lineThin = std::string(header.length(), '-') + '\n';
 
-    if (mOptions.csvOut) {
-      auto csvHeader = "Wrapper,Dropped,Total Packets per second\n";
-      std::cout << csvHeader;
-    } else {
+    if (!mOptions.jsonOut && !mOptions.monitoring) {
       otherTable << lineFat << header << lineThin;
     }
 
@@ -148,7 +163,17 @@ class ProgramPacketMonitor : public Program
       uint32_t dropped = wrapperMonitoringInfoMap.dropped;
       uint32_t totalPacketsPerSec = wrapperMonitoringInfoMap.totalPacketsPerSec;
 
-      if (mOptions.jsonOut) {
+      if (mOptions.monitoring) {
+        monitoring->send(Metric{ "wrapper" }
+                           .addValue(card.pciAddress.toString(), "pciAddress")
+                           .addValue(card.serialId.getSerial(), "serial")
+                           .addValue(card.serialId.getEndpoint(), "endpoint")
+                           .addValue((int)dropped, "dropped")
+                           .addValue((int)totalPacketsPerSec, "totalPacketsPerSec")
+                           .addTag(tags::Key::CRU, card.sequenceId)
+                           .addTag(tags::Key::ID, wrapper)
+                           .addTag(tags::Key::Type, tags::Value::CRU));
+      } else if (mOptions.jsonOut) {
         pt::ptree wrapperNode;
 
         // add kv pairs for this wrapper
@@ -159,10 +184,7 @@ class ProgramPacketMonitor : public Program
         // add the wrapper node to the tree
         root.add_child("wrapper", wrapperNode);
       }
-      if (mOptions.csvOut) {
-        auto csvLine = std::to_string(wrapper) + "," + std::to_string(dropped) + "," + std::to_string(totalPacketsPerSec) + "\n";
-        std::cout << csvLine;
-      } else {
+      if (!mOptions.jsonOut && !mOptions.monitoring) {
         auto format = boost::format(formatRow) % wrapper % dropped % totalPacketsPerSec;
         otherTable << format;
       }
@@ -171,7 +193,7 @@ class ProgramPacketMonitor : public Program
     /* BREAK + PRINT */
     if (mOptions.jsonOut) {
       pt::write_json(std::cout, root);
-    } else if (!mOptions.csvOut) {
+    } else if (!mOptions.monitoring) {
       auto lineFat = std::string(header.length(), '=') + '\n';
       otherTable << lineFat;
       std::cout << otherTable.str();
@@ -181,7 +203,7 @@ class ProgramPacketMonitor : public Program
  private:
   struct OptionsStruct {
     bool jsonOut = false;
-    bool csvOut = false;
+    bool monitoring = false;
   } mOptions;
 };
 

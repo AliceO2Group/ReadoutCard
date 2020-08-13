@@ -1,0 +1,16 @@
+2020-08-13 15:55:41	[1;49mInfluxDB backend initialized[0m
+link,hostname=flp-kostas.cern.ch,CRU=1,id=0,type=CRU pciAddress="af:00.0",serial=243i,endpoint=0i,accepted=1231196187i,rejected=107289i,forced=0i 1597326941681864570
+link,hostname=flp-kostas.cern.ch,CRU=1,id=1,type=CRU pciAddress="af:00.0",serial=243i,endpoint=0i,accepted=1231196188i,rejected=107289i,forced=0i 1597326941681962027
+link,hostname=flp-kostas.cern.ch,CRU=1,id=2,type=CRU pciAddress="af:00.0",serial=243i,endpoint=0i,accepted=1231196188i,rejected=107289i,forced=0i 1597326941681973819
+link,hostname=flp-kostas.cern.ch,CRU=1,id=3,type=CRU pciAddress="af:00.0",serial=243i,endpoint=0i,accepted=0i,rejected=0i,forced=0i 1597326941681982570
+link,hostname=flp-kostas.cern.ch,CRU=1,id=4,type=CRU pciAddress="af:00.0",serial=243i,endpoint=0i,accepted=0i,rejected=0i,forced=0i 1597326941681990492
+link,hostname=flp-kostas.cern.ch,CRU=1,id=5,type=CRU pciAddress="af:00.0",serial=243i,endpoint=0i,accepted=0i,rejected=0i,forced=0i 1597326941681998179
+link,hostname=flp-kostas.cern.ch,CRU=1,id=6,type=CRU pciAddress="af:00.0",serial=243i,endpoint=0i,accepted=0i,rejected=0i,forced=0i 1597326941682005737
+link,hostname=flp-kostas.cern.ch,CRU=1,id=7,type=CRU pciAddress="af:00.0",serial=243i,endpoint=0i,accepted=0i,rejected=0i,forced=0i 1597326941682013295
+link,hostname=flp-kostas.cern.ch,CRU=1,id=8,type=CRU pciAddress="af:00.0",serial=243i,endpoint=0i,accepted=0i,rejected=0i,forced=0i 1597326941682020724
+link,hostname=flp-kostas.cern.ch,CRU=1,id=9,type=CRU pciAddress="af:00.0",serial=243i,endpoint=0i,accepted=0i,rejected=0i,forced=0i 1597326941682028192
+link,hostname=flp-kostas.cern.ch,CRU=1,id=10,type=CRU pciAddress="af:00.0",serial=243i,endpoint=0i,accepted=0i,rejected=0i,forced=0i 1597326941682035597
+link,hostname=flp-kostas.cern.ch,CRU=1,id=11,type=CRU pciAddress="af:00.0",serial=243i,endpoint=0i,accepted=0i,rejected=0i,forced=0i 1597326941682043187
+link,hostname=flp-kostas.cern.ch,CRU=1,id=13,type=CRU pciAddress="af:00.0",serial=243i,endpoint=0i,accepted=0i,rejected=0i,forced=0i 1597326941682050683
+link,hostname=flp-kostas.cern.ch,CRU=1,id=15,type=CRU pciAddress="af:00.0",serial=243i,endpoint=0i,accepted=0i,rejected=0i,forced=0i 1597326941682058139
+wrapper,hostname=flp-kostas.cern.ch,CRU=1,id=0,type=CRU pciAddress="af:00.0",serial=243i,endpoint=0i,dropped=-688509689i,totalPacketsPerSec=304347i 1597326941682073479
