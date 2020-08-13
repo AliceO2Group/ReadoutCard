@@ -1,0 +1,93 @@
+{
+    "gbtLinks": {
+        "0": {
+            "linkId": "0",
+            "accepted": "1230564670",
+            "rejected": "107289",
+            "forced": "0"
+        },
+        "1": {
+            "linkId": "1",
+            "accepted": "1230564673",
+            "rejected": "107289",
+            "forced": "0"
+        },
+        "2": {
+            "linkId": "2",
+            "accepted": "1230564673",
+            "rejected": "107289",
+            "forced": "0"
+        },
+        "3": {
+            "linkId": "3",
+            "accepted": "0",
+            "rejected": "0",
+            "forced": "0"
+        },
+        "4": {
+            "linkId": "4",
+            "accepted": "0",
+            "rejected": "0",
+            "forced": "0"
+        },
+        "5": {
+            "linkId": "5",
+            "accepted": "0",
+            "rejected": "0",
+            "forced": "0"
+        },
+        "6": {
+            "linkId": "6",
+            "accepted": "0",
+            "rejected": "0",
+            "forced": "0"
+        },
+        "7": {
+            "linkId": "7",
+            "accepted": "0",
+            "rejected": "0",
+            "forced": "0"
+        },
+        "8": {
+            "linkId": "8",
+            "accepted": "0",
+            "rejected": "0",
+            "forced": "0"
+        },
+        "9": {
+            "linkId": "9",
+            "accepted": "0",
+            "rejected": "0",
+            "forced": "0"
+        },
+        "10": {
+            "linkId": "10",
+            "accepted": "0",
+            "rejected": "0",
+            "forced": "0"
+        },
+        "11": {
+            "linkId": "11",
+            "accepted": "0",
+            "rejected": "0",
+            "forced": "0"
+        },
+        "13": {
+            "linkId": "13",
+            "accepted": "0",
+            "rejected": "0",
+            "forced": "0"
+        },
+        "15": {
+            "linkId": "15",
+            "accepted": "0",
+            "rejected": "0",
+            "forced": "0"
+        }
+    },
+    "wrapper": {
+        "wrapperId": "0",
+        "dropped": "3604563062",
+        "totalPacketsPerSec": "304347"
+    }
+}
