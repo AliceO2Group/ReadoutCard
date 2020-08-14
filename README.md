@@ -413,6 +413,25 @@ Parameter information can be extracted from the monitoring table below.
 
 To directly send metrics to the Alice O2 Monitoring library, the argument `--monitoring` is necessary.
 
+##### CRORC
+
+###### Metric: `"link"`
+
+| Value name              | Value  | Type   |
+| ----------------------- | ------ | ------ |
+| `"pciAddress"`          | -      | string |
+| `"serial"`              | -      | int    |
+| `"acquisitionRate"`     | -      | int    |
+| `"packetsReceived"`     | -      | int    |
+
+| Tag key            | Value                |
+| ------------------ | -------------------- |
+| `tags::Key::CRORC` | ID of the CRORC      |
+| `tags::Key::ID`    | ID of the link       |
+| `tags::Key::Type`  | `tags::Value::CRORC` |
+
+##### CRU
+
 ###### Metric: `"link"`
 
 | Value name       | Value  | Type   |
@@ -430,7 +449,7 @@ To directly send metrics to the Alice O2 Monitoring library, the argument `--mon
 | `tags::Key::ID`    | ID of the link       |
 | `tags::Key::Type`  | `tags::Value::CRU`   |
 
-##### Metric: `"wrapper"`
+###### `Metric: `"wrapper"`
 
 | Value name                 | Value  | Type   |
 | -------------------------- | ------ | ------ |
