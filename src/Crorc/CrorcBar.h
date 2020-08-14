@@ -65,6 +65,7 @@ class CrorcBar final : public BarInterfaceBase
   void setLoopback();
   void setDiuLoopback();
   void setSiuLoopback();
+  Crorc::PacketMonitoringInfo monitorPackets();
 
  private:
   std::map<int, Crorc::Link> initializeLinkMap();

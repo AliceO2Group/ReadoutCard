@@ -365,5 +365,12 @@ void CrorcBar::setSiuLoopback()
   //  sendDdlCommand(Crorc::Registers::DDL_COMMAND.address, Crorc::Registers::SIU_RANDCIFST);
 }
 
+Crorc::PacketMonitoringInfo CrorcBar::monitorPackets()
+{
+  uint32_t acquisitionRate = readRegister(Crorc::Registers::ACQ_RATE.index);
+  uint32_t packetsReceived = readRegister(Crorc::Registers::PKTS_RECEIVED.index);
+  return { acquisitionRate, packetsReceived };
+}
+
 } // namespace roc
 } // namespace AliceO2

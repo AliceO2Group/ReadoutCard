@@ -42,6 +42,11 @@ struct ReportInfo {
   bool dynamicOffset;
 };
 
+struct PacketMonitoringInfo {
+  uint32_t acquisitionRate;
+  uint32_t packetsReceived;
+};
+
 } // namespace Crorc
 } // namespace roc
 } // namespace AliceO2

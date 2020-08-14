@@ -420,6 +420,9 @@ static constexpr Register SERIAL_NUMBER_CTRL(0x000000F0);
 static constexpr uint32_t SERIAL_NUMBER_TRG(0xC0000000);
 static constexpr Register SERIAL_NUMBER(0x000000FC);
 
+static constexpr Register ACQ_RATE(0x00000050);
+static constexpr Register PKTS_RECEIVED(0x00000054);
+
 } // namespace Registers
 } //namespace Crorc
 
