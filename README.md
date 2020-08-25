@@ -390,18 +390,18 @@ To directly send metrics to the Alice O2 Monitoring library, the argument `--mon
 | Value name                | Value | type   |
 | ------------------------- | ----- | ------ |
 | `"pciAddress"`            | -     | string |
-| `"serial"`                | -     | int    |
-| `"endpoint"`              | -     | int    |
 | `"temperature"`           | -     | double |
 | `"droppedPackets"`        | -     | int    |
 | `"ctpClock"`              | -     | double |
 | `"localClock"`            | -     | double |
 | `"totalPacketsPerSecond"` | -     | int    |
 
-| Tag key            | Value            |
-| ------------------ | ---------------- |
-| `tags::Key::ID`    | ID of the card   |
-| `tags::Key::Type`  | Type of the card |
+| Tag key               | Value                 |
+| --------------------- | --------------------- |
+| `tags::Key::SerialId` | Serial ID of the card |
+| `tags::Key::Endpoint` | Endpoint of the card  |
+| `tags::Key::ID`       | ID of the card        |
+| `tags::Key::Type`     | Type of the card      |
 
 ### roc-pkt-monitor
 Monitors packet statistics per link and per CRU wrapper. Output may be in an ASCII table (default) or in JSON (`json-out` option)
@@ -420,15 +420,15 @@ To directly send metrics to the Alice O2 Monitoring library, the argument `--mon
 | Value name              | Value  | Type   |
 | ----------------------- | ------ | ------ |
 | `"pciAddress"`          | -      | string |
-| `"serial"`              | -      | int    |
 | `"acquisitionRate"`     | -      | int    |
 | `"packetsReceived"`     | -      | int    |
 
-| Tag key            | Value                |
-| ------------------ | -------------------- |
-| `tags::Key::CRORC` | ID of the CRORC      |
-| `tags::Key::ID`    | ID of the link       |
-| `tags::Key::Type`  | `tags::Value::CRORC` |
+| Tag key               | Value                 |
+| --------------------- | --------------------- |
+| `tags::Key::SerialId` | Serial ID of the card |
+| `tags::Key::CRORC`    | ID of the CRORC       |
+| `tags::Key::ID`       | ID of the link        |
+| `tags::Key::Type`     | `tags::Value::CRORC`  |
 
 ##### CRU
 
@@ -437,34 +437,34 @@ To directly send metrics to the Alice O2 Monitoring library, the argument `--mon
 | Value name       | Value  | Type   |
 | ---------------- | ------ | ------ |
 | `"pciAddress"`   | -      | string |
-| `"serial"`       | -      | int    |
-| `"endpoint"`     | -      | int    |
 | `"accepted"`     | -      | int    |
 | `"rejected"`     | -      | int    |
 | `"forced"`       | -      | int    |
 
-| Tag key            | Value                |
-| ------------------ | -------------------- |
-| `tags::Key::CRU`   | ID of the CRU        |
-| `tags::Key::ID`    | ID of the link       |
-| `tags::Key::Type`  | `tags::Value::CRU`   |
+| Tag key               | Value                 |
+| --------------------- | --------------------- |
+| `tags::Key::SerialId` | Serial ID of the card |
+| `tags::Key::Endpoint` | Endpoint of the card  |
+| `tags::Key::CRU`      | ID of the CRU         |
+| `tags::Key::ID`       | ID of the link        |
+| `tags::Key::Type`     | `tags::Value::CRU`    |
 
 ###### `Metric: `"wrapper"`
 
 | Value name                 | Value  | Type   |
 | -------------------------- | ------ | ------ |
 | `"pciAddress"`             | -      | string |
-| `"serial"`                 | -      | int    |
-| `"endpoint"`               | -      | int    |
 | `"dropped"`                | -      | int    |
 | `"totalPacketsPerSec"`     | -      | int    |
 | `"forced"`                 | -      | int    |
 
-| Tag key            | Value                |
-| ------------------ | -------------------- |
-| `tags::Key::CRU`   | ID of the CRU        |
-| `tags::Key::ID`    | ID of the wrapper    |
-| `tags::Key::Type`  | `tags::Value::CRU`   |
+| Tag key               | Value                 |
+| --------------------- | --------------------- |
+| `tags::Key::SerialId` | Serial ID of the card |
+| `tags::Key::Endpoint` | Endpoint of the card  |
+| `tags::Key::CRU`      | ID of the CRU         |
+| `tags::Key::ID`       | ID of the link        |
+| `tags::Key::Type`     | `tags::Value::CRU`    |
 
 ### roc-reg-[read, read-range, write]
 Writes and reads registers to/from a card's BAR. 
@@ -502,31 +502,31 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | Value name             | Value                    | Type   |
 | ---------------------- | ------------------------ | ------ |
 | `"pciAddress"`         | -                        | string |
-| `"serial"`             | -                        | int    |
 | `"qsfp"`               | 0/1 (Disabled/Enabled)   | int    |
 | `"dynamicOffset"`      | 0/1 (Disabled/Enabled)   | int    |
 | `"timeFrameDetection"` | 0/1 (Disabled/Enabled)   | int    |
 | `"timeFrameLength"`    | -                        | int    |
 
-| Tag key           | Value                |
-| ----------------- | -------------------- |
-| `tags::Key::ID`   | ID of the card       | 
-| `tags::Key::Type` | `tags::Value::CRORC` |
+| Tag key               | Value                 |
+| --------------------- | --------------------- |
+| `tags::Key::SerialId` | Serial ID of the card |
+| `tags::Key::ID`       | ID of the card        | 
+| `tags::Key::Type`     | `tags::Value::CRORC`  |
 
 ###### Metric: `"link"`
 
 | Value name       | Value              | Type   |
 | ---------------- | --------------     | ------ |
 | `"pciAddress"`   | -                  | string |
-| `"serial"`       | -                  | int    |
 | `"status"`       | 0/1 (DOWN/UP)      | int    |
 | `"opticalPower"` | -                  | double |
 
-| Tag key            | Value                |
-| ------------------ | -------------------- |
-| `tags::Key::CRORC` | ID of the CRORC      |
-| `tags::Key::ID`    | ID of the link       |
-| `tags::Key::Type`  | `tags::Value::CRORC` |
+| Tag key               | Value                 |
+| --------------------- | --------------------- |
+| `tags::Key::SerialId` | Serial ID of the card |
+| `tags::Key::CRORC`    | ID of the CRORC       |
+| `tags::Key::ID`       | ID of the link        |
+| `tags::Key::Type`     | `tags::Value::CRORC`  |
 
 ##### CRU
 
@@ -535,8 +535,6 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | Value name                  | Value                   | Type   | 
 | --------------------------- | ----------------------- | ------ | 
 | `"pciAddress"`              | -                       | string |
-| `"serial"`                  | -                       | int    |
-| `"endpoint"`                | -                       | int    |
 | `"CRU ID"`                  | Assigned CRU ID         | int    |
 | `"clock"`                   | "TTC" or "Local"        | string |
 | `"dynamicOffset"`           | 0/1 (Disabled/Enabled)  | int    |
@@ -544,10 +542,12 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | `"runStats"`                | 0/1 (Disabled/Enabled)  | int    |
 | `"commonAndUserLogic"`      | 0/1 (Disabled/Enabled)  | int    |
 
-| Tag key           | Value              |
-| ----------------- | ------------------ |
-| `tags::Key::ID`   | ID of the card     |
-| `tags::Key::Type` | `tags::Value::CRU` |
+| Tag key               | Value                 |
+| --------------------- | --------------------- |
+| `tags::Key::SerialId` | Serial ID of the card |
+| `tags::Key::Endpoint` | Endpoint of the card  |
+| `tags::Key::ID`       | ID of the card        |
+| `tags::Key::Type`     | `tags::Value::CRU`    |
 
 ###### Metric: `"onu"`
 
@@ -570,8 +570,6 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | Value name       | Value                                                             | Type   | 
 | ---------------- | ----------------------------------------------------------------- | ------ | 
 | `"pciAddress"`   | -                                                                 | string |
-| `"serial"`       | -                                                                 | int    |
-| `"endpoint"`     | -                                                                 | int    |
 | `"gbtMode"`      | "GBT/GBT" or "GBT/WB"                                             | string |
 | `"loopback"`     | 0/1 (Enabled/Disabled)                                            | int    |
 | `"gbtMux"`       | "DDG", "SWT", "TTC:CTP", "TTC:PATTERN", "TTC:MIDTRG", or "TTCUP"  | string |
@@ -582,11 +580,13 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | `"status"`       | 0/1/2 (DOWN/UP/UP was DOWN)                                       | int    |
 | `"opticalPower"` | -                                                                 | double |
 
-| Tag key           | Value              |
-| ----------------- | ------------------ |
-| `tags::Key::CRU`  | ID of the CRU      |
-| `tags::Key::ID`   | ID of the link     |
-| `tags::Key::Type` | `tags::Value::CRU` |
+| Tag key               | Value                 |
+| --------------------- | --------------------- |
+| `tags::Key::SerialId` | Serial ID of the card |
+| `tags::Key::Endpoint` | Endpoint of the card  |
+| `tags::Key::CRU`      | ID of the CRU         |
+| `tags::Key::ID`       | ID of the link        |
+| `tags::Key::Type`     | `tags::Value::CRU`    |
 
 Exceptions
 -------------------

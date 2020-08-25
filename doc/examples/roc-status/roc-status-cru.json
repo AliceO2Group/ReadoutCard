@@ -11,62 +11,62 @@
     "0": {
         "gbtMode": "GBT\/GBT",
         "loopback": "Enabled",
+        "gbtMux": "TTC:PATTERN",
+        "datapathMode": "Streaming",
+        "datapath": "Enabled",
+        "rxFreq": "240.47",
+        "txFreq": "240.47",
+        "status": "UP",
+        "opticalPower": "500.00"
+    },
+    "1": {
+        "gbtMode": "GBT\/GBT",
+        "loopback": "Enabled",
         "gbtMux": "DDG",
         "datapathMode": "Streaming",
         "datapath": "Enabled",
         "rxFreq": "240.47",
         "txFreq": "240.47",
         "status": "UP",
-        "opticalPower": "495.50"
-    },
-    "1": {
-        "gbtMode": "GBT\/GBT",
-        "loopback": "None",
-        "gbtMux": "TTC:CTP",
-        "datapathMode": "Streaming",
-        "datapath": "Disabled",
-        "rxFreq": "240.47",
-        "txFreq": "240.47",
-        "status": "UP",
-        "opticalPower": "542.60"
+        "opticalPower": "546.80"
     },
     "2": {
         "gbtMode": "GBT\/GBT",
-        "loopback": "None",
-        "gbtMux": "TTC:CTP",
+        "loopback": "Enabled",
+        "gbtMux": "TTC:PATTERN",
         "datapathMode": "Streaming",
-        "datapath": "Disabled",
+        "datapath": "Enabled",
         "rxFreq": "240.47",
         "txFreq": "240.47",
         "status": "UP",
-        "opticalPower": "663.90"
+        "opticalPower": "667.20"
     },
     "3": {
         "gbtMode": "GBT\/GBT",
         "loopback": "None",
-        "gbtMux": "TTC:CTP",
+        "gbtMux": "DDG",
         "datapathMode": "Streaming",
         "datapath": "Disabled",
         "rxFreq": "240.47",
         "txFreq": "240.47",
         "status": "UP",
-        "opticalPower": "582.10"
+        "opticalPower": "578.60"
     },
     "4": {
         "gbtMode": "GBT\/GBT",
         "loopback": "None",
-        "gbtMux": "TTC:CTP",
+        "gbtMux": "TTC:PATTERN",
         "datapathMode": "Streaming",
         "datapath": "Disabled",
         "rxFreq": "240.47",
         "txFreq": "240.47",
         "status": "UP",
-        "opticalPower": "689.60"
+        "opticalPower": "682.60"
     },
     "5": {
         "gbtMode": "GBT\/GBT",
         "loopback": "None",
-        "gbtMux": "TTC:CTP",
+        "gbtMux": "DDG",
         "datapathMode": "Streaming",
         "datapath": "Disabled",
         "rxFreq": "240.47",
@@ -77,7 +77,7 @@
     "6": {
         "gbtMode": "GBT\/GBT",
         "loopback": "None",
-        "gbtMux": "TTC:CTP",
+        "gbtMux": "TTC:PATTERN",
         "datapathMode": "Streaming",
         "datapath": "Disabled",
         "rxFreq": "240.47",
@@ -88,29 +88,29 @@
     "7": {
         "gbtMode": "GBT\/GBT",
         "loopback": "None",
-        "gbtMux": "TTC:CTP",
+        "gbtMux": "TTC:PATTERN",
         "datapathMode": "Streaming",
         "datapath": "Disabled",
         "rxFreq": "240.47",
         "txFreq": "240.47",
         "status": "UP",
-        "opticalPower": "534.10"
+        "opticalPower": "530.30"
     },
     "8": {
         "gbtMode": "GBT\/GBT",
         "loopback": "None",
-        "gbtMux": "TTC:CTP",
+        "gbtMux": "TTC:PATTERN",
         "datapathMode": "Streaming",
         "datapath": "Disabled",
         "rxFreq": "240.47",
         "txFreq": "240.47",
         "status": "UP",
-        "opticalPower": "793.20"
+        "opticalPower": "782.80"
     },
     "9": {
         "gbtMode": "GBT\/GBT",
         "loopback": "None",
-        "gbtMux": "TTC:CTP",
+        "gbtMux": "TTC:PATTERN",
         "datapathMode": "Streaming",
         "datapath": "Disabled",
         "rxFreq": "240.47",
@@ -121,23 +121,23 @@
     "10": {
         "gbtMode": "GBT\/GBT",
         "loopback": "None",
-        "gbtMux": "TTC:CTP",
+        "gbtMux": "TTC:PATTERN",
         "datapathMode": "Streaming",
         "datapath": "Disabled",
         "rxFreq": "240.47",
         "txFreq": "240.47",
         "status": "UP",
-        "opticalPower": "740.10"
+        "opticalPower": "747.40"
     },
     "11": {
         "gbtMode": "GBT\/GBT",
         "loopback": "None",
-        "gbtMux": "TTC:CTP",
+        "gbtMux": "TTC:PATTERN",
         "datapathMode": "Streaming",
         "datapath": "Disabled",
         "rxFreq": "240.47",
         "txFreq": "240.47",
         "status": "UP",
-        "opticalPower": "242.90"
+        "opticalPower": "239.30"
     }
 }

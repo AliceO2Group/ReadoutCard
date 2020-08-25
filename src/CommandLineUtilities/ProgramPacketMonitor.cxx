@@ -99,9 +99,9 @@ class ProgramPacketMonitor : public Program
         if (mOptions.monitoring) {
           monitoring->send(Metric{ "link" }
                              .addValue(card.pciAddress.toString(), "pciAddress")
-                             .addValue(card.serialId.getSerial(), "serial")
                              .addValue((int)acquisitionRate, "acquisitionRate")
                              .addValue((int)packetsReceived, "packetsReceived")
+                             .addTag(tags::Key::SerialId, card.serialId.getSerial())
                              .addTag(tags::Key::CRORC, card.sequenceId)
                              .addTag(tags::Key::ID, channel)
                              .addTag(tags::Key::Type, tags::Value::CRORC));
@@ -164,11 +164,11 @@ class ProgramPacketMonitor : public Program
         if (mOptions.monitoring) {
           monitoring->send(Metric{ "link" }
                              .addValue(card.pciAddress.toString(), "pciAddress")
-                             .addValue(card.serialId.getSerial(), "serial")
-                             .addValue(card.serialId.getEndpoint(), "endpoint")
                              .addValue((int)accepted, "accepted")
                              .addValue((int)rejected, "rejected")
                              .addValue((int)forced, "forced")
+                             .addTag(tags::Key::SerialId, card.serialId.getSerial())
+                             .addTag(tags::Key::Endpoint, card.serialId.getEndpoint())
                              .addTag(tags::Key::CRU, card.sequenceId)
                              .addTag(tags::Key::ID, globalId)
                              .addTag(tags::Key::Type, tags::Value::CRU));
@@ -221,10 +221,10 @@ class ProgramPacketMonitor : public Program
         if (mOptions.monitoring) {
           monitoring->send(Metric{ "wrapper" }
                              .addValue(card.pciAddress.toString(), "pciAddress")
-                             .addValue(card.serialId.getSerial(), "serial")
-                             .addValue(card.serialId.getEndpoint(), "endpoint")
                              .addValue((int)dropped, "dropped")
                              .addValue((int)totalPacketsPerSec, "totalPacketsPerSec")
+                             .addTag(tags::Key::SerialId, card.serialId.getSerial())
+                             .addTag(tags::Key::Endpoint, card.serialId.getEndpoint())
                              .addTag(tags::Key::CRU, card.sequenceId)
                              .addTag(tags::Key::ID, wrapper)
                              .addTag(tags::Key::Type, tags::Value::CRU));
