@@ -2,23 +2,23 @@
     "0": {
         "type": "CRU",
         "pciAddress": "af:00.0",
-        "serial": "10243",
+        "serial": "243",
         "endpoint": "0",
         "temperature": "38.19",
-        "droppedPackets": "0",
-        "ctpClock": "0.79",
+        "droppedPackets": "-1723989759",
+        "ctpClock": "1.01",
         "localClock": "240.47",
-        "totalPacketsPerSecond": "0"
+        "totalPacketsPerSecond": "304347"
     },
     "1": {
         "type": "CRU",
         "pciAddress": "3b:00.0",
         "serial": "10241",
         "endpoint": "0",
-        "temperature": "38.19",
+        "temperature": "40.22",
         "droppedPackets": "0",
         "ctpClock": "0.90",
-        "localClock": "0.00",
+        "localClock": "240.47",
         "totalPacketsPerSecond": "0"
     },
     "2": {
@@ -26,21 +26,21 @@
         "pciAddress": "3c:00.0",
         "serial": "10241",
         "endpoint": "1",
-        "temperature": "38.19",
+        "temperature": "40.22",
         "droppedPackets": "0",
         "ctpClock": "0.90",
-        "localClock": "0.00",
+        "localClock": "240.47",
         "totalPacketsPerSecond": "0"
     },
     "3": {
         "type": "CRU",
         "pciAddress": "b0:00.0",
-        "serial": "10243",
+        "serial": "243",
         "endpoint": "1",
         "temperature": "38.19",
-        "droppedPackets": "0",
-        "ctpClock": "0.79",
+        "droppedPackets": "772628918",
+        "ctpClock": "1.01",
         "localClock": "240.47",
-        "totalPacketsPerSecond": "0"
+        "totalPacketsPerSecond": "304347"
     }
 }

@@ -2,19 +2,19 @@
     "gbtLinks": {
         "0": {
             "linkId": "0",
-            "accepted": "1230564670",
+            "accepted": "2323607366",
             "rejected": "107289",
             "forced": "0"
         },
         "1": {
             "linkId": "1",
-            "accepted": "1230564673",
+            "accepted": "2323607367",
             "rejected": "107289",
             "forced": "0"
         },
         "2": {
             "linkId": "2",
-            "accepted": "1230564673",
+            "accepted": "2323607367",
             "rejected": "107289",
             "forced": "0"
         },
@@ -87,7 +87,7 @@
     },
     "wrapper": {
         "wrapperId": "0",
-        "dropped": "3604563062",
-        "totalPacketsPerSec": "304347"
+        "dropped": "2588723845",
+        "totalPacketsPerSec": "304353"
     }
 }

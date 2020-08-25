@@ -99,13 +99,13 @@ class ProgramMetrics : public Program
       if (mOptions.monitoring) {
         monitoring->send(Metric{ "card" }
                            .addValue(card.pciAddress.toString(), "pciAddress")
-                           .addValue(card.serialId.getSerial(), "serial")
-                           .addValue(card.serialId.getEndpoint(), "endpoint")
                            .addValue(temperature, "temperature")
                            .addValue(dropped, "droppedPackets")
                            .addValue(ctpClock, "ctpClock")
                            .addValue(localClock, "localClock")
                            .addValue((int)totalPacketsPerSecond, "totalPacketsPerSecond")
+                           .addTag(tags::Key::SerialId, card.serialId.getSerial())
+                           .addTag(tags::Key::Endpoint, card.serialId.getEndpoint())
                            .addTag(tags::Key::ID, card.sequenceId)
                            .addTag(tags::Key::Type, tags::Value::CRU));
 

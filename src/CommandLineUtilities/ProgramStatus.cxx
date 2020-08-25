@@ -107,11 +107,11 @@ class ProgramStatus : public Program
       if (mOptions.monitoring) {
         monitoring->send(Metric{ "CRORC" }
                            .addValue(card.pciAddress.toString(), "pciAddress")
-                           .addValue(card.serialId.getSerial(), "serial")
                            .addValue(reportInfo.qsfpEnabled, "qsfp")
                            .addValue(reportInfo.dynamicOffset, "dynamicOffset")
                            .addValue(reportInfo.timeFrameDetectionEnabled, "timeFrameDetection")
                            .addValue(reportInfo.timeFrameLength, "timeFrameLength")
+                           .addTag(tags::Key::SerialId, card.serialId.getSerial())
                            .addTag(tags::Key::ID, card.sequenceId)
                            .addTag(tags::Key::Type, tags::Value::CRORC));
       } else if (mOptions.jsonOut) {
@@ -142,9 +142,9 @@ class ProgramStatus : public Program
         if (mOptions.monitoring) {
           monitoring->send(Metric{ "link" }
                              .addValue(card.pciAddress.toString(), "pciAddress")
-                             .addValue(card.serialId.getSerial(), "serial")
                              .addValue(link.status, "status")
                              .addValue(opticalPower, "opticalPower")
+                             .addTag(tags::Key::SerialId, card.serialId.getSerial())
                              .addTag(tags::Key::CRORC, card.sequenceId)
                              .addTag(tags::Key::ID, id)
                              .addTag(tags::Key::Type, tags::Value::CRORC));
@@ -189,13 +189,13 @@ class ProgramStatus : public Program
       if (mOptions.monitoring) {
         monitoring->send(Metric{ "CRU" }
                            .addValue(card.pciAddress.toString(), "pciAddress")
-                           .addValue(card.serialId.getSerial(), "serial")
-                           .addValue(card.serialId.getEndpoint(), "endpoint")
                            .addValue(clock, "clock")
                            .addValue(reportInfo.dynamicOffset, "dynamicOffset")
                            .addValue(reportInfo.userLogicEnabled, "userLogic")
                            .addValue(reportInfo.runStatsEnabled, "runStats")
                            .addValue(reportInfo.userAndCommonLogicEnabled, "userAndCommonLogic")
+                           .addTag(tags::Key::SerialId, card.serialId.getSerial())
+                           .addTag(tags::Key::Endpoint, card.serialId.getEndpoint())
                            .addTag(tags::Key::ID, card.sequenceId)
                            .addTag(tags::Key::Type, tags::Value::CRU));
       } else if (mOptions.jsonOut) {
@@ -319,8 +319,6 @@ class ProgramStatus : public Program
         if (mOptions.monitoring) {
           monitoring->send(Metric{ "link" }
                              .addValue(card.pciAddress.toString(), "pciAddress")
-                             .addValue(card.serialId.getSerial(), "serial")
-                             .addValue(card.serialId.getEndpoint(), "endpoint")
                              .addValue(gbtTxRxMode, "gbtMode")
                              .addValue(link.loopback, "loopback")
                              .addValue(gbtMux, "gbtMux")
@@ -330,6 +328,8 @@ class ProgramStatus : public Program
                              .addValue(txFreq, "txFreq")
                              .addValue(link.stickyBit, "status")
                              .addValue(opticalPower, "opticalPower")
+                             .addTag(tags::Key::SerialId, card.serialId.getSerial())
+                             .addTag(tags::Key::Endpoint, card.serialId.getEndpoint())
                              .addTag(tags::Key::CRU, card.sequenceId)
                              .addTag(tags::Key::ID, globalId)
                              .addTag(tags::Key::Type, tags::Value::CRU));
