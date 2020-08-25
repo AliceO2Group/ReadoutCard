@@ -229,7 +229,7 @@ class ProgramConfig : public Program
       std::cout << "Configuring with config uri" << std::endl;
       try {
         CardConfigurator(cardId, mOptions.configUri, mOptions.forceConfig);
-      } catch (std::runtime_error e) {
+      } catch (std::runtime_error& e) {
         std::cout << "Error parsing the configuration..." << boost::diagnostic_information(e) << std::endl;
       }
     }
