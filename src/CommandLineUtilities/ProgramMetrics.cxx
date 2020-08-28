@@ -94,7 +94,7 @@ class ProgramMetrics : public Program
       int32_t dropped = bar2->getDroppedPackets(bar0->getEndpointNumber());
       float ctpClock = bar2->getCTPClock() / 1e6;
       float localClock = bar2->getLocalClock() / 1e6;
-      uint32_t totalPacketsPerSecond = bar2->getTotalPacketsPerSecond(0);
+      uint32_t totalPacketsPerSecond = bar2->getTotalPacketsPerSecond(bar0->getEndpointNumber());
 
       if (mOptions.monitoring) {
         monitoring->send(Metric{ "card" }
