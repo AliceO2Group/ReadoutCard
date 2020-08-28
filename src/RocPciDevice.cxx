@@ -50,7 +50,8 @@ struct DeviceType {
 
 const std::vector<DeviceType> deviceTypes = {
   { CardType::Crorc, { "0033", "10dc" }, crorcGetSerial, crorcGetEndpoint }, // C-RORC
-  { CardType::Cru, { "e001", "1172" }, cruGetSerial, cruGetEndpoint },       // Altera dev board CRU
+  { CardType::Cru, { "0034", "10dc" }, cruGetSerial, cruGetEndpoint },       // CRU
+  { CardType::Cru, { "e001", "1172" }, cruGetSerial, cruGetEndpoint }        // Altera dev board CRU
 };
 
 PciAddress addressFromDevice(PciDevice* pciDevice)

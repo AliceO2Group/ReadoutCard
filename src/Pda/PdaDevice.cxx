@@ -49,7 +49,8 @@ PdaDevice::PdaDevice() : mDeviceOperator(nullptr)
 
     const std::vector<PciType> pciTypes = {
       { CardType::Crorc, { "0033", "10dc" } },
-      { CardType::Cru, { "e001", "1172" } }
+      { CardType::Cru, { "0034", "10dc" } },
+      { CardType::Cru, { "e001", "1172" } } // Altera vendor & device id; to be discontinued
     };
 
     for (const PciType& pciType : pciTypes) {
