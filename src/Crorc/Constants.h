@@ -359,6 +359,12 @@ static constexpr Register I2C_CMD(0x000000D0);
 // [0]    -> FIXED/DYNAMIC OFFSET
 static constexpr Register CFG_CONTROL(0x000001F0);
 
+// Register to control CRORC configuration
+// [16]   -> SUPERPAGE FLUSH
+// [12]   -> TF DETECTION
+// [11-0] -> TF LENGTH
+static constexpr Register CFG_CONTROL_B(0x000001F4);
+
 // Register that contains the firmware hash
 static constexpr Register FIRMWARE_HASH(0x0000019C);
 
@@ -375,7 +381,7 @@ static constexpr Register CHANNEL_CSR(0x00000010);
 static constexpr uint32_t CRORC_RESET(0x00000003);
 static constexpr uint32_t DATA_RX_ON_OFF(0x00000200);
 static constexpr uint32_t RXSTAT_NOT_EMPTY(0x00800000);
-static constexpr uint32_t LOOPBACK_ON_OFF = 0x00001000;
+static constexpr uint32_t LOOPBACK_ON_OFF(0x00001000);
 
 // Channel Receive Report Base Address
 static constexpr Register CHANNEL_RRBAR(0x00000034);
