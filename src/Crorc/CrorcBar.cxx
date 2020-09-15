@@ -209,22 +209,22 @@ void CrorcBar::setTimeFrameLength(uint16_t timeFrameLength)
   if (timeFrameLength > 256) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD TF LENGTH, should be less or equal to 256") << ErrorInfo::ConfigValue(timeFrameLength));
   }
-  modifyRegister(Crorc::Registers::CFG_CONTROL.index, 16, 12, timeFrameLength);
+  modifyRegister(Crorc::Registers::CFG_CONTROL_B.index, 0, 11, timeFrameLength);
 }
 
 uint16_t CrorcBar::getTimeFrameLength()
 {
-  return (readRegister(Crorc::Registers::CFG_CONTROL.index) >> 16) & 0x0fff;
+  return readRegister(Crorc::Registers::CFG_CONTROL_B.index) & 0x0fff;
 }
 
 void CrorcBar::setTimeFrameDetectionEnabled(bool enabled)
 {
-  modifyRegister(Crorc::Registers::CFG_CONTROL.index, 28, 1, enabled ? 0x1 : 0x0);
+  modifyRegister(Crorc::Registers::CFG_CONTROL_B.index, 12, 1, enabled ? 0x1 : 0x0);
 }
 
 bool CrorcBar::getTimeFrameDetectionEnabled()
 {
-  return (readRegister(Crorc::Registers::CFG_CONTROL.index) >> 28) & 0x1;
+  return (readRegister(Crorc::Registers::CFG_CONTROL_B.index) >> 12) & 0x1;
 }
 
 void CrorcBar::getOpticalPowers(std::map<int, Crorc::Link>& linkMap)
