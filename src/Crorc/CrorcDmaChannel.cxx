@@ -166,6 +166,7 @@ void CrorcDmaChannel::startPendingDma()
 
 void CrorcDmaChannel::deviceStopDma()
 {
+  getBar()->flushSuperpages();
   if (mGeneratorEnabled) {
     getBar()->stopDataGenerator();
   } else {

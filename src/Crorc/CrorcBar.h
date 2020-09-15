@@ -52,6 +52,7 @@ class CrorcBar final : public BarInterfaceBase
   Crorc::ReportInfo report();
 
   void resetDevice(bool withSiu);
+  void flushSuperpages();
   void startDataReceiver(uintptr_t readyFifoBusAddress);
   void stopDataReceiver();
   void startDataGenerator();

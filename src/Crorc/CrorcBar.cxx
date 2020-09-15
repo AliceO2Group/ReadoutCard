@@ -227,6 +227,11 @@ bool CrorcBar::getTimeFrameDetectionEnabled()
   return (readRegister(Crorc::Registers::CFG_CONTROL_B.index) >> 12) & 0x1;
 }
 
+void CrorcBar::flushSuperpages()
+{
+  modifyRegister(Crorc::Registers::CFG_CONTROL_B.index, 16, 1, 0x1);
+}
+
 void CrorcBar::getOpticalPowers(std::map<int, Crorc::Link>& linkMap)
 {
   for (auto& el : linkMap) {
