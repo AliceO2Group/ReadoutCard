@@ -15,7 +15,7 @@ namespace AliceO2
 namespace roc
 {
 
-CardConfigurator::CardConfigurator(Parameters::CardIdType cardId, std::string configUri, bool forceConfigure) //TODO: Currently only supports the CRU
+CardConfigurator::CardConfigurator(Parameters::CardIdType cardId, std::string configUri, bool forceConfigure)
 {
   auto cardType = RocPciDevice(cardId).getCardDescriptor().cardType;
   Parameters parameters;
@@ -78,6 +78,7 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
 {
   std::set<uint32_t> linkMask;
   std::map<uint32_t, GbtMux::type> gbtMuxMap;
+  std::map<uint32_t, uint32_t> feeIdMap;
 
   Clock::type clock = Clock::type::Local;
   DatapathMode::type datapathMode = DatapathMode::type::Packet;
@@ -94,9 +95,11 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
   bool userLogicEnabled = false;
   bool runStatsEnabled = false;
   bool userAndCommonLogicEnabled = false;
+  uint32_t systemId = 0x0;
 
   bool enabled = false;
   std::string gbtMux = "ttc";
+  uint32_t feeId = 0x0;
 
   std::unique_ptr<o2::configuration::ConfigurationInterface> conf;
   try {
@@ -108,14 +111,13 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
 
   auto tree = conf->getRecursive("");
   std::string group = "";
+  std::string parsedString;
   try {
     for (auto it : tree) {
       group = it.first;
       auto subtree = it.second;
 
       if (group == "cru") { // Configure the CRU globally
-
-        std::string parsedString;
 
         parsedString = subtree.get<std::string>("clock");
         clock = Clock::fromString(parsedString);
@@ -148,6 +150,9 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
         runStatsEnabled = subtree.get<bool>("runStatsEnabled");
         userAndCommonLogicEnabled = subtree.get<bool>("userAndCommonLogicEnabled");
 
+        parsedString = subtree.get<std::string>("systemId");
+        systemId = Hex::fromString(parsedString);
+
         parameters.setClock(clock);
         parameters.setDatapathMode(datapathMode);
         parameters.setGbtMode(gbtMode);
@@ -163,6 +168,7 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
         parameters.setUserLogicEnabled(userLogicEnabled);
         parameters.setRunStatsEnabled(runStatsEnabled);
         parameters.setUserAndCommonLogicEnabled(userAndCommonLogicEnabled);
+        parameters.setSystemId(systemId);
       } else if (group == "links") { // Configure all links with default values
 
         enabled = subtree.get<bool>("enabled");
@@ -178,6 +184,11 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
           gbtMuxMap.insert(std::make_pair((uint32_t)i, GbtMux::fromString(gbtMux)));
         }
 
+        parsedString = subtree.get<std::string>("feeId");
+        feeId = Hex::fromString(parsedString);
+        for (int i = 0; i < 12; i++) {
+          feeIdMap.insert(std::make_pair((uint32_t)i, feeId));
+        };
       } else if (!group.find("link")) { // Configure individual links
 
         std::string linkIndexString = group.substr(group.find("k") + 1);
@@ -200,11 +211,24 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
         } else {
           gbtMuxMap.insert(std::make_pair(linkIndex, GbtMux::fromString(gbtMux)));
         }
+
+        parsedString = subtree.get<std::string>("feeId");
+        feeId = Hex::fromString(parsedString);
+        if (feeIdMap.find(linkIndex) != feeIdMap.end()) {
+          feeIdMap[linkIndex] = feeId;
+        } else {
+          feeIdMap.insert(std::make_pair(linkIndex, feeId));
+        }
       }
+    }
+
+    for (const auto& el : feeIdMap) { //TODO: REMOVE ME
+      std::cout << el.first << "." << el.second << std::endl;
     }
 
     parameters.setLinkMask(linkMask);
     parameters.setGbtMuxMap(gbtMuxMap);
+    parameters.setFeeIdMap(feeIdMap);
 
   } catch (...) {
     BOOST_THROW_EXCEPTION(ParseException() << ErrorInfo::ConfigParse(group));

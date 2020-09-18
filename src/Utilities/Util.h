@@ -123,6 +123,14 @@ std::string toPreciseString(T flo, int precision = 2)
   return precisionEnforcer.str();
 }
 
+template <typename T>
+std::string toHexString(T num)
+{
+  std::stringstream ss;
+  ss << std::hex << "0x" << num;
+  return ss.str();
+}
+
 } // namespace Utilities
 } // namespace roc
 } // namespace AliceO2

@@ -151,6 +151,9 @@ class CruBar final : public BarInterfaceBase
   bool mUserLogicEnabled;
   bool mRunStatsEnabled;
   bool mUserAndCommonLogicEnabled;
+  uint32_t mSystemId;
+  uint32_t mFeeId;
+  std::map<uint32_t, uint32_t> mFeeIdMap;
 
   int mEndpoint;
 

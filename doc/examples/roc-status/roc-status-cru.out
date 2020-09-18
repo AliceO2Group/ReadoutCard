@@ -1,19 +1,21 @@
 -----------------------------
-CRU ID: 0
+CRU ID: 66
 Local clock | Fixed offset
-=============================================================================================================================================
-  Link ID   GBT Mode Tx/Rx   Loopback   GBT MUX        Datapath Mode   Datapath   RX freq(MHz)   TX freq(MHz)   Status   Optical power(uW)  
----------------------------------------------------------------------------------------------------------------------------------------------
-  0         GBT/GBT          Enabled    TTC:PATTERN    Streaming       Enabled    240.47         240.47         UP       500.0              
-  1         GBT/GBT          Enabled    DDG            Streaming       Enabled    240.47         240.47         UP       546.8              
-  2         GBT/GBT          Enabled    TTC:PATTERN    Streaming       Enabled    240.47         240.47         UP       667.2              
-  3         GBT/GBT          None       DDG            Streaming       Disabled   240.47         240.47         UP       582.1              
-  4         GBT/GBT          None       TTC:PATTERN    Streaming       Disabled   240.47         240.47         UP       679.1              
-  5         GBT/GBT          None       DDG            Streaming       Disabled   240.47         240.47         UP       747.3              
-  6         GBT/GBT          None       TTC:PATTERN    Streaming       Disabled   240.47         240.47         UP       672.1              
-  7         GBT/GBT          None       TTC:PATTERN    Streaming       Disabled   240.47         240.47         UP       534.1              
-  8         GBT/GBT          None       TTC:PATTERN    Streaming       Disabled   240.47         240.47         UP       779.4              
-  9         GBT/GBT          None       TTC:PATTERN    Streaming       Disabled   240.47         240.47         UP       560.8              
-  10        GBT/GBT          None       TTC:PATTERN    Streaming       Disabled   240.47         240.47         UP       751.0              
-  11        GBT/GBT          None       TTC:PATTERN    Streaming       Disabled   240.47         240.47         UP       239.3              
-=============================================================================================================================================
+User Logic enabled
+Run statistics enabled
+=================================================================================================================================================================
+  Link ID   GBT Mode Tx/Rx   Loopback   GBT MUX        Datapath Mode   Datapath   RX freq(MHz)   TX freq(MHz)   Status   Optical power(uW)   System ID   FEE ID 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+  0         GBT/WB           None       TTC:MIDTRG     Streaming       Enabled    240.47         240.47         UP       472.7               0xfd        0xf00d 
+  1         GBT/WB           None       TTC:MIDTRG     Streaming       Enabled    240.47         240.47         UP       546.8               0xfd        0x1    
+  2         GBT/WB           None       SWT            Streaming       Enabled    240.47         240.47         UP       647.5               0xfd        0x2    
+  3         GBT/GBT          None       TTC:MIDTRG     Streaming       Disabled   240.47         240.47         UP       589.3               0xfd        0x0    
+  4         GBT/GBT          None       TTC:MIDTRG     Streaming       Disabled   240.47         240.47         UP       626.4               0xfd        0x0    
+  5         GBT/WB           None       TTC:MIDTRG     Streaming       Enabled    240.47         240.47         UP       823.7               0xfd        0xf00d 
+  6         GBT/WB           None       TTC:MIDTRG     Streaming       Enabled    240.47         240.47         UP       703.7               0xfd        0xf00d 
+  7         GBT/WB           None       TTC:MIDTRG     Streaming       Enabled    240.47         240.47         UP       541.7               0xfd        0xf00d 
+  8         GBT/WB           None       TTC:MIDTRG     Streaming       Enabled    240.47         240.47         UP       769.0               0xfd        0xf00d 
+  9         GBT/WB           None       TTC:MIDTRG     Streaming       Enabled    240.47         240.47         UP       560.8               0xfd        0xf00d 
+  10        GBT/WB           None       TTC:MIDTRG     Streaming       Enabled    240.47         240.47         UP       721.9               0xfd        0xf00d 
+  11        GBT/WB           None       TTC:MIDTRG     Streaming       Enabled    240.47         240.47         UP       242.9               0xfd        0xf00d 
+=================================================================================================================================================================

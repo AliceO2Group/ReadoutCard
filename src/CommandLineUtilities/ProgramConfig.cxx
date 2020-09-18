@@ -117,6 +117,12 @@ class ProgramConfig : public Program
     options.add_options()("user-and-common-logic",
                           po::bool_switch(&mOptions.userAndCommonLogicEnabled),
                           "Flag to toggle the User and Common Logic");
+    options.add_options()("system-id",
+                          po::value<std::string>(&mOptions.systemId),
+                          "Sets the System ID");
+    options.add_options()("fee-id",
+                          po::value<std::string>(&mOptions.feeId),
+                          "Sets the FEE ID");
     Options::addOptionCardId(options);
   }
 
@@ -181,6 +187,8 @@ class ProgramConfig : public Program
       params.setUserAndCommonLogicEnabled(mOptions.userAndCommonLogicEnabled);
       params.setTimeFrameLength(mOptions.timeFrameLength);
       params.setTimeFrameDetectionEnabled(!mOptions.timeFrameDetectionDisabled);
+      params.setSystemId(strtoul(mOptions.systemId.c_str(), NULL, 16));
+      params.setFeeId(strtoul(mOptions.feeId.c_str(), NULL, 16));
 
       // Generate a configuration file base on the parameters provided
       if (mOptions.genConfigFile != "") { //TODO: To be updated for the CRORC
@@ -204,15 +212,20 @@ class ProgramConfig : public Program
         cfgFile << "userLogicEnabled=" << std::boolalpha << mOptions.userLogicEnabled << "\n";
         cfgFile << "runStatsEnabled=" << std::boolalpha << mOptions.runStatsEnabled << "\n";
         cfgFile << "userAndCommonLogicEnabled=" << std::boolalpha << mOptions.userAndCommonLogicEnabled << "\n";
+        cfgFile << "timeFrameLength=" << mOptions.timeFrameLength << "\n";
+        cfgFile << "timeFrameDetectionEnabled=" << std::boolalpha << !mOptions.timeFrameDetectionDisabled << "\n";
+        cfgFile << "systemId" << mOptions.systemId << "\n";
 
         cfgFile << "[links]\n";
         cfgFile << "enabled=false\n";
         cfgFile << "gbtMux=TTC\n";
+        cfgFile << "feeId" << mOptions.systemId << "\n";
 
         for (const auto& link : params.getLinkMaskRequired()) {
           cfgFile << "[link" << link << "]\n";
           cfgFile << "enabled=true\n";
           cfgFile << "gbtMux=" << mOptions.gbtMux << "\n";
+          cfgFile << "feeId" << mOptions.systemId << "\n";
         }
 
         cfgFile.close();
@@ -262,6 +275,10 @@ class ProgramConfig : public Program
     bool runStatsEnabled = false;
     bool userAndCommonLogicEnabled = false;
     bool noGbt = false;
+    std::string systemId = "0x0";
+    std::string feeId = "0x0";
+    /*std::string systemId = "0x1ff"; // TODO: Default values that can be used to check if params have been specified
+    std::string feeId = "0x1f";*/
   } mOptions;
 
  private:

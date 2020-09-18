@@ -298,5 +298,43 @@ bool DatapathWrapper::getUserAndCommonLogicEnabled(int wrapper)
   return (Utilities::getBit(mPdaBar->readRegister(address), 30) == 0x1);
 }
 
+void DatapathWrapper::setSystemId(Link link, uint32_t systemId)
+{
+  uint32_t address = getDatapathWrapperBaseAddress(link.dwrapper) +
+                     Cru::Registers::DATAPATHLINK_OFFSET.address +
+                     Cru::Registers::DATALINK_OFFSET.address * link.dwrapperId +
+                     Cru::Registers::DATALINK_IDS.address;
+  mPdaBar->modifyRegister(address / 4, 16, 8, systemId);
+}
+
+uint32_t DatapathWrapper::getSystemId(Link link)
+{
+  uint32_t address = getDatapathWrapperBaseAddress(link.dwrapper) +
+                     Cru::Registers::DATAPATHLINK_OFFSET.address +
+                     Cru::Registers::DATALINK_OFFSET.address * link.dwrapperId +
+                     Cru::Registers::DATALINK_IDS.address;
+
+  return (mPdaBar->readRegister(address / 4) & 0xff0000) >> 16;
+}
+
+void DatapathWrapper::setFeeId(Link link, uint32_t feeId)
+{
+  uint32_t address = getDatapathWrapperBaseAddress(link.dwrapper) +
+                     Cru::Registers::DATAPATHLINK_OFFSET.address +
+                     Cru::Registers::DATALINK_OFFSET.address * link.dwrapperId +
+                     Cru::Registers::DATALINK_IDS.address;
+  mPdaBar->modifyRegister(address / 4, 0, 16, feeId);
+}
+
+uint32_t DatapathWrapper::getFeeId(Link link)
+{
+  uint32_t address = getDatapathWrapperBaseAddress(link.dwrapper) +
+                     Cru::Registers::DATAPATHLINK_OFFSET.address +
+                     Cru::Registers::DATALINK_OFFSET.address * link.dwrapperId +
+                     Cru::Registers::DATALINK_IDS.address;
+
+  return mPdaBar->readRegister(address / 4) & 0xffff;
+}
+
 } // namespace roc
 } // namespace AliceO2

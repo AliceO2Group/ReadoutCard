@@ -54,6 +54,7 @@ roc_regs = {
 'add_datapathlink_offset':'DATAPATHLINK_OFFSET',
 'add_datalink_offset':'DATALINK_OFFSET',
 'add_datalink_ctrl':'DATALINK_CONTROL',
+'add_datalink_feeid':'DATALINK_IDS',
 'add_datalink_acc_pkt':'DATALINK_PACKETS_ACCEPTED',
 'add_datalink_rej_pkt':'DATALINK_PACKETS_REJECTED',
 'add_datalink_forced_pkt':'DATALINK_PACKETS_FORCED',

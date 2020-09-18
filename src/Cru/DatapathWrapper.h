@@ -56,6 +56,10 @@ class DatapathWrapper
   uint32_t getTriggerWindowSize(int wrapper);
   void toggleUserAndCommonLogic(bool enable, int wrapper);
   bool getUserAndCommonLogicEnabled(int wrapper);
+  void setSystemId(Link link, uint32_t systemId);
+  uint32_t getSystemId(Link link);
+  void setFeeId(Link link, uint32_t feeId);
+  uint32_t getFeeId(Link link);
 
  private:
   uint32_t getDatapathWrapperBaseAddress(int wrapper);

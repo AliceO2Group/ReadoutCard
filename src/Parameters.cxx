@@ -35,7 +35,8 @@ using Variant = boost::variant<size_t, uint32_t, int32_t, bool, Parameters::Buff
                                Parameters::DataSourceType, Parameters::LinkMaskType, Parameters::AllowRejectionType,
                                Parameters::ClockType, Parameters::CrorcIdType, Parameters::CruIdType,
                                Parameters::DatapathModeType, Parameters::DownstreamDataType, Parameters::GbtModeType,
-                               Parameters::GbtMuxType, Parameters::GbtMuxMapType, Parameters::OnuAddressType>;
+                               Parameters::GbtMuxType, Parameters::GbtMuxMapType, Parameters::OnuAddressType,
+                               Parameters::FeeIdMapType>;
 
 using KeyType = const char*;
 
@@ -142,6 +143,9 @@ _PARAMETER_FUNCTIONS(StbrdEnabled, "stbrd_enabled")
 _PARAMETER_FUNCTIONS(TriggerWindowSize, "trigger_window_size")
 _PARAMETER_FUNCTIONS(TimeFrameLength, "timeframe_length")
 _PARAMETER_FUNCTIONS(TimeFrameDetectionEnabled, "timeframe_detection_enabled")
+_PARAMETER_FUNCTIONS(SystemId, "system_id")
+_PARAMETER_FUNCTIONS(FeeId, "fee_id")
+_PARAMETER_FUNCTIONS(FeeIdMap, "fee_id_map")
 #undef _PARAMETER_FUNCTIONS
 
 Parameters::Parameters() : mPimpl(std::make_unique<ParametersPimpl>())

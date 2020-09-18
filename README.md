@@ -579,6 +579,8 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | `"txFreq"`       | -                                                                 | double |
 | `"status"`       | 0/1/2 (DOWN/UP/UP was DOWN)                                       | int    |
 | `"opticalPower"` | -                                                                 | double |
+| `"systemId"`     | 8-bit hex                                                         | string |
+| `"feeId"`        | 12-bit hex                                                        | string |
 
 | Tag key               | Value                 |
 | --------------------- | --------------------- |
