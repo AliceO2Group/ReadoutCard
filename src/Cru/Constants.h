@@ -268,6 +268,9 @@ static constexpr Register DWRAPPER_ENREG(0x00000000);
 static constexpr Register DATAPATHLINK_OFFSET(0x00040000);
 static constexpr Register DATALINK_OFFSET(0x00002000);
 static constexpr Register DATALINK_CONTROL(0x00000000);
+// [15 - 0] FEE ID
+// [23 - 16] SYSTEM ID
+static constexpr Register DATALINK_IDS(0x00000004);
 /*static constexpr uint32_t GBT_PACKET(0x1); 
 static constexpr uint32_t GBT_STREAMING(0x0);*/
 
@@ -280,8 +283,8 @@ static constexpr Register DWRAPPER_TOTAL_PACKETS_PER_SEC(0x0000002c);
 /// Register to set the trigger window size in gbt words
 static constexpr Register DWRAPPER_TRIGGER_SIZE(0x00000034);
 
-static constexpr Register DATALINK_PACKETS_ACCEPTED(0x0000000c);
 static constexpr Register DATALINK_PACKETS_REJECTED(0x00000008);
+static constexpr Register DATALINK_PACKETS_ACCEPTED(0x0000000c);
 static constexpr Register DATALINK_PACKETS_FORCED(0x00000010);
 
 /// Registers to set the Flow Control

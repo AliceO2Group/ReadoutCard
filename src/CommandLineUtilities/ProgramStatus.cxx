@@ -163,9 +163,9 @@ class ProgramStatus : public Program
         }
       }
     } else if (cardType == CardType::type::Cru) {
-      formatHeader = "  %-9s %-16s %-10s %-14s %-15s %-10s %-14s %-14s %-8s %-19s\n";
-      formatRow = "  %-9s %-16s %-10s %-14s %-15s %-10s %-14.2f %-14.2f %-8s %-19.1f\n";
-      header = (boost::format(formatHeader) % "Link ID" % "GBT Mode Tx/Rx" % "Loopback" % "GBT MUX" % "Datapath Mode" % "Datapath" % "RX freq(MHz)" % "TX freq(MHz)" % "Status" % "Optical power(uW)").str();
+      formatHeader = "  %-9s %-16s %-10s %-14s %-15s %-10s %-14s %-14s %-8s %-19s %-11s %-7s\n";
+      formatRow = "  %-9s %-16s %-10s %-14s %-15s %-10s %-14.2f %-14.2f %-8s %-19.1f %-11s %-7s\n";
+      header = (boost::format(formatHeader) % "Link ID" % "GBT Mode Tx/Rx" % "Loopback" % "GBT MUX" % "Datapath Mode" % "Datapath" % "RX freq(MHz)" % "TX freq(MHz)" % "Status" % "Optical power(uW)" % "System ID" % "FEE ID").str();
       lineFat = std::string(header.length(), '=') + '\n';
       lineThin = std::string(header.length(), '-') + '\n';
 
@@ -189,6 +189,7 @@ class ProgramStatus : public Program
       if (mOptions.monitoring) {
         monitoring->send(Metric{ "CRU" }
                            .addValue(card.pciAddress.toString(), "pciAddress")
+                           .addValue(reportInfo.cruId, "cruId")
                            .addValue(clock, "clock")
                            .addValue(reportInfo.dynamicOffset, "dynamicOffset")
                            .addValue(reportInfo.userLogicEnabled, "userLogic")
@@ -315,6 +316,8 @@ class ProgramStatus : public Program
         }
 
         float opticalPower = link.opticalPower;
+        std::string systemId = Utilities::toHexString(link.systemId);
+        std::string feeId = Utilities::toHexString(link.feeId);
 
         if (mOptions.monitoring) {
           monitoring->send(Metric{ "link" }
@@ -328,6 +331,8 @@ class ProgramStatus : public Program
                              .addValue(txFreq, "txFreq")
                              .addValue(link.stickyBit, "status")
                              .addValue(opticalPower, "opticalPower")
+                             .addValue(systemId, "systemId")
+                             .addValue(feeId, "feeId")
                              .addTag(tags::Key::SerialId, card.serialId.getSerial())
                              .addTag(tags::Key::Endpoint, card.serialId.getEndpoint())
                              .addTag(tags::Key::CRU, card.sequenceId)
@@ -346,11 +351,13 @@ class ProgramStatus : public Program
           linkNode.put("txFreq", Utilities::toPreciseString(txFreq));
           linkNode.put("status", linkStatus);
           linkNode.put("opticalPower", Utilities::toPreciseString(opticalPower));
+          linkNode.put("systemId", systemId);
+          linkNode.put("feeId", feeId);
 
           // add the link node to the tree
           root.add_child(std::to_string(globalId), linkNode);
         } else {
-          auto format = boost::format(formatRow) % globalId % gbtTxRxMode % loopback % gbtMux % datapathMode % enabled % rxFreq % txFreq % linkStatus % opticalPower;
+          auto format = boost::format(formatRow) % globalId % gbtTxRxMode % loopback % gbtMux % datapathMode % enabled % rxFreq % txFreq % linkStatus % opticalPower % systemId % feeId;
           table << format;
         }
       }

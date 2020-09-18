@@ -146,6 +146,15 @@ class Parameters
   /// Type for the Time Frame Detection enabled parameter
   using TimeFrameDetectionEnabledType = bool;
 
+  /// Type for the System ID parameter
+  using SystemIdType = uint32_t;
+
+  /// Type for the FEE ID parameter
+  using FeeIdType = uint32_t;
+
+  /// Type for the FEE ID map parameter
+  using FeeIdMapType = std::map<uint32_t, uint32_t>;
+
   // Setters
 
   /// Sets the CardId parameter
@@ -404,6 +413,24 @@ class Parameters
   /// \return Reference to this object for chaining calls
   auto setTimeFrameDetectionEnabled(TimeFrameDetectionEnabledType value) -> Parameters&;
 
+  /// Sets the SystemId parameter
+  ///
+  /// \param value The value to set
+  /// \return Reference to this object for chaining calls
+  auto setSystemId(SystemIdType value) -> Parameters&;
+
+  /// Sets the FeeId parameter
+  ///
+  /// \param value The value to set
+  /// \return Reference to this object for chaining calls
+  auto setFeeId(FeeIdType value) -> Parameters&;
+
+  /// Sets the FeeIdMap parameter
+  ///
+  /// \param value The value to set
+  /// \return Reference to this object for chaining calls
+  auto setFeeIdMap(FeeIdMapType value) -> Parameters&;
+
   // non-throwing getters
 
   /// Gets the AllowRejection parameter
@@ -516,6 +543,18 @@ class Parameters
   /// Gets the TimeFrameDetectionEnabled parameter
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
   auto getTimeFrameDetectionEnabled() const -> boost::optional<TimeFrameDetectionEnabledType>;
+
+  /// Gets the SystemId parameter
+  /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+  auto getSystemId() const -> boost::optional<SystemIdType>;
+
+  /// Gets the FeeId parameter
+  /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+  auto getFeeId() const -> boost::optional<FeeIdType>;
+
+  /// Gets the FeeIdMap parameter
+  /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+  auto getFeeIdMap() const -> boost::optional<FeeIdMapType>;
 
   // Throwing getters
 
@@ -658,6 +697,21 @@ class Parameters
   /// \exception ParameterException The parameter was not present
   /// \return The value
   auto getTimeFrameDetectionEnabledRequired() const -> TimeFrameDetectionEnabledType;
+
+  /// Gets the SystemId parameter
+  /// \exception ParameterException The parameter was not present
+  /// \return The value
+  auto getSystemIdRequired() const -> SystemIdType;
+
+  /// Gets the FeeId parameter
+  /// \exception ParameterException The parameter was not present
+  /// \return The value
+  auto getFeeIdRequired() const -> FeeIdType;
+
+  /// Gets the FeeIdMap parameter
+  /// \exception ParameterException The parameter was not present
+  /// \return The value
+  auto getFeeIdMapRequired() const -> FeeIdMapType;
 
   // Helper functions
 

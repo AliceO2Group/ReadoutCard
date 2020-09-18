@@ -52,6 +52,10 @@ struct Link {
   float txFreq = 0x0; //In MHz
   float rxFreq = 0x0; //In MHz
   uint32_t allowRejection = 0;
+  uint32_t systemId = 0x0;
+  uint32_t feeId = 0x0;
+  /*uint32_t systemId = 0x1ff; // invalid, used as "unset" placeholder
+  uint32_t feeId = 0x1f; // invalid, used as "unset" placeholder*/
 
   bool operator==(const Link& dlink) const
   {
@@ -70,7 +74,9 @@ struct Link {
               loopback == dlink.loopback &&
               datapathMode == dlink.datapathMode &&
               enabled == dlink.enabled &&
-              allowRejection == dlink.allowRejection);
+              allowRejection == dlink.allowRejection &&
+              systemId == dlink.systemId &&
+              feeId == dlink.feeId);
     }
   }
 

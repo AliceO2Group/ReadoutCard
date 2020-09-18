@@ -56,7 +56,10 @@ CruBar::CruBar(const Parameters& parameters, std::unique_ptr<RocPciDevice> rocPc
     mGbtEnabled(parameters.getGbtEnabled().get_value_or(true)),
     mUserLogicEnabled(parameters.getUserLogicEnabled().get_value_or(false)),
     mRunStatsEnabled(parameters.getRunStatsEnabled().get_value_or(false)),
-    mUserAndCommonLogicEnabled(parameters.getUserAndCommonLogicEnabled().get_value_or(false))
+    mUserAndCommonLogicEnabled(parameters.getUserAndCommonLogicEnabled().get_value_or(false)),
+    mSystemId(parameters.getSystemId().get_value_or(0x0)),
+    mFeeId(parameters.getFeeId().get_value_or(0x0)),
+    mFeeIdMap(parameters.getFeeIdMap().get_value_or({}))
 {
   if (getIndex() == 0) {
     mFeatures = parseFirmwareFeatures();
@@ -471,6 +474,8 @@ Cru::ReportInfo CruBar::report()
     link.stickyBit = gbt.getStickyBit(link);
     link.rxFreq = gbt.getRxClockFrequency(link) / 1e6; // Hz -> Mhz
     link.txFreq = gbt.getTxClockFrequency(link) / 1e6; // Hz -> Mhz
+    link.systemId = datapathWrapper.getSystemId(link);
+    link.feeId = datapathWrapper.getFeeId(link);
 
     if (link.enabled) {
       gbtEnabled = true;
@@ -668,6 +673,8 @@ void CruBar::configure(bool force)
         datapathWrapper.setDatapathMode(link, mDatapathMode);
       }
       datapathWrapper.setFlowControl(link.dwrapper, mAllowRejection); //Set flow control anyway as it's per dwrapper
+      datapathWrapper.setSystemId(link, mSystemId);
+      datapathWrapper.setFeeId(link, link.feeId);
     }
   }
 
@@ -820,6 +827,14 @@ void CruBar::populateLinkMap(std::map<int, Link>& linkMap)
 
       link.datapathMode = mDatapathMode;
       link.allowRejection = mAllowRejection;
+      link.systemId = mSystemId;
+
+      auto feeIdMapElement = mFeeIdMap.find(el.first);
+      if (feeIdMapElement != mFeeIdMap.end()) { // Different FEE IDs per link
+        link.feeId = feeIdMapElement->second;
+      } else { // Specific FEE ID not found
+        link.feeId = mFeeId;
+      }
     } else {
       link.loopback = false; // disabled links should NOT be in loopback
       gbt.setLoopback(link, link.loopback);
