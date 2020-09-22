@@ -47,6 +47,7 @@ class Gbt
   LinkStatus getStickyBit(Link link);
   uint32_t getRxClockFrequency(Link link);
   uint32_t getTxClockFrequency(Link link);
+  void resetFifo();
 
  private:
   uint32_t getSourceSelectAddress(Link link);
