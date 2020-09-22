@@ -287,5 +287,11 @@ uint32_t Gbt::getTxClockFrequency(Link link) //In Hz
   return mPdaBar->readRegister(address / 4);
 }
 
+void Gbt::resetFifo()
+{
+  mPdaBar->writeRegister(Cru::Registers::BSP_USER_CONTROL.index, 0x80);
+  mPdaBar->writeRegister(Cru::Registers::BSP_USER_CONTROL.index, 0x0);
+}
+
 } // namespace roc
 } // namespace AliceO2

@@ -629,6 +629,7 @@ void CruBar::configure(bool force)
       gbt.calibrateGbt(mLinkMap);
       Cru::fpllref(mLinkMap, mPdaBar, 2);
       Cru::fpllcal(mLinkMap, mPdaBar);
+      gbt.resetFifo();
     }
   }
 
