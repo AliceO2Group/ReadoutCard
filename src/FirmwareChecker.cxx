@@ -21,19 +21,21 @@ namespace AliceO2
 namespace roc
 {
 
-FirmwareChecker::FirmwareChecker() : mCompatibleFirmwareList({ /* CRU */
-                                                               { "f71faa86", "v3.9.1" },
-                                                               { "8e0d2ffa", "v3.9.0" },
-                                                               { "e8e58cff", "v3.8.0" },
+FirmwareChecker::FirmwareChecker() : mCompatibleFirmwareList({
+                                       /* CRU */
+                                       { "f71faa86", "v3.9.1" },
+                                       { "8e0d2ffa", "v3.9.0" },
+                                       /*{ "e8e58cff", "v3.8.0" },
                                                                { "f8cecade", "v3.7.0" },
                                                                { "75b96268", "v3.6.1" },
                                                                { "6955404", "v3.6.0" },
                                                                { "d458317e", "v3.5.2" },
-                                                               { "6baf11da", "v3.5.1" },
-                                                               /* CRORC */
-                                                               { "72cdb92", "v2.4.1" },
-                                                               { "474f9e1", "v2.7.0" },
-                                                               { "8e3a98e", "v2.6.1" } })
+                                                               { "6baf11da", "v3.5.1" },*/
+                                       /* CRORC */
+                                       { "475f9e1", "v2.7.0" }
+                                       /*{ "8e3a98e", "v2.6.1" },
+                                                               { "72cdb92", "v2.4.1" }*/
+                                     })
 {
 }
 
