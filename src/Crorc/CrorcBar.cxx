@@ -156,9 +156,17 @@ bool CrorcBar::checkLinkUp()
 
 void CrorcBar::assertLinkUp()
 {
-  auto timeOut = std::chrono::steady_clock::now() + std::chrono::milliseconds(100);
-  while ((std::chrono::steady_clock::now() < timeOut) && !checkLinkUp()) {
+  int checkTimes = 1000;
+  auto timeOut = std::chrono::steady_clock::now() + std::chrono::milliseconds(2000);
+  while ((std::chrono::steady_clock::now() < timeOut) && checkTimes) {
+    if (checkLinkUp()) {
+      checkTimes--;
+    } else {
+      checkTimes = 1000;
+    }
   }
+
+  std::this_thread::sleep_for(500ms);
   if (!checkLinkUp()) {
     BOOST_THROW_EXCEPTION(CrorcCheckLinkException() << ErrorInfo::Message("Link was not up"));
   }
