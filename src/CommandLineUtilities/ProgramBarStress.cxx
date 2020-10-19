@@ -26,7 +26,6 @@
 
 using namespace AliceO2::roc::CommandLineUtilities;
 using namespace AliceO2::roc;
-using namespace AliceO2::InfoLogger;
 namespace po = boost::program_options;
 
 class ProgramBarStress : public Program
@@ -44,44 +43,32 @@ class ProgramBarStress : public Program
     options.add_options()("cycles",
                           po::value<long long>(&mOptions.cycles)->default_value(100),
                           "Total bar writes to perform");
-    options.add_options()("print-freq",
-                          po::value<long long>(&mOptions.printFrequency)->default_value(10),
-                          "Print every #print-freq cycles");
-    options.add_options()("sleep",
-                          po::value<int>(&mOptions.sleep)->default_value(0),
-                          "Sleep for #sleep us between every bar write");
     Options::addOptionCardId(options);
     Options::addOptionRegisterAddress(options);
     Options::addOptionRegisterValue(options);
     Options::addOptionChannel(options);
   }
 
-  int stress(BarInterface* bar, uint32_t address, uint32_t value, long long cycles, long long printFrequency)
+  int stress(BarInterface* bar, uint32_t address, uint32_t value, long long cycles)
   {
-
     std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
     std::chrono::high_resolution_clock::time_point finish = std::chrono::high_resolution_clock::now();
 
     for (long long i = 0;; i++) {
-      if (mOptions.sleep) {
-        std::this_thread::sleep_for(std::chrono::microseconds(mOptions.sleep));
-      }
       bar->writeRegister(address / 4, value);
+      bar->readRegister(address / 4);
 
-      if (i && ((i % printFrequency == 0) || (i == cycles))) {
+      if (i == cycles || isSigInt()) {
         finish = std::chrono::high_resolution_clock::now();
-        getLogger() << "loops [" << i - printFrequency + 1 << " - " << i << "]: " << std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count() << "ns" << InfoLogger::endm;
+        std::cout << "cyc: " << i * 2;
+        std::cout << "time: " << std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count() * 1e-9 << std::endl;
+        double throughput = ((i * 2) / (std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count() * 1e-9)); //throughput (ops/time) [ops/sec]
+        std::cout << "Throughput: " << throughput << " ops/sec" << std::endl;
+        std::cout << "Throughput: " << throughput * 32 / 1e6 << " Mbps/sec" << std::endl;
 
-        if (i == cycles || isSigInt()) {                                                                                                //sigInt only stops at cycles = printFrequency * X
-          double throughput = (printFrequency / (std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count() * 1e-9)); //throughput (ops/time) [ops/sec]
-          getLogger() << "Throughput :" << throughput << " ops/sec" << InfoLogger::endm;
-
-          double latency = ((std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count() * 1e-9) / printFrequency); // latency (time/ops) [sec]
-          getLogger() << "Operation latency: " << latency << " sec " << InfoLogger::endm;
-          return i;
-        }
-
-        start = std::chrono::high_resolution_clock::now();
+        double latency = ((std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count() * 1e-9) / (cycles * 2)); // latency (time/ops) [sec]
+        std::cout << "Operation latency: " << latency << " sec " << std::endl;
+        return i;
       }
     }
   }
@@ -96,23 +83,25 @@ class ProgramBarStress : public Program
     auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
     auto bar = AliceO2::roc::ChannelFactory().getBar(params);
 
-    getLogger() << "Card ID: " << cardId << InfoLogger::endm;
-    getLogger() << "Total BAR write operations: " << mOptions.cycles << InfoLogger::endm;
-    getLogger() << "Print frequency: " << mOptions.printFrequency << InfoLogger::endm;
+    std::cout << "Card ID: " << cardId << std::endl;
+    std::cout << "BAR: " << channelNumber << std::endl;
+    std::cout << "Total cycles (rd + wr): " << mOptions.cycles << std::endl;
+    std::cout << "Total BAR operations: " << mOptions.cycles * 2 << std::endl;
 
-    if (isVerbose())
-      getLogger() << "Running operations..." << InfoLogger::endm;
+    std::cout << std::endl
+              << "Running operations..." << std::endl
+              << std::endl;
 
     auto start = std::chrono::high_resolution_clock::now();
     long long cycles_run = stress(bar.get(), registerAddress, registerValue,
-                                  mOptions.cycles, mOptions.printFrequency);
+                                  mOptions.cycles);
     auto finish = std::chrono::high_resolution_clock::now();
 
     if (!cycles_run)
-      getLogger() << "Execution terminated because of error..." << InfoLogger::endm;
+      std::cout << "Execution terminated because of error..." << std::endl;
 
-    getLogger() << "Total duration: " << std::chrono::duration_cast<std::chrono::seconds>(finish - start).count() << "s" << InfoLogger::endm;
-    getLogger() << "Total bar operations: " << cycles_run << InfoLogger::endm;
+    std::cout << "Total duration: " << std::chrono::duration_cast<std::chrono::seconds>(finish - start).count() << "s" << std::endl;
+    std::cout << "Total BAR operations: " << cycles_run * 2 << std::endl;
   }
 
   struct OptionsStruct {
