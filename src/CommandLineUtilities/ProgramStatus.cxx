@@ -248,7 +248,11 @@ class ProgramStatus : public Program
                              .addValue(onuStatus.mgtTxReady, "mgtTxReady")
                              .addValue(onuStatus.mgtRxReady, "mgtRxReady")
                              .addValue(onuStatus.mgtTxPllLocked, "mgtTxPllLocked")
-                             .addValue(onuStatus.mgtRxPllLocked, "mgtRxPllLocked"));
+                             .addValue(onuStatus.mgtRxPllLocked, "mgtRxPllLocked")
+                             .addTag(tags::Key::SerialId, card.serialId.getSerial())
+                             .addTag(tags::Key::Endpoint, card.serialId.getEndpoint())
+                             .addTag(tags::Key::ID, card.sequenceId)
+                             .addTag(tags::Key::Type, tags::Value::CRU));
         } else if (mOptions.jsonOut) {
           root.put("ONU status", onuStickyStatus);
           root.put("ONU address", onuStatus.onuAddress);

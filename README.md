@@ -553,7 +553,7 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 
 | Value name         | Value                       | Type   | 
 | -------------------| --------------------------- | ------ | 
-| `"onuStatus"`      | 0/1/2 (DOWN/UP/UP was DOWN) | int    |
+| `"onuStickyStatus"`| 0/1/2 (DOWN/UP/UP was DOWN) | int    |
 | `"onuAddress"`     | ONU Address                 | string |
 | `"rx40Locked"`     | 0/1 (False/True)            | int    |
 | `"phaseGood"`      | 0/1 (False/True)            | int    |
@@ -564,6 +564,12 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | `"mgtTxPllLocked"` | 0/1 (False/True)            | int    |
 | `"mgtRxPllLocked"` | 0/1 (False/True)            | int    |
 
+| Tag key               | Value                 |
+| --------------------- | --------------------- |
+| `tags::Key::SerialId` | Serial ID of the card |
+| `tags::Key::Endpoint` | Endpoint of the card  |
+| `tags::Key::ID`       | ID of the card        |
+| `tags::Key::Type`     | `tags::Value::CRU`    |
 
 ###### Metric: `"link"`
 
