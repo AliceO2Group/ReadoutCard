@@ -222,10 +222,6 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
       }
     }
 
-    for (const auto& el : feeIdMap) { //TODO: REMOVE ME
-      std::cout << el.first << "." << el.second << std::endl;
-    }
-
     parameters.setLinkMask(linkMask);
     parameters.setGbtMuxMap(gbtMuxMap);
     parameters.setFeeIdMap(feeIdMap);
