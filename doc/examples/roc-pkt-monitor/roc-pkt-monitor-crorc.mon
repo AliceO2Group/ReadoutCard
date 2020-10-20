@@ -1,7 +1,0 @@
-2020-08-25 13:49:59	[1;49mInfluxDB backend initialized[0m
-link,hostname=flp-kostas.cern.ch,serialId=42942,CRORC=0,id=0,type=CRORC pciAddress="d8:00.0",acquisitionRate=0i,packetsReceived=0i 1598356199986026486
-link,hostname=flp-kostas.cern.ch,serialId=42942,CRORC=0,id=1,type=CRORC pciAddress="d8:00.0",acquisitionRate=0i,packetsReceived=0i 1598356200488689170
-link,hostname=flp-kostas.cern.ch,serialId=42942,CRORC=0,id=2,type=CRORC pciAddress="d8:00.0",acquisitionRate=0i,packetsReceived=0i 1598356200990959498
-link,hostname=flp-kostas.cern.ch,serialId=42942,CRORC=0,id=3,type=CRORC pciAddress="d8:00.0",acquisitionRate=0i,packetsReceived=0i 1598356201493785243
-link,hostname=flp-kostas.cern.ch,serialId=42942,CRORC=0,id=4,type=CRORC pciAddress="d8:00.0",acquisitionRate=0i,packetsReceived=0i 1598356201997210429
-link,hostname=flp-kostas.cern.ch,serialId=42942,CRORC=0,id=5,type=CRORC pciAddress="d8:00.0",acquisitionRate=0i,packetsReceived=0i 1598356202499596972
