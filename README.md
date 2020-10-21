@@ -796,3 +796,5 @@ C-RORC concurrent channels
 On certain machines, initializing multiple C-RORC channels concurrently has led to hard lockups.
 The cause is unknown, but adding acpi=off to the Linux boot options fixed the issue.
 The issue has occurred on Dell R720 servers.
+
+PLEASE DO NOT MERGE THIS PULL REQUEST
