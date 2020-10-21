@@ -93,6 +93,12 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
 
   getReadyFifoUser()->reset();
   mDmaBufferUserspace = getBufferProvider().getAddress();
+
+  if (mDataSource == DataSource::Fee || mDataSource == DataSource::Siu) {
+    deviceResetChannel(ResetLevel::InternalSiu);
+  } else {
+    deviceResetChannel(ResetLevel::Internal);
+  }
 }
 
 auto CrorcDmaChannel::allowedChannels() -> AllowedChannels
@@ -106,11 +112,7 @@ CrorcDmaChannel::~CrorcDmaChannel()
 
 void CrorcDmaChannel::deviceStartDma()
 {
-  if (mDataSource == DataSource::Fee || mDataSource == DataSource::Siu) {
-    deviceResetChannel(ResetLevel::InternalSiu);
-  } else {
-    deviceResetChannel(ResetLevel::Internal);
-  }
+  deviceResetChannel(ResetLevel::Internal);
 
   startDataReceiving();
 
