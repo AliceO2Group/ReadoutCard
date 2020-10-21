@@ -166,7 +166,6 @@ void CrorcBar::assertLinkUp()
     }
   }
 
-  std::this_thread::sleep_for(500ms);
   if (!checkLinkUp()) {
     BOOST_THROW_EXCEPTION(CrorcCheckLinkException() << ErrorInfo::Message("Link was not up"));
   }
