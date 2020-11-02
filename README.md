@@ -553,7 +553,7 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 
 | Value name         | Value                       | Type   | 
 | -------------------| --------------------------- | ------ | 
-| `"onuStickyStatus"`| 0/1/2 (DOWN/UP/UP was DOWN) | int    |
+| `"onuStickyStatus"`| 0/1 (DOWN/UP)               | int    |
 | `"onuAddress"`     | ONU Address                 | string |
 | `"rx40Locked"`     | 0/1 (False/True)            | int    |
 | `"phaseGood"`      | 0/1 (False/True)            | int    |
