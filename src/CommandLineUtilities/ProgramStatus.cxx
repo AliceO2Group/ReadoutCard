@@ -227,14 +227,13 @@ class ProgramStatus : public Program
       /* ONU PARAMETERS */
       if (mOptions.onu) {
         Cru::OnuStatus onuStatus = cruBar2->reportOnuStatus();
-        std::string onuStickyStatus;
+        int onuStickyStatus = 0;
 
-        if (onuStatus.stickyBit == Cru::LinkStatus::Up) {
-          onuStickyStatus = "UP";
-        } else if (onuStatus.stickyBit == Cru::LinkStatus::UpWasDown) {
-          onuStickyStatus = "UP (was DOWN)";
+        if (onuStatus.stickyBit == Cru::LinkStatus::Up || onuStatus.stickyBit == Cru::LinkStatus::UpWasDown) {
+          // force status = 1 (vs = 2) when UP(was DOWN) for monitoring
+          onuStickyStatus = 1;
         } else if (onuStatus.stickyBit == Cru::LinkStatus::Down) {
-          onuStickyStatus = "DOWN";
+          onuStickyStatus = 0;
         }
 
         if (mOptions.monitoring) {
