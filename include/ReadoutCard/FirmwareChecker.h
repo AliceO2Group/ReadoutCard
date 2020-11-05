@@ -36,7 +36,7 @@ class FirmwareChecker
   void checkFirmwareCompatibility(Parameters::CardIdType cardId);
 
  private:
-  void checkFirmwareCompatibilityWrapped(std::shared_ptr<BarInterface> bar2);
+  void checkFirmwareCompatibilityWrapped(Parameters::CardIdType cardId);
   std::string getFirmwareCompatibilityList();
   std::unordered_map<std::string, std::string> mCompatibleFirmwareList;
 };

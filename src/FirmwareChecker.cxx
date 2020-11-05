@@ -62,15 +62,18 @@ std::string FirmwareChecker::getFirmwareCompatibilityList()
   return fwStrings;
 }
 
-void FirmwareChecker::checkFirmwareCompatibilityWrapped(std::shared_ptr<BarInterface> bar2)
+void FirmwareChecker::checkFirmwareCompatibilityWrapped(Parameters::CardIdType cardId)
 {
+  auto bar0 = ChannelFactory().getBar(cardId, 0);
+  auto bar2 = ChannelFactory().getBar(cardId, 2);
   auto firmware = bar2->getFirmwareInfo().value_or("");
-  //firmware = firmware.substr(firmware.find_last_of("-") + 1);
   auto serial = bar2->getSerial().value_or(-1);
+  auto endpoint = bar0->getEndpointNumber();
   if (mCompatibleFirmwareList.find(firmware) == mCompatibleFirmwareList.end()) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(
                             std::string("Firmware compatibility check failed.\n") +
                             std::string("Serial: " + std::to_string(serial) + "\n") +
+                            std::string("Endpoint: " + std::to_string(endpoint) + "\n") +
                             std::string("Firmware: " + firmware + "\n") +
                             std::string("\nCompatible firmwares:") +
                             getFirmwareCompatibilityList()));
@@ -79,15 +82,12 @@ void FirmwareChecker::checkFirmwareCompatibilityWrapped(std::shared_ptr<BarInter
 
 void FirmwareChecker::checkFirmwareCompatibility(Parameters params)
 {
-  auto bar2 = ChannelFactory().getBar(params);
-  checkFirmwareCompatibilityWrapped(bar2);
+  checkFirmwareCompatibilityWrapped(params.getCardIdRequired());
 }
 
 void FirmwareChecker::checkFirmwareCompatibility(Parameters::CardIdType cardId)
 {
-  auto params = Parameters::makeParameters(cardId, 2); // access bar2 to check the firmware release
-  auto bar2 = ChannelFactory().getBar(params);
-  checkFirmwareCompatibilityWrapped(bar2);
+  checkFirmwareCompatibilityWrapped(cardId);
 }
 
 } // namespace roc
