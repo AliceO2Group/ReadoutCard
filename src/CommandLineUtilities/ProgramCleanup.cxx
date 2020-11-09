@@ -51,8 +51,9 @@ class ProgramCleanup : public Program
     std::cout << std::endl;
     std::cout << "Execution of this tool will:" << std::endl;
     std::cout << "1. Free PDA DMA buffers" << std::endl;
-    std::cout << "2. Clean all hugepage resources under /var/lib/hugetlbfs/global/pagesize-{2MB, 1GB}/ which match readout* and roc-bench-dma*" << std::endl;
-    std::cout << "3. Remove and reinsert the uio_pci_dma kernel module" << std::endl;
+    std::cout << "2. Clean CRORC FIFO shared memory files under /dev/shm which match AliceO2_ROC_*" << std::endl;
+    std::cout << "3. Clean all hugepage resources under /var/lib/hugetlbfs/global/pagesize-{2MB, 1GB}/ which match readout* and roc-bench-dma*" << std::endl;
+    std::cout << "4. Remove and reinsert the uio_pci_dma kernel module" << std::endl;
     std::cout << std::endl;
     std::cout << "In case instances of readout.exe or roc-bench-dma are running, they will fail." << std::endl;
     std::cout << std::endl;
@@ -67,6 +68,8 @@ class ProgramCleanup : public Program
 
     Pda::freePdaDmaBuffers();
 
+    std::cout << "Removing CRORC FIFO shared memory files" << std::endl;
+    system("rm /dev/shm/AliceO2_RoC_*");
     std::cout << "Removing readout 2MB hugepage mappings" << std::endl;
     system("rm /var/lib/hugetlbfs/global/pagesize-2MB/readout*");
     std::cout << "Removing readout 1GB hugepage mappings" << std::endl;
