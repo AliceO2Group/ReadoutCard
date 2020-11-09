@@ -227,18 +227,25 @@ class ProgramStatus : public Program
       /* ONU PARAMETERS */
       if (mOptions.onu) {
         Cru::OnuStatus onuStatus = cruBar2->reportOnuStatus();
-        int onuStickyStatus = 0;
 
-        if (onuStatus.stickyBit == Cru::LinkStatus::Up || onuStatus.stickyBit == Cru::LinkStatus::UpWasDown) {
+        std::string onuStickyStatus;
+        int onuStickyStatusInt = 0;
+
+        if (onuStatus.stickyBit == Cru::LinkStatus::Up) {
+          onuStickyStatus = "UP";
+          onuStickyStatusInt = 1;
+        } else if (onuStatus.stickyBit == Cru::LinkStatus::UpWasDown) {
+          onuStickyStatus = "UP (was DOWN)";
           // force status = 1 (vs = 2) when UP(was DOWN) for monitoring
-          onuStickyStatus = 1;
+          onuStickyStatusInt = 1;
         } else if (onuStatus.stickyBit == Cru::LinkStatus::Down) {
-          onuStickyStatus = 0;
+          onuStickyStatus = "DOWN";
+          onuStickyStatusInt = 0;
         }
 
         if (mOptions.monitoring) {
           monitoring->send(Metric{ "onu" }
-                             .addValue(onuStickyStatus, "onuStickyStatus")
+                             .addValue(onuStickyStatusInt, "onuStickyStatus")
                              .addValue(std::to_string(onuStatus.onuAddress), "onuAddress")
                              .addValue(onuStatus.rx40Locked, "rx40Locked")
                              .addValue(onuStatus.phaseGood, "phaseGood")

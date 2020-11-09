@@ -147,9 +147,9 @@ LinkStatus Ttc::getOnuStickyBit()
   mBar->modifyRegister(Cru::Registers::TTC_DATA.index, 28, 1, 0x0);
   uint32_t is = mBar->readRegister(Cru::Registers::TTC_ONU_STICKY.index);
 
-  if (was == 1 && is == 1) {
+  if (was == 0x0 && is == 0x0) {
     return LinkStatus::Up;
-  } else if (was == 0 && is == 1) {
+  } else if (was != 0x0 && is == 0x0) {
     return LinkStatus::UpWasDown;
   }
   return LinkStatus::Down;
