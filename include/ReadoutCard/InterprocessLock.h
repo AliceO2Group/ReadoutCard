@@ -22,7 +22,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
-#define LOCK_TIMEOUT 5            //5 second timeout in case we wait for the lock (e.g PDA)
+#define LOCK_TIMEOUT 15           //15 second timeout in case we wait for the lock (PDA, I2C)
 #define UNIX_SOCK_NAME_LENGTH 104 //108 for most UNIXs, 104 for macOS
 
 namespace AliceO2

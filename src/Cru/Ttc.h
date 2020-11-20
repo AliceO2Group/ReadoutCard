@@ -8,6 +8,7 @@
 
 #include "Common.h"
 #include "ReadoutCard/BarInterface.h"
+#include "ReadoutCard/InterprocessLock.h"
 
 namespace AliceO2
 {
@@ -20,7 +21,7 @@ class Ttc
   using LinkStatus = Cru::LinkStatus;
 
  public:
-  Ttc(std::shared_ptr<BarInterface> bar);
+  Ttc(std::shared_ptr<BarInterface> bar, int serial = -1);
 
   void calibrateTtc();
   void setClock(uint32_t clock);
@@ -52,7 +53,9 @@ class Ttc
   LinkStatus getOnuStickyBit();
 
   std::shared_ptr<BarInterface> mBar;
+  std::unique_ptr<Interprocess::Lock> mI2cLock;
 
+  int mSerial;
   static constexpr uint32_t MAX_BCID = 3564 - 1;
 };
 } // namespace roc
