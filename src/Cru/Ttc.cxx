@@ -31,7 +31,7 @@ namespace roc
 using LinkStatus = Cru::LinkStatus;
 using OnuStatus = Cru::OnuStatus;
 
-Ttc::Ttc(std::shared_ptr<BarInterface> bar) : mBar(bar)
+Ttc::Ttc(std::shared_ptr<BarInterface> bar, int serial) : mBar(bar), mSerial(serial)
 {
 }
 
@@ -65,9 +65,12 @@ void Ttc::configurePlls(uint32_t clock)
   I2c p2 = I2c(Cru::Registers::SI5345_2.address, chipAddress, mBar, 0, registerMap2);
   I2c p3 = I2c(Cru::Registers::SI5344.address, chipAddress, mBar, 0, registerMap3);
 
+  // lock I2C operation
+  mI2cLock = std::make_unique<Interprocess::Lock>("_Alice_O2_RoC_I2C_" + std::to_string(mSerial) + "_lock", true);
   p1.configurePll();
   p2.configurePll();
   p3.configurePll();
+  mI2cLock.reset();
 
   std::this_thread::sleep_for(std::chrono::seconds(2));
 }
@@ -224,7 +227,12 @@ uint32_t Ttc::getPllClock()
 {
   uint32_t chipAddress = 0x68;
   I2c p2 = I2c(Cru::Registers::SI5345_2.address, chipAddress, mBar); // no register map for this
+
+  // lock I2C operation
+  mI2cLock = std::make_unique<Interprocess::Lock>("_Alice_O2_RoC_I2C_" + std::to_string(mSerial) + "_lock", true);
   uint32_t clock = p2.getSelectedClock();
+  mI2cLock.reset();
+
   return clock;
 }
 

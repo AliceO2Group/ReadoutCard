@@ -155,6 +155,7 @@ class CruBar final : public BarInterfaceBase
   uint32_t mFeeId;
   std::map<uint32_t, uint32_t> mFeeIdMap;
 
+  int mSerial;
   int mEndpoint;
 
   /// Per-link counter to verify superpage sizes received are valid

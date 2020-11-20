@@ -77,6 +77,7 @@ CruBar::CruBar(const Parameters& parameters, std::unique_ptr<RocPciDevice> rocPc
     mAllowRejection = 0x0;
   }
 
+  mSerial = mRocPciDevice->getSerialId().getSerial();
   mEndpoint = mRocPciDevice->getSerialId().getEndpoint();
 }
 
@@ -484,9 +485,13 @@ Cru::ReportInfo CruBar::report()
 
   // Update the link map with optical power information through I2C
   I2c i2c = I2c(Cru::Registers::BSP_I2C_MINIPODS.address, 0x0, mPdaBar, mEndpoint);
-  i2c.getOpticalPower(linkMap);
 
-  Ttc ttc = Ttc(mPdaBar);
+  // lock I2C operation
+  std::unique_ptr<Interprocess::Lock> i2cLock = std::make_unique<Interprocess::Lock>("_Alice_O2_RoC_I2C_" + std::to_string(mSerial) + "_lock", true);
+  i2c.getOpticalPower(linkMap);
+  i2cLock.reset();
+
+  Ttc ttc = Ttc(mPdaBar, mSerial);
   // Mismatch between values returned by getPllClock and value required to set the clock
   // getPllClock: 0 for Local clock, 1 for TTC clock
   // setClock: 2 for Local clock, 0 for TTC clock
@@ -603,7 +608,7 @@ void CruBar::configure(bool force)
   checkConfigParameters();
   log("Reconfiguring");
 
-  Ttc ttc = Ttc(mPdaBar);
+  Ttc ttc = Ttc(mPdaBar, mSerial);
   DatapathWrapper datapathWrapper = DatapathWrapper(mPdaBar);
 
   /* TTC */
@@ -902,7 +907,7 @@ uint16_t CruBar::getCruId()
 
 void CruBar::emulateCtp(Cru::CtpInfo ctpInfo)
 {
-  Ttc ttc = Ttc(mPdaBar);
+  Ttc ttc = Ttc(mPdaBar, mSerial);
   if (ctpInfo.generateEox) {
     ttc.setEmulatorIdleMode();
   } else if (ctpInfo.generateSingleTrigger) {
@@ -955,7 +960,7 @@ void CruBar::patternPlayer(PatternPlayer::Info info)
 
 Cru::OnuStatus CruBar::reportOnuStatus()
 {
-  Ttc ttc = Ttc(mPdaBar);
+  Ttc ttc = Ttc(mPdaBar, mSerial);
   return ttc.onuStatus();
 }
 
