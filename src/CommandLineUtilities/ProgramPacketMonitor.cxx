@@ -69,6 +69,11 @@ class ProgramPacketMonitor : public Program
       monitoring = MonitoringFactory::Get(getMonitoringUri());
     }
 
+    if (card.serialId.getSerial() == 0x7fffffff || card.serialId.getSerial() == 0x0) {
+        std::cout << "Bad serial reported, bad card state, exiting" << std::endl;
+        return;
+      }
+
     if (cardType == CardType::type::Crorc) {
 
       /* HEADER */

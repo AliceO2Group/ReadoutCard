@@ -96,6 +96,11 @@ class ProgramMetrics : public Program
       float localClock = bar2->getLocalClock() / 1e6;
       uint32_t totalPacketsPerSecond = bar2->getTotalPacketsPerSecond(bar0->getEndpointNumber());
 
+      if (card.serialId.getSerial() == 0x7fffffff || card.serialId.getSerial() == 0x0) {
+        std::cout << "Bad serial reported, bad card state, exiting" << std::endl;
+        return;
+      }
+
       if (mOptions.monitoring) {
         monitoring->send(Metric{ "card" }
                            .addValue(card.pciAddress.toString(), "pciAddress")

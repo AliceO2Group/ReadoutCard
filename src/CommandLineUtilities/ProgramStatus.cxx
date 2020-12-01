@@ -103,6 +103,11 @@ class ProgramStatus : public Program
       std::string offset = reportInfo.dynamicOffset ? "Dynamic" : "Fixed";
       std::string timeFrameDetectionEnabled = reportInfo.timeFrameDetectionEnabled ? "Enabled" : "Disabled";
 
+      if (card.serialId.getSerial() == 0x7fffffff || card.serialId.getSerial() == 0x0) {
+        std::cout << "Bad serial reported, bad card state, exiting" << std::endl;
+        return;
+      }
+
       /* GENERAL PARAMETERS */
       if (mOptions.monitoring) {
         monitoring->send(Metric{ "CRORC" }
