@@ -291,8 +291,11 @@ uint32_t Gbt::getTxClockFrequency(Link link) //In Hz
 
 void Gbt::resetFifo()
 {
-  mPdaBar->writeRegister(Cru::Registers::BSP_USER_CONTROL.index, 0x80);
-  mPdaBar->writeRegister(Cru::Registers::BSP_USER_CONTROL.index, 0x0);
+  mPdaBar->modifyRegister(Cru::Registers::BSP_USER_CONTROL.index, 7, 1, 0x1); // reset TX
+  mPdaBar->modifyRegister(Cru::Registers::BSP_USER_CONTROL.index, 8, 1, 0x1); // reset RX
+
+  mPdaBar->modifyRegister(Cru::Registers::BSP_USER_CONTROL.index, 7, 1, 0x0);
+  mPdaBar->modifyRegister(Cru::Registers::BSP_USER_CONTROL.index, 8, 1, 0x0);
 }
 
 } // namespace roc
