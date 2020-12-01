@@ -277,7 +277,7 @@ boost::optional<int32_t> CruBar::getSerialNumber()
   uint32_t serial = readRegister(Cru::Registers::SERIAL_NUMBER.index);
   if (serial == 0x0) { // Try to populate the serial register in case it's empty
     writeRegister(Cru::Registers::SERIAL_NUMBER_CTRL.index, Cru::Registers::SERIAL_NUMBER_TRG);
-    std::this_thread::sleep_for(5ms); // Wait some time for the I2C calls
+    std::this_thread::sleep_for(40ms); // Wait some time for the I2C calls
     serial = readRegister(Cru::Registers::SERIAL_NUMBER.index);
   }
 
