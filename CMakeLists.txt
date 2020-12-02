@@ -22,7 +22,7 @@ project(ReadoutCard
 add_subdirectory(doc)
 
 # Add compiler flags for warnings and debug symbols
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra -Werror")
 
 # Set fPIC for all targets
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
