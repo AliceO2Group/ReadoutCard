@@ -82,6 +82,7 @@ class CruBar final : public BarInterfaceBase
   void configure(bool force = false) override;
   Cru::ReportInfo report();
   Cru::PacketMonitoringInfo monitorPackets();
+  Cru::TriggerMonitoringInfo monitorTriggers(bool updateable = false);
   void emulateCtp(Cru::CtpInfo);
   void patternPlayer(PatternPlayer::Info patternPlayerInfo);
 

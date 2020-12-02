@@ -130,6 +130,15 @@ struct PacketMonitoringInfo {
   std::map<int, WrapperPacketInfo> wrapperPacketInfoMap;
 };
 
+struct TriggerMonitoringInfo {
+  uint64_t hbCount;
+  double hbRate;
+  uint64_t phyCount;
+  double phyRate;
+  uint64_t eoxCount;
+  uint64_t soxCount;
+};
+
 enum TriggerMode {
   Manual,
   Periodic,

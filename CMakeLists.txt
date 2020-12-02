@@ -233,6 +233,7 @@ if(PDA_FOUND)
     ProgramPatternPlayer.cxx
     ProgramSiuStatus.cxx
     ProgramStatus.cxx
+    ProgramTriggerMonitor.cxx
   )
   list(APPEND EXE_NAMES
     roc-bar-stress
@@ -248,6 +249,7 @@ if(PDA_FOUND)
     roc-pat-player
     roc-siu-status
     roc-status
+    roc-trig-monitor
   )
 endif()
 

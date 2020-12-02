@@ -574,6 +574,71 @@ Cru::PacketMonitoringInfo CruBar::monitorPackets()
   return { linkPacketInfoMap, wrapperPacketInfoMap };
 }
 
+Cru::TriggerMonitoringInfo CruBar::monitorTriggers(bool updateable)
+{
+  Ttc ttc = Ttc(mPdaBar, mSerial);
+
+  // previous values to calculate rate (every second)
+  uint32_t hbCountPrev = ttc.getHbTriggerLtuCount();
+  uint32_t phyCountPrev = ttc.getPhyTriggerLtuCount();
+
+  // base values to report relative counts for updateable monitoring (e.g. for a single run)
+  static uint32_t hbCountBase = hbCountPrev;
+  static uint32_t phyCountBase = phyCountPrev;
+  static std::pair<uint32_t, uint32_t>  statEoxSox = ttc.getEoxSoxLtuCount();
+  static uint32_t  eoxCountBase = statEoxSox.first;
+  static uint32_t  soxCountBase = statEoxSox.second;
+
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  uint32_t hbCount = ttc.getHbTriggerLtuCount();
+  uint32_t phyCount = ttc.getPhyTriggerLtuCount();
+  std::pair<uint32_t, uint32_t> eoxSox = ttc.getEoxSoxLtuCount();
+  uint32_t eoxCount = eoxSox.first;
+  uint32_t soxCount = eoxSox.second;
+
+  // current - previous counts for rates
+  uint64_t hbDiff;
+  if (hbCountPrev > hbCount) {
+    hbDiff = hbCount + pow(2, 32) - hbCountPrev;
+  } else {
+    hbDiff = hbCount - hbCountPrev;
+  }
+
+  uint64_t phyDiff;
+  if (phyCountPrev > phyCount) {
+    phyDiff = phyCount + pow(2, 32) - phyCountPrev;
+  } else {
+    phyDiff = phyCount - phyCountPrev;
+  }
+
+  // report absolute values + rates(1s)
+  if (!updateable) { 
+    return { hbCount, hbDiff / pow(10,3),
+      phyCount, phyDiff / pow(10,3),
+      eoxCount, soxCount };
+  }
+
+  // current - base counts for EOX/SOX
+  uint64_t eoxDiff;
+  if (eoxCountBase > eoxCount) {
+    eoxDiff = eoxCount + pow(2, 32) - eoxCountBase;
+  } else {
+    eoxDiff = eoxCount - eoxCountBase;
+  }
+
+  uint64_t soxDiff;
+  if (soxCountBase > soxCount) {
+    soxDiff = soxCount + pow(2, 32) - soxCountBase;
+  } else {
+    soxDiff = soxCount - soxCountBase;
+  }
+
+  // report relative values + rates (1s)
+  return { hbCount - hbCountBase, hbDiff / pow(10,3),
+           phyCount - phyCountBase, phyDiff / pow(10,3),
+           eoxDiff, soxDiff };
+}
+
 void CruBar::checkConfigParameters()
 {
   if (mUserAndCommonLogicEnabled && !mUserLogicEnabled) {

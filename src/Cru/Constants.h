@@ -193,7 +193,7 @@ static constexpr Register PON_WRAPPER_PLL(0x00224000);
 static constexpr Register PON_WRAPPER_TX(0x00226000);
 static constexpr Register PON_WRAPPER_REG(0x00222000);
 
-/// Register for configuring PON TX
+/// Registers for configuring PON TX
 static constexpr Register CLOCK_ONU_FPLL(0x00248000);
 static constexpr Register CLOCK_PLL_CONTROL_ONU(0x00240018);
 static constexpr Register ONU_USER_LOGIC(0x0022a000);
@@ -202,6 +202,11 @@ static constexpr Register ONU_USER_LOGIC(0x0022a000);
 static constexpr Register ONU_USER_REFGEN(0x0022c000);
 static constexpr Register REFGEN0_OFFSET(0x00000000);
 static constexpr Register REFGEN1_OFFSET(0x00000004);
+
+// Registers for getting LTU info
+static constexpr Register LTU_HBTRIG_CNT(0x00200004);
+static constexpr Register LTU_PHYSTRIG_CNT(0x00200008);
+static constexpr Register LTU_EOX_SOX_CNT(0x0020000c);
 
 //** GBT **//
 /// Wrapper 0's base address
