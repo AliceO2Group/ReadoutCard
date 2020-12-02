@@ -30,6 +30,9 @@ class Ttc
   void selectDownstreamData(uint32_t downstreamData);
   uint32_t getPllClock();
   uint32_t getDownstreamData();
+  uint32_t getHbTriggerLtuCount();
+  uint32_t getPhyTriggerLtuCount();
+  std::pair<uint32_t, uint32_t> getEoxSoxLtuCount();
 
   void resetCtpEmulator(bool doReset);
   void setEmulatorTriggerMode(Cru::TriggerMode mode);

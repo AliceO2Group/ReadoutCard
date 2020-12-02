@@ -236,6 +236,22 @@ uint32_t Ttc::getPllClock()
   return clock;
 }
 
+uint32_t Ttc::getHbTriggerLtuCount()
+{
+  return mBar->readRegister(Cru::Registers::LTU_HBTRIG_CNT.index);
+}
+
+uint32_t Ttc::getPhyTriggerLtuCount()
+{
+  return mBar->readRegister(Cru::Registers::LTU_PHYSTRIG_CNT.index);
+}
+
+std::pair<uint32_t, uint32_t> Ttc::getEoxSoxLtuCount()
+{
+  uint32_t eoxSox = mBar->readRegister(Cru::Registers::LTU_EOX_SOX_CNT.index);
+  return {(eoxSox >> 4) & 0xf, eoxSox & 0xf};
+}
+
 /*** CTP EMULATOR METHODS ***/
 void Ttc::resetCtpEmulator(bool doReset)
 {
