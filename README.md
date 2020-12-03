@@ -374,10 +374,10 @@ CRORC.
 | `FW Version` | Firmware version installed (`vx.y.z` if identified and supported, git hash otherwise) |
 | `UL Version` | User Logic version installed (git hash)                                               |
 
-Output may be in ASCII table (default), or JSON format (`--json-out` option). Example outputs can be found [here](doc/examples/roc-list-cards/).
+Output may be in ASCII table (default), or JSON format (`--json-out` option).
 
 ### roc-metrics
-Outputs metrics for the ReadoutCards. Output may be in an ASCII table (default) or in JSON (`--json-out` option) format. Example outputs can be found [here](doc/examples/roc-metrics/).
+Outputs metrics for the ReadoutCards. Output may be in an ASCII table (default) or in JSON (`--json-out` option) format.
 
 Parameter information can be extracted from the monitoring table below.
 
@@ -405,7 +405,7 @@ To directly send metrics to the Alice O2 Monitoring library, the argument `--mon
 
 ### roc-pkt-monitor
 Monitors packet statistics per link and per CRU wrapper. Output may be in an ASCII table (default) or in JSON (`json-out` option)
-format. Example outputs can be found [here](doc/examples/roc-pkt-monitor/).
+format.
 
 Parameter information can be extracted from the monitoring table below.
 
@@ -485,7 +485,7 @@ Run a Python script that can use a simple interface to use the library.
 Setup hugetlbfs directories & mounts. If using hugepages, should be run once per boot.
 
 ### roc-status
-Reports status on the card's global and per-link configuration. Output may be in an ASCII table (default) or in JSON (`--json-out` option) format. Example outputs can be found [here](doc/examples/roc-status/).
+Reports status on the card's global and per-link configuration. Output may be in an ASCII table (default) or in JSON (`--json-out` option) format.
 
 Parameter information can be extracted from the monitoring tables below. Please note that for "UP/DOWN" and "Enabled/Disabled"
 states while the monitoring format is an int (0/1), in all other formats a string representation is used.
