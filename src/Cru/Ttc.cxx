@@ -173,7 +173,9 @@ OnuStatus Ttc::onuStatus()
     calStatus >> 5 & 0x1,
     calStatus >> 6 & 0x1,
     calStatus >> 7 & 0x1,
-    getOnuStickyBit()
+    getOnuStickyBit(),
+    getPonQuality(),
+    getPonQualityStatus()
   };
 
   return onuStatus;
@@ -386,6 +388,22 @@ void Ttc::setFixedBCTrigger(std::vector<uint32_t> FBCTVector)
       mBar->writeRegister(Cru::Registers::CTP_EMU_FBCT.index, newValue);
     }
   }
+}
+
+uint32_t Ttc::getPonQuality()
+{
+  return mBar->readRegister(Cru::Registers::TTC_PON_QUALITY.index);
+}
+
+int Ttc::getPonQualityStatus()
+{
+  uint32_t ponQuality = getPonQuality();
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  if (ponQuality == getPonQuality()) {
+      return 1; // GOOD
+  }
+
+  return 0; // BAD
 }
 
 // Currently unused by RoC

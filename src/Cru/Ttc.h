@@ -54,6 +54,8 @@ class Ttc
   void configurePlls(uint32_t clock);
   void setRefGen(int frequency = 240);
   LinkStatus getOnuStickyBit();
+  uint32_t getPonQuality();
+  int getPonQualityStatus();
 
   std::shared_ptr<BarInterface> mBar;
   std::unique_ptr<Interprocess::Lock> mI2cLock;
