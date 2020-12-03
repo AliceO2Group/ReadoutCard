@@ -112,6 +112,8 @@ struct OnuStatus {
   bool mgtTxPllLocked;
   bool mgtRxPllLocked;
   LinkStatus stickyBit;
+  uint32_t ponQuality;
+  int ponQualityStatus;
 };
 
 struct LinkPacketInfo {

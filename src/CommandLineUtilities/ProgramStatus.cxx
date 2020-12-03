@@ -248,6 +248,9 @@ class ProgramStatus : public Program
           onuStickyStatusInt = 0;
         }
 
+        std::string ponQualityStatusStr;
+        ponQualityStatusStr = onuStatus.ponQualityStatus ? "good" : "bad";
+
         if (mOptions.monitoring) {
           monitoring->send(Metric{ "onu" }
                              .addValue(onuStickyStatusInt, "onuStickyStatus")
@@ -260,6 +263,7 @@ class ProgramStatus : public Program
                              .addValue(onuStatus.mgtRxReady, "mgtRxReady")
                              .addValue(onuStatus.mgtTxPllLocked, "mgtTxPllLocked")
                              .addValue(onuStatus.mgtRxPllLocked, "mgtRxPllLocked")
+                             .addValue(onuStatus.ponQualityStatus, "ponQualityStatus")
                              .addTag(tags::Key::SerialId, card.serialId.getSerial())
                              .addTag(tags::Key::Endpoint, card.serialId.getEndpoint())
                              .addTag(tags::Key::ID, card.sequenceId)
@@ -275,6 +279,8 @@ class ProgramStatus : public Program
           root.put("ONU MGT RX ready", onuStatus.mgtRxReady);
           root.put("ONU MGT TX PLL locked", onuStatus.mgtTxPllLocked);
           root.put("ONU MGT RX PLL locked", onuStatus.mgtRxPllLocked);
+          root.put("PON quality", Utilities::toHexString(onuStatus.ponQuality));
+          root.put("PON quality Status", ponQualityStatusStr);
         } else {
           std::cout << "=============================" << std::endl;
           std::cout << "ONU status: \t\t" << onuStickyStatus << std::endl;
@@ -288,6 +294,8 @@ class ProgramStatus : public Program
           std::cout << "ONU MGT RX ready: \t" << std::boolalpha << onuStatus.mgtRxReady << std::endl;
           std::cout << "ONU MGT TX PLL locked: \t" << std::boolalpha << onuStatus.mgtTxPllLocked << std::endl;
           std::cout << "ONU MGT RX PLL locked: \t" << std::boolalpha << onuStatus.mgtRxPllLocked << std::endl;
+          std::cout << "PON quality: \t\t0x" << std::hex << onuStatus.ponQuality << std::endl;
+          std::cout << "PON quality status: \t" << ponQualityStatusStr << std::endl;
         }
       }
 

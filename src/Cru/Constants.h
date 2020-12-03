@@ -181,12 +181,15 @@ static constexpr Register LOCK_CLOCK_TO_REF(0x00220000);
 
 /// Register for modifying TTC parameters (CLOCK_/DATA_)
 static constexpr Register TTC_DATA(0x00200000);
-static constexpr Register TTC_ONU_STICKY(0x00200014);
 /*static constexpr uint32_t CLOCK_TTC(0x0);
 static constexpr uint32_t CLOCK_LOCAL(0x2);
 static constexpr uint32_t DATA_CTP(0x0);
 static constexpr uint32_t DATA_PATTERN(0x1);
 static constexpr uint32_t DATA_MIDTRG(0x2);*/
+
+/// Registers for getting TTC info
+static constexpr Register TTC_ONU_STICKY(0x00200014);
+static constexpr Register TTC_PON_QUALITY(0x0010000C);
 
 /// Registers used for TTC calibration
 static constexpr Register PON_WRAPPER_PLL(0x00224000);
