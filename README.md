@@ -8,6 +8,7 @@ Table of Contents
 ===================
 1. [Introduction](#introduction)
 2. [Usage](#usage)
+  * [Addressing](#addressing)
   * [DMA channels](#dma-channels)
   * [Card Configurator](#card-configurator)
   * [BAR interface](#bar-interface)
@@ -77,6 +78,50 @@ Usage
 For a simple usage example, see the program in `src/Example.cxx`.
 For high-performance readout, the benchmark program `src/CommandLineUtilities/ProgramDmaBench.cxx` may be more
 instructive.
+
+Addressing
+----------
+ReadoutCard addresses the cards on the level of a PCIe _endpoint_.
+
+A physical CRU is split into two logical endpoints, with each one addressing 12 of its 24 links. Endpoint 0 sees virtual links 0-11 (physical links 0-11) while endpoint 1 sees virtual links 0-11 (physical links 12-23).
+Each endpoint publishes two BAR interfaces; BAR 0 for DMA orchestration and BAR 2 for everything else.
+Each endpoint corresponds to a separate DMA channel.
+
+A physical CRORC corresponds to a single endpoint, addressing its 6 links, with each one having its own BAR interface and DMA channel.
+
+| Card        | CRU  |              | CRORC |
+| ----------- | ---- | ------------ | ----- |
+| Endpoint    | 0    |    1         |   0   |
+| Link #      | 0-11 | 0-11 (12-23) |  0-5  |
+| BAR #       | 0/2  | 0/2          |  0-5  |
+| DMA Channel | 0    | 0            |  0-5  |
+
+
+
+ReadoutCard provides several ways to address a card endpoint:
+
+1) By the "Sequence ID"; a string with a '#' prefix followed by the sequence number which corresponds to an endpoint (e.g. `#2`).
+2) By the "PCI Address"; a string following the format "[bus]:[device].[function]", made up of the PCI values which correspond to an endpoint (e.g. `3b:00.0`).
+3) By the "Serial-Endpoint ID"; a string following the format "[serial]:[endpoint]", made up of the card's unique serial number and its endpoint (e.g. `1024:1`).
+
+Addressing information is provided by the [roc-list-cards](https://github.com/AliceO2Group/ReadoutCard#roc-list-cards) tool, as shown below:
+
+```
+$ roc-list-cards
+============================================================================
+  #   Type   PCI Addr   Serial   Endpoint   NUMA  FW Version   UL Version
+----------------------------------------------------------------------------
+  0   CRORC  d8:00.0    2942     0          1     v2.7.0       n/a
+  1   CRU    3b:00.0    1041     0          0     f0e4f4fa     f0e4f4fa
+  2   CRU    3c:00.0    1041     1          0     f0e4f4fa     f0e4f4fa
+  3   CRU    af:00.0    1239     0          1     v3.9.1       f71faa86
+  4   CRU    b0:00.0    1239     1          1     v3.9.1       f71faa86
+============================================================================
+```
+
+Any of the above options can be used to specify an endpoint for all the relevant [command-line utility programs](https://github.com/AliceO2Group/ReadoutCard#utility-programs), as an argument to the `--id` command-line option.
+
+The same strings are used for the [`CardId`](https://github.com/AliceO2Group/ReadoutCard#card-id) parameter when using the ReadoutCard library.
 
 DMA channels
 -------------------
