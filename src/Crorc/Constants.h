@@ -408,7 +408,7 @@ static constexpr uint32_t LINK_DOWN(0x00002000);
 // Odd link number, bits [31-16], even link number bits [15-0]
 static constexpr Register OPT_POWER_QSFP10(0x00000144);
 static constexpr Register OPT_POWER_QSFP32(0x00000148);
-static constexpr Register OPT_POWER_QSFP54(0x00000158);
+static constexpr Register OPT_POWER_QSFP54(0x00000154);
 
 // Registers for RX FIFO configuration
 static constexpr Register RX_FIFO_ADDR_LOW(0x00000038);
