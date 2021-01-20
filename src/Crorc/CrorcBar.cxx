@@ -104,24 +104,28 @@ int CrorcBar::getEndpointNumber()
 
 void CrorcBar::configure(bool /*force*/)
 {
+  log("Configuring...", LogInfoOps);
+
   // enable laser
-  log("Enabling the laser");
+  log("Enabling the laser", LogInfoDevel);
   setQsfpEnabled();
 
-  log("Configuring fixed/dynamic offset");
+  log("Configuring fixed/dynamic offset", LogInfoDevel);
   // choose between fixed and dynamic offset
   setDynamicOffsetEnabled(mDynamicOffset);
 
   // set crorc id
-  log("Setting the CRORC ID");
+  log("Setting the CRORC ID", LogInfoDevel);
   setCrorcId(mCrorcId);
 
   // set timeframe length
-  log("Setting the Time Frame length");
+  log("Setting the Time Frame length", LogInfoDevel);
   setTimeFrameLength(mTimeFrameLength);
 
-  log("Configuring Time Frame detection");
+  log("Configuring Time Frame detection", LogInfoDevel);
   setTimeFrameDetectionEnabled(mTimeFrameDetectionEnabled);
+
+  log("CRORC configuration done", LogInfoOps);
 }
 
 Crorc::ReportInfo CrorcBar::report()

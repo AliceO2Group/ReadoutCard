@@ -18,6 +18,7 @@
 #include "Cru/Constants.h"
 #include "Cru/CruBar.h"
 #include "ReadoutCard/ChannelFactory.h"
+#include "ReadoutCard/Logger.h"
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
 #include "Utilities/Enum.h"
@@ -25,12 +26,15 @@
 
 using namespace AliceO2::roc::CommandLineUtilities;
 using namespace AliceO2::roc;
-using namespace AliceO2::InfoLogger;
 namespace po = boost::program_options;
 
 class ProgramCtpEmulator : public Program
 {
  public:
+  ProgramCtpEmulator(bool ilgEnabled) : Program(ilgEnabled)
+  {
+  }
+
   virtual Description getDescription()
   {
     return { "CTP Emulator", "Emulate CTP functionality",
@@ -68,6 +72,7 @@ class ProgramCtpEmulator : public Program
 
   virtual void run(const boost::program_options::variables_map& map)
   {
+    Logger::setFacility("ReadoutCard/CTP emulator");
 
     auto cardId = Options::getOptionCardId(map);
     auto params = Parameters::makeParameters(cardId, 2);
@@ -75,10 +80,10 @@ class ProgramCtpEmulator : public Program
 
     CardType::type cardType = bar2->getCardType();
     if (cardType == CardType::type::Crorc) {
-      std::cout << "CRORC not supported" << std::endl;
+      Logger::get() << "CRORC not supported" << LogErrorOps << endm;
       return;
     } else if (cardType != CardType::type::Cru) {
-      std::cout << "Invalid card type" << std::endl;
+      Logger::get() << "Invalid card type" << LogErrorOps << endm;
       return;
     }
 
@@ -125,5 +130,7 @@ class ProgramCtpEmulator : public Program
 
 int main(int argc, char** argv)
 {
-  return ProgramCtpEmulator().execute(argc, argv);
+  // true here enables InfoLogger output by default
+  // see the Program constructor
+  return ProgramCtpEmulator(true).execute(argc, argv);
 }

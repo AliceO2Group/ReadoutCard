@@ -17,12 +17,13 @@
 #define ALICEO2_READOUTCARD_PROGRAM_H
 
 #include <atomic>
+#include <cstdlib>
 #include <boost/program_options.hpp>
-#include <InfoLogger/InfoLogger.hxx>
 #include "Common/Program.h"
 #include "CommandLineUtilities/Common.h"
 #include "CommandLineUtilities/Options.h"
 #include "ReadoutCard/Exception.h"
+#include "ReadoutCard/Logger.h"
 
 namespace AliceO2
 {
@@ -36,34 +37,29 @@ namespace CommandLineUtilities
 class Program : public AliceO2::Common::Program
 {
  public:
+  Program(bool ilgEnabled = false)
+  {
+    enableInfoLogger(ilgEnabled); // Redirect to stdout by default
+  }
   virtual ~Program() = default;
 
  protected:
-  /// Get Program's InfoLogger instance
-  InfoLogger::InfoLogger& getLogger()
-  {
-    return mLogger;
-  }
-
-  InfoLogger::InfoLogger::Severity getLogLevel() const
-  {
-    return mLogLevel;
-  }
-
-  void setLogLevel(InfoLogger::InfoLogger::Severity logLevel = InfoLogger::InfoLogger::Severity::Info)
-  {
-    mLogLevel = logLevel;
-  }
-
   std::string getMonitoringUri()
   {
     return MONITORING_URI;
   }
 
- private:
-  InfoLogger::InfoLogger mLogger;
-  InfoLogger::InfoLogger::Severity mLogLevel = InfoLogger::InfoLogger::Severity::Info;
+  void enableInfoLogger(bool state)
+  {
+    // don't interfere if env var explicitly set
+    if (std::getenv("INFOLOGGER_MODE")) {
+      return;
+    }
 
+    Logger::enableInfoLogger(state);
+  }
+
+ private:
   const std::string MONITORING_URI = "influxdb-stdout://";
 };
 

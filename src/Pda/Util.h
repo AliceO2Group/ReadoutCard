@@ -19,10 +19,10 @@
 
 #include <boost/filesystem.hpp>
 #include <vector>
-#include <InfoLogger/InfoLogger.hxx>
 #include "Common/System.h"
 #include "Pda/PdaLock.h"
 #include "ReadoutCard/CardDescriptor.h"
+#include "ReadoutCard/Logger.h"
 
 namespace bfs = boost::filesystem;
 
@@ -44,12 +44,11 @@ namespace Pda
 void freePdaDmaBuffersWrapped(const CardDescriptor cardDescriptor, const int channelNumber, bool force = false)
 {
   namespace bfs = boost::filesystem;
-  InfoLogger::InfoLogger logger;
 
   try {
     Pda::PdaLock lock{}; // We're messing around with PDA buffers so we need this even though we hold the DMA lock
   } catch (const LockException& exception) {
-    logger << InfoLogger::InfoLogger::Debug << "Failed to acquire PDA lock" << InfoLogger::InfoLogger::endm;
+    Logger::get() << "Failed to acquire PDA lock" << LogErrorDevel << endm;
     throw;
   }
 
@@ -85,7 +84,7 @@ void freePdaDmaBuffersWrapped(const CardDescriptor cardDescriptor, const int cha
 
                 std::string mapPath = dmaPath + "/" + bufferId + "/map";
                 std::string freePath = dmaPath + "/free";
-                logger << "Freeing PDA buffer '" + mapPath + "'" << InfoLogger::InfoLogger::endm;
+                Logger::get() << "Freeing PDA buffer '" + mapPath + "'" << LogDebugDevel << endm;
                 AliceO2::Common::System::executeCommand("echo " + bufferId + " > " + freePath);
               }
             }
@@ -94,7 +93,7 @@ void freePdaDmaBuffersWrapped(const CardDescriptor cardDescriptor, const int cha
       }
     }
   } catch (const boost::filesystem::filesystem_error& e) {
-    logger << "Failed to free buffers: " << e.what() << InfoLogger::InfoLogger::endm;
+    Logger::get() << "Failed to free buffers: " << e.what() << LogErrorDevel << endm;
     throw;
   }
 }

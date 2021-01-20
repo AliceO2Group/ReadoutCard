@@ -251,7 +251,7 @@ uint32_t Ttc::getPhyTriggerLtuCount()
 std::pair<uint32_t, uint32_t> Ttc::getEoxSoxLtuCount()
 {
   uint32_t eoxSox = mBar->readRegister(Cru::Registers::LTU_EOX_SOX_CNT.index);
-  return {(eoxSox >> 4) & 0xf, eoxSox & 0xf};
+  return { (eoxSox >> 4) & 0xf, eoxSox & 0xf };
 }
 
 /*** CTP EMULATOR METHODS ***/
@@ -400,7 +400,7 @@ int Ttc::getPonQualityStatus()
   uint32_t ponQuality = getPonQuality();
   std::this_thread::sleep_for(std::chrono::milliseconds(10));
   if (ponQuality == getPonQuality()) {
-      return 1; // GOOD
+    return 1; // GOOD
   }
 
   return 0; // BAD

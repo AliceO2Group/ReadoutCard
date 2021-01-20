@@ -19,10 +19,10 @@
 
 #include <boost/optional/optional_io.hpp>
 #include <memory>
-#include "InfoLogger/InfoLogger.hxx"
 #include "RocPciDevice.h"
 #include "Pda/PdaBar.h"
 #include "ReadoutCard/BarInterface.h"
+#include "ReadoutCard/Logger.h"
 #include "ReadoutCard/Parameters.h"
 
 namespace AliceO2
@@ -117,12 +117,6 @@ class BarInterfaceBase : public BarInterface
     return -1;
   }
 
-  /// Default implementation for optional function
-  void configure(bool /*force*/) override
-  {
-    log("Configure unavailable for this interface", InfoLogger::InfoLogger::Error);
-  }
-
  protected:
   /// BAR index
   int mBarIndex;
@@ -134,7 +128,7 @@ class BarInterfaceBase : public BarInterface
   std::shared_ptr<Pda::PdaBar> mPdaBar;
 
   /// Convenience function for InfoLogger
-  void log(std::string logMessage, InfoLogger::InfoLogger::Severity logLevel = InfoLogger::InfoLogger::Info);
+  void log(const std::string& logMessage, ILMessageOption = LogInfoOps);
 
  private:
   /// Inheriting classes must implement this to check whether a given read is safe.
@@ -144,7 +138,7 @@ class BarInterfaceBase : public BarInterface
   /// If it is not safe, it should throw an UnsafeWriteAccess exception
   //virtual void checkWriteSafe(int index, uint32_t value) = 0;
 
-  InfoLogger::InfoLogger mLogger;
+  std::string mLoggerPrefix;
 };
 
 } // namespace roc

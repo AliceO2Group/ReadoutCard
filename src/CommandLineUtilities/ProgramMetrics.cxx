@@ -30,7 +30,6 @@ using namespace o2::monitoring;
 
 using namespace AliceO2::roc::CommandLineUtilities;
 using namespace AliceO2::roc;
-using namespace AliceO2::InfoLogger;
 namespace pt = boost::property_tree;
 namespace po = boost::program_options;
 

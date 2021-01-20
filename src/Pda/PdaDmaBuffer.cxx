@@ -16,10 +16,10 @@
 
 #include "PdaDmaBuffer.h"
 #include <pda.h>
-#include <InfoLogger/InfoLogger.hxx>
 #include "ExceptionInternal.h"
 #include "Pda/PdaLock.h"
 #include "ReadoutCard/InterprocessLock.h"
+#include "ReadoutCard/Logger.h"
 
 namespace AliceO2
 {
@@ -35,7 +35,7 @@ PdaDmaBuffer::PdaDmaBuffer(PciDevice* pciDevice, void* userBufferAddress, size_t
   try {
     Pda::PdaLock lock{};
   } catch (const LockException& e) {
-    InfoLogger::InfoLogger() << "Failed to acquire PDA lock" << e.what() << InfoLogger::InfoLogger::endm;
+    Logger::get() << "Failed to acquire PDA lock" << e.what() << LogErrorDevel << endm;
     throw;
   }
 
@@ -119,7 +119,7 @@ PdaDmaBuffer::~PdaDmaBuffer()
   try {
     Pda::PdaLock lock{};
   } catch (const LockException& e) {
-    InfoLogger::InfoLogger() << "Failed to acquire PDA lock" << e.what() << InfoLogger::InfoLogger::endm;
+    Logger::get() << "Failed to acquire PDA lock" << e.what() << LogErrorDevel << endm;
     assert(false);
     //throw; (changed to assert(false) to get rid of the warning)
   }
@@ -128,7 +128,7 @@ PdaDmaBuffer::~PdaDmaBuffer()
     PciDevice_deleteDMABuffer(mPciDevice, mDmaBuffer);
   } catch (std::exception& e) {
     // Nothing to be done?
-    InfoLogger::InfoLogger() << "PdaDmaBuffer::~PdaDmaBuffer() failed: " << e.what() << InfoLogger::InfoLogger::endm;
+    Logger::get() << "PdaDmaBuffer::~PdaDmaBuffer() failed: " << e.what() << LogErrorDevel << endm;
   }
 }
 

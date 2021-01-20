@@ -27,6 +27,7 @@
 #include "Ttc.h"
 #include "DatapathWrapper.h"
 #include "boost/format.hpp"
+#include "ReadoutCard/Logger.h"
 #include "ReadoutCard/PatternPlayer.h"
 #include "Utilities/Util.h"
 
@@ -585,9 +586,9 @@ Cru::TriggerMonitoringInfo CruBar::monitorTriggers(bool updateable)
   // base values to report relative counts for updateable monitoring (e.g. for a single run)
   static uint32_t hbCountBase = hbCountPrev;
   static uint32_t phyCountBase = phyCountPrev;
-  static std::pair<uint32_t, uint32_t>  statEoxSox = ttc.getEoxSoxLtuCount();
-  static uint32_t  eoxCountBase = statEoxSox.first;
-  static uint32_t  soxCountBase = statEoxSox.second;
+  static std::pair<uint32_t, uint32_t> statEoxSox = ttc.getEoxSoxLtuCount();
+  static uint32_t eoxCountBase = statEoxSox.first;
+  static uint32_t soxCountBase = statEoxSox.second;
 
   std::this_thread::sleep_for(std::chrono::seconds(1));
   uint32_t hbCount = ttc.getHbTriggerLtuCount();
@@ -612,10 +613,10 @@ Cru::TriggerMonitoringInfo CruBar::monitorTriggers(bool updateable)
   }
 
   // report absolute values + rates(1s)
-  if (!updateable) { 
-    return { hbCount, hbDiff / pow(10,3),
-      phyCount, phyDiff / pow(10,3),
-      eoxCount, soxCount };
+  if (!updateable) {
+    return { hbCount, hbDiff / pow(10, 3),
+             phyCount, phyDiff / pow(10, 3),
+             eoxCount, soxCount };
   }
 
   // current - base counts for EOX/SOX
@@ -634,8 +635,8 @@ Cru::TriggerMonitoringInfo CruBar::monitorTriggers(bool updateable)
   }
 
   // report relative values + rates (1s)
-  return { hbCount - hbCountBase, hbDiff / pow(10,3),
-           phyCount - phyCountBase, phyDiff / pow(10,3),
+  return { hbCount - hbCountBase, hbDiff / pow(10, 3),
+           phyCount - phyCountBase, phyDiff / pow(10, 3),
            eoxDiff, soxDiff };
 }
 
@@ -666,35 +667,35 @@ void CruBar::configure(bool force)
       mRunStatsEnabled == reportInfo.runStatsEnabled &&
       mGbtEnabled == reportInfo.gbtEnabled &&
       !force) {
-    log("No need to reconfigure further");
+    log("No need to reconfigure further", LogInfoOps);
     return;
   }
 
   checkConfigParameters();
-  log("Reconfiguring");
+  log("Reconfiguring", LogInfoOps);
 
   Ttc ttc = Ttc(mPdaBar, mSerial);
   DatapathWrapper datapathWrapper = DatapathWrapper(mPdaBar);
 
   /* TTC */
   if (static_cast<uint32_t>(mClock) != reportInfo.ttcClock /*|| !checkClockConsistent(reportInfo.linkMap)*/ || force) {
-    log("Setting the clock");
+    log("Setting the clock", LogInfoDevel);
     ttc.setClock(mClock);
 
-    log("Calibrating TTC");
+    log("Calibrating TTC", LogInfoDevel);
     if (mClock == Clock::Ttc) {
       ttc.calibrateTtc();
 
       if (!checkPonUpstreamStatusExpected(reportInfo.ponStatusRegister, reportInfo.onuAddress) || force) {
         ttc.resetFpll();
         if (!ttc.configurePonTx(mOnuAddress)) {
-          log("PON TX fPLL phase scan failed", InfoLogger::InfoLogger::Error);
+          log("PON TX fPLL phase scan failed" + mOnuAddress, LogErrorDevel);
         }
       }
     }
 
     if (mGbtEnabled /*|| !checkClockConsistent(reportInfo.linkMap)*/) {
-      log("Calibrating the fPLLs");
+      log("Calibrating the fPLLs", LogInfoDevel);
       Gbt gbt = Gbt(mPdaBar, mLinkMap, mWrapperCount, mEndpoint);
       gbt.calibrateGbt(mLinkMap);
       Cru::fpllref(mLinkMap, mPdaBar, 2);
@@ -704,7 +705,7 @@ void CruBar::configure(bool force)
   }
 
   if (static_cast<uint32_t>(mDownstreamData) != reportInfo.downstreamData || force) {
-    log("Setting downstream data");
+    log("Setting downstream data", LogInfoDevel);
     ttc.selectDownstreamData(mDownstreamData);
   }
 
@@ -726,7 +727,7 @@ void CruBar::configure(bool force)
     //datapathWrapper.setLinksEnabled(0, 0x0);
     //datapathWrapper.setLinksEnabled(1, 0x0);
 
-    log("Enabling links and setting datapath mode and flow control");
+    log("Enabling links and setting datapath mode and flow control", LogInfoDevel);
     for (auto const& el : mLinkMap) {
       auto& link = el.second;
       auto& linkPrevState = reportInfo.linkMap.at(el.first);
@@ -751,39 +752,39 @@ void CruBar::configure(bool force)
 
   /* USER LOGIC */
   if (mUserLogicEnabled != reportInfo.userLogicEnabled || force) {
-    log("Toggling the User Logic link");
+    log("Toggling the User Logic link", LogInfoDevel);
     toggleUserLogicLink(mUserLogicEnabled);
   }
 
   /* RUN STATS */
   if (mRunStatsEnabled != reportInfo.runStatsEnabled || force) {
-    log("Toggling the Run Statistics link");
+    log("Toggling the Run Statistics link", LogInfoDevel);
     toggleRunStatsLink(mRunStatsEnabled);
   }
 
   /* UL + CL */
   if (mUserAndCommonLogicEnabled != reportInfo.userAndCommonLogicEnabled || force) {
-    log("Toggling User and Common Logic");
+    log("Toggling User and Common Logic", LogInfoDevel);
     datapathWrapper.toggleUserAndCommonLogic(mUserAndCommonLogicEnabled, mEndpoint);
   }
 
   /* BSP */
   if (mCruId != reportInfo.cruId || force) {
-    log("Setting the CRU ID");
+    log("Setting the CRU ID", LogInfoDevel);
     setCruId(mCruId);
   }
 
   if (mTriggerWindowSize != reportInfo.triggerWindowSize || force) {
-    log("Setting trigger window size");
+    log("Setting trigger window size", LogInfoDevel);
     datapathWrapper.setTriggerWindowSize(mEndpoint, mTriggerWindowSize);
   }
 
   if (mDynamicOffset != reportInfo.dynamicOffset || force) {
-    log("Toggling fixed/dynamic offset");
+    log("Toggling fixed/dynamic offset", LogInfoDevel);
     datapathWrapper.setDynamicOffset(mEndpoint, mDynamicOffset);
   }
 
-  log("CRU configuration done.");
+  log("CRU configuration done", LogInfoOps);
 }
 
 /// Sets the mWrapperCount variable
@@ -974,10 +975,13 @@ void CruBar::emulateCtp(Cru::CtpInfo ctpInfo)
 {
   Ttc ttc = Ttc(mPdaBar, mSerial);
   if (ctpInfo.generateEox) {
+    log("Sending EOX", LogInfoDevel);
     ttc.setEmulatorIdleMode();
   } else if (ctpInfo.generateSingleTrigger) {
+    log("Sending simple trigger", LogInfoDevel);
     ttc.doManualPhyTrigger();
   } else {
+    log("Starting CTP emulator", LogInfoDevel);
     ttc.resetCtpEmulator(true);
 
     if (ctpInfo.triggerMode == Cru::TriggerMode::Periodic) {

@@ -70,7 +70,7 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
   crorcBar = std::move(std::dynamic_pointer_cast<CrorcBar>(bar)); // Initialize bar
 
   // Create and register our ReadyFIFO buffer
-  log("Initializing ReadyFIFO DMA buffer", InfoLogger::InfoLogger::Debug);
+  log("Initializing ReadyFIFO DMA buffer", LogDebugDevel);
   {
     // Create and register the buffer
     // Note: if resizing the file fails, we might've accidentally put the file in a hugetlbfs mount with 1 GB page size
@@ -116,7 +116,7 @@ void CrorcDmaChannel::deviceStartDma()
 
   startDataReceiving();
 
-  log("DMA start deferred until enough superpages available");
+  log("DMA start deferred until enough superpages available", LogInfoDevel);
 
   mFreeFifoFront = 0;
   mFreeFifoBack = 0;
@@ -137,19 +137,19 @@ void CrorcDmaChannel::startPendingDma()
   }
 
   if (mTransferQueue.isEmpty()) { // We should never end up in here
-    log("Insufficient superpages to start pending DMA");
+    log("Insufficient superpages to start pending DMA", LogErrorDevel);
     return;
   }
 
-  log("Starting pending DMA");
+  log("Starting pending DMA", LogInfoDevel);
 
   if (mGeneratorEnabled) {
-    log("Starting data generator");
+    log("Starting data generator", LogInfoDevel);
     //getBar()->startDataGenerator();
     startDataGenerator();
   } else {
     if (mRDYRX || mSTBRD) {
-      log("Starting trigger");
+      log("Starting trigger", LogInfoDevel);
 
       // Clearing SIU/DIU status.
       getBar()->assertLinkUp();
@@ -163,7 +163,7 @@ void CrorcDmaChannel::startPendingDma()
   std::this_thread::sleep_for(100ms);
 
   mPendingDmaStart = false;
-  log("DMA started");
+  log("DMA started", LogInfoOps);
 }
 
 void CrorcDmaChannel::deviceStopDma()

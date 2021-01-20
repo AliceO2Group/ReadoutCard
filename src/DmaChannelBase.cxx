@@ -53,8 +53,10 @@ DmaChannelBase::DmaChannelBase(CardDescriptor cardDescriptor, Parameters& parame
                                const AllowedChannels& allowedChannels)
   : mCardDescriptor(cardDescriptor), mChannelNumber(parameters.getChannelNumberRequired())
 {
+  mLoggerPrefix = "[" + mCardDescriptor.serialId.toString() + " | ch" + std::to_string(mChannelNumber) + "] ";
+  Logger::setFacility("ReadoutCard/DMA");
 #ifndef NDEBUG
-  log("Backend compiled without NDEBUG; performance may be severely degraded", InfoLogger::InfoLogger::Info);
+  log("Backend compiled without NDEBUG; performance may be severely degraded", LogWarningDevel);
 #endif
 
   // Check the channel number is allowed
@@ -71,7 +73,7 @@ DmaChannelBase::DmaChannelBase(CardDescriptor cardDescriptor, Parameters& parame
   //checkParameters(parameters);
 
   //try to acquire lock
-  log("Acquiring DMA channel lock", InfoLogger::InfoLogger::Debug);
+  log("Acquiring DMA channel lock", LogInfoDevel);
   try {
     if (mCardDescriptor.cardType == CardType::Crorc) {
       Utilities::resetSmartPtr(mInterprocessLock, "Alice_O2_RoC_DMA_" + cardDescriptor.pciAddress.toString() + "_chan" +
@@ -80,29 +82,23 @@ DmaChannelBase::DmaChannelBase(CardDescriptor cardDescriptor, Parameters& parame
       Utilities::resetSmartPtr(mInterprocessLock, "Alice_O2_RoC_DMA_" + cardDescriptor.pciAddress.toString() + "_lock");
     }
   } catch (const LockException& exception) {
-    log("Failed to acquire DMA channel lock", InfoLogger::InfoLogger::Debug);
+    log("Failed to acquire DMA channel lock", LogErrorDevel);
     throw;
   }
 
-  log("Acquired DMA channel lock", InfoLogger::InfoLogger::Debug);
+  log("Acquired DMA channel lock", LogInfoDevel);
   Pda::freePdaDmaBuffers(mCardDescriptor, getChannelNumber());
 }
 
 DmaChannelBase::~DmaChannelBase()
 {
   Pda::freePdaDmaBuffers(mCardDescriptor, getChannelNumber());
-  log("Releasing DMA channel lock", InfoLogger::InfoLogger::Debug);
+  log("Releasing DMA channel lock", LogInfoDevel);
 }
 
-void DmaChannelBase::log(const std::string& message, boost::optional<InfoLogger::InfoLogger::Severity> severity)
+void DmaChannelBase::log(const std::string& logMessage, ILMessageOption ilgMsgOption)
 {
-  mLogger << severity.get_value_or(mLogLevel);
-  mLogger << "[pci=" << getCardDescriptor().pciAddress.toString();
-  mLogger << " serial=" << getSerialNumber();
-  mLogger << " endpoint=" << getEndpointNumber();
-  mLogger << " channel=" << getChannelNumber() << "] ";
-  mLogger << message;
-  mLogger << InfoLogger::InfoLogger::endm;
+  Logger::get() << mLoggerPrefix << logMessage << ilgMsgOption << endm;
 }
 
 } // namespace roc

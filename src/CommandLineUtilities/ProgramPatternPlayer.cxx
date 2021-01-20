@@ -28,7 +28,6 @@
 
 using namespace AliceO2::roc::CommandLineUtilities;
 using namespace AliceO2::roc;
-using namespace AliceO2::InfoLogger;
 namespace po = boost::program_options;
 using namespace boost::multiprecision;
 

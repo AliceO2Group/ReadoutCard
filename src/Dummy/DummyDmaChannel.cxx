@@ -34,15 +34,15 @@ constexpr size_t TRANSFER_QUEUE_CAPACITY = 16;
 constexpr size_t READY_QUEUE_CAPACITY = 32;
 } // namespace
 
-constexpr auto endm = InfoLogger::InfoLogger::StreamOps::endm;
+//constexpr auto endm = InfoLogger::InfoLogger::StreamOps::endm;
 
 DummyDmaChannel::DummyDmaChannel(const Parameters& params)
   : DmaChannelBase(makeDummyDescriptor(), const_cast<Parameters&>(params), { 0, 1, 2, 3, 4, 5, 6, 7 }),
     mTransferQueue(TRANSFER_QUEUE_CAPACITY),
     mReadyQueue(READY_QUEUE_CAPACITY)
 {
-  getLogger() << "DummyDmaChannel::DummyDmaChannel(channel:" << params.getChannelNumberRequired() << ")"
-              << InfoLogger::InfoLogger::endm;
+  //getLogger() << "DummyDmaChannel::DummyDmaChannel(channel:" << params.getChannelNumberRequired() << ")"
+  //              << InfoLogger::InfoLogger::endm;
 
   if (auto bufferParameters = params.getBufferParameters()) {
     // Create appropriate BufferProvider subclass
@@ -58,25 +58,26 @@ DummyDmaChannel::DummyDmaChannel(const Parameters& params)
 
 DummyDmaChannel::~DummyDmaChannel()
 {
-  getLogger() << "DummyDmaChannel::~DummyDmaChannel()" << endm;
+  //getLogger() << "DummyDmaChannel::~DummyDmaChannel()" << endm;
 }
 
 void DummyDmaChannel::startDma()
 {
-  getLogger() << "DummyDmaChannel::startDma()" << endm;
+  //getLogger() << "DummyDmaChannel::startDma()" << endm;
   mTransferQueue.clear();
   mReadyQueue.clear();
 }
 
 void DummyDmaChannel::stopDma()
 {
-  getLogger() << "DummyDmaChannel::stopDma()" << endm;
+  //getLogger() << "DummyDmaChannel::stopDma()" << endm;
 }
 
 void DummyDmaChannel::resetChannel(ResetLevel::type resetLevel)
 {
-  getLogger() << "DummyDmaChannel::resetCard(" << ResetLevel::toString(resetLevel) << ")"
-              << endm;
+  std::cout << ResetLevel::toString(resetLevel) << std::endl;
+  //getLogger() << "DummyDmaChannel::resetCard(" << ResetLevel::toString(resetLevel) << ")"
+  //            << endm;
 }
 
 CardType::type DummyDmaChannel::getCardType()
