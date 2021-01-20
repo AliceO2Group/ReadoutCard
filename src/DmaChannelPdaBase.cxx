@@ -53,17 +53,17 @@ DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
     mBufferProvider = Visitor::apply<std::unique_ptr<DmaBufferProviderInterface>>(
       *bufferParameters,
       [&](buffer_parameters::Memory parameters) {
-        log("Initializing with DMA buffer from memory region", InfoLogger::InfoLogger::Debug);
+        log("Initializing with DMA buffer from memory region", LogDebugDevel);
         return std::make_unique<PdaDmaBufferProvider>(mRocPciDevice->getPciDevice(), parameters.address,
                                                       parameters.size, bufferId, true);
       },
       [&](buffer_parameters::File parameters) {
-        log("Initializing with DMA buffer from memory-mapped file", InfoLogger::InfoLogger::Debug);
+        log("Initializing with DMA buffer from memory-mapped file", LogDebugDevel);
         return std::make_unique<FilePdaDmaBufferProvider>(mRocPciDevice->getPciDevice(), parameters.path,
                                                           parameters.size, bufferId, true);
       },
       [&](buffer_parameters::Null) {
-        log("Initializing with null DMA buffer", InfoLogger::InfoLogger::Debug);
+        log("Initializing with null DMA buffer", LogDebugDevel);
         return std::make_unique<NullDmaBufferProvider>();
       });
     //TODO: This can be simplified as only the
@@ -77,12 +77,12 @@ DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
     auto listSize = mBufferProvider->getScatterGatherListSize();
     auto hugePageMinSize = 1024 * 1024 * 2; // 2 MiB, the smallest hugepage size
     auto bufferSize = getBufferProvider().getSize();
-    log(std::string("Scatter-gather list size: ") + std::to_string(listSize));
+    //log(std::string("Scatter-gather list size: ") + std::to_string(listSize));
     if (listSize > (bufferSize / hugePageMinSize)) {
       std::string message =
         "Scatter-gather list size greater than buffer size divided by 2MiB (minimum hugepage size)."
         " This means the IOMMU is off and the buffer is not backed by hugepages - an unsupported buffer configuration.";
-      log(message, InfoLogger::InfoLogger::Error);
+      log(message, LogErrorDevel); //TODO: Why log + throw?
       BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(message));
     }
   }
@@ -96,15 +96,15 @@ DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
       const auto bufferAddress = reinterpret_cast<uintptr_t>(getBufferProvider().getAddress());
       if (map.addressStart == bufferAddress) {
         if (map.pageSizeKiB > 4) {
-          log("Buffer is hugepage-backed", InfoLogger::InfoLogger::Info);
+          log("Buffer is hugepage-backed", LogDebugDevel);
         } else {
           if (Common::Iommu::isEnabled()) {
-            log("Buffer is NOT hugepage-backed, but IOMMU is enabled", InfoLogger::InfoLogger::Warning);
+            log("Buffer is NOT hugepage-backed, but IOMMU is enabled", LogWarningDevel);
           } else {
             std::string message =
               "Buffer is NOT hugepage-backed and IOMMU is disabled - unsupported buffer "
               "configuration";
-            log(message, InfoLogger::InfoLogger::Error);
+            log(message, LogErrorDevel); //TODO: Why log + throw?
             BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(message)
                                               << ErrorInfo::PossibleCauses({ "roc-setup-hugetlbfs was not run" }));
           }
@@ -114,7 +114,7 @@ DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
       }
     }
     if (!checked) {
-      log("Failed to check if buffer is hugepage-backed", InfoLogger::InfoLogger::Warning);
+      log("Failed to check if buffer is hugepage-backed", LogWarningDevel);
     }
   }
 }
@@ -127,11 +127,11 @@ DmaChannelPdaBase::~DmaChannelPdaBase()
 void DmaChannelPdaBase::startDma()
 {
   if (mDmaState == DmaState::UNKNOWN) {
-    log("Unknown DMA state");
+    log("Unknown DMA state", LogErrorOps);
   } else if (mDmaState == DmaState::STARTED) {
-    log("DMA already started. Ignoring startDma() call");
+    log("DMA already started. Ignoring startDma() call", LogWarningOps);
   } else {
-    log("Starting DMA", InfoLogger::InfoLogger::Debug);
+    log("Starting DMA", LogInfoOps);
     deviceStartDma();
   }
   mDmaState = DmaState::STARTED;
@@ -141,12 +141,12 @@ void DmaChannelPdaBase::startDma()
 void DmaChannelPdaBase::stopDma()
 {
   if (mDmaState == DmaState::UNKNOWN) {
-    log("Unknown DMA state");
+    log("Unknown DMA state", LogErrorOps);
     mDmaState = DmaState::STOPPED;
   } else if (mDmaState == DmaState::STOPPED) {
-    log("Warning: DMA already stopped. Ignoring stopDma() call");
+    log("DMA already stopped. Ignoring stopDma() call", LogWarningOps);
   } else {
-    log("Stopping DMA", InfoLogger::InfoLogger::Debug);
+    log("Stopping DMA", LogInfoOps);
     mDmaState = DmaState::STOPPED;
     deviceStopDma();
   }
@@ -161,7 +161,7 @@ void DmaChannelPdaBase::resetChannel(ResetLevel::type resetLevel)
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Reset channel failed: DMA was not stopped"));
   }
 
-  log("Resetting channel", InfoLogger::InfoLogger::Debug);
+  log("Resetting channel", LogDebugOps);
   deviceResetChannel(resetLevel);
 }
 

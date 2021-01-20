@@ -40,7 +40,6 @@
 #include "Common/SuffixOption.h"
 #include "DataFormat.h"
 #include "ExceptionInternal.h"
-#include "InfoLogger/InfoLogger.hxx"
 #include "folly/ProducerConsumerQueue.h"
 #include "ReadoutCard/ChannelFactory.h"
 #include "ReadoutCard/MemoryMappedFile.h"
@@ -53,7 +52,6 @@
 
 using namespace AliceO2::roc::CommandLineUtilities;
 using namespace AliceO2::roc;
-using namespace AliceO2::InfoLogger;
 using AliceO2::Common::SuffixOption;
 using std::cout;
 using std::endl;
@@ -81,8 +79,6 @@ const std::string PROGRESS_FORMAT("  %02s:%02s:%02s   %-12s  %-12s  %-18s  %-12s
 auto READOUT_ERRORS_PATH = "readout_errors.txt";
 /// Max amount of errors that are recorded into the error stream
 constexpr int64_t MAX_RECORDED_ERRORS = 10000;
-/// End InfoLogger message alias
-constexpr auto endm = InfoLogger::endm;
 /// We use steady clock because otherwise system clock changes could affect the running of the program
 using TimePoint = std::chrono::steady_clock::time_point;
 /// Struct used for benchmark time limit
@@ -226,7 +222,7 @@ class ProgramDmaBench : public Program
       i = EVENT_COUNTER_INITIAL_VALUE;
     }
 
-    getLogger() << "DMA channel: " << mOptions.dmaChannel << endm;
+    std::cout << "DMA channel: " << mOptions.dmaChannel << std::endl;
 
     auto cardId = Options::getOptionCardId(map);
     auto params = Parameters::makeParameters(cardId, mOptions.dmaChannel);
@@ -254,7 +250,7 @@ class ProgramDmaBench : public Program
     }
 
     // Log IOMMU status
-    getLogger() << "IOMMU " << (AliceO2::Common::Iommu::isEnabled() ? "enabled" : "not enabled") << endm;
+    std::cout << "IOMMU " << (AliceO2::Common::Iommu::isEnabled() ? "enabled" : "not enabled") << std::endl;
 
     // Create channel buffer
 
@@ -268,7 +264,7 @@ class ProgramDmaBench : public Program
     mMemoryMappedFile = Utilities::tryMapFile(mBufferSize, bufferName, !mOptions.noRemovePagesFile, &hugepageType);
 
     mBufferBaseAddress = reinterpret_cast<uintptr_t>(mMemoryMappedFile->getAddress());
-    getLogger() << "Using buffer file path: " << mMemoryMappedFile->getFileName() << endm;
+    std::cout << "Using buffer file path: " << mMemoryMappedFile->getFileName() << std::endl;
 
     // Set up channel parameters
     mPageSize = params.getDmaPageSize().get();
@@ -286,13 +282,13 @@ class ProgramDmaBench : public Program
     }
 
     mSuperpagesInBuffer = mBufferSize / mSuperpageSize;
-    getLogger() << "Buffer size: " << mBufferSize << endm;
-    getLogger() << "Superpage size: " << mSuperpageSize << endm;
-    getLogger() << "Superpages in buffer: " << mSuperpagesInBuffer << endm;
-    getLogger() << "Superpage limit: " << mSuperpageLimit << endm;
-    getLogger() << "DMA page size: " << mPageSize << endm;
+    std::cout << "Buffer size: " << mBufferSize << std::endl;
+    std::cout << "Superpage size: " << mSuperpageSize << std::endl;
+    std::cout << "Superpages in buffer: " << mSuperpagesInBuffer << std::endl;
+    std::cout << "Superpage limit: " << mSuperpageLimit << std::endl;
+    std::cout << "DMA page size: " << mPageSize << std::endl;
     if (mOptions.bufferFullCheck) {
-      getLogger() << "Buffer-Full Check enabled" << endm;
+      std::cout << "Buffer-Full Check enabled" << std::endl;
       mBufferFullCheck = true;
     }
 
@@ -301,33 +297,32 @@ class ProgramDmaBench : public Program
         throw ParameterException() << ErrorInfo::Message("Frequency of dma pages to fast check has to be in the range [1,255]");
       }
       mErrorCheckFrequency = mOptions.errorCheckFrequency;
-      getLogger() << "Error check frequency: " << mErrorCheckFrequency << " dma page(s)" << endm;
+      std::cout << "Error check frequency: " << mErrorCheckFrequency << " dma page(s)" << std::endl;
       if (mOptions.fastCheckEnabled) {
         mFastCheckEnabled = mOptions.fastCheckEnabled;
-        getLogger() << "Fast check enabled" << endm;
+        std::cout << "Fast check enabled" << std::endl;
       }
       mMaxRdhPacketCounter = mOptions.maxRdhPacketCounter;
-      getLogger() << "Maximum RDH packet counter " << mMaxRdhPacketCounter << endm;
+      std::cout << "Maximum RDH packet counter " << mMaxRdhPacketCounter << std::endl;
       mTimeFrameLength = mOptions.timeFrameLength;
-      getLogger() << "TimeFrame length " << mTimeFrameLength << endm;
+      std::cout << "TimeFrame length " << mTimeFrameLength << std::endl;
     }
 
     // Get DMA channel object
     try {
       mChannel = ChannelFactory().getDmaChannel(params);
     } catch (const LockException& e) {
-      getLogger() << InfoLogger::Error
-                  << "Another process is holding the channel lock (no automatic cleanup possible)" << endm;
+      std::cerr << "Another process is holding the channel lock (no automatic cleanup possible)" << std::endl;
       throw;
     }
 
     mCardType = mChannel->getCardType();
-    getLogger() << "Card type: " << CardType::toString(mChannel->getCardType()) << endm;
-    getLogger() << "Card PCI address: " << mChannel->getPciAddress().toString() << endm;
-    getLogger() << "Card NUMA node: " << mChannel->getNumaNode() << endm;
-    getLogger() << "Card firmware info: " << mChannel->getFirmwareInfo().value_or("unknown") << endm;
+    std::cout << "Card type: " << CardType::toString(mChannel->getCardType()) << std::endl;
+    std::cout << "Card PCI address: " << mChannel->getPciAddress().toString() << std::endl;
+    std::cout << "Card NUMA node: " << mChannel->getNumaNode() << std::endl;
+    std::cout << "Card firmware info: " << mChannel->getFirmwareInfo().value_or("unknown") << std::endl;
 
-    getLogger() << "Starting benchmark" << endm;
+    std::cout << "Starting benchmark" << std::endl;
     mChannel->startDma();
 
     if (mOptions.barHammer) {
@@ -342,8 +337,8 @@ class ProgramDmaBench : public Program
     if (!mOptions.timeLimitString.empty()) {
       auto limit = convertTimeString(mOptions.timeLimitString);
       mTimeLimitOptional = std::chrono::steady_clock::now() + std::chrono::hours(limit.hours) + std::chrono::minutes(limit.minutes) + std::chrono::seconds(limit.seconds);
-      getLogger() << (b::format("Time limit: %1%h %2%m %3%s") % limit.hours % limit.minutes % limit.seconds).str()
-                  << endm;
+      std::cout << (b::format("Time limit: %1%h %2%m %3%s") % limit.hours % limit.minutes % limit.seconds).str()
+                << std::endl;
     }
 
     if (mBufferFullCheck) {
@@ -359,11 +354,11 @@ class ProgramDmaBench : public Program
     std::cout << "\n\n";
     mChannel->stopDma();
     int numPopped = freeExcessPages(10ms);
-    getLogger() << "Popped " << numPopped << " remaining superpages" << endm;
+    std::cout << "Popped " << numPopped << " remaining superpages" << std::endl;
 
     outputErrors();
     outputStats();
-    getLogger() << "Benchmark complete" << endm;
+    std::cout << "Benchmark complete" << std::endl;
   }
 
  private:
@@ -1016,8 +1011,8 @@ class ProgramDmaBench : public Program
     auto errorStr = mErrorStream.str();
 
     if (!errorStr.empty()) {
-      getLogger() << "Outputting " << std::min(mErrorCount, MAX_RECORDED_ERRORS) << " errors to '"
-                  << READOUT_ERRORS_PATH << "'" << endm;
+      std::cout << "Outputting " << std::min(mErrorCount, MAX_RECORDED_ERRORS) << " errors to '"
+                << READOUT_ERRORS_PATH << "'" << std::endl;
       std::ofstream stream(READOUT_ERRORS_PATH);
       stream << errorStr;
     }
@@ -1274,5 +1269,7 @@ class ProgramDmaBench : public Program
 
 int main(int argc, char** argv)
 {
+  // true here enables InfoLogger output by default
+  // see the Program constructor
   return ProgramDmaBench().execute(argc, argv);
 }

@@ -23,7 +23,6 @@
 
 using namespace AliceO2::roc::CommandLineUtilities;
 using namespace AliceO2::roc;
-using namespace AliceO2::InfoLogger;
 namespace pt = boost::property_tree;
 namespace po = boost::program_options;
 
@@ -91,7 +90,8 @@ class ProgramTriggerMonitor : public Program
           std::cout << '\r' << format << std::flush;
         }
 
-        std::cout << std::endl << lineFat;
+        std::cout << std::endl
+                  << lineFat;
       } else {
         Cru::TriggerMonitoringInfo tmi = cruBar2->monitorTriggers();
         auto format = boost::format(formatRow) % tmi.hbCount % tmi.hbRate % tmi.phyCount % tmi.phyRate % tmi.soxCount % tmi.eoxCount;

@@ -18,7 +18,6 @@
 
 #include <cstdint>
 #include <boost/optional.hpp>
-#include <InfoLogger/InfoLogger.hxx>
 #include "ReadoutCard/Parameters.h"
 #include "ReadoutCard/CardType.h"
 #include "ReadoutCard/ParameterTypes/ResetLevel.h"
@@ -105,9 +104,6 @@ class DmaChannelInterface
   /// Returns the type of the card this DmaChannelInterface is controlling
   /// \return The card type
   virtual CardType::type getCardType() = 0;
-
-  /// Sets the InfoLogger log level for this channel
-  virtual void setLogLevel(InfoLogger::InfoLogger::Severity severity) = 0;
 
   /// Get the PCI address of this DMA channel
   /// Note: dummy card will always return 0:0.0

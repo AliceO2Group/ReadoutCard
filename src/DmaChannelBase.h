@@ -21,13 +21,13 @@
 #include <memory>
 #include <mutex>
 #include <boost/optional.hpp>
-#include <InfoLogger/InfoLogger.hxx>
 #include "ChannelPaths.h"
 #include "ExceptionInternal.h"
 #include "Pda/PdaLock.h"
 #include "ReadoutCard/CardDescriptor.h"
 #include "ReadoutCard/DmaChannelInterface.h"
 #include "ReadoutCard/Exception.h"
+#include "ReadoutCard/Logger.h"
 #include "ReadoutCard/InterprocessLock.h"
 #include "ReadoutCard/Parameters.h"
 #include "Utilities/Util.h"
@@ -107,22 +107,8 @@ class DmaChannelBase : public DmaChannelInterface
     return { getCardDescriptor().pciAddress, getChannelNumber() };
   }
 
-  void log(const std::string& message, boost::optional<InfoLogger::InfoLogger::Severity> severity = boost::none);
-
-  InfoLogger::InfoLogger& getLogger()
-  {
-    return mLogger;
-  }
-
-  InfoLogger::InfoLogger::Severity getLogLevel()
-  {
-    return mLogLevel;
-  }
-
-  virtual void setLogLevel(InfoLogger::InfoLogger::Severity severity) final override
-  {
-    mLogLevel = severity;
-  }
+  /// Convenience function for InfoLogger
+  void log(const std::string& logMessage, ILMessageOption = LogInfoOps);
 
  private:
   /// Check if the channel number is valid
@@ -140,11 +126,7 @@ class DmaChannelBase : public DmaChannelInterface
   /// Lock that guards against both inter- and intra-process ownership
   std::unique_ptr<Interprocess::Lock> mInterprocessLock;
 
-  /// InfoLogger instance
-  InfoLogger::InfoLogger mLogger;
-
-  /// Current log level
-  InfoLogger::InfoLogger::Severity mLogLevel;
+  std::string mLoggerPrefix;
 };
 
 } // namespace roc

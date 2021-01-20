@@ -28,7 +28,6 @@ using namespace o2::monitoring;
 
 using namespace AliceO2::roc::CommandLineUtilities;
 using namespace AliceO2::roc;
-using namespace AliceO2::InfoLogger;
 namespace pt = boost::property_tree;
 namespace po = boost::program_options;
 
@@ -70,9 +69,9 @@ class ProgramPacketMonitor : public Program
     }
 
     if (card.serialId.getSerial() == 0x7fffffff || card.serialId.getSerial() == 0x0) {
-        std::cout << "Bad serial reported, bad card state, exiting" << std::endl;
-        return;
-      }
+      std::cout << "Bad serial reported, bad card state, exiting" << std::endl;
+      return;
+    }
 
     if (cardType == CardType::type::Crorc) {
 

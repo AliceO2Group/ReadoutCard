@@ -28,6 +28,7 @@ BarInterfaceBase::BarInterfaceBase(const Parameters& parameters, std::unique_ptr
 {
   Utilities::resetSmartPtr(mPdaBar, mRocPciDevice->getPciDevice(), mBarIndex);
   mPdaBar = std::move(mRocPciDevice->getBar(mBarIndex));
+  mLoggerPrefix = "[" + mRocPciDevice->getSerialId().toString() + " | bar" + std::to_string(mBarIndex) + "] ";
 }
 
 BarInterfaceBase::BarInterfaceBase(std::shared_ptr<Pda::PdaBar> bar)
@@ -56,10 +57,9 @@ void BarInterfaceBase::modifyRegister(int index, int position, int width, uint32
   mPdaBar->modifyRegister(index, position, width, value);
 }
 
-void BarInterfaceBase::log(std::string logMessage, InfoLogger::InfoLogger::Severity logLevel)
+void BarInterfaceBase::log(const std::string& logMessage, ILMessageOption ilgMsgOption)
 {
-  mLogger << logLevel;
-  mLogger << "[PCI ID: " << mRocPciDevice->getPciAddress().toString() << " | bar" << getIndex() << "] : " << logMessage << InfoLogger::InfoLogger::endm;
+  Logger::get() << mLoggerPrefix << logMessage << ilgMsgOption << endm;
 }
 
 } // namespace roc

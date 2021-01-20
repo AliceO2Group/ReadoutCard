@@ -26,7 +26,6 @@
 
 using namespace AliceO2::roc::CommandLineUtilities;
 using namespace AliceO2::roc;
-using namespace AliceO2::InfoLogger;
 namespace po = boost::program_options;
 
 class ProgramSiuStatus : public Program
@@ -49,19 +48,19 @@ class ProgramSiuStatus : public Program
   virtual void run(const boost::program_options::variables_map& map)
   {
     if ((mOptions.channel < 0) || (mOptions.channel > 5)) {
-      getLogger() << "Please provide a channel in the 0-5 range." << InfoLogger::endm;
+      std::cout << "Please provide a channel in the 0-5 range." << std::endl;
       return;
     }
     auto cardId = Options::getOptionCardId(map);
-    getLogger() << "Card ID: " << cardId << InfoLogger::endm;
-    getLogger() << "Channel: " << mOptions.channel << InfoLogger::endm;
+    std::cout << "Card ID: " << cardId << std::endl;
+    std::cout << "Channel: " << mOptions.channel << std::endl;
 
     std::shared_ptr<BarInterface>
       bar = ChannelFactory().getBar(cardId, mOptions.channel);
 
     auto cardType = bar->getCardType();
     if (cardType != CardType::Crorc) {
-      getLogger() << InfoLogger::Warning << "SIU status only applicable to CRORC" << InfoLogger::endm;
+      std::cout << "SIU status only applicable to CRORC" << std::endl;
       return;
     }
 
@@ -70,19 +69,19 @@ class ProgramSiuStatus : public Program
     try {
       siuStatus = crorc.siuStatus();
     } catch (const Exception& e) {
-      getLogger() << InfoLogger::Error << diagnostic_information(e) << InfoLogger::endm;
+      std::cout << diagnostic_information(e) << std::endl;
       return;
     }
 
     std::stringstream ss;
     ss << "0x" << std::setfill('0') << std::hex << std::get<1>(siuStatus);
 
-    getLogger() << "SIU HW info: " << std::get<0>(siuStatus) << InfoLogger::endm;
-    getLogger() << "SIU Status Register: " << ss.str() << InfoLogger::endm;
+    std::cout << "SIU HW info: " << std::get<0>(siuStatus) << std::endl;
+    std::cout << "SIU Status Register: " << ss.str() << std::endl;
     auto statusStrings = crorc.ddlInterpretIfstw(std::get<1>(siuStatus));
 
     for (auto const& string : statusStrings) {
-      getLogger() << string << InfoLogger::endm;
+      std::cout << string << std::endl;
     }
   }
 

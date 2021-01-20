@@ -70,7 +70,7 @@ void CardConfigurator::parseConfigUri(CardType::type cardType, std::string confi
 
 void CardConfigurator::parseConfigUriCrorc(std::string /*configUri*/, Parameters& /*parameters*/) //TODO: Fill me
 {
-  std::cout << "Non-parameter configuration not supported for the CRORC yet" << std::endl;
+  Logger::get() << "Non-parameter configuration not supported for the CRORC yet" << LogErrorOps << endm;
   BOOST_THROW_EXCEPTION(Exception());
 }
 /// configUri has to start with "ini://", "json://" or "consul://"

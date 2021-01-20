@@ -37,7 +37,7 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
 
   if (auto pageSize = parameters.getDmaPageSize()) {
     if (pageSize.get() != Cru::DMA_PAGE_SIZE) {
-      log("DMA page size not default; Behaviour undefined", InfoLogger::InfoLogger::Warning);
+      log("DMA page size not default; Behaviour undefined", LogWarningDevel);
       /*BOOST_THROW_EXCEPTION(CruException()
           << ErrorInfo::Message("CRU only supports an 8KiB page size")
           << ErrorInfo::DmaPageSize(pageSize.get()));*/
@@ -58,7 +58,7 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
   cruBar2 = std::move(std::dynamic_pointer_cast<CruBar>(bar2)); // Initialize BAR 2
   mFeatures = getBar()->getFirmwareFeatures();                  // Get which features of the firmware are enabled
 
-  if (mFeatures.standalone) {
+  if (mFeatures.standalone) { //TODO: ??
     std::stringstream stream;
     auto logFeature = [&](auto name, bool enabled) { if (!enabled) { stream << " " << name; } };
     stream << "Standalone firmware features disabled:";
@@ -66,7 +66,7 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
     logFeature("serial-number", mFeatures.serial);
     logFeature("temperature", mFeatures.temperature);
     logFeature("data-selection", mFeatures.dataSelection);
-    log(stream.str());
+    log(stream.str(), LogDebugDevel);
   }
 
   // Insert links
@@ -114,7 +114,7 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
       BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("No links are enabled. Check with roc-status. Configure with roc-config."));
     }
 
-    log(stream.str());
+    log(stream.str(), LogInfoOps);
   }
 }
 
@@ -128,7 +128,7 @@ CruDmaChannel::~CruDmaChannel()
 {
   setBufferNonReady();
   if (mReadyQueue.sizeGuess() > 0) {
-    log((format("Remaining superpages in the ready queue: %1%") % mReadyQueue.sizeGuess()).str());
+    log((format("Remaining superpages in the ready queue: %1%") % mReadyQueue.sizeGuess()).str(), LogDebugDevel);
   }
 
   if (mDataSource == DataSource::Internal) {
@@ -151,7 +151,7 @@ void CruDmaChannel::deviceStartDma()
   if (mFeatures.dataSelection) {
     getBar()->setDataSource(dataSourceSelection);
   } else {
-    log("Did not set data source, feature not supported by firmware", InfoLogger::InfoLogger::Warning);
+    log("Did not set data source, feature not supported by firmware", LogWarningDevel);
   }
 
   // Reset CRU (should be done after link mask set)
@@ -213,8 +213,7 @@ void CruDmaChannel::reclaimSuperpages()
     }
 
     if (!link.queue->isEmpty()) {
-      log((format("Superpage queue of link %1% not empty after DMA stop. Superpages unclaimed.") % link.id).str(),
-          InfoLogger::InfoLogger::Error);
+      log((format("Superpage queue of link %1% not empty after DMA stop. Superpages unclaimed.") % link.id).str(), LogErrorDevel);
     }
   }
 }
@@ -358,7 +357,7 @@ void CruDmaChannel::fillSuperpages()
       stream << "FATAL: Firmware reported more superpages available (" << amountAvailable << ") than should be present in FIFO (" << link.queue->sizeGuess() << "); "
              << link.superpageCounter << " superpages received from link " << int(link.id) << " according to driver, "
              << superpageCount << " pushed according to firmware";
-      log(stream.str(), InfoLogger::InfoLogger::Error);
+      log(stream.str(), LogErrorDevel);
       BOOST_THROW_EXCEPTION(Exception()
                             << ErrorInfo::Message("FATAL: Firmware reported more superpages available than should be present in FIFO"));
     }

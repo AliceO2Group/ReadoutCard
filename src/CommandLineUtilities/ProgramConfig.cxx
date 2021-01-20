@@ -22,6 +22,7 @@
 #include "ReadoutCard/ChannelFactory.h"
 #include "ReadoutCard/Exception.h"
 #include "ReadoutCard/FirmwareChecker.h"
+#include "ReadoutCard/Logger.h"
 #include "RocPciDevice.h"
 
 using namespace AliceO2::roc::CommandLineUtilities;
@@ -32,6 +33,10 @@ namespace po = boost::program_options;
 class ProgramConfig : public Program
 {
  public:
+  ProgramConfig(bool ilgEnabled) : Program(ilgEnabled)
+  {
+  }
+
   virtual Description getDescription()
   {
     return { "Config", "Configure the ReadoutCard(s)",
@@ -129,25 +134,27 @@ class ProgramConfig : public Program
   virtual void run(const boost::program_options::variables_map& map)
   {
 
+    Logger::setFacility("ReadoutCard/config");
+
     // Configure all cards found - Normally used during boot
     if (mOptions.configAll) {
-      std::cout << "Running RoC Configuration for all cards" << std::endl;
+      Logger::get() << "Running RoC Configuration for all cards" << LogInfoOps << endm;
       std::vector<CardDescriptor> cardsFound;
       if (mOptions.configUri == "") {
-        std::cout << "A configuration URI is necessary with the startup-config flag set" << std::endl;
+        Logger::get() << "A configuration URI is necessary with the startup-config flag set" << LogErrorOps << endm;
         return;
       }
 
       cardsFound = RocPciDevice::findSystemDevices();
       for (auto const& card : cardsFound) {
-        std::cout << " __== " << card.pciAddress.toString() << " ==__ " << std::endl;
+        Logger::get() << " __== " << card.pciAddress.toString() << " ==__ " << LogDebugTrace << endm;
         auto params = Parameters::makeParameters(card.pciAddress, 2);
         if (!mOptions.bypassFirmwareCheck) {
           try {
             FirmwareChecker().checkFirmwareCompatibility(params);
             CardConfigurator(card.pciAddress, mOptions.configUri, mOptions.forceConfig);
           } catch (const Exception& e) {
-            std::cout << boost::diagnostic_information(e) << std::endl;
+            Logger::get() << boost::diagnostic_information(e) << LogErrorOps << endm;
           }
         }
       }
@@ -160,7 +167,7 @@ class ProgramConfig : public Program
       try {
         FirmwareChecker().checkFirmwareCompatibility(cardId);
       } catch (const Exception& e) {
-        std::cout << boost::diagnostic_information(e) << std::endl;
+        Logger::get() << boost::diagnostic_information(e) << LogErrorOps << endm;
         return;
       }
     }
@@ -232,18 +239,18 @@ class ProgramConfig : public Program
         return;
       }
 
-      std::cout << "Configuring with command line arguments" << std::endl;
+      Logger::get() << "Configuring with command line arguments" << LogDebugOps << endm;
       try {
         CardConfigurator(params, mOptions.forceConfig);
       } catch (const Exception& e) {
-        std::cout << boost::diagnostic_information(e) << std::endl;
+        Logger::get() << boost::diagnostic_information(e) << LogErrorOps << endm;
       }
     } else {
-      std::cout << "Configuring with config uri" << std::endl;
+      Logger::get() << "Configuring with config uri" << LogDebugOps << endm;
       try {
         CardConfigurator(cardId, mOptions.configUri, mOptions.forceConfig);
       } catch (std::runtime_error& e) {
-        std::cout << "Error parsing the configuration..." << boost::diagnostic_information(e) << std::endl;
+        Logger::get() << "Error parsing the configuration..." << boost::diagnostic_information(e) << LogErrorOps << endm;
       }
     }
     return;
@@ -286,5 +293,7 @@ class ProgramConfig : public Program
 
 int main(int argc, char** argv)
 {
-  return ProgramConfig().execute(argc, argv);
+  // true here enables InfoLogger output by default
+  // see the Program constructor
+  return ProgramConfig(true).execute(argc, argv);
 }
