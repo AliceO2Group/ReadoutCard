@@ -31,6 +31,11 @@ namespace algo = boost::algorithm;
 namespace po = boost::program_options;
 namespace bfs = boost::filesystem;
 
+template <class T>
+void ignore(const T&)
+{
+}
+
 class ProgramCleanup : public Program
 {
  public:
@@ -69,20 +74,20 @@ class ProgramCleanup : public Program
     Pda::freePdaDmaBuffers();
 
     std::cout << "Removing CRORC FIFO shared memory files" << std::endl;
-    system("rm /dev/shm/AliceO2_RoC_*");
+    ignore(system("rm /dev/shm/AliceO2_RoC_*"));
     std::cout << "Removing readout 2MB hugepage mappings" << std::endl;
-    system("rm /var/lib/hugetlbfs/global/pagesize-2MB/readout*");
+    ignore(system("rm /var/lib/hugetlbfs/global/pagesize-2MB/readout*"));
     std::cout << "Removing readout 1GB hugepage mappings" << std::endl;
-    system("rm /var/lib/hugetlbfs/global/pagesize-1GB/readout*");
+    ignore(system("rm /var/lib/hugetlbfs/global/pagesize-1GB/readout*"));
     std::cout << "Removing roc-bench-dma 2MB hugepage mappings" << std::endl;
-    system("rm /var/lib/hugetlbfs/global/pagesize-2MB/roc-bench-dma*");
+    ignore(system("rm /var/lib/hugetlbfs/global/pagesize-2MB/roc-bench-dma*"));
     std::cout << "Removing roc-bench-dma 1GB hugepage mappings" << std::endl;
-    system("rm /var/lib/hugetlbfs/global/pagesize-1GB/roc-bench-dma*");
+    ignore(system("rm /var/lib/hugetlbfs/global/pagesize-1GB/roc-bench-dma*"));
 
     std::cout << "Removing uio_pci_dma" << std::endl;
-    system("modprobe -r uio_pci_dma");
+    ignore(system("modprobe -r uio_pci_dma"));
     std::cout << "Reinserting uio_pci_dma" << std::endl;
-    system("modprobe uio_pci_dma");
+    ignore(system("modprobe uio_pci_dma"));
   }
 
  private:
