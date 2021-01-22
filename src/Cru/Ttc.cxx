@@ -165,14 +165,14 @@ OnuStatus Ttc::onuStatus()
 
   Cru::OnuStatus onuStatus = {
     onuAddress,
-    calStatus & 0x1,
-    calStatus >> 1 & 0x1,
-    calStatus >> 2 & 0x1,
-    calStatus >> 3 & 0x1,
-    calStatus >> 4 & 0x1,
-    calStatus >> 5 & 0x1,
-    calStatus >> 6 & 0x1,
-    calStatus >> 7 & 0x1,
+    (calStatus & 0x1) == 1, // comparisons to bool
+    (calStatus >> 1 & 0x1) == 1,
+    (calStatus >> 2 & 0x1) == 1,
+    (calStatus >> 3 & 0x1) == 1,
+    (calStatus >> 4 & 0x1) == 1,
+    (calStatus >> 5 & 0x1) == 1,
+    (calStatus >> 6 & 0x1) == 1,
+    (calStatus >> 7 & 0x1) == 1,
     getOnuStickyBit(),
     getPonQuality(),
     getPonQualityStatus()

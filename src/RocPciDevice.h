@@ -85,7 +85,7 @@ class RocPciDevice
     } else if (barIndex > 0 && barIndex < 6) {
       std::shared_ptr<Pda::PdaBar> mPdaBarX;
       Utilities::resetSmartPtr(mPdaBarX, mPciDevice, barIndex);
-      return std::move(mPdaBarX);
+      return mPdaBarX;
     }
     return nullptr;
   }
