@@ -107,6 +107,7 @@ roc_regs = {
 'add_bsp_i2c_si5345_2':'SI5345_2',
 'add_bsp_i2c_si5344':'SI5344',
 'add_pcie_dma_ep_id':'ENDPOINT_ID',
+'add_ro_prot_system_id':'VIRTUAL_LINKS_IDS',
 
 ### SCA ###
 'add_gbt_sc':'SC_BASE_INDEX',

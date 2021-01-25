@@ -98,6 +98,7 @@ constant add_ro_prot_check_mask 		: unsigned(31 downto 0):=X"0000_0004"+add_ro_p
 constant add_ro_prot_alloc_fail 		: unsigned(31 downto 0):=X"0000_0008"+add_ro_protocol_base;
 constant add_ro_prot_ttc_linkerr 	        : unsigned(31 downto 0):=X"0000_000C"+add_ro_protocol_base;
 constant add_ro_prot_nack_dly_reg 	        : unsigned(31 downto 0):=X"0000_0010"+add_ro_protocol_base;
+constant add_ro_prot_system_id   	        : unsigned(31 downto 0):=add_ro_protocol_base+X"0000_0014";
 
 -------------------------------------------------------------------------------
 -- GBT address tables
@@ -313,10 +314,10 @@ constant add_serial_flash_wr_data : unsigned(31 downto 0):=X"00B0_0004";
 -------------------------------------------------------------------------------
 -- BSP address tables
 -------------------------------------------------------------------------------
-constant add_bsp_info	          : unsigned(31 downto 0):=add_bsp+X"0000_0000";
-constant add_bsp_hkeeping	      : unsigned(31 downto 0):=add_bsp+X"0001_0000";
-constant add_bsp_rsu     	      : unsigned(31 downto 0):=add_bsp+X"0002_0000";
-constant add_bsp_i2c	          : unsigned(31 downto 0):=add_bsp+X"0003_0000";
+constant add_bsp_info	       : unsigned(31 downto 0):=add_bsp+X"0000_0000";
+constant add_bsp_hkeeping      : unsigned(31 downto 0):=add_bsp+X"0001_0000";
+constant add_bsp_rsu           : unsigned(31 downto 0):=add_bsp+X"0002_0000";
+constant add_bsp_i2c	       : unsigned(31 downto 0):=add_bsp+X"0003_0000";
 
 constant add_bsp_info_dirtystatus  : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0000";
 constant add_bsp_info_shorthash    : unsigned(31 downto 0)   :=add_bsp_info+X"0000_0004";
@@ -431,7 +432,7 @@ component bsp is
     DEBUGCTRL   : out std_logic_vector(31 downto 0);
     ---------------------------------------------------------------------------
     USERCTRL    : out std_logic_vector(31 downto 0);
-    USERTXSEL   : out std_logic_vector(2*g_NUM_GBT_LINKS-1 downto 0);
+    USERTXSEL   : out std_logic_vector(4*g_NUM_GBT_LINKS-1 downto 0);
     ---------------------------------------------------------------------------
     spare_in       : in  std_logic_vector(31 downto 0);  -- general purpose in
     ---------------------------------------------------------------------------

@@ -762,6 +762,8 @@ void CruBar::configure(bool force)
     toggleRunStatsLink(mRunStatsEnabled);
   }
 
+  setVirtualLinksIds(mSystemId);
+
   /* UL + CL */
   if (mUserAndCommonLogicEnabled != reportInfo.userAndCommonLogicEnabled || force) {
     log("Toggling User and Common Logic", LogInfoDevel);
@@ -969,6 +971,12 @@ void CruBar::setCruId(uint16_t cruId)
 uint16_t CruBar::getCruId()
 {
   return (readRegister(Cru::Registers::BSP_USER_CONTROL.index) >> 16) & 0x0fff;
+}
+
+void CruBar::setVirtualLinksIds(uint16_t systemId)
+{
+  mPdaBar->modifyRegister(Cru::Registers::VIRTUAL_LINKS_IDS.index, 16, 8, systemId);
+  mPdaBar->modifyRegister(Cru::Registers::VIRTUAL_LINKS_IDS.index, 0, 16, 0x0);
 }
 
 void CruBar::emulateCtp(Cru::CtpInfo ctpInfo)
