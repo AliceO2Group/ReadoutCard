@@ -84,7 +84,7 @@ find_package(Common REQUIRED)
 find_package(Configuration REQUIRED)
 find_package(Monitoring REQUIRED)
 find_package(InfoLogger REQUIRED)
-find_package(PDA)
+find_package(PDA REQUIRED)
 
 ####################################
 # RPATH
@@ -133,32 +133,30 @@ add_library(ReadoutCard SHARED
 )
 
 # Add sources requiring PDA
-if(PDA_FOUND)
-  target_sources(ReadoutCard PRIVATE
-    src/DmaChannelPdaBase.cxx
-    src/BarInterfaceBase.cxx
-    src/CardConfigurator.cxx
-    src/CardFinder.cxx
-    src/Crorc/Crorc.cxx
-    src/Crorc/CrorcDmaChannel.cxx
-    src/Crorc/CrorcBar.cxx
-    src/Cru/Common.cxx
-    src/Cru/CruDmaChannel.cxx
-    src/Cru/CruBar.cxx
-    src/Cru/DatapathWrapper.cxx
-    src/Cru/Eeprom.cxx
-    src/Cru/Gbt.cxx
-    src/Cru/I2c.cxx
-    src/Cru/PatternPlayer.cxx
-    src/Cru/Ttc.cxx
-    src/Pda/PdaBar.cxx
-    src/Pda/PdaDevice.cxx
-    src/Pda/PdaDmaBuffer.cxx
-    src/RocPciDevice.cxx
-    $<$<BOOL:${Python2_FOUND}>:src/PythonInterface.cxx>
-    $<$<BOOL:${Python3_FOUND}>:src/PythonInterface.cxx>
-  )
-endif()
+target_sources(ReadoutCard PRIVATE
+  src/DmaChannelPdaBase.cxx
+  src/BarInterfaceBase.cxx
+  src/CardConfigurator.cxx
+  src/CardFinder.cxx
+  src/Crorc/Crorc.cxx
+  src/Crorc/CrorcDmaChannel.cxx
+  src/Crorc/CrorcBar.cxx
+  src/Cru/Common.cxx
+  src/Cru/CruDmaChannel.cxx
+  src/Cru/CruBar.cxx
+  src/Cru/DatapathWrapper.cxx
+  src/Cru/Eeprom.cxx
+  src/Cru/Gbt.cxx
+  src/Cru/I2c.cxx
+  src/Cru/PatternPlayer.cxx
+  src/Cru/Ttc.cxx
+  src/Pda/PdaBar.cxx
+  src/Pda/PdaDevice.cxx
+  src/Pda/PdaDmaBuffer.cxx
+  src/RocPciDevice.cxx
+  $<$<BOOL:${Python2_FOUND}>:src/PythonInterface.cxx>
+  $<$<BOOL:${Python3_FOUND}>:src/PythonInterface.cxx>
+)
 
 target_include_directories(ReadoutCard
   PUBLIC
@@ -180,15 +178,10 @@ target_link_libraries(ReadoutCard
     $<$<BOOL:${Python3_FOUND}>:Boost::python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}>
     $<$<BOOL:${Python3_FOUND}>:Python3::Python>
   PRIVATE
-    $<$<BOOL:${PDA_FOUND}>:pda::pda>
+    pda::pda
     Boost::filesystem
     Boost::system
     pthread
-)
-
-target_compile_definitions(ReadoutCard
-  PRIVATE
-    $<$<BOOL:${PDA_FOUND}>:ALICEO2_READOUTCARD_PDA_ENABLED>
 )
 
 # Use C++17
@@ -217,40 +210,39 @@ set(EXE_NAMES
   roc-reg-write
 )
 
-if(PDA_FOUND)
-  list(APPEND EXE_SRCS
-    ProgramBarStress.cxx
-    ProgramConfig.cxx
-    ProgramCtpEmulator.cxx
-    ProgramCleanup.cxx
-    ../Example.cxx
-    ProgramFlash.cxx
-    ProgramFlashRead.cxx
-    ProgramListCards.cxx
-    ProgramMetrics.cxx
-    ProgramPacketMonitor.cxx
-    ProgramPatternPlayer.cxx
-    ProgramSiuStatus.cxx
-    ProgramStatus.cxx
-    ProgramTriggerMonitor.cxx
-  )
-  list(APPEND EXE_NAMES
-    roc-bar-stress
-    roc-config
-    roc-ctp-emulator
-    roc-cleanup
-    roc-example
-    roc-flash
-    roc-flash-read
-    roc-list-cards
-    roc-metrics
-    roc-pkt-monitor
-    roc-pat-player
-    roc-siu-status
-    roc-status
-    roc-trig-monitor
-  )
-endif()
+list(APPEND EXE_SRCS
+  ProgramBarStress.cxx
+  ProgramConfig.cxx
+  ProgramCtpEmulator.cxx
+  ProgramCleanup.cxx
+  ../Example.cxx
+  ProgramFlash.cxx
+  ProgramFlashRead.cxx
+  ProgramListCards.cxx
+  ProgramMetrics.cxx
+  ProgramPacketMonitor.cxx
+  ProgramPatternPlayer.cxx
+  ProgramSiuStatus.cxx
+  ProgramStatus.cxx
+  ProgramTriggerMonitor.cxx
+)
+
+list(APPEND EXE_NAMES
+  roc-bar-stress
+  roc-config
+  roc-ctp-emulator
+  roc-cleanup
+  roc-example
+  roc-flash
+  roc-flash-read
+  roc-list-cards
+  roc-metrics
+  roc-pkt-monitor
+  roc-pat-player
+  roc-siu-status
+  roc-status
+  roc-trig-monitor
+)
 
 
 list(LENGTH EXE_SRCS count)
@@ -267,7 +259,7 @@ foreach(i RANGE ${count})
     PRIVATE
       ReadoutCard
       Boost::program_options
-      $<$<BOOL:${PDA_FOUND}>:pda::pda>
+      pda::pda
   )
 endforeach()
 
@@ -280,6 +272,7 @@ enable_testing()
 set(TEST_SRCS
   test/TestChannelFactoryUtils.cxx
   test/TestChannelPaths.cxx
+  test/TestCruBar.cxx
   test/TestCruDataFormat.cxx
   test/TestEnums.cxx
   test/TestInterprocessLock.cxx
@@ -290,10 +283,6 @@ set(TEST_SRCS
   test/TestRorcException.cxx
   test/TestSuperpageQueue.cxx
 )
-
-if(PDA_FOUND)
-  list(APPEND TEST_SRCS test/TestCruBar.cxx)
-endif()
 
 foreach (test ${TEST_SRCS})
   get_filename_component(test_name ${test} NAME)
@@ -308,7 +297,7 @@ foreach (test ${TEST_SRCS})
     PRIVATE
       ReadoutCard
       Boost::unit_test_framework
-      $<$<BOOL:${PDA_FOUND}>:pda::pda>
+      pda::pda
   )
   add_test(NAME ${test_name} COMMAND ${test_name})
   set_tests_properties(${test_name} PROPERTIES TIMEOUT 15)
