@@ -111,8 +111,6 @@ add_library(ReadoutCard SHARED
   src/Factory/ChannelFactory.cxx
   src/DmaChannelBase.cxx
   src/ChannelPaths.cxx
-  src/Dummy/DummyDmaChannel.cxx
-  src/Dummy/DummyBar.cxx
   src/ExceptionInternal.cxx
   src/FirmwareChecker.cxx
   src/Logger.cxx

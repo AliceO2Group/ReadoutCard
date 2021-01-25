@@ -3,8 +3,6 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "Dummy/DummyBar.h"
-#include "Dummy/DummyDmaChannel.h"
 #include "ReadoutCard/BarInterface.h"
 #include "ReadoutCard/ChannelFactory.h"
 #include "ReadoutCard/DmaChannelInterface.h"
@@ -24,16 +22,16 @@ namespace
 {
 
 // Helper function for calling the DMA channel factory
-std::unique_ptr<DmaChannelInterface> produceDma()
+std::unique_ptr<DmaChannelInterface> produceDma(int seqNumber)
 {
-  auto parameters = Parameters::makeParameters(ChannelFactory::getDummySerialId(), 0);
+  auto parameters = Parameters::makeParameters(PciSequenceNumber("#" + seqNumber), 0);
   return ChannelFactoryUtils::dmaChannelFactoryHelper<DmaChannelInterface>(parameters);
 }
 
 // Helper function for calling the BAR factory
-std::unique_ptr<BarInterface> produceBar()
+std::unique_ptr<BarInterface> produceBar(int seqNumber)
 {
-  auto parameters = Parameters::makeParameters(ChannelFactory::getDummySerialId(), 0);
+  auto parameters = Parameters::makeParameters(PciSequenceNumber("#" + seqNumber), 0);
   return ChannelFactoryUtils::barFactoryHelper<BarInterface>(parameters);
 }
 
@@ -42,8 +40,10 @@ std::unique_ptr<BarInterface> produceBar()
 // we test only part of its implementation.
 BOOST_AUTO_TEST_CASE(ChannelFactoryHelperTest)
 {
-  BOOST_CHECK(nullptr != dynamic_cast<DummyDmaChannel*>(produceDma().get()));
-  BOOST_CHECK(nullptr != dynamic_cast<DummyBar*>(produceBar().get()));
+  BOOST_CHECK(nullptr != dynamic_cast<CrorcDmaChannel*>(produceDma(0).get()));
+  BOOST_CHECK(nullptr != dynamic_cast<CrorcBar*>(produceBar(0).get()));
+  BOOST_CHECK(nullptr != dynamic_cast<CruDmaChannel*>(produceDma(1).get()));
+  BOOST_CHECK(nullptr != dynamic_cast<CruBar*>(produceBar(1).get()));
 }
 
 } // Anonymous namespace
