@@ -12,7 +12,6 @@ Table of Contents
   * [DMA channels](#dma-channels)
   * [Card Configurator](#card-configurator)
   * [BAR interface](#bar-interface)
-  * [Dummy implementation](#dummy-implementation)
   * [Parameters](#parameters-1)
   * [Utility programs](#utility-programs)
   * [Exceptions](#exceptions)
@@ -34,7 +33,6 @@ If you are just interested in reading and writing to the BAR, without particular
 feel free to skip ahead to the section "Python interface" for the most convenient way to do so.
 
 The library currently supports the C-RORC and CRU cards.
-It also provides a software-based dummy card (see the section "Dummy implementation" for more details).
 
 `*` *Formerly known as the RORC module*
 
@@ -353,13 +351,6 @@ params.setFirmwareCheckEnabled(true);
 ### Other parameters
 Operations on all other parameters can be done through setter, getter and getterRequired() functions, as seen in [Parameters.h](include/ReadoutCard/Parameters.h)
 
-Dummy implementation
--------------------
-The `ChannelFactory` can instantiate a dummy object if the serial number -1 is passed to its functions.
-This dummy object may at some point provide a mock DMA transfer, but currently it does not do anything.
- 
-If PDA is not available (see 'Dependencies') the factory will **always** instantiate a dummy object.
-
 Utility programs
 -------------------
 The module contains some utility programs to assist with ReadoutCard debugging and administration.
@@ -661,7 +652,6 @@ import libReadoutCard
 # Here we open channel number 0
 bar = libReadoutCard.BarChannel("42:0.0", 0) # PCI address
 bar = libReadoutCard.BarChannel("12345", 0) # Serial number
-bar = libReadoutCard.BarChannel("-1", 0) # Dummy channel
 
 # Read register at index 0
 bar.register_read(0)

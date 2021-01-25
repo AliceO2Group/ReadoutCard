@@ -20,17 +20,11 @@
 #include "ReadoutCard/CardDescriptor.h"
 #include "ReadoutCard/CardType.h"
 #include "ReadoutCard/Parameters.h"
-#include "Dummy/DummyDmaChannel.h"
-#include "Dummy/DummyBar.h"
-#ifdef ALICEO2_READOUTCARD_PDA_ENABLED
 #include "Crorc/CrorcDmaChannel.h"
 #include "Crorc/CrorcBar.h"
 #include "Cru/CruDmaChannel.h"
 #include "Cru/CruBar.h"
 #include "RocPciDevice.h"
-#else
-#pragma message("PDA not enabled, ChannelFactory will always return a dummy implementation")
-#endif
 
 namespace AliceO2
 {
@@ -39,7 +33,6 @@ namespace roc
 namespace ChannelFactoryUtils
 {
 
-#ifdef ALICEO2_READOUTCARD_PDA_ENABLED
 inline std::unique_ptr<RocPciDevice> findCard(const Parameters::CardIdType& id)
 {
   return std::make_unique<RocPciDevice>(id);
@@ -58,7 +51,7 @@ std::unique_ptr<Interface> dmaChannelFactoryHelper(const Parameters& params)
     return std::make_unique<CrorcDmaChannel>(params);
   }
 
-  return std::make_unique<DummyDmaChannel>(params);
+  BOOST_THROW_EXCEPTION(DeviceFinderException() << ErrorInfo::Message("Unknown card type"));
 }
 
 template <typename Interface>
@@ -74,23 +67,8 @@ std::unique_ptr<Interface> barFactoryHelper(const Parameters& params)
     return std::make_unique<CrorcBar>(params, std::move(rocPciDevice));
   }
 
-  return std::make_unique<DummyBar>(params);
+  BOOST_THROW_EXCEPTION(DeviceFinderException() << ErrorInfo::Message("Unknown card type"));
 }
-
-#else
-
-template <typename Interface>
-std::unique_ptr<Interface> dmaChannelFactoryHelper(const Parameters& params)
-{
-  return std::make_unique<DummyDmaChannel>(params);
-}
-
-template <typename Interface>
-std::unique_ptr<Interface> barFactoryHelper(const Parameters& params)
-{
-  return std::make_unique<DummyBar>(params);
-}
-#endif
 
 } // namespace ChannelFactoryUtils
 } // namespace roc

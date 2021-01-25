@@ -64,6 +64,8 @@ struct UnsafeWriteAccess : virtual UnsafeAccess {
 };
 struct InvalidLinkId : virtual Exception {
 };
+struct FactoryException : virtual Exception {
+};
 
 // C-RORC exception definitions
 struct CrorcException : virtual Exception {

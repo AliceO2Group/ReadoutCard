@@ -19,7 +19,6 @@ struct CardType {
     Unknown, ///< Unknown card type
     Crorc,   ///< C-RORC card type
     Cru,     ///< CRU card type
-    Dummy    ///< Dummy card type
   };
 
   /// Converts a CardType to a string
@@ -32,9 +31,6 @@ struct CardType {
 /// Namespace for type tags that refer to CardType enum values. Provided for use in templates.
 namespace CardTypeTag
 {
-constexpr struct DummyTag_ {
-  static constexpr auto type = CardType::Dummy;
-} DummyTag = {};
 constexpr struct CrorcTag_ {
   static constexpr auto type = CardType::Crorc;
 } CrorcTag = {};
@@ -46,14 +42,13 @@ constexpr struct UnknownTag_ {
 } UnknownTag = {};
 
 /// Checks if the given tag represents a valid card type.
-/// This means the type needs to be a DummyTag_ CrorcTag_ or CruTag_. NOT UnknownTag_ or anything else.
+/// This means the type needs to be a CrorcTag_ or CruTag_. NOT UnknownTag_ or anything else.
 template <class Tag>
 constexpr bool isValidTag()
 {
   // To make the comparison simpler, we strip Tag of cv-qualifiers and references
   using tag = typename std::decay<Tag>::type;
-  return std::is_same<tag, CardTypeTag::DummyTag_>::value ||
-         std::is_same<tag, CardTypeTag::CrorcTag_>::value ||
+  return std::is_same<tag, CardTypeTag::CrorcTag_>::value ||
          std::is_same<tag, CardTypeTag::CruTag_>::value;
 }
 
@@ -75,16 +70,6 @@ constexpr bool isNonDummyTag()
          std::is_same<tag, CardTypeTag::CruTag_>::value;
 }
 
-/// Checks if the given tag represents a dummy card type
-template <class Tag>
-constexpr bool isDummyTag()
-{
-  // To make the comparison simpler, we strip Tag of cv-qualifiers and references
-  using tag = typename std::decay<Tag>::type;
-  return std::is_same<tag, CardTypeTag::DummyTag_>::value;
-}
-
-static_assert(isValidTag<DummyTag_>() && isValidTag(DummyTag), "");
 static_assert(isValidTag<CrorcTag_>() && isValidTag(CrorcTag), "");
 static_assert(isValidTag<CruTag_>() && isValidTag(CruTag), "");
 static_assert(!isValidTag<UnknownTag_>() && !isValidTag(UnknownTag), "");

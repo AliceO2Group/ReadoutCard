@@ -27,7 +27,7 @@ void checkEnumConversion(const std::vector<typename E::type>& items)
 
 BOOST_AUTO_TEST_CASE(EnumCardTypeConversion)
 {
-  checkEnumConversion<CardType>({ CardType::Crorc, CardType::Cru, CardType::Dummy, CardType::Unknown });
+  checkEnumConversion<CardType>({ CardType::Crorc, CardType::Cru, CardType::Unknown });
 }
 
 BOOST_AUTO_TEST_CASE(EnumDataSourceConversion)

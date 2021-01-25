@@ -27,7 +27,6 @@ static const auto converter = Utilities::makeEnumConverter<CardType::type>("Card
                                                                                          { CardType::Unknown, "UNKNOWN" },
                                                                                          { CardType::Crorc, "CRORC" },
                                                                                          { CardType::Cru, "CRU" },
-                                                                                         { CardType::Dummy, "DUMMY" },
                                                                                        });
 
 } // Anonymous namespace
