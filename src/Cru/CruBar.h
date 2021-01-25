@@ -128,6 +128,8 @@ class CruBar final : public BarInterfaceBase
   void setCruId(uint16_t cruId);
   uint16_t getCruId();
 
+  void setVirtualLinksIds(uint16_t systemId);
+
   FirmwareFeatures parseFirmwareFeatures();
   FirmwareFeatures mFeatures;
 

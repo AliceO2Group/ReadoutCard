@@ -279,6 +279,7 @@ static constexpr Register DATALINK_CONTROL(0x00000000);
 // [15 - 0] FEE ID
 // [23 - 16] SYSTEM ID
 static constexpr Register DATALINK_IDS(0x00000004);
+static constexpr Register VIRTUAL_LINKS_IDS(0x00100014);
 /*static constexpr uint32_t GBT_PACKET(0x1); 
 static constexpr uint32_t GBT_STREAMING(0x0);*/
 
