@@ -221,18 +221,18 @@ class ProgramConfig : public Program
         cfgFile << "userAndCommonLogicEnabled=" << std::boolalpha << mOptions.userAndCommonLogicEnabled << "\n";
         cfgFile << "timeFrameLength=" << mOptions.timeFrameLength << "\n";
         cfgFile << "timeFrameDetectionEnabled=" << std::boolalpha << !mOptions.timeFrameDetectionDisabled << "\n";
-        cfgFile << "systemId" << mOptions.systemId << "\n";
+        cfgFile << "systemId=" << mOptions.systemId << "\n";
 
         cfgFile << "[links]\n";
         cfgFile << "enabled=false\n";
         cfgFile << "gbtMux=TTC\n";
-        cfgFile << "feeId" << mOptions.systemId << "\n";
+        cfgFile << "feeId=" << mOptions.systemId << "\n";
 
         for (const auto& link : params.getLinkMaskRequired()) {
           cfgFile << "[link" << link << "]\n";
           cfgFile << "enabled=true\n";
           cfgFile << "gbtMux=" << mOptions.gbtMux << "\n";
-          cfgFile << "feeId" << mOptions.systemId << "\n";
+          cfgFile << "feeId=" << mOptions.systemId << "\n";
         }
 
         cfgFile.close();
