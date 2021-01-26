@@ -37,6 +37,7 @@ CrorcBar::CrorcBar(const Parameters& parameters, std::unique_ptr<RocPciDevice> r
   : BarInterfaceBase(parameters, std::move(rocPciDevice)),
     mCrorcId(parameters.getCrorcId().get_value_or(0x0)),
     mDynamicOffset(parameters.getDynamicOffsetEnabled().get_value_or(false)),
+    mLinkMask(parameters.getLinkMask().get_value_or(std::set<uint32_t>{ 0, 1, 2, 3, 4, 5 })),
     mTimeFrameLength(parameters.getTimeFrameLength().get_value_or(0x100)),
     mTimeFrameDetectionEnabled(parameters.getTimeFrameDetectionEnabled().get_value_or(true))
 {
@@ -131,6 +132,17 @@ void CrorcBar::configure(bool /*force*/)
 Crorc::ReportInfo CrorcBar::report()
 {
   std::map<int, Crorc::Link> linkMap = initializeLinkMap();
+
+  // strip down link map, depending on link(s) requested to report on
+  // "associative-container erase idiom"
+  for (auto it = linkMap.cbegin(); it != linkMap.cend(); /* no increment */) {
+    if ((mLinkMask.find(it->first) == mLinkMask.end())) {
+      linkMap.erase(it++);
+    } else {
+      it++;
+    }
+  }
+
   getOpticalPowers(linkMap);
   Crorc::ReportInfo reportInfo = {
     linkMap,

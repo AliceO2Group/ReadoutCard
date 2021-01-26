@@ -58,6 +58,9 @@ class ProgramStatus : public Program
     options.add_options()("onu-status",
                           po::bool_switch(&mOptions.onu),
                           "Toggle ONU status output");
+    options.add_options()("links",
+                          po::value<std::string>(&mOptions.links)->default_value("0-11"),
+                          "Links to show (all by default)");
   }
 
   virtual void run(const boost::program_options::variables_map& map)
@@ -95,6 +98,7 @@ class ProgramStatus : public Program
       }
 
       auto params = Parameters::makeParameters(cardId, 0); //status available on BAR0
+      params.setLinkMask(Parameters::linkMaskFromString(mOptions.links));
       auto bar0 = ChannelFactory().getBar(params);
       auto crorcBar0 = std::dynamic_pointer_cast<CrorcBar>(bar0);
 
@@ -175,6 +179,7 @@ class ProgramStatus : public Program
       lineThin = std::string(header.length(), '-') + '\n';
 
       auto params = Parameters::makeParameters(cardId, 2); //status available on BAR2
+      params.setLinkMask(Parameters::linkMaskFromString(mOptions.links));
       auto bar2 = ChannelFactory().getBar(params);
       auto cruBar2 = std::dynamic_pointer_cast<CruBar>(bar2);
 
@@ -400,6 +405,7 @@ class ProgramStatus : public Program
 
  private:
   struct OptionsStruct {
+    std::string links = "0-11";
     bool jsonOut = false;
     bool monitoring = false;
     bool onu = false;
