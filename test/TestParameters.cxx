@@ -68,6 +68,10 @@ BOOST_AUTO_TEST_CASE(ParametersLinkMaskFromString)
     BOOST_CHECK(Parameters::linkMaskFromString("0,1,4-6") == b);
     BOOST_CHECK(Parameters::linkMaskFromString("0-1,4-6") == b);
   }
+  {
+    auto c = Parameters::LinkMaskType{ 0, 3, 4, 5 };
+    BOOST_CHECK(Parameters::linkMaskFromString("0,3-5") == c);
+  }
   BOOST_CHECK_THROW(Parameters::linkMaskFromString("0/2/3/4"), ParseException);
   BOOST_CHECK_THROW(Parameters::linkMaskFromString("0,1,2,3+4"), ParseException);
 }

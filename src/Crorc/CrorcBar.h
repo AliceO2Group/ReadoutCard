@@ -94,6 +94,7 @@ class CrorcBar final : public BarInterfaceBase
 
   uint16_t mCrorcId;
   bool mDynamicOffset;
+  std::set<uint32_t> mLinkMask;
   uint16_t mTimeFrameLength;
   bool mTimeFrameDetectionEnabled;
 };

@@ -459,6 +459,16 @@ Cru::ReportInfo CruBar::report()
 {
   std::map<int, Link> linkMap = initializeLinkMap();
 
+  // strip down link map, depending on link(s) requested to report on
+  // "associative-container erase idiom"
+  for (auto it = linkMap.cbegin(); it != linkMap.cend(); /* no increment */) {
+    if ((mLinkMask.find(it->first) == mLinkMask.end())) {
+      linkMap.erase(it++);
+    } else {
+      it++;
+    }
+  }
+
   bool gbtEnabled = false;
   // Update linkMap
   Gbt gbt = Gbt(mPdaBar, linkMap, mWrapperCount, mEndpoint);
