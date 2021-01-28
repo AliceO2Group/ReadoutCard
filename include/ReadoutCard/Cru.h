@@ -59,6 +59,12 @@ static constexpr Register SCA_RD_CMD(0x00f00014);
 static constexpr Register SCA_RD_CTRL(0x00f00018);
 static constexpr Register SCA_RD_MON(0x00f0001c);
 
+static constexpr Register SCA_MFT_PSU_DATA(0x00f00000);
+static constexpr Register SCA_MFT_PSU_CMD(0x00f00004);
+static constexpr Register SCA_MFT_PSU_CTRL(0x00f00008);
+static constexpr Register SCA_MFT_PSU_RESET(0x00f0000c);
+static constexpr Register SCA_MFT_PSU_MASTER_SLAVE(0x00f0003c);
+
 static constexpr Register SC_LINK(0x00f00078);
 static constexpr Register SC_RESET(0x00f0007c);
 
