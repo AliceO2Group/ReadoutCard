@@ -129,13 +129,14 @@ void CrorcBar::configure(bool /*force*/)
   log("CRORC configuration done", LogInfoOps);
 }
 
-Crorc::ReportInfo CrorcBar::report()
+Crorc::ReportInfo CrorcBar::report(bool forConfig)
 {
   std::map<int, Crorc::Link> linkMap = initializeLinkMap();
 
   // strip down link map, depending on link(s) requested to report on
   // "associative-container erase idiom"
-  for (auto it = linkMap.cbegin(); it != linkMap.cend(); /* no increment */) {
+  // don't remove links for config, as they all need to be reported
+  for (auto it = linkMap.cbegin(); it != linkMap.cend() && !forConfig; /* no increment */) {
     if ((mLinkMask.find(it->first) == mLinkMask.end())) {
       linkMap.erase(it++);
     } else {

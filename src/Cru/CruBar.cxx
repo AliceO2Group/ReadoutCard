@@ -455,13 +455,14 @@ FirmwareFeatures CruBar::convertToFirmwareFeatures(uint32_t reg)
 }
 
 /// Reports the CRU status
-Cru::ReportInfo CruBar::report()
+Cru::ReportInfo CruBar::report(bool forConfig)
 {
   std::map<int, Link> linkMap = initializeLinkMap();
 
   // strip down link map, depending on link(s) requested to report on
   // "associative-container erase idiom"
-  for (auto it = linkMap.cbegin(); it != linkMap.cend(); /* no increment */) {
+  // don't remove links for config, as they all need to be reported
+  for (auto it = linkMap.cbegin(); it != linkMap.cend() && !forConfig; /* no increment */) {
     if ((mLinkMask.find(it->first) == mLinkMask.end())) {
       linkMap.erase(it++);
     } else {
@@ -661,7 +662,7 @@ void CruBar::checkConfigParameters()
 void CruBar::configure(bool force)
 {
   // Get current info
-  Cru::ReportInfo reportInfo = report();
+  Cru::ReportInfo reportInfo = report(true);
   populateLinkMap(mLinkMap);
 
   if (static_cast<uint32_t>(mClock) == reportInfo.ttcClock &&

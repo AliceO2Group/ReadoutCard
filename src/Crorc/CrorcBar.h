@@ -49,7 +49,7 @@ class CrorcBar final : public BarInterfaceBase
   void setSerial(int serial);
 
   void configure(bool force = false) override;
-  Crorc::ReportInfo report();
+  Crorc::ReportInfo report(bool forConfig = false);
 
   void resetDevice(bool withSiu);
   void flushSuperpages();
