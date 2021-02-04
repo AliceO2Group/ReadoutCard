@@ -168,7 +168,7 @@ class ProgramConfig : public Program
         FirmwareChecker().checkFirmwareCompatibility(cardId);
       } catch (const Exception& e) {
         Logger::get() << boost::diagnostic_information(e) << LogErrorOps << endm;
-        return;
+        throw(e);
       }
     }
 
@@ -244,6 +244,7 @@ class ProgramConfig : public Program
         CardConfigurator(params, mOptions.forceConfig);
       } catch (const Exception& e) {
         Logger::get() << boost::diagnostic_information(e) << LogErrorOps << endm;
+        throw(e);
       }
     } else {
       Logger::get() << "Configuring with config uri" << LogDebugOps << endm;
@@ -251,6 +252,7 @@ class ProgramConfig : public Program
         CardConfigurator(cardId, mOptions.configUri, mOptions.forceConfig);
       } catch (std::runtime_error& e) {
         Logger::get() << "Error parsing the configuration..." << boost::diagnostic_information(e) << LogErrorOps << endm;
+        throw(e);
       }
     }
     return;
