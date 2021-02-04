@@ -104,7 +104,7 @@ class ProgramPacketMonitor : public Program
           monitoring->send(Metric{ "link" }
                              .addValue(card.pciAddress.toString(), "pciAddress")
                              .addValue((int)acquisitionRate, "acquisitionRate")
-                             .addValue((int)packetsReceived, "packetsReceived")
+                             .addValue((uint64_t)packetsReceived, "packetsReceived")
                              .addTag(tags::Key::SerialId, card.serialId.getSerial())
                              .addTag(tags::Key::CRORC, card.sequenceId)
                              .addTag(tags::Key::ID, channel)
