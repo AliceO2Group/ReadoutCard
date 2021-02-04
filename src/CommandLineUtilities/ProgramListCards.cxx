@@ -86,10 +86,9 @@ class ProgramListCards : public Program
         // Check if the firmware is tagged
         firmware = FirmwareChecker().resolveFirmwareTag(firmware);
       } catch (const Exception& e) {
-        if (isVerbose()) {
-          std::cout << "Error parsing card information through BAR\n"
-                    << boost::diagnostic_information(e) << '\n';
-        }
+        std::cerr << "Error parsing card information through BAR\n"
+                  << boost::diagnostic_information(e) << '\n';
+        throw(e);
       }
 
       // Pad the serial with 0s if necessary

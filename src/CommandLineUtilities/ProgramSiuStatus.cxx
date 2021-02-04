@@ -69,8 +69,8 @@ class ProgramSiuStatus : public Program
     try {
       siuStatus = crorc.siuStatus();
     } catch (const Exception& e) {
-      std::cout << diagnostic_information(e) << std::endl;
-      return;
+      std::cerr << diagnostic_information(e) << std::endl;
+      throw(e);
     }
 
     std::stringstream ss;
