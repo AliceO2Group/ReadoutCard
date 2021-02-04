@@ -453,11 +453,11 @@ To directly send metrics to the Alice O2 Monitoring library, the argument `--mon
 
 ###### Metric: `"link"`
 
-| Value name              | Value  | Type   |
-| ----------------------- | ------ | ------ |
-| `"pciAddress"`          | -      | string |
-| `"acquisitionRate"`     | -      | int    |
-| `"packetsReceived"`     | -      | int    |
+| Value name              | Value  | Type     |
+| ----------------------- | ------ | -------- |
+| `"pciAddress"`          | -      | string   | 
+| `"acquisitionRate"`     | -      | int      |
+| `"packetsReceived"`     | -      | uint64_t |
 
 | Tag key               | Value                 |
 | --------------------- | --------------------- |
