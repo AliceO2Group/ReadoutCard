@@ -52,7 +52,13 @@ struct EnumConverter {
         return pair.first;
       }
     }
-    BOOST_THROW_EXCEPTION(std::runtime_error("Failed to convert string to " + typeName + " enum"));
+
+    std::string errString = "Failed to convert string \"" + string + "\" to " + typeName + " enum\nPossible values:";
+    for (const auto& el : mapping) {
+      errString += " \"" + el.second + "\"";
+    }
+
+    BOOST_THROW_EXCEPTION(std::runtime_error(errString));
   }
 };
 
