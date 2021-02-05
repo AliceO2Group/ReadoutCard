@@ -27,7 +27,6 @@
 
 using namespace AliceO2::roc::CommandLineUtilities;
 using namespace AliceO2::roc;
-using namespace AliceO2::InfoLogger;
 namespace po = boost::program_options;
 
 class ProgramConfig : public Program
@@ -168,7 +167,7 @@ class ProgramConfig : public Program
         FirmwareChecker().checkFirmwareCompatibility(cardId);
       } catch (const Exception& e) {
         Logger::get() << boost::diagnostic_information(e) << LogErrorOps << endm;
-        throw(e);
+        throw;
       }
     }
 
@@ -243,16 +242,16 @@ class ProgramConfig : public Program
       try {
         CardConfigurator(params, mOptions.forceConfig);
       } catch (const Exception& e) {
-        Logger::get() << boost::diagnostic_information(e) << LogErrorOps << endm;
-        throw(e);
+        Logger::get() << e.what() << LogErrorOps << endm;
+        throw;
       }
     } else {
       Logger::get() << "Configuring with config uri" << LogDebugOps << endm;
       try {
         CardConfigurator(cardId, mOptions.configUri, mOptions.forceConfig);
-      } catch (std::runtime_error& e) {
-        Logger::get() << "Error parsing the configuration..." << boost::diagnostic_information(e) << LogErrorOps << endm;
-        throw(e);
+      } catch (std::exception& e) {
+        Logger::get() << e.what() << LogErrorOps << endm;
+        throw;
       }
     }
     return;

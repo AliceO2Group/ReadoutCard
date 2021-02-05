@@ -105,7 +105,6 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
   try {
     conf = o2::configuration::ConfigurationFactory::getConfiguration(configUri);
   } catch (std::exception& e) {
-    std::cout << boost::diagnostic_information(e) << std::endl;
     throw;
   }
 
