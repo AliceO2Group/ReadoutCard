@@ -739,7 +739,7 @@ class ProgramDmaBench : public Program
 
     if (Utilities::getBit(triggerType, 9) == 0x1 || Utilities::getBit(triggerType, 7) == 0x1) { // If SOX, use current orbit as the first one
       mNextTFOrbit = (orbit + mTimeFrameLength) % (0x100000000);
-    } else if (orbit >= mNextTFOrbit) {
+    } else if (orbit == mNextTFOrbit) {
       // next orbit should be previous orbit + time frame length
       if (!atStartOfSuperpage) {
         // log TF not at the beginning of the superpage error
