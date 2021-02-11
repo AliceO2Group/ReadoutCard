@@ -17,6 +17,7 @@
 #include "Constants.h"
 #include "I2c.h"
 #include "Ttc.h"
+#include "Utilities/Util.h"
 #include "register_maps/Si5345-RevD_local_pll1_zdb-Registers.h"
 #include "register_maps/Si5345-RevD_local_pll2_zdb-Registers.h"
 #include "register_maps/Si5345-RevD_ttc_pll1_zdb-Registers.h"
@@ -30,6 +31,7 @@ namespace roc
 
 using LinkStatus = Cru::LinkStatus;
 using OnuStatus = Cru::OnuStatus;
+using FecStatus = Cru::FecStatus;
 
 Ttc::Ttc(std::shared_ptr<BarInterface> bar, int serial) : mBar(bar), mSerial(serial)
 {
@@ -163,7 +165,7 @@ OnuStatus Ttc::onuStatus()
   uint32_t calStatus = mBar->readRegister(Cru::Registers::ONU_USER_LOGIC.index + 0xc / 4);
   uint32_t onuAddress = mBar->readRegister(Cru::Registers::ONU_USER_LOGIC.index) >> 1;
 
-  Cru::OnuStatus onuStatus = {
+  return {
     onuAddress,
     (calStatus & 0x1) == 1, // comparisons to bool
     (calStatus >> 1 & 0x1) == 1,
@@ -177,8 +179,19 @@ OnuStatus Ttc::onuStatus()
     getPonQuality(),
     getPonQualityStatus()
   };
+}
 
-  return onuStatus;
+FecStatus Ttc::fecStatus()
+{
+  uint32_t fecStatus = mBar->readRegister(Cru::Registers::ONU_FEC_COUNTERS.index);
+  return {
+    Utilities::getBit(fecStatus, 0) == 1,
+    Utilities::getBit(fecStatus, 1) == 1,
+    Utilities::getBit(fecStatus, 7) == 1,
+    (uint8_t)Utilities::getBits(fecStatus, 8, 15),
+    (uint8_t)Utilities::getBits(fecStatus, 16, 23),
+    (uint8_t)Utilities::getBits(fecStatus, 24, 31)
+  };
 }
 
 void Ttc::calibrateTtc()

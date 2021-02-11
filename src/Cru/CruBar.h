@@ -97,6 +97,7 @@ class CruBar final : public BarInterfaceBase
   boost::optional<std::string> getUserLogicVersion();
 
   Cru::OnuStatus reportOnuStatus();
+  Cru::FecStatus reportFecStatus();
   std::map<int, Link> initializeLinkMap();
 
   std::shared_ptr<Pda::PdaBar> getPdaBar()

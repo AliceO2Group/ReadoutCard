@@ -116,6 +116,15 @@ struct OnuStatus {
   int ponQualityStatus;
 };
 
+struct FecStatus {
+  bool clearFecCrcError;
+  bool latchFecCrcError;
+  bool slowControlFramingLocked;
+  uint8_t fecSingleErrorCount;
+  uint8_t fecDoubleErrorCount;
+  uint8_t crcErrorCount;
+};
+
 struct LinkPacketInfo {
   uint32_t accepted;
   uint32_t rejected;

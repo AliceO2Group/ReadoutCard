@@ -1053,6 +1053,12 @@ Cru::OnuStatus CruBar::reportOnuStatus()
   return ttc.onuStatus();
 }
 
+Cru::FecStatus CruBar::reportFecStatus()
+{
+  Ttc ttc = Ttc(mPdaBar, mSerial);
+  return ttc.fecStatus();
+}
+
 void CruBar::toggleUserLogicLink(bool userLogicEnabled)
 {
   Link userLogicLink;

@@ -608,6 +608,25 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | `tags::Key::ID`       | ID of the card        |
 | `tags::Key::Type`     | `tags::Value::CRU`    |
 
+###### Metric: `"fec"`
+
+| Value name                   | Value                      | Type   | 
+| ---------------------------- | -------------------------- | ------ | 
+| `"clearFecCrcErrors"`        | 0/1 (Good/Bad)             | int    |
+| `"latchFecCrcErrors"`        | 0/1 (Good/Bad)             | int    |
+| `"slowControlFramingLocked"` | 0/1 (Good/Bad)             | int    |
+| `"fecSingleErrorCount"`      | 8-bit counter (0x0 = good) | int    |
+| `"fecDoubleErrorCount"`      | 8-bit counter (0x0 = good) | int    |
+| `"crcErrorCount"`            | 8-bit counter (0x0 = good) | int    |
+
+| Tag key               | Value                 |
+| --------------------- | --------------------- |
+| `tags::Key::SerialId` | Serial ID of the card |
+| `tags::Key::Endpoint` | Endpoint of the card  |
+| `tags::Key::ID`       | ID of the card        |
+| `tags::Key::Type`     | `tags::Value::CRU`    |
+
+
 ###### Metric: `"link"`
 
 | Value name       | Value                                                             | Type   | 
