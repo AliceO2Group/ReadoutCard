@@ -58,6 +58,9 @@ class ProgramStatus : public Program
     options.add_options()("onu-status",
                           po::bool_switch(&mOptions.onu),
                           "Toggle ONU status output");
+    options.add_options()("fec-status",
+                          po::bool_switch(&mOptions.fec),
+                          "Toggle FEC status output");
     options.add_options()("links",
                           po::value<std::string>(&mOptions.links)->default_value("0-11"),
                           "Links to show (all by default)");
@@ -304,6 +307,43 @@ class ProgramStatus : public Program
         }
       }
 
+      /* FEC PARAMETERS */
+      if (mOptions.fec) {
+        Cru::FecStatus fecStatus = cruBar2->reportFecStatus();
+
+        if (mOptions.monitoring) {
+          monitoring->send(Metric{ "fec" }
+                             .addValue(fecStatus.clearFecCrcError, "clearFecCrcErrors")
+                             .addValue(fecStatus.latchFecCrcError, "latchFecCrcErrors")
+                             .addValue(fecStatus.slowControlFramingLocked, "slowControlFramingLocked")
+                             .addValue(fecStatus.fecSingleErrorCount, "fecSingleErrorCount")
+                             .addValue(fecStatus.fecDoubleErrorCount, "fecDoubleErrorCount")
+                             .addValue(fecStatus.crcErrorCount, "crcErrorCount")
+                             .addTag(tags::Key::SerialId, card.serialId.getSerial())
+                             .addTag(tags::Key::Endpoint, card.serialId.getEndpoint())
+                             .addTag(tags::Key::ID, card.sequenceId)
+                             .addTag(tags::Key::Type, tags::Value::CRU));
+        } else if (mOptions.jsonOut) {
+          root.put("clearFecCrcErrors", fecStatus.clearFecCrcError);
+          root.put("latchFecCrcErrors", fecStatus.latchFecCrcError);
+          root.put("slowControlFramingLocked", fecStatus.slowControlFramingLocked);
+          root.put("fecSingleErrorCount", fecStatus.fecSingleErrorCount);
+          root.put("fecDoubleErrorCount", fecStatus.fecDoubleErrorCount);
+          root.put("crcErrorCount", fecStatus.crcErrorCount);
+        } else {
+          std::cout << "=====================================" << std::endl;
+          std::cout << "Clear FEC & CRC errors: \t" << std::boolalpha << fecStatus.clearFecCrcError << std::endl;
+          std::cout << "Latch FEC & CRC errors: \t" << std::boolalpha << fecStatus.latchFecCrcError << std::endl;
+          std::cout << "Slow Control Framing locked: \t" << std::boolalpha << fecStatus.slowControlFramingLocked << std::endl;
+          std::cout << "FEC single error count: \t"
+                    << "0x" << std::hex << fecStatus.fecSingleErrorCount << std::endl;
+          std::cout << "FEC double error count: \t"
+                    << "0x" << std::hex << fecStatus.fecDoubleErrorCount << std::endl;
+          std::cout << "CRC error count: \t\t"
+                    << "0x" << std::hex << fecStatus.crcErrorCount << std::endl;
+        }
+      }
+
       /* PARAMETERS PER LINK */
       for (const auto& el : reportInfo.linkMap) {
         auto link = el.second;
@@ -409,6 +449,7 @@ class ProgramStatus : public Program
     bool jsonOut = false;
     bool monitoring = false;
     bool onu = false;
+    bool fec = false;
   } mOptions;
 };
 

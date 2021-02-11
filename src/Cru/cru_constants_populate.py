@@ -96,6 +96,7 @@ roc_regs = {
 'add_onu_user_logic':'ONU_USER_LOGIC',
 'add_onu_user_refgen':'ONU_USER_REFGEN',
 'add_onu_mgt_stickys':'ONU_MGT_STICKYS',
+'add_onu_fec_counters':'ONU_FEC_COUNTERS',
 'add_refgen0_offset':'REFGEN0_OFFSET',
 'add_refgen1_offset':'REFGEN1_OFFSET',
 #'add_refgen2_offset':'I2C_COMMAND',

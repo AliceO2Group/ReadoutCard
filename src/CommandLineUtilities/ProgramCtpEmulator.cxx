@@ -104,17 +104,15 @@ class ProgramCtpEmulator : public Program
     triggerMode = converter.fromString(mOptions.triggerModeString);
 
     auto cruBar2 = std::dynamic_pointer_cast<CruBar>(bar2);
-    cruBar2->emulateCtp({
-      mOptions.bcMax,
-      mOptions.hbDrop,
-      mOptions.hbKeep,
-      mOptions.hbMax,
-      triggerMode,
-      mOptions.triggerFrequency,
-      mOptions.generateEox,
-      mOptions.generateSingleTrigger,
-      mOptions.orbitInit
-    });
+    cruBar2->emulateCtp({ mOptions.bcMax,
+                          mOptions.hbDrop,
+                          mOptions.hbKeep,
+                          mOptions.hbMax,
+                          triggerMode,
+                          mOptions.triggerFrequency,
+                          mOptions.generateEox,
+                          mOptions.generateSingleTrigger,
+                          mOptions.orbitInit });
   }
 
  private:

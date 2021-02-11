@@ -201,13 +201,16 @@ static constexpr Register CLOCK_ONU_FPLL(0x00248000);
 static constexpr Register CLOCK_PLL_CONTROL_ONU(0x00240018);
 static constexpr Register ONU_USER_LOGIC(0x0022a000);
 
-// Registers for setting the Ref Gen
+/// Register for getting FEC status
+static constexpr Register ONU_FEC_COUNTERS(0x0022200c);
+
+/// Registers for setting the Ref Gen
 static constexpr Register ONU_USER_REFGEN(0x0022c000);
 static constexpr Register REFGEN0_OFFSET(0x00000000);
 static constexpr Register REFGEN1_OFFSET(0x00000004);
 static constexpr Register ONU_MGT_STICKYS(0x00222014);
 
-// Registers for getting LTU info
+/// Registers for getting LTU info
 static constexpr Register LTU_HBTRIG_CNT(0x00200004);
 static constexpr Register LTU_PHYSTRIG_CNT(0x00200008);
 static constexpr Register LTU_EOX_SOX_CNT(0x0020000c);

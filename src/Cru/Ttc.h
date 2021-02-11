@@ -18,6 +18,7 @@ namespace roc
 class Ttc
 {
   using OnuStatus = Cru::OnuStatus;
+  using FecStatus = Cru::FecStatus;
   using LinkStatus = Cru::LinkStatus;
 
  public:
@@ -50,6 +51,7 @@ class Ttc
   void setFixedBCTrigger(std::vector<uint32_t> FBCTVector);
 
   OnuStatus onuStatus();
+  FecStatus fecStatus();
 
  private:
   void configurePlls(uint32_t clock);
