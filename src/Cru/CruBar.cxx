@@ -1002,6 +1002,7 @@ void CruBar::emulateCtp(Cru::CtpInfo ctpInfo)
   } else {
     log("Starting CTP emulator", LogInfoDevel);
     ttc.resetCtpEmulator(true);
+    ttc.setEmulatorORBITINIT(ctpInfo.orbitInit);
 
     if (ctpInfo.triggerMode == Cru::TriggerMode::Periodic) {
       ttc.setEmulatorPHYSDIV(ctpInfo.triggerFrequency);

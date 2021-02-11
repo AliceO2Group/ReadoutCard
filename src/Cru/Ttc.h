@@ -46,6 +46,7 @@ class Ttc
   void setEmulatorPHYSDIV(uint32_t physdiv);
   void setEmulatorCALDIV(uint32_t caldiv);
   void setEmulatorHCDIV(uint32_t hcdiv);
+  void setEmulatorORBITINIT(uint32_t orbitInit);
   void setFixedBCTrigger(std::vector<uint32_t> FBCTVector);
 
   OnuStatus onuStatus();

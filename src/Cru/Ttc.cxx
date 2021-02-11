@@ -390,6 +390,11 @@ void Ttc::setFixedBCTrigger(std::vector<uint32_t> FBCTVector)
   }
 }
 
+void Ttc::setEmulatorORBITINIT(uint32_t orbitInit)
+{
+  mBar->writeRegister(Cru::Registers::CTP_EMU_ORBIT_INIT.index, orbitInit);
+}
+
 uint32_t Ttc::getPonQuality()
 {
   return mBar->readRegister(Cru::Registers::TTC_PON_QUALITY.index);

@@ -56,6 +56,9 @@ class ProgramCtpEmulator : public Program
     options.add_options()("hbkeep",
                           po::value<uint32_t>(&mOptions.hbKeep)->default_value(15000),
                           "Sets the number Heartbeats to drop");
+    options.add_options()("init-orbit",
+                          po::value<uint32_t>(&mOptions.orbitInit)->default_value(0),
+                          "Sets the initial orbit id");
     options.add_options()("trigger-mode",
                           po::value<std::string>(&mOptions.triggerModeString)->default_value("periodic"),
                           "Sets the trigger mode. Options are periodic, manual, continuous and fixed");
@@ -110,6 +113,7 @@ class ProgramCtpEmulator : public Program
       mOptions.triggerFrequency,
       mOptions.generateEox,
       mOptions.generateSingleTrigger,
+      mOptions.orbitInit
     });
   }
 
@@ -119,6 +123,7 @@ class ProgramCtpEmulator : public Program
     uint32_t hbDrop = 15000;
     uint32_t hbKeep = 15000;
     uint32_t hbMax = 255;
+    uint32_t orbitInit = 0;
 
     std::string triggerModeString = "periodic";
     uint32_t triggerFrequency = 8;

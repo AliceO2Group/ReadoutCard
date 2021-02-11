@@ -161,6 +161,8 @@ struct CtpInfo {
 
   bool generateEox;
   bool generateSingleTrigger;
+
+  uint32_t orbitInit;
 };
 
 uint32_t getWrapperBaseAddress(int wrapper);
