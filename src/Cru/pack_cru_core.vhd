@@ -4,6 +4,10 @@
 -- 20180713 JB  Change adress definition for GBT register after change the Avalon 
 --              component type
 --              Add adress definition for add_gbt_wrapper_test_control = x"0000_0008"
+--------------------------------------------------------------------------------------------
+-- NOTE: Register assignment should keep the base address on the left of the + operator
+-- and the extension on the left: e.g. :=add_base+X"0000_0000";
+
 
 library ieee;
 use ieee.std_logic_1164.ALL;
@@ -93,12 +97,12 @@ constant add_gbt_sc	        		: unsigned(31 downto 0):=X"00F0_0000";
 -------------------------------------------------------------------------------
 -- Redaout protocol address tables
 -------------------------------------------------------------------------------
-constant add_ro_prot_conf_reg 		        : unsigned(31 downto 0):=X"0000_0000"+add_ro_protocol_base;
-constant add_ro_prot_check_mask 		: unsigned(31 downto 0):=X"0000_0004"+add_ro_protocol_base;
-constant add_ro_prot_alloc_fail 		: unsigned(31 downto 0):=X"0000_0008"+add_ro_protocol_base;
-constant add_ro_prot_ttc_linkerr 	        : unsigned(31 downto 0):=X"0000_000C"+add_ro_protocol_base;
-constant add_ro_prot_nack_dly_reg 	        : unsigned(31 downto 0):=X"0000_0010"+add_ro_protocol_base;
-constant add_ro_prot_system_id   	        : unsigned(31 downto 0):=add_ro_protocol_base+X"0000_0014";
+constant add_ro_prot_conf_reg     : unsigned(31 downto 0):=add_ro_protocol_base+X"0000_0000";
+constant add_ro_prot_check_mask   : unsigned(31 downto 0):=add_ro_protocol_base+X"0000_0004";
+constant add_ro_prot_alloc_fail   : unsigned(31 downto 0):=add_ro_protocol_base+X"0000_0008";
+constant add_ro_prot_ttc_linkerr  : unsigned(31 downto 0):=add_ro_protocol_base+X"0000_000C";
+constant add_ro_prot_nack_dly_reg : unsigned(31 downto 0):=add_ro_protocol_base+X"0000_0010";
+constant add_ro_prot_system_id    : unsigned(31 downto 0):=add_ro_protocol_base+X"0000_0014";
 
 -------------------------------------------------------------------------------
 -- GBT address tables
@@ -218,6 +222,17 @@ constant add_pon_wrapper_tx		: unsigned(31 downto 0):=add_ttc_onu+X"0000_6000";
 constant add_onu_user_logic	        : unsigned(31 downto 0):=add_ttc_onu+X"0000_A000";
 constant add_onu_freq_meas		: unsigned(31 downto 0):=add_ttc_onu+X"0000_E000";
 
+-- ONU register bank
+constant add_onu_mode   	        : unsigned(31 downto 0):=add_pon_wrapper_reg+X"0000_0000";
+constant add_onu_HB_offset   	        : unsigned(31 downto 0):=add_pon_wrapper_reg+X"0000_0004";
+constant add_onu_offset_tdm_sfp_en      : unsigned(31 downto 0):=add_pon_wrapper_reg+X"0000_0008";
+constant add_onu_fec_counters	        : unsigned(31 downto 0):=add_pon_wrapper_reg+X"0000_000C";
+constant add_onu_fec_stickys	        : unsigned(31 downto 0):=add_pon_wrapper_reg+X"0000_0010";
+constant add_onu_mgt_stickys	        : unsigned(31 downto 0):=add_pon_wrapper_reg+X"0000_0014";
+constant add_onu_interrupts	        : unsigned(31 downto 0):=add_pon_wrapper_reg+X"0000_0018";
+constant add_onu_i2cmast_ctrl	        : unsigned(31 downto 0):=add_pon_wrapper_reg+X"0000_0034";
+constant add_onu_i2cmast_stat	        : unsigned(31 downto 0):=add_pon_wrapper_reg+X"0000_0038";
+constant add_onu_clk_phase_ctrl	        : unsigned(31 downto 0):=add_pon_wrapper_reg+X"0000_0048";
 
 -- Pattern player
 constant add_patplayer_cfg		: unsigned(31 downto 0):=add_ttc_patplayer+X"0000_0000";
@@ -252,6 +267,7 @@ constant add_ctp_emu_hcdiv	            : unsigned(31 downto 0):=add_ctp_emu_core
 constant add_ctp_emu_userbits	        : unsigned(31 downto 0):=add_ctp_emu_core+X"0000_001C";
 constant add_ctp_emu_caldiv	            : unsigned(31 downto 0):=add_ctp_emu_core+X"0000_0020";
 constant add_ctp_emu_fbct	            : unsigned(31 downto 0):=add_ctp_emu_core+X"0000_0024";
+constant add_ctp_emu_orbit_init	            : unsigned(31 downto 0):=add_ctp_emu_core+X"0000_0028";
 
 
 -------------------------------------------------------------------------------
