@@ -205,6 +205,7 @@ static constexpr Register ONU_USER_LOGIC(0x0022a000);
 static constexpr Register ONU_USER_REFGEN(0x0022c000);
 static constexpr Register REFGEN0_OFFSET(0x00000000);
 static constexpr Register REFGEN1_OFFSET(0x00000004);
+static constexpr Register ONU_MGT_STICKYS(0x00222014);
 
 // Registers for getting LTU info
 static constexpr Register LTU_HBTRIG_CNT(0x00200004);
@@ -310,6 +311,7 @@ static constexpr Register CTP_EMU_PHYSDIV(0x00280014);
 static constexpr Register CTP_EMU_CALDIV(0x00280020);
 static constexpr Register CTP_EMU_HCDIV(0x00280018);
 static constexpr Register CTP_EMU_FBCT(0x00280024);
+static constexpr Register CTP_EMU_ORBIT_INIT(0x00280028);
 
 /// Registers for the Pattern Player
 static constexpr Register PATPLAYER_CFG(0x00260000);
