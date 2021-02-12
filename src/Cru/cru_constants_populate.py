@@ -137,7 +137,12 @@ roc_regs = {
 
 'add_gbt_swt_cmd':'SWT_CMD',
 'add_gbt_swt_mon':'SWT_MON',
-'add_gbt_swt_word_mon':'SWT_WORD_MON'
+'add_gbt_swt_word_mon':'SWT_WORD_MON',
+
+### USER LOGIC ###
+'add_user_logic_reset':'USER_LOGIC_RESET',
+'add_user_logic_eventsize':'USER_LOGIC_EVSIZE',
+'add_user_logic_rand_eventsize_toggle':'USER_LOGIC_EVSIZE_RAND'
 }
 
 # e.g. 'TEMPERATURE':0x00010008

@@ -98,6 +98,10 @@ class CruBar final : public BarInterfaceBase
 
   Cru::OnuStatus reportOnuStatus();
   Cru::FecStatus reportFecStatus();
+
+  void controlUserLogic(uint32_t eventSize, bool random);
+  Cru::UserLogicInfo reportUserLogic();
+
   std::map<int, Link> initializeLinkMap();
 
   std::shared_ptr<Pda::PdaBar> getPdaBar()
