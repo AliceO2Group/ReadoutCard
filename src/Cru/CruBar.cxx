@@ -1094,5 +1094,26 @@ boost::optional<std::string> CruBar::getUserLogicVersion()
   return (boost::format("%x") % firmwareHash).str();
 }
 
+void CruBar::controlUserLogic(uint32_t eventSize, bool random)
+{
+  // reset UL
+  writeRegister(Cru::Registers::USER_LOGIC_RESET.index, 0x0);
+
+  // set event size
+  writeRegister(Cru::Registers::USER_LOGIC_EVSIZE.index, eventSize);
+
+  bool randomEventSize = readRegister(Cru::Registers::USER_LOGIC_EVSIZE_RAND.index) == 0x1;
+  if (random != randomEventSize) { // toggle random evsize
+    writeRegister(Cru::Registers::USER_LOGIC_EVSIZE_RAND.index, 0x1);
+  }
+}
+
+Cru::UserLogicInfo CruBar::reportUserLogic()
+{
+  bool randomEventSize = readRegister(Cru::Registers::USER_LOGIC_EVSIZE_RAND.index) == 0x1;
+  uint32_t eventSize = readRegister(Cru::Registers::USER_LOGIC_EVSIZE.index);
+  return { eventSize, randomEventSize };
+}
+
 } // namespace roc
 } // namespace AliceO2

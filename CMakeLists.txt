@@ -225,6 +225,7 @@ list(APPEND EXE_SRCS
   ProgramSiuStatus.cxx
   ProgramStatus.cxx
   ProgramTriggerMonitor.cxx
+  ProgramUserLogic.cxx
 )
 
 list(APPEND EXE_NAMES
@@ -242,6 +243,7 @@ list(APPEND EXE_NAMES
   roc-siu-status
   roc-status
   roc-trig-monitor
+  roc-ul
 )
 
 

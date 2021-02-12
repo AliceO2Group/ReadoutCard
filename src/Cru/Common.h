@@ -174,6 +174,11 @@ struct CtpInfo {
   uint32_t orbitInit;
 };
 
+struct UserLogicInfo {
+  uint32_t eventSize;
+  bool random;
+};
+
 uint32_t getWrapperBaseAddress(int wrapper);
 uint32_t getXcvrRegisterAddress(int wrapper, int bank, int link, int reg = 0);
 void atxcal0(std::shared_ptr<BarInterface> bar, uint32_t baseAddress);
