@@ -327,14 +327,16 @@ void CrorcBar::resetDevice(bool withSiu)
   resetCard();
   if (withSiu) {
     resetSiu();
+    assertLinkUp();
   }
-  assertLinkUp();
 
   if (withSiu) {
     resetSiu();
   }
   resetCard();
-  assertLinkUp();
+  if (withSiu) {
+    assertLinkUp();
+  }
 }
 
 void CrorcBar::startDataReceiver(uintptr_t readyFifoBusAddress)
