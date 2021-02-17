@@ -150,34 +150,27 @@ constant add_gbt_link_rx_ctrl_offset : unsigned(31 downto 0) := x"0000_003C";
 -- GBTSC address tables
 -------------------------------------------------------------------------------
 -- GBTSCA wrapper pages
--- SCA WR
-constant add_gbt_sca_wr_data        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0000";
-constant add_gbt_sca_wr_cmd        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0004";
-constant add_gbt_sca_wr_ctr        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0008";
--- SCA RD
-constant add_gbt_sca_rd_data        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0010";
-constant add_gbt_sca_rd_cmd        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0014";
-constant add_gbt_sca_rd_ctr        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0018";
+-- SCA
+constant add_gbt_sca_data        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0000";
+constant add_gbt_sca_cmd        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0004";
+constant add_gbt_sca_ctr        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0008";
 constant add_gbt_sca_rd_mon        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_001c";
+
 -- IC
-constant add_gbt_ic_wr_data        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0020";
-constant add_gbt_ic_wr_cfg        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0024";
-constant add_gbt_ic_wr_cmd        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0028";
---
-constant add_gbt_ic_rd_data        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0030";
+constant add_gbt_ic_data        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0010";
+constant add_gbt_ic_cfg        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0014";
+constant add_gbt_ic_cmd        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0018";
+
 -- SWT
-constant add_gbt_swt_wr_l                       : unsigned(31 downto 0):=add_gbt_sc+X"0000_0040";
-constant add_gbt_swt_wr_m                       : unsigned(31 downto 0):=add_gbt_sc+X"0000_0044";
-constant add_gbt_swt_wr_h                       : unsigned(31 downto 0):=add_gbt_sc+X"0000_0048";
-constant add_gbt_swt_cmd                        : unsigned(31 downto 0):=add_gbt_sc+X"0000_004c";
-constant add_gbt_swt_rd_l                       : unsigned(31 downto 0):=add_gbt_sc+X"0000_0050";
-constant add_gbt_swt_rd_m                       : unsigned(31 downto 0):=add_gbt_sc+X"0000_0054";
-constant add_gbt_swt_rd_h                       : unsigned(31 downto 0):=add_gbt_sc+X"0000_0058";
-constant add_gbt_swt_mon                        : unsigned(31 downto 0):=add_gbt_sc+X"0000_005c";
-constant add_gbt_swt_word_mon                   : unsigned(31 downto 0):=add_gbt_sc+X"0000_0060";
+constant add_gbt_swt_l                       : unsigned(31 downto 0):=add_gbt_sc+X"0000_0020";
+constant add_gbt_swt_m                       : unsigned(31 downto 0):=add_gbt_sc+X"0000_0024";
+constant add_gbt_swt_h                       : unsigned(31 downto 0):=add_gbt_sc+X"0000_0028";
+constant add_gbt_swt_cmd                     : unsigned(31 downto 0):=add_gbt_sc+X"0000_004c";
+constant add_gbt_swt_mon                     : unsigned(31 downto 0):=add_gbt_sc+X"0000_0030";
+constant add_gbt_swt_word_mon                : unsigned(31 downto 0):=add_gbt_sc+X"0000_0034";
 --
 constant add_gbt_sc_link                        : unsigned(31 downto 0):=add_gbt_sc+X"0000_0078";
-constant add_gbt_sc_rst                         : unsigned(31 downto 0):=add_gbt_sc+X"0000_007c";
+constant add_gbt_sc_rst                         : unsigned(31 downto 0):=add_gbt_sc+X"0000_000c";
 
 -------------------------------------------------------------------------------
 -- TTC PON address tables
