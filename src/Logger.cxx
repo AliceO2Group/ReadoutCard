@@ -34,8 +34,9 @@ void Logger::setFacility(std::string facility)
   ILContext context;
   context.setField(ILContext::FieldName::System, "FLP");
   context.setField(ILContext::FieldName::Facility, facility);
-  Logger::instance().mLogger.setContext(context);
-  Logger::get() << "Facility set: " << facility << LogDebugTrace << endm;
+  Logger::instance(facility).mLogger.setContext(context);
+  // may flood infologger
+  //Logger::get() << "Facility set: " << facility << LogDebugTrace << endm;
 }
 
 Logger& Logger::instance(std::string facility)
