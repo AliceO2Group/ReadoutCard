@@ -114,24 +114,26 @@ roc_regs = {
 
 ### SCA ###
 'add_gbt_sc':'SC_BASE_INDEX',
-'add_gbt_sca_data':'SCA_DATA',
-'add_gbt_sca_cmd':'SCA_CMD',
-'add_gbt_sca_ctr':'SCA_CTRL',
+'add_gbt_sca_wr_data':'SCA_WR_DATA',
+'add_gbt_sca_wr_cmd':'SCA_WR_CMD',
+'add_gbt_sca_wr_ctr':'SCA_WR_CTRL',
 
+'add_gbt_sca_rd_data':'SCA_RD_DATA',
+'add_gbt_sca_rd_cmd':'SCA_RD_CMD',
+'add_gbt_sca_rd_ctr':'SCA_RD_CTRL',
 'add_gbt_sca_rd_mon':'SCA_RD_MON',
 
 'add_gbt_sc_link':'SC_LINK',
 'add_gbt_sc_rst':'SC_RESET',
 
-### IC ###
-'add_gbt_ic_data':'IC_DATA',
-'add_gbt_ic_cfg':'IC_CFG',
-'add_gbt_ic_cmd':'IC_CMD',
-
 ### SWT ###
-'add_gbt_swt_l':'SWT_WORD_L',
-'add_gbt_swt_m':'SWT_WORD_M',
-'add_gbt_swt_h':'SWT_WORD_H',
+'add_gbt_swt_wr_l':'SWT_WR_WORD_L',
+'add_gbt_swt_wr_m':'SWT_WR_WORD_M',
+'add_gbt_swt_wr_h':'SWT_WR_WORD_H',
+
+'add_gbt_swt_rd_l':'SWT_RD_WORD_L',
+'add_gbt_swt_rd_m':'SWT_RD_WORD_M',
+'add_gbt_swt_rd_h':'SWT_RD_WORD_H',
 
 'add_gbt_swt_cmd':'SWT_CMD',
 'add_gbt_swt_mon':'SWT_MON',
