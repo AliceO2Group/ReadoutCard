@@ -39,8 +39,11 @@ class ProgramCleanup : public Program
     return { "Cleanup", "Cleans up ReadoutCard state", "roc-cleanup" };
   }
 
-  virtual void addOptions(po::options_description&)
+  virtual void addOptions(po::options_description& options)
   {
+    options.add_options()("light",
+                          po::bool_switch(&mOptions.light)->default_value(false),
+                          "Flag to run a \"light\" roc-cleanup, skipping PDA module removal");
   }
 
   virtual void run(const po::variables_map&)
@@ -53,7 +56,9 @@ class ProgramCleanup : public Program
     std::cout << "1. Free PDA DMA buffers" << std::endl;
     std::cout << "2. Clean CRORC FIFO shared memory files under /dev/shm which match AliceO2_ROC_*" << std::endl;
     std::cout << "3. Clean all hugepage resources under /var/lib/hugetlbfs/global/pagesize-{2MB, 1GB}/ which match readout* and roc-bench-dma*" << std::endl;
-    std::cout << "4. Remove and reinsert the uio_pci_dma kernel module" << std::endl;
+    if (!mOptions.light) {
+      std::cout << "4. Remove and reinsert the uio_pci_dma kernel module" << std::endl;
+    }
     std::cout << std::endl;
     std::cout << "In case instances of readout.exe or roc-bench-dma are running, they will fail." << std::endl;
     std::cout << std::endl;
@@ -79,13 +84,18 @@ class ProgramCleanup : public Program
     std::cout << "Removing roc-bench-dma 1GB hugepage mappings" << std::endl;
     system("rm /var/lib/hugetlbfs/global/pagesize-1GB/roc-bench-dma*");
 
-    std::cout << "Removing uio_pci_dma" << std::endl;
-    system("modprobe -r uio_pci_dma");
-    std::cout << "Reinserting uio_pci_dma" << std::endl;
-    system("modprobe uio_pci_dma");
+    if (!mOptions.light) {
+      std::cout << "Removing uio_pci_dma" << std::endl;
+      system("modprobe -r uio_pci_dma");
+      std::cout << "Reinserting uio_pci_dma" << std::endl;
+      system("modprobe uio_pci_dma");
+    }
   }
 
  private:
+  struct OptionsStruct {
+    bool light = false;
+  } mOptions;
 };
 
 int main(int argc, char** argv)
