@@ -216,6 +216,7 @@ list(APPEND EXE_SRCS
   ProgramCtpEmulator.cxx
   ProgramCleanup.cxx
   ../Example.cxx
+  ProgramFirmwareCheck.cxx
   ProgramFlash.cxx
   ProgramFlashRead.cxx
   ProgramListCards.cxx
@@ -234,6 +235,7 @@ list(APPEND EXE_NAMES
   roc-ctp-emulator
   roc-cleanup
   roc-example
+  roc-fw-check
   roc-flash
   roc-flash-read
   roc-list-cards
