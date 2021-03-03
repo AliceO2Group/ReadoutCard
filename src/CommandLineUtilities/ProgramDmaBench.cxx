@@ -730,26 +730,12 @@ class ProgramDmaBench : public Program
       mPacketCounters[linkId] = packetCounter; // same as = (mPacketCounters + mErrorCheckFrequency) % mMaxRdhPacketCounter
     }
 
-    // check that the TimeFrame starts at the beginning of the superpage
-    const auto triggerType = DataFormat::getTriggerType(reinterpret_cast<const char*>(pageAddress));
-    const auto orbit = DataFormat::getOrbit(reinterpret_cast<const char*>(pageAddress));
-    //const auto pagesCounter = DataFormat::getPagesCounter(reinterpret_cast<const char*>(pageAddress));
-
-    //std::cout << atStartOfSuperpage << " 0x" << std::hex << orbit << " 0x" << std::hex << mNextTFOrbit << std::endl;
-
-    if (Utilities::getBit(triggerType, 9) == 0x1 || Utilities::getBit(triggerType, 7) == 0x1) { // If SOX, use current orbit as the first one
-      mNextTFOrbit = (orbit + mTimeFrameLength) % (0x100000000);
-    } else if (orbit == mNextTFOrbit) {
-      // next orbit should be previous orbit + time frame length
-      if (!atStartOfSuperpage) {
-        // log TF not at the beginning of the superpage error
-        mErrorCount++;
-        if (mErrorCount < MAX_RECORDED_ERRORS) {
-          mErrorStream << b::format("[RDHERR]\tevent:%1% l:%2% payloadBytes:%3% size:%4% packet_cnt:%5% orbit:%6$#x nextTForbit:%7$#x atSPStart:%8% TF unaligned w/ start of superpage\n") % eventNumber % linkId % memBytes % pageSize % packetCounter % orbit % mNextTFOrbit % atStartOfSuperpage;
-        }
+    if (!checkTimeFrameAlignment(pageAddress, atStartOfSuperpage)) {
+      // log TF not at the beginning of the superpage error
+      mErrorCount++;
+      if (mErrorCount < MAX_RECORDED_ERRORS) {
+        mErrorStream << b::format("[RDHERR]\tevent:%1% l:%2% payloadBytes:%3% size:%4% packet_cnt:%5% orbit:%6$#x nextTForbit:%7$#x atSPStart:%8% TF unaligned w/ start of superpage\n") % eventNumber % linkId % memBytes % pageSize % packetCounter % mOrbit % mNextTFOrbit % atStartOfSuperpage;
       }
-      // Update next TF orbit expected
-      mNextTFOrbit = (orbit + mTimeFrameLength) % (0x100000000);
     }
 
     // Skip data check if fast check enabled or FEE data source selected
@@ -801,6 +787,39 @@ class ProgramDmaBench : public Program
     return foundError;
   }
 
+  bool checkTimeFrameAlignment(uintptr_t pageAddress, bool atStartOfSuperpage)
+  {
+    static bool overflowGuard = false;
+    static uint32_t mNextTFOrbit = 0x0;
+    static uint32_t prevOrbit = 0x0;
+
+    // check that the TimeFrame starts at the beginning of the superpage
+    const auto triggerType = DataFormat::getTriggerType(reinterpret_cast<const char*>(pageAddress));
+    //const auto orbit = DataFormat::getOrbit(reinterpret_cast<const char*>(pageAddress));
+    mOrbit = DataFormat::getOrbit(reinterpret_cast<const char*>(pageAddress));
+    //const auto pagesCounter = DataFormat::getPagesCounter(reinterpret_cast<const char*>(pageAddress));
+
+    //std::cout << atStartOfSuperpage << " 0x" << std::hex << orbit << " 0x" << std::hex << mNextTFOrbit << std::endl;
+    if (prevOrbit > mOrbit) { // orbit overflown, remove guard
+      overflowGuard = false;
+    }
+    prevOrbit = mOrbit;
+
+    if (Utilities::getBit(triggerType, 9) == 0x1 || Utilities::getBit(triggerType, 7) == 0x1) { // If SOX, use current orbit as the first one
+      mNextTFOrbit = mOrbit + mTimeFrameLength;
+    } else if (!overflowGuard && mOrbit >= mNextTFOrbit) {
+      // next orbit should be previous orbit + time frame length
+      if (!atStartOfSuperpage) {
+        return false;
+      }
+      // Update next TF orbit expected
+      overflowGuard = (mNextTFOrbit + mTimeFrameLength) & 0x100000000; // next TF orbit overflown, need to wait for orbit to overflow as well
+      mNextTFOrbit = mNextTFOrbit + mTimeFrameLength;
+    }
+
+    return true;
+  }
+
   void addError(int64_t eventNumber, int linkId, int index, uint32_t generatorCounter, uint32_t expectedValue,
                 uint32_t actualValue, uint32_t payloadBytes)
   {
@@ -837,27 +856,12 @@ class ProgramDmaBench : public Program
       mPacketCounters[linkId] = packetCounter;
     }
 
-    // check that the TimeFrame starts at the beginning of the superpage
-    const auto triggerType = DataFormat::getTriggerType(reinterpret_cast<const char*>(pageAddress));
-    const auto orbit = DataFormat::getOrbit(reinterpret_cast<const char*>(pageAddress));
-    //const auto pagesCounter = DataFormat::getPagesCounter(reinterpret_cast<const char*>(pageAddress));
-    //const auto bunchCrossing = DataFormat::getBunchCrossing(reinterpret_cast<const char*>(pageAddress));
-
-    //std::cout << atStartOfSuperpage << " 0x" << std::hex << orbit << " 0x" << std::hex << mNextTFOrbit << std::endl;
-
-    if (Utilities::getBit(triggerType, 9) == 0x1 || Utilities::getBit(triggerType, 7) == 0x1) { // If SOX, use current orbit as the first one
-      mNextTFOrbit = (orbit + mTimeFrameLength) % (0x100000000);
-    } else if (orbit >= mNextTFOrbit) {
-      // next orbit should be previous orbit + time frame length
-      if (!atStartOfSuperpage) {
-        // log TF not at the beginning of the superpage error
-        mErrorCount++;
-        if (mErrorCount < MAX_RECORDED_ERRORS) {
-          mErrorStream << b::format("[RDHERR]\tevent:%1% l:%2% payloadBytes:%3% size:%4% packet_cnt:%5% orbit:%6$#x nextTForbit:%7$#x atSPStart:%8% TF unaligned w/ start of superpage\n") % eventNumber % linkId % memBytes % pageSize % packetCounter % orbit % mNextTFOrbit % atStartOfSuperpage;
-        }
+    if (!checkTimeFrameAlignment(pageAddress, atStartOfSuperpage)) {
+      // log TF not at the beginning of the superpage error
+      mErrorCount++;
+      if (mErrorCount < MAX_RECORDED_ERRORS) {
+        mErrorStream << b::format("[RDHERR]\tevent:%1% l:%2% payloadBytes:%3% size:%4% packet_cnt:%5% orbit:%6$#x nextTForbit:%7$#x atSPStart:%8% TF unaligned w/ start of superpage\n") % eventNumber % linkId % memBytes % pageSize % packetCounter % mOrbit % mNextTFOrbit % atStartOfSuperpage;
       }
-      // Update next TF orbit expected
-      mNextTFOrbit = (orbit + mTimeFrameLength) % (0x100000000);
     }
 
     if (mFastCheckEnabled) {
@@ -1259,6 +1263,9 @@ class ProgramDmaBench : public Program
 
   /// Data Source
   DataSource::type mDataSource;
+
+  /// Current orbit
+  uint32_t mOrbit = 0x0;
 
   /// The orbit number that coincides with the next TimeFrame
   uint32_t mNextTFOrbit = 0x0;
