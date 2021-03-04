@@ -125,9 +125,6 @@ class ProgramDmaBench : public Program
     options.add_options()("bytes",
                           SuffixOption<uint64_t>::make(&mOptions.maxBytes)->default_value("0"),
                           "Limit of bytes to transfer. Give 0 for infinite.");
-    options.add_options()("byte-count",
-                          po::bool_switch(&mOptions.byteCountEnabled),
-                          "Flag to enable byte-count; use the actual dma page for throughput (not always 8K)");
     options.add_options()("buffer-full-check",
                           po::bool_switch(&mOptions.bufferFullCheck),
                           "Test how quickly the readout buffer gets full, if it's not emptied");
@@ -524,9 +521,7 @@ class ProgramDmaBench : public Program
 
             atStartOfSuperpage = false; //Update the boolean value as soon as we move...
 
-            if (mOptions.byteCountEnabled && !(mOptions.dataSourceString == "INTERNAL")) {
-              mByteCount.fetch_add(pageSize, std::memory_order_relaxed);
-            }
+            mByteCount.fetch_add(pageSize, std::memory_order_relaxed);
             readoutBytes += pageSize;
           }
 
@@ -918,7 +913,7 @@ class ProgramDmaBench : public Program
     format % mSuperpagesReadOut.load(std::memory_order_relaxed);
 
     double runTime = std::chrono::duration<double>(steady_clock::now() - mRunTime.start).count();
-    double bytes = mOptions.byteCountEnabled ? double(mByteCount.load(std::memory_order_relaxed)) : double(mSuperpagesReadOut.load(std::memory_order_relaxed)) * mSuperpageSize;
+    double bytes = double(mByteCount.load(std::memory_order_relaxed));
     double Gb = bytes * 8 / (1000 * 1000 * 1000);
     double Gbps = Gb / runTime;
     format % Gbps;
@@ -965,7 +960,7 @@ class ProgramDmaBench : public Program
   {
     // Calculating throughput
     double runTime = std::chrono::duration<double>(mRunTime.end - mRunTime.start).count();
-    double bytes = mOptions.byteCountEnabled ? double(mByteCount.load()) : double(mSuperpagesReadOut.load() * mSuperpageSize);
+    double bytes = double(mByteCount.load());
     double GB = bytes / (1000 * 1000 * 1000);
     double GBs = GB / runTime;
     double GiB = bytes / (1024 * 1024 * 1024);
@@ -1155,7 +1150,6 @@ class ProgramDmaBench : public Program
     uint64_t pauseRead;
     size_t maxRdhPacketCounter;
     bool stbrd = false;
-    bool byteCountEnabled = false;
     bool bypassFirmwareCheck = false;
     uint32_t timeFrameLength = 256;
     bool printSuperpageChange = false;
