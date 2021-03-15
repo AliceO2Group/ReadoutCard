@@ -33,6 +33,7 @@ class Ttc
   uint32_t getDownstreamData();
   uint32_t getHbTriggerLtuCount();
   uint32_t getPhyTriggerLtuCount();
+  uint32_t getTofTriggerLtuCount();
   std::pair<uint32_t, uint32_t> getEoxSoxLtuCount();
 
   void resetCtpEmulator(bool doReset);
