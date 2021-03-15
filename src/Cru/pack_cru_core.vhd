@@ -93,7 +93,7 @@ constant add_serial_flash_csr                   : unsigned(31 downto 0):=X"00A0_
 constant add_serial_flash_wr_rst                : unsigned(31 downto 0):=X"00B0_0000";
 constant add_userlogic    		        : unsigned(31 downto 0):=X"00C0_0000";
 constant add_ddg	                        : unsigned(31 downto 0):=X"00D0_0000";
-constant add_gbt_sc	        		: unsigned(31 downto 0):=X"00F0_0000";
+constant add_gbt_sc	        		: unsigned(31 downto 0):=X"0000_0000";
 -------------------------------------------------------------------------------
 -- Redaout protocol address tables
 -------------------------------------------------------------------------------
@@ -159,6 +159,7 @@ constant add_gbt_sca_rd_data        		: unsigned(31 downto 0):=add_gbt_sc+X"0000
 constant add_gbt_sca_rd_cmd        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0014";
 constant add_gbt_sca_rd_ctr        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0018";
 constant add_gbt_sca_rd_mon        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_001c";
+
 -- IC
 constant add_gbt_ic_wr_data        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0020";
 constant add_gbt_ic_wr_cfg        		: unsigned(31 downto 0):=add_gbt_sc+X"0000_0024";
