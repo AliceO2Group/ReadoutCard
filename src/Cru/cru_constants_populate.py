@@ -146,6 +146,12 @@ roc_regs = {
 'add_gbt_swt_mon':'SWT_MON',
 'add_gbt_swt_word_mon':'SWT_WORD_MON',
 
+### IC ###
+'add_gbt_ic_wr_data':'IC_WR_DATA',
+'add_gbt_ic_wr_cfg':'IC_WR_CFG',
+'add_gbt_ic_wr_cmd':'IC_WR_CMD',
+'add_gbt_ic_rd_data':'IC_RD_DATA',
+
 ### USER LOGIC ###
 'add_user_logic_reset':'USER_LOGIC_RESET',
 'add_user_logic_eventsize':'USER_LOGIC_EVSIZE',

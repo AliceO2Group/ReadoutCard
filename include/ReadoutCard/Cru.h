@@ -50,16 +50,16 @@ static constexpr uint32_t GBT_STREAMING(0x0);
 
 namespace ScRegisters
 {
-static constexpr Register SC_BASE_INDEX(0x00f00000);
+static constexpr Register SC_BASE_INDEX(0x00000000);
 
-static constexpr Register SCA_WR_DATA(0x00f00000);
-static constexpr Register SCA_WR_CMD(0x00f00004);
-static constexpr Register SCA_WR_CTRL(0x00f00008);
+static constexpr Register SCA_WR_DATA(0x00000000);
+static constexpr Register SCA_WR_CMD(0x00000004);
+static constexpr Register SCA_WR_CTRL(0x00000008);
 
-static constexpr Register SCA_RD_DATA(0x00f00010);
-static constexpr Register SCA_RD_CMD(0x00f00014);
-static constexpr Register SCA_RD_CTRL(0x00f00018);
-static constexpr Register SCA_RD_MON(0x00f0001c);
+static constexpr Register SCA_RD_DATA(0x00000010);
+static constexpr Register SCA_RD_CMD(0x00000014);
+static constexpr Register SCA_RD_CTRL(0x00000018);
+static constexpr Register SCA_RD_MON(0x0000001c); //unused
 
 static constexpr Register SCA_MFT_PSU_DATA(0x00f00000);
 static constexpr Register SCA_MFT_PSU_CMD(0x00f00004);
@@ -68,20 +68,25 @@ static constexpr Register SCA_MFT_PSU_RESET(0x00f0000c);
 static constexpr Register SCA_MFT_PSU_MASTER_SLAVE(0x00f0003c);
 static constexpr Register SCA_MFT_PSU_ID(0x00f0001c);
 
-static constexpr Register SC_LINK(0x00f00078);
-static constexpr Register SC_RESET(0x00f0007c);
+static constexpr Register SC_LINK(0x00000078);
+static constexpr Register SC_RESET(0x0000007c);
 
-static constexpr Register SWT_WR_WORD_L(0x00f00040);
-static constexpr Register SWT_WR_WORD_M(0x00f00044);
-static constexpr Register SWT_WR_WORD_H(0x00f00048);
+static constexpr Register SWT_WR_WORD_L(0x00000040);
+static constexpr Register SWT_WR_WORD_M(0x00000044);
+static constexpr Register SWT_WR_WORD_H(0x00000048);
 
-static constexpr Register SWT_RD_WORD_L(0x00f00050);
-static constexpr Register SWT_RD_WORD_M(0x00f00054);
-static constexpr Register SWT_RD_WORD_H(0x00f00058);
+static constexpr Register SWT_RD_WORD_L(0x00000050);
+static constexpr Register SWT_RD_WORD_M(0x00000054);
+static constexpr Register SWT_RD_WORD_H(0x00000058);
 
-static constexpr Register SWT_CMD(0x00f0004c);
-static constexpr Register SWT_MON(0x00f0005c);
-static constexpr Register SWT_WORD_MON(0x00f00060);
+static constexpr Register SWT_CMD(0x0000004c); //unused
+static constexpr Register SWT_MON(0x0000005c);
+static constexpr Register SWT_WORD_MON(0x00000060); //unused
+
+static constexpr Register IC_WR_CFG(0x00000024);
+static constexpr Register IC_WR_DATA(0x00000020);
+static constexpr Register IC_WR_CMD(0x00000028);
+static constexpr Register IC_RD_DATA(0x00000030);
 } // namespace ScRegisters
 
 } // namespace Cru
