@@ -195,6 +195,7 @@ constant add_ttc_phystrig_ltu	: unsigned(31 downto 0):=add_ttc_regs+X"0000_0008"
 constant add_ttc_eox_sox_ltu	: unsigned(31 downto 0):=add_ttc_regs+X"0000_000C";
 constant add_ttc_ttcok	                : unsigned(31 downto 0):=add_ttc_regs+X"0000_0010";
 constant add_ttc_onuerror_sticky        : unsigned(31 downto 0):=add_ttc_regs+X"0000_0014";
+constant add_ttc_tof_trig_ltu        : unsigned(31 downto 0):=add_ttc_regs+X"0000_0018";
 
 constant add_ttc_clkgen_ttc240freq	: unsigned(31 downto 0):=add_ttc_clkgen+X"0000_0000";
 constant add_ttc_clkgen_glb240freq	: unsigned(31 downto 0):=add_ttc_clkgen+X"0000_0004";

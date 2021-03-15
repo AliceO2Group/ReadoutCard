@@ -593,10 +593,12 @@ Cru::TriggerMonitoringInfo CruBar::monitorTriggers(bool updateable)
   // previous values to calculate rate (every second)
   uint32_t hbCountPrev = ttc.getHbTriggerLtuCount();
   uint32_t phyCountPrev = ttc.getPhyTriggerLtuCount();
+  uint32_t tofCountPrev = ttc.getTofTriggerLtuCount();
 
   // base values to report relative counts for updateable monitoring (e.g. for a single run)
   static uint32_t hbCountBase = hbCountPrev;
   static uint32_t phyCountBase = phyCountPrev;
+  static uint32_t tofCountBase = tofCountPrev;
   static std::pair<uint32_t, uint32_t> statEoxSox = ttc.getEoxSoxLtuCount();
   static uint32_t eoxCountBase = statEoxSox.first;
   static uint32_t soxCountBase = statEoxSox.second;
@@ -604,6 +606,7 @@ Cru::TriggerMonitoringInfo CruBar::monitorTriggers(bool updateable)
   std::this_thread::sleep_for(std::chrono::seconds(1));
   uint32_t hbCount = ttc.getHbTriggerLtuCount();
   uint32_t phyCount = ttc.getPhyTriggerLtuCount();
+  uint32_t tofCount = ttc.getTofTriggerLtuCount();
   std::pair<uint32_t, uint32_t> eoxSox = ttc.getEoxSoxLtuCount();
   uint32_t eoxCount = eoxSox.first;
   uint32_t soxCount = eoxSox.second;
@@ -623,10 +626,18 @@ Cru::TriggerMonitoringInfo CruBar::monitorTriggers(bool updateable)
     phyDiff = phyCount - phyCountPrev;
   }
 
+  uint64_t tofDiff;
+  if (tofCountPrev > tofCount) {
+    tofDiff = tofCount + pow(2, 32) - tofCountPrev;
+  } else {
+    tofDiff = tofCount - tofCountPrev;
+  }
+
   // report absolute values + rates(1s)
   if (!updateable) {
     return { hbCount, hbDiff / pow(10, 3),
              phyCount, phyDiff / pow(10, 3),
+             tofCount, tofDiff / pow(10, 3),
              eoxCount, soxCount };
   }
 
@@ -648,6 +659,7 @@ Cru::TriggerMonitoringInfo CruBar::monitorTriggers(bool updateable)
   // report relative values + rates (1s)
   return { hbCount - hbCountBase, hbDiff / pow(10, 3),
            phyCount - phyCountBase, phyDiff / pow(10, 3),
+           tofCount - tofCountBase, tofDiff / pow(10, 3),
            eoxDiff, soxDiff };
 }
 
