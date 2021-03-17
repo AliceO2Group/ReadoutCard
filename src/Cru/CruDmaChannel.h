@@ -52,6 +52,7 @@ class CruDmaChannel final : public DmaChannelPdaBase
   virtual bool isTransferQueueEmpty() override;
   virtual bool isReadyQueueFull() override;
   virtual int32_t getDroppedPackets() override;
+  virtual bool areSuperpageFifosHealthy() override;
 
   virtual bool injectError() override;
   virtual boost::optional<int32_t> getSerial() override;
