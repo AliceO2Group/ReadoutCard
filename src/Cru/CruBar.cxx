@@ -165,6 +165,14 @@ uint32_t CruBar::getSuperpageSize(uint32_t link)
   return superpageSize;
 }
 
+uint32_t CruBar::getSuperpageFifoEmptyCounter(uint32_t link)
+{
+  if (link >= Cru::MAX_LINKS) {
+    BOOST_THROW_EXCEPTION(InvalidLinkId() << ErrorInfo::Message("Link ID out of range") << ErrorInfo::LinkId(link));
+  }
+  return readRegister(Cru::Registers::LINK_SUPERPAGE_FIFO_EMPTY.get(link).index);
+}
+
 /// Signals the CRU DMA engine to start
 void CruBar::startDmaEngine()
 {

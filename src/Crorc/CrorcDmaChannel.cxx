@@ -339,6 +339,11 @@ int32_t CrorcDmaChannel::getDroppedPackets()
   return -1;
 }
 
+bool CrorcDmaChannel::areSuperpageFifosHealthy()
+{
+  return true;
+}
+
 void CrorcDmaChannel::pushFreeFifoPage(int readyFifoIndex, uintptr_t pageBusAddress, int pageSize)
 {
   size_t pageWords = pageSize / 4; // Size in 32-bit words

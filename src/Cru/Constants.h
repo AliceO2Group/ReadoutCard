@@ -66,6 +66,9 @@ static constexpr IntervalRegister LINK_SUPERPAGE_COUNT(0x00000800, SUPERPAGES_RE
 // FIFO containing the size of the ready superpages
 static constexpr IntervalRegister LINK_SUPERPAGE_SIZE(0x00000840, SUPERPAGES_READY_INTERVAL);
 
+// Counter for the times a link's Superpage FIFO is empty
+static constexpr IntervalRegister LINK_SUPERPAGE_FIFO_EMPTY(0x00000880, SUPERPAGES_READY_INTERVAL);
+
 /// Enable/disable links
 /// Every bit represents a link. Set a bit to 0 to disable a link.
 //static constexpr Register LINKS_ENABLE = 0x604;

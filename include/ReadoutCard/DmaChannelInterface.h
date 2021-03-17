@@ -96,6 +96,9 @@ class DmaChannelInterface
   // Returns the number of dropped packets, as reported by the BAR
   virtual int32_t getDroppedPackets() = 0;
 
+  // Reports the state of the Superpage FIFOs
+  virtual bool areSuperpageFifosHealthy() = 0;
+
   /// Stops DMA for the given channel.
   /// Called automatically on channel closure.
   /// This moves any remaining superpages to the "ready queue", even if they are not filled.

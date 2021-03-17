@@ -59,6 +59,7 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
   virtual bool isTransferQueueEmpty() override;
   virtual bool isReadyQueueFull() override;
   virtual int32_t getDroppedPackets() override;
+  virtual bool areSuperpageFifosHealthy() override;
 
   AllowedChannels allowedChannels();
 

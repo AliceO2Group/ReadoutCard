@@ -403,6 +403,24 @@ int32_t CruDmaChannel::getDroppedPackets()
   return getBar2()->getDroppedPackets(endpoint);
 }
 
+bool CruDmaChannel::areSuperpageFifosHealthy()
+{
+  bool ok = true;
+  static std::unordered_map<int, uint32_t> counters;
+
+  for (const auto& link : mLinks) {
+    uint32_t emptyCounter = getBar()->getSuperpageFifoEmptyCounter(link.id);
+    if (counters.count(link.id) && //only check after the counters map has been initialized
+        counters[link.id] != emptyCounter) {
+      log((format("Empty counter of Superpage FIFO of link %1% increased") % link.id).str(), LogWarningDevel);
+      ok = false;
+    }
+    counters[link.id] = emptyCounter;
+  }
+
+  return ok;
+}
+
 bool CruDmaChannel::injectError()
 {
   if (!mDataSource == DataSource::Fee) {
