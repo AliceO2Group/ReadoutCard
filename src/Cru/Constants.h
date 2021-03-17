@@ -164,6 +164,9 @@ static constexpr Register DDG_CTRL2(0x00d00004);
 /// Register to control BSP
 static constexpr Register BSP_USER_CONTROL(0x00000018);
 
+/// Register to access I2C SFP information
+static constexpr Register BSP_I2C_SFP_1(0x00030200);
+
 /// Register to access I2C minipod information
 static constexpr Register BSP_I2C_MINIPODS(0x00030300);
 

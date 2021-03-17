@@ -106,6 +106,7 @@ roc_regs = {
 'add_gbt_bank_fpll':'GBT_BANK_FPLL',
 'add_bsp_i2c_eeprom':"BSP_I2C_EEPROM",
 'add_bsp_i2c_minipods':"BSP_I2C_MINIPODS",
+'add_bsp_i2c_sfp1':"BSP_I2C_SFP_1",
 'add_bsp_i2c_si5345_1':'SI5345_1',
 'add_bsp_i2c_si5345_2':'SI5345_2',
 'add_bsp_i2c_si5344':'SI5344',

@@ -114,6 +114,7 @@ struct OnuStatus {
   LinkStatus stickyBit;
   uint32_t ponQuality;
   int ponQualityStatus;
+  double ponRxPower;
 };
 
 struct FecStatus {

@@ -272,6 +272,7 @@ class ProgramStatus : public Program
                              .addValue(onuStatus.mgtTxPllLocked, "mgtTxPllLocked")
                              .addValue(onuStatus.mgtRxPllLocked, "mgtRxPllLocked")
                              .addValue(onuStatus.ponQualityStatus, "ponQualityStatus")
+                             .addValue(onuStatus.ponRxPower, "ponRxPower")
                              .addTag(tags::Key::SerialId, card.serialId.getSerial())
                              .addTag(tags::Key::Endpoint, card.serialId.getEndpoint())
                              .addTag(tags::Key::ID, card.sequenceId)
@@ -289,6 +290,7 @@ class ProgramStatus : public Program
           root.put("ONU MGT RX PLL locked", onuStatus.mgtRxPllLocked);
           root.put("PON quality", Utilities::toHexString(onuStatus.ponQuality));
           root.put("PON quality Status", ponQualityStatusStr);
+          root.put("PON RX power (dBm)", onuStatus.ponRxPower);
         } else {
           std::cout << "=============================" << std::endl;
           std::cout << "ONU status: \t\t" << onuStickyStatus << std::endl;
@@ -304,6 +306,7 @@ class ProgramStatus : public Program
           std::cout << "ONU MGT RX PLL locked: \t" << std::boolalpha << onuStatus.mgtRxPllLocked << std::endl;
           std::cout << "PON quality: \t\t0x" << std::hex << onuStatus.ponQuality << std::endl;
           std::cout << "PON quality status: \t" << ponQualityStatusStr << std::endl;
+          std::cout << "PON RX power (dBm): \t" << onuStatus.ponRxPower << std::endl;
         }
       }
 

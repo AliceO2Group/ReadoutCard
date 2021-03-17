@@ -41,6 +41,7 @@ class I2c
   void configurePll();
   uint32_t getSelectedClock();
   void getOpticalPower(std::map<int, Link>& linkMap);
+  double getRxPower(); //unit: dBm
   uint32_t readI2c(uint32_t address);
 
  private:
