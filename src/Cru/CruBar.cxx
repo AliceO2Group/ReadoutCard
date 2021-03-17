@@ -498,7 +498,7 @@ Cru::ReportInfo CruBar::report(bool forConfig)
   // Update the link map with optical power information through I2C
   I2c i2c = I2c(Cru::Registers::BSP_I2C_MINIPODS.address, 0x0, mPdaBar, mEndpoint);
 
-  // lock I2C operation
+  // lock I2C operations
   std::unique_ptr<Interprocess::Lock> i2cLock = std::make_unique<Interprocess::Lock>("_Alice_O2_RoC_I2C_" + std::to_string(mSerial) + "_lock", true);
   i2c.getOpticalPower(linkMap);
   i2cLock.reset();
@@ -1061,7 +1061,7 @@ void CruBar::patternPlayer(PatternPlayer::Info info)
 
 Cru::OnuStatus CruBar::reportOnuStatus()
 {
-  Ttc ttc = Ttc(mPdaBar, mSerial);
+  Ttc ttc = Ttc(mPdaBar, mSerial, mEndpoint);
   return ttc.onuStatus();
 }
 

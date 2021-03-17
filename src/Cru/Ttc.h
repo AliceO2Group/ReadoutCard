@@ -22,7 +22,7 @@ class Ttc
   using LinkStatus = Cru::LinkStatus;
 
  public:
-  Ttc(std::shared_ptr<BarInterface> bar, int serial = -1);
+  Ttc(std::shared_ptr<BarInterface> bar, int serial = -1, int endpoint = -1);
 
   void calibrateTtc();
   void setClock(uint32_t clock);
@@ -60,11 +60,13 @@ class Ttc
   LinkStatus getOnuStickyBit();
   uint32_t getPonQuality();
   int getPonQualityStatus();
+  double getPonRxPower();
 
   std::shared_ptr<BarInterface> mBar;
   std::unique_ptr<Interprocess::Lock> mI2cLock;
 
   int mSerial;
+  int mEndpoint;
   static constexpr uint32_t MAX_BCID = 3564 - 1;
 };
 } // namespace roc

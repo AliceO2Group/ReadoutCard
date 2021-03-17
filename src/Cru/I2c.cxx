@@ -241,5 +241,19 @@ void I2c::getOpticalPower(std::map<int, Link>& linkMap)
   return;
 }
 
+double I2c::getRxPower()
+{
+  resetI2c();
+  uint32_t address = 0x68;
+  uint32_t rxPower = readI2c(address) << 8;
+  rxPower |= readI2c(address + 1); // unit: 0.1*uW
+  if (rxPower) {
+    double watts = rxPower * 0.1 * 1e-6;
+    return 10 * log10(watts / 1e-3); // convert to dBm
+  } else {
+    return -1 * std::numeric_limits<double>::infinity();
+  }
+}
+
 } // namespace roc
 } // namespace AliceO2

@@ -33,7 +33,7 @@ using LinkStatus = Cru::LinkStatus;
 using OnuStatus = Cru::OnuStatus;
 using FecStatus = Cru::FecStatus;
 
-Ttc::Ttc(std::shared_ptr<BarInterface> bar, int serial) : mBar(bar), mSerial(serial)
+Ttc::Ttc(std::shared_ptr<BarInterface> bar, int serial, int endpoint) : mBar(bar), mSerial(serial), mEndpoint(endpoint)
 {
 }
 
@@ -177,7 +177,8 @@ OnuStatus Ttc::onuStatus()
     (calStatus >> 7 & 0x1) == 1,
     getOnuStickyBit(),
     getPonQuality(),
-    getPonQualityStatus()
+    getPonQualityStatus(),
+    getPonRxPower()
   };
 }
 
@@ -427,6 +428,18 @@ int Ttc::getPonQualityStatus()
   }
 
   return 0; // BAD
+}
+
+double Ttc::getPonRxPower()
+{
+  I2c i2c = I2c(Cru::Registers::BSP_I2C_SFP_1.address, 0x51, mBar, mEndpoint);
+
+  // lock I2C operations
+  std::unique_ptr<Interprocess::Lock> i2cLock = std::make_unique<Interprocess::Lock>("_Alice_O2_RoC_I2C_" + std::to_string(mSerial) + "_lock", true);
+  auto rxPower = i2c.getRxPower();
+  i2cLock.reset();
+
+  return rxPower;
 }
 
 // Currently unused by RoC
