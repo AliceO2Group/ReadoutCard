@@ -14,12 +14,13 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_READOUTCARD_DATASOURCE_H_
-#define ALICEO2_INCLUDE_READOUTCARD_DATASOURCE_H_
+#ifndef O2_READOUTCARD_INCLUDE_DATASOURCE_H_
+#define O2_READOUTCARD_INCLUDE_DATASOURCE_H_
 
+#include "ReadoutCard/NamespaceAlias.h"
 #include <string>
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -46,6 +47,6 @@ struct DataSource {
 };
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_INCLUDE_READOUTCARD_DATASOURCE_H_
+#endif // O2_READOUTCARD_INCLUDE_DATASOURCE_H_

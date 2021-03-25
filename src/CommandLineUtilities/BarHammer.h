@@ -13,15 +13,15 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_READOUTCARD_BARHAMMER_H
-#define ALICEO2_READOUTCARD_BARHAMMER_H
+#ifndef O2_READOUTCARD_CLI_BARHAMMER_H
+#define O2_READOUTCARD_CLI_BARHAMMER_H
 
 #include <atomic>
 #include "Common/BasicThread.h"
 #include "Cru/Constants.h"
 #include "ReadoutCard/BarInterface.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -68,6 +68,6 @@ class BarHammer : public AliceO2::Common::BasicThread
 
 } // namespace CommandLineUtilities
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_READOUTCARD_BARHAMMER_H
+#endif // O2_READOUTCARD_CLI_BARHAMMER_H

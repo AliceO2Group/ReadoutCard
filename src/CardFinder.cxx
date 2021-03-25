@@ -16,7 +16,7 @@
 #include "ReadoutCard/CardFinder.h"
 #include "RocPciDevice.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -38,4 +38,4 @@ CardDescriptor findCard(const Parameters::CardIdType& cardId)
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

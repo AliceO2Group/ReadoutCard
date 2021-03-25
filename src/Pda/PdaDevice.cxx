@@ -32,7 +32,7 @@
     }                                                                              \
   } while (0)
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -113,4 +113,4 @@ int PdaDevice::getPciDeviceCount()
 
 } // namespace Pda
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

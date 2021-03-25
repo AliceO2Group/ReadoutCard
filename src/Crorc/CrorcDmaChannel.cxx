@@ -34,7 +34,7 @@ using std::cout;
 using std::endl;
 using namespace std::literals;
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -396,4 +396,4 @@ boost::optional<std::string> CrorcDmaChannel::getFirmwareInfo()
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

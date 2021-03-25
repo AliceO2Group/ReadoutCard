@@ -14,15 +14,15 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef ALICEO2_SRC_READOUTCARD_UTILITIES_UTIL_H_
-#define ALICEO2_SRC_READOUTCARD_UTILITIES_UTIL_H_
+#ifndef O2_READOUTCARD_SRC_UTILITIES_UTIL_H_
+#define O2_READOUTCARD_SRC_UTILITIES_UTIL_H_
 
 #include <cstdint>
 #include <iomanip>
 #include <iostream>
 #include <bitset>
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -133,6 +133,6 @@ std::string toHexString(T num)
 
 } // namespace Utilities
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_SRC_READOUTCARD_UTILITIES_UTIL_H_
+#endif // O2_READOUTCARD_SRC_UTILITIES_UTIL_H_

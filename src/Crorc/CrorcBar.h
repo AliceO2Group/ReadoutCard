@@ -14,15 +14,15 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef ALICEO2_SRC_READOUTCARD_CRORC_CRORCBAR_H_
-#define ALICEO2_SRC_READOUTCARD_CRORC_CRORCBAR_H_
+#ifndef O2_READOUTCARD_SRC_CRORC_CRORCBAR_H_
+#define O2_READOUTCARD_SRC_CRORC_CRORCBAR_H_
 
 #include "BarInterfaceBase.h"
 #include "Crorc/Common.h"
 #include "Crorc/Constants.h"
 #include "Utilities/Util.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -100,6 +100,6 @@ class CrorcBar final : public BarInterfaceBase
 };
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_SRC_READOUTCARD_CRORC_CRORCBAR_H_
+#endif // O2_READOUTCARD_SRC_CRORC_CRORCBAR_H_

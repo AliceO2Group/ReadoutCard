@@ -19,7 +19,7 @@
 #include <fstream>
 #include <string>
 
-using namespace AliceO2::roc::CommandLineUtilities;
+using namespace o2::roc::CommandLineUtilities;
 namespace po = boost::program_options;
 
 namespace
@@ -48,8 +48,8 @@ class ProgramRegisterReadRange : public Program
     int baseAddress = Options::getOptionRegisterAddress(map);
     int channelNumber = Options::getOptionChannel(map);
     int range = Options::getOptionRegisterRange(map);
-    auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
-    auto channel = AliceO2::roc::ChannelFactory().getBar(params);
+    auto params = o2::roc::Parameters::makeParameters(cardId, channelNumber);
+    auto channel = o2::roc::ChannelFactory().getBar(params);
 
     std::vector<uint32_t> values(range);
 

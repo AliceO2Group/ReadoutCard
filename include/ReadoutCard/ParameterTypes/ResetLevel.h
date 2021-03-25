@@ -13,12 +13,13 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_READOUTCARD_RESETLEVEL_H_
-#define ALICEO2_INCLUDE_READOUTCARD_RESETLEVEL_H_
+#ifndef O2_READOUTCARD_INCLUDE_RESETLEVEL_H_
+#define O2_READOUTCARD_INCLUDE_RESETLEVEL_H_
 
+#include "ReadoutCard/NamespaceAlias.h"
 #include <string>
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -42,6 +43,6 @@ struct ResetLevel {
 };
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_INCLUDE_READOUTCARD_RESETLEVEL_H_
+#endif // O2_READOUTCARD_INCLUDE_RESETLEVEL_H_

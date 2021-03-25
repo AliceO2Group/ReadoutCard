@@ -13,9 +13,10 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_READOUTCARD_DMACHANNELINTERFACE_H_
-#define ALICEO2_INCLUDE_READOUTCARD_DMACHANNELINTERFACE_H_
+#ifndef O2_READOUTCARD_INCLUDE_DMACHANNELINTERFACE_H_
+#define O2_READOUTCARD_INCLUDE_DMACHANNELINTERFACE_H_
 
+#include "ReadoutCard/NamespaceAlias.h"
 #include <cstdint>
 #include <boost/optional.hpp>
 #include "ReadoutCard/Parameters.h"
@@ -24,7 +25,7 @@
 #include "ReadoutCard/RegisterReadWriteInterface.h"
 #include "ReadoutCard/Superpage.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -144,6 +145,6 @@ class DmaChannelInterface
 };
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_INCLUDE_READOUTCARD_DMACHANNELINTERFACE_H_
+#endif // O2_READOUTCARD_INCLUDE_DMACHANNELINTERFACE_H_

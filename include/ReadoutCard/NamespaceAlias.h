@@ -8,32 +8,20 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 
-/// \file Hex.h
-/// \brief Definition of the Hex struct
+/// \file NamespaceAlias.h
+/// \brief Retain backwards compatibility with the AliceO2 namespace
 ///
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef O2_READOUTCARD_INCLUDE_CRU_ADDRESS_H_
-#define O2_READOUTCARD_INCLUDE_CRU_ADDRESS_H_
+#ifndef O2_READOUTCARD_NAMESPACE_ALIAS_H_
+#define O2_READOUTCARD_NAMESPACE_ALIAS_H_
 
-#include "ReadoutCard/NamespaceAlias.h"
-#include <string>
-#include "ReadoutCard/Cru.h"
+// "fake" namespace forward decalaration so that
+// the `using` directive can find the namespace
+namespace o2 {}
 
-namespace o2
-{
-namespace roc
-{
+namespace AliceO2 {
+  using namespace o2;
+}
 
-//Ugly for consistency reasons
-struct Hex {
-  using type = uint32_t;
-
-  /// Converts a string to an Hex
-  static Hex::type fromString(const std::string& string);
-};
-
-} // namespace roc
-} // namespace o2
-
-#endif // O2_READOUTCARD_INCLUDE_CRU_ADDRESS_H_
+#endif // O2_READOUTCARD_NAMESPACE_ALIAS_H_

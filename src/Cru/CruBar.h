@@ -14,8 +14,8 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef ALICEO2_READOUTCARD_CRU_CRUBAR_H_
-#define ALICEO2_READOUTCARD_CRU_CRUBAR_H_
+#ifndef O2_READOUTCARD_CRU_CRUBAR_H_
+#define O2_READOUTCARD_CRU_CRUBAR_H_
 
 #include <cstddef>
 #include <set>
@@ -31,7 +31,7 @@
 #include "ReadoutCard/PatternPlayer.h"
 #include "Utilities/Util.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -172,6 +172,6 @@ class CruBar final : public BarInterfaceBase
 };
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_READOUTCARD_CRU_CRUBAR_H_
+#endif // O2_READOUTCARD_CRU_CRUBAR_H_

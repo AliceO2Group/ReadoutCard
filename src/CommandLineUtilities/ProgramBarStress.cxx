@@ -24,8 +24,8 @@
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
 
-using namespace AliceO2::roc::CommandLineUtilities;
-using namespace AliceO2::roc;
+using namespace o2::roc::CommandLineUtilities;
+using namespace o2::roc;
 namespace po = boost::program_options;
 
 class ProgramBarStress : public Program
@@ -80,8 +80,8 @@ class ProgramBarStress : public Program
     int channelNumber = Options::getOptionChannel(map);
     uint32_t registerAddress = Options::getOptionRegisterAddress(map);
     uint32_t registerValue = Options::getOptionRegisterValue(map);
-    auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
-    auto bar = AliceO2::roc::ChannelFactory().getBar(params);
+    auto params = o2::roc::Parameters::makeParameters(cardId, channelNumber);
+    auto bar = o2::roc::ChannelFactory().getBar(params);
 
     std::cout << "Card ID: " << cardId << std::endl;
     std::cout << "BAR: " << channelNumber << std::endl;

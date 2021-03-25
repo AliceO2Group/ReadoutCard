@@ -23,7 +23,7 @@
 namespace
 {
 
-using namespace ::AliceO2::roc;
+using namespace ::o2::roc;
 
 struct TestObject {
   TestObject(const std::string& s, int i) : string(s), integer(i) {}

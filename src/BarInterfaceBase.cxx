@@ -17,7 +17,7 @@
 #include "BarInterfaceBase.h"
 #include "Utilities/SmartPointer.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -63,4 +63,4 @@ void BarInterfaceBase::log(const std::string& logMessage, ILMessageOption ilgMsg
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

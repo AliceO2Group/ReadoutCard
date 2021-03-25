@@ -13,8 +13,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_READOUTCARD_PROGRAM_H
-#define ALICEO2_READOUTCARD_PROGRAM_H
+#ifndef O2_READOUTCARD_CLI_PROGRAM_H
+#define O2_READOUTCARD_CLI_PROGRAM_H
 
 #include <atomic>
 #include <cstdlib>
@@ -25,7 +25,7 @@
 #include "ReadoutCard/Exception.h"
 #include "ReadoutCard/Logger.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -65,6 +65,6 @@ class Program : public AliceO2::Common::Program
 
 } // namespace CommandLineUtilities
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_READOUTCARD_PROGRAM_H
+#endif // O2_READOUTCARD_CLI_PROGRAM_H

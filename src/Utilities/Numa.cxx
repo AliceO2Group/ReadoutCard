@@ -21,7 +21,7 @@
 #include "ExceptionInternal.h"
 #include "Common/System.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -62,4 +62,4 @@ int getNumaNode(const PciAddress& pciAddress)
 
 } // namespace Utilities
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

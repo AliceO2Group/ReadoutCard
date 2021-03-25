@@ -21,7 +21,7 @@
 #include "ExceptionInternal.h"
 #include "Utilities/SmartPointer.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -151,4 +151,4 @@ bool MemoryMappedFile::map(const std::string& fileName, size_t fileSize)
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

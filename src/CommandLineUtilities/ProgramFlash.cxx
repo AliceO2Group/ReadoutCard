@@ -21,8 +21,8 @@
 #include "Crorc/CrorcBar.h"
 #include "ExceptionInternal.h"
 
-using namespace AliceO2::roc::CommandLineUtilities;
-using namespace AliceO2::roc;
+using namespace o2::roc::CommandLineUtilities;
+using namespace o2::roc;
 using std::cout;
 using std::endl;
 namespace po = boost::program_options;
@@ -46,12 +46,12 @@ class ProgramCrorcFlash : public Program
 
   virtual void run(const boost::program_options::variables_map& map)
   {
-    using namespace AliceO2::roc;
+    using namespace o2::roc;
 
     auto cardId = Options::getOptionCardId(map);
     auto channelNumber = 0;
-    auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
-    auto channel = AliceO2::roc::ChannelFactory().getBar(params);
+    auto params = o2::roc::Parameters::makeParameters(cardId, channelNumber);
+    auto channel = o2::roc::ChannelFactory().getBar(params);
 
     if (channel->getCardType() != CardType::Crorc) {
       BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Only C-RORC supported for now"));

@@ -68,7 +68,7 @@ auto mask = [](auto a, auto b) { return a & b; };
 auto incr15 = [](auto a) { return (((a) + 1) & 0xf); };
 } // Anonymous namespace
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -1287,4 +1287,4 @@ std::vector<std::string> Crorc::ddlInterpretIfstw(uint32_t ifstw)
 
 } // namespace Crorc
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

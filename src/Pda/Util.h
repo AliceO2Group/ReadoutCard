@@ -14,8 +14,8 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef ALICEO2_SRC_READOUTCARD_PDA_UTIL_H_
-#define ALICEO2_SRC_READOUTCARD_PDA_UTIL_H_
+#ifndef O2_READOUTCARD_SRC_PDA_UTIL_H_
+#define O2_READOUTCARD_SRC_PDA_UTIL_H_
 
 #include <boost/filesystem.hpp>
 #include <vector>
@@ -26,7 +26,7 @@
 
 namespace bfs = boost::filesystem;
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -111,6 +111,6 @@ void freePdaDmaBuffers(const CardDescriptor cardDescriptor, const int channelNum
 
 } // namespace Pda
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_SRC_READOUTCARD_PDA_UTIL_H_
+#endif // O2_READOUTCARD_SRC_PDA_UTIL_H_

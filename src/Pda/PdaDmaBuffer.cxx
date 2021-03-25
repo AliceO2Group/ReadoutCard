@@ -21,7 +21,7 @@
 #include "ReadoutCard/InterprocessLock.h"
 #include "ReadoutCard/Logger.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -161,4 +161,4 @@ uintptr_t PdaDmaBuffer::getBusOffsetAddress(size_t offset) const
 
 } // namespace Pda
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

@@ -13,12 +13,13 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_READOUTCARD_BUFFERPARAMETERS_H_
-#define ALICEO2_INCLUDE_READOUTCARD_BUFFERPARAMETERS_H_
+#ifndef O2_READOUTCARD_INCLUDE_BUFFERPARAMETERS_H_
+#define O2_READOUTCARD_INCLUDE_BUFFERPARAMETERS_H_
 
+#include "ReadoutCard/NamespaceAlias.h"
 #include <string>
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -43,6 +44,6 @@ struct Null {
 
 } // namespace buffer_parameters
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_INCLUDE_READOUTCARD_BUFFERPARAMETERS_H_
+#endif // O2_READOUTCARD_INCLUDE_BUFFERPARAMETERS_H_

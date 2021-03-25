@@ -13,14 +13,15 @@
 ///
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_READOUTCARD_FIRMWARECHECKER_H_
-#define ALICEO2_INCLUDE_READOUTCARD_FIRMWARECHECKER_H_
+#ifndef O2_READOUTCARD_INCLUDE_FIRMWARECHECKER_H_
+#define O2_READOUTCARD_INCLUDE_FIRMWARECHECKER_H_
 
+#include "ReadoutCard/NamespaceAlias.h"
 #include "unordered_map"
 #include "ReadoutCard/ChannelFactory.h"
 #include "ReadoutCard/Parameters.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -42,6 +43,6 @@ class FirmwareChecker
 };
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_INCLUDE_READOUTCARD_FIRMWARECHECKER_H_
+#endif // O2_READOUTCARD_INCLUDE_FIRMWARECHECKER_H_

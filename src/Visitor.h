@@ -15,13 +15,13 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_SRC_READOUTCARD_VISITOR_H_
-#define ALICEO2_SRC_READOUTCARD_VISITOR_H_
+#ifndef O2_READOUTCARD_SRC_VISITOR_H_
+#define O2_READOUTCARD_SRC_VISITOR_H_
 
 #include "VisitorImplementation.h"
 #include <boost/variant/apply_visitor.hpp>
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -54,6 +54,6 @@ ReturnType apply(const Variant& variant, Functions... functions)
 
 } // namespace Visitor
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_ALICEO2_SRC_READOUTCARD_VISITOR_H_
+#endif // O2_READOUTCARD_SRC_VISITOR_H_

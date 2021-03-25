@@ -14,12 +14,13 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_READOUTCARD_SUPERPAGE_H_
-#define ALICEO2_INCLUDE_READOUTCARD_SUPERPAGE_H_
+#ifndef O2_READOUTCARD_INCLUDE_SUPERPAGE_H_
+#define O2_READOUTCARD_INCLUDE_SUPERPAGE_H_
 
+#include "ReadoutCard/NamespaceAlias.h"
 #include <cstddef>
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -110,6 +111,6 @@ struct Superpage {
 };
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_INCLUDE_READOUTCARD_SUPERPAGE_H_
+#endif // O2_READOUTCARD_INCLUDE_SUPERPAGE_H_

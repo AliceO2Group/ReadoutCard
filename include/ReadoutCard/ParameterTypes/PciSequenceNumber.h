@@ -13,14 +13,15 @@
 ///
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef ALICEO2_READOUTCARD_INCLUDE_PCISEQUENCENUMBER_H_
-#define ALICEO2_READOUTCARD_INCLUDE_PCISEQUENCENUMBER_H_
+#ifndef O2_READOUTCARD_INCLUDE_PCISEQUENCENUMBER_H_
+#define O2_READOUTCARD_INCLUDE_PCISEQUENCENUMBER_H_
 
+#include "ReadoutCard/NamespaceAlias.h"
 #include <iostream>
 #include <string>
 #include <boost/optional.hpp>
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -63,6 +64,6 @@ class PciSequenceNumber
 };
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_READOUTCARD_INCLUDE_PCISEQUENCENUMBER_H_
+#endif // O2_READOUTCARD_INCLUDE_PCISEQUENCENUMBER_H_

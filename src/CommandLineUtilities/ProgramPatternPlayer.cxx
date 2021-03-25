@@ -26,8 +26,8 @@
 #include <boost/format.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 
-using namespace AliceO2::roc::CommandLineUtilities;
-using namespace AliceO2::roc;
+using namespace o2::roc::CommandLineUtilities;
+using namespace o2::roc;
 namespace po = boost::program_options;
 using namespace boost::multiprecision;
 

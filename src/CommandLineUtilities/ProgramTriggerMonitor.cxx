@@ -21,8 +21,8 @@
 #include <boost/format.hpp>
 #include <boost/property_tree/ptree.hpp>
 
-using namespace AliceO2::roc::CommandLineUtilities;
-using namespace AliceO2::roc;
+using namespace o2::roc::CommandLineUtilities;
+using namespace o2::roc;
 namespace pt = boost::property_tree;
 namespace po = boost::program_options;
 

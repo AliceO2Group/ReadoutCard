@@ -17,7 +17,7 @@
 #include "DatapathWrapper.h"
 #include "Utilities/Util.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -337,4 +337,4 @@ uint32_t DatapathWrapper::getFeeId(Link link)
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

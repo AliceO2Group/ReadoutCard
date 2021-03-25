@@ -17,7 +17,7 @@
 #include "ReadoutCard/ChannelFactory.h"
 #include "Factory/ChannelFactoryUtils.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -44,4 +44,4 @@ auto ChannelFactory::getBar(const Parameters& params) -> BarSharedPtr
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

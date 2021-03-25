@@ -24,7 +24,7 @@
 using namespace std::literals;
 using boost::format;
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -483,4 +483,4 @@ boost::optional<std::string> CruDmaChannel::getCardId()
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

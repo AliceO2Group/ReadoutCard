@@ -15,7 +15,7 @@
 
 #include "ReadoutCard/Logger.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -60,4 +60,4 @@ void Logger::enableInfoLogger(bool state)
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

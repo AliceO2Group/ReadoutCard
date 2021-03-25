@@ -15,15 +15,15 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_READOUTCARD_OPTIONS_H
-#define ALICEO2_READOUTCARD_OPTIONS_H
+#ifndef O2_READOUTCARD_CLI_OPTIONS_H
+#define O2_READOUTCARD_CLI_OPTIONS_H
 
 #include <boost/program_options.hpp>
 #include "ReadoutCard/Exception.h"
 #include "ReadoutCard/Parameters.h"
 #include "ReadoutCard/ParameterTypes/ResetLevel.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -51,6 +51,6 @@ int getOptionRegisterRange(const boost::program_options::variables_map& map);
 } // namespace Options
 } // namespace CommandLineUtilities
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_READOUTCARD_OPTIONS_H
+#endif // O2_READOUTCARD_CLI_OPTIONS_H

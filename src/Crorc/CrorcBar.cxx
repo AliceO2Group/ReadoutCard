@@ -28,7 +28,7 @@
 
 using namespace std::literals;
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -404,4 +404,4 @@ Crorc::PacketMonitoringInfo CrorcBar::monitorPackets()
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

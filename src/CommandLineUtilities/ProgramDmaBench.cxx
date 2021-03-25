@@ -50,8 +50,8 @@
 #include "Utilities/SmartPointer.h"
 #include "Utilities/Util.h"
 
-using namespace AliceO2::roc::CommandLineUtilities;
-using namespace AliceO2::roc;
+using namespace o2::roc::CommandLineUtilities;
+using namespace o2::roc;
 using AliceO2::Common::SuffixOption;
 using std::cout;
 using std::endl;

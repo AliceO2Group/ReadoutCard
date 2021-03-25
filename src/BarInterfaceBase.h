@@ -14,8 +14,8 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef ALICEO2_SRC_READOUTCARD_BARINTERFACEBASE_H_
-#define ALICEO2_SRC_READOUTCARD_BARINTERFACEBASE_H_
+#ifndef O2_READOUTCARD_SRC_BARINTERFACEBASE_H_
+#define O2_READOUTCARD_SRC_BARINTERFACEBASE_H_
 
 #include <boost/optional/optional_io.hpp>
 #include <memory>
@@ -25,7 +25,7 @@
 #include "ReadoutCard/Logger.h"
 #include "ReadoutCard/Parameters.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -142,6 +142,6 @@ class BarInterfaceBase : public BarInterface
 };
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_SRC_READOUTCARD_BARINTERFACEBASE_H_
+#endif // O2_READOUTCARD_SRC_BARINTERFACEBASE_H_

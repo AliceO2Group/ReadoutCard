@@ -10,7 +10,7 @@
 #include "ReadoutCard/ChannelFactory.h"
 #include "RocPciDevice.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -231,4 +231,4 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

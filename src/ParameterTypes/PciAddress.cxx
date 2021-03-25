@@ -21,7 +21,7 @@
 #include <boost/spirit/include/qi.hpp>
 #include "ExceptionInternal.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -99,4 +99,4 @@ std::ostream& operator<<(std::ostream& os, const PciAddress& pciAddress)
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

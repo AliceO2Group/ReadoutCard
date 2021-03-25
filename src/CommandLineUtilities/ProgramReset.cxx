@@ -20,7 +20,7 @@
 
 namespace
 {
-using namespace AliceO2::roc::CommandLineUtilities;
+using namespace o2::roc::CommandLineUtilities;
 
 class ProgramReset : public Program
 {
@@ -44,10 +44,10 @@ class ProgramReset : public Program
     auto cardId = Options::getOptionCardId(map);
     int channelNumber = Options::getOptionChannel(map);
 
-    auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
-    params.setBufferParameters(AliceO2::roc::buffer_parameters::Null());
+    auto params = o2::roc::Parameters::makeParameters(cardId, channelNumber);
+    params.setBufferParameters(o2::roc::buffer_parameters::Null());
     params.setFirmwareCheckEnabled(false);
-    auto channel = AliceO2::roc::ChannelFactory().getDmaChannel(params);
+    auto channel = o2::roc::ChannelFactory().getDmaChannel(params);
     channel->resetChannel(resetLevel);
   }
 };

@@ -13,13 +13,14 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_READOUTCARD_REGISTER_H_
-#define ALICEO2_INCLUDE_READOUTCARD_REGISTER_H_
+#ifndef O2_READOUTCARD_INCLUDE_REGISTER_H_
+#define O2_READOUTCARD_INCLUDE_REGISTER_H_
 
+#include "ReadoutCard/NamespaceAlias.h"
 #include <cstdint>
 #include <cstddef>
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -59,6 +60,6 @@ struct IntervalRegister {
 };
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_INCLUDE_READOUTCARD_REGISTER_H_
+#endif // O2_READOUTCARD_INCLUDE_REGISTER_H_

@@ -24,7 +24,7 @@
 #include "Utilities/SmartPointer.h"
 #include "Visitor.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -102,4 +102,4 @@ void DmaChannelBase::log(const std::string& logMessage, ILMessageOption ilgMsgOp
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

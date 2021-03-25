@@ -18,7 +18,7 @@
 
 namespace b = boost;
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -53,4 +53,4 @@ std::string ChannelPaths::namedMutex() const
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

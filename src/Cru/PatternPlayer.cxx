@@ -19,7 +19,7 @@
 
 using namespace boost::multiprecision;
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -126,4 +126,4 @@ void PatternPlayer::triggerReset()
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

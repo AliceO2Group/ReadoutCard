@@ -25,8 +25,8 @@
 #include "Pda/Util.h"
 #include "ReadoutCard/CardDescriptor.h"
 
-using namespace AliceO2::roc::CommandLineUtilities;
-using namespace AliceO2::roc;
+using namespace o2::roc::CommandLineUtilities;
+using namespace o2::roc;
 namespace algo = boost::algorithm;
 namespace po = boost::program_options;
 namespace bfs = boost::filesystem;

@@ -13,13 +13,14 @@
 ///
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_READOUTCARD_CARDCONFIGURATOR_H_
-#define ALICEO2_INCLUDE_READOUTCARD_CARDCONFIGURATOR_H_
+#ifndef O2_READOUTCARD_INCLUDE_CARDCONFIGURATOR_H_
+#define O2_READOUTCARD_INCLUDE_CARDCONFIGURATOR_H_
 
+#include "ReadoutCard/NamespaceAlias.h"
 #include "ReadoutCard/CardType.h"
 #include "ReadoutCard/Parameters.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -37,6 +38,6 @@ class CardConfigurator
 };
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_SRC_READOUTCARD_CARDCONFIGURATOR_H_
+#endif // O2_READOUTCARD_INCLUDE_CARDCONFIGURATOR_H_

@@ -13,8 +13,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_SRC_READOUTCARD_DMABUFFERPROVIDER_PDADMABUFFERPROVIDER_H_
-#define ALICEO2_SRC_READOUTCARD_DMABUFFERPROVIDER_PDADMABUFFERPROVIDER_H_
+#ifndef O2_READOUTCARD_SRC_DMABUFFERPROVIDER_PDADMABUFFERPROVIDER_H_
+#define O2_READOUTCARD_SRC_DMABUFFERPROVIDER_PDADMABUFFERPROVIDER_H_
 
 #include <cstddef>
 #include <cstdint>
@@ -23,7 +23,7 @@
 #include "Pda/PdaDevice.h"
 #include "Pda/PdaDmaBuffer.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -83,6 +83,6 @@ class PdaDmaBufferProvider : public DmaBufferProviderInterface
 };
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_SRC_READOUTCARD_DMABUFFERPROVIDER_PDADMABUFFERPROVIDER_H_
+#endif // O2_READOUTCARD_SRC_DMABUFFERPROVIDER_PDADMABUFFERPROVIDER_H_

@@ -14,7 +14,7 @@
 #include <assert.h>
 #include <string>
 
-using namespace AliceO2::roc;
+using namespace o2::roc;
 
 /// Helper method for checking enum to/from string conversions
 template <typename E>

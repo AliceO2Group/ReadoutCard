@@ -13,10 +13,10 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_READOUTCARD_CRU_FIRMWAREFEATURES_H_
-#define ALICEO2_READOUTCARD_CRU_FIRMWAREFEATURES_H_
+#ifndef O2_READOUTCARD_CRU_FIRMWAREFEATURES_H_
+#define O2_READOUTCARD_CRU_FIRMWAREFEATURES_H_
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -42,6 +42,6 @@ struct FirmwareFeatures {
 };
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_READOUTCARD_CRU_FIRMWAREFEATURES_H_
+#endif // O2_READOUTCARD_CRU_FIRMWAREFEATURES_H_

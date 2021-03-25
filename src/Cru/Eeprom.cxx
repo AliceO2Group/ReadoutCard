@@ -18,7 +18,7 @@
 #include "I2c.h"
 #include "Eeprom.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -70,4 +70,4 @@ boost::optional<int32_t> Eeprom::getSerial()
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

@@ -17,7 +17,7 @@
 #include "Common.h"
 #include "Utilities/Util.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -238,4 +238,4 @@ uint32_t getBankPllRegisterAddress(int wrapper, int bank)
 
 } // namespace Cru
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

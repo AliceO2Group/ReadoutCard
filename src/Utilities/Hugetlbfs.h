@@ -13,14 +13,14 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_SRC_READOUTCARD_UTILITIES_HUGETLBFS_H_
-#define ALICEO2_SRC_READOUTCARD_UTILITIES_HUGETLBFS_H_
+#ifndef O2_READOUTCARD_SRC_UTILITIES_HUGETLBFS_H_
+#define O2_READOUTCARD_SRC_UTILITIES_HUGETLBFS_H_
 
 #include <memory>
 #include "ReadoutCard/ParameterTypes/PciAddress.h"
 #include "ReadoutCard/MemoryMappedFile.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -52,6 +52,6 @@ std::unique_ptr<MemoryMappedFile> tryMapFile(size_t bufferSize, std::string buff
 
 } // namespace Utilities
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_SRC_READOUTCARD_UTILITIES_HUGETLBFS_H_
+#endif // O2_READOUTCARD_SRC_UTILITIES_HUGETLBFS_H_

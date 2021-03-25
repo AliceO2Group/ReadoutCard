@@ -22,7 +22,7 @@
 #include "Utilities/Util.h"
 #include "Utilities/SmartPointer.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -83,4 +83,4 @@ std::unique_ptr<MemoryMappedFile> tryMapFile(size_t bufferSize, std::string buff
 
 } // namespace Utilities
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

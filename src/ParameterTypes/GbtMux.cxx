@@ -16,7 +16,7 @@
 #include "ReadoutCard/ParameterTypes/GbtMux.h"
 #include "Utilities/Enum.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -45,4 +45,4 @@ GbtMux::type GbtMux::fromString(const std::string& string)
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

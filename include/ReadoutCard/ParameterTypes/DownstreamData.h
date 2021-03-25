@@ -13,13 +13,14 @@
 ///
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_READOUTCARD_CRU_DOWNSTREAMDATA_H_
-#define ALICEO2_INCLUDE_READOUTCARD_CRU_DOWNSTREAMDATA_H_
+#ifndef O2_READOUTCARD_INCLUDE_CRU_DOWNSTREAMDATA_H_
+#define O2_READOUTCARD_INCLUDE_CRU_DOWNSTREAMDATA_H_
 
+#include "ReadoutCard/NamespaceAlias.h"
 #include <string>
 #include "ReadoutCard/Cru.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -40,6 +41,6 @@ struct DownstreamData {
 };
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_INCLUDE_READOUTCARD_CRU_DOWNSTREAMDATA_H_
+#endif // O2_READOUTCARD_INCLUDE_CRU_DOWNSTREAMDATA_H_

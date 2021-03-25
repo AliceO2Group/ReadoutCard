@@ -26,7 +26,7 @@
 #include "Cru/CruBar.h"
 #include "RocPciDevice.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -72,4 +72,4 @@ std::unique_ptr<Interface> barFactoryHelper(const Parameters& params)
 
 } // namespace ChannelFactoryUtils
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

@@ -13,15 +13,15 @@
 ///
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef ALICEO2_READOUTCARD_CRU_GBT_H_
-#define ALICEO2_READOUTCARD_CRU_GBT_H_
+#ifndef O2_READOUTCARD_CRU_GBT_H_
+#define O2_READOUTCARD_CRU_GBT_H_
 
 #include "Pda/PdaBar.h"
 #include "Common.h"
 #include "Constants.h"
 #include "I2c.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -70,6 +70,6 @@ class Gbt
   int mEndpoint;
 };
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_READOUTCARD_CRU_GBT_H_
+#endif // O2_READOUTCARD_CRU_GBT_H_

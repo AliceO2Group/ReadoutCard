@@ -17,7 +17,7 @@
 #include "ExceptionInternal.h"
 #include <regex>
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -81,4 +81,4 @@ std::ostream& operator<<(std::ostream& os, const PciSequenceNumber& pciSequenceN
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

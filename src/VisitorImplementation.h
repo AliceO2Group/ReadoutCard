@@ -13,12 +13,12 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_SRC_READOUTCARD_VISITOR_IMPLEMENTATION_H_
-#define ALICEO2_SRC_READOUTCARD_VISITOR_IMPLEMENTATION_H_
+#ifndef O2_READOUTCARD_SRC_VISITOR_IMPLEMENTATION_H_
+#define O2_READOUTCARD_SRC_VISITOR_IMPLEMENTATION_H_
 
 #include <boost/variant/static_visitor.hpp>
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -62,6 +62,6 @@ struct Visitor<ReturnT> : public boost::static_visitor<ReturnT> {
 } // namespace Implementation
 } // namespace Visitor
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
 #endif

@@ -23,7 +23,7 @@
 
 namespace
 {
-using namespace AliceO2::roc;
+using namespace o2::roc;
 /// This is a Python wrapper class for a BAR channel. It only provides register read and write access.
 
 /// Documentation for the init function (constructor)
@@ -86,7 +86,7 @@ class BarChannel
   }
 
  private:
-  std::shared_ptr<AliceO2::roc::BarInterface> mBarChannel;
+  std::shared_ptr<o2::roc::BarInterface> mBarChannel;
 };
 } // Anonymous namespace
 

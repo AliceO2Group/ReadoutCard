@@ -21,7 +21,7 @@
 #include "I2c.h"
 #include "Utilities/Util.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -256,4 +256,4 @@ double I2c::getRxPower()
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

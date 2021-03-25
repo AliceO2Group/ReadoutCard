@@ -16,7 +16,7 @@
 #include "CommandLineUtilities/Program.h"
 #include "ReadoutCard/ChannelFactory.h"
 
-using namespace AliceO2::roc::CommandLineUtilities;
+using namespace o2::roc::CommandLineUtilities;
 namespace po = boost::program_options;
 
 const char* NOREAD_SWITCH("noread");
@@ -55,8 +55,8 @@ class ProgramRegisterModify : public Program
     int position = mOptions.position;
     int width = mOptions.width;
     auto readback = !bool(map.count(NOREAD_SWITCH));
-    auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
-    auto channel = AliceO2::roc::ChannelFactory().getBar(params);
+    auto params = o2::roc::Parameters::makeParameters(cardId, channelNumber);
+    auto channel = o2::roc::ChannelFactory().getBar(params);
 
     // Registers are indexed by 32 bits (4 bytes)
     if (readback) {

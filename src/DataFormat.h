@@ -13,15 +13,15 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_READOUTCARD_DATAFORMAT_H_
-#define ALICEO2_READOUTCARD_DATAFORMAT_H_
+#ifndef O2_READOUTCARD_SRC_DATAFORMAT_H_
+#define O2_READOUTCARD_SRC_DATAFORMAT_H_
 
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include "Utilities/Util.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -92,6 +92,6 @@ constexpr size_t getHeaderSizeWords()
 
 } // namespace DataFormat
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_READOUTCARD_DATAFORMAT_H_
+#endif // O2_READOUTCARD_SRC_DATAFORMAT_H_
