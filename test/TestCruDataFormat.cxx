@@ -9,7 +9,7 @@
 #include <boost/test/unit_test.hpp>
 #include "DataFormat.h"
 
-using namespace AliceO2::roc;
+using namespace o2::roc;
 using namespace DataFormat;
 
 static const std::vector<uint32_t> link18Test1 = {

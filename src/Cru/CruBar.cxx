@@ -33,7 +33,7 @@
 
 using namespace std::literals;
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -1136,4 +1136,4 @@ Cru::UserLogicInfo CruBar::reportUserLogic()
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

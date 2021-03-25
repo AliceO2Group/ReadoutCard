@@ -13,13 +13,13 @@
 ///
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef ALICEO2_READOUTCARD_CRU_DATAPATHWRAPPER_H_
-#define ALICEO2_READOUTCARD_CRU_DATAPATHWRAPPER_H_
+#ifndef O2_READOUTCARD_CRU_DATAPATHWRAPPER_H_
+#define O2_READOUTCARD_CRU_DATAPATHWRAPPER_H_
 
 #include "Common.h"
 #include "Pda/PdaBar.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -67,6 +67,6 @@ class DatapathWrapper
   std::shared_ptr<Pda::PdaBar> mPdaBar;
 };
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_READOUTCARD_CRU_DATAPATHWRAPPER_H_
+#endif // O2_READOUTCARD_CRU_DATAPATHWRAPPER_H_

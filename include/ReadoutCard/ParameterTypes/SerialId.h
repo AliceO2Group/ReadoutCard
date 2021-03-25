@@ -13,14 +13,15 @@
 ///
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef ALICEO2_READOUTCARD_INCLUDE_SERIALID_H_
-#define ALICEO2_READOUTCARD_INCLUDE_SERIALID_H_
+#ifndef O2_READOUTCARD_INCLUDE_SERIALID_H_
+#define O2_READOUTCARD_INCLUDE_SERIALID_H_
 
+#include "ReadoutCard/NamespaceAlias.h"
 #include <iostream>
 #include <string>
 #include <boost/optional.hpp>
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -78,6 +79,6 @@ static constexpr int ENDPOINT_DEFAULT(0);
 //static constexpr SerialId SERIAL_ID_DEFAULT(SERIAL_DEFAULT, ENDPOINT_DEFAULT);
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_READOUTCARD_INCLUDE_SERIALID_H_
+#endif // O2_READOUTCARD_INCLUDE_SERIALID_H_

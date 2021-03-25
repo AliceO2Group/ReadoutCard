@@ -21,7 +21,7 @@
 #include "CommandLineUtilities/Common.h"
 #include "ExceptionInternal.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -225,4 +225,4 @@ std::string getOptionCardIdString(const po::variables_map& map)
 } // namespace Options
 } // namespace CommandLineUtilities
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

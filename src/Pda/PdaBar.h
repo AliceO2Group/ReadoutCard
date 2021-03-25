@@ -13,8 +13,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_SRC_READOUTCARD_PDA_PDABAR_H_
-#define ALICEO2_SRC_READOUTCARD_PDA_PDABAR_H_
+#ifndef O2_READOUTCARD_SRC_PDA_PDABAR_H_
+#define O2_READOUTCARD_SRC_PDA_PDABAR_H_
 
 #include "ReadoutCard/BarInterface.h"
 #include <pda.h>
@@ -25,7 +25,7 @@
 #endif
 #include "Utilities/Util.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -218,6 +218,6 @@ class PdaBar : public BarInterface
 
 } // namespace Pda
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_SRC_READOUTCARD_PDA_PDABAR_H_
+#endif // O2_READOUTCARD_SRC_PDA_PDABAR_H_

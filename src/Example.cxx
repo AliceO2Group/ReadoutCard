@@ -23,7 +23,7 @@
 
 using std::cout;
 using std::endl;
-using namespace AliceO2;
+using namespace o2;
 
 int main(int, char**)
 {

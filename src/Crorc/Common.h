@@ -13,10 +13,10 @@
 ///
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef ALICEO2_READOUTCARD_CRORC_COMMON_H_
-#define ALICEO2_READOUTCARD_CRORC_COMMON_H_
+#ifndef O2_READOUTCARD_CRORC_COMMON_H_
+#define O2_READOUTCARD_CRORC_COMMON_H_
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -49,6 +49,6 @@ struct PacketMonitoringInfo {
 
 } // namespace Crorc
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_READOUTCARD_CRORC_COMMON_H_
+#endif // O2_READOUTCARD_CRORC_COMMON_H_

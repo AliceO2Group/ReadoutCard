@@ -22,10 +22,10 @@
 #include <cstdint>
 #include "ReadoutCard/CardType.h"
 
-using namespace AliceO2::roc;
+using namespace o2::roc;
 namespace b = boost;
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -44,7 +44,7 @@ void addPossibleCauses(boost::exception& exception, const std::vector<std::strin
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
 template <typename Message>
 std::string toStringHelper(const std::string& name, const Message& message)

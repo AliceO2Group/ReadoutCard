@@ -19,7 +19,7 @@
 
 namespace
 {
-using namespace AliceO2::roc::CommandLineUtilities;
+using namespace o2::roc::CommandLineUtilities;
 
 class ProgramRegisterRead : public Program
 {
@@ -41,8 +41,8 @@ class ProgramRegisterRead : public Program
     auto cardId = Options::getOptionCardId(map);
     uint32_t address = Options::getOptionRegisterAddress(map);
     int channelNumber = Options::getOptionChannel(map);
-    auto params = AliceO2::roc::Parameters::makeParameters(cardId, channelNumber);
-    auto channel = AliceO2::roc::ChannelFactory().getBar(params);
+    auto params = o2::roc::Parameters::makeParameters(cardId, channelNumber);
+    auto channel = o2::roc::ChannelFactory().getBar(params);
 
     // Registers are indexed by 32 bits (4 bytes)
     uint32_t value = channel->readRegister(address / 4);

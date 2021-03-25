@@ -28,8 +28,8 @@
 #include <Monitoring/MonitoringFactory.h>
 using namespace o2::monitoring;
 
-using namespace AliceO2::roc::CommandLineUtilities;
-using namespace AliceO2::roc;
+using namespace o2::roc::CommandLineUtilities;
+using namespace o2::roc;
 namespace pt = boost::property_tree;
 namespace po = boost::program_options;
 
@@ -68,7 +68,7 @@ class ProgramMetrics : public Program
       table << lineFat << header << lineThin;
     }
 
-    auto cardsFound = AliceO2::roc::RocPciDevice::findSystemDevices();
+    auto cardsFound = o2::roc::RocPciDevice::findSystemDevices();
 
     // Monitoring instance to send metrics
     std::unique_ptr<Monitoring> monitoring;

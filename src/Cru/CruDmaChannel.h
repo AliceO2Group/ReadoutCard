@@ -14,8 +14,8 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef ALICEO2_READOUTCARD_CRU_CRUDMACHANNEL_H_
-#define ALICEO2_READOUTCARD_CRU_CRUDMACHANNEL_H_
+#ifndef O2_READOUTCARD_CRU_CRUDMACHANNEL_H_
+#define O2_READOUTCARD_CRU_CRUDMACHANNEL_H_
 
 #include "DmaChannelPdaBase.h"
 #include <memory>
@@ -27,7 +27,7 @@
 #include "ReadoutCard/Parameters.h"
 #include "folly/ProducerConsumerQueue.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -161,6 +161,6 @@ class CruDmaChannel final : public DmaChannelPdaBase
 };
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_READOUTCARD_CRU_CRUDMACHANNEL_H_
+#endif // O2_READOUTCARD_CRU_CRUDMACHANNEL_H_

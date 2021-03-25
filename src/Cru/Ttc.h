@@ -3,14 +3,14 @@
 ///
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef ALICEO2_READOUTCARD_CRU_TTC_H_
-#define ALICEO2_READOUTCARD_CRU_TTC_H_
+#ifndef O2_READOUTCARD_CRU_TTC_H_
+#define O2_READOUTCARD_CRU_TTC_H_
 
 #include "Common.h"
 #include "ReadoutCard/BarInterface.h"
 #include "ReadoutCard/InterprocessLock.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -70,6 +70,6 @@ class Ttc
   static constexpr uint32_t MAX_BCID = 3564 - 1;
 };
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_READOUTCARD_CRU_TTC_H_
+#endif // O2_READOUTCARD_CRU_TTC_H_

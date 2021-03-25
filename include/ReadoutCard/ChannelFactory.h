@@ -13,9 +13,10 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_READOUTCARD_CHANNELFACTORY_H_
-#define ALICEO2_INCLUDE_READOUTCARD_CHANNELFACTORY_H_
+#ifndef O2_READOUTCARD_INCLUDE_CHANNELFACTORY_H_
+#define O2_READOUTCARD_INCLUDE_CHANNELFACTORY_H_
 
+#include "ReadoutCard/NamespaceAlias.h"
 #include <memory>
 #include <string>
 #include "ReadoutCard/BarInterface.h"
@@ -23,7 +24,7 @@
 #include "ReadoutCard/Parameters.h"
 #include "ReadoutCard/ParameterTypes/SerialId.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -64,6 +65,6 @@ class ChannelFactory
 };
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_INCLUDE_READOUTCARD_CHANNELFACTORY_H_
+#endif // O2_READOUTCARD_INCLUDE_CHANNELFACTORY_H_

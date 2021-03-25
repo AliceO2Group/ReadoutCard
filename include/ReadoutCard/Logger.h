@@ -13,13 +13,14 @@
 ///
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_READOUTCARD_LOGGER_H_
-#define ALICEO2_INCLUDE_READOUTCARD_LOGGER_H_
+#ifndef O2_READOUTCARD_INCLUDE_LOGGER_H_
+#define O2_READOUTCARD_INCLUDE_LOGGER_H_
 
+#include "ReadoutCard/NamespaceAlias.h"
 #include "InfoLogger/InfoLogger.hxx"
 #include "InfoLogger/InfoLoggerMacros.hxx"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -47,6 +48,6 @@ class Logger
 };
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
 #endif // O2_ALF_LOGGER_H_

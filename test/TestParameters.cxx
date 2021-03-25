@@ -12,7 +12,7 @@
 #include <assert.h>
 #include "ReadoutCard/Exception.h"
 
-using namespace AliceO2::roc;
+using namespace o2::roc;
 
 constexpr auto SERIAL_NUMBER = 10000;
 constexpr auto ENDPOINT_NUMBER = 0;

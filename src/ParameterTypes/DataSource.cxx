@@ -17,7 +17,7 @@
 #include "ReadoutCard/ParameterTypes/DataSource.h"
 #include "Utilities/Enum.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -50,4 +50,4 @@ DataSource::type DataSource::fromString(const std::string& string)
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

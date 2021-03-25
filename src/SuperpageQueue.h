@@ -13,8 +13,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_READOUTCARD_SRC_SUPERPAGEQUEUE_H_
-#define ALICEO2_READOUTCARD_SRC_SUPERPAGEQUEUE_H_
+#ifndef O2_READOUTCARD_SRC_SUPERPAGEQUEUE_H_
+#define O2_READOUTCARD_SRC_SUPERPAGEQUEUE_H_
 
 #include <iostream>
 #include <unordered_map>
@@ -22,7 +22,7 @@
 #include "ReadoutCard/Superpage.h"
 #include "ExceptionInternal.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -298,6 +298,6 @@ class SuperpageQueue
 };
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_READOUTCARD_SRC_SUPERPAGEQUEUE_H_
+#endif // O2_READOUTCARD_SRC_SUPERPAGEQUEUE_H_

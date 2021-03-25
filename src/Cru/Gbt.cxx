@@ -17,7 +17,7 @@
 #include "Gbt.h"
 #include "Utilities/Util.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -299,4 +299,4 @@ void Gbt::resetFifo()
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

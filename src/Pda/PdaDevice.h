@@ -14,8 +14,8 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef ALICEO2_SRC_READOUTCARD_PDA_PDADEVICE_H_
-#define ALICEO2_SRC_READOUTCARD_PDA_PDADEVICE_H_
+#ifndef O2_READOUTCARD_SRC_PDA_PDADEVICE_H_
+#define O2_READOUTCARD_SRC_PDA_PDADEVICE_H_
 
 #include <memory>
 #include <string>
@@ -24,7 +24,7 @@
 #include "ReadoutCard/CardType.h"
 #include "ReadoutCard/PciId.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -76,6 +76,6 @@ class PdaDevice
 
 } // namespace Pda
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_SRC_READOUTCARD_PDA_PDADEVICE_H_
+#endif // O2_READOUTCARD_SRC_PDA_PDADEVICE_H_

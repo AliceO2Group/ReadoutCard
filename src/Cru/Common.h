@@ -13,14 +13,14 @@
 ///
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef ALICEO2_READOUTCARD_CRU_COMMON_H_
-#define ALICEO2_READOUTCARD_CRU_COMMON_H_
+#ifndef O2_READOUTCARD_CRU_COMMON_H_
+#define O2_READOUTCARD_CRU_COMMON_H_
 
 #include "Constants.h"
 #include "ExceptionInternal.h"
 #include "ReadoutCard/BarInterface.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -196,6 +196,6 @@ uint32_t waitForBit(std::shared_ptr<BarInterface> bar, uint32_t address, uint32_
 
 } // namespace Cru
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_READOUTCARD_CRU_COMMON_H_
+#endif // O2_READOUTCARD_CRU_COMMON_H_

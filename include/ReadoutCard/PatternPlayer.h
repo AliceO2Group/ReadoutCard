@@ -3,16 +3,17 @@
 ///
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_READOUTCARD_PATTERNPLAYER_H_
-#define ALICEO2_INCLUDE_READOUTCARD_PATTERNPLAYER_H_
+#ifndef O2_READOUTCARD_INCLUDE_PATTERNPLAYER_H_
+#define O2_READOUTCARD_INCLUDE_PATTERNPLAYER_H_
 
+#include "ReadoutCard/NamespaceAlias.h"
 #include "ReadoutCard/Cru.h"
 #include "ReadoutCard/BarInterface.h"
 #include <boost/multiprecision/cpp_int.hpp>
 
 using namespace boost::multiprecision;
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -53,6 +54,6 @@ class PatternPlayer
 };
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_INCLUDE_READOUTCARD_PATTERNPLAYER_H_
+#endif // O2_READOUTCARD_INCLUDE_PATTERNPLAYER_H_

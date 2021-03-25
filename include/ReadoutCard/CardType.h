@@ -3,12 +3,13 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_READOUTCARD_CARDTYPE_H_
-#define ALICEO2_INCLUDE_READOUTCARD_CARDTYPE_H_
+#ifndef O2_READOUTCARD_INCLUDE_CARDTYPE_H_
+#define O2_READOUTCARD_INCLUDE_CARDTYPE_H_
 
+#include "ReadoutCard/NamespaceAlias.h"
 #include <string>
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -78,6 +79,6 @@ static_assert(!isValidTag<int>(), "");
 } // namespace CardTypeTag
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_INCLUDE_READOUTCARD_CARDTYPE_H_
+#endif // O2_READOUTCARD_INCLUDE_CARDTYPE_H_

@@ -13,15 +13,15 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_SRC_READOUTCARD_UTILITIES_MEMORYMAPS_H_
-#define ALICEO2_SRC_READOUTCARD_UTILITIES_MEMORYMAPS_H_
+#ifndef O2_READOUTCARD_SRC_UTILITIES_MEMORYMAPS_H_
+#define O2_READOUTCARD_SRC_UTILITIES_MEMORYMAPS_H_
 
 #include <cstddef>
 #include <cstdint>
 #include <vector>
 #include <string>
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -40,6 +40,6 @@ std::vector<MemoryMap> getMemoryMaps();
 
 } // namespace Utilities
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_SRC_READOUTCARD_UTILITIES_MEMORYMAPS_H_
+#endif // O2_READOUTCARD_SRC_UTILITIES_MEMORYMAPS_H_

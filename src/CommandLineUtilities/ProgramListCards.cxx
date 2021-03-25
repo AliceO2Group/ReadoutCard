@@ -27,8 +27,8 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
-using namespace AliceO2::roc::CommandLineUtilities;
-using namespace AliceO2::roc;
+using namespace o2::roc::CommandLineUtilities;
+using namespace o2::roc;
 namespace pt = boost::property_tree;
 namespace po = boost::program_options;
 
@@ -68,7 +68,7 @@ class ProgramListCards : public Program
     // initialize ptree
     pt::ptree root;
 
-    auto cardsFound = AliceO2::roc::RocPciDevice::findSystemDevices();
+    auto cardsFound = o2::roc::RocPciDevice::findSystemDevices();
 
     int i = 0;
     for (const auto& card : cardsFound) {

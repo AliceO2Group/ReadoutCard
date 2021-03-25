@@ -15,7 +15,7 @@
 /// Test handling of program options in the utilities
 BOOST_AUTO_TEST_CASE(UtilOptions)
 {
-  using namespace AliceO2::roc::CommandLineUtilities::Options;
+  using namespace o2::roc::CommandLineUtilities::Options;
   namespace po = boost::program_options;
 
   // Our mock options

@@ -13,6 +13,7 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
+#include "ReadoutCard/NamespaceAlias.h"
 #include "ReadoutCard/BarInterface.h"
 #include "ReadoutCard/CardType.h"
 #include "ReadoutCard/ChannelFactory.h"

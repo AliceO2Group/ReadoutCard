@@ -13,20 +13,21 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_READOUTCARD_EXCEPTION_H_
-#define ALICEO2_INCLUDE_READOUTCARD_EXCEPTION_H_
+#ifndef O2_READOUTCARD_INCLUDE_EXCEPTION_H_
+#define O2_READOUTCARD_INCLUDE_EXCEPTION_H_
 
+#include "ReadoutCard/NamespaceAlias.h"
 #include <Common/Exceptions.h>
 #include <stdexcept>
 #include <boost/exception/exception.hpp>
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
 
 //// RORC exception definitions
-struct Exception : Common::Exception {
+struct Exception : AliceO2::Common::Exception {
 };
 
 // General exception definitions
@@ -110,6 +111,6 @@ struct OptionRequiredException : virtual ProgramOptionException {
 };
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_INCLUDE_READOUTCARD_EXCEPTION_H_
+#endif // O2_READOUTCARD_INCLUDE_EXCEPTION_H_

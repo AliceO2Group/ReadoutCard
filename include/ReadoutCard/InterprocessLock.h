@@ -14,9 +14,10 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef ALICEO2_READOUTCARD_INTERPROCESSMUTEX_H_
-#define ALICEO2_READOUTCARD_INTERPROCESSMUTEX_H_
+#ifndef O2_READOUTCARD_INCLUDE_INTERPROCESSMUTEX_H_
+#define O2_READOUTCARD_INCLUDE_INTERPROCESSMUTEX_H_
 
+#include "ReadoutCard/NamespaceAlias.h"
 #include <boost/exception/errinfo_errno.hpp>
 #include <chrono>
 #include <sys/socket.h>
@@ -25,7 +26,7 @@
 #define LOCK_TIMEOUT 15           //15 second timeout in case we wait for the lock (PDA, I2C)
 #define UNIX_SOCK_NAME_LENGTH 104 //108 for most UNIXs, 104 for macOS
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -109,6 +110,6 @@ class Lock
 
 } // namespace Interprocess
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif /* ALICEO2_READOUTCARD_INTERPROCESSMUTEX_H_ */
+#endif /* O2_READOUTCARD_INCLUDE_INTERPROCESSMUTEX_H_ */

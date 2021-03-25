@@ -24,7 +24,7 @@
 #include "register_maps/Si5345-RevD_ttc_pll2_zdb-Registers.h"
 #include "register_maps/Si5344-RevD-TFC_40-Registers.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -452,4 +452,4 @@ double Ttc::getPonRxPower()
 }*/
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

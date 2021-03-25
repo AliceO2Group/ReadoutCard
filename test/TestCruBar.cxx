@@ -12,7 +12,7 @@
 #include "ReadoutCard/BarInterface.h"
 #include "Cru/CruBar.h"
 
-using namespace AliceO2::roc;
+using namespace o2::roc;
 
 BOOST_AUTO_TEST_CASE(TestFirmwareFeatures)
 {

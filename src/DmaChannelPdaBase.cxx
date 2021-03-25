@@ -25,7 +25,7 @@
 #include "DmaBufferProvider/NullDmaBufferProvider.h"
 #include "Visitor.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -98,7 +98,7 @@ DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
         if (map.pageSizeKiB > 4) {
           log("Buffer is hugepage-backed", LogDebugDevel);
         } else {
-          if (Common::Iommu::isEnabled()) {
+          if (AliceO2::Common::Iommu::isEnabled()) {
             log("Buffer is NOT hugepage-backed, but IOMMU is enabled", LogWarningDevel);
           } else {
             std::string message =
@@ -203,4 +203,4 @@ int DmaChannelPdaBase::getNumaNode()
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

@@ -21,7 +21,7 @@
 
 #include "ReadoutCard/Exception.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -61,4 +61,4 @@ PdaBar::PdaBar(PciDevice* pciDevice, int barNumberInt) : mBarNumber(barNumberInt
 
 } // namespace Pda
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

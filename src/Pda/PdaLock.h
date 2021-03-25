@@ -13,12 +13,12 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_SRC_READOUTCARD_PDA_PDALOCK_H_
-#define ALICEO2_SRC_READOUTCARD_PDA_PDALOCK_H_
+#ifndef O2_READOUTCARD_SRC_PDA_PDALOCK_H_
+#define O2_READOUTCARD_SRC_PDA_PDALOCK_H_
 
 #include "ReadoutCard/InterprocessLock.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -49,6 +49,6 @@ class PdaLock
 
 } // namespace Pda
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_SRC_READOUTCARD_PDA_PDALOCK_H_
+#endif // O2_READOUTCARD_SRC_PDA_PDALOCK_H_

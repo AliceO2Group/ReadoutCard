@@ -13,8 +13,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_SRC_READOUTCARD_CRORC_CRORC_H_
-#define ALICEO2_SRC_READOUTCARD_CRORC_CRORC_H_
+#ifndef O2_READOUTCARD_SRC_CRORC_CRORC_H_
+#define O2_READOUTCARD_SRC_CRORC_CRORC_H_
 
 #include <atomic>
 #include <iostream>
@@ -25,7 +25,7 @@
 #include "RxFreeFifoState.h"
 #include "StWord.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -215,6 +215,6 @@ class Crorc
 
 } // namespace Crorc
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_SRC_READOUTCARD_CRORC_CRORC_H_
+#endif // O2_READOUTCARD_SRC_CRORC_CRORC_H_

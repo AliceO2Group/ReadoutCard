@@ -18,7 +18,7 @@
 #include <iomanip>
 #include <bitset>
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -71,4 +71,4 @@ std::string makeRegisterString(int address, uint32_t value)
 } // namespace Common
 } // namespace CommandLineUtilities
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

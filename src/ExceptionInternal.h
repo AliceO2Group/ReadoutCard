@@ -13,8 +13,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_SRC_READOUTCARD_EXCEPTIONINTERNAL_H_
-#define ALICEO2_SRC_READOUTCARD_EXCEPTIONINTERNAL_H_
+#ifndef O2_READOUTCARD_SRC_EXCEPTIONINTERNAL_H_
+#define O2_READOUTCARD_SRC_EXCEPTIONINTERNAL_H_
 
 #include <stdexcept>
 #include <string>
@@ -32,7 +32,7 @@
 #include "ReadoutCard/ParameterTypes/ResetLevel.h"
 #include "ReadoutCard/ParameterTypes/SerialId.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -50,8 +50,8 @@ using FilesystemType = AliceO2::Common::ErrorInfo::FilesystemType;
 DEFINE_ERRINFO(Address, uintptr_t);
 DEFINE_ERRINFO(BarIndex, size_t);
 DEFINE_ERRINFO(BarSize, size_t);
-DEFINE_ERRINFO(CardId, ::AliceO2::roc::Parameters::CardIdType);
-DEFINE_ERRINFO(CardType, ::AliceO2::roc::CardType::type);
+DEFINE_ERRINFO(CardId, ::o2::roc::Parameters::CardIdType);
+DEFINE_ERRINFO(CardType, ::o2::roc::CardType::type);
 DEFINE_ERRINFO(ChannelNumber, int);
 DEFINE_ERRINFO(ConfigParse, std::string);
 DEFINE_ERRINFO(ConfigValue, uint32_t);
@@ -67,27 +67,27 @@ DEFINE_ERRINFO(FileSize, size_t);
 DEFINE_ERRINFO(GeneratorEventLength, size_t);
 DEFINE_ERRINFO(Index, size_t);
 DEFINE_ERRINFO(LinkId, uint32_t);
-DEFINE_ERRINFO(DataSource, ::AliceO2::roc::DataSource::type);
+DEFINE_ERRINFO(DataSource, ::o2::roc::DataSource::type);
 DEFINE_ERRINFO(Offset, size_t);
 DEFINE_ERRINFO(PageIndex, int);
 DEFINE_ERRINFO(Pages, size_t);
 DEFINE_ERRINFO(ParameterKey, std::string);
-DEFINE_ERRINFO(PciAddress, ::AliceO2::roc::PciAddress);
+DEFINE_ERRINFO(PciAddress, ::o2::roc::PciAddress);
 DEFINE_ERRINFO(PciAddressBusNumber, int);
 DEFINE_ERRINFO(PciAddressSlotNumber, int);
 DEFINE_ERRINFO(PciAddressFunctionNumber, int);
 DEFINE_ERRINFO(PciDeviceIndex, int);
-DEFINE_ERRINFO(PciId, ::AliceO2::roc::PciId);
-DEFINE_ERRINFO(PciIds, std::vector<::AliceO2::roc::PciId>);
-DEFINE_ERRINFO(PciSequenceNumber, ::AliceO2::roc::PciSequenceNumber);
+DEFINE_ERRINFO(PciId, ::o2::roc::PciId);
+DEFINE_ERRINFO(PciIds, std::vector<::o2::roc::PciId>);
+DEFINE_ERRINFO(PciSequenceNumber, ::o2::roc::PciSequenceNumber);
 DEFINE_ERRINFO(PdaStatusCode, int);
 DEFINE_ERRINFO(PossibleCauses, std::vector<std::string>);
 DEFINE_ERRINFO(Range, size_t);
 DEFINE_ERRINFO(ReadyFifoLength, int32_t);
 DEFINE_ERRINFO(ReadyFifoStatus, int);
-DEFINE_ERRINFO(ResetLevel, ::AliceO2::roc::ResetLevel::type);
+DEFINE_ERRINFO(ResetLevel, ::o2::roc::ResetLevel::type);
 DEFINE_ERRINFO(ScatterGatherEntrySize, size_t);
-DEFINE_ERRINFO(SerialId, ::AliceO2::roc::SerialId);
+DEFINE_ERRINFO(SerialId, ::o2::roc::SerialId);
 DEFINE_ERRINFO(SerialIdEndpoint, int);
 DEFINE_ERRINFO(SerialIdSerial, int);
 DEFINE_ERRINFO(SerialNumber, int);
@@ -112,26 +112,26 @@ DEFINE_ERRINFO(StwReceived, std::string);
 void addPossibleCauses(boost::exception& exception, const std::vector<std::string>& possibleCauses);
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
 namespace boost
 {
 
 // These functions convert the errinfos to strings for diagnostic messages
-std::string to_string(const AliceO2::roc::ErrorInfo::CardId& e);
-std::string to_string(const AliceO2::roc::ErrorInfo::CardType& e);
-std::string to_string(const AliceO2::roc::ErrorInfo::ConfigParse& e);
-std::string to_string(const AliceO2::roc::ErrorInfo::Message& e);
-std::string to_string(const AliceO2::roc::ErrorInfo::DataSource& e);
-std::string to_string(const AliceO2::roc::ErrorInfo::PciAddress& e);
-std::string to_string(const AliceO2::roc::ErrorInfo::PciId& e);
-std::string to_string(const AliceO2::roc::ErrorInfo::PciIds& e);
-std::string to_string(const AliceO2::roc::ErrorInfo::PciSequenceNumber& e);
-std::string to_string(const AliceO2::roc::ErrorInfo::PossibleCauses& e);
-std::string to_string(const AliceO2::roc::ErrorInfo::ReadyFifoStatus& e);
-std::string to_string(const AliceO2::roc::ErrorInfo::ResetLevel& e);
-std::string to_string(const AliceO2::roc::ErrorInfo::SerialId& e);
+std::string to_string(const o2::roc::ErrorInfo::CardId& e);
+std::string to_string(const o2::roc::ErrorInfo::CardType& e);
+std::string to_string(const o2::roc::ErrorInfo::ConfigParse& e);
+std::string to_string(const o2::roc::ErrorInfo::Message& e);
+std::string to_string(const o2::roc::ErrorInfo::DataSource& e);
+std::string to_string(const o2::roc::ErrorInfo::PciAddress& e);
+std::string to_string(const o2::roc::ErrorInfo::PciId& e);
+std::string to_string(const o2::roc::ErrorInfo::PciIds& e);
+std::string to_string(const o2::roc::ErrorInfo::PciSequenceNumber& e);
+std::string to_string(const o2::roc::ErrorInfo::PossibleCauses& e);
+std::string to_string(const o2::roc::ErrorInfo::ReadyFifoStatus& e);
+std::string to_string(const o2::roc::ErrorInfo::ResetLevel& e);
+std::string to_string(const o2::roc::ErrorInfo::SerialId& e);
 
 } // namespace boost
 
-#endif // ALICEO2_SRC_READOUTCARD_EXCEPTIONINTERNAL_H_
+#endif // O2_READOUTCARD_SRC_EXCEPTIONINTERNAL_H_

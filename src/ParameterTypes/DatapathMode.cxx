@@ -16,7 +16,7 @@
 #include "ReadoutCard/ParameterTypes/DatapathMode.h"
 #include "Utilities/Enum.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -41,4 +41,4 @@ DatapathMode::type DatapathMode::fromString(const std::string& string)
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

@@ -25,7 +25,7 @@
 #include <boost/lexical_cast.hpp>
 #include "Common/System.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -153,4 +153,4 @@ std::vector<MemoryMap> getMemoryMaps()
 
 } // namespace Utilities
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

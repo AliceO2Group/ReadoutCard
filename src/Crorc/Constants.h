@@ -15,12 +15,12 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
-#ifndef ALICEO2_SRC_READOUTCARD_CRORC_CONSTANTS_H_
-#define ALICEO2_SRC_READOUTCARD_CRORC_CONSTANTS_H_
+#ifndef O2_READOUTCARD_SRC_CRORC_CONSTANTS_H_
+#define O2_READOUTCARD_SRC_CRORC_CONSTANTS_H_
 
 #include "ReadoutCard/Register.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -433,6 +433,6 @@ static constexpr Register PKTS_RECEIVED(0x00000054);
 } //namespace Crorc
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_SRC_READOUTCARD_CRORC_CONSTANTS_H_
+#endif // O2_READOUTCARD_SRC_CRORC_CONSTANTS_H_

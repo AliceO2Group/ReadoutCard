@@ -16,7 +16,7 @@
 #include "ReadoutCard/CardType.h"
 #include "Utilities/Enum.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -42,4 +42,4 @@ CardType::type CardType::fromString(const std::string& string)
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

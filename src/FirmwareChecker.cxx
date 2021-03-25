@@ -16,7 +16,7 @@
 #include "ReadoutCard/FirmwareChecker.h"
 #include "ExceptionInternal.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -92,4 +92,4 @@ void FirmwareChecker::checkFirmwareCompatibility(Parameters::CardIdType cardId)
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

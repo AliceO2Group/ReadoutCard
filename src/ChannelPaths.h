@@ -13,13 +13,13 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_SRC_READOUTCARD_CHANNELPATHS_H_
-#define ALICEO2_SRC_READOUTCARD_CHANNELPATHS_H_
+#ifndef O2_READOUTCARD_SRC_CHANNELPATHS_H_
+#define O2_READOUTCARD_SRC_CHANNELPATHS_H_
 
 #include <string>
 #include "ReadoutCard/ParameterTypes/PciAddress.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -53,6 +53,6 @@ class ChannelPaths
 };
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_SRC_READOUTCARD_CHANNELPATHS_H_
+#endif // O2_READOUTCARD_SRC_CHANNELPATHS_H_

@@ -24,8 +24,8 @@
 #include "Utilities/Enum.h"
 #include <boost/format.hpp>
 
-using namespace AliceO2::roc::CommandLineUtilities;
-using namespace AliceO2::roc;
+using namespace o2::roc::CommandLineUtilities;
+using namespace o2::roc;
 namespace po = boost::program_options;
 
 class ProgramCtpEmulator : public Program

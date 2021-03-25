@@ -13,9 +13,10 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_READOUTCARD_PARAMETERS_H_
-#define ALICEO2_INCLUDE_READOUTCARD_PARAMETERS_H_
+#ifndef O2_READOUTCARD_INCLUDE_PARAMETERS_H_
+#define O2_READOUTCARD_INCLUDE_PARAMETERS_H_
 
+#include "ReadoutCard/NamespaceAlias.h"
 #include <map>
 #include <memory>
 #include <set>
@@ -36,7 +37,7 @@
 #include "ReadoutCard/ParameterTypes/GbtMode.h"
 #include "ReadoutCard/ParameterTypes/GbtMux.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -66,7 +67,7 @@ class Parameters
                                               buffer_parameters::Null>;
 
   /// Type for the CardId parameter. It can hold a SerialId, a PciAddress or a PciSequenceNumber.
-  using CardIdType = boost::variant<::AliceO2::roc::PciAddress, ::AliceO2::roc::PciSequenceNumber, ::AliceO2::roc::SerialId>;
+  using CardIdType = boost::variant<::o2::roc::PciAddress, ::o2::roc::PciSequenceNumber, ::o2::roc::SerialId>;
 
   /// Type for the ChannelNumber parameter
   using ChannelNumberType = int32_t;
@@ -742,6 +743,6 @@ class Parameters
 };
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_INCLUDE_READOUTCARD_PARAMETERS_H_
+#endif // O2_READOUTCARD_INCLUDE_PARAMETERS_H_

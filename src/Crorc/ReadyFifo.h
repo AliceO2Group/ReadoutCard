@@ -13,13 +13,13 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_SRC_READOUTCARD_CRORC_READYFIFO_H_
-#define ALICEO2_SRC_READOUTCARD_CRORC_READYFIFO_H_
+#ifndef O2_READOUTCARD_SRC_CRORC_READYFIFO_H_
+#define O2_READOUTCARD_SRC_CRORC_READYFIFO_H_
 
 #include <cstdint>
 #include <array>
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -67,6 +67,6 @@ static_assert(sizeof(ReadyFifo::Entry) == 8, "Size of ReadyFifo::Entry invalid")
 static_assert(sizeof(ReadyFifo) == (READYFIFO_ENTRIES * sizeof(ReadyFifo::Entry)), "Size of ReadyFifo invalid");
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_SRC_READOUTCARD_CRORC_READYFIFO_H_
+#endif // O2_READOUTCARD_SRC_CRORC_READYFIFO_H_

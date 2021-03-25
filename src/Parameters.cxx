@@ -25,7 +25,7 @@
 #include <boost/variant.hpp>
 #include "ExceptionInternal.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -247,4 +247,4 @@ auto Parameters::cardIdFromString(const std::string& string) -> CardIdType
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

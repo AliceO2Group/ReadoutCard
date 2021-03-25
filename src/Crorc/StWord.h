@@ -13,8 +13,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_SRC_READOUTCARD_CRORC_STWORD_H_
-#define ALICEO2_SRC_READOUTCARD_CRORC_STWORD_H_
+#ifndef O2_READOUTCARD_SRC_CRORC_STWORD_H_
+#define O2_READOUTCARD_SRC_CRORC_STWORD_H_
 
 #include <cstdint>
 
@@ -29,4 +29,4 @@ union StWord {
   uint32_t stw;
 };
 
-#endif // ALICEO2_SRC_READOUTCARD_CRORC_STWORD_H_
+#endif // O2_READOUTCARD_SRC_CRORC_STWORD_H_

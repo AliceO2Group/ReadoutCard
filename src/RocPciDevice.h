@@ -13,8 +13,8 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_SRC_READOUTCARD_ROCPCIDEVICE_H_
-#define ALICEO2_SRC_READOUTCARD_ROCPCIDEVICE_H_
+#ifndef O2_READOUTCARD_SRC_ROCPCIDEVICE_H_
+#define O2_READOUTCARD_SRC_ROCPCIDEVICE_H_
 
 #include <memory>
 #include <string>
@@ -28,7 +28,7 @@
 #include "ReadoutCard/PciId.h"
 #include "Utilities/SmartPointer.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -110,6 +110,6 @@ class RocPciDevice
 };
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_SRC_READOUTCARD_ROCPCIDEVICE_H_
+#endif // O2_READOUTCARD_SRC_ROCPCIDEVICE_H_

@@ -6,10 +6,11 @@
 #ifndef ALICEO2_READOUTCARD_VERSION_H
 #define ALICEO2_READOUTCARD_VERSION_H
 
+#include "ReadoutCard/NamespaceAlias.h"
 #include <string>
 #include <sstream>
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -102,6 +103,6 @@ class Version
 
 } // namespace Core
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
 #endif // ALICEO2_READOUTCARD_VERSION_H

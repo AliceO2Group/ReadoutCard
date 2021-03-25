@@ -29,7 +29,7 @@
 #include "ReadoutCard/Exception.h"
 #include "ReadoutCard/Parameters.h"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -278,4 +278,4 @@ int crorcGetEndpoint(std::shared_ptr<Pda::PdaBar> /*pdaBar0*/)
 }
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2

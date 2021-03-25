@@ -13,16 +13,17 @@
 ///
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#ifndef ALICEO2_INCLUDE_READOUTCARD_BARINTERFACE_H_
-#define ALICEO2_INCLUDE_READOUTCARD_BARINTERFACE_H_
+#ifndef O2_READOUTCARD_INCLUDE_BARINTERFACE_H_
+#define O2_READOUTCARD_INCLUDE_BARINTERFACE_H_
 
+#include "ReadoutCard/NamespaceAlias.h"
 #include <cstdint>
 #include "ReadoutCard/CardType.h"
 #include "ReadoutCard/RegisterReadWriteInterface.h"
 #include "ReadoutCard/Parameters.h"
 #include "boost/optional.hpp"
 
-namespace AliceO2
+namespace o2
 {
 namespace roc
 {
@@ -78,6 +79,6 @@ class BarInterface : public virtual RegisterReadWriteInterface
 };
 
 } // namespace roc
-} // namespace AliceO2
+} // namespace o2
 
-#endif // ALICEO2_INCLUDE_READOUTCARD_BARINTERFACE_H_
+#endif // O2_READOUTCARD_INCLUDE_BARINTERFACE_H_
