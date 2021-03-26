@@ -13,9 +13,9 @@ endif()
 
 # Define project
 project(ReadoutCard
-  VERSION 0.11.11
+  VERSION 0.31.0
   DESCRIPTION "O2 ReadoutCard library"
-  LANGUAGES C CXX
+  LANGUAGES CXX
 )
 
 # Documentation dir
@@ -39,17 +39,15 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   )
 endif()
 
-
 ####################################
 # Populate the Cru/Constants.h file with the register addresses contained in CRU/cru_table.py
 ####################################
-execute_process(COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/src/Cru/cru_constants_populate.py
+execute_process(COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/src/Cru/cru_constants_populate.py
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/Cru
   RESULT_VARIABLE status)
 IF(NOT "${status}" EQUAL "0")
   MESSAGE(WARNING "Couldn't update CRU Register Addresses")
 ENDIF()
-
 
 ####################################
 # Dependencies
@@ -91,29 +89,36 @@ include(GNUInstallDirs)
 ####################################
 # RPATH
 ####################################
-include(GNUInstallDirs)
 
 # https://gitlab.kitware.com/cmake/community/wikis/doc/cmake/RPATH-handling
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" isSystemDir)
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-  if("${isSystemDir}" STREQUAL "-1")
-    set(CMAKE_INSTALL_RPATH "@loader_path/../${CMAKE_INSTALL_LIBDIR}")
-  endif()
-  set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-endif()
-unset(isSystemDir)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE) #TODO: Why does the lib dir end up in the BUILD bin but not the INSTALL bin?
 
 ####################################
 # Module, library and executable definition
 ####################################
 
 add_library(ReadoutCard SHARED
+  src/BarInterfaceBase.cxx
+  src/CardConfigurator.cxx
+  src/CardFinder.cxx
   src/CardType.cxx
-  src/Factory/ChannelFactory.cxx
+  src/Crorc/Crorc.cxx
+  src/Crorc/CrorcDmaChannel.cxx
+  src/Crorc/CrorcBar.cxx
+  src/Cru/Common.cxx
+  src/Cru/CruDmaChannel.cxx
+  src/Cru/CruBar.cxx
+  src/Cru/DatapathWrapper.cxx
+  src/Cru/Eeprom.cxx
+  src/Cru/Gbt.cxx
+  src/Cru/I2c.cxx
+  src/Cru/PatternPlayer.cxx
+  src/Cru/Ttc.cxx
   src/DmaChannelBase.cxx
+  src/DmaChannelPdaBase.cxx
   src/ChannelPaths.cxx
   src/ExceptionInternal.cxx
+  src/Factory/ChannelFactory.cxx
   src/FirmwareChecker.cxx
   src/Logger.cxx
   src/MemoryMappedFile.cxx
@@ -129,33 +134,13 @@ add_library(ReadoutCard SHARED
   src/ParameterTypes/PciSequenceNumber.cxx
   src/ParameterTypes/ResetLevel.cxx
   src/ParameterTypes/SerialId.cxx
-  src/Utilities/Hugetlbfs.cxx
-  src/Utilities/MemoryMaps.cxx
-  src/Utilities/Numa.cxx
-)
-
-# Add sources requiring PDA
-target_sources(ReadoutCard PRIVATE
-  src/DmaChannelPdaBase.cxx
-  src/BarInterfaceBase.cxx
-  src/CardConfigurator.cxx
-  src/CardFinder.cxx
-  src/Crorc/Crorc.cxx
-  src/Crorc/CrorcDmaChannel.cxx
-  src/Crorc/CrorcBar.cxx
-  src/Cru/Common.cxx
-  src/Cru/CruDmaChannel.cxx
-  src/Cru/CruBar.cxx
-  src/Cru/DatapathWrapper.cxx
-  src/Cru/Eeprom.cxx
-  src/Cru/Gbt.cxx
-  src/Cru/I2c.cxx
-  src/Cru/PatternPlayer.cxx
-  src/Cru/Ttc.cxx
   src/Pda/PdaBar.cxx
   src/Pda/PdaDevice.cxx
   src/Pda/PdaDmaBuffer.cxx
   src/RocPciDevice.cxx
+  src/Utilities/Hugetlbfs.cxx
+  src/Utilities/MemoryMaps.cxx
+  src/Utilities/Numa.cxx
   $<$<BOOL:${Python2_FOUND}>:src/PythonInterface.cxx>
   $<$<BOOL:${Python3_FOUND}>:src/PythonInterface.cxx>
 )
@@ -195,28 +180,11 @@ target_compile_features(ReadoutCard PUBLIC cxx_std_17)
 ####################################
 
 set(EXE_SRCS
-  ProgramDmaBench.cxx
-  ProgramReset.cxx
-  ProgramRegisterModify.cxx
-  ProgramRegisterRead.cxx
-  ProgramRegisterReadRange
-  ProgramRegisterWrite.cxx
-)
-
-set(EXE_NAMES
-  roc-bench-dma
-  roc-reset
-  roc-reg-modify
-  roc-reg-read
-  roc-reg-read-range
-  roc-reg-write
-)
-
-list(APPEND EXE_SRCS
   ProgramBarStress.cxx
   ProgramConfig.cxx
   ProgramCtpEmulator.cxx
   ProgramCleanup.cxx
+  ProgramDmaBench.cxx
   ../Example.cxx
   ProgramFirmwareCheck.cxx
   ProgramFlash.cxx
@@ -225,31 +193,43 @@ list(APPEND EXE_SRCS
   ProgramMetrics.cxx
   ProgramPacketMonitor.cxx
   ProgramPatternPlayer.cxx
+  ProgramReset.cxx
+  ProgramRegisterModify.cxx
+  ProgramRegisterRead.cxx
+  ProgramRegisterReadRange
+  ProgramRegisterWrite.cxx
   ProgramSiuStatus.cxx
   ProgramStatus.cxx
   ProgramTriggerMonitor.cxx
   ProgramUserLogic.cxx
 )
 
-list(APPEND EXE_NAMES
-  roc-bar-stress
-  roc-config
-  roc-ctp-emulator
-  roc-cleanup
-  roc-example
-  roc-fw-check
-  roc-flash
-  roc-flash-read
-  roc-list-cards
-  roc-metrics
-  roc-pkt-monitor
-  roc-pat-player
-  roc-siu-status
-  roc-status
-  roc-trig-monitor
-  roc-ul
+set(EXE_NAMES
+  o2-roc-bar-stress
+  o2-roc-config
+  o2-roc-ctp-emulator
+  o2-roc-cleanup
+  o2-roc-bench-dma
+  o2-roc-example
+  o2-roc-fw-check
+  o2-roc-flash
+  o2-roc-flash-read
+  o2-roc-list-cards
+  o2-roc-metrics
+  o2-roc-pkt-monitor
+  o2-roc-pat-player
+  o2-roc-reset
+  o2-roc-reg-modify
+  o2-roc-reg-read
+  o2-roc-reg-read-range
+  o2-roc-reg-write
+  o2-roc-siu-status
+  o2-roc-status
+  o2-roc-trig-monitor
+  o2-roc-ul
 )
 
+set(LEGACY_EXE_NAMES)
 
 list(LENGTH EXE_SRCS count)
 math(EXPR count "${count}-1")
@@ -267,6 +247,12 @@ foreach(i RANGE ${count})
       Boost::program_options
       pda::pda
   )
+
+  # create binary symlinks to preserve backwards compatibility
+  STRING(REGEX REPLACE "^o2-roc" "roc" legacy_exe_link ${name})
+  add_custom_command(TARGET ${name} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E create_symlink ${name} ${legacy_exe_link})
+  list(APPEND LEGACY_EXE_NAMES ${legacy_exe_link}) 
 endforeach()
 
 ####################################
@@ -309,7 +295,6 @@ foreach (test ${TEST_SRCS})
   set_tests_properties(${test_name} PROPERTIES TIMEOUT 15)
 endforeach()
 
-
 ####################################
 # Install
 ####################################
@@ -328,10 +313,11 @@ set_target_properties(ReadoutCard
     O2ReadoutCard # Adhere to O2 naming conventions
 )
 
+# create a symlink libReadoutCard -> libO2ReadoutCard for backwards compatibility
 set(legacy_library_link libReadoutCard.so)
 set(legacy_library_target libO2ReadoutCard.so)
 
-add_custom_target(link_build_target ReadoutCard
+add_custom_target(legacy_library_target ReadoutCard
   COMMAND ${CMAKE_COMMAND} -E create_symlink ${legacy_library_target} ${legacy_library_link})
 
 # Create version file
@@ -371,17 +357,17 @@ install(
 
 # Install the hugetlbfs script separately, because it's not a compiled target
 install(
-  FILES src/roc-setup-hugetlbfs.sh
+  FILES src/o2-roc-setup-hugetlbfs.sh
   DESTINATION ${CMAKE_INSTALL_BINDIR}
   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-  RENAME roc-setup-hugetlbfs
+  RENAME o2-roc-setup-hugetlbfs
 )
 
 install(
-  FILES src/roc-setup-hugetlbfs.sh
+  FILES src/o2-roc-setup-hugetlbfs.sh
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-  RENAME roc-setup-hugetlbfs
+  RENAME o2-roc-setup-hugetlbfs
 )
 
 # Install the roc-config template
@@ -391,8 +377,16 @@ install(
   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 )
 
+# Install the binary symlinks
+foreach(legacy_exe ${LEGACY_EXE_NAMES})
+  install (
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/${legacy_exe}
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}
+  )
+endforeach()
+
 # Install the legacy library symlink
 install(
   FILES ${CMAKE_CURRENT_BINARY_DIR}/${legacy_library_link}
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
 )
