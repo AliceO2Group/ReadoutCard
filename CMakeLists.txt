@@ -86,6 +86,8 @@ find_package(Monitoring REQUIRED)
 find_package(InfoLogger REQUIRED)
 find_package(PDA REQUIRED)
 
+include(GNUInstallDirs)
+
 ####################################
 # RPATH
 ####################################
@@ -320,6 +322,18 @@ install(TARGETS ReadoutCard ${EXE_NAMES}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
+set_target_properties(ReadoutCard
+  PROPERTIES
+  OUTPUT_NAME
+    O2ReadoutCard # Adhere to O2 naming conventions
+)
+
+set(legacy_library_link libReadoutCard.so)
+set(legacy_library_target libO2ReadoutCard.so)
+
+add_custom_target(link_build_target ReadoutCard
+  COMMAND ${CMAKE_COMMAND} -E create_symlink ${legacy_library_target} ${legacy_library_link})
+
 # Create version file
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/cmake/ReadoutCardConfigVersion.cmake"
@@ -328,7 +342,7 @@ write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/cmake/ReadoutCardC
 )
 
 # Install headers
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ReadoutCard DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ReadoutCard DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 # Export targets
 install(EXPORT ReadoutCardTargets
@@ -375,4 +389,10 @@ install(
   FILES cru_template.cfg
   DESTINATION ${CMAKE_INSTALL_PREFIX}/etc
   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+)
+
+# Install the legacy library symlink
+install(
+  FILES ${CMAKE_CURRENT_BINARY_DIR}/${legacy_library_link}
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
