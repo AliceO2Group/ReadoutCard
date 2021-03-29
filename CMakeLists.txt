@@ -42,7 +42,7 @@ endif()
 ####################################
 # Populate the Cru/Constants.h file with the register addresses contained in CRU/cru_table.py
 ####################################
-execute_process(COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/src/Cru/cru_constants_populate.py
+execute_process(COMMAND /usr/bin/env python3 ${CMAKE_CURRENT_SOURCE_DIR}/src/Cru/cru_constants_populate.py
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/Cru
   RESULT_VARIABLE status)
 IF(NOT "${status}" EQUAL "0")
@@ -91,7 +91,7 @@ include(GNUInstallDirs)
 ####################################
 
 # https://gitlab.kitware.com/cmake/community/wikis/doc/cmake/RPATH-handling
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE) #TODO: Why does the lib dir end up in the BUILD bin but not the INSTALL bin?
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 ####################################
 # Module, library and executable definition
@@ -229,8 +229,6 @@ set(EXE_NAMES
   o2-roc-ul
 )
 
-set(LEGACY_EXE_NAMES)
-
 list(LENGTH EXE_SRCS count)
 math(EXPR count "${count}-1")
 foreach(i RANGE ${count})
@@ -251,6 +249,7 @@ foreach(i RANGE ${count})
   # create binary symlinks to preserve backwards compatibility
   STRING(REGEX REPLACE "^o2-roc" "roc" legacy_exe_link ${name})
   add_custom_command(TARGET ${name} POST_BUILD
+    BYPRODUCTS ${legacy_exe_link}
     COMMAND ${CMAKE_COMMAND} -E create_symlink ${name} ${legacy_exe_link})
   list(APPEND LEGACY_EXE_NAMES ${legacy_exe_link}) 
 endforeach()
@@ -317,7 +316,8 @@ set_target_properties(ReadoutCard
 set(legacy_library_link libReadoutCard.so)
 set(legacy_library_target libO2ReadoutCard.so)
 
-add_custom_target(legacy_library_target ReadoutCard
+add_custom_command(TARGET ReadoutCard POST_BUILD
+  BYPRODUCTS ${legacy_library_link}
   COMMAND ${CMAKE_COMMAND} -E create_symlink ${legacy_library_target} ${legacy_library_link})
 
 # Create version file
@@ -355,14 +355,14 @@ install(
     ${CMAKE_INSTALL_LIBDIR}/cmake/ReadoutCard
 )
 
-# Install the hugetlbfs script separately, because it's not a compiled target
+# Install the roc-config template
 install(
-  FILES src/o2-roc-setup-hugetlbfs.sh
-  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  FILES cru_template.cfg
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/etc
   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-  RENAME o2-roc-setup-hugetlbfs
 )
 
+# Install the hugetlbfs script separately, because it's not a compiled target
 install(
   FILES src/o2-roc-setup-hugetlbfs.sh
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
@@ -370,10 +370,19 @@ install(
   RENAME o2-roc-setup-hugetlbfs
 )
 
-# Install the roc-config template
+# Create a symlink for backwards compatibility
+set(legacy_hugetlbfs_target o2-roc-setup-hugetlbfs)
+set(legacy_hugetlbfs_link roc-setup-hugetlbfs)
+
+add_custom_command(TARGET ReadoutCard
+  DEPENDS ${legacy_hugetlbfs_target}
+  BYPRODUCTS ${legacy_hugetlbfs_link}
+  COMMAND ${CMAKE_COMMAND} -E create_symlink ${legacy_hugetlbfs_target} ${legacy_hugetlbfs_link})
+
+# Deploy script and symlink
 install(
-  FILES cru_template.cfg
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/etc
+  FILES ${CMAKE_CURRENT_BINARY_DIR}/${legacy_hugetlbfs_target} ${CMAKE_CURRENT_BINARY_DIR}/${legacy_hugetlbfs_link}
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}
   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 )
 
