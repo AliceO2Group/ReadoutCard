@@ -92,6 +92,17 @@ class BarChannel
 
 // Note that the name given here to BOOST_PYTHON_MODULE must be the actual name of the shared object file this file is
 // compiled into
+BOOST_PYTHON_MODULE(libO2ReadoutCard)
+{
+  using namespace boost::python;
+
+  class_<BarChannel>("BarChannel", init<std::string, int>(sInitDocString))
+    .def("register_read", &BarChannel::read, sRegisterReadDocString)
+    .def("register_write", &BarChannel::write, sRegisterWriteDocString)
+    .def("register_modify", &BarChannel::modify, sRegisterModifyDocString);
+}
+
+// Keep libReadoutCard for backward compatility for now
 BOOST_PYTHON_MODULE(libReadoutCard)
 {
   using namespace boost::python;
