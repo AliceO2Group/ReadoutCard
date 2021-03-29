@@ -15,7 +15,7 @@ endif()
 project(ReadoutCard
   VERSION 0.31.0
   DESCRIPTION "O2 ReadoutCard library"
-  LANGUAGES CXX
+  LANGUAGES C CXX
 )
 
 # Documentation dir

@@ -18,10 +18,13 @@
 
 // "fake" namespace forward decalaration so that
 // the `using` directive can find the namespace
-namespace o2 {}
+namespace o2
+{
+}
 
-namespace AliceO2 {
-  using namespace o2;
+namespace AliceO2
+{
+using namespace o2;
 }
 
 #endif // O2_READOUTCARD_NAMESPACE_ALIAS_H_
