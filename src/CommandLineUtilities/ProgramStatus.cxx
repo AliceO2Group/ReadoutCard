@@ -339,11 +339,11 @@ class ProgramStatus : public Program
           std::cout << "Latch FEC & CRC errors: \t" << std::boolalpha << fecStatus.latchFecCrcError << std::endl;
           std::cout << "Slow Control Framing locked: \t" << std::boolalpha << fecStatus.slowControlFramingLocked << std::endl;
           std::cout << "FEC single error count: \t"
-                    << "0x" << std::hex << fecStatus.fecSingleErrorCount << std::endl;
+                    << "0x" << std::hex << (unsigned int)fecStatus.fecSingleErrorCount << std::endl;
           std::cout << "FEC double error count: \t"
-                    << "0x" << std::hex << fecStatus.fecDoubleErrorCount << std::endl;
+                    << "0x" << std::hex << (unsigned int)fecStatus.fecDoubleErrorCount << std::endl;
           std::cout << "CRC error count: \t\t"
-                    << "0x" << std::hex << fecStatus.crcErrorCount << std::endl;
+                    << "0x" << std::hex << (unsigned int)fecStatus.crcErrorCount << std::endl;
         }
       }
 
