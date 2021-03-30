@@ -636,7 +636,7 @@ Cru::TriggerMonitoringInfo CruBar::monitorTriggers(bool updateable)
 
   uint64_t tofDiff;
   if (tofCountPrev > tofCount) {
-    tofDiff = tofCount + pow(2, 32) - tofCountPrev;
+    tofDiff = tofCount + pow(2, 16) - tofCountPrev;
   } else {
     tofDiff = tofCount - tofCountPrev;
   }
