@@ -182,6 +182,15 @@ struct UserLogicInfo {
   bool random;
 };
 
+struct LoopbackStats {
+  bool pllLock;
+  bool rxLockedToData;
+  bool dataLayerUp;
+  bool gbtPhyUp;
+  uint32_t rxDataErrorCount;
+  uint32_t fecErrorCount;
+};
+
 uint32_t getWrapperBaseAddress(int wrapper);
 uint32_t getXcvrRegisterAddress(int wrapper, int bank, int link, int reg = 0);
 void atxcal0(std::shared_ptr<BarInterface> bar, uint32_t baseAddress);

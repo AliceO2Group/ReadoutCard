@@ -261,9 +261,17 @@ static constexpr Register GBT_WRAPPER_CONF0(0x00000000);
 static constexpr Register GBT_WRAPPER_ATX_PLL(0x000e0000);
 static constexpr Register GBT_BANK_FPLL(0x0000e000);
 
+/// GBT registers to collect loopback stats
+static constexpr Register GBT_WRAPPER_TEST_CTRL(0x00000008);
+static constexpr Register GBT_LINK_MASK_LOW(0x00000028);
+static constexpr Register GBT_LINK_MASK_MED(0x00000024);
+static constexpr Register GBT_LINK_MASK_HIGH(0x00000020);
+static constexpr Register GBT_LINK_FEC_MONITORING(0x0000001c);
+
 /// Registers to set TX and RX GBT modes
 static constexpr Register GBT_LINK_TX_CONTROL_OFFSET(0x0000002c);
 static constexpr Register GBT_LINK_RX_CONTROL_OFFSET(0x0000003c);
+static constexpr Register GBT_LINK_RX_ERROR_COUNT(0x00000010);
 /*static constexpr uint32_t GBT_MODE_GBT(0x0);
 static constexpr uint32_t GBT_MODE_WB(0x1);*/
 

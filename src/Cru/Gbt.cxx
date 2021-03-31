@@ -14,6 +14,10 @@
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
 #include <iostream>
+
+#include <chrono>
+#include <thread>
+
 #include "Gbt.h"
 #include "Utilities/Util.h"
 
@@ -24,6 +28,7 @@ namespace roc
 
 using Link = Cru::Link;
 using LinkStatus = Cru::LinkStatus;
+using LoopbackStats = Cru::LoopbackStats;
 
 Gbt::Gbt(std::shared_ptr<Pda::PdaBar> pdaBar, std::map<int, Link>& linkMap, int wrapperCount, int endpoint) : mPdaBar(pdaBar),
                                                                                                               mLinkMap(linkMap),
@@ -242,6 +247,26 @@ uint32_t Gbt::getAtxPllRegisterAddress(int wrapper, uint32_t reg)
          Cru::Registers::GBT_WRAPPER_ATX_PLL.address + 4 * reg;
 }
 
+uint32_t Gbt::getRxErrorCount(Link link)
+{
+  uint32_t address = Cru::getWrapperBaseAddress(link.wrapper) +
+                     Cru::Registers::GBT_WRAPPER_BANK_OFFSET.address * (link.bank + 1) +
+                     Cru::Registers::GBT_BANK_LINK_OFFSET.address * (link.id + 1) +
+                     Cru::Registers::GBT_LINK_REGS_OFFSET.address +
+                     Cru::Registers::GBT_LINK_RX_ERROR_COUNT.address;
+  return mPdaBar->readRegister(address / 4);
+}
+
+uint32_t Gbt::getFecErrorCount(Link link)
+{
+  uint32_t address = Cru::getWrapperBaseAddress(link.wrapper) +
+                     Cru::Registers::GBT_WRAPPER_BANK_OFFSET.address * (link.bank + 1) +
+                     Cru::Registers::GBT_BANK_LINK_OFFSET.address * (link.id + 1) +
+                     Cru::Registers::GBT_LINK_REGS_OFFSET.address +
+                     Cru::Registers::GBT_LINK_FEC_MONITORING.address;
+  return mPdaBar->readRegister(address / 4);
+}
+
 LinkStatus Gbt::getStickyBit(Link link)
 {
   uint32_t addr = getStatusAddress(link);
@@ -296,6 +321,110 @@ void Gbt::resetFifo()
 
   mPdaBar->modifyRegister(Cru::Registers::BSP_USER_CONTROL.index, 7, 1, 0x0);
   mPdaBar->modifyRegister(Cru::Registers::BSP_USER_CONTROL.index, 8, 1, 0x0);
+}
+
+std::map<int, LoopbackStats> Gbt::getLoopbackStats(bool reset, GbtPatternMode::type patternMode, GbtCounterType::type counterType, GbtStatsMode::type statsMode,
+                                                   uint32_t lowMask, uint32_t medMask, uint32_t highMask)
+{
+  if (reset) {
+    for (const auto& el : mLinkMap) {
+      auto link = el.second;
+      setInternalDataGenerator(link, 1);
+    }
+
+    setPatternMode(patternMode);
+    setTxCounterType(counterType);
+    setRxPatternMask(lowMask, medMask, highMask);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100)); //It's not clear why this is necessary
+
+    resetErrorCounters();
+  }
+
+  auto ret = getStats(statsMode);
+
+  /*for (const auto& el : mLinkMap) {
+    auto link = el.second;
+    setInternalDataGenerator(link, 0);
+  }*/
+  return ret;
+}
+
+std::map<int, LoopbackStats> Gbt::getStats(GbtStatsMode::type /*statsMode*/)
+{
+  std::map<int, LoopbackStats> ret;
+  for (const auto& el : mLinkMap) {
+    const auto& link = el.second;
+    uint32_t data = mPdaBar->readRegister(getStatusAddress(link) / 4);
+
+    uint32_t pllLock = Utilities::getBit(data, 8);
+    uint32_t rxLockedToData = Utilities::getBit(data, 10);
+    uint32_t dataLayerUp = Utilities::getBit(data, 11);
+    uint32_t gbtPhyUp = Utilities::getBit(data, 13);
+
+    uint32_t rxDataErrorCount = getRxErrorCount(link);
+    uint32_t fecErrorCount = getFecErrorCount(link);
+
+    LoopbackStats stat = { pllLock == 0x1,
+                           rxLockedToData == 0x1,
+                           dataLayerUp == 0x1,
+                           gbtPhyUp == 0x1,
+                           rxDataErrorCount,
+                           fecErrorCount };
+    ret[el.first] = stat;
+  }
+
+  return ret;
+}
+
+void Gbt::setPatternMode(GbtPatternMode::type patternMode)
+{
+  for (const auto& el : mLinkMap) {
+    const auto& link = el.second;
+    uint32_t address = getSourceSelectAddress(link);
+    if (patternMode == GbtPatternMode::type::Counter) {
+      mPdaBar->modifyRegister(address / 4, 5, 1, 0x0);
+    } else if (patternMode == GbtPatternMode::type::Static) {
+      mPdaBar->modifyRegister(address / 4, 5, 1, 0x1);
+    }
+  }
+}
+
+void Gbt::setTxCounterType(GbtCounterType::type counterType)
+{
+  for (int wrapper = 0; wrapper < mWrapperCount; wrapper++) {
+    uint32_t address = Cru::getWrapperBaseAddress(wrapper) + Cru::Registers::GBT_WRAPPER_GREGS.address + Cru::Registers::GBT_WRAPPER_TEST_CTRL.address;
+
+    if (counterType == GbtCounterType::type::ThirtyBit) {
+      mPdaBar->modifyRegister(address / 4, 7, 1, 0x0);
+    } else if (counterType == GbtCounterType::type::EightBit) {
+      mPdaBar->modifyRegister(address / 4, 7, 1, 0x1);
+    }
+  }
+}
+
+void Gbt::setRxPatternMask(uint32_t lowMask, uint32_t midMask, uint32_t highMask)
+{
+  for (const auto& el : mLinkMap) {
+    const auto& link = el.second;
+    uint32_t address = Cru::getWrapperBaseAddress(link.wrapper) +
+                       Cru::Registers::GBT_WRAPPER_BANK_OFFSET.address * (link.bank + 1) +
+                       Cru::Registers::GBT_BANK_LINK_OFFSET.address * (link.id + 1) +
+                       Cru::Registers::GBT_LINK_REGS_OFFSET.address;
+    mPdaBar->writeRegister((address + Cru::Registers::GBT_LINK_MASK_LOW.address) / 4, lowMask);
+    mPdaBar->writeRegister((address + Cru::Registers::GBT_LINK_MASK_MED.address) / 4, midMask);
+    mPdaBar->writeRegister((address + Cru::Registers::GBT_LINK_MASK_HIGH.address) / 4, highMask);
+  }
+}
+
+void Gbt::resetErrorCounters()
+{
+  for (const auto& el : mLinkMap) {
+    const auto& link = el.second;
+    uint32_t address = getSourceSelectAddress(link);
+    mPdaBar->modifyRegister(address / 4, 6, 1, 0x1);
+    mPdaBar->modifyRegister(address / 4, 6, 1, 0x0);
+  }
 }
 
 } // namespace roc

@@ -34,8 +34,9 @@ namespace roc
 using Variant = boost::variant<size_t, uint32_t, int32_t, bool, Parameters::BufferParametersType, Parameters::CardIdType,
                                Parameters::DataSourceType, Parameters::LinkMaskType, Parameters::AllowRejectionType,
                                Parameters::ClockType, Parameters::CrorcIdType, Parameters::CruIdType,
-                               Parameters::DatapathModeType, Parameters::DownstreamDataType, Parameters::GbtModeType,
-                               Parameters::GbtMuxType, Parameters::GbtMuxMapType, Parameters::OnuAddressType,
+                               Parameters::DatapathModeType, Parameters::DownstreamDataType, Parameters::GbtCounterTypeType,
+                               Parameters::GbtModeType, Parameters::GbtMuxType, Parameters::GbtMuxMapType,
+                               Parameters::GbtPatternModeType, Parameters::GbtStatsModeType, Parameters::OnuAddressType,
                                Parameters::FeeIdMapType>;
 
 using KeyType = const char*;
@@ -127,9 +128,15 @@ _PARAMETER_FUNCTIONS(CrorcId, "crorc_id")
 _PARAMETER_FUNCTIONS(CruId, "cru_id")
 _PARAMETER_FUNCTIONS(DatapathMode, "datapath_mode")
 _PARAMETER_FUNCTIONS(DownstreamData, "downstream_data")
+_PARAMETER_FUNCTIONS(GbtCounterType, "gbt_counter_type")
 _PARAMETER_FUNCTIONS(GbtMode, "gbt_mode")
 _PARAMETER_FUNCTIONS(GbtMux, "gbt_mux")
 _PARAMETER_FUNCTIONS(GbtMuxMap, "gbt_mux_map")
+_PARAMETER_FUNCTIONS(GbtPatternMode, "gbt_pattern_mode")
+_PARAMETER_FUNCTIONS(GbtStatsMode, "gbt_stats_mode")
+_PARAMETER_FUNCTIONS(GbtHighMask, "gbt_high_mask")
+_PARAMETER_FUNCTIONS(GbtMedMask, "gbt_med_mask")
+_PARAMETER_FUNCTIONS(GbtLowMask, "gbt_low_mask")
 _PARAMETER_FUNCTIONS(LinkLoopbackEnabled, "link_loopback_enabled")
 _PARAMETER_FUNCTIONS(PonUpstreamEnabled, "pon_upstream_enabled")
 _PARAMETER_FUNCTIONS(DynamicOffsetEnabled, "dynamic_offset_enabled")
