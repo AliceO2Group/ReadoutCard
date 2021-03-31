@@ -136,7 +136,7 @@ constant add_gbt_link_txclk_cnt		: unsigned(31 downto 0):=X"0000_0004"; -- RO
 constant add_gbt_link_rxclk_cnt		: unsigned(31 downto 0):=X"0000_0008"; -- RO
 constant add_gbt_link_rxframe_32lsb	: unsigned(31 downto 0):=X"0000_000C"; -- RO
 constant add_gbt_link_rx_err_cnt	: unsigned(31 downto 0) := x"0000_0010"; -- RO
-constant add_gbt_link_FEC_monitoring : unsigned(31 downto 0) := x"0000_001C";
+constant add_gbt_link_fec_monitoring : unsigned(31 downto 0) := x"0000_001C";
 
 constant add_gbt_link_mask_hi        : unsigned(31 downto 0) := x"0000_0020"; -- W with loopBack
 constant add_gbt_link_mask_med	     : unsigned(31 downto 0) := x"0000_0024"; -- W with loopBack

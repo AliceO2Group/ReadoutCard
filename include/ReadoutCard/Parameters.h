@@ -34,8 +34,11 @@
 #include "ReadoutCard/ParameterTypes/Clock.h"
 #include "ReadoutCard/ParameterTypes/DatapathMode.h"
 #include "ReadoutCard/ParameterTypes/DownstreamData.h"
+#include "ReadoutCard/ParameterTypes/GbtCounterType.h"
 #include "ReadoutCard/ParameterTypes/GbtMode.h"
 #include "ReadoutCard/ParameterTypes/GbtMux.h"
+#include "ReadoutCard/ParameterTypes/GbtPatternMode.h"
+#include "ReadoutCard/ParameterTypes/GbtStatsMode.h"
 
 namespace o2
 {
@@ -102,11 +105,25 @@ class Parameters
   /// Type for the downstream data parameter
   using DownstreamDataType = DownstreamData::type;
 
-  /// Type for the gbt mux parameter
-  using GbtMuxType = GbtMux::type;
+  /// Type for the gbt counter type parameter
+  using GbtCounterTypeType = GbtCounterType::type;
 
   /// Type for the gbt mode parameter
   using GbtModeType = GbtMode::type;
+
+  /// Type for the gbt mux parameter
+  using GbtMuxType = GbtMux::type;
+
+  /// Type for the gbt pattern mode parameter
+  using GbtPatternModeType = GbtPatternMode::type;
+
+  /// Type for the gbt stats mode parameter
+  using GbtStatsModeType = GbtStatsMode::type;
+
+  /// Types for the gbt masks
+  using GbtHighMaskType = uint32_t;
+  using GbtMedMaskType = uint32_t;
+  using GbtLowMaskType = uint32_t;
 
   /// Type for the link loopback enabled parameter
   using LinkLoopbackEnabledType = bool;
@@ -362,6 +379,15 @@ class Parameters
   /// \return Reference to this object for chaining calls
   auto setDownstreamData(DownstreamDataType value) -> Parameters&;
 
+  /// Sets the GbtCounterType Parameter
+  ///
+  /// The GBT Counter Type parameter refers to the counter type used to collect loopback stats
+  /// The GBT Counter Type may be 30 or 8 bit
+  ///
+  /// \param value The value to set
+  /// \return Reference to this object for chaining calls
+  auto setGbtCounterType(GbtCounterTypeType value) -> Parameters&;
+
   /// Sets the GbtMode Parameter
   ///
   /// The GBT Mode parameter refers to the selection of the GBT Mode for the CRU configuration
@@ -387,6 +413,48 @@ class Parameters
   /// \param value The value to set
   /// \return Reference to this object for chaining calls
   auto setGbtMuxMap(GbtMuxMapType value) -> Parameters&;
+
+  /// Sets the GbtPatternMode Parameter
+  ///
+  /// The GBT Pattern Mode parameter refers to the pattern mode used to collect loopback stats
+  /// The GBT Pattern Mode may be Counter or Static
+  ///
+  /// \param value The value to set
+  /// \return Reference to this object for chaining calls
+  auto setGbtPatternMode(GbtPatternModeType value) -> Parameters&;
+
+  /// Sets the GbtStatsMode Parameter
+  ///
+  /// The GBT Stats Mode parameter refers to the selection of the GBT Loopback Stats to be reported
+  /// The GBT Stats Mode may be Counter, Fec, or All
+  ///
+  /// \param value The value to set
+  /// \return Reference to this object for chaining calls
+  auto setGbtStatsMode(GbtStatsModeType value) -> Parameters&;
+
+  /// Sets the GbtHighMask Parameter
+  ///
+  /// The GBT High mask parameter is used to report GBT loopback stats
+  ///
+  /// \param value The value to set
+  /// \return Reference to this object for chaining calls
+  auto setGbtHighMask(GbtHighMaskType value) -> Parameters&;
+
+  /// Sets the GbtMedMask Parameter
+  ///
+  /// The GBT Med mask parameter is used to report GBT loopback stats
+  ///
+  /// \param value The value to set
+  /// \return Reference to this object for chaining calls
+  auto setGbtMedMask(GbtMedMaskType value) -> Parameters&;
+
+  /// Sets the GbtLowMask Parameter
+  ///
+  /// The GBT Low mask parameter is used to report GBT loopback stats
+  ///
+  /// \param value The value to set
+  /// \return Reference to this object for chaining calls
+  auto setGbtLowMask(GbtLowMaskType value) -> Parameters&;
 
   /// Sets the StbrdEnabled parameter
   ///
@@ -517,6 +585,10 @@ class Parameters
   /// \return The value
   auto getDownstreamData() const -> boost::optional<DownstreamDataType>;
 
+  /// Gets the GbtCounterType Parameter
+  /// \return The value
+  auto getGbtCounterType() const -> boost::optional<GbtCounterTypeType>;
+
   /// Gets the GbtMode Parameter
   /// \return The value
   auto getGbtMode() const -> boost::optional<GbtModeType>;
@@ -528,6 +600,26 @@ class Parameters
   /// Gets the GbtMuxMap Parameter
   /// \return The value
   auto getGbtMuxMap() const -> boost::optional<GbtMuxMapType>;
+
+  /// Gets the GbtPatternMode Parameter
+  /// \return The value
+  auto getGbtPatternMode() const -> boost::optional<GbtPatternModeType>;
+
+  /// Gets the GbtStatsMode Parameter
+  /// \return The value
+  auto getGbtStatsMode() const -> boost::optional<GbtStatsModeType>;
+
+  /// Gets the GbtHighMask Parameter
+  /// \return The value
+  auto getGbtHighMask() const -> boost::optional<GbtHighMaskType>;
+
+  /// Gets the GbtMedMask Parameter
+  /// \return The value
+  auto getGbtMedMask() const -> boost::optional<GbtMedMaskType>;
+
+  /// Gets the GbtLowMask Parameter
+  /// \return The value
+  auto getGbtLowMask() const -> boost::optional<GbtLowMaskType>;
 
   /// Gets the StbrdEnabled parameter
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
@@ -664,6 +756,11 @@ class Parameters
   /// \return The value
   auto getDownstreamDataRequired() const -> DownstreamDataType;
 
+  /// Gets the GbtCounterType Parameter
+  /// \exception ParameterException The parameter was not present
+  /// \return The value
+  auto getGbtCounterTypeRequired() const -> GbtCounterTypeType;
+
   /// Gets the GbtMode Parameter
   /// \exception ParameterException The parameter was not present
   /// \return The value
@@ -678,6 +775,31 @@ class Parameters
   /// \exception ParameterException The parameter was not present
   /// \return The value
   auto getGbtMuxMapRequired() const -> GbtMuxMapType;
+
+  /// Gets the GbtPatternMode Parameter
+  /// \exception ParameterException The parameter was not present
+  /// \return The value
+  auto getGbtPatternModeRequired() const -> GbtPatternModeType;
+
+  /// Gets the GbtStatsMode Parameter
+  /// \exception ParameterException The parameter was not present
+  /// \return The value
+  auto getGbtStatsModeRequired() const -> GbtStatsModeType;
+
+  /// Gets the GbtHighMask Parameter
+  /// \exception ParameterException The parameter was not present
+  /// \return The value
+  auto getGbtHighMaskRequired() const -> GbtHighMaskType;
+
+  /// Gets the GbtMedMask Parameter
+  /// \exception ParameterException The parameter was not present
+  /// \return The value
+  auto getGbtMedMaskRequired() const -> GbtMedMaskType;
+
+  /// Gets the GbtLowMask Parameter
+  /// \exception ParameterException The parameter was not present
+  /// \return The value
+  auto getGbtLowMaskRequired() const -> GbtLowMaskType;
 
   /// Gets the StbrdEnabled parameter
   /// \exception ParameterException The parameter was not present

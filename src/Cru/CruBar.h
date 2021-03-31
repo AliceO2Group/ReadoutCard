@@ -103,6 +103,8 @@ class CruBar final : public BarInterfaceBase
   void controlUserLogic(uint32_t eventSize, bool random);
   Cru::UserLogicInfo reportUserLogic();
 
+  std::map<int, Cru::LoopbackStats> getGbtLoopbackStats(bool reset);
+
   std::map<int, Link> initializeLinkMap();
 
   std::shared_ptr<Pda::PdaBar> getPdaBar()
@@ -163,6 +165,13 @@ class CruBar final : public BarInterfaceBase
   uint32_t mSystemId;
   uint32_t mFeeId;
   std::map<uint32_t, uint32_t> mFeeIdMap;
+  GbtPatternMode::type mGbtPatternMode;
+  GbtCounterType::type mGbtCounterType;
+  GbtStatsMode::type mGbtStatsMode;
+  uint32_t mGbtHighMask;
+  uint32_t mGbtMedMask;
+  uint32_t mGbtLowMask;
+  bool mGbtLoopbackReset;
 
   int mSerial;
   int mEndpoint;

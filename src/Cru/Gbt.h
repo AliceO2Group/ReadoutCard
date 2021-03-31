@@ -21,6 +21,8 @@
 #include "Constants.h"
 #include "I2c.h"
 
+#include <map>
+
 namespace o2
 {
 namespace roc
@@ -31,6 +33,7 @@ class Gbt
 
   using Link = Cru::Link;
   using LinkStatus = Cru::LinkStatus;
+  using LoopbackStats = Cru::LoopbackStats;
 
  public:
   //Gbt(std::shared_ptr<Pda::PdaBar> pdaBar, std::vector<Link> &mLinkList, int wrapperCount);
@@ -48,6 +51,16 @@ class Gbt
   uint32_t getRxClockFrequency(Link link);
   uint32_t getTxClockFrequency(Link link);
   void resetFifo();
+  std::map<int, LoopbackStats> getLoopbackStats(bool reset, GbtPatternMode::type patternMode = GbtPatternMode::type::Counter,
+                                                GbtCounterType::type counterType = GbtCounterType::type::ThirtyBit,
+                                                GbtStatsMode::type statsMode = GbtStatsMode::type::All,
+                                                uint32_t lowMask = 0xffffffff,
+                                                uint32_t medMask = 0xffffffff,
+                                                uint32_t highMask = 0xffffffff);
+  std::map<int, LoopbackStats> getStats(GbtStatsMode::type statsMode);
+  void setPatternMode(GbtPatternMode::type patternMode);
+  void setTxCounterType(GbtCounterType::type counterType);
+  void setRxPatternMask(uint32_t lowMask, uint32_t midMask, uint32_t highMask);
 
  private:
   uint32_t getSourceSelectAddress(Link link);
@@ -56,6 +69,9 @@ class Gbt
   uint32_t getRxControlAddress(Link link);
   uint32_t getTxControlAddress(Link link);
   uint32_t getAtxPllRegisterAddress(int wrapper, uint32_t reg);
+  uint32_t getRxErrorCount(Link link);
+  uint32_t getFecErrorCount(Link link);
+  void resetErrorCounters();
 
   void atxcal(uint32_t baseAddress = 0x0);
   void cdrref(std::map<int, Link> linkMap, uint32_t refClock);

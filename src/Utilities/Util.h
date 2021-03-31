@@ -131,6 +131,13 @@ std::string toHexString(T num)
   return ss.str();
 }
 
+inline std::string toBoolString(bool var)
+{
+  std::stringstream ss;
+  ss << std::boolalpha << var;
+  return ss.str();
+}
+
 } // namespace Utilities
 } // namespace roc
 } // namespace o2

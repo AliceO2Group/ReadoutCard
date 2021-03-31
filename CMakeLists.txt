@@ -24,6 +24,9 @@ add_subdirectory(doc)
 # Add compiler flags for warnings and debug symbols
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra -Werror")
 
+# Increase boost MPL maximum length to accommodate for a longer Parameters variant
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_MPL_CFG_NO_PREPROCESSED_HEADERS -DBOOST_MPL_LIMIT_LIST_SIZE=30")
+
 # Set fPIC for all targets
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -126,8 +129,11 @@ add_library(ReadoutCard SHARED
   src/ParameterTypes/Clock.cxx
   src/ParameterTypes/DatapathMode.cxx
   src/ParameterTypes/DownstreamData.cxx
+  src/ParameterTypes/GbtCounterType.cxx
   src/ParameterTypes/GbtMode.cxx
   src/ParameterTypes/GbtMux.cxx
+  src/ParameterTypes/GbtPatternMode.cxx
+  src/ParameterTypes/GbtStatsMode.cxx
   src/ParameterTypes/Hex.cxx
   src/ParameterTypes/DataSource.cxx
   src/ParameterTypes/PciAddress.cxx
@@ -190,6 +196,7 @@ set(EXE_SRCS
   ProgramFlash.cxx
   ProgramFlashRead.cxx
   ProgramListCards.cxx
+  ProgramLoopback.cxx
   ProgramMetrics.cxx
   ProgramPacketMonitor.cxx
   ProgramPatternPlayer.cxx
@@ -215,6 +222,7 @@ set(EXE_NAMES
   o2-roc-flash
   o2-roc-flash-read
   o2-roc-list-cards
+  o2-roc-loopback
   o2-roc-metrics
   o2-roc-pkt-monitor
   o2-roc-pat-player

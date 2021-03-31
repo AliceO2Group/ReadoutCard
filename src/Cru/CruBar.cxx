@@ -60,7 +60,13 @@ CruBar::CruBar(const Parameters& parameters, std::unique_ptr<RocPciDevice> rocPc
     mUserAndCommonLogicEnabled(parameters.getUserAndCommonLogicEnabled().get_value_or(false)),
     mSystemId(parameters.getSystemId().get_value_or(0x0)),
     mFeeId(parameters.getFeeId().get_value_or(0x0)),
-    mFeeIdMap(parameters.getFeeIdMap().get_value_or({}))
+    mFeeIdMap(parameters.getFeeIdMap().get_value_or({})),
+    mGbtPatternMode(parameters.getGbtPatternMode().get_value_or(GbtPatternMode::Counter)),
+    mGbtCounterType(parameters.getGbtCounterType().get_value_or(GbtCounterType::ThirtyBit)),
+    mGbtStatsMode(parameters.getGbtStatsMode().get_value_or(GbtStatsMode::All)),
+    mGbtHighMask(parameters.getGbtHighMask().get_value_or(0xffffffff)),
+    mGbtMedMask(parameters.getGbtMedMask().get_value_or(0xffffffff)),
+    mGbtLowMask(parameters.getGbtLowMask().get_value_or(0xffffffff))
 {
   if (getIndex() == 0) {
     mFeatures = parseFirmwareFeatures();
@@ -1133,6 +1139,27 @@ Cru::UserLogicInfo CruBar::reportUserLogic()
   bool randomEventSize = readRegister(Cru::Registers::USER_LOGIC_EVSIZE_RAND.index) == 0x1;
   uint32_t eventSize = readRegister(Cru::Registers::USER_LOGIC_EVSIZE.index);
   return { eventSize, randomEventSize };
+}
+
+std::map<int, Cru::LoopbackStats> CruBar::getGbtLoopbackStats(bool reset)
+{
+  auto linkMap = initializeLinkMap();
+
+  // strip down link map, depending on link(s) requested to report on
+  // "associative-container erase idiom"
+  for (auto it = linkMap.cbegin(); it != linkMap.cend(); /* no increment */) {
+    if ((mLinkMask.find(it->first) == mLinkMask.end())) {
+      linkMap.erase(it++);
+    } else {
+      it++;
+    }
+  }
+
+  if (mWrapperCount == 0) {
+    setWrapperCount();
+  }
+  Gbt gbt = Gbt(mPdaBar, linkMap, mWrapperCount, mEndpoint);
+  return gbt.getLoopbackStats(reset, mGbtPatternMode, mGbtCounterType, mGbtStatsMode, mGbtLowMask, mGbtMedMask, mGbtHighMask);
 }
 
 } // namespace roc
