@@ -52,7 +52,7 @@ class Program : public AliceO2::Common::Program
   void enableInfoLogger(bool state)
   {
     // don't interfere if env var explicitly set
-    if (std::getenv("INFOLOGGER_MODE")) {
+    if (std::getenv("O2_INFOLOGGER_MODE")) {
       return;
     }
 

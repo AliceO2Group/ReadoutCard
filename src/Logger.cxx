@@ -53,9 +53,9 @@ AliceO2::InfoLogger::InfoLogger& Logger::get()
 void Logger::enableInfoLogger(bool state)
 {
   if (state) {
-    setenv("INFOLOGGER_MODE", "infoLoggerD", true);
+    setenv("O2_INFOLOGGER_MODE", "infoLoggerD", true);
   } else {
-    setenv("INFOLOGGER_MODE", "stdout", true);
+    setenv("O2_INFOLOGGER_MODE", "stdout", true);
   }
 }
 
