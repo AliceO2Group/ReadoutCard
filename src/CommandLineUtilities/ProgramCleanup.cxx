@@ -73,21 +73,21 @@ class ProgramCleanup : public Program
     Pda::freePdaDmaBuffers();
 
     std::cout << "Removing CRORC FIFO shared memory files" << std::endl;
-    sysIgnored("rm /dev/shm/AliceO2_RoC_*");
+    sysCheckRet("rm /dev/shm/AliceO2_RoC_*");
     std::cout << "Removing readout 2MB hugepage mappings" << std::endl;
-    sysIgnored("rm /var/lib/hugetlbfs/global/pagesize-2MB/readout*");
+    sysCheckRet("rm /var/lib/hugetlbfs/global/pagesize-2MB/readout*");
     std::cout << "Removing readout 1GB hugepage mappings" << std::endl;
-    sysIgnored("rm /var/lib/hugetlbfs/global/pagesize-1GB/readout*");
+    sysCheckRet("rm /var/lib/hugetlbfs/global/pagesize-1GB/readout*");
     std::cout << "Removing roc-bench-dma 2MB hugepage mappings" << std::endl;
-    sysIgnored("rm /var/lib/hugetlbfs/global/pagesize-2MB/roc-bench-dma*");
+    sysCheckRet("rm /var/lib/hugetlbfs/global/pagesize-2MB/roc-bench-dma*");
     std::cout << "Removing roc-bench-dma 1GB hugepage mappings" << std::endl;
-    sysIgnored("rm /var/lib/hugetlbfs/global/pagesize-1GB/roc-bench-dma*");
+    sysCheckRet("rm /var/lib/hugetlbfs/global/pagesize-1GB/roc-bench-dma*");
 
     if (!mOptions.light) {
       std::cout << "Removing uio_pci_dma" << std::endl;
-      sysIgnored("modprobe -r uio_pci_dma");
+      sysCheckRet("modprobe -r uio_pci_dma");
       std::cout << "Reinserting uio_pci_dma" << std::endl;
-      sysIgnored("modprobe uio_pci_dma");
+      sysCheckRet("modprobe uio_pci_dma");
     }
   }
 
@@ -96,10 +96,12 @@ class ProgramCleanup : public Program
     bool light = false;
   } mOptions;
 
-  // Ignore system()'s return value
-  void sysIgnored(const char* command)
+  void sysCheckRet(const char* command)
   {
-    static_cast<void>(system(command));
+    int ret = system(command);
+    if (ret) {
+      std::cerr << "Command: `" << command << "` failed with ret=" << ret << std::endl;
+    }
   }
 };
 
