@@ -48,7 +48,7 @@ CardConfigurator::CardConfigurator(Parameters& parameters, bool forceConfigure)
       auto bar2 = ChannelFactory().getBar(parameters);
       bar2->configure(forceConfigure);
     } else if (cardType == CardType::Crorc) {
-      parameters.setChannelNumber(0); // we need to change bar 0
+      parameters.setChannelNumber(0); // we need to change to bar 0
       auto bar0 = ChannelFactory().getBar(parameters);
       bar0->configure(forceConfigure);
     }
@@ -68,11 +68,39 @@ void CardConfigurator::parseConfigUri(CardType::type cardType, std::string confi
   }
 }
 
-void CardConfigurator::parseConfigUriCrorc(std::string /*configUri*/, Parameters& /*parameters*/) //TODO: Fill me
+/// configUri has to start with "ini://", "json://" or "consul://"
+void CardConfigurator::parseConfigUriCrorc(std::string configUri, Parameters& parameters)
 {
-  Logger::get() << "Non-parameter configuration not supported for the CRORC yet" << LogErrorOps << endm;
-  BOOST_THROW_EXCEPTION(Exception());
+  bool dynamicOffset = false;
+  uint32_t timeFrameLength = 0x100;
+
+  std::unique_ptr<o2::configuration::ConfigurationInterface> conf;
+  try {
+    conf = o2::configuration::ConfigurationFactory::getConfiguration(configUri);
+  } catch (std::exception& e) {
+    throw;
+  }
+
+  auto tree = conf->getRecursive("");
+  std::string group = "";
+  try {
+    for (auto it : tree) {
+      group = it.first;
+      auto subtree = it.second;
+
+      if (group == "crorc") { // Configure the CRORC
+        dynamicOffset = subtree.get<bool>("dynamicOffset");
+        timeFrameLength = subtree.get<int>("timeFrameLength");
+      }
+
+      parameters.setDynamicOffsetEnabled(dynamicOffset);
+      parameters.setTimeFrameLength(timeFrameLength);
+    }
+  } catch (...) {
+    BOOST_THROW_EXCEPTION(ParseException() << ErrorInfo::ConfigParse(group));
+  }
 }
+
 /// configUri has to start with "ini://", "json://" or "consul://"
 void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& parameters)
 {
