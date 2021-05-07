@@ -32,7 +32,7 @@ class ProgramFirmwareCheck : public Program
   virtual Description getDescription()
   {
     return { "Firmware Check", "Check firmware compatibility of the ReadoutCard(s)",
-             "roc-fw-check\n" };
+             "o2-roc-fw-check\n" };
   }
 
   virtual void addOptions(boost::program_options::options_description&)

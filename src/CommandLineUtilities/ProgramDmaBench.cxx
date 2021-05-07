@@ -113,7 +113,7 @@ class ProgramDmaBench : public Program
       "README.md for more information.\n"
       "The options specifying a size take power-of-10 and power-of-2 unit prefixes. For example '--bytes=1T' "
       "(1 terabyte) or '--buffer-size=1Gi' (1 gibibyte)",
-      "roc-bench-dma --verbose --id=42:0.0 --bytes=10G"
+      "o2-roc-bench-dma --verbose --id=42:0.0 --bytes=10G"
     };
   }
 
@@ -255,7 +255,7 @@ class ProgramDmaBench : public Program
       BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("Buffer size smaller than superpage size"));
     }
 
-    std::string bufferName = (b::format("roc-bench-dma_id=%s_chan=%s_pages") % map["id"].as<std::string>() % mOptions.dmaChannel).str();
+    std::string bufferName = (b::format("o2-roc-bench-dma_id=%s_chan=%s_pages") % map["id"].as<std::string>() % mOptions.dmaChannel).str();
 
     Utilities::HugepageType hugepageType;
     mMemoryMappedFile = Utilities::tryMapFile(mBufferSize, bufferName, !mOptions.noRemovePagesFile, &hugepageType);

@@ -32,8 +32,8 @@ class ProgramTriggerMonitor : public Program
   virtual Description getDescription()
   {
     return { "Trigger Monitor", "Return LTU trigger monitoring information",
-             "roc-pkt-monitor --id 42:00.0\n"
-             "roc-pkt-monitor --id 42:00.0 --updateable\n" };
+             "o2-roc-pkt-monitor --id 42:00.0\n"
+             "o2-roc-pkt-monitor --id 42:00.0 --updateable\n" };
   }
 
   virtual void addOptions(boost::program_options::options_description& options)

@@ -27,7 +27,7 @@ class ProgramReset : public Program
  public:
   virtual Description getDescription()
   {
-    return { "Reset", "Resets a channel", "roc-reset --id=12345 --channel=0 --reset=INTERNAL_SIU" };
+    return { "Reset", "Resets a channel", "o2-roc-reset --id=12345 --channel=0 --reset=INTERNAL_SIU" };
   }
 
   virtual void addOptions(boost::program_options::options_description& options)

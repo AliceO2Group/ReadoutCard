@@ -34,7 +34,7 @@ class ProgramBarStress : public Program
   virtual Description getDescription()
   {
     return { "Bar Stress", "Stress the Bar Accessor",
-             "roc-bar-stress --id 04:00.0 --channel=1 --address=0x0f00040 --value=0x18 \n"
+             "o2-roc-bar-stress --id 04:00.0 --channel=1 --address=0x0f00040 --value=0x18 \n"
              "\t--cycles 100000 --print-freq 10000 --sleep=1000" };
   }
 

@@ -39,9 +39,9 @@ class ProgramConfig : public Program
   virtual Description getDescription()
   {
     return { "Config", "Configure the ReadoutCard(s)",
-             "roc-config --config-uri ini:///home/flp/roc.cfg\n"
-             "roc-config --id 42:00.0 --links 0-23 --clock local --datapathmode packet --loopback --gbtmux ttc #CRU\n"
-             "roc-config --id #0 --crorc-id 0x42 --dyn-offset --tf-length 255 #CRORC\n" };
+             "o2-roc-config --config-uri ini:///home/flp/roc.cfg\n"
+             "o2-roc-config --id 42:00.0 --links 0-11 --clock local --datapathmode packet --loopback --gbtmux ttc #CRU\n"
+             "o2-roc-config --id #0 --crorc-id 0x42 --dyn-offset --tf-length 255 #CRORC\n" };
   }
 
   virtual void addOptions(boost::program_options::options_description& options)
@@ -108,7 +108,7 @@ class ProgramConfig : public Program
                           "Flag to enable the Time Frame Detection");
     options.add_options()("gen-cfg-file",
                           po::value<std::string>(&mOptions.genConfigFile),
-                          "If set generates a configuration file from the command line options. [DOES NOT CONFIGURE]");
+                          "If set generates a CRU configuration file from the command line options. [DOES NOT CONFIGURE]");
     options.add_options()("no-gbt",
                           po::bool_switch(&mOptions.noGbt),
                           "Flag to switch off GBT");

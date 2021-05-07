@@ -29,9 +29,9 @@ class ProgramUserLogic : public Program
   virtual Description getDescription()
   {
     return { "User Logic", "Control the dummy User Logic",
-             "roc-ul --id 0042:0 --event-size=128 \n"
-             "roc-ul --id 0042:0 --random-event-size \n"
-             "roc-ul --id 0042:0 --status \n" };
+             "o2-roc-ul --id 0042:0 --event-size=128 \n"
+             "o2-roc-ul --id 0042:0 --random-event-size \n"
+             "o2-roc-ul --id 0042:0 --status \n" };
   }
 
   virtual void addOptions(boost::program_options::options_description& options)

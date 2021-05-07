@@ -37,7 +37,7 @@ class ProgramPatternPlayer : public Program
   virtual Description getDescription()
   {
     return { "PatternPlayer", "Configure the CRU pattern player",
-             "roc-pat-player --id 42:00.0 --sync 0x0123457899876543210abcdefedcb --sync-length 4 --sync-delay 2 --sync-at-start\n" };
+             "o2-roc-pat-player --id 42:00.0 --sync 0x0123457899876543210abcdefedcb --sync-length 4 --sync-delay 2 --sync-at-start\n" };
   }
 
   virtual void addOptions(boost::program_options::options_description& options)

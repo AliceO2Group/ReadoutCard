@@ -39,9 +39,9 @@ class ProgramMetrics : public Program
   virtual Description getDescription()
   {
     return { "Metrics", "Return current RoC parameters",
-             "roc-metrics \n"
-             "roc-metrics --json \n"
-             "roc-metrics --monitoring\n" };
+             "o2-roc-metrics \n"
+             "o2-roc-metrics --json \n"
+             "o2-roc-metrics --monitoring\n" };
   }
 
   virtual void addOptions(boost::program_options::options_description& options)

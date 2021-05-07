@@ -34,7 +34,7 @@ class ProgramCrorcFlash : public Program
  public:
   virtual Description getDescription()
   {
-    return { "Flash", "Programs the card's flash memory", "roc-flash --id=12345 --file=/dir/my_file" };
+    return { "Flash", "Programs the card's flash memory", "o2-roc-flash --id=12345 --file=/dir/my_file" };
   }
 
   virtual void addOptions(po::options_description& options)

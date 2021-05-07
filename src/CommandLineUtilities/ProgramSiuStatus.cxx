@@ -34,7 +34,7 @@ class ProgramSiuStatus : public Program
   virtual Description getDescription()
   {
     return { "SIU Status", "Report SIU Status",
-             "roc-siu-status --id=42:00.0 --channel=2" };
+             "o2-roc-siu-status --id=42:00.0 --channel=2" };
   }
 
   virtual void addOptions(boost::program_options::options_description& options)

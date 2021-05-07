@@ -41,9 +41,9 @@ class ProgramStatus : public Program
   virtual Description getDescription()
   {
     return { "Status", "Return current RoC configuration status",
-             "roc-status --id 42:00.0\n"
-             "roc-status --id 42:00.0 --json\n"
-             "roc-status --id 42:00.0 --monitoring\n" };
+             "o2-roc-status --id 42:00.0\n"
+             "o2-roc-status --id 42:00.0 --json\n"
+             "o2-roc-status --id 42:00.0 --monitoring\n" };
   }
 
   virtual void addOptions(boost::program_options::options_description& options)
