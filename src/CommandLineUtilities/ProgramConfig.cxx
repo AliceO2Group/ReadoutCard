@@ -218,9 +218,9 @@ class ProgramConfig : public Program
         cfgFile << "userLogicEnabled=" << std::boolalpha << mOptions.userLogicEnabled << "\n";
         cfgFile << "runStatsEnabled=" << std::boolalpha << mOptions.runStatsEnabled << "\n";
         cfgFile << "userAndCommonLogicEnabled=" << std::boolalpha << mOptions.userAndCommonLogicEnabled << "\n";
-        cfgFile << "timeFrameLength=" << mOptions.timeFrameLength << "\n";
-        cfgFile << "timeFrameDetectionEnabled=" << std::boolalpha << !mOptions.timeFrameDetectionDisabled << "\n";
+        //cfgFile << "timeFrameDetectionEnabled=" << std::boolalpha << !mOptions.timeFrameDetectionDisabled << "\n";
         cfgFile << "systemId=" << mOptions.systemId << "\n";
+        cfgFile << "timeFrameLength=" << mOptions.timeFrameLength << "\n";
 
         cfgFile << "[links]\n";
         cfgFile << "enabled=false\n";

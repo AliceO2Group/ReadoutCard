@@ -99,6 +99,7 @@ struct ReportInfo {
   bool userLogicEnabled;
   bool runStatsEnabled;
   bool userAndCommonLogicEnabled;
+  uint16_t timeFrameLength;
 };
 
 struct OnuStatus {

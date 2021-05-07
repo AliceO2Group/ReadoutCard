@@ -138,6 +138,9 @@ class CruBar final : public BarInterfaceBase
 
   void setVirtualLinksIds(uint16_t systemId);
 
+  uint16_t getTimeFrameLength();
+  void setTimeFrameLength(uint16_t timeFrameLength);
+
   FirmwareFeatures parseFirmwareFeatures();
   FirmwareFeatures mFeatures;
 
@@ -172,6 +175,7 @@ class CruBar final : public BarInterfaceBase
   uint32_t mGbtMedMask;
   uint32_t mGbtLowMask;
   bool mGbtLoopbackReset;
+  uint32_t mTimeFrameLength;
 
   int mSerial;
   int mEndpoint;
