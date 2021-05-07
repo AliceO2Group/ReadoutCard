@@ -40,8 +40,8 @@ class ProgramListCards : public Program
   virtual Description getDescription()
   {
     return { "List Cards", "Lists installed cards and some basic information about them",
-             "roc-list-cards\n"
-             "roc-list-cards --json" };
+             "o2-roc-list-cards\n"
+             "o2-roc-list-cards --json" };
   }
 
   virtual void addOptions(boost::program_options::options_description& options)

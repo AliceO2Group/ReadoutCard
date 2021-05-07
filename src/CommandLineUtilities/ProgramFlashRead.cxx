@@ -33,7 +33,7 @@ class ProgramCrorcFlash : public Program
   virtual Description getDescription()
   {
     return { "Flash Read", "Reads card flash memory",
-             "roc-flash-read --id=12345 --address=0 --words=32" };
+             "o2-roc-flash-read --id=12345 --address=0 --words=32" };
   }
 
   virtual void addOptions(po::options_description& options)

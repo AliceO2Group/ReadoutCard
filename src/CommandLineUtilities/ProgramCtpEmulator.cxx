@@ -38,7 +38,7 @@ class ProgramCtpEmulator : public Program
   virtual Description getDescription()
   {
     return { "CTP Emulator", "Emulate CTP functionality",
-             "roc-ctp-emulator --id 42:00.0 --trigger-mode continuous\n" };
+             "o2-roc-ctp-emulator --id 42:00.0 --trigger-mode continuous\n" };
   }
 
   virtual void addOptions(boost::program_options::options_description& options)
@@ -55,7 +55,7 @@ class ProgramCtpEmulator : public Program
                           "Sets the number of Heartbeats to keep");
     options.add_options()("hbkeep",
                           po::value<uint32_t>(&mOptions.hbKeep)->default_value(15000),
-                          "Sets the number Heartbeats to drop");
+                          "Sets the number of Heartbeats to drop");
     options.add_options()("init-orbit",
                           po::value<std::string>(&mOptions.orbitInit)->default_value("0x0"),
                           "Sets the initial orbit id");

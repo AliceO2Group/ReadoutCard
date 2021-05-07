@@ -37,9 +37,9 @@ class ProgramPacketMonitor : public Program
   virtual Description getDescription()
   {
     return { "Packet Monitor", "Return RoC packet monitoring information",
-             "roc-pkt-monitor --id 42:00.0\n"
-             "roc-pkt-monitor --id 42:00.0 --json\n"
-             "roc-pkt-monitor --id 42:00.0 --monitoring\n" };
+             "o2-roc-pkt-monitor --id 42:00.0\n"
+             "o2-roc-pkt-monitor --id 42:00.0 --json\n"
+             "o2-roc-pkt-monitor --id 42:00.0 --monitoring\n" };
   }
 
   virtual void addOptions(boost::program_options::options_description& options)
