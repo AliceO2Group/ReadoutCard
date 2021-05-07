@@ -72,7 +72,7 @@ void CardConfigurator::parseConfigUri(CardType::type cardType, std::string confi
 void CardConfigurator::parseConfigUriCrorc(std::string configUri, Parameters& parameters)
 {
   bool dynamicOffset = false;
-  uint32_t timeFrameLength = 0x100;
+  uint16_t timeFrameLength = 0x100;
 
   std::unique_ptr<o2::configuration::ConfigurationInterface> conf;
   try {
@@ -124,6 +124,7 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
   bool runStatsEnabled = false;
   bool userAndCommonLogicEnabled = false;
   uint32_t systemId = 0x0;
+  uint16_t timeFrameLength = 0x100;
 
   bool enabled = false;
   std::string gbtMux = "ttc";
@@ -180,6 +181,8 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
         parsedString = subtree.get<std::string>("systemId");
         systemId = Hex::fromString(parsedString);
 
+        timeFrameLength = subtree.get<int>("timeFrameLength");
+
         parameters.setClock(clock);
         parameters.setDatapathMode(datapathMode);
         parameters.setGbtMode(gbtMode);
@@ -196,6 +199,7 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
         parameters.setRunStatsEnabled(runStatsEnabled);
         parameters.setUserAndCommonLogicEnabled(userAndCommonLogicEnabled);
         parameters.setSystemId(systemId);
+        parameters.setTimeFrameLength(timeFrameLength);
       } else if (group == "links") { // Configure all links with default values
 
         enabled = subtree.get<bool>("enabled");

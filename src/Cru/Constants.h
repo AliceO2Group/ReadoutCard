@@ -358,6 +358,9 @@ static constexpr Register USER_LOGIC_RESET(0x00c80000);
 static constexpr Register USER_LOGIC_EVSIZE(0x00c80004);
 static constexpr Register USER_LOGIC_EVSIZE_RAND(0x00c80008);
 
+/// Register to adjust the TimeFrame length (31 downto 20)
+static constexpr Register TIME_FRAME_LENGTH(0x00000c00);
+
 } // namespace Registers
 } // namespace Cru
 } // namespace roc

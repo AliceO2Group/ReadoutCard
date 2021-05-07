@@ -66,7 +66,8 @@ CruBar::CruBar(const Parameters& parameters, std::unique_ptr<RocPciDevice> rocPc
     mGbtStatsMode(parameters.getGbtStatsMode().get_value_or(GbtStatsMode::All)),
     mGbtHighMask(parameters.getGbtHighMask().get_value_or(0xffffffff)),
     mGbtMedMask(parameters.getGbtMedMask().get_value_or(0xffffffff)),
-    mGbtLowMask(parameters.getGbtLowMask().get_value_or(0xffffffff))
+    mGbtLowMask(parameters.getGbtLowMask().get_value_or(0xffffffff)),
+    mTimeFrameLength(parameters.getTimeFrameLength().get_value_or(0x100))
 {
   if (getIndex() == 0) {
     mFeatures = parseFirmwareFeatures();
@@ -540,6 +541,7 @@ Cru::ReportInfo CruBar::report(bool forConfig)
   bool runStatsEnabled = datapathWrapper.getLinkEnabled(runStatsLink);
 
   bool userAndCommonLogicEnabled = datapathWrapper.getUserAndCommonLogicEnabled(mEndpoint);
+  uint16_t timeFrameLength = getTimeFrameLength();
 
   Cru::ReportInfo reportInfo = {
     linkMap,
@@ -553,7 +555,8 @@ Cru::ReportInfo CruBar::report(bool forConfig)
     gbtEnabled,
     userLogicEnabled,
     runStatsEnabled,
-    userAndCommonLogicEnabled
+    userAndCommonLogicEnabled,
+    timeFrameLength
   };
 
   return reportInfo;
@@ -703,6 +706,7 @@ void CruBar::configure(bool force)
       mUserAndCommonLogicEnabled == reportInfo.userAndCommonLogicEnabled &&
       mRunStatsEnabled == reportInfo.runStatsEnabled &&
       mGbtEnabled == reportInfo.gbtEnabled &&
+      mTimeFrameLength == reportInfo.timeFrameLength &&
       !force) {
     log("No need to reconfigure further", LogInfoOps);
     return;
@@ -821,6 +825,11 @@ void CruBar::configure(bool force)
   if (mDynamicOffset != reportInfo.dynamicOffset || force) {
     log("Toggling fixed/dynamic offset", LogInfoDevel);
     datapathWrapper.setDynamicOffset(mEndpoint, mDynamicOffset);
+  }
+
+  if (mTimeFrameLength != reportInfo.timeFrameLength || force) {
+    log("Setting Time Frame length", LogInfoDevel);
+    setTimeFrameLength(mTimeFrameLength);
   }
 
   log("CRU configuration done", LogInfoOps);
@@ -1160,6 +1169,17 @@ std::map<int, Cru::LoopbackStats> CruBar::getGbtLoopbackStats(bool reset)
   }
   Gbt gbt = Gbt(mPdaBar, linkMap, mWrapperCount, mEndpoint);
   return gbt.getLoopbackStats(reset, mGbtPatternMode, mGbtCounterType, mGbtStatsMode, mGbtLowMask, mGbtMedMask, mGbtHighMask);
+}
+
+uint16_t CruBar::getTimeFrameLength()
+{
+  uint32_t timeFrameLength = readRegister(Cru::Registers::TIME_FRAME_LENGTH.index);
+  return (uint16_t)Utilities::getBits(timeFrameLength, 12, 20);
+}
+
+void CruBar::setTimeFrameLength(uint16_t timeFrameLength)
+{
+  modifyRegister(Cru::Registers::TIME_FRAME_LENGTH.index, 20, 12, timeFrameLength);
 }
 
 } // namespace roc
