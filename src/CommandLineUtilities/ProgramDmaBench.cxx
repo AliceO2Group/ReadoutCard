@@ -68,7 +68,7 @@ constexpr auto PACKET_COUNTER_INITIAL_VALUE = std::numeric_limits<uint32_t>::max
 /// Initial value for link event counters
 constexpr auto EVENT_COUNTER_INITIAL_VALUE = std::numeric_limits<uint32_t>::max();
 /// Maximum supported links
-constexpr auto MAX_LINKS = 32;
+constexpr auto MAX_LINKS = 12;
 /// Interval for low priority thread (display updates, etc)
 constexpr auto LOW_PRIORITY_INTERVAL = 10ms;
 /// Fields: Time(hour:minute:second), Pages pushed, Pages read, Errors, °C
@@ -145,9 +145,6 @@ class ProgramDmaBench : public Program
                           po::bool_switch(&mOptions.fastCheckEnabled),
                           "Enable fast error checking");
     Options::addOptionCardId(options);
-    options.add_options()("links",
-                          po::value<std::string>(&mOptions.links)->default_value("0"),
-                          "Links to open. A comma separated list of integers or ranges, e.g. '0,2,5-10'");
     options.add_options()("max-rdh-packetcount",
                           po::value<size_t>(&mOptions.maxRdhPacketCounter)->default_value(255),
                           "Maximum packet counter expected in the RDH");
@@ -269,7 +266,6 @@ class ProgramDmaBench : public Program
     params.setChannelNumber(mOptions.dmaChannel);
     params.setBufferParameters(buffer_parameters::Memory{ mMemoryMappedFile->getAddress(),
                                                           mMemoryMappedFile->getSize() });
-    params.setLinkMask(Parameters::linkMaskFromString(mOptions.links));
 
     mInfinitePages = (mOptions.maxBytes <= 0);
     mSuperpageLimit = mOptions.maxBytes / mSuperpageSize;
@@ -1141,7 +1137,6 @@ class ProgramDmaBench : public Program
     bool noRemovePagesFile = false;
     std::string fileOutputPathBin;
     std::string fileOutputPathAscii;
-    std::string links;
     bool bufferFullCheck = false;
     size_t dmaPageSize;
     std::string dataSourceString;
