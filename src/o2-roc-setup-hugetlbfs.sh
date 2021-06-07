@@ -5,10 +5,10 @@
 # Defaults can be altered by configuration files containing an integer (see variables HUGEPAGES_XX_CONF for paths).
 
 
-HUGEPAGES_2M_CONF=/etc/flp.d/readoutcard/hugepages-2MiB.conf
+HUGEPAGES_2M_CONF=/etc/o2.d/readoutcard/hugepages-2MiB.conf
 HUGEPAGES_2M_SYSFILE=/sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
 HUGEPAGES_2M_NUMBER=128
-HUGEPAGES_1G_CONF=/etc/flp.d/readoutcard/hugepages-1GiB.conf
+HUGEPAGES_1G_CONF=/etc/o2.d/readoutcard/hugepages-1GiB.conf
 HUGEPAGES_1G_SYSFILE=/sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages
 HUGEPAGES_1G_NUMBER=6
 
