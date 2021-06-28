@@ -1,0 +1,86 @@
+{
+    "cru": {
+          "allowRejection": "false",
+          "clock": "ttc",
+          "cruId": "0x0",
+          "datapathMode": "streaming",
+          "loopback": "true",
+          "gbtMode": "GBT",
+          "downstreamData": "CTP",
+          "ponUpstream": "true",
+          "onuAddress": "1",
+          "dynamicOffset": "true",
+          "triggerWindowSize": "1000",
+          "gbtEnabled": "true",
+          "userLogicEnabled": "false",
+          "runStatsEnabled": "false",
+          "userAndCommonLogicEnabled": "false",
+          "systemId": "0x0",
+          "timeFrameLength": "255"
+        },
+      "links": {
+            "enabled": "false",
+            "gbtMux": "ttc",
+            "feeId": "0x0"
+          },
+      "link0": {
+            "enabled": "true",
+            "gbtMux": "ttc",
+            "feeId": "0x0"
+          },
+      "link1": {
+            "enabled": "true",
+            "gbtMux": "ttc",
+            "feeId": "0x0"
+          },
+      "link2": {
+            "enabled": "false",
+            "gbtMux": "ttc",
+            "feeId": "0x0"
+          },
+      "link3": {
+            "enabled": "false",
+            "gbtMux": "swt",
+            "feeId": "0x0"
+          },
+      "link4": {
+            "enabled": "false",
+            "gbtMux": "ttc",
+            "feeId": "0x0"
+          },
+      "link5": {
+            "enabled": "false",
+            "gbtMux": "ttc",
+            "feeId": "0x0"
+          },
+      "link6": {
+            "enabled": "false",
+            "gbtMux": "ttc",
+            "feeId": "0x0"
+          },
+      "link7": {
+            "enabled": "false",
+            "gbtMux": "ttc",
+            "feeId": "0x0"
+          },
+      "link8": {
+            "enabled": "false",
+            "gbtMux": "ttc",
+            "feeId": "0x0"
+          },
+      "link9": {
+            "enabled": "false",
+            "gbtMux": "ul",
+            "feeId": "0x0"
+          },
+      "link10": {
+            "enabled": "false",
+            "gbtMux": "ttc",
+            "feeId": "0x0"
+          },
+      "link11": {
+            "enabled": "false",
+            "gbtMux": "ttc",
+            "feeId": "0x0"
+          }
+}
