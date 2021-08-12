@@ -65,6 +65,7 @@ static constexpr Register SCA_MFT_PSU_CMD(0x00f00004);
 static constexpr Register SCA_MFT_PSU_CTRL(0x00f00008);
 static constexpr Register SCA_MFT_PSU_RESET(0x00f0000c);
 static constexpr Register SCA_MFT_PSU_MASTER_SLAVE(0x00f0003c);
+static constexpr Register SCA_MFT_PSU_ID(0x00f00080);
 
 static constexpr Register SC_LINK(0x00f00078);
 static constexpr Register SC_RESET(0x00f0007c);
