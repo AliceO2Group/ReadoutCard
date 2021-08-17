@@ -52,6 +52,9 @@ class ProgramMetrics : public Program
     options.add_options()("monitoring",
                           po::bool_switch(&mOptions.monitoring),
                           "Toggle monitoring metrics sending");
+    options.add_options()("force-report",
+                          po::bool_switch(&mOptions.forceReport),
+                          "Force report for invalid serial numbers (doesn't send monitoring metrics)");
   }
 
   virtual void run(const boost::program_options::variables_map& /*map*/)
@@ -95,9 +98,13 @@ class ProgramMetrics : public Program
       float localClock = bar2->getLocalClock() / 1e6;
       uint32_t totalPacketsPerSecond = bar2->getTotalPacketsPerSecond(bar0->getEndpointNumber());
 
-      if (card.serialId.getSerial() == 0x7fffffff || card.serialId.getSerial() == 0x0) {
+      if (!mOptions.forceReport && (card.serialId.getSerial() == 0x7fffffff || card.serialId.getSerial() == 0x0)) {
         std::cout << "Bad serial reported, bad card state, exiting" << std::endl;
         return;
+      }
+
+      if (mOptions.forceReport) {
+        mOptions.monitoring = false; // force disable sending metrics with force
       }
 
       if (mOptions.monitoring) {
@@ -150,6 +157,7 @@ class ProgramMetrics : public Program
   struct OptionsStruct {
     bool jsonOut = false;
     bool monitoring = false;
+    bool forceReport = false;
   } mOptions;
 };
 
