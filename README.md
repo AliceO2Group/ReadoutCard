@@ -721,7 +721,7 @@ In order to use a CRU the package versions have to adhere to the following table
 | v0.26.0     | v3.9.1.        | v2.7.0         | v1.1.0+     | v12.0.0      |
 | v0.27.0     | v3.9.1/v3.10.0 | v2.7.0         | v1.1.0+     | v12.0.0      |
 | v0.32.1     | v3.9.1/v3.10.0 | v2.7.0/v2.8.0  | v1.1.0+     | v12.0.0      |
-| v0.33.0     | v3.9.1-v3.12.0 | v2.7.0-v2.8.1  | v1.1.0+     | v12.0.0      |
+| v0.32.2     | v3.9.1-v3.12.0 | v2.7.0-v2.8.1  | v1.1.0+     | v12.0.0      |
 
 The _PDA Driver_ entry refers to the `pda-kadapter-dkms-*.rpm` package which is availabe through the [o2-daq-yum](http://alice-daq-yum-o2.web.cern.ch/alice-daq-yum-o2/cc7_64/) repo as an RPM.
 
