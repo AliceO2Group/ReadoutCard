@@ -208,6 +208,7 @@ class ProgramStatus : public Program
                            .addValue(reportInfo.userLogicEnabled, "userLogic")
                            .addValue(reportInfo.runStatsEnabled, "runStats")
                            .addValue(reportInfo.userAndCommonLogicEnabled, "userAndCommonLogic")
+                           .addValue(reportInfo.timeFrameLength, "timeFrameLength")
                            .addTag(tags::Key::SerialId, card.serialId.getSerial())
                            .addTag(tags::Key::Endpoint, card.serialId.getEndpoint())
                            .addTag(tags::Key::ID, card.sequenceId)
@@ -222,11 +223,13 @@ class ProgramStatus : public Program
         root.put("userLogic", userLogic);
         root.put("runStats", runStats);
         root.put("userAndCommonLogic", userAndCommonLogic);
+        root.put("timeFrameLength", reportInfo.timeFrameLength);
       } else {
         std::cout << "-----------------------------" << std::endl;
         std::cout << "CRU ID: " << reportInfo.cruId << std::endl;
         std::cout << clock << " clock | ";
         std::cout << offset << " offset" << std::endl;
+        std::cout << "Timeframe length: " << (int)reportInfo.timeFrameLength << std::endl;
         if (reportInfo.userLogicEnabled && reportInfo.userAndCommonLogicEnabled) {
           std::cout << "User and Common Logic enabled" << std::endl;
         } else if (reportInfo.userLogicEnabled) {

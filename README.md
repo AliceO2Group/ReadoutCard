@@ -577,6 +577,7 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | `"userLogic"`               | 0/1 (Disabled/Enabled)  | int    |
 | `"runStats"`                | 0/1 (Disabled/Enabled)  | int    |
 | `"commonAndUserLogic"`      | 0/1 (Disabled/Enabled)  | int    |
+| `"timeFrameLength"`         | -                       | int    |
 
 | Tag key               | Value                 |
 | --------------------- | --------------------- |
