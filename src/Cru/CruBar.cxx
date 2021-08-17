@@ -1173,13 +1173,21 @@ std::map<int, Cru::LoopbackStats> CruBar::getGbtLoopbackStats(bool reset)
 
 uint16_t CruBar::getTimeFrameLength()
 {
-  uint32_t timeFrameLength = readRegister(Cru::Registers::TIME_FRAME_LENGTH.index);
-  return (uint16_t)Utilities::getBits(timeFrameLength, 12, 20);
+  // temporary hack to access the timeframe length register from bar0
+  auto params = Parameters::makeParameters(SerialId{ mSerial, mEndpoint }, 0);
+  auto bar0 = ChannelFactory().getBar(params);
+
+  uint32_t timeFrameLength = bar0->readRegister(Cru::Registers::TIME_FRAME_LENGTH.index);
+  return (uint16_t)Utilities::getBits(timeFrameLength, 20, 31);
 }
 
 void CruBar::setTimeFrameLength(uint16_t timeFrameLength)
 {
-  modifyRegister(Cru::Registers::TIME_FRAME_LENGTH.index, 20, 12, timeFrameLength);
+  // temporary hack to access the timeframe length register from bar0
+  auto params = Parameters::makeParameters(SerialId{ mSerial, mEndpoint }, 0);
+  auto bar0 = ChannelFactory().getBar(params);
+
+  bar0->modifyRegister(Cru::Registers::TIME_FRAME_LENGTH.index, 20, 12, timeFrameLength);
 }
 
 } // namespace roc

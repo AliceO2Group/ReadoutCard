@@ -31,6 +31,9 @@
 #include "ReadoutCard/PatternPlayer.h"
 #include "Utilities/Util.h"
 
+// Needed for a temporary hack, to be removed
+#include "ReadoutCard/ChannelFactory.h"
+
 namespace o2
 {
 namespace roc
