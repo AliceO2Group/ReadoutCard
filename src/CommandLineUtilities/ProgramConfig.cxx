@@ -101,7 +101,7 @@ class ProgramConfig : public Program
                           po::value<uint32_t>(&mOptions.triggerWindowSize),
                           "The size of the trigger window in GBT words");
     options.add_options()("tf-length",
-                          po::value<uint32_t>(&mOptions.timeFrameLength),
+                          po::value<uint32_t>(&mOptions.timeFrameLength)->default_value(0x100),
                           "Sets the length of the Time Frame");
     options.add_options()("no-tf-detection",
                           po::bool_switch(&mOptions.timeFrameDetectionDisabled),
