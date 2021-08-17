@@ -23,9 +23,12 @@ namespace roc
 
 FirmwareChecker::FirmwareChecker() : mCompatibleFirmwareList({
                                        /* CRU */
+                                       { "6a85d30c", "v3.12.0" },
+                                       { "7be5aa1c", "v3.11.0" },
                                        { "e4a5a46e", "v3.10.0" },
                                        { "f71faa86", "v3.9.1" },
                                        { "8e0d2ffa", "v3.9.0" },
+                                       { "0c6a3a7c", "MFT PSU" },
                                        /*{ "e8e58cff", "v3.8.0" },
                                                                { "f8cecade", "v3.7.0" },
                                                                { "75b96268", "v3.6.1" },
@@ -33,6 +36,7 @@ FirmwareChecker::FirmwareChecker() : mCompatibleFirmwareList({
                                                                { "d458317e", "v3.5.2" },
                                                                { "6baf11da", "v3.5.1" },*/
                                        /* CRORC */
+                                       { "59e9955", "v2.8.1" },
                                        { "f086417", "v2.8.0" },
                                        { "474f9e1", "v2.7.0" }
                                        /*{ "8e3a98e", "v2.6.1" },
