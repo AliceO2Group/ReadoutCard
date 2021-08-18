@@ -32,8 +32,8 @@ class ProgramTriggerMonitor : public Program
   virtual Description getDescription()
   {
     return { "Trigger Monitor", "Return LTU trigger monitoring information",
-             "o2-roc-pkt-monitor --id 42:00.0\n"
-             "o2-roc-pkt-monitor --id 42:00.0 --updateable\n" };
+             "o2-roc-trig-monitor --id 42:00.0\n"
+             "o2-roc-trig-monitor --id 42:00.0 --force # for pre-production CRUs\n" };
   }
 
   virtual void addOptions(boost::program_options::options_description& options)
@@ -42,6 +42,9 @@ class ProgramTriggerMonitor : public Program
     options.add_options()("updateable",
                           po::bool_switch(&mOptions.updateable),
                           "Toggle updateable output");
+    options.add_options()("force-report",
+                          po::bool_switch(&mOptions.forceReport),
+                          "Force report for invalid serial numbers");
   }
 
   virtual void run(const boost::program_options::variables_map& map)
@@ -53,7 +56,7 @@ class ProgramTriggerMonitor : public Program
     auto card = RocPciDevice(cardId).getCardDescriptor();
     auto cardType = card.cardType;
 
-    if (card.serialId.getSerial() == 0x7fffffff || card.serialId.getSerial() == 0x0) {
+    if (!mOptions.forceReport && (card.serialId.getSerial() == 0x7fffffff || card.serialId.getSerial() == 0x0)) {
       std::cout << "Bad serial reported, bad card state, exiting" << std::endl;
       return;
     }
@@ -108,6 +111,7 @@ class ProgramTriggerMonitor : public Program
  private:
   struct OptionsStruct {
     bool updateable = false;
+    bool forceReport = false;
   } mOptions;
 };
 
