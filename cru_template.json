@@ -16,7 +16,7 @@
           "runStatsEnabled": "false",
           "userAndCommonLogicEnabled": "false",
           "systemId": "0x0",
-          "timeFrameLength": "255"
+          "timeFrameLength": "256"
         },
       "links": {
             "enabled": "false",
