@@ -111,6 +111,8 @@ class CruBar final : public BarInterfaceBase
 
   std::map<int, Link> initializeLinkMap();
 
+  std::vector<int> getDataTakingLinks();
+
   std::shared_ptr<Pda::PdaBar> getPdaBar()
   {
     return mPdaBar;

@@ -72,50 +72,23 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
 
   // Insert links
   {
-    DatapathWrapper dwrapper = DatapathWrapper(getBar2()->getPdaBar());
-    auto linkMap = getBar2()->initializeLinkMap();
-
-    int endpoint = getBar()->getEndpointNumber();
-
-    Cru::Link newLink;
-    newLink.dwrapper = endpoint;
-
-    // Insert UL link
-    newLink.dwrapperId = 15;
-    if (dwrapper.getLinkEnabled(newLink)) {
-      linkMap.insert({ 15, newLink });
-    }
-
-    // Insert Run Statistics link
-    newLink.dwrapperId = (endpoint == 0) ? 13 : 14;
-
-    if (dwrapper.getLinkEnabled(newLink)) {
-      linkMap.insert({ newLink.dwrapperId, newLink });
-    }
-
     std::stringstream stream;
     stream << "Using link(s): ";
 
-    for (const auto& el : linkMap) {
-      auto id = el.first;
-      auto link = el.second;
-      if (!dwrapper.getLinkEnabled(link)) {
-        //log((format("Will not push superpages to link #%1% (disabled)") % id).str(), InfoLogger::InfoLogger::Warning);
-        continue;
-      }
-
-      stream << id << " ";
+    auto links = getBar2()->getDataTakingLinks();
+    for (auto const& link : links) {
+      stream << link << " ";
       //Implicit constructors are deleted for the folly Queue. Workaround to keep the Link struct with a queue * field.
       std::shared_ptr<SuperpageQueue> linkQueue = std::make_shared<SuperpageQueue>(LINK_QUEUE_CAPACITY_ALLOCATIONS);
-      Link newLink = { static_cast<LinkId>(id), 0, linkQueue };
+      Link newLink = { static_cast<LinkId>(link), 0, linkQueue };
       mLinks.push_back(newLink);
     }
+
+    log(stream.str(), LogInfoOps);
 
     if (mLinks.empty()) {
       BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("No links are enabled. Check with roc-status. Configure with roc-config."));
     }
-
-    log(stream.str(), LogInfoOps);
   }
 }
 

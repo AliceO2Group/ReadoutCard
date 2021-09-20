@@ -55,7 +55,7 @@ void DatapathWrapper::setLinkDisabled(Link link)
 }
 
 /// Get particular link's enabled bit
-bool DatapathWrapper::getLinkEnabled(Link link)
+bool DatapathWrapper::isLinkEnabled(Link link)
 {
   uint32_t address = getDatapathWrapperBaseAddress(link.dwrapper) +
                      Cru::Registers::DWRAPPER_GREGS.address +
