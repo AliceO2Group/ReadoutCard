@@ -37,7 +37,7 @@ class DatapathWrapper
   void setLinksEnabled(uint32_t dwrapper, uint32_t mask);
   void setLinkEnabled(Link link);
   void setLinkDisabled(Link link);
-  bool getLinkEnabled(Link link);
+  bool isLinkEnabled(Link link);
   void setDatapathMode(Link link, uint32_t mode);
   DatapathMode::type getDatapathMode(Link link);
   void setPacketArbitration(int wrapperCount, int arbitrationMode = 0);

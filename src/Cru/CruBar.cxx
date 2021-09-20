@@ -498,7 +498,7 @@ Cru::ReportInfo CruBar::report(bool forConfig)
   for (auto& el : linkMap) {
     auto& link = el.second;
     link.datapathMode = datapathWrapper.getDatapathMode(link);
-    link.enabled = datapathWrapper.getLinkEnabled(link);
+    link.enabled = datapathWrapper.isLinkEnabled(link);
     link.allowRejection = datapathWrapper.getFlowControl(link.dwrapper);
     link.stickyBit = gbt.getStickyBit(link);
     link.rxFreq = gbt.getRxClockFrequency(link) / 1e6; // Hz -> Mhz
@@ -534,12 +534,12 @@ Cru::ReportInfo CruBar::report(bool forConfig)
   Link userLogicLink;
   userLogicLink.dwrapper = mEndpoint;
   userLogicLink.dwrapperId = 15;
-  bool userLogicEnabled = datapathWrapper.getLinkEnabled(userLogicLink);
+  bool userLogicEnabled = datapathWrapper.isLinkEnabled(userLogicLink);
 
   Link runStatsLink;
   runStatsLink.dwrapper = mEndpoint;
   runStatsLink.dwrapperId = (mEndpoint == 0) ? 13 : 14;
-  bool runStatsEnabled = datapathWrapper.getLinkEnabled(runStatsLink);
+  bool runStatsEnabled = datapathWrapper.isLinkEnabled(runStatsLink);
 
   bool userAndCommonLogicEnabled = datapathWrapper.getUserAndCommonLogicEnabled(mEndpoint);
   uint16_t timeFrameLength = getTimeFrameLength();
@@ -911,6 +911,46 @@ std::map<int, Link> CruBar::initializeLinkMap()
     std::cout << el.first << " " << el.second.bank << " " << el.second.id << std::endl;*/
 
   return newLinkMap;
+}
+
+// Returns a vector of the link ids that should participate in data taking
+// A link participates in data taking if it is enabled in the datapath and is not down
+std::vector<int> CruBar::getDataTakingLinks()
+{
+  std::vector<int> links;
+  DatapathWrapper datapathWrapper = DatapathWrapper(mPdaBar);
+  auto linkMap = initializeLinkMap();
+  if (mWrapperCount == 0) {
+    setWrapperCount();
+  }
+  Gbt gbt = Gbt(mPdaBar, linkMap, mWrapperCount, mEndpoint);
+
+  // Insert GBT links
+  for (auto const& el : linkMap) {
+    int id = el.first;
+    Link link = el.second;
+    if (!datapathWrapper.isLinkEnabled(link) || gbt.getStickyBit(link) == Cru::LinkStatus::Down) {
+      continue;
+    }
+    links.push_back(id);
+  }
+
+  Cru::Link newLink;
+  newLink.dwrapper = mEndpoint;
+
+  // Insert Run Statistics link
+  newLink.dwrapperId = (mEndpoint == 0) ? 13 : 14;
+  if (datapathWrapper.isLinkEnabled(newLink)) {
+    links.push_back(newLink.dwrapperId);
+  }
+
+  // Insert UL link
+  newLink.dwrapperId = 15;
+  if (datapathWrapper.isLinkEnabled(newLink)) {
+    links.push_back(newLink.dwrapperId);
+  }
+
+  return links;
 }
 
 /// Initializes and Populates the linkMap with the GBT configuration parameters
