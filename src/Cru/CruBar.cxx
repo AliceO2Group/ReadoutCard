@@ -569,14 +569,6 @@ Cru::PacketMonitoringInfo CruBar::monitorPackets()
   std::map<int, Cru::WrapperPacketInfo> wrapperPacketInfoMap;
 
   DatapathWrapper datapathWrapper = DatapathWrapper(mPdaBar);
-  std::map<int, Link> linkMap = initializeLinkMap();
-  for (auto& el : linkMap) {
-    uint32_t accepted = datapathWrapper.getAcceptedPackets(el.second);
-    uint32_t rejected = datapathWrapper.getRejectedPackets(el.second);
-    uint32_t forced = datapathWrapper.getForcedPackets(el.second);
-    linkPacketInfoMap.insert({ el.first, { accepted, rejected, forced } });
-  }
-
   // Insert the Run Statistics link
   Link runStatsLink = {};
   runStatsLink.dwrapper = mEndpoint;
@@ -595,6 +587,18 @@ Cru::PacketMonitoringInfo CruBar::monitorPackets()
   rejected = datapathWrapper.getRejectedPackets(uLLink);
   forced = datapathWrapper.getForcedPackets(uLLink);
   linkPacketInfoMap.insert({ 15, { accepted, rejected, forced } });
+
+  bool userLogicEnabled = datapathWrapper.getLinkEnabled(uLLink);
+
+  // Insert links 0-11
+  std::map<int, Link> linkMap = initializeLinkMap();
+  for (auto& el : linkMap) {
+    // don't read the link register when UL is enabled
+    uint32_t accepted = userLogicEnabled ? 0 : datapathWrapper.getAcceptedPackets(el.second);
+    uint32_t rejected = userLogicEnabled ? 0 : datapathWrapper.getRejectedPackets(el.second);
+    uint32_t forced = userLogicEnabled ? 0 : datapathWrapper.getForcedPackets(el.second);
+    linkPacketInfoMap.insert({ el.first, { accepted, rejected, forced } });
+  }
 
   int wrapper = mEndpoint;
   uint32_t dropped = datapathWrapper.getDroppedPackets(wrapper);
