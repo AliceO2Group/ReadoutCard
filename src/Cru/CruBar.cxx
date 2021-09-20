@@ -588,7 +588,7 @@ Cru::PacketMonitoringInfo CruBar::monitorPackets()
   forced = datapathWrapper.getForcedPackets(uLLink);
   linkPacketInfoMap.insert({ 15, { accepted, rejected, forced } });
 
-  bool userLogicEnabled = datapathWrapper.getLinkEnabled(uLLink);
+  bool userLogicEnabled = datapathWrapper.isLinkEnabled(uLLink);
 
   // Insert links 0-11
   std::map<int, Link> linkMap = initializeLinkMap();
