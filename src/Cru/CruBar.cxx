@@ -933,7 +933,8 @@ std::vector<int> CruBar::getDataTakingLinks()
   for (auto const& el : linkMap) {
     int id = el.first;
     Link link = el.second;
-    if (!datapathWrapper.isLinkEnabled(link) || gbt.getStickyBit(link) == Cru::LinkStatus::Down) {
+    // TODO: Check for link UP disabled until clear what will happen with the case of TPC UL
+    if (!datapathWrapper.isLinkEnabled(link) /* || gbt.getStickyBit(link) == Cru::LinkStatus::Down */) {
       continue;
     }
     links.push_back(id);
