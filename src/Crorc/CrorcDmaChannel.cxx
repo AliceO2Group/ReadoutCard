@@ -299,7 +299,6 @@ void CrorcDmaChannel::fillSuperpages()
 
     while (mFreeFifoSize > 0) {
       if (isArrived(mFreeFifoBack)) {
-        //size_t superpageFilled = SUPERPAGE_SIZE; // Get the length before updating our descriptor index
         size_t superpageFilled = getLength(mFreeFifoBack); // Get the length before updating our descriptor index
         resetDescriptor(mFreeFifoBack);
 

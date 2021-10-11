@@ -404,5 +404,21 @@ Crorc::PacketMonitoringInfo CrorcBar::monitorPackets()
   return { acquisitionRate, packetsReceived };
 }
 
+bool CrorcBar::isASuperpageAvailable()
+{
+  static uint32_t previousAvailable = 0x0;
+  uint32_t currentAvailable = readRegister(0x30 / 4);
+  uint32_t diff;
+  if (currentAvailable < previousAvailable) { // warped
+    diff = (0x100000000 - 0xffffffff) + currentAvailable;
+  } else {
+    diff = currentAvailable - previousAvailable;
+  }
+
+  previousAvailable = currentAvailable;
+
+  return diff > 0;
+}
+
 } // namespace roc
 } // namespace o2
