@@ -375,12 +375,13 @@ static constexpr Register CRORC_CSR(0x00000000);
 // CHANNEL Control & Status Register
 // [1] -> CRORC
 // [2] -> CHANNEL (can be used together - e.g. 0x3)
-// [9] -> data receive ON / OFF
+// [9] -> data receive ON / OFF toggle
 // [12] -> LOOPBACK ON OFF
 // [23] -> FIFO NOT EMPTY
 static constexpr Register CHANNEL_CSR(0x00000010);
 static constexpr uint32_t CRORC_RESET(0x00000003);
 static constexpr uint32_t DATA_RX_ON_OFF(0x00000200);
+static constexpr uint32_t DATA_RX_ON_OFF_BIT(0x9);
 static constexpr uint32_t RXSTAT_NOT_EMPTY(0x00800000);
 static constexpr uint32_t LOOPBACK_ON_OFF(0x00001000);
 
