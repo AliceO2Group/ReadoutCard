@@ -349,15 +349,20 @@ void CrorcBar::startDataReceiver(uintptr_t readyFifoBusAddress)
     writeRegister(Crorc::Registers::CHANNEL_RRBARX.index, 0x0);
   }
 
-  if (!(readRegister(Crorc::Registers::CHANNEL_CSR.index) & Crorc::Registers::DATA_RX_ON_OFF)) {
-    writeRegister(Crorc::Registers::CHANNEL_CSR.index, Crorc::Registers::DATA_RX_ON_OFF);
+  uint32_t CSRRegister = readRegister(Crorc::Registers::CHANNEL_CSR.index);
+  if (!Utilities::getBit(CSRRegister, Crorc::Registers::DATA_RX_ON_OFF_BIT)) {
+    Utilities::setBit(CSRRegister, Crorc::Registers::DATA_RX_ON_OFF_BIT, true);
+    writeRegister(Crorc::Registers::CHANNEL_CSR.index, CSRRegister);
   }
 }
 
 void CrorcBar::stopDataReceiver()
 {
-  if (readRegister(Crorc::Registers::CHANNEL_CSR.index) & Crorc::Registers::DATA_RX_ON_OFF) {
-    writeRegister(Crorc::Registers::CHANNEL_CSR.index, Crorc::Registers::DATA_RX_ON_OFF);
+  uint32_t CSRRegister = readRegister(Crorc::Registers::CHANNEL_CSR.index);
+  if (Utilities::getBit(CSRRegister, Crorc::Registers::DATA_RX_ON_OFF_BIT)) {
+    // Implemented as a toggle, so we write the same value we did for starting
+    Utilities::setBit(CSRRegister, Crorc::Registers::DATA_RX_ON_OFF_BIT, true);
+    writeRegister(Crorc::Registers::CHANNEL_CSR.index, CSRRegister);
   }
 }
 
