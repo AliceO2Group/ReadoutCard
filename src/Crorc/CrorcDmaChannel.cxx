@@ -113,11 +113,6 @@ CrorcDmaChannel::~CrorcDmaChannel()
 
 void CrorcDmaChannel::deviceStartDma()
 {
-  /* This sleep is an effort to reduce PCIe/BAR saturation during the DMA start
-     of different channels, during which lost BAR operations were observed.
-     If initialization of all 5 channels is triggered together, it will proceed in
-     a sequential manner. */
-  std::this_thread::sleep_for(getChannelNumber() * std::chrono::milliseconds(100));
   deviceResetChannel(ResetLevel::Internal);
 
   startDataReceiving();
