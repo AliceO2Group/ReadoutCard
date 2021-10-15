@@ -104,7 +104,7 @@ class CruBar final : public BarInterfaceBase
   Cru::OnuStatus reportOnuStatus();
   Cru::FecStatus reportFecStatus();
 
-  void controlUserLogic(uint32_t eventSize, bool random);
+  void controlUserLogic(uint32_t eventSize, bool random, uint32_t systemId, uint32_t linkId);
   Cru::UserLogicInfo reportUserLogic();
 
   std::map<int, Cru::LoopbackStats> getGbtLoopbackStats(bool reset);

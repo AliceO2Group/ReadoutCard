@@ -1175,7 +1175,7 @@ boost::optional<std::string> CruBar::getUserLogicVersion()
   return (boost::format("%x") % firmwareHash).str();
 }
 
-void CruBar::controlUserLogic(uint32_t eventSize, bool random)
+void CruBar::controlUserLogic(uint32_t eventSize, bool random, uint32_t systemId, uint32_t linkId)
 {
   // reset UL
   writeRegister(Cru::Registers::USER_LOGIC_RESET.index, 0x0);
@@ -1187,13 +1187,21 @@ void CruBar::controlUserLogic(uint32_t eventSize, bool random)
   if (random != randomEventSize) { // toggle random evsize
     writeRegister(Cru::Registers::USER_LOGIC_EVSIZE_RAND.index, 0x1);
   }
+
+  // set system id
+  writeRegister(Cru::Registers::USER_LOGIC_SYSTEM_ID.index, systemId);
+
+  // set link id
+  writeRegister(Cru::Registers::USER_LOGIC_LINK_ID.index, linkId);
 }
 
 Cru::UserLogicInfo CruBar::reportUserLogic()
 {
   bool randomEventSize = readRegister(Cru::Registers::USER_LOGIC_EVSIZE_RAND.index) == 0x1;
   uint32_t eventSize = readRegister(Cru::Registers::USER_LOGIC_EVSIZE.index);
-  return { eventSize, randomEventSize };
+  uint32_t systemId = readRegister(Cru::Registers::USER_LOGIC_SYSTEM_ID.index);
+  uint32_t linkId = readRegister(Cru::Registers::USER_LOGIC_LINK_ID.index);
+  return { eventSize, randomEventSize, systemId, linkId };
 }
 
 std::map<int, Cru::LoopbackStats> CruBar::getGbtLoopbackStats(bool reset)

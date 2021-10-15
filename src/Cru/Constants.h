@@ -358,6 +358,8 @@ static constexpr Register SI5344(0x00030400);
 static constexpr Register USER_LOGIC_RESET(0x00c80000);
 static constexpr Register USER_LOGIC_EVSIZE(0x00c80004);
 static constexpr Register USER_LOGIC_EVSIZE_RAND(0x00c80008);
+static constexpr Register USER_LOGIC_SYSTEM_ID(0x00c8000c);
+static constexpr Register USER_LOGIC_LINK_ID(0x00c80010);
 
 /// Register to adjust the TimeFrame length (31 downto 20)
 static constexpr Register TIME_FRAME_LENGTH(0x00000c00);
