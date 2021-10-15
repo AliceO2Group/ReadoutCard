@@ -47,6 +47,12 @@ class ProgramUserLogic : public Program
     options.add_options()("status",
                           po::bool_switch(&mOptions.status),
                           "Print UL status only");
+    options.add_options()("system-id",
+                          po::value<uint32_t>(&mOptions.systemId)->default_value(0xff),
+                          "Set the System ID");
+    options.add_options()("link-id",
+                          po::value<uint32_t>(&mOptions.linkId)->default_value(0xf),
+                          "Set the Link ID");
   }
 
   virtual void run(const boost::program_options::variables_map& map)
@@ -66,13 +72,15 @@ class ProgramUserLogic : public Program
     if (mOptions.status) {
       Cru::UserLogicInfo ulInfo = cruBar2->reportUserLogic();
       std::cout << "==========================" << std::endl;
+      std::cout << "System ID : 0x" << std::hex << ulInfo.systemId << std::endl;
+      std::cout << "Link ID   : " << std::dec << ulInfo.linkId << std::endl;
       std::cout << "Event size: " << ulInfo.eventSize << " GBT words" << std::endl;
       std::cout << "Event size: " << (ulInfo.eventSize * 128) / 1024.0 << "Kb" << std::endl;
       std::cout << "Event size: " << (ulInfo.eventSize * 128) / (1024.0 * 8) << "KB" << std::endl;
       std::cout << "Randomized: " << std::boolalpha << ulInfo.random << std::endl;
       std::cout << "==========================" << std::endl;
     } else {
-      cruBar2->controlUserLogic(mOptions.eventSize, mOptions.randomEventSize);
+      cruBar2->controlUserLogic(mOptions.eventSize, mOptions.randomEventSize, mOptions.systemId, mOptions.linkId);
     }
   }
 
@@ -81,6 +89,8 @@ class ProgramUserLogic : public Program
     uint32_t eventSize;
     bool randomEventSize;
     bool status;
+    uint32_t systemId;
+    uint32_t linkId;
   } mOptions;
 };
 

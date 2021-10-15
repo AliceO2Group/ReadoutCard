@@ -69,7 +69,7 @@ constexpr auto PACKET_COUNTER_INITIAL_VALUE = std::numeric_limits<uint32_t>::max
 /// Initial value for link event counters
 constexpr auto EVENT_COUNTER_INITIAL_VALUE = std::numeric_limits<uint32_t>::max();
 /// Maximum supported links
-constexpr auto MAX_LINKS = 12;
+constexpr auto MAX_LINKS = 16;
 /// Interval for low priority thread (display updates, etc)
 constexpr auto LOW_PRIORITY_INTERVAL = 10ms;
 /// Fields: Time(hour:minute:second), Pages pushed, Pages read, Errors, °C

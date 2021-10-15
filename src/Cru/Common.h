@@ -182,6 +182,8 @@ struct CtpInfo {
 struct UserLogicInfo {
   uint32_t eventSize;
   bool random;
+  uint32_t systemId;
+  uint32_t linkId;
 };
 
 struct LoopbackStats {
