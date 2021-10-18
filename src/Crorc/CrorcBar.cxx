@@ -340,15 +340,17 @@ void CrorcBar::resetDevice(bool withSiu)
   }
 }
 
-void CrorcBar::startDataReceiver(uintptr_t readyFifoBusAddress)
+void CrorcBar::startDataReceiver(uintptr_t superpageInfoBusAddress)
 {
-  writeRegister(Crorc::Registers::CHANNEL_RRBAR.index, (readyFifoBusAddress & 0xffffffff));
+  // Send the address of the DMA buffer used for writing the Superpage Info (size + count)
+  writeRegister(Crorc::Registers::SPINFO_LOW.index, (superpageInfoBusAddress & 0xffffffff));
   if (sizeof(uintptr_t) > 4) {
-    writeRegister(Crorc::Registers::CHANNEL_RRBARX.index, (readyFifoBusAddress >> 32));
+    writeRegister(Crorc::Registers::SPINFO_HIGH.index, (superpageInfoBusAddress >> 32));
   } else {
-    writeRegister(Crorc::Registers::CHANNEL_RRBARX.index, 0x0);
+    writeRegister(Crorc::Registers::SPINFO_HIGH.index, 0x0);
   }
 
+  // Set DMA ON
   uint32_t CSRRegister = readRegister(Crorc::Registers::CHANNEL_CSR.index);
   if (!Utilities::getBit(CSRRegister, Crorc::Registers::DATA_RX_ON_OFF_BIT)) {
     Utilities::setBit(CSRRegister, Crorc::Registers::DATA_RX_ON_OFF_BIT, true);
@@ -366,11 +368,11 @@ void CrorcBar::stopDataReceiver()
   }
 }
 
-void CrorcBar::pushRxFreeFifo(uintptr_t blockAddress, uint32_t blockLength, uint32_t readyFifoIndex)
+void CrorcBar::pushSuperpageAddressAndSize(uintptr_t blockAddress, uint32_t blockLength)
 {
-  writeRegister(Crorc::Registers::RX_FIFO_ADDR_EXT.index, arch64() ? (blockAddress >> 32) : 0x0);
-  writeRegister(Crorc::Registers::RX_FIFO_ADDR_HIGH.index, blockAddress & 0xffffffff);
-  writeRegister(Crorc::Registers::RX_FIFO_ADDR_LOW.index, (blockLength << 8) | readyFifoIndex);
+  writeRegister(Crorc::Registers::SP_WR_ADDR_HIGH.index, arch64() ? (blockAddress >> 32) : 0x0);
+  writeRegister(Crorc::Registers::SP_WR_ADDR_LOW.index, blockAddress & 0xffffffff);
+  writeRegister(Crorc::Registers::SP_WR_SIZE.index, blockLength);
 }
 
 void CrorcBar::startDataGenerator()
@@ -407,22 +409,6 @@ Crorc::PacketMonitoringInfo CrorcBar::monitorPackets()
   uint32_t acquisitionRate = readRegister(Crorc::Registers::ACQ_RATE.index);
   uint32_t packetsReceived = readRegister(Crorc::Registers::PKTS_RECEIVED.index);
   return { acquisitionRate, packetsReceived };
-}
-
-bool CrorcBar::isASuperpageAvailable()
-{
-  static uint32_t previousAvailable = 0x0;
-  uint32_t currentAvailable = readRegister(0x30 / 4);
-  uint32_t diff;
-  if (currentAvailable < previousAvailable) { // warped
-    diff = (0x100000000 - 0xffffffff) + currentAvailable;
-  } else {
-    diff = currentAvailable - previousAvailable;
-  }
-
-  previousAvailable = currentAvailable;
-
-  return diff > 0;
 }
 
 } // namespace roc

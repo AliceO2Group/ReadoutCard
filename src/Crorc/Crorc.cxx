@@ -802,31 +802,6 @@ void Crorc::diuCommand(int command)
   ddlReadDiu(command, Ddl::RESPONSE_TIME);
 }
 
-RxFreeFifoState Crorc::getRxFreeFifoState()
-{
-  uint32_t st = read(Rorc::C_CSR);
-  if (st & Rorc::CcsrStatus::RXAFF_FULL) {
-    return (RxFreeFifoState::FULL);
-  } else if (st & Rorc::CcsrStatus::RXAFF_EMPTY) {
-    return (RxFreeFifoState::EMPTY);
-  } else {
-    return (RxFreeFifoState::NOT_EMPTY);
-  }
-}
-
-bool Crorc::isFreeFifoEmpty()
-{
-  return getRxFreeFifoState() == RxFreeFifoState::EMPTY;
-}
-
-void Crorc::assertFreeFifoEmpty()
-{
-  if (!isFreeFifoEmpty()) {
-    BOOST_THROW_EXCEPTION(CrorcFreeFifoException() << ErrorInfo::Message("Free FIFO not empty")
-                                                   << ErrorInfo::PossibleCauses({ "Previous DMA did not get/free all received pages" }));
-  }
-}
-
 void Crorc::startDataReceiver(uintptr_t readyFifoBusAddress)
 {
   write(Rorc::C_RRBAR, (readyFifoBusAddress & 0xffffffff));

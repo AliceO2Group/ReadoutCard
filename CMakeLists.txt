@@ -296,7 +296,6 @@ set(TEST_SRCS
   test/TestPciAddress.cxx
   test/TestProgramOptions.cxx
   test/TestRorcException.cxx
-  test/TestSuperpageQueue.cxx
 )
 
 foreach (test ${TEST_SRCS})

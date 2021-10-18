@@ -24,7 +24,6 @@
 #include "DmaChannelPdaBase.h"
 #include "CrorcBar.h"
 #include "ReadoutCard/Parameters.h"
-#include "ReadyFifo.h"
 #include "folly/ProducerConsumerQueue.h"
 
 namespace o2
@@ -77,7 +76,8 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
   static constexpr size_t DMA_PAGE_SIZE = 8 * 1024;
 
   /// Max amount of superpages in the transfer queue (i.e. pending transfer).
-  static constexpr size_t TRANSFER_QUEUE_CAPACITY = MAX_SUPERPAGE_DESCRIPTORS;
+  /// CRORC FW only handles a single superpage at a time
+  static constexpr size_t TRANSFER_QUEUE_CAPACITY = 1;
   static constexpr size_t TRANSFER_QUEUE_CAPACITY_ALLOCATIONS = TRANSFER_QUEUE_CAPACITY + 1; // folly Queue needs + 1
 
   /// Max amount of superpages in the ready queue (i.e. finished transfer).
@@ -91,71 +91,34 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
 
   using SuperpageQueue = folly::ProducerConsumerQueue<Superpage>;
 
-  /// Namespace for enum describing the status of a page's arrival
-  struct DataArrivalStatus {
-    enum type {
-      NoneArrived,
-      PartArrived,
-      WholeArrived,
-    };
-  };
-
-  ReadyFifo* getReadyFifoUser()
-  {
-    return reinterpret_cast<ReadyFifo*>(mReadyFifoAddressUser);
-  }
-
   /// Enables data receiving in the RORC
   void startDataReceiving();
 
   /// Initializes and starts the data generator
   void startDataGenerator();
 
-  /// Pushes a page to the CRORC's Free FIFO
-  /// \param readyFifoIndex Index of the Ready FIFO to write the page's transfer status to
-  /// \param pageBusAddress Address on the bus to push the page to
-  void pushFreeFifoPage(int readyFifoIndex, uintptr_t pageBusAddress, int pageSize);
-
-  /// Check if data has arrived
-  DataArrivalStatus::type dataArrived(int index);
-
-  /// Get front index of FIFO
-  int getFreeFifoFront() const
-  {
-    return (mFreeFifoBack + mFreeFifoSize) % READYFIFO_ENTRIES;
-  };
-
   CrorcBar* getBar()
   {
     return crorcBar.get();
   }
+
+  /// Memory mapped file for the Superpage info buffer
+  boost::scoped_ptr<MemoryMappedFile> mSuperpageInfoFile;
+
+  /// PDA DMABuffer FIFO object for the Superpage info buffer
+  boost::scoped_ptr<Pda::PdaDmaBuffer> mPdaDmaBufferFifo;
+
+  /// Userspace address of Superpage info in DMA buffer
+  uintptr_t mSuperpageInfoAddressUser;
+
+  /// Bus address of Superpage info in DMA buffer
+  uintptr_t mSuperpageInfoAddressBus;
 
   /// Starts pending DMA with given superpage for the initial pages
   void startPendingDma();
 
   /// BAR used for DMA engine and configuration
   std::shared_ptr<CrorcBar> crorcBar;
-
-  /// Memory mapped file for the ReadyFIFO
-  boost::scoped_ptr<MemoryMappedFile> mBufferFifoFile;
-
-  /// PDA DMABuffer object for the ReadyFIFO
-  boost::scoped_ptr<Pda::PdaDmaBuffer> mPdaDmaBufferFifo;
-
-  /// Userspace address of FIFO in DMA buffer
-  uintptr_t mReadyFifoAddressUser;
-
-  /// Bus address of FIFO in DMA buffer
-  uintptr_t mReadyFifoAddressBus;
-
-  /// Front index of the firmware FIFO (WRITE)
-  int mFreeFifoFront = 0;
-
-  /// Back index of the firmware FIFO (READ)
-  int mFreeFifoBack = 0;
-
-  /// Amount of elements in the firmware FIFO
-  int mFreeFifoSize = 0;
 
   /// Queue for superpages that are pushed to the firmware FIFO
   SuperpageQueue mTransferQueue{ TRANSFER_QUEUE_CAPACITY_ALLOCATIONS };
@@ -181,15 +144,27 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
   /// Allows sending the STBRD and EOBTR commands for FEE configuration
   const bool mSTBRD;
 
-  /// Enforces that the data reading is carried out with the Start Block Read (STBRD) command
-  /// XXX Not sure if this should be a parameter...
-  const bool mUseFeeAddress;
-
   /// Gives the data source
   const DataSource::type mDataSource;
 
   /// Enables the data generator
   bool mGeneratorEnabled;
+
+  /// Check the SuperpageInfo buffer for superpage availability
+  bool isASuperpageAvailable();
+
+  /// A convenience struct to access the Superpage info DMA buffer
+  struct SuperpageInfo {
+    volatile uint32_t size;  // size of the written superpage in bytes (24 bits)
+    volatile uint32_t count; // incrementing counter that signals a completed write (8 bits)
+  };
+
+  const size_t kSuperpageInfoSize = 2 * sizeof(uint32_t);
+
+  SuperpageInfo* getSuperpageInfoUser()
+  {
+    return reinterpret_cast<SuperpageInfo*>(mSuperpageInfoAddressUser);
+  }
 };
 
 } // namespace roc

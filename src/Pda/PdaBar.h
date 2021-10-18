@@ -53,9 +53,9 @@ class PdaBar : public BarInterface
 
   virtual void modifyRegister(int index, int position, int width, uint32_t value)
   {
-    uint32_t regValue = barRead<uint32_t>(index * sizeof(uint32_t));
+    uint32_t regValue = readRegister(index);
     Utilities::setBits(regValue, position, width, value);
-    barWrite<uint32_t>(index * sizeof(uint32_t), regValue);
+    writeRegister(index, regValue);
   }
 
   virtual int getIndex() const override
