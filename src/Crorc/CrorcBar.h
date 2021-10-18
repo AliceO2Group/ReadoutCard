@@ -23,6 +23,9 @@
 #include "Crorc/Constants.h"
 #include "Utilities/Util.h"
 
+#include <fstream>
+#include <iostream>
+
 namespace o2
 {
 namespace roc
@@ -54,7 +57,7 @@ class CrorcBar final : public BarInterfaceBase
 
   void resetDevice(bool withSiu);
   void flushSuperpages();
-  void startDataReceiver(uintptr_t readyFifoBusAddress);
+  void startDataReceiver(uintptr_t superpageInfoBusAddress);
   void stopDataReceiver();
   void startDataGenerator();
   void stopDataGenerator();
@@ -63,13 +66,11 @@ class CrorcBar final : public BarInterfaceBase
   bool isLinkUp(int barIndex);
   bool checkLinkUp();
   void assertLinkUp();
-  void pushRxFreeFifo(uintptr_t blockAddress, uint32_t blockLength, uint32_t readyFifoIndex);
+  void pushSuperpageAddressAndSize(uintptr_t blockAddress, uint32_t blockLength);
   void setLoopback();
   void setDiuLoopback();
   void setSiuLoopback();
   Crorc::PacketMonitoringInfo monitorPackets();
-
-  bool isASuperpageAvailable();
 
  private:
   std::map<int, Crorc::Link> initializeLinkMap();

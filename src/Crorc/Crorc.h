@@ -23,7 +23,6 @@
 #include <vector>
 #include <boost/optional.hpp>
 #include "ReadoutCard/RegisterReadWriteInterface.h"
-#include "RxFreeFifoState.h"
 #include "StWord.h"
 
 namespace o2
@@ -104,12 +103,6 @@ class Crorc
   ///   the header ddl_def.h
   void diuCommand(int command);
 
-  /// Checks if the C-RORC's Free FIFO is empty
-  bool isFreeFifoEmpty();
-
-  /// Checks if the C-RORC's Free FIFO is empty
-  void assertFreeFifoEmpty();
-
   /// Starts the trigger (RDYRX or STBRD)
   void startTrigger(const DiuConfig& diuConfig, uint32_t command);
   //void startTrigger(uint32_t command);
@@ -148,8 +141,6 @@ class Crorc
   uint32_t checkRxData();
 
   void pushRxFreeFifo(uintptr_t blockAddress, uint32_t blockLength, uint32_t readyFifoIndex);
-
-  RxFreeFifoState getRxFreeFifoState();
 
   static void scaInit(RegisterReadWriteInterface& bar2);
 

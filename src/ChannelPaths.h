@@ -38,9 +38,9 @@ class ChannelPaths
   /// \return The path
   std::string lock() const;
 
-  /// Generates a path for the channel's shared memory FIFO object. It will be in hugetlbfs.
+  /// Generates a path for the CRORC channel's shared memory Superpage info object.
   /// \return The path
-  std::string fifo() const;
+  std::string spInfo() const;
 
   /// Generates a name for the channel's mutex
   /// \return The name

@@ -385,10 +385,9 @@ static constexpr uint32_t DATA_RX_ON_OFF_BIT(0x9);
 static constexpr uint32_t RXSTAT_NOT_EMPTY(0x00800000);
 static constexpr uint32_t LOOPBACK_ON_OFF(0x00001000);
 
-// Channel Receive Report Base Address
-static constexpr Register CHANNEL_RRBAR(0x00000034);
-// Channel Receive Report Base Address Extension
-static constexpr Register CHANNEL_RRBARX(0x00000084);
+// Addresses to push the DMA buffer address for SP size + count info
+static constexpr Register SPINFO_LOW(0x00000040);
+static constexpr Register SPINFO_HIGH(0x00000044);
 
 // Registers to send DDL commands
 static constexpr Register DDL_COMMAND(0x00000018);
@@ -412,10 +411,10 @@ static constexpr Register OPT_POWER_QSFP10(0x00000144);
 static constexpr Register OPT_POWER_QSFP32(0x00000148);
 static constexpr Register OPT_POWER_QSFP54(0x00000154);
 
-// Registers for RX FIFO configuration
-static constexpr Register RX_FIFO_ADDR_LOW(0x00000038);
-static constexpr Register RX_FIFO_ADDR_HIGH(0x0000003c);
-static constexpr Register RX_FIFO_ADDR_EXT(0x00000080);
+// Registers for pushing a Superpage to the CRORC
+static constexpr Register SP_WR_SIZE(0x00000028);
+static constexpr Register SP_WR_ADDR_HIGH(0x00000030);
+static constexpr Register SP_WR_ADDR_LOW(0x0000002c);
 
 // Data transmission status word
 static constexpr uint32_t DTSW(0x00000082);

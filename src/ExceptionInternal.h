@@ -63,7 +63,7 @@ DEFINE_ERRINFO(DmaBufferPages, size_t);
 DEFINE_ERRINFO(DmaBufferSize, size_t);
 DEFINE_ERRINFO(DmaPageSize, size_t);
 DEFINE_ERRINFO(FifoIndex, int);
-DEFINE_ERRINFO(FifoSize, size_t);
+DEFINE_ERRINFO(SuperpageInfoSize, size_t);
 DEFINE_ERRINFO(FileSize, size_t);
 DEFINE_ERRINFO(GeneratorEventLength, size_t);
 DEFINE_ERRINFO(Index, size_t);

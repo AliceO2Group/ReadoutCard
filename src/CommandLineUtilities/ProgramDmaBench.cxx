@@ -508,13 +508,13 @@ class ProgramDmaBench : public Program
           size_t readoutBytes = 0;
           auto superpageAddress = mBufferBaseAddress + superpageInfo.bufferOffset;
 
-          fetchAddSuperpagesReadOut();
+          auto superpageCount = fetchAddSuperpagesReadOut();
 
           bool atStartOfSuperpage = true;
           while ((readoutBytes < superpageInfo.effectiveSize) && !isStopDma()) {
             auto pageAddress = superpageAddress + readoutBytes;
             auto readoutCount = fetchAddDmaPagesReadOut();
-            size_t pageSize = readoutPage(pageAddress, readoutCount, atStartOfSuperpage);
+            size_t pageSize = readoutPage(pageAddress, readoutCount, superpageCount, atStartOfSuperpage);
 
             atStartOfSuperpage = false; //Update the boolean value as soon as we move...
 
@@ -558,7 +558,7 @@ class ProgramDmaBench : public Program
       auto size = mChannel->getReadyQueueSize();
       for (int i = 0; i < size; ++i) {
         auto superpage = mChannel->popSuperpage();
-        fetchAddSuperpagesReadOut();
+        auto superpageCount = fetchAddSuperpagesReadOut();
         if ((mDataSource == DataSource::Fee) || (mDataSource == DataSource::Ddg)) {
           auto superpageAddress = mBufferBaseAddress + superpage.getOffset();
           size_t readoutBytes = 0;
@@ -566,7 +566,7 @@ class ProgramDmaBench : public Program
           while ((readoutBytes < superpage.getReceived())) { // At least one more dma page fits in the superpage
             auto pageAddress = superpageAddress + readoutBytes;
             auto readoutCount = fetchAddDmaPagesReadOut();
-            size_t pageSize = readoutPage(pageAddress, readoutCount, atStartOfSuperpage);
+            size_t pageSize = readoutPage(pageAddress, readoutCount, superpageCount, atStartOfSuperpage);
             atStartOfSuperpage = false; // Update the boolean value as soon as we move...
             readoutBytes += pageSize;
           }
@@ -588,12 +588,23 @@ class ProgramDmaBench : public Program
     return payload[0];
   };
 
-  size_t readoutPage(uintptr_t pageAddress, int64_t readoutCount, bool atStartOfSuperpage)
+  size_t readoutPage(uintptr_t pageAddress, int64_t readoutCount, int64_t superpageCount, bool atStartOfSuperpage)
   {
     size_t pageSize = (mDataSource == DataSource::Internal) ? mPageSize : DataFormat::getOffset(reinterpret_cast<const char*>(pageAddress));
 
+    bool isEmpty = false;
+    if (pageSize != mPageSize) {
+      pageSize = mPageSize;
+      isEmpty = true;
+      // write to file
+      uint32_t emptySP = 0x0badf00d;
+      for (int i = 0; i < 4; i++) { // Marker is 128bits long
+        mReadoutStream.write(reinterpret_cast<const char*>(&emptySP), sizeof(emptySP));
+      }
+    }
+
     // Read out to file
-    printToFile(pageAddress, pageSize, readoutCount, atStartOfSuperpage);
+    printToFile(pageAddress, pageSize, readoutCount, superpageCount, atStartOfSuperpage, isEmpty);
 
     // Data error checking
     if (!mOptions.noErrorCheck) {
@@ -848,7 +859,7 @@ class ProgramDmaBench : public Program
       mPacketCounters[linkId] = packetCounter;
     }
 
-    if (!checkTimeFrameAlignment(pageAddress, atStartOfSuperpage)) {
+    if (false && !checkTimeFrameAlignment(pageAddress, atStartOfSuperpage)) {
       // log TF not at the beginning of the superpage error
       mErrorCount++;
       if (mErrorCount < MAX_RECORDED_ERRORS) {
@@ -1015,26 +1026,38 @@ class ProgramDmaBench : public Program
   }
 
   /// Prints the page to a file in ASCII or binary format if such output is enabled
-  void printToFile(uintptr_t pageAddress, size_t pageSize, int64_t pageNumber, bool atStartOfSuperpage)
+  void printToFile(uintptr_t pageAddress, size_t pageSize, int64_t pageNumber, int64_t superpageNumber, bool atStartOfSuperpage, bool isEmpty = false)
   {
     auto page = reinterpret_cast<const volatile uint32_t*>(pageAddress);
     auto pageSize32 = pageSize / sizeof(uint32_t);
 
     if (mOptions.fileOutputAscii) {
       if (atStartOfSuperpage && mOptions.printSuperpageChange) {
-        mReadoutStream << "New Superpage\n";
+        mReadoutStream << "Superpage #" << std::hex << "0x" << superpageNumber << '\n';
       }
-      mReadoutStream << "Event #" << pageNumber << '\n';
+      // TODO: for debugging: maybe add an option here?
+      if (isEmpty) {
+        mReadoutStream << "!!EMPTY DMA PAGE!!\n";
+      }
+      mReadoutStream << "Event #" << std::hex << "0x" << pageNumber << '\n';
       uint32_t perLine = 8;
 
       for (uint32_t i = 0; i < pageSize32; i += perLine) {
         for (uint32_t j = 0; j < perLine; ++j) {
-          mReadoutStream << page[i + j] << ' ';
+          mReadoutStream << std::hex << "0x" << std::setw(8) << page[i + j] << ' ';
+          mReadoutStream << '\t';
         }
         mReadoutStream << '\n';
       }
       mReadoutStream << '\n';
     } else if (mOptions.fileOutputBin) {
+      // TODO: for debugging
+      if (isEmpty) {
+        uint32_t emptySP = 0xdeadbeef;
+        for (int i = 0; i < 4; i++) { // Marker is 128bits long
+          mReadoutStream.write(reinterpret_cast<const char*>(&emptySP), sizeof(emptySP));
+        }
+      }
       if (atStartOfSuperpage && mOptions.printSuperpageChange) {
         uint32_t newSP = 0x0badf00d;
         for (int i = 0; i < 4; i++) { // Marker is 128bits long

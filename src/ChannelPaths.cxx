@@ -43,9 +43,9 @@ std::string ChannelPaths::lock() const
   return makePath(".lock", DIR_SHAREDMEM);
 }
 
-std::string ChannelPaths::fifo() const
+std::string ChannelPaths::spInfo() const
 {
-  return makePath("_fifo", DIR_SHAREDMEM);
+  return makePath("_sp_info", DIR_SHAREDMEM);
 }
 
 std::string ChannelPaths::namedMutex() const

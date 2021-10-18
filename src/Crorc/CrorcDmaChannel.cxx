@@ -23,16 +23,9 @@
 #include <thread>
 #include <boost/circular_buffer.hpp>
 #include <boost/format.hpp>
-#include "ChannelPaths.h"
 #include "Crorc/Constants.h"
 #include "ReadoutCard/ChannelFactory.h"
-#include "Utilities/SmartPointer.h"
 
-namespace b = boost;
-//namespace bip = boost::interprocess;
-//namespace bfs = boost::filesystem;
-using std::cout;
-using std::endl;
 using namespace std::literals;
 
 namespace o2
@@ -44,7 +37,6 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
   : DmaChannelPdaBase(parameters, allowedChannels()),
     mPageSize(parameters.getDmaPageSize().get_value_or(DMA_PAGE_SIZE)), // 8 kB default for uniformity with CRU
     mSTBRD(parameters.getStbrdEnabled().get_value_or(false)),
-    mUseFeeAddress(false),                                                     // Not sure
     mDataSource(parameters.getDataSource().get_value_or(DataSource::Internal)) // Internal loopback by default
 {
   // Check that the DMA page is valid
@@ -70,30 +62,29 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
   auto bar = ChannelFactory().getBar(parameters);
   crorcBar = std::move(std::dynamic_pointer_cast<CrorcBar>(bar)); // Initialize bar
 
-  // Create and register our ReadyFIFO buffer
-  log("Initializing ReadyFIFO DMA buffer", LogDebugDevel);
+  // Create and register our Superpage info (size + count) buffer
+  log("Initializing Superpage info buffer", LogDebugDevel);
   {
     // Create and register the buffer
     // Note: if resizing the file fails, we might've accidentally put the file in a hugetlbfs mount with 1 GB page size
-    constexpr auto FIFO_SIZE = sizeof(ReadyFifo);
-    Utilities::resetSmartPtr(mBufferFifoFile, getPaths().fifo(), FIFO_SIZE, true);
-    Utilities::resetSmartPtr(mPdaDmaBufferFifo, getRocPciDevice().getPciDevice(), mBufferFifoFile->getAddress(),
-                             FIFO_SIZE, getPdaDmaBufferIndexFifo(getChannelNumber()), false); // note the 'false' at the end specifies non-hugepage memory
+    Utilities::resetSmartPtr(mSuperpageInfoFile, getPaths().spInfo(), kSuperpageInfoSize, true);
+    Utilities::resetSmartPtr(mPdaDmaBufferFifo, getRocPciDevice().getPciDevice(), mSuperpageInfoFile->getAddress(),
+                             kSuperpageInfoSize, getPdaDmaBufferIndexFifo(getChannelNumber()), false); // note the 'false' at the end specifies non-hugepage memory
 
     const auto& entry = mPdaDmaBufferFifo->getScatterGatherList().at(0);
-    if (entry.size < FIFO_SIZE) {
+    if (entry.size < kSuperpageInfoSize) {
       // Something must've failed at some point
       BOOST_THROW_EXCEPTION(Exception()
-                            << ErrorInfo::Message("Scatter gather list entry for internal FIFO was too small")
+                            << ErrorInfo::Message("Scatter gather list entry for Superpage info buffer was too small")
                             << ErrorInfo::ScatterGatherEntrySize(entry.size)
-                            << ErrorInfo::FifoSize(FIFO_SIZE));
+                            << ErrorInfo::SuperpageInfoSize(kSuperpageInfoSize));
     }
-    mReadyFifoAddressUser = entry.addressUser;
-    mReadyFifoAddressBus = entry.addressBus;
+    mSuperpageInfoAddressUser = entry.addressUser;
+    mSuperpageInfoAddressBus = entry.addressBus;
   }
 
-  getReadyFifoUser()->reset();
-  mDmaBufferUserspace = getBufferProvider().getAddress();
+  // Start this from 0xff, as the first valid count to be written will be 0x0
+  getSuperpageInfoUser()->count = 0xff;
 
   if (mDataSource == DataSource::Fee || mDataSource == DataSource::Siu) {
     deviceResetChannel(ResetLevel::InternalSiu);
@@ -119,9 +110,6 @@ void CrorcDmaChannel::deviceStartDma()
 
   log("DMA start deferred until enough superpages available", LogInfoDevel);
 
-  mFreeFifoFront = 0;
-  mFreeFifoBack = 0;
-  mFreeFifoSize = 0;
   while (!mReadyQueue.isEmpty()) {
     mReadyQueue.popFront();
   }
@@ -146,7 +134,6 @@ void CrorcDmaChannel::startPendingDma()
 
   if (mGeneratorEnabled) {
     log("Starting data generator", LogInfoDevel);
-    //getBar()->startDataGenerator();
     startDataGenerator();
   } else {
     if (mRDYRX || mSTBRD) {
@@ -222,7 +209,7 @@ void CrorcDmaChannel::startDataGenerator() //TODO: Update this
 
 void CrorcDmaChannel::startDataReceiving()
 {
-  getBar()->startDataReceiver(mReadyFifoAddressBus);
+  getBar()->startDataReceiver(mSuperpageInfoAddressBus);
 }
 
 int CrorcDmaChannel::getTransferQueueAvailable()
@@ -255,15 +242,8 @@ bool CrorcDmaChannel::pushSuperpage(Superpage superpage)
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not push superpage, transfer queue was full"));
   }
 
-  if (mFreeFifoSize >= MAX_SUPERPAGE_DESCRIPTORS) {
-    BOOST_THROW_EXCEPTION(Exception()
-                          << ErrorInfo::Message("Could not push superpage, firmware queue was full (this should never happen)"));
-  }
-
   auto busAddress = getBusOffsetAddress(superpage.getOffset());
-  pushFreeFifoPage(mFreeFifoFront, busAddress, superpage.getSize());
-  mFreeFifoSize++;
-  mFreeFifoFront = (mFreeFifoFront + 1) % MAX_SUPERPAGE_DESCRIPTORS;
+  getBar()->pushSuperpageAddressAndSize(busAddress, superpage.getSize());
 
   mTransferQueue.write(superpage);
 
@@ -280,6 +260,22 @@ auto CrorcDmaChannel::popSuperpage() -> Superpage
   return *superpage;
 }
 
+bool CrorcDmaChannel::isASuperpageAvailable()
+{
+  static uint32_t count = 0xff;
+  uint32_t newCount = getSuperpageInfoUser()->count;
+  uint32_t diff;
+
+  if (newCount < count) { // handle overflow
+    diff = ((0xff + 1) - 0xff) + newCount;
+  } else {
+    diff = newCount - count;
+  }
+  count = newCount;
+
+  return diff > 0;
+}
+
 void CrorcDmaChannel::fillSuperpages()
 {
   if (mPendingDmaStart) {
@@ -292,35 +288,18 @@ void CrorcDmaChannel::fillSuperpages()
   }
 
   // Check for arrivals & handle them
-  if (!mTransferQueue.isEmpty()) { // i.e. If something is pushed to the CRORC
-    auto isArrived = [&](int descriptorIndex) { return dataArrived(descriptorIndex) == DataArrivalStatus::WholeArrived; };
-    auto resetDescriptor = [&](int descriptorIndex) { getReadyFifoUser()->entries[descriptorIndex].reset(); };
-    auto getLength = [&](int descriptorIndex) { return getReadyFifoUser()->entries[descriptorIndex].length * 4; }; // length in 4B words
+  if (!mTransferQueue.isEmpty() && isASuperpageAvailable()) {
 
-    while (mFreeFifoSize > 0) {
-      if (isArrived(mFreeFifoBack)) {
-        size_t superpageFilled = getLength(mFreeFifoBack); // Get the length before updating our descriptor index
-        resetDescriptor(mFreeFifoBack);
-
-        mFreeFifoSize--;
-        mFreeFifoBack = (mFreeFifoBack + 1) % MAX_SUPERPAGE_DESCRIPTORS;
-
-        // Push Superpage
-        auto superpage = mTransferQueue.frontPtr();
-        superpage->setReceived(superpageFilled);
-        superpage->setReady(true);
-        mReadyQueue.write(*superpage);
-        mTransferQueue.popFront();
-      } else {
-        // If the back one hasn't arrived yet, the next ones will certainly not have arrived either...
-        break;
-      }
-    }
+    auto superpage = mTransferQueue.frontPtr();
+    superpage->setReceived(getSuperpageInfoUser()->size); // length in bytes
+    superpage->setReady(true);
+    mReadyQueue.write(*superpage);
+    mTransferQueue.popFront();
   }
 }
 
 // Return a boolean that denotes whether the transfer queue is empty
-// The transfer queue is empty when all its slots are available
+// The transfer queue is empty when all its slots are availabl//e
 bool CrorcDmaChannel::isTransferQueueEmpty()
 {
   return mTransferQueue.isEmpty();
@@ -342,42 +321,6 @@ int32_t CrorcDmaChannel::getDroppedPackets()
 bool CrorcDmaChannel::areSuperpageFifosHealthy()
 {
   return true;
-}
-
-void CrorcDmaChannel::pushFreeFifoPage(int readyFifoIndex, uintptr_t pageBusAddress, int pageSize)
-{
-  size_t pageWords = pageSize / 4; // Size in 32-bit words
-  getBar()->pushRxFreeFifo(pageBusAddress, pageWords, readyFifoIndex);
-}
-
-CrorcDmaChannel::DataArrivalStatus::type CrorcDmaChannel::dataArrived(int index)
-{
-  auto length = getReadyFifoUser()->entries[index].length;
-  auto status = getReadyFifoUser()->entries[index].status;
-
-  if (status == -1) {
-    return DataArrivalStatus::NoneArrived;
-  } else if (status == 0) {
-    return DataArrivalStatus::PartArrived;
-  } else if ((status & 0xff) == Crorc::Registers::DTSW) {
-    // Note: when internal loopback is used, the length of the event in words is also stored in the status word.
-    // For example, the status word could be 0x400082 for events of size 4 kiB
-    if ((status & (1 << 31)) != 0) {
-      // The error bit is set
-      BOOST_THROW_EXCEPTION(CrorcDataArrivalException()
-                            << ErrorInfo::Message("Data arrival status word contains error bits")
-                            << ErrorInfo::ReadyFifoStatus(status)
-                            << ErrorInfo::ReadyFifoLength(length)
-                            << ErrorInfo::FifoIndex(index));
-    }
-    return DataArrivalStatus::WholeArrived;
-  }
-
-  BOOST_THROW_EXCEPTION(CrorcDataArrivalException()
-                        << ErrorInfo::Message("Unrecognized data arrival status word")
-                        << ErrorInfo::ReadyFifoStatus(status)
-                        << ErrorInfo::ReadyFifoLength(length)
-                        << ErrorInfo::FifoIndex(index));
 }
 
 CardType::type CrorcDmaChannel::getCardType()
