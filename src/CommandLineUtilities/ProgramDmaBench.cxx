@@ -201,6 +201,10 @@ class ProgramDmaBench : public Program
     options.add_options()("bypass-fw-check",
                           po::bool_switch(&mOptions.bypassFirmwareCheck),
                           "Flag to bypass the firmware checker");
+    options.add_options()("no-tf-check",
+                          po::bool_switch(&mOptions.noTimeFrameCheck),
+                          "Skip error checking");
+
   }
 
   virtual void run(const po::variables_map& map)
@@ -300,6 +304,11 @@ class ProgramDmaBench : public Program
       std::cout << "Maximum RDH packet counter " << mMaxRdhPacketCounter << std::endl;
       mTimeFrameLength = mOptions.timeFrameLength;
       std::cout << "TimeFrame length " << mTimeFrameLength << std::endl;
+      if (mOptions.noTimeFrameCheck) {
+        mTimeFrameCheckEnabled = false;
+        std::cout << "TimeFrame check disabled" << std::endl;
+      }
+
     }
 
     // Get DMA channel object
@@ -669,7 +678,9 @@ class ProgramDmaBench : public Program
     // Get initial data counter value from page
     if (mDataGeneratorCounters[linkId] == DATA_COUNTER_INITIAL_VALUE) {
       auto dataCounter = getDataGeneratorCounterFromPage(pageAddress, 0x0); // no header!
-      mErrorStream << b::format("resync dataCounter for e:%d l:%d cnt:%x\n") % eventNumber % linkId % dataCounter;
+      if (mErrorCount < MAX_RECORDED_ERRORS) {
+        mErrorStream << b::format("resync dataCounter for e:%d l:%d cnt:%x\n") % eventNumber % linkId % dataCounter;
+      }
       mDataGeneratorCounters[linkId] = dataCounter - 1; // -- so that the for loop offset incrementer logic is consistent
     }
 
@@ -719,8 +730,10 @@ class ProgramDmaBench : public Program
     const auto packetCounter = DataFormat::getPacketCounter(reinterpret_cast<const char*>(pageAddress));
 
     if (mPacketCounters[linkId] == PACKET_COUNTER_INITIAL_VALUE) {
-      mErrorStream << b::format("resync packet counter for e:%d l:%d packet_cnt:%x mpacket_cnt:%x le:%d \n") % eventNumber % linkId % packetCounter %
-                        mPacketCounters[linkId] % mEventCounters[linkId];
+      if (mErrorCount < MAX_RECORDED_ERRORS) {
+        mErrorStream << b::format("resync packet counter for e:%d l:%d packet_cnt:%x mpacket_cnt:%x le:%d \n") % eventNumber % linkId % packetCounter %
+          mPacketCounters[linkId] % mEventCounters[linkId];
+      }
       mPacketCounters[linkId] = packetCounter;
     } else if (((mPacketCounters[linkId] + mErrorCheckFrequency) % (mMaxRdhPacketCounter + 1)) != packetCounter) { //packetCounter is 8bits long
       // log packet counter error
@@ -749,7 +762,9 @@ class ProgramDmaBench : public Program
     // Get counter value only if page is valid...
     const auto dataCounter = getDataGeneratorCounterFromPage(pageAddress, DataFormat::getHeaderSize());
     if (mDataGeneratorCounters[linkId] == DATA_COUNTER_INITIAL_VALUE) {
-      mErrorStream << b::format("resync counter for e:%d l:%d cnt:%x\n") % eventNumber % linkId % dataCounter;
+      if (mErrorCount < MAX_RECORDED_ERRORS) {
+        mErrorStream << b::format("resync counter for e:%d l:%d cnt:%x\n") % eventNumber % linkId % dataCounter;
+      }
       mDataGeneratorCounters[linkId] = dataCounter;
     }
     //const uint32_t dataCounter = mDataGeneratorCounters[linkId];
@@ -846,8 +861,10 @@ class ProgramDmaBench : public Program
     uint32_t packetCounter = DataFormat::getPacketCounter(reinterpret_cast<const char*>(pageAddress));
 
     if (mPacketCounters[linkId] == PACKET_COUNTER_INITIAL_VALUE) {
-      mErrorStream << b::format("resync packet counter for e%d l:%d packet_cnt:%x mpacket_cnt:%x, le:%d \n") % eventNumber % linkId % packetCounter %
-                        mPacketCounters[linkId] % mEventCounters[linkId];
+      if (mErrorCount < MAX_RECORDED_ERRORS) {
+        mErrorStream << b::format("resync packet counter for e%d l:%d packet_cnt:%x mpacket_cnt:%x, le:%d \n") % eventNumber % linkId % packetCounter %
+          mPacketCounters[linkId] % mEventCounters[linkId];
+      }
       mPacketCounters[linkId] = packetCounter;
     } else if (((mPacketCounters[linkId] + mErrorCheckFrequency) % (mMaxRdhPacketCounter + 1)) != packetCounter) {
       mErrorCount++;
@@ -859,7 +876,7 @@ class ProgramDmaBench : public Program
       mPacketCounters[linkId] = packetCounter;
     }
 
-    if (false && !checkTimeFrameAlignment(pageAddress, atStartOfSuperpage)) {
+    if (mTimeFrameCheckEnabled && !checkTimeFrameAlignment(pageAddress, atStartOfSuperpage)) {
       // log TF not at the beginning of the superpage error
       mErrorCount++;
       if (mErrorCount < MAX_RECORDED_ERRORS) {
@@ -874,7 +891,9 @@ class ProgramDmaBench : public Program
     // Get counter value only if page is valid...
     const auto dataCounter = getDataGeneratorCounterFromPage(pageAddress, DataFormat::getHeaderSize());
     if (mDataGeneratorCounters[linkId] == DATA_COUNTER_INITIAL_VALUE) {
-      mErrorStream << b::format("resync counter for e:%d l:%d cnt:%x\n") % eventNumber % linkId % dataCounter;
+      if (mErrorCount < MAX_RECORDED_ERRORS) {
+        mErrorStream << b::format("resync counter for e:%d l:%d cnt:%x\n") % eventNumber % linkId % dataCounter;
+      }
       mDataGeneratorCounters[linkId] = dataCounter;
     }
 
@@ -1172,6 +1191,7 @@ class ProgramDmaBench : public Program
     bool bypassFirmwareCheck = false;
     uint32_t timeFrameLength = 256;
     bool printSuperpageChange = false;
+    bool noTimeFrameCheck = false;
   } mOptions;
 
   /// The DMA channel
@@ -1285,6 +1305,9 @@ class ProgramDmaBench : public Program
 
   /// The orbit number that coincides with the next TimeFrame
   uint32_t mTimeFrameLength = 0x0;
+
+  /// Flag for TF check
+  bool mTimeFrameCheckEnabled = true;
 };
 
 int main(int argc, char** argv)
