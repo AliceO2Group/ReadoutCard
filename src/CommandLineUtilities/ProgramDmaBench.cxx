@@ -204,7 +204,6 @@ class ProgramDmaBench : public Program
     options.add_options()("no-tf-check",
                           po::bool_switch(&mOptions.noTimeFrameCheck),
                           "Skip error checking");
-
   }
 
   virtual void run(const po::variables_map& map)
@@ -308,7 +307,6 @@ class ProgramDmaBench : public Program
         mTimeFrameCheckEnabled = false;
         std::cout << "TimeFrame check disabled" << std::endl;
       }
-
     }
 
     // Get DMA channel object
@@ -601,19 +599,8 @@ class ProgramDmaBench : public Program
   {
     size_t pageSize = (mDataSource == DataSource::Internal) ? mPageSize : DataFormat::getOffset(reinterpret_cast<const char*>(pageAddress));
 
-    bool isEmpty = false;
-    if (pageSize != mPageSize) {
-      pageSize = mPageSize;
-      isEmpty = true;
-      // write to file
-      uint32_t emptySP = 0x0badf00d;
-      for (int i = 0; i < 4; i++) { // Marker is 128bits long
-        mReadoutStream.write(reinterpret_cast<const char*>(&emptySP), sizeof(emptySP));
-      }
-    }
-
     // Read out to file
-    printToFile(pageAddress, pageSize, readoutCount, superpageCount, atStartOfSuperpage, isEmpty);
+    printToFile(pageAddress, pageSize, readoutCount, superpageCount, atStartOfSuperpage, pageSize == 0);
 
     // Data error checking
     if (!mOptions.noErrorCheck) {
@@ -732,7 +719,7 @@ class ProgramDmaBench : public Program
     if (mPacketCounters[linkId] == PACKET_COUNTER_INITIAL_VALUE) {
       if (mErrorCount < MAX_RECORDED_ERRORS) {
         mErrorStream << b::format("resync packet counter for e:%d l:%d packet_cnt:%x mpacket_cnt:%x le:%d \n") % eventNumber % linkId % packetCounter %
-          mPacketCounters[linkId] % mEventCounters[linkId];
+                          mPacketCounters[linkId] % mEventCounters[linkId];
       }
       mPacketCounters[linkId] = packetCounter;
     } else if (((mPacketCounters[linkId] + mErrorCheckFrequency) % (mMaxRdhPacketCounter + 1)) != packetCounter) { //packetCounter is 8bits long
@@ -863,7 +850,7 @@ class ProgramDmaBench : public Program
     if (mPacketCounters[linkId] == PACKET_COUNTER_INITIAL_VALUE) {
       if (mErrorCount < MAX_RECORDED_ERRORS) {
         mErrorStream << b::format("resync packet counter for e%d l:%d packet_cnt:%x mpacket_cnt:%x, le:%d \n") % eventNumber % linkId % packetCounter %
-          mPacketCounters[linkId] % mEventCounters[linkId];
+                          mPacketCounters[linkId] % mEventCounters[linkId];
       }
       mPacketCounters[linkId] = packetCounter;
     } else if (((mPacketCounters[linkId] + mErrorCheckFrequency) % (mMaxRdhPacketCounter + 1)) != packetCounter) {
@@ -1054,8 +1041,7 @@ class ProgramDmaBench : public Program
       if (atStartOfSuperpage && mOptions.printSuperpageChange) {
         mReadoutStream << "Superpage #" << std::hex << "0x" << superpageNumber << '\n';
       }
-      // TODO: for debugging: maybe add an option here?
-      if (isEmpty) {
+      if (isEmpty && mOptions.printSuperpageChange) {
         mReadoutStream << "!!EMPTY DMA PAGE!!\n";
       }
       mReadoutStream << "Event #" << std::hex << "0x" << pageNumber << '\n';
@@ -1070,19 +1056,19 @@ class ProgramDmaBench : public Program
       }
       mReadoutStream << '\n';
     } else if (mOptions.fileOutputBin) {
-      // TODO: for debugging
-      if (isEmpty) {
-        uint32_t emptySP = 0xdeadbeef;
-        for (int i = 0; i < 4; i++) { // Marker is 128bits long
-          mReadoutStream.write(reinterpret_cast<const char*>(&emptySP), sizeof(emptySP));
-        }
-      }
       if (atStartOfSuperpage && mOptions.printSuperpageChange) {
         uint32_t newSP = 0x0badf00d;
         for (int i = 0; i < 4; i++) { // Marker is 128bits long
           mReadoutStream.write(reinterpret_cast<const char*>(&newSP), sizeof(newSP));
         }
       }
+      if (isEmpty && mOptions.printSuperpageChange) {
+        uint32_t emptySP = 0xdeadbeef;
+        for (int i = 0; i < 4; i++) { // Marker is 128bits long
+          mReadoutStream.write(reinterpret_cast<const char*>(&emptySP), sizeof(emptySP));
+        }
+      }
+
       // TODO Is there a more elegant way to write from volatile memory?
       mReadoutStream.write(reinterpret_cast<const char*>(pageAddress), pageSize);
     }
