@@ -18,12 +18,13 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>
 #include <iostream>
-#include "ReadoutCard/ChannelFactory.h"
+#include <pwd.h>
 #include "CommandLineUtilities/Common.h"
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
 #include "Pda/Util.h"
-#include "ReadoutCard/CardDescriptor.h"
+#include "ReadoutCard/CardFinder.h"
+#include "ReadoutCard/InterprocessLock.h"
 
 using namespace o2::roc::CommandLineUtilities;
 using namespace o2::roc;
@@ -60,7 +61,7 @@ class ProgramCleanup : public Program
       std::cout << "4. Remove and reinsert the uio_pci_dma kernel module" << std::endl;
     }
     std::cout << std::endl;
-    std::cout << "In case instances of readout.exe or o2-roc-bench-dma are running, they will fail." << std::endl;
+    std::cout << "In case instances of readout.exe or o2-roc-bench-dma are running, roc-cleanup will fail." << std::endl;
     std::cout << std::endl;
     std::cout << "This tool is intended to be run with elevated privileges." << std::endl;
     std::cout << "Are you sure you want to continue? (yes/no)" << std::endl;
@@ -71,25 +72,63 @@ class ProgramCleanup : public Program
       return;
     }
 
+    Logger::setFacility("ReadoutCard/cleanup");
+
+    auto getUsername = []() -> std::string {
+      struct passwd* passw = getpwuid(geteuid());
+      if (passw) {
+        return std::string(passw->pw_name);
+      }
+      return {};
+    };
+
+    Logger::get() << "`roc-cleanup` execution initiated by " << getUsername() << LogDebugOps << endm;
+
+    // Take and hold DMA locks during cleanup
+    std::vector<std::unique_ptr<Interprocess::Lock>> dmaLocks;
+
+    Logger::get() << "Grabbing PDA & DMA locks" << LogDebugDevel << endm;
+    try {
+      auto cards = findCards();
+
+      for (auto card : cards) {
+        if (card.cardType == CardType::Cru) {
+          std::string lockName("Alice_O2_RoC_DMA_" + card.pciAddress.toString() + "_lock");
+          dmaLocks.push_back(std::make_unique<Interprocess::Lock>(lockName));
+        } else if (card.cardType == CardType::Crorc) {
+          for (int chan = 0; chan < 6; chan++) {
+            std::string lockName("Alice_O2_RoC_DMA_" + card.pciAddress.toString() + "_chan" + std::to_string(chan) + "_lock");
+            dmaLocks.push_back(std::make_unique<Interprocess::Lock>(lockName));
+          }
+        } // ignore an invalid card type
+      }
+    } catch (std::runtime_error& e) {
+      Logger::get() << e.what() << LogErrorDevel << endm;
+      return;
+    }
+
     Pda::freePdaDmaBuffers();
 
-    std::cout << "Removing CRORC FIFO shared memory files" << std::endl;
+    Logger::get() << "Removing CRORC FIFO shared memory files" << LogDebugDevel << endm;
     sysCheckRet("rm /dev/shm/AliceO2_RoC_*");
-    std::cout << "Removing readout 2MB hugepage mappings" << std::endl;
+    Logger::get() << "Removing readout 2MB hugepage mappings" << LogDebugDevel << endm;
     sysCheckRet("rm /var/lib/hugetlbfs/global/pagesize-2MB/readout*");
-    std::cout << "Removing readout 1GB hugepage mappings" << std::endl;
+    Logger::get() << "Removing readout 1GB hugepage mappings" << LogDebugDevel << endm;
     sysCheckRet("rm /var/lib/hugetlbfs/global/pagesize-1GB/readout*");
-    std::cout << "Removing o2-roc-bench-dma 2MB hugepage mappings" << std::endl;
+    Logger::get() << "Removing o2-roc-bench-dma 2MB hugepage mappings" << LogDebugDevel << endm;
     sysCheckRet("rm /var/lib/hugetlbfs/global/pagesize-2MB/roc-bench-dma*");
-    std::cout << "Removing o2-roc-bench-dma 1GB hugepage mappings" << std::endl;
+    Logger::get() << "Removing o2-roc-bench-dma 1GB hugepage mappings" << LogDebugDevel << endm;
     sysCheckRet("rm /var/lib/hugetlbfs/global/pagesize-1GB/roc-bench-dma*");
 
     if (!mOptions.light) {
-      std::cout << "Removing uio_pci_dma" << std::endl;
+      Logger::get() << "Removing uio_pci_dma" << LogDebugDevel << endm;
       sysCheckRet("modprobe -r uio_pci_dma");
-      std::cout << "Reinserting uio_pci_dma" << std::endl;
+      Logger::get() << "Reinserting uio_pci_dma" << LogDebugDevel << endm;
       sysCheckRet("modprobe uio_pci_dma");
     }
+
+    Logger::get() << "`roc-cleanup` execution finished" << LogDebugOps << endm;
+    return;
   }
 
  private:
@@ -100,8 +139,8 @@ class ProgramCleanup : public Program
   void sysCheckRet(const char* command)
   {
     int ret = system(command);
-    if (ret) {
-      std::cerr << "Command: `" << command << "` failed with ret=" << ret << std::endl;
+    if (ret && ret != 256) { // Don't log in case the file was not found
+      Logger::get() << "Command: `" << command << "` failed with ret=" << ret << LogDebugDevel << endm;
     }
   }
 };
