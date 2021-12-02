@@ -597,7 +597,12 @@ class ProgramDmaBench : public Program
 
   size_t readoutPage(uintptr_t pageAddress, int64_t readoutCount, int64_t superpageCount, bool atStartOfSuperpage)
   {
-    size_t pageSize = (mDataSource == DataSource::Internal) ? mPageSize : DataFormat::getOffset(reinterpret_cast<const char*>(pageAddress));
+    size_t pageSize;
+    if (mCardType == CardType::Cru && mDataSource == DataSource::Internal) {
+      pageSize = mPageSize;
+    } else {
+      pageSize = DataFormat::getOffset(reinterpret_cast<const char*>(pageAddress));
+    }
 
     // Read out to file
     printToFile(pageAddress, pageSize, readoutCount, superpageCount, atStartOfSuperpage, pageSize == 0);
