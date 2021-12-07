@@ -800,7 +800,6 @@ class ProgramDmaBench : public Program
   bool checkTimeFrameAlignment(uintptr_t pageAddress, bool atStartOfSuperpage)
   {
     static bool overflowGuard = false;
-    static uint32_t mNextTFOrbit = 0x0;
     static uint32_t prevOrbit = 0x0;
 
     // check that the TimeFrame starts at the beginning of the superpage
@@ -822,9 +821,11 @@ class ProgramDmaBench : public Program
       if (!atStartOfSuperpage) {
         return false;
       }
-      // Update next TF orbit expected
-      overflowGuard = (mNextTFOrbit + mTimeFrameLength) & 0x100000000; // next TF orbit overflown, need to wait for orbit to overflow as well
-      mNextTFOrbit = mNextTFOrbit + mTimeFrameLength;
+      while (mNextTFOrbit <= mOrbit) { // If we end up on an orbit that is more than a TF length away
+        // Update next TF orbit expected
+        overflowGuard = (mNextTFOrbit + mTimeFrameLength) & 0x100000000; // next TF orbit overflown, need to wait for orbit to overflow as well
+        mNextTFOrbit = mNextTFOrbit + mTimeFrameLength;
+      }
     }
 
     return true;
