@@ -76,9 +76,13 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
   static constexpr size_t DMA_PAGE_SIZE = 8 * 1024;
 
   /// Max amount of superpages in the transfer queue (i.e. pending transfer).
-  /// CRORC FW only handles a single superpage at a time
-  static constexpr size_t TRANSFER_QUEUE_CAPACITY = 1;
+  static constexpr size_t TRANSFER_QUEUE_CAPACITY = 128;
   static constexpr size_t TRANSFER_QUEUE_CAPACITY_ALLOCATIONS = TRANSFER_QUEUE_CAPACITY + 1; // folly Queue needs + 1
+
+  /// Max amount of superpages in the intermediate queue (i.e. pushed superpage).
+  /// CRORC FW only handles a single superpage at a time
+  static constexpr size_t INTERMEDIATE_QUEUE_CAPACITY = 1;
+  static constexpr size_t INTERMEDIATE_QUEUE_CAPACITY_ALLOCATIONS = INTERMEDIATE_QUEUE_CAPACITY + 1;
 
   /// Max amount of superpages in the ready queue (i.e. finished transfer).
   /// This is an arbitrary size, can easily be increased if more headroom is needed.
@@ -120,8 +124,11 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
   /// BAR used for DMA engine and configuration
   std::shared_ptr<CrorcBar> crorcBar;
 
-  /// Queue for superpages that are pushed to the firmware FIFO
+  /// Queue for superpages that are pushed from the Readout thread
   SuperpageQueue mTransferQueue{ TRANSFER_QUEUE_CAPACITY_ALLOCATIONS };
+
+  /// Queue for the superpage that is pushed to the firmware
+  SuperpageQueue mIntermediateQueue{ INTERMEDIATE_QUEUE_CAPACITY_ALLOCATIONS };
 
   /// Queue for superpages that are filled
   SuperpageQueue mReadyQueue{ READY_QUEUE_CAPACITY_ALLOCATIONS };
@@ -165,6 +172,9 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
   {
     return reinterpret_cast<SuperpageInfo*>(mSuperpageInfoAddressUser);
   }
+
+  // Counter for the available (from the fw) superpages
+  uint32_t mSPAvailCount = 0xff;
 };
 
 } // namespace roc

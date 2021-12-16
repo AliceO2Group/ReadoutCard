@@ -242,9 +242,6 @@ bool CrorcDmaChannel::pushSuperpage(Superpage superpage)
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not push superpage, transfer queue was full"));
   }
 
-  auto busAddress = getBusOffsetAddress(superpage.getOffset());
-  getBar()->pushSuperpageAddressAndSize(busAddress, superpage.getSize());
-
   mTransferQueue.write(superpage);
 
   return true;
@@ -262,16 +259,15 @@ auto CrorcDmaChannel::popSuperpage() -> Superpage
 
 bool CrorcDmaChannel::isASuperpageAvailable()
 {
-  static uint32_t count = 0xff;
   uint32_t newCount = getSuperpageInfoUser()->count;
   uint32_t diff;
 
-  if (newCount < count) { // handle overflow
+  if (newCount < mSPAvailCount) { // handle overflow
     diff = ((0xff + 1) - 0xff) + newCount;
   } else {
-    diff = newCount - count;
+    diff = newCount - mSPAvailCount;
   }
-  count = newCount;
+  mSPAvailCount = newCount;
 
   return diff > 0;
 }
@@ -288,13 +284,24 @@ void CrorcDmaChannel::fillSuperpages()
   }
 
   // Check for arrivals & handle them
-  if (!mTransferQueue.isEmpty() && isASuperpageAvailable()) {
+  if (!mIntermediateQueue.isEmpty() && isASuperpageAvailable()) {
 
-    auto superpage = mTransferQueue.frontPtr();
+    auto superpage = mIntermediateQueue.frontPtr();
     superpage->setReceived(getSuperpageInfoUser()->size); // length in bytes
     superpage->setReady(true);
     mReadyQueue.write(*superpage);
+    mIntermediateQueue.popFront();
+  }
+
+  // Push single Superpage to the firmware when available
+  if (mIntermediateQueue.isEmpty() && !mTransferQueue.isEmpty()) {
+    auto inSuperpage = mTransferQueue.frontPtr();
     mTransferQueue.popFront();
+
+    auto busAddress = getBusOffsetAddress(inSuperpage->getOffset());
+    getBar()->pushSuperpageAddressAndSize(busAddress, inSuperpage->getSize());
+
+    mIntermediateQueue.write(*inSuperpage);
   }
 }
 
