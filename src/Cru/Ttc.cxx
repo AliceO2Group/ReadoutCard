@@ -146,13 +146,23 @@ bool Ttc::configurePonTx(uint32_t onuAddress)
   //TODO: Show calibration status..
 }
 
-LinkStatus Ttc::getOnuStickyBit()
+// The monitoring parameter is set when roc-status is called through the monitoring infrastructure
+// this reports and clears a different register, so that clock information is not lost
+// from rogue invocations of roc-status
+LinkStatus Ttc::getOnuStickyBit(bool monitoring)
 {
-  uint32_t was = mBar->readRegister(Cru::Registers::TTC_ONU_STICKY.index);
-  mBar->modifyRegister(Cru::Registers::TTC_DATA.index, 28, 1, 0x1);
-  mBar->modifyRegister(Cru::Registers::TTC_DATA.index, 28, 1, 0x0);
-  uint32_t is = mBar->readRegister(Cru::Registers::TTC_ONU_STICKY.index);
-
+  uint32_t was, is;
+  if (monitoring) {
+    was = mBar->readRegister(Cru::Registers::TTC_ONU_STICKY_MON.index);
+    mBar->writeRegister(Cru::Registers::TTC_ONU_STICKY_MON.index, 0x1);
+    mBar->writeRegister(Cru::Registers::TTC_ONU_STICKY_MON.index, 0x0);
+    is = mBar->readRegister(Cru::Registers::TTC_ONU_STICKY_MON.index);
+  } else {
+    was = mBar->readRegister(Cru::Registers::TTC_ONU_STICKY.index);
+    mBar->modifyRegister(Cru::Registers::TTC_DATA.index, 28, 1, 0x1);
+    mBar->modifyRegister(Cru::Registers::TTC_DATA.index, 28, 1, 0x0);
+    is = mBar->readRegister(Cru::Registers::TTC_ONU_STICKY.index);
+  }
   if (was == 0x0 && is == 0x0) {
     return LinkStatus::Up;
   } else if (was != 0x0 && is == 0x0) {
@@ -161,7 +171,7 @@ LinkStatus Ttc::getOnuStickyBit()
   return LinkStatus::Down;
 }
 
-OnuStatus Ttc::onuStatus()
+OnuStatus Ttc::onuStatus(bool monitoring)
 {
   uint32_t calStatus = mBar->readRegister(Cru::Registers::ONU_USER_LOGIC.index + 0xc / 4);
   uint32_t onuAddress = mBar->readRegister(Cru::Registers::ONU_USER_LOGIC.index) >> 1;
@@ -176,7 +186,7 @@ OnuStatus Ttc::onuStatus()
     (calStatus >> 5 & 0x1) == 1,
     (calStatus >> 6 & 0x1) == 1,
     (calStatus >> 7 & 0x1) == 1,
-    getOnuStickyBit(),
+    getOnuStickyBit(monitoring),
     getPonQuality(),
     getPonQualityStatus(),
     getPonRxPower()

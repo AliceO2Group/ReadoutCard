@@ -62,13 +62,13 @@ class Ttc
   void setEmulatorORBITINIT(uint32_t orbitInit);
   void setFixedBCTrigger(std::vector<uint32_t> FBCTVector);
 
-  OnuStatus onuStatus();
+  OnuStatus onuStatus(bool monitoring = false);
   FecStatus fecStatus();
 
  private:
   void configurePlls(uint32_t clock);
   void setRefGen(int frequency = 240);
-  LinkStatus getOnuStickyBit();
+  LinkStatus getOnuStickyBit(bool monitoring = false);
   uint32_t getPonQuality();
   int getPonQualityStatus();
   double getPonRxPower();
