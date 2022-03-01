@@ -243,7 +243,7 @@ class ProgramStatus : public Program
 
       /* ONU PARAMETERS */
       if (mOptions.onu) {
-        Cru::OnuStatus onuStatus = cruBar2->reportOnuStatus();
+        Cru::OnuStatus onuStatus = cruBar2->reportOnuStatus(mOptions.monitoring);
 
         std::string onuStickyStatus;
         int onuStickyStatusInt = 0;

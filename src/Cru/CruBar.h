@@ -101,7 +101,7 @@ class CruBar final : public BarInterfaceBase
   void toggleRunStatsLink(bool mRunStatsLinkEnabled);
   boost::optional<std::string> getUserLogicVersion();
 
-  Cru::OnuStatus reportOnuStatus();
+  Cru::OnuStatus reportOnuStatus(bool monitoring = false);
   Cru::FecStatus reportFecStatus();
 
   void controlUserLogic(uint32_t eventSize, bool random, uint32_t systemId, uint32_t linkId);

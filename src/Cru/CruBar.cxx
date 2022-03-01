@@ -1128,10 +1128,10 @@ void CruBar::patternPlayer(PatternPlayer::Info info)
   pp.play(info);
 }
 
-Cru::OnuStatus CruBar::reportOnuStatus()
+Cru::OnuStatus CruBar::reportOnuStatus(bool monitoring)
 {
   Ttc ttc = Ttc(mPdaBar, mSerial, mEndpoint);
-  return ttc.onuStatus();
+  return ttc.onuStatus(monitoring);
 }
 
 Cru::FecStatus CruBar::reportFecStatus()
