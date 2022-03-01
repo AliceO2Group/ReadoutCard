@@ -24,13 +24,14 @@ namespace roc
 
 FirmwareChecker::FirmwareChecker() : mCompatibleFirmwareList({
                                        /* CRU */
+                                       { "2058c933", "v3.14.0" },
                                        { "4a412c71", "v3.13.0" },
+                                       { "82b4662d", "MFT PSU" },
                                        /*{ "6a85d30c", "v3.12.0" },
                                        { "7be5aa1c", "v3.11.0" },
                                        { "e4a5a46e", "v3.10.0" },
                                        { "f71faa86", "v3.9.1" },
                                        { "8e0d2ffa", "v3.9.0" },
-                                       { "0c6a3a7c", "MFT PSU" },
                                        { "e8e58cff", "v3.8.0" },
                                                                { "f8cecade", "v3.7.0" },
                                                                { "75b96268", "v3.6.1" },
