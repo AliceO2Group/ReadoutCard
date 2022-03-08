@@ -20,6 +20,7 @@
 #include <vector>
 #include <pda.h>
 #include "Pda/PdaDevice.h"
+#include "ReadoutCard/ParameterTypes/SerialId.h"
 
 namespace o2
 {
@@ -40,7 +41,7 @@ class PdaDmaBuffer
   /// \param dmaBufferId Unique ID to use for registering the buffer (uniqueness must be card-wide)
   /// \param requireHugepage Require the buffer to have hugepage-sized scatter-gather list nodes
   PdaDmaBuffer(PciDevice* pciDevice, void* userBufferAddress, size_t userBufferSize,
-               int dmaBufferId, bool requireHugepage = true);
+               int dmaBufferId, SerialId serialId, bool requireHugepage = true);
 
   ~PdaDmaBuffer();
 

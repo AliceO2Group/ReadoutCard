@@ -15,6 +15,7 @@
 /// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 /// \author Kostas Alexopoulos (kostas.alexopoulos@cern.ch)
 
+#include <numeric>
 #include "PdaDmaBuffer.h"
 #include <pda.h>
 #include "ExceptionInternal.h"
@@ -30,7 +31,7 @@ namespace Pda
 {
 
 PdaDmaBuffer::PdaDmaBuffer(PciDevice* pciDevice, void* userBufferAddress, size_t userBufferSize,
-                           int dmaBufferId, bool requireHugepage) : mPciDevice(pciDevice)
+                           int dmaBufferId, SerialId serialId, bool requireHugepage) : mPciDevice(pciDevice)
 {
   // Safeguard against PDA kernel module deadlocks, since it does not like parallel buffer registration
   try {
@@ -83,15 +84,13 @@ PdaDmaBuffer::PdaDmaBuffer(PciDevice* pciDevice, void* userBufferAddress, size_t
     }
 
     auto node = sgList;
+    std::vector<size_t> nodeSizes;
     while (node != nullptr) {
-      if (requireHugepage) {
-        size_t hugePageMinSize = 1024 * 1024 * 2; // 2 MiB, the smallest hugepage size
-        if (node->length < hugePageMinSize) {
-          BOOST_THROW_EXCEPTION(
-            PdaException() << ErrorInfo::Message("Scatter-gather node smaller than 2 MiB (minimum hugepage"
-                                                 " size. This means the IOMMU is off and the buffer is not backed by hugepages - an unsupported buffer "
-                                                 "configuration."));
-        }
+      nodeSizes.emplace_back(node->length);
+      size_t hugePageMinSize = 1024 * 1024 * 2; // 2 MiB, the smallest hugepage size
+      if (requireHugepage && node->length < hugePageMinSize) {
+        BOOST_THROW_EXCEPTION(
+          PdaException() << ErrorInfo::Message("SGL node smaller than 2 MiB. IOMMU off and buffer not backed by hugapages - unsupported buffer configuration"));
       }
 
       ScatterGatherEntry e;
@@ -107,6 +106,20 @@ PdaDmaBuffer::PdaDmaBuffer(PciDevice* pciDevice, void* userBufferAddress, size_t
       BOOST_THROW_EXCEPTION(PdaException() << ErrorInfo::Message(
                               "Failed to initialize scatter-gather list, was empty"));
     }
+
+    // Print some stats regarding the Scatter-Gather list
+    std::sort(nodeSizes.begin(), nodeSizes.end());
+    int n = nodeSizes.size();
+    int minSize = nodeSizes[0];
+    int maxSize = nodeSizes[n - 1];
+    double median = nodeSizes[n / 2];
+    if (n % 2 == 0) {
+      median = (median + nodeSizes[n / 2 - 1]) / 2;
+    }
+    int totalSize = std::accumulate(nodeSizes.begin(), nodeSizes.end(), 0);
+
+    Logger::get() << "[" << serialId << " |"
+                  << " PDA buffer SGL stats] #nodes: " << n << " | total: " << totalSize << " | min: " << minSize << " | max: " << maxSize << " | median: " << median << LogInfoDevel << endm;
   } catch (const PdaException&) {
     PciDevice_deleteDMABuffer(mPciDevice, mDmaBuffer);
     throw;

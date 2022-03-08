@@ -24,6 +24,7 @@
 #include "DmaBufferProvider/PdaDmaBufferProvider.h"
 #include "DmaBufferProvider/FilePdaDmaBufferProvider.h"
 #include "DmaBufferProvider/NullDmaBufferProvider.h"
+#include "ReadoutCard/ParameterTypes/SerialId.h"
 #include "Visitor.h"
 
 namespace o2
@@ -56,7 +57,7 @@ DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
       [&](buffer_parameters::Memory parameters) {
         log("Initializing with DMA buffer from memory region", LogDebugDevel);
         return std::make_unique<PdaDmaBufferProvider>(mRocPciDevice->getPciDevice(), parameters.address,
-                                                      parameters.size, bufferId, true);
+                                                      parameters.size, bufferId, mRocPciDevice->getSerialId(), true);
       },
       [&](buffer_parameters::File parameters) {
         log("Initializing with DMA buffer from memory-mapped file", LogDebugDevel);
@@ -78,12 +79,11 @@ DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
     auto listSize = mBufferProvider->getScatterGatherListSize();
     auto hugePageMinSize = 1024 * 1024 * 2; // 2 MiB, the smallest hugepage size
     auto bufferSize = getBufferProvider().getSize();
-    //log(std::string("Scatter-gather list size: ") + std::to_string(listSize));
     if (listSize > (bufferSize / hugePageMinSize)) {
       std::string message =
         "Scatter-gather list size greater than buffer size divided by 2MiB (minimum hugepage size)."
         " This means the IOMMU is off and the buffer is not backed by hugepages - an unsupported buffer configuration.";
-      log(message, LogErrorDevel); //TODO: Why log + throw?
+      log(message, LogErrorDevel);
       BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(message));
     }
   }
@@ -92,20 +92,22 @@ DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
   if (getBufferProvider().getSize() > 0) {
     // Non-null buffer
     bool checked = false;
+    // Get the memory mappings from linux
     const auto maps = Utilities::getMemoryMaps();
+    const auto bufferAddress = reinterpret_cast<uintptr_t>(getBufferProvider().getAddress());
     for (const auto& map : maps) {
-      const auto bufferAddress = reinterpret_cast<uintptr_t>(getBufferProvider().getAddress());
+      // Match the map address with the provided buffer address
       if (map.addressStart == bufferAddress) {
         if (map.pageSizeKiB > 4) {
-          log("Buffer is hugepage-backed", LogDebugDevel);
+          log("Buffer is hugepage-backed", LogDebugTrace);
         } else {
           if (AliceO2::Common::Iommu::isEnabled()) {
-            log("Buffer is NOT hugepage-backed, but IOMMU is enabled", LogWarningDevel);
+            log("Buffer is NOT hugepage-backed, but IOMMU is enabled", LogWarningTrace);
           } else {
             std::string message =
               "Buffer is NOT hugepage-backed and IOMMU is disabled - unsupported buffer "
               "configuration";
-            log(message, LogErrorDevel); //TODO: Why log + throw?
+            log(message, LogWarningDevel);
             BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(message)
                                               << ErrorInfo::PossibleCauses({ "roc-setup-hugetlbfs was not run" }));
           }
@@ -115,7 +117,7 @@ DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
       }
     }
     if (!checked) {
-      log("Failed to check if buffer is hugepage-backed", LogWarningDevel);
+      log("Failed to check if buffer is hugepage-backed", LogDebugTrace);
     }
   }
 }
