@@ -62,7 +62,7 @@ DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
       [&](buffer_parameters::File parameters) {
         log("Initializing with DMA buffer from memory-mapped file", LogDebugDevel);
         return std::make_unique<FilePdaDmaBufferProvider>(mRocPciDevice->getPciDevice(), parameters.path,
-                                                          parameters.size, bufferId, true);
+                                                          parameters.size, bufferId, mRocPciDevice->getSerialId(), true);
       },
       [&](buffer_parameters::Null) {
         log("Initializing with null DMA buffer", LogDebugDevel);
