@@ -110,13 +110,13 @@ PdaDmaBuffer::PdaDmaBuffer(PciDevice* pciDevice, void* userBufferAddress, size_t
     // Print some stats regarding the Scatter-Gather list
     std::sort(nodeSizes.begin(), nodeSizes.end());
     int n = nodeSizes.size();
-    int minSize = nodeSizes[0];
-    int maxSize = nodeSizes[n - 1];
+    long minSize = nodeSizes[0];
+    long maxSize = nodeSizes[n - 1];
     double median = nodeSizes[n / 2];
     if (n % 2 == 0) {
       median = (median + nodeSizes[n / 2 - 1]) / 2;
     }
-    int totalSize = std::accumulate(nodeSizes.begin(), nodeSizes.end(), 0);
+    long totalSize = std::accumulate(nodeSizes.begin(), nodeSizes.end(), 0);
 
     Logger::get() << "[" << serialId << " |"
                   << " PDA buffer SGL stats] #nodes: " << n << " | total: " << totalSize << " | min: " << minSize << " | max: " << maxSize << " | median: " << median << LogInfoDevel << endm;
