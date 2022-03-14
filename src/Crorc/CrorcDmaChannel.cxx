@@ -67,9 +67,10 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
   {
     // Create and register the buffer
     // Note: if resizing the file fails, we might've accidentally put the file in a hugetlbfs mount with 1 GB page size
-    Utilities::resetSmartPtr(mSuperpageInfoFile, getPaths().spInfo(), kSuperpageInfoSize, true);
+    SerialId serialId = { getSerialNumber(), getEndpointNumber() };
+    Utilities::resetSmartPtr(mSuperpageInfoFile, getPaths().spInfo(), kSuperpageInfoSize, false);
     Utilities::resetSmartPtr(mPdaDmaBufferFifo, getRocPciDevice().getPciDevice(), mSuperpageInfoFile->getAddress(),
-                             kSuperpageInfoSize, getPdaDmaBufferIndexFifo(getChannelNumber()), false); // note the 'false' at the end specifies non-hugepage memory
+                             kSuperpageInfoSize, getPdaDmaBufferIndexFifo(getChannelNumber()), serialId, false); // note the 'false' at the end specifies non-hugepage memory
 
     const auto& entry = mPdaDmaBufferFifo->getScatterGatherList().at(0);
     if (entry.size < kSuperpageInfoSize) {
