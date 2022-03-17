@@ -118,9 +118,6 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
   /// Bus address of Superpage info in DMA buffer
   uintptr_t mSuperpageInfoAddressBus;
 
-  /// Starts pending DMA with given superpage for the initial pages
-  void startPendingDma();
-
   /// BAR used for DMA engine and configuration
   std::shared_ptr<CrorcBar> crorcBar;
 
@@ -135,10 +132,6 @@ class CrorcDmaChannel final : public DmaChannelPdaBase
 
   /// Address of DMA buffer in userspace
   uintptr_t mDmaBufferUserspace = 0;
-
-  /// Indicates deviceStartDma() was called, but DMA was not actually started yet. We do this because we need a
-  /// superpage to actually start.
-  bool mPendingDmaStart = false;
 
   // These variables are configuration parameters
 

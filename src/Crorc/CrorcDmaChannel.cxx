@@ -109,29 +109,12 @@ void CrorcDmaChannel::deviceStartDma()
 
   startDataReceiving();
 
-  log("DMA start deferred until enough superpages available", LogInfoDevel);
-
   while (!mReadyQueue.isEmpty()) {
     mReadyQueue.popFront();
   }
   while (!mTransferQueue.isEmpty()) {
     mTransferQueue.popFront();
   }
-  mPendingDmaStart = true;
-}
-
-void CrorcDmaChannel::startPendingDma()
-{
-  if (!mPendingDmaStart) {
-    return;
-  }
-
-  if (mTransferQueue.isEmpty()) { // We should never end up in here
-    log("Insufficient superpages to start pending DMA", LogErrorDevel);
-    return;
-  }
-
-  log("Starting pending DMA", LogInfoDevel);
 
   if (mGeneratorEnabled) {
     log("Starting data generator", LogInfoDevel);
@@ -151,7 +134,6 @@ void CrorcDmaChannel::startPendingDma()
 
   std::this_thread::sleep_for(100ms);
 
-  mPendingDmaStart = false;
   log("DMA started", LogInfoOps);
 }
 
@@ -275,15 +257,6 @@ bool CrorcDmaChannel::isASuperpageAvailable()
 
 void CrorcDmaChannel::fillSuperpages()
 {
-  if (mPendingDmaStart) {
-    if (!mTransferQueue.isEmpty()) {
-      startPendingDma();
-    } else {
-      // Waiting on enough superpages to start DMA...
-      return;
-    }
-  }
-
   // Check for arrivals & handle them
   if (!mIntermediateQueue.isEmpty() && isASuperpageAvailable()) {
 
