@@ -237,10 +237,10 @@ params.setDynamicOffsetEnabled(true);
 ...
 ```
 
-Likewise for `OnuAddress`, passing the hex is enough.
+Likewise for `OnuAddress`, passing the int is enough.
 
 ```
-params.setOnuAddress(0x0badcafe)
+params.setOnuAddress(42)
 ```
 
 ### Configuration File
@@ -591,7 +591,7 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | Value name         - | Value                       | Type   | 
 | ---------------------| --------------------------- | ------ | 
 | `"onuStickyStatus"`  | 0/1 (DOWN/UP)               | int    |
-| `"onuAddress"`       | ONU Address                 | string |
+| `"onuAddress"`       | ONU Address                 | int    |
 | `"rx40Locked"`       | 0/1 (False/True)            | int    |
 | `"phaseGood"`        | 0/1 (False/True)            | int    |
 | `"rxLocked"`         | 0/1 (False/True)            | int    |

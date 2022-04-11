@@ -266,7 +266,7 @@ class ProgramStatus : public Program
         if (mOptions.monitoring) {
           monitoring->send(Metric{ "onu" }
                              .addValue(onuStickyStatusInt, "onuStickyStatus")
-                             .addValue(std::to_string(onuStatus.onuAddress), "onuAddress")
+                             .addValue(int(onuStatus.onuAddress), "onuAddress")
                              .addValue(onuStatus.rx40Locked, "rx40Locked")
                              .addValue(onuStatus.phaseGood, "phaseGood")
                              .addValue(onuStatus.rxLocked, "rxLocked")
@@ -298,7 +298,7 @@ class ProgramStatus : public Program
         } else {
           std::cout << "=============================" << std::endl;
           std::cout << "ONU status: \t\t" << onuStickyStatus << std::endl;
-          std::cout << "ONU address: \t\t0x" << std::hex << onuStatus.onuAddress << std::endl;
+          std::cout << "ONU address: \t\t" << onuStatus.onuAddress << std::endl;
           std::cout << "-----------------------------" << std::endl;
           std::cout << "ONU RX40 locked: \t" << std::boolalpha << onuStatus.rx40Locked << std::endl;
           std::cout << "ONU phase good: \t" << std::boolalpha << onuStatus.phaseGood << std::endl;
