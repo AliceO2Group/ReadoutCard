@@ -174,8 +174,7 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
         ponUpstream = subtree.get<bool>("ponUpstream");
         dynamicOffset = subtree.get<bool>("dynamicOffset");
 
-        parsedString = subtree.get<std::string>("onuAddress");
-        onuAddress = Hex::fromString(parsedString);
+        onuAddress = subtree.get<int>("onuAddress");
 
         parsedString = subtree.get<std::string>("cruId");
         cruId = Hex::fromString(parsedString);
