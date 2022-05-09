@@ -198,7 +198,7 @@ static constexpr uint32_t DATA_MIDTRG(0x2);*/
 
 /// Registers for getting TTC info
 static constexpr Register TTC_ONU_STICKY(0x00200014);
-static constexpr Register TTC_ONU_STICKY_MON(0x00200014);
+static constexpr Register TTC_ONU_STICKY_MON(0x0020001c);
 static constexpr Register TTC_PON_QUALITY(0x0010000C);
 
 /// Registers used for TTC calibration
