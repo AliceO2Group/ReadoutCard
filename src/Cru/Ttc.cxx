@@ -152,7 +152,7 @@ bool Ttc::configurePonTx(uint32_t onuAddress)
 // from rogue invocations of roc-status
 OnuStickyStatus Ttc::getOnuStickyStatus(bool monitoring)
 {
-  LinkStatus monStatus = LinkStatus::Down, upstreamStatus = LinkStatus::Down, downstreamStatus = LinkStatus::Down;
+  LinkStatus upstreamStatus = LinkStatus::Down, downstreamStatus = LinkStatus::Down;
   uint32_t was, is;
   if (monitoring) {
     was = mBar->readRegister(Cru::Registers::TTC_ONU_STICKY_MON.index);
@@ -173,14 +173,7 @@ OnuStickyStatus Ttc::getOnuStickyStatus(bool monitoring)
     downstreamStatus = LinkStatus::Up;
   }
 
-  if (was == 0x0 && is == 0x0) {
-    monStatus = LinkStatus::Up;
-  } else if (was != 0x0 && is == 0x0) {
-    monStatus = LinkStatus::UpWasDown;
-  }
-
   return {
-    monStatus,
     upstreamStatus,
     downstreamStatus,
     is,

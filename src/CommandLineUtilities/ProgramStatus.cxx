@@ -250,28 +250,15 @@ class ProgramStatus : public Program
         uint32_t onuStickyValue = onuStatus.stickyStatus.stickyValue;
         uint32_t onuStickyValuePrev = onuStatus.stickyStatus.stickyValuePrev;
 
-        // TODO: remove when monitoring is updated
-        std::string onuStickyStatus;
-        int onuStickyStatusInt = 0;
-
-        if (onuStatus.stickyStatus.monStatus == Cru::LinkStatus::Up) {
-          onuStickyStatus = "UP";
-          onuStickyStatusInt = 1;
-        } else if (onuStatus.stickyStatus.monStatus == Cru::LinkStatus::UpWasDown) {
-          onuStickyStatus = "UP (was DOWN)";
-          // force status = 1 (vs = 2) when UP(was DOWN) for monitoring
-          onuStickyStatusInt = 1;
-        } else if (onuStatus.stickyStatus.monStatus == Cru::LinkStatus::Down) {
-          onuStickyStatus = "DOWN";
-          onuStickyStatusInt = 0;
-        }
-
         std::string ponQualityStatusStr;
         ponQualityStatusStr = onuStatus.ponQualityStatus ? "good" : "bad";
 
         if (mOptions.monitoring) {
           monitoring->send(Metric{ "onu" }
-                             .addValue(onuStickyStatusInt, "onuStickyStatus")
+                             .addValue(onuStatus.stickyStatus.upstreamStatus, "onuUpstreamStatus")
+                             .addValue(onuStatus.stickyStatus.downstreamStatus, "onuDownstreamStatus")
+                             .addValue(int(onuStatus.stickyStatus.stickyValue), "onuStickyValue")
+                             .addValue(int(onuStatus.stickyStatus.stickyValuePrev), "onuStickyVaulePrev")
                              .addValue(int(onuStatus.onuAddress), "onuAddress")
                              .addValue(onuStatus.rx40Locked, "rx40Locked")
                              .addValue(onuStatus.phaseGood, "phaseGood")
