@@ -31,6 +31,7 @@ namespace roc
 {
 
 using LinkStatus = Cru::LinkStatus;
+using OnuStickyStatus = Cru::OnuStickyStatus;
 using OnuStatus = Cru::OnuStatus;
 using FecStatus = Cru::FecStatus;
 
@@ -149,8 +150,9 @@ bool Ttc::configurePonTx(uint32_t onuAddress)
 // The monitoring parameter is set when roc-status is called through the monitoring infrastructure
 // this reports and clears a different register, so that clock information is not lost
 // from rogue invocations of roc-status
-LinkStatus Ttc::getOnuStickyBit(bool monitoring)
+OnuStickyStatus Ttc::getOnuStickyStatus(bool monitoring)
 {
+  LinkStatus monStatus = LinkStatus::Down, upstreamStatus = LinkStatus::Down, downstreamStatus = LinkStatus::Down;
   uint32_t was, is;
   if (monitoring) {
     was = mBar->readRegister(Cru::Registers::TTC_ONU_STICKY_MON.index);
@@ -163,12 +165,27 @@ LinkStatus Ttc::getOnuStickyBit(bool monitoring)
     mBar->modifyRegister(Cru::Registers::TTC_DATA.index, 28, 1, 0x0);
     is = mBar->readRegister(Cru::Registers::TTC_ONU_STICKY.index);
   }
-  if (was == 0x0 && is == 0x0) {
-    return LinkStatus::Up;
-  } else if (was != 0x0 && is == 0x0) {
-    return LinkStatus::UpWasDown;
+
+  if (is == 0x0 || is == 0x8) {
+    upstreamStatus = LinkStatus::Up;
+    downstreamStatus = LinkStatus::Up;
+  } else if (is == 0x1a) {
+    downstreamStatus = LinkStatus::Up;
   }
-  return LinkStatus::Down;
+
+  if (was == 0x0 && is == 0x0) {
+    monStatus = LinkStatus::Up;
+  } else if (was != 0x0 && is == 0x0) {
+    monStatus = LinkStatus::UpWasDown;
+  }
+
+  return {
+    monStatus,
+    upstreamStatus,
+    downstreamStatus,
+    is,
+    was
+  };
 }
 
 OnuStatus Ttc::onuStatus(bool monitoring)
@@ -186,7 +203,7 @@ OnuStatus Ttc::onuStatus(bool monitoring)
     (calStatus >> 5 & 0x1) == 1,
     (calStatus >> 6 & 0x1) == 1,
     (calStatus >> 7 & 0x1) == 1,
-    getOnuStickyBit(monitoring),
+    getOnuStickyStatus(monitoring),
     getPonQuality(),
     getPonQualityStatus(),
     getPonRxPower()
