@@ -34,6 +34,20 @@ enum LinkStatus {
   UpWasDown
 };
 
+constexpr const char* LinkStatusToString(LinkStatus status)
+{
+  switch (status) {
+    case LinkStatus::Down:
+      return "DOWN";
+    case LinkStatus::Up:
+      return "UP";
+    case LinkStatus::UpWasDown:
+      return "UP (was DOWN)";
+    default:
+      throw std::invalid_argument("Invalid LinkStatus provided for string conversion");
+  }
+}
+
 struct Link {
   int dwrapper = -1;
   int wrapper = -1;
@@ -103,6 +117,14 @@ struct ReportInfo {
   uint16_t timeFrameLength;
 };
 
+struct OnuStickyStatus {
+  LinkStatus monStatus; // TODO: Remove after monitoring is updated
+  LinkStatus upstreamStatus;
+  LinkStatus downstreamStatus;
+  uint32_t stickyValue;
+  uint32_t stickyValuePrev;
+};
+
 struct OnuStatus {
   uint32_t onuAddress;
   bool rx40Locked;
@@ -113,7 +135,10 @@ struct OnuStatus {
   bool mgtRxReady;
   bool mgtTxPllLocked;
   bool mgtRxPllLocked;
-  LinkStatus stickyBit;
+  /* NEW */
+  //LinkStatus stickyBit;
+  OnuStickyStatus stickyStatus;
+  /* NEW */
   uint32_t ponQuality;
   int ponQualityStatus;
   double ponRxPower;

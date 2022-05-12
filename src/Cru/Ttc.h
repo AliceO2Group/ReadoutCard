@@ -28,9 +28,10 @@ namespace roc
 
 class Ttc
 {
+  using LinkStatus = Cru::LinkStatus;
+  using OnuStickyStatus = Cru::OnuStickyStatus;
   using OnuStatus = Cru::OnuStatus;
   using FecStatus = Cru::FecStatus;
-  using LinkStatus = Cru::LinkStatus;
 
  public:
   Ttc(std::shared_ptr<BarInterface> bar, int serial = -1, int endpoint = -1);
@@ -68,7 +69,7 @@ class Ttc
  private:
   void configurePlls(uint32_t clock);
   void setRefGen(int frequency = 240);
-  LinkStatus getOnuStickyBit(bool monitoring = false);
+  OnuStickyStatus getOnuStickyStatus(bool monitoring = false);
   uint32_t getPonQuality();
   int getPonQualityStatus();
   double getPonRxPower();

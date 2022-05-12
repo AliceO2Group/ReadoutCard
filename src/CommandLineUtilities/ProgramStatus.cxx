@@ -245,17 +245,23 @@ class ProgramStatus : public Program
       if (mOptions.onu) {
         Cru::OnuStatus onuStatus = cruBar2->reportOnuStatus(mOptions.monitoring);
 
+        std::string onuUpstreamStatus = Cru::LinkStatusToString(onuStatus.stickyStatus.upstreamStatus);
+        std::string onuDownstreamStatus = Cru::LinkStatusToString(onuStatus.stickyStatus.downstreamStatus);
+        uint32_t onuStickyValue = onuStatus.stickyStatus.stickyValue;
+        uint32_t onuStickyValuePrev = onuStatus.stickyStatus.stickyValuePrev;
+
+        // TODO: remove when monitoring is updated
         std::string onuStickyStatus;
         int onuStickyStatusInt = 0;
 
-        if (onuStatus.stickyBit == Cru::LinkStatus::Up) {
+        if (onuStatus.stickyStatus.monStatus == Cru::LinkStatus::Up) {
           onuStickyStatus = "UP";
           onuStickyStatusInt = 1;
-        } else if (onuStatus.stickyBit == Cru::LinkStatus::UpWasDown) {
+        } else if (onuStatus.stickyStatus.monStatus == Cru::LinkStatus::UpWasDown) {
           onuStickyStatus = "UP (was DOWN)";
           // force status = 1 (vs = 2) when UP(was DOWN) for monitoring
           onuStickyStatusInt = 1;
-        } else if (onuStatus.stickyBit == Cru::LinkStatus::Down) {
+        } else if (onuStatus.stickyStatus.monStatus == Cru::LinkStatus::Down) {
           onuStickyStatus = "DOWN";
           onuStickyStatusInt = 0;
         }
@@ -282,7 +288,10 @@ class ProgramStatus : public Program
                              .addTag(tags::Key::ID, card.sequenceId)
                              .addTag(tags::Key::Type, tags::Value::CRU));
         } else if (mOptions.jsonOut) {
-          root.put("ONU status", onuStickyStatus);
+          root.put("ONU downstream status", onuDownstreamStatus);
+          root.put("ONU upstream status", onuUpstreamStatus);
+          root.put("ONU sticky value", Utilities::toHexString(onuStickyValue));
+          root.put("ONU sticky value (was)", Utilities::toHexString(onuStickyValuePrev));
           root.put("ONU address", onuStatus.onuAddress);
           root.put("ONU RX40 locked", onuStatus.rx40Locked);
           root.put("ONU phase good", onuStatus.phaseGood);
@@ -297,7 +306,10 @@ class ProgramStatus : public Program
           root.put("PON RX power (dBm)", onuStatus.ponRxPower);
         } else {
           std::cout << "=============================" << std::endl;
-          std::cout << "ONU status: \t\t" << onuStickyStatus << std::endl;
+          std::cout << "ONU downstream status: \t" << onuDownstreamStatus << std::endl;
+          std::cout << "ONU upstream status: \t" << onuUpstreamStatus << std::endl;
+          std::cout << "ONU sticky value: \t0x" << std::hex << onuStickyValue << std::endl;
+          std::cout << "ONU sticky value (was): 0x" << std::hex << onuStickyValuePrev << std::endl;
           std::cout << "ONU address: \t\t" << onuStatus.onuAddress << std::endl;
           std::cout << "-----------------------------" << std::endl;
           std::cout << "ONU RX40 locked: \t" << std::boolalpha << onuStatus.rx40Locked << std::endl;
