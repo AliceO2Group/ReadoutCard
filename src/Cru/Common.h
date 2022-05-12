@@ -118,7 +118,6 @@ struct ReportInfo {
 };
 
 struct OnuStickyStatus {
-  LinkStatus monStatus; // TODO: Remove after monitoring is updated
   LinkStatus upstreamStatus;
   LinkStatus downstreamStatus;
   uint32_t stickyValue;
@@ -135,10 +134,7 @@ struct OnuStatus {
   bool mgtRxReady;
   bool mgtTxPllLocked;
   bool mgtRxPllLocked;
-  /* NEW */
-  //LinkStatus stickyBit;
   OnuStickyStatus stickyStatus;
-  /* NEW */
   uint32_t ponQuality;
   int ponQualityStatus;
   double ponRxPower;

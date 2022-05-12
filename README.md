@@ -588,20 +588,23 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 
 ###### Metric: `"onu"`
 
-| Value name         - | Value                       | Type   | 
-| ---------------------| --------------------------- | ------ | 
-| `"onuStickyStatus"`  | 0/1 (DOWN/UP)               | int    |
-| `"onuAddress"`       | ONU Address                 | int    |
-| `"rx40Locked"`       | 0/1 (False/True)            | int    |
-| `"phaseGood"`        | 0/1 (False/True)            | int    |
-| `"rxLocked"`         | 0/1 (False/True)            | int    |
-| `"operational"`      | 0/1 (False/True)            | int    |
-| `"mgtTxReady"`       | 0/1 (False/True)            | int    |
-| `"mgtRxReady"`       | 0/1 (False/True)            | int    |
-| `"mgtTxPllLocked"`   | 0/1 (False/True)            | int    |
-| `"mgtRxPllLocked"`   | 0/1 (False/True)            | int    |
-| `"ponQualityStatus"` | 0/1 (Bad/Good)              | int    |
-| `"ponRxPower"`       | dBm                         | int    |
+| Value name              | Value                          | Type   | 
+| ----------------------- | ------------------------------ | ------ | 
+| `"onuDownstreamStatus"` | 0/1 (DOWN/UP)                  | int    |
+| `"onuUpstreamStatus"`   | 0/1 (DOWN/UP)                  | int    |
+| `"onuStickyValue"`      | 8-bit                          | int    |
+| `"onuStickyVaulePrev"`  | 8-bit                          | int    |
+| `"onuAddress"`          | ONU Address                    | int    |
+| `"rx40Locked"`          | 0/1 (False/True)               | int    |
+| `"phaseGood"`           | 0/1 (False/True)               | int    |
+| `"rxLocked"`            | 0/1 (False/True)               | int    |
+| `"operational"`         | 0/1 (False/True)               | int    |
+| `"mgtTxReady"`          | 0/1 (False/True)               | int    |
+| `"mgtRxReady"`          | 0/1 (False/True)               | int    |
+| `"mgtTxPllLocked"`      | 0/1 (False/True)               | int    |
+| `"mgtRxPllLocked"`      | 0/1 (False/True)               | int    |
+| `"ponQualityStatus"`    | 0/1 (Bad/Good)                 | int    |
+| `"ponRxPower"`          | dBm                            | int    |
 
 | Tag key               | Value                 |
 | --------------------- | --------------------- |
