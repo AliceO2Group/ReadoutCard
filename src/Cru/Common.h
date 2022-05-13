@@ -176,6 +176,8 @@ struct TriggerMonitoringInfo {
   double phyRate;
   uint64_t tofCount;
   double tofRate;
+  uint64_t calCount;
+  double calRate;
   uint64_t eoxCount;
   uint64_t soxCount;
 };

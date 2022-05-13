@@ -224,6 +224,7 @@ static constexpr Register ONU_MGT_STICKYS(0x00222014);
 static constexpr Register LTU_HBTRIG_CNT(0x00200004);
 static constexpr Register LTU_PHYSTRIG_CNT(0x00200008);
 static constexpr Register LTU_TOFTRIG_CNT(0x00200018);
+static constexpr Register LTU_CALTRIG_CNT(0x00200018);
 static constexpr Register LTU_EOX_SOX_CNT(0x0020000c);
 
 //** GBT **//

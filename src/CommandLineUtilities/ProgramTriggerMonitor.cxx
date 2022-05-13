@@ -72,10 +72,10 @@ class ProgramTriggerMonitor : public Program
       auto cruBar2 = std::dynamic_pointer_cast<CruBar>(bar);
 
       std::ostringstream table;
-      auto formatHeader = "  %-12s %-15s %-12s %-15s %-12s %-15s %-12s %-12s\n";
-      auto formatRow = "  %-12s %-15.3f %-12s %-15.3f %-12s %-15.3f %-12s %-12s\n";
-      auto formatRowUpdateable = "  %-12s %-15.3f %-12s %-15.3f %-12s %-15.3f %-12s %-12s";
-      auto header = (boost::format(formatHeader) % "HB" % "HB rate (kHz)" % "PHY" % "PHY rate (kHz)" % "TOF" % "TOF rate (kHz)" % "SOX" % "EOX").str();
+      auto formatHeader = "  %-12s %-15s %-12s %-15s %-12s %-15s %-12s %-15s %-12s %-12s\n";
+      auto formatRow = "  %-12s %-15.3f %-12s %-15.3f %-12s %-15.3f %-12s %-15.3f %-12s %-12s\n";
+      auto formatRowUpdateable = "  %-12s %-15.3f %-12s %-15.3f %-12s %-15.3f %-12s %-15.3f %-12s %-12s";
+      auto header = (boost::format(formatHeader) % "HB" % "HB rate (kHz)" % "PHY" % "PHY rate (kHz)" % "CAL" % "CAL rate (kHz)" % "TOF" % "TOF rate (kHz)" % "SOX" % "EOX").str();
       auto lineFat = std::string(header.length(), '=') + '\n';
       auto lineThin = std::string(header.length(), '-') + '\n';
 
@@ -90,7 +90,7 @@ class ProgramTriggerMonitor : public Program
 
         while (!isSigInt()) {
           Cru::TriggerMonitoringInfo tmi = cruBar2->monitorTriggers(true);
-          auto format = boost::format(formatRowUpdateable) % tmi.hbCount % tmi.hbRate % tmi.phyCount % tmi.phyRate % tmi.tofCount % tmi.tofRate % tmi.soxCount % tmi.eoxCount;
+          auto format = boost::format(formatRowUpdateable) % tmi.hbCount % tmi.hbRate % tmi.phyCount % tmi.phyRate % tmi.calCount % tmi.calRate % tmi.tofCount % tmi.tofRate % tmi.soxCount % tmi.eoxCount;
           std::cout << '\r' << format << std::flush;
         }
 
@@ -98,7 +98,7 @@ class ProgramTriggerMonitor : public Program
                   << lineFat;
       } else {
         Cru::TriggerMonitoringInfo tmi = cruBar2->monitorTriggers();
-        auto format = boost::format(formatRow) % tmi.hbCount % tmi.hbRate % tmi.phyCount % tmi.phyRate % tmi.tofCount % tmi.tofRate % tmi.soxCount % tmi.eoxCount;
+        auto format = boost::format(formatRow) % tmi.hbCount % tmi.hbRate % tmi.phyCount % tmi.phyRate % tmi.calCount % tmi.calRate % tmi.tofCount % tmi.tofRate % tmi.soxCount % tmi.eoxCount;
         table << format << lineFat;
         std::cout << table.str();
       }
