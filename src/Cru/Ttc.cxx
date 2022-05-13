@@ -298,7 +298,12 @@ std::pair<uint32_t, uint32_t> Ttc::getEoxSoxLtuCount()
 
 uint32_t Ttc::getTofTriggerLtuCount()
 {
-  return mBar->readRegister(Cru::Registers::LTU_TOFTRIG_CNT.index);
+  return mBar->readRegister(Cru::Registers::LTU_TOFTRIG_CNT.index) & 0xffff;
+}
+
+uint32_t Ttc::getCalTriggerLtuCount()
+{
+  return mBar->readRegister(Cru::Registers::LTU_CALTRIG_CNT.index) >> 16;
 }
 
 /*** CTP EMULATOR METHODS ***/

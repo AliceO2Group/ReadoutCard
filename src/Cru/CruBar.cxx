@@ -616,11 +616,13 @@ Cru::TriggerMonitoringInfo CruBar::monitorTriggers(bool updateable)
   uint32_t hbCountPrev = ttc.getHbTriggerLtuCount();
   uint32_t phyCountPrev = ttc.getPhyTriggerLtuCount();
   uint32_t tofCountPrev = ttc.getTofTriggerLtuCount();
+  uint32_t calCountPrev = ttc.getCalTriggerLtuCount();
 
   // base values to report relative counts for updateable monitoring (e.g. for a single run)
   static uint32_t hbCountBase = hbCountPrev;
   static uint32_t phyCountBase = phyCountPrev;
   static uint32_t tofCountBase = tofCountPrev;
+  static uint32_t calCountBase = calCountPrev;
   static std::pair<uint32_t, uint32_t> statEoxSox = ttc.getEoxSoxLtuCount();
   static uint32_t eoxCountBase = statEoxSox.first;
   static uint32_t soxCountBase = statEoxSox.second;
@@ -629,6 +631,7 @@ Cru::TriggerMonitoringInfo CruBar::monitorTriggers(bool updateable)
   uint32_t hbCount = ttc.getHbTriggerLtuCount();
   uint32_t phyCount = ttc.getPhyTriggerLtuCount();
   uint32_t tofCount = ttc.getTofTriggerLtuCount();
+  uint32_t calCount = ttc.getCalTriggerLtuCount();
   std::pair<uint32_t, uint32_t> eoxSox = ttc.getEoxSoxLtuCount();
   uint32_t eoxCount = eoxSox.first;
   uint32_t soxCount = eoxSox.second;
@@ -655,11 +658,19 @@ Cru::TriggerMonitoringInfo CruBar::monitorTriggers(bool updateable)
     tofDiff = tofCount - tofCountPrev;
   }
 
+  uint64_t calDiff;
+  if (calCountPrev > calCount) {
+    calDiff = calCount + pow(2, 16) - calCountPrev;
+  } else {
+    calDiff = calCount - calCountPrev;
+  }
+
   // report absolute values + rates(1s)
   if (!updateable) {
     return { hbCount, hbDiff / pow(10, 3),
              phyCount, phyDiff / pow(10, 3),
              tofCount, tofDiff / pow(10, 3),
+             calCount, calDiff / pow(10, 3),
              eoxCount, soxCount };
   }
 
@@ -682,6 +693,7 @@ Cru::TriggerMonitoringInfo CruBar::monitorTriggers(bool updateable)
   return { hbCount - hbCountBase, hbDiff / pow(10, 3),
            phyCount - phyCountBase, phyDiff / pow(10, 3),
            tofCount - tofCountBase, tofDiff / pow(10, 3),
+           calCount - calCountBase, calDiff / pow(10, 3),
            eoxDiff, soxDiff };
 }
 
