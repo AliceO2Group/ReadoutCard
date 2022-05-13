@@ -76,6 +76,9 @@ class ProgramLoopback : public Program
     options.add_options()("low-mask",
                           po::value<std::string>(&mOptions.lowMask)->default_value("0xffffffff"),
                           "Low part of the mask");
+    options.add_options()("expert-view",
+                          po::bool_switch(&mOptions.expertView)->default_value(false),
+                          "Enables expert view");
   }
 
   virtual void run(const boost::program_options::variables_map& map)
@@ -98,9 +101,15 @@ class ProgramLoopback : public Program
     if (cardType == CardType::type::Crorc) {
       Logger::get() << "CRORC not supported" << LogErrorOps << endm;
     } else if (cardType == CardType::type::Cru) {
-      formatHeader = "  %-9s %-10s %-19s %-16s %-12s %-21s %-17s\n";
-      formatRow = "  %-9s %-10s %-19s %-16s %-12s %-21s %-17s\n";
-      header = (boost::format(formatHeader) % "Link ID" % "PLL Lock" % "RX Locked to Data" % "Data layer UP" % "GBT PHY UP" % "RX Data Error Count" % "FEC Error Count").str();
+      if (mOptions.expertView) {
+        formatHeader = "  %-9s %-10s %-19s %-16s %-12s %-21s %-17s\n";
+        formatRow = "  %-9s %-10s %-19s %-16s %-12s %-21s %-17s\n";
+        header = (boost::format(formatHeader) % "Link ID" % "PLL Lock" % "RX Locked to Data" % "Data layer UP" % "GBT PHY UP" % "RX Data Error Count" % "FEC Error Count").str();
+      } else {
+        formatHeader = "  %-9s %-12s %-21s %-17s\n";
+        formatRow = "  %-9s %-12s %-21s %-17s\n";
+        header = (boost::format(formatHeader) % "Link ID" % "GBT PHY UP" % "RX Data Error Count" % "FEC Error Count").str();
+      }
       lineFat = std::string(header.length(), '=') + '\n';
       lineThin = std::string(header.length(), '-') + '\n';
 
@@ -133,14 +142,17 @@ class ProgramLoopback : public Program
           std::string dataLayerUpString = Utilities::toBoolString(stats.dataLayerUp);
           std::string gbtPhyUpString = Utilities::toBoolString(stats.gbtPhyUp);
 
-          auto format = boost::format(formatRow) %
-                        globalId %
-                        pllLockString %
-                        rxLockedToDataString %
-                        dataLayerUpString %
-                        gbtPhyUpString %
-                        stats.rxDataErrorCount %
-                        stats.fecErrorCount;
+          auto format = boost::format(formatRow) % globalId;
+          if (mOptions.expertView) {
+            format = format %
+                     pllLockString %
+                     rxLockedToDataString %
+                     dataLayerUpString;
+          }
+          format = format %
+                   gbtPhyUpString %
+                   stats.rxDataErrorCount %
+                   stats.fecErrorCount;
           table << format;
         }
         // clear the screen
@@ -171,6 +183,7 @@ class ProgramLoopback : public Program
     std::string lowMask = "0xffffffff";
     bool skipReset = false;
     int interval = 1;
+    bool expertView = false;
   } mOptions;
 };
 
