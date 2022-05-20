@@ -159,6 +159,8 @@ class CruDmaChannel final : public DmaChannelPdaBase
 
   /// DMA page size, as specified when opening the channel
   const size_t mDmaPageSize;
+
+  bool mFirstSPPushed = false;
 };
 
 } // namespace roc
