@@ -261,6 +261,8 @@ bool CruDmaChannel::pushSuperpage(Superpage superpage)
   auto busAddress = getBusOffsetAddress(superpage.getOffset());
   getBar()->pushSuperpageDescriptor(link.id, dmaPages, busAddress);
 
+  mFirstSPPushed = true;
+
   return true;
 }
 
@@ -379,6 +381,10 @@ int32_t CruDmaChannel::getDroppedPackets()
 
 bool CruDmaChannel::areSuperpageFifosHealthy()
 {
+  if (mDmaState != DmaState::STARTED || !mFirstSPPushed) {
+    return true;
+  }
+
   bool ok = true;
   static std::unordered_map<int, uint32_t> counters;
 
