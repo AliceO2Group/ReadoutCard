@@ -421,6 +421,10 @@ class ProgramDmaBench : public Program
             }
           }
 
+          // Intermittently check that the FIFOs are healthy
+          // Will potentially log a warning as a side-effect
+          mChannel->areSuperpageFifosHealthy();
+
           next += LOW_PRIORITY_INTERVAL;
           std::this_thread::sleep_until(next);
         }
