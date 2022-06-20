@@ -151,9 +151,7 @@ static constexpr Register FIRMWARE_TIME(0x0000000c);
 
 /// Register containing the userlogic Git hash
 /// Must be accessed on BAR 2
-/// Keep the same address as the COMMON LOGIC until register is implemented for all detectors
-//static constexpr Register USERLOGIC_GIT_HASH(0x00c00004);
-static constexpr Register USERLOGIC_GIT_HASH(0x4);
+static constexpr Register USERLOGIC_GIT_HASH(0x00c00004);
 
 /// Register containing the first part of the Arria 10 chip ID
 /// Must be accessed on BAR 2
