@@ -166,10 +166,18 @@ OnuStickyStatus Ttc::getOnuStickyStatus(bool monitoring)
     is = mBar->readRegister(Cru::Registers::TTC_ONU_STICKY.index);
   }
 
-  if (is == 0x0 || is == 0x8) {
+  // onu sticky bits: [mgtRxPllLocked][mgtTxPllLocked][mgtRxReady][mgtTxReady][operational][rxLocked][phaseGood][rx40Locked]
+  // bit 0 = no error = GOOD | bit 1 = error = BAD
+  // first we invert the sticky status: after inversion 1 = GOOD
+  auto notIs = ~is;
+
+  // mgtTxPllLocked | mgtTxReady | operational | phaseGood <-- these should be GOOD for upstream to be UP
+  if ((notIs & 0xb01011010) == 0xb01011010) {
     upstreamStatus = LinkStatus::Up;
-    downstreamStatus = LinkStatus::Up;
-  } else if (is == 0x1a) {
+  }
+
+  // mgtRxPllLocked | mgtRxReady | rxLocked | rx40Locked <-- these should be GOOD for upstream to be UP
+  if ((notIs & 0xb10100101) == 0xb10100101) {
     downstreamStatus = LinkStatus::Up;
   }
 
