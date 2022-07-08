@@ -172,12 +172,12 @@ OnuStickyStatus Ttc::getOnuStickyStatus(bool monitoring)
   auto notIs = ~is;
 
   // mgtTxPllLocked | mgtTxReady | operational | phaseGood <-- these should be GOOD for upstream to be UP
-  if ((notIs & 0xb01011010) == 0xb01011010) {
+  if ((notIs & 0b01011010) == 0b01011010) {
     upstreamStatus = LinkStatus::Up;
   }
 
-  // mgtRxPllLocked | mgtRxReady | rxLocked | rx40Locked <-- these should be GOOD for upstream to be UP
-  if ((notIs & 0xb10100101) == 0xb10100101) {
+  // mgtRxPllLocked | mgtRxReady | rxLocked | rx40Locked <-- these should be GOOD for downstream to be UP
+  if ((notIs & 0b10100101) == 0b10100101) {
     downstreamStatus = LinkStatus::Up;
   }
 
