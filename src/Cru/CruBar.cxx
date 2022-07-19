@@ -1256,5 +1256,10 @@ void CruBar::setTimeFrameLength(uint16_t timeFrameLength)
   bar0->modifyRegister(Cru::Registers::TIME_FRAME_LENGTH.index, 20, 12, timeFrameLength);
 }
 
+uint32_t CruBar::getMaxSuperpageDescriptors()
+{
+  return readRegister(Cru::Registers::MAX_SUPERPAGE_DESCRIPTORS.index);
+}
+
 } // namespace roc
 } // namespace o2
