@@ -70,6 +70,18 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
     log(stream.str(), LogDebugDevel);
   }
 
+  // Calculate link and ready queue capacities
+  {
+    uint32_t maxSuperpageDescriptors = getBar()->getMaxSuperpageDescriptors();
+    // If number of descriptors reported is 0, the feature is not supported by the firmware. Fall back to default value
+    if (maxSuperpageDescriptors == 0x0) {
+      maxSuperpageDescriptors = Cru::MAX_SUPERPAGE_DESCRIPTORS_DEFAULT;
+    }
+
+    mLinkQueueCapacity = maxSuperpageDescriptors;
+    mReadyQueueCapacity = maxSuperpageDescriptors * Cru::MAX_LINKS;
+  }
+
   // Insert links
   {
     std::stringstream stream;
@@ -79,7 +91,7 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
     for (auto const& link : links) {
       stream << link << " ";
       //Implicit constructors are deleted for the folly Queue. Workaround to keep the Link struct with a queue * field.
-      std::shared_ptr<SuperpageQueue> linkQueue = std::make_shared<SuperpageQueue>(LINK_QUEUE_CAPACITY_ALLOCATIONS);
+      std::shared_ptr<SuperpageQueue> linkQueue = std::make_shared<SuperpageQueue>(mLinkQueueCapacity + 1); // folly queue needs + 1
       Link newLink = { static_cast<LinkId>(link), 0, linkQueue };
       mLinks.push_back(newLink);
     }
@@ -89,6 +101,8 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
     if (mLinks.empty()) {
       BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("No links are enabled. Check with roc-status. Configure with roc-config."));
     }
+
+    mReadyQueue = std::make_unique<SuperpageQueue>(mReadyQueueCapacity + 1); // folly queue needs + 1
   }
 }
 
@@ -101,8 +115,8 @@ auto CruDmaChannel::allowedChannels() -> AllowedChannels
 CruDmaChannel::~CruDmaChannel()
 {
   setBufferNonReady();
-  if (mReadyQueue.sizeGuess() > 0) {
-    log((format("Remaining superpages in the ready queue: %1%") % mReadyQueue.sizeGuess()).str(), LogDebugDevel);
+  if (mReadyQueue->sizeGuess() > 0) {
+    log((format("Remaining superpages in the ready queue: %1%") % mReadyQueue->sizeGuess()).str(), LogDebugDevel);
   }
 
   if (mDataSource == DataSource::Internal) {
@@ -138,10 +152,10 @@ void CruDmaChannel::deviceStartDma()
     }
     link.superpageCounter = 0;
   }
-  while (!mReadyQueue.isEmpty()) {
-    mReadyQueue.popFront();
+  while (!mReadyQueue->isEmpty()) {
+    mReadyQueue->popFront();
   }
-  mLinkQueuesTotalAvailable = LINK_QUEUE_CAPACITY * mLinks.size();
+  mLinkQueuesTotalAvailable = mLinkQueueCapacity * mLinks.size();
 
   // Start DMA
   setBufferReady();
@@ -249,7 +263,7 @@ bool CruDmaChannel::pushSuperpage(Superpage superpage)
   // Get the next link to push
   auto& link = mLinks[getNextLinkIndex()];
 
-  if (link.queue->sizeGuess() >= LINK_QUEUE_CAPACITY) {
+  if (link.queue->sizeGuess() >= mLinkQueueCapacity) {
     // Is the link's FIFO out of space?
     // This should never happen
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not push superpage, link queue was full"));
@@ -268,19 +282,19 @@ bool CruDmaChannel::pushSuperpage(Superpage superpage)
 
 auto CruDmaChannel::getSuperpage() -> Superpage
 {
-  if (mReadyQueue.isEmpty()) {
+  if (mReadyQueue->isEmpty()) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not get superpage, ready queue was empty"));
   }
-  return *mReadyQueue.frontPtr();
+  return *mReadyQueue->frontPtr();
 }
 
 auto CruDmaChannel::popSuperpage() -> Superpage
 {
-  if (mReadyQueue.isEmpty()) {
+  if (mReadyQueue->isEmpty()) {
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not pop superpage, ready queue was empty"));
   }
-  auto superpage = *mReadyQueue.frontPtr();
-  mReadyQueue.popFront();
+  auto superpage = *mReadyQueue->frontPtr();
+  mReadyQueue->popFront();
 
   return superpage;
 }
@@ -310,7 +324,7 @@ void CruDmaChannel::transferSuperpageFromLinkToReady(Link& link, bool reclaim)
     link.queue->frontPtr()->setReceived(0);
   }
 
-  mReadyQueue.write(*link.queue->frontPtr());
+  mReadyQueue->write(*link.queue->frontPtr());
   link.queue->popFront();
   link.superpageCounter++;
   mLinkQueuesTotalAvailable++;
@@ -339,7 +353,7 @@ void CruDmaChannel::fillSuperpages()
     }
 
     while (amountAvailable) {
-      if (mReadyQueue.sizeGuess() >= READY_QUEUE_CAPACITY) {
+      if (mReadyQueue->sizeGuess() >= mReadyQueueCapacity) {
         break;
       }
 
@@ -358,19 +372,19 @@ int CruDmaChannel::getTransferQueueAvailable()
 // The transfer queue is empty when all its slots are available
 bool CruDmaChannel::isTransferQueueEmpty()
 {
-  return mLinkQueuesTotalAvailable == (LINK_QUEUE_CAPACITY * mLinks.size());
+  return mLinkQueuesTotalAvailable == (mLinkQueueCapacity * mLinks.size());
 }
 
 int CruDmaChannel::getReadyQueueSize()
 {
-  return mReadyQueue.sizeGuess();
+  return mReadyQueue->sizeGuess();
 }
 
 // Return a boolean that denotes whether the ready queue is full
 // The ready queue is full when the CRU has filled it up
 bool CruDmaChannel::isReadyQueueFull()
 {
-  return mReadyQueue.isFull();
+  return mReadyQueue->isFull();
 }
 
 int32_t CruDmaChannel::getDroppedPackets()

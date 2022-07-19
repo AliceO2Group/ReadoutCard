@@ -31,7 +31,7 @@ namespace Cru
 static constexpr int MAX_LINKS = 16;
 
 /// Amount of available superpage descriptors per link
-static constexpr int MAX_SUPERPAGE_DESCRIPTORS = 128;
+static constexpr int MAX_SUPERPAGE_DESCRIPTORS_DEFAULT = 128;
 
 /// DMA page length in bytes
 /// Note: the CRU has a firmware defined fixed page size
@@ -110,6 +110,10 @@ static constexpr Register DEBUG(0x00000c00);
 /// 0x0        -> Endpoint #0
 /// 0x11111111 -> Endpoint #1
 static constexpr Register ENDPOINT_ID(0x00000500);
+
+/// Register to get the size of the internal CRU per-link Superpage FIFO
+/// If it returns 0, use the default of MAX_SUPERPAGE_DESCRIPTORS_DEFAULT
+static constexpr Register MAX_SUPERPAGE_DESCRIPTORS(0x00000c04);
 
 ///*** bar2 ***///
 

@@ -113,6 +113,8 @@ class CruBar final : public BarInterfaceBase
 
   std::vector<int> getDataTakingLinks();
 
+  uint32_t getMaxSuperpageDescriptors();
+
   std::shared_ptr<Pda::PdaBar> getPdaBar()
   {
     return mPdaBar;
