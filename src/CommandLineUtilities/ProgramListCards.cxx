@@ -70,6 +70,7 @@ class ProgramListCards : public Program
     pt::ptree root;
 
     auto cardsFound = o2::roc::RocPciDevice::findSystemDevices();
+    auto firmwareChecker = FirmwareChecker();
 
     int i = 0;
     for (const auto& card : cardsFound) {
@@ -85,7 +86,7 @@ class ProgramListCards : public Program
           userLogicVersion = std::dynamic_pointer_cast<CruBar>(bar2)->getUserLogicVersion().value_or(na);
         }
         // Check if the firmware is tagged
-        firmware = FirmwareChecker().resolveFirmwareTag(firmware);
+        firmware = firmwareChecker.resolveFirmwareTag(firmware);
       } catch (const Exception& e) {
         std::cerr << "Error parsing card information through BAR\n"
                   << boost::diagnostic_information(e) << '\n';

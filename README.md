@@ -738,6 +738,10 @@ Both _PDA_ packages can also be installed from source as described on the next s
 
 For the _CRU firmware_ see the [gitlab](https://gitlab.cern.ch/alice-cru/cru-fw) repo.
 
+Note: The CRU firmware compatibility table has lower precedence to an (optionally present) firmware compatibility json file, which
+is always searched for in `/etc/o2.d/readoutcard/o2-roc-fw-list.json`. This is a flat json map, as seen in the example file
+[o2-roc-fw-list.json](o2-roc-fw-list.json).
+
 ### PDA
 The module depends on the PDA (Portable Driver Architecture) library and driver.
 If PDA is not detected on the system, only a dummy implementation of the interface will be compiled.
