@@ -742,7 +742,7 @@ class ProgramDmaBench : public Program
       mPacketCounters[linkId] = packetCounter; // same as = (mPacketCounters + mErrorCheckFrequency) % mMaxRdhPacketCounter
     }
 
-    if (!checkTimeFrameAlignment(pageAddress, atStartOfSuperpage)) {
+    if (mTimeFrameCheckEnabled && !checkTimeFrameAlignment(pageAddress, atStartOfSuperpage)) {
       // log TF not at the beginning of the superpage error
       mErrorCount++;
       if (mErrorCount < MAX_RECORDED_ERRORS) {
