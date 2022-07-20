@@ -41,6 +41,7 @@ class FirmwareChecker
   void checkFirmwareCompatibilityWrapped(Parameters::CardIdType cardId);
   std::string getFirmwareCompatibilityList();
   std::unordered_map<std::string, std::string> mCompatibleFirmwareList;
+  static constexpr char kFirmwareListFile[] = "json:///etc/o2.d/readoutcard/o2-roc-fw-list.json";
 };
 
 } // namespace roc

@@ -16,6 +16,7 @@
 
 #include "ReadoutCard/FirmwareChecker.h"
 #include "ExceptionInternal.h"
+#include <Configuration/ConfigurationFactory.h>
 
 namespace o2
 {
@@ -49,6 +50,19 @@ FirmwareChecker::FirmwareChecker() : mCompatibleFirmwareList({
                                                                { "72cdb92", "v2.4.1" }*/
                                      })
 {
+  std::unordered_map<std::string, std::string> parsedList;
+  try {
+    auto conf = configuration::ConfigurationFactory::getConfiguration(kFirmwareListFile);
+    parsedList = conf->getRecursiveMap();
+  } catch (const std::runtime_error& e) {
+    /* on error bail out */
+    return;
+  }
+
+  // if the parsed list is not empty update the compatible fimrware list
+  if (!parsedList.empty()) {
+    mCompatibleFirmwareList = parsedList;
+  }
 }
 
 FirmwareChecker::~FirmwareChecker()
