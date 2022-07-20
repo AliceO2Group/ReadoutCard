@@ -153,6 +153,8 @@ class ProgramConfig : public Program
           try {
             FirmwareChecker().checkFirmwareCompatibility(params);
             CardConfigurator(card.pciAddress, mOptions.configUri, mOptions.forceConfig);
+          } catch (const std::runtime_error& e) {
+            Logger::get() << e.what() << LogErrorOps << endm;
           } catch (const Exception& e) {
             Logger::get() << boost::diagnostic_information(e) << LogErrorOps << endm;
           }
@@ -242,6 +244,9 @@ class ProgramConfig : public Program
       Logger::get() << "Configuring with command line arguments" << LogDebugOps << endm;
       try {
         CardConfigurator(params, mOptions.forceConfig);
+      } catch (const std::runtime_error& e) {
+        Logger::get() << e.what() << LogErrorOps << endm;
+        throw;
       } catch (const Exception& e) {
         Logger::get() << e.what() << LogErrorOps << endm;
         throw;
@@ -250,7 +255,10 @@ class ProgramConfig : public Program
       Logger::get() << "Configuring with config uri" << LogDebugOps << endm;
       try {
         CardConfigurator(cardId, mOptions.configUri, mOptions.forceConfig);
-      } catch (std::exception& e) {
+      } catch (const std::runtime_error& e) {
+        Logger::get() << e.what() << LogErrorOps << endm;
+        throw;
+      } catch (const Exception& e) {
         Logger::get() << e.what() << LogErrorOps << endm;
         throw;
       }
