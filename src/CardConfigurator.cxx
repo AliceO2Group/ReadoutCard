@@ -39,8 +39,10 @@ CardConfigurator::CardConfigurator(Parameters::CardIdType cardId, std::string co
   }
   try {
     parseConfigUri(cardType, configUri, parameters);
-  } catch (...) {
-    throw;
+  } catch (const std::runtime_error& e) {
+    BOOST_THROW_EXCEPTION(e);
+  } catch (const Exception& e) {
+    BOOST_THROW_EXCEPTION(e);
   }
 
   auto bar2 = ChannelFactory().getBar(parameters);
@@ -267,8 +269,10 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
     parameters.setGbtMuxMap(gbtMuxMap);
     parameters.setFeeIdMap(feeIdMap);
 
-  } catch (...) {
-    BOOST_THROW_EXCEPTION(ParseException() << ErrorInfo::ConfigParse(group));
+  } catch (const std::runtime_error& e) {
+    BOOST_THROW_EXCEPTION(e);
+  } catch (const Exception& e) {
+    BOOST_THROW_EXCEPTION(e);
   }
 }
 
