@@ -713,11 +713,15 @@ class ProgramDmaBench : public Program
     // Get memsize from the header
     const auto memBytes = DataFormat::getMemsize(reinterpret_cast<const char*>(pageAddress)); // Memory size [RDH, Payload]
 
+    // It is useful to also report the orbit and the bunch crossing on error
+    const auto orbit = DataFormat::getOrbit(reinterpret_cast<const char*>(pageAddress));
+    const auto bunchCrossing = DataFormat::getBunchCrossing(reinterpret_cast<const char*>(pageAddress));
+
     if (memBytes < 0x40 || memBytes > pageSize) {
       // Report RDH error
       mErrorCount++;
       if (mErrorCount < MAX_RECORDED_ERRORS) {
-        mErrorStream << b::format("[RDHERR]\tevent:%1% l:%2% payloadBytes:%3% size:%4% words out of range\n") % eventNumber % linkId % memBytes % pageSize;
+        mErrorStream << b::format("[RDHERR]\tevent:%d l:%d o:0x%x bc:0x%x payloadBytes:%d size:%d words out of range\n") % eventNumber % linkId % orbit % bunchCrossing % memBytes % pageSize;
       }
       return true;
     }
@@ -727,7 +731,7 @@ class ProgramDmaBench : public Program
 
     if (mPacketCounters[linkId] == PACKET_COUNTER_INITIAL_VALUE) {
       if (mErrorCount < MAX_RECORDED_ERRORS) {
-        mErrorStream << b::format("resync packet counter for e:%d l:%d packet_cnt:%x mpacket_cnt:%x le:%d \n") % eventNumber % linkId % packetCounter %
+        mErrorStream << b::format("resync packet counter for e:%d l:%d o:0x%x bc:0x%x packet_cnt:0x%x mpacket_cnt:0x%x le:%d \n") % eventNumber % linkId % orbit % bunchCrossing % packetCounter %
                           mPacketCounters[linkId] % mEventCounters[linkId];
       }
       mPacketCounters[linkId] = packetCounter;
@@ -735,7 +739,7 @@ class ProgramDmaBench : public Program
       // log packet counter error
       mErrorCount++;
       if (mErrorCount < MAX_RECORDED_ERRORS) {
-        mErrorStream << b::format("[RDHERR]\tevent:%1% l:%2% payloadBytes:%3% size:%4% packet_cnt:%5% mpacket_cnt:%6% levent:%7% unexpected packet counter\n") % eventNumber % linkId % memBytes % pageSize % packetCounter % mPacketCounters[linkId] % mEventCounters[linkId];
+        mErrorStream << b::format("[RDHERR]\tevent:%d l:%d o:0x%x bc: 0x%x payloadBytes:%d size:%d packet_cnt:0x%x mpacket_cnt:0x%x levent:%d unexpected packet counter\n") % eventNumber % linkId % orbit % bunchCrossing % memBytes % pageSize % packetCounter % mPacketCounters[linkId] % mEventCounters[linkId];
       }
       return true;
     } else {
@@ -746,7 +750,7 @@ class ProgramDmaBench : public Program
       // log TF not at the beginning of the superpage error
       mErrorCount++;
       if (mErrorCount < MAX_RECORDED_ERRORS) {
-        mErrorStream << b::format("[RDHERR]\tevent:%1% l:%2% payloadBytes:%3% size:%4% packet_cnt:%5% orbit:%6$#x nextTForbit:%7$#x atSPStart:%8% TF unaligned w/ start of superpage\n") % eventNumber % linkId % memBytes % pageSize % packetCounter % mOrbit % mNextTFOrbit % atStartOfSuperpage;
+        mErrorStream << b::format("[RDHERR]\tevent:%d l:%d o:0x%x bc:0x%x payloadBytes:%d size:%d packet_cnt:0x%x nextTForbit:0x%x atSPStart:%b TF unaligned w/ start of superpage\n") % eventNumber % linkId % orbit % bunchCrossing % memBytes % pageSize % packetCounter % mNextTFOrbit % atStartOfSuperpage;
       }
     }
 
@@ -847,10 +851,15 @@ class ProgramDmaBench : public Program
   bool checkErrorsCrorc(uintptr_t pageAddress, size_t pageSize, int64_t eventNumber, int linkId, bool atStartOfSuperpage)
   {
     const auto memBytes = DataFormat::getMemsize(reinterpret_cast<const char*>(pageAddress));
+
+    // It is useful to also report the orbit and the bunch crossing on error
+    const auto orbit = DataFormat::getOrbit(reinterpret_cast<const char*>(pageAddress));
+    const auto bunchCrossing = DataFormat::getBunchCrossing(reinterpret_cast<const char*>(pageAddress));
+
     if (memBytes > pageSize) {
       mErrorCount++;
       if (mErrorCount < MAX_RECORDED_ERRORS) {
-        mErrorStream << b::format("[RDHERR]\tevent:%1% l:%2% payloadBytes:%3% size:%4% words out of ranger\n") % eventNumber % linkId % memBytes % pageSize;
+        mErrorStream << b::format("[RDHERR]\tevent:%d l:%d o:0x%x bc:0x%x payloadBytes:%d size:%d words out of ranger\n") % eventNumber % linkId % orbit % bunchCrossing % memBytes % pageSize;
       }
       return true;
     }
@@ -859,14 +868,14 @@ class ProgramDmaBench : public Program
 
     if (mPacketCounters[linkId] == PACKET_COUNTER_INITIAL_VALUE) {
       if (mErrorCount < MAX_RECORDED_ERRORS) {
-        mErrorStream << b::format("resync packet counter for e%d l:%d packet_cnt:%x mpacket_cnt:%x, le:%d \n") % eventNumber % linkId % packetCounter %
+        mErrorStream << b::format("resync packet counter for e%d l:%d o:0x%x bc:0x%x packet_cnt:0x%x mpacket_cnt:0x%x, le:%d \n") % eventNumber % linkId % orbit % bunchCrossing % packetCounter %
                           mPacketCounters[linkId] % mEventCounters[linkId];
       }
       mPacketCounters[linkId] = packetCounter;
     } else if (((mPacketCounters[linkId] + mErrorCheckFrequency) % (mMaxRdhPacketCounter + 1)) != packetCounter) {
       mErrorCount++;
       if (mErrorCount < MAX_RECORDED_ERRORS) {
-        mErrorStream << b::format("[RDHERR]\tevent:%1% l:%2% packet_cnt:%3% mpacket_cnt:%4% unexpected packet counter\n") % eventNumber % linkId % packetCounter % mPacketCounters[linkId];
+        mErrorStream << b::format("[RDHERR]\tevent:%d l:%d o:0x%x bc:0x%x packet_cnt:0x%x mpacket_cnt:0x%x unexpected packet counter\n") % eventNumber % linkId % orbit % bunchCrossing % packetCounter % mPacketCounters[linkId];
       }
       return true;
     } else {
@@ -877,7 +886,7 @@ class ProgramDmaBench : public Program
       // log TF not at the beginning of the superpage error
       mErrorCount++;
       if (mErrorCount < MAX_RECORDED_ERRORS) {
-        mErrorStream << b::format("[RDHERR]\tevent:%1% l:%2% payloadBytes:%3% size:%4% packet_cnt:%5% orbit:%6$#x nextTForbit:%7$#x atSPStart:%8% TF unaligned w/ start of superpage\n") % eventNumber % linkId % memBytes % pageSize % packetCounter % mOrbit % mNextTFOrbit % atStartOfSuperpage;
+        mErrorStream << b::format("[RDHERR]\tevent:%d l:%d o:0x%x bc:0x%x payloadBytes:%d size:%d packet_cnt:0x%x nextTForbit:0x%x atSPStart:%b TF unaligned w/ start of superpage\n") % eventNumber % linkId % orbit % bunchCrossing % memBytes % pageSize % packetCounter % mNextTFOrbit % atStartOfSuperpage;
       }
     }
 
