@@ -241,7 +241,7 @@ class ProgramConfig : public Program
         return;
       }
 
-      Logger::get() << "Configuring with command line arguments" << LogDebugOps << endm;
+      Logger::get() << "Configuring card " << cardId << " with command line arguments" << LogDebugOps << endm;
       try {
         CardConfigurator(params, mOptions.forceConfig);
       } catch (const std::runtime_error& e) {
@@ -252,7 +252,7 @@ class ProgramConfig : public Program
         throw;
       }
     } else {
-      Logger::get() << "Configuring with config uri" << LogDebugOps << endm;
+      Logger::get() << "Configuring card " << cardId << " with config uri: " << mOptions.configUri << LogDebugOps << endm;
       try {
         CardConfigurator(cardId, mOptions.configUri, mOptions.forceConfig);
       } catch (const std::runtime_error& e) {
