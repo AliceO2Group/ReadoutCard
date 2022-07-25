@@ -14,6 +14,7 @@ Table of Contents
   * [BAR interface](#bar-interface)
   * [Parameters](#parameters-1)
   * [Utility programs](#utility-programs)
+  * [Logging](#logging)
   * [Exceptions](#exceptions)
   * [Python interface](#python-interface)
 3. [Installation](#installation)
@@ -656,6 +657,50 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | `tags::Key::CRU`      | ID of the CRU         |
 | `tags::Key::ID`       | ID of the link        |
 | `tags::Key::Type`     | `tags::Value::CRU`    |
+
+Logging
+-------------------
+Logging is achieved through the use of the [InfoLogger](https://github.com/AliceO2Group/InfoLogger) library.
+
+Error codes in the range 4000-4999 are assigned to ReadoutCard. These are further partitioned according to components:
+
+### General
+| 4000 - 4099 | Full Range |
+| ----------- | ---------- |
+| 4000 - 4010 | Internal logger |
+
+### PDA
+| 4100 - 4199 | Full Range |
+| ----------- | ---------- |
+
+### DMA
+| 4200 - 4399 | Full Range |
+| ----------- | ---------- |
+| 4200 - 4239 | General DMA |
+| 4250 - 4299 | CRU DMA |
+| 4300 - 4349 | CRORC DMA |
+
+### Card Configuration
+| 4600 - 4699 | Full Range |
+| ----------- | ---------- |
+| 4600 - 4649 | CRU |
+| 4650 - 4699 | CRORC |
+
+### Cleanup
+| 4700 - 4799 | Full Range |
+| ----------- | ---------- |
+
+### Reports
+| 4800 - 4899 | Full Range   |
+| ----------- | ------------ |
+| 4800 - 4804 | CTP emulator |
+
+### Unassigned
+| Range |
+| ----- |
+| 4350 - 4599 |
+| 4900 - 4999 |
+
 
 Exceptions
 -------------------

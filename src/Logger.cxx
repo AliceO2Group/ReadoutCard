@@ -27,7 +27,7 @@ Logger::Logger(std::string facility)
   context.setField(ILContext::FieldName::System, "FLP");
   context.setField(ILContext::FieldName::Facility, facility);
   mLogger.setContext(context);
-  mLogger << "New " << facility << " InfoLogger connection" << LogDebugTrace << endm;
+  mLogger << "New " << facility << " InfoLogger connection" << LogDebugTrace_(4000) << endm;
 }
 
 void Logger::setFacility(std::string facility)

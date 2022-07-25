@@ -49,7 +49,7 @@ void freePdaDmaBuffersWrapped(const CardDescriptor cardDescriptor, const int cha
   try {
     Pda::PdaLock lock{}; // We're messing around with PDA buffers so we need this even though we hold the DMA lock
   } catch (const LockException& exception) {
-    Logger::get() << "Failed to acquire PDA lock" << LogErrorDevel << endm;
+    Logger::get() << "Failed to acquire PDA lock" << LogErrorDevel_(4100) << endm;
     throw;
   }
 
@@ -85,7 +85,7 @@ void freePdaDmaBuffersWrapped(const CardDescriptor cardDescriptor, const int cha
 
                 std::string mapPath = dmaPath + "/" + bufferId + "/map";
                 std::string freePath = dmaPath + "/free";
-                Logger::get() << "Freeing PDA buffer '" + mapPath + "'" << LogDebugDevel << endm;
+                Logger::get() << "Freeing PDA buffer '" + mapPath + "'" << LogDebugDevel_(4201) << endm;
                 AliceO2::Common::System::executeCommand("echo " + bufferId + " > " + freePath);
               }
             }
@@ -94,7 +94,7 @@ void freePdaDmaBuffersWrapped(const CardDescriptor cardDescriptor, const int cha
       }
     }
   } catch (const boost::filesystem::filesystem_error& e) {
-    Logger::get() << "Failed to free buffers: " << e.what() << LogErrorDevel << endm;
+    Logger::get() << "Failed to free buffers: " << e.what() << LogErrorDevel_(4202) << endm;
     throw;
   }
 }

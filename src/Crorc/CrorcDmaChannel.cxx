@@ -63,7 +63,7 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
   crorcBar = std::move(std::dynamic_pointer_cast<CrorcBar>(bar)); // Initialize bar
 
   // Create and register our Superpage info (size + count) buffer
-  log("Initializing Superpage info buffer", LogDebugDevel);
+  log("Initializing Superpage info buffer", LogDebugDevel_(4300));
   {
     // Create and register the buffer
     // Note: if resizing the file fails, we might've accidentally put the file in a hugetlbfs mount with 1 GB page size
@@ -117,11 +117,11 @@ void CrorcDmaChannel::deviceStartDma()
   }
 
   if (mGeneratorEnabled) {
-    log("Starting data generator", LogInfoDevel);
+    log("Starting data generator", LogInfoDevel_(4301));
     startDataGenerator();
   } else {
     if (mRDYRX || mSTBRD) {
-      log("Starting trigger", LogInfoDevel);
+      log("Starting trigger", LogInfoDevel_(4302));
 
       // Clearing SIU/DIU status.
       getBar()->assertLinkUp();
@@ -134,7 +134,7 @@ void CrorcDmaChannel::deviceStartDma()
 
   std::this_thread::sleep_for(100ms);
 
-  log("DMA started", LogInfoOps);
+  log("DMA started", LogInfoOps_(4303));
 }
 
 void CrorcDmaChannel::deviceStopDma()

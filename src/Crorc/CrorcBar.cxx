@@ -106,28 +106,28 @@ int CrorcBar::getEndpointNumber()
 
 void CrorcBar::configure(bool /*force*/)
 {
-  log("Configuring...", LogInfoOps);
+  log("Configuring...", LogInfoOps_(4650));
 
   // enable laser
-  log("Enabling the laser", LogInfoDevel);
+  log("Enabling the laser", LogInfoDevel_(4651));
   setQsfpEnabled();
 
-  log("Configuring fixed/dynamic offset", LogInfoDevel);
+  log("Configuring fixed/dynamic offset", LogInfoDevel_(4652));
   // choose between fixed and dynamic offset
   setDynamicOffsetEnabled(mDynamicOffset);
 
   // set crorc id
-  log("Setting the CRORC ID", LogInfoDevel);
+  log("Setting the CRORC ID", LogInfoDevel_(4653));
   setCrorcId(mCrorcId);
 
   // set timeframe length
-  log("Setting the Time Frame length", LogInfoDevel);
+  log("Setting the Time Frame length", LogInfoDevel_(4654));
   setTimeFrameLength(mTimeFrameLength);
 
-  log("Configuring Time Frame detection", LogInfoDevel);
+  log("Configuring Time Frame detection", LogInfoDevel_(4655));
   setTimeFrameDetectionEnabled(mTimeFrameDetectionEnabled);
 
-  log("CRORC configuration done", LogInfoOps);
+  log("CRORC configuration done", LogInfoOps_(4656));
 }
 
 Crorc::ReportInfo CrorcBar::report(bool forConfig)
@@ -314,7 +314,7 @@ void CrorcBar::stopTrigger()
   try {
     sendDdlCommand(Crorc::Registers::DDL_COMMAND.address, Crorc::Registers::EOBTR);
   } catch (const Exception& e) {
-    log("Stopping DDL trigger timed out");
+    log("Stopping DDL trigger timed out", LogInfoDevel_(4656));
   }
 }
 

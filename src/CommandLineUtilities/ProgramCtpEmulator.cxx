@@ -84,10 +84,10 @@ class ProgramCtpEmulator : public Program
 
     CardType::type cardType = bar2->getCardType();
     if (cardType == CardType::type::Crorc) {
-      Logger::get() << "CRORC not supported" << LogErrorOps << endm;
+      Logger::get() << "CRORC not supported" << LogErrorOps_(4803) << endm;
       return;
     } else if (cardType != CardType::type::Cru) {
-      Logger::get() << "Invalid card type" << LogErrorOps << endm;
+      Logger::get() << "Invalid card type" << LogErrorOps_(4804) << endm;
       return;
     }
 
