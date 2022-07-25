@@ -48,6 +48,7 @@ class PatternPlayer
 
   PatternPlayer(std::shared_ptr<BarInterface> bar);
   void play(PatternPlayer::Info info);
+  PatternPlayer::Info read();
 
  private:
   void configure(bool startConfig);
@@ -60,6 +61,15 @@ class PatternPlayer
   void enableSyncAtStart(bool enable = false);
   void triggerSync();
   void triggerReset();
+
+  uint128_t getSyncPattern();
+  uint128_t getResetPattern();
+  uint128_t getIdlePattern();
+  uint32_t getSyncLength();
+  uint32_t getSyncDelay();
+  uint32_t getResetLength();
+  uint32_t getResetTriggerSelect();
+  uint32_t getSyncTriggerSelect();
 
   std::shared_ptr<BarInterface> mBar;
 };

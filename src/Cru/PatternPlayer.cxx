@@ -57,6 +57,23 @@ void PatternPlayer::play(PatternPlayer::Info info)
   }
 }
 
+PatternPlayer::Info PatternPlayer::read()
+{
+  return {
+    getSyncPattern(),
+    getResetPattern(),
+    getIdlePattern(),
+    getSyncLength(),
+    getSyncDelay(),
+    getResetLength(),
+    getResetTriggerSelect(),
+    getSyncTriggerSelect(),
+    false,
+    false,
+    false
+  };
+}
+
 /// Configure has to be called to enable/disable pattern player configuration
 void PatternPlayer::configure(bool startConfig)
 {
@@ -74,6 +91,14 @@ void PatternPlayer::setIdlePattern(uint128_t pattern)
   mBar->writeRegister(Cru::Registers::PATPLAYER_IDLE_PATTERN_2.index, uint32_t((pattern >> 64) & 0xffff));
 }
 
+uint128_t PatternPlayer::getIdlePattern()
+{
+  uint128_t pattern = mBar->readRegister(Cru::Registers::PATPLAYER_IDLE_PATTERN_2.index);
+  pattern = pattern << 32 | mBar->readRegister(Cru::Registers::PATPLAYER_IDLE_PATTERN_1.index);
+  pattern = pattern << 32 | mBar->readRegister(Cru::Registers::PATPLAYER_IDLE_PATTERN_0.index);
+  return pattern;
+}
+
 void PatternPlayer::setSyncPattern(uint128_t pattern)
 {
   mBar->writeRegister(Cru::Registers::PATPLAYER_SYNC_PATTERN_0.index, uint32_t(pattern & 0xffffffff));
@@ -81,10 +106,29 @@ void PatternPlayer::setSyncPattern(uint128_t pattern)
   mBar->writeRegister(Cru::Registers::PATPLAYER_SYNC_PATTERN_2.index, uint32_t((pattern >> 64) & 0xffff));
 }
 
+uint128_t PatternPlayer::getSyncPattern()
+{
+  uint128_t pattern = mBar->readRegister(Cru::Registers::PATPLAYER_SYNC_PATTERN_2.index);
+  pattern = pattern << 32 | mBar->readRegister(Cru::Registers::PATPLAYER_SYNC_PATTERN_1.index);
+  pattern = pattern << 32 | mBar->readRegister(Cru::Registers::PATPLAYER_SYNC_PATTERN_0.index);
+  return pattern;
+}
+
 void PatternPlayer::configureSync(uint32_t length, uint32_t delay)
 {
   mBar->writeRegister(Cru::Registers::PATPLAYER_SYNC_CNT.index, length + delay);
   mBar->writeRegister(Cru::Registers::PATPLAYER_DELAY_CNT.index, delay);
+}
+
+uint32_t PatternPlayer::getSyncLength()
+{
+  return mBar->readRegister(Cru::Registers::PATPLAYER_SYNC_CNT.index) -
+         mBar->readRegister(Cru::Registers::PATPLAYER_DELAY_CNT.index);
+}
+
+uint32_t PatternPlayer::getSyncDelay()
+{
+  return mBar->readRegister(Cru::Registers::PATPLAYER_DELAY_CNT.index);
 }
 
 void PatternPlayer::setResetPattern(uint128_t pattern)
@@ -94,14 +138,37 @@ void PatternPlayer::setResetPattern(uint128_t pattern)
   mBar->writeRegister(Cru::Registers::PATPLAYER_RESET_PATTERN_2.index, uint32_t((pattern >> 64) & 0xffff));
 }
 
+uint128_t PatternPlayer::getResetPattern()
+{
+  uint128_t pattern = mBar->readRegister(Cru::Registers::PATPLAYER_RESET_PATTERN_2.index);
+  pattern = pattern << 32 | mBar->readRegister(Cru::Registers::PATPLAYER_RESET_PATTERN_1.index);
+  pattern = pattern << 32 | mBar->readRegister(Cru::Registers::PATPLAYER_RESET_PATTERN_0.index);
+  return pattern;
+}
+
 void PatternPlayer::configureReset(uint32_t length)
 {
   mBar->writeRegister(Cru::Registers::PATPLAYER_RESET_CNT.index, length);
 }
 
+uint32_t PatternPlayer::getResetLength()
+{
+  return mBar->readRegister(Cru::Registers::PATPLAYER_RESET_CNT.index);
+}
+
 void PatternPlayer::selectPatternTrigger(uint32_t syncTrigger, uint32_t resetTrigger)
 {
   mBar->writeRegister(Cru::Registers::PATPLAYER_TRIGGER_SEL.index, (resetTrigger << 16) | syncTrigger);
+}
+
+uint32_t PatternPlayer::getResetTriggerSelect()
+{
+  return (mBar->readRegister(Cru::Registers::PATPLAYER_TRIGGER_SEL.index) >> 16);
+}
+
+uint32_t PatternPlayer::getSyncTriggerSelect()
+{
+  return (mBar->readRegister(Cru::Registers::PATPLAYER_TRIGGER_SEL.index) & 0xffff);
 }
 
 /*** No need to enable configuration for these last 3 ***/

@@ -77,6 +77,9 @@ class ProgramPatternPlayer : public Program
     options.add_options()("trigger-reset",
                           po::bool_switch(&mOptions.triggerReset)->default_value(false),
                           "Manually trigger the reset pattern");
+    options.add_options()("read-back",
+                          po::bool_switch(&mOptions.readBack)->default_value(false),
+                          "Reads back the pattern player configuration [DOES NOT CONFIGURE!!]");
   }
 
   virtual void run(const boost::program_options::variables_map& map)
@@ -96,17 +99,29 @@ class ProgramPatternPlayer : public Program
     }
 
     auto cruBar2 = std::dynamic_pointer_cast<CruBar>(bar2);
-    cruBar2->patternPlayer({ uint128_t(mOptions.syncPattern), //TODO: Parse this correctly!
-                             uint128_t(mOptions.resetPattern),
-                             uint128_t(mOptions.idlePattern),
-                             mOptions.syncLength,
-                             mOptions.syncDelay,
-                             mOptions.resetLength,
-                             mOptions.resetTriggerSelect,
-                             mOptions.syncTriggerSelect,
-                             mOptions.syncAtStart,
-                             mOptions.triggerSync,
-                             mOptions.triggerReset });
+    if (!mOptions.readBack) {
+      cruBar2->patternPlayer({ uint128_t(mOptions.syncPattern), //TODO: Parse this correctly!
+                               uint128_t(mOptions.resetPattern),
+                               uint128_t(mOptions.idlePattern),
+                               mOptions.syncLength,
+                               mOptions.syncDelay,
+                               mOptions.resetLength,
+                               mOptions.resetTriggerSelect,
+                               mOptions.syncTriggerSelect,
+                               mOptions.syncAtStart,
+                               mOptions.triggerSync,
+                               mOptions.triggerReset });
+    } else {
+      auto ppInfo = cruBar2->patternPlayerRead();
+      std::cout << "sync pattern:\t\t0x" << std::hex << ppInfo.syncPattern << std::endl;
+      std::cout << "reset pattern:\t\t0x" << ppInfo.resetPattern << std::endl;
+      std::cout << "idle pattern:\t\t0x" << ppInfo.idlePattern << std::dec << std::endl;
+      std::cout << "sync length:\t\t" << ppInfo.syncLength << std::endl;
+      std::cout << "sync delay:\t\t" << ppInfo.syncDelay << std::endl;
+      std::cout << "reset length:\t\t" << ppInfo.resetLength << std::endl;
+      std::cout << "reset trigger select:\t" << ppInfo.resetTriggerSelect << std::endl;
+      std::cout << "sync trigger select:\t" << ppInfo.syncTriggerSelect << std::endl;
+    }
   }
 
  private:
@@ -122,6 +137,7 @@ class ProgramPatternPlayer : public Program
     bool syncAtStart = false;
     bool triggerSync = false;
     bool triggerReset = false;
+    bool readBack = false;
   } mOptions;
 };
 
