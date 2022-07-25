@@ -90,6 +90,7 @@ class CruBar final : public BarInterfaceBase
   Cru::TriggerMonitoringInfo monitorTriggers(bool updateable = false);
   void emulateCtp(Cru::CtpInfo);
   void patternPlayer(PatternPlayer::Info patternPlayerInfo);
+  PatternPlayer::Info patternPlayerRead();
 
   void enableDataTaking();
   void disableDataTaking();

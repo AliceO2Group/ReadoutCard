@@ -1146,6 +1146,12 @@ void CruBar::patternPlayer(PatternPlayer::Info info)
   pp.play(info);
 }
 
+PatternPlayer::Info CruBar::patternPlayerRead()
+{
+  PatternPlayer pp = PatternPlayer(mPdaBar);
+  return pp.read();
+}
+
 Cru::OnuStatus CruBar::reportOnuStatus(bool monitoring)
 {
   Ttc ttc = Ttc(mPdaBar, mSerial, mEndpoint);
