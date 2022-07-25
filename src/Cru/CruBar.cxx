@@ -168,7 +168,7 @@ uint32_t CruBar::getSuperpageSize(uint32_t link)
     superpageSizeIndex = Utilities::getBits(superpageSizeFifo, 24, 31);
   }
 
-  mSuperpageSizeIndexCounter[link] = (superpageSizeIndex + 1) % 256;
+  mSuperpageSizeIndexCounter[link] = (superpageSizeIndex + 1) % 246;
 
   return superpageSize;
 }
@@ -725,19 +725,19 @@ void CruBar::configure(bool force)
       mGbtEnabled == reportInfo.gbtEnabled &&
       mTimeFrameLength == reportInfo.timeFrameLength &&
       !force) {
-    log("No need to reconfigure further", LogInfoOps);
+    log("No need to reconfigure further", LogInfoOps_(4600));
     return;
   }
 
   checkConfigParameters();
-  log("Reconfiguring", LogInfoOps);
+  log("Reconfiguring", LogInfoOps_(4600));
 
   Ttc ttc = Ttc(mPdaBar, mSerial);
   DatapathWrapper datapathWrapper = DatapathWrapper(mPdaBar);
 
   /* TTC */
   if (static_cast<uint32_t>(mClock) != reportInfo.ttcClock /*|| !checkClockConsistent(reportInfo.linkMap)*/ || force) {
-    log("Setting the clock to " + Clock::toString(mClock), LogInfoDevel);
+    log("Setting the clock to " + Clock::toString(mClock), LogInfoDevel_(4601));
     ttc.setClock(mClock);
 
     if (mClock == Clock::Ttc) {
@@ -746,7 +746,7 @@ void CruBar::configure(bool force)
       if (!checkPonUpstreamStatusExpected(reportInfo.ponStatusRegister, reportInfo.onuAddress) || force) {
         ttc.resetFpll();
         if (!ttc.configurePonTx(mOnuAddress)) {
-          log("PON TX fPLL phase scan failed" + mOnuAddress, LogErrorDevel);
+          log("PON TX fPLL phase scan failed" + mOnuAddress, LogErrorDevel_(4602));
         }
       }
     }
@@ -761,7 +761,7 @@ void CruBar::configure(bool force)
   }
 
   if (static_cast<uint32_t>(mDownstreamData) != reportInfo.downstreamData || force) {
-    log("Setting downstream data: " + DownstreamData::toString(mDownstreamData), LogInfoDevel);
+    log("Setting downstream data: " + DownstreamData::toString(mDownstreamData), LogInfoDevel_(4603));
     ttc.selectDownstreamData(mDownstreamData);
   }
 
@@ -783,10 +783,10 @@ void CruBar::configure(bool force)
     //datapathWrapper.setLinksEnabled(0, 0x0);
     //datapathWrapper.setLinksEnabled(1, 0x0);
 
-    log("System ID: " + Utilities::toHexString(mSystemId), LogInfoDevel);
-    log("Allow rejection enabled: " + Utilities::toBoolString(mAllowRejection), LogInfoDevel);
-    log("DatapathMode: " + DatapathMode::toString(mDatapathMode), LogInfoDevel);
-    log("Enabling links:", LogInfoDevel);
+    log("System ID: " + Utilities::toHexString(mSystemId), LogInfoDevel_(4604));
+    log("Allow rejection enabled: " + Utilities::toBoolString(mAllowRejection), LogInfoDevel_(4604));
+    log("DatapathMode: " + DatapathMode::toString(mDatapathMode), LogInfoDevel_(4604));
+    log("Enabling links:", LogInfoDevel_(4604));
     for (auto const& el : mLinkMap) {
       auto& link = el.second;
       auto& linkPrevState = reportInfo.linkMap.at(el.first);
@@ -809,20 +809,20 @@ void CruBar::configure(bool force)
       if (link.enabled) {
         std::stringstream linkLog;
         linkLog << "Link #" << el.first << " | GBT MUX: " << GbtMux::toString(link.gbtMux) << " | FEE ID: " << Utilities::toHexString(link.feeId);
-        log(linkLog.str(), LogInfoDevel);
+        log(linkLog.str(), LogInfoDevel_(4604));
       }
     }
   }
 
   /* USER LOGIC */
   if (mUserLogicEnabled != reportInfo.userLogicEnabled || force) {
-    log("User Logic enabled: " + Utilities::toBoolString(mUserLogicEnabled), LogInfoDevel);
+    log("User Logic enabled: " + Utilities::toBoolString(mUserLogicEnabled), LogInfoDevel_(4604));
     toggleUserLogicLink(mUserLogicEnabled);
   }
 
   /* RUN STATS */
   if (mRunStatsEnabled != reportInfo.runStatsEnabled || force) {
-    log("Run Statistics link enabled: " + Utilities::toBoolString(mRunStatsEnabled), LogInfoDevel);
+    log("Run Statistics link enabled: " + Utilities::toBoolString(mRunStatsEnabled), LogInfoDevel_(4604));
     toggleRunStatsLink(mRunStatsEnabled);
   }
 
@@ -830,32 +830,32 @@ void CruBar::configure(bool force)
 
   /* UL + CL */
   if (mUserAndCommonLogicEnabled != reportInfo.userAndCommonLogicEnabled || force) {
-    log("User and Common Logic enabled: " + Utilities::toBoolString(mUserAndCommonLogicEnabled), LogInfoDevel);
+    log("User and Common Logic enabled: " + Utilities::toBoolString(mUserAndCommonLogicEnabled), LogInfoDevel_(4604));
     datapathWrapper.toggleUserAndCommonLogic(mUserAndCommonLogicEnabled, mEndpoint);
   }
 
   /* BSP */
   if (mCruId != reportInfo.cruId || force) {
-    log("Setting the CRU ID: " + Utilities::toHexString(mCruId), LogInfoDevel);
+    log("Setting the CRU ID: " + Utilities::toHexString(mCruId), LogInfoDevel_(4605));
     setCruId(mCruId);
   }
 
   if (mTriggerWindowSize != reportInfo.triggerWindowSize || force) {
-    log("Setting trigger window size: " + std::to_string(mTriggerWindowSize), LogInfoDevel);
+    log("Setting trigger window size: " + std::to_string(mTriggerWindowSize), LogInfoDevel_(4605));
     datapathWrapper.setTriggerWindowSize(mEndpoint, mTriggerWindowSize);
   }
 
   if (mDynamicOffset != reportInfo.dynamicOffset || force) {
-    log("Dynamic offset enabled: " + Utilities::toBoolString(mDynamicOffset), LogInfoDevel);
+    log("Dynamic offset enabled: " + Utilities::toBoolString(mDynamicOffset), LogInfoDevel_(4605));
     datapathWrapper.setDynamicOffset(mEndpoint, mDynamicOffset);
   }
 
   if (mTimeFrameLength != reportInfo.timeFrameLength || force) {
-    log("Setting Time Frame length: " + std::to_string(mTimeFrameLength), LogInfoDevel);
+    log("Setting Time Frame length: " + std::to_string(mTimeFrameLength), LogInfoDevel_(4605));
     setTimeFrameLength(mTimeFrameLength);
   }
 
-  log("CRU configuration done", LogInfoOps);
+  log("CRU configuration done", LogInfoOps_(4600));
 }
 
 /// Sets the mWrapperCount variable
@@ -1093,13 +1093,13 @@ void CruBar::emulateCtp(Cru::CtpInfo ctpInfo)
 {
   Ttc ttc = Ttc(mPdaBar, mSerial);
   if (ctpInfo.generateEox) {
-    log("Sending EOX", LogInfoDevel);
+    log("Sending EOX", LogInfoDevel_(4800));
     ttc.setEmulatorIdleMode();
   } else if (ctpInfo.generateSingleTrigger) {
-    log("Sending simple trigger", LogInfoDevel);
+    log("Sending simple trigger", LogInfoDevel_(4801));
     ttc.doManualPhyTrigger();
   } else {
-    log("Starting CTP emulator", LogInfoDevel);
+    log("Starting CTP emulator", LogInfoDevel_(4802));
     ttc.resetCtpEmulator(true);
     ttc.setEmulatorORBITINIT(ctpInfo.orbitInit);
 

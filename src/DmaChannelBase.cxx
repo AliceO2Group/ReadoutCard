@@ -57,7 +57,7 @@ DmaChannelBase::DmaChannelBase(CardDescriptor cardDescriptor, Parameters& parame
   mLoggerPrefix = "[" + mCardDescriptor.serialId.toString() + " | ch" + std::to_string(mChannelNumber) + "] ";
   Logger::setFacility("ReadoutCard/DMA");
 #ifndef NDEBUG
-  log("Backend compiled without NDEBUG; performance may be severely degraded", LogWarningDevel);
+  log("Backend compiled without NDEBUG; performance may be severely degraded", LogWarningDevel_(4200));
 #endif
 
   // Check the channel number is allowed
@@ -74,7 +74,7 @@ DmaChannelBase::DmaChannelBase(CardDescriptor cardDescriptor, Parameters& parame
   //checkParameters(parameters);
 
   //try to acquire lock
-  log("Acquiring DMA channel lock", LogInfoDevel);
+  log("Acquiring DMA channel lock", LogInfoDevel_(4201));
   try {
     if (mCardDescriptor.cardType == CardType::Crorc) {
       Utilities::resetSmartPtr(mInterprocessLock, "Alice_O2_RoC_DMA_" + cardDescriptor.pciAddress.toString() + "_chan" +
@@ -83,18 +83,18 @@ DmaChannelBase::DmaChannelBase(CardDescriptor cardDescriptor, Parameters& parame
       Utilities::resetSmartPtr(mInterprocessLock, "Alice_O2_RoC_DMA_" + cardDescriptor.pciAddress.toString() + "_lock");
     }
   } catch (const LockException& exception) {
-    log("Failed to acquire DMA channel lock", LogErrorDevel);
+    log("Failed to acquire DMA channel lock", LogErrorDevel_(4202));
     throw;
   }
 
-  log("Acquired DMA channel lock", LogInfoDevel);
+  log("Acquired DMA channel lock", LogInfoDevel_(4203));
   Pda::freePdaDmaBuffers(mCardDescriptor, getChannelNumber());
 }
 
 DmaChannelBase::~DmaChannelBase()
 {
   Pda::freePdaDmaBuffers(mCardDescriptor, getChannelNumber());
-  log("Releasing DMA channel lock", LogInfoDevel);
+  log("Releasing DMA channel lock", LogInfoDevel_(4204));
 }
 
 void DmaChannelBase::log(const std::string& logMessage, ILMessageOption ilgMsgOption)

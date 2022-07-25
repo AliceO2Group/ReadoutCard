@@ -138,25 +138,25 @@ class ProgramConfig : public Program
 
     // Configure all cards found - Normally used during boot
     if (mOptions.configAll) {
-      Logger::get() << "Running RoC Configuration for all cards" << LogInfoOps << endm;
+      Logger::get() << "Running RoC Configuration for all cards" << LogInfoOps_(4600) << endm;
       std::vector<CardDescriptor> cardsFound;
       if (mOptions.configUri == "") {
-        Logger::get() << "A configuration URI is necessary with the startup-config flag set" << LogErrorOps << endm;
+        Logger::get() << "A configuration URI is necessary with the startup-config flag set" << LogErrorOps_(4600) << endm;
         return;
       }
 
       cardsFound = RocPciDevice::findSystemDevices();
       for (auto const& card : cardsFound) {
-        Logger::get() << " __== " << card.pciAddress.toString() << " ==__ " << LogDebugTrace << endm;
+        Logger::get() << " __== " << card.pciAddress.toString() << " ==__ " << LogDebugTrace_(4600) << endm;
         auto params = Parameters::makeParameters(card.pciAddress, 2);
         if (!mOptions.bypassFirmwareCheck) {
           try {
             FirmwareChecker().checkFirmwareCompatibility(params);
             CardConfigurator(card.pciAddress, mOptions.configUri, mOptions.forceConfig);
           } catch (const std::runtime_error& e) {
-            Logger::get() << e.what() << LogErrorOps << endm;
+            Logger::get() << e.what() << LogErrorOps_(4600) << endm;
           } catch (const Exception& e) {
-            Logger::get() << boost::diagnostic_information(e) << LogErrorOps << endm;
+            Logger::get() << boost::diagnostic_information(e) << LogErrorOps_(4600) << endm;
           }
         }
       }
@@ -169,7 +169,7 @@ class ProgramConfig : public Program
       try {
         FirmwareChecker().checkFirmwareCompatibility(cardId);
       } catch (const Exception& e) {
-        Logger::get() << boost::diagnostic_information(e) << LogErrorOps << endm;
+        Logger::get() << boost::diagnostic_information(e) << LogErrorOps_(4600) << endm;
         throw;
       }
     }
@@ -241,25 +241,25 @@ class ProgramConfig : public Program
         return;
       }
 
-      Logger::get() << "Configuring card " << cardId << " with command line arguments" << LogDebugOps << endm;
+      Logger::get() << "Configuring card " << cardId << " with command line arguments" << LogDebugOps_(4600) << endm;
       try {
         CardConfigurator(params, mOptions.forceConfig);
       } catch (const std::runtime_error& e) {
-        Logger::get() << e.what() << LogErrorOps << endm;
+        Logger::get() << e.what() << LogErrorOps_(4600) << endm;
         throw;
       } catch (const Exception& e) {
-        Logger::get() << e.what() << LogErrorOps << endm;
+        Logger::get() << e.what() << LogErrorOps_(4600) << endm;
         throw;
       }
     } else {
-      Logger::get() << "Configuring card " << cardId << " with config uri: " << mOptions.configUri << LogDebugOps << endm;
+      Logger::get() << "Configuring card " << cardId << " with config uri: " << mOptions.configUri << LogDebugOps_(4600) << endm;
       try {
         CardConfigurator(cardId, mOptions.configUri, mOptions.forceConfig);
       } catch (const std::runtime_error& e) {
-        Logger::get() << e.what() << LogErrorOps << endm;
+        Logger::get() << e.what() << LogErrorOps_(4600) << endm;
         throw;
       } catch (const Exception& e) {
-        Logger::get() << e.what() << LogErrorOps << endm;
+        Logger::get() << e.what() << LogErrorOps_(4600) << endm;
         throw;
       }
     }

@@ -82,12 +82,12 @@ class ProgramCleanup : public Program
       return {};
     };
 
-    Logger::get() << "`roc-cleanup` execution initiated by " << getUsername() << LogDebugOps << endm;
+    Logger::get() << "`roc-cleanup` execution initiated by " << getUsername() << LogDebugOps_(4700) << endm;
 
     // Take and hold DMA locks during cleanup
     std::vector<std::unique_ptr<Interprocess::Lock>> dmaLocks;
 
-    Logger::get() << "Grabbing PDA & DMA locks" << LogDebugDevel << endm;
+    Logger::get() << "Grabbing PDA & DMA locks" << LogDebugDevel_(4701) << endm;
     try {
       auto cards = findCards();
 
@@ -103,31 +103,31 @@ class ProgramCleanup : public Program
         } // ignore an invalid card type
       }
     } catch (std::runtime_error& e) {
-      Logger::get() << e.what() << LogErrorDevel << endm;
+      Logger::get() << e.what() << LogErrorDevel_(4702) << endm;
       return;
     }
 
     Pda::freePdaDmaBuffers();
 
-    Logger::get() << "Removing CRORC FIFO shared memory files" << LogDebugDevel << endm;
+    Logger::get() << "Removing CRORC FIFO shared memory files" << LogDebugDevel_(4703) << endm;
     sysCheckRet("rm /dev/shm/*_sp_info");
-    Logger::get() << "Removing readout 2MB hugepage mappings" << LogDebugDevel << endm;
+    Logger::get() << "Removing readout 2MB hugepage mappings" << LogDebugDevel_(4704) << endm;
     sysCheckRet("rm /var/lib/hugetlbfs/global/pagesize-2MB/readout*");
-    Logger::get() << "Removing readout 1GB hugepage mappings" << LogDebugDevel << endm;
+    Logger::get() << "Removing readout 1GB hugepage mappings" << LogDebugDevel_(4705) << endm;
     sysCheckRet("rm /var/lib/hugetlbfs/global/pagesize-1GB/readout*");
-    Logger::get() << "Removing o2-roc-bench-dma 2MB hugepage mappings" << LogDebugDevel << endm;
+    Logger::get() << "Removing o2-roc-bench-dma 2MB hugepage mappings" << LogDebugDevel_(4706) << endm;
     sysCheckRet("rm /var/lib/hugetlbfs/global/pagesize-2MB/roc-bench-dma*");
-    Logger::get() << "Removing o2-roc-bench-dma 1GB hugepage mappings" << LogDebugDevel << endm;
+    Logger::get() << "Removing o2-roc-bench-dma 1GB hugepage mappings" << LogDebugDevel_(4707) << endm;
     sysCheckRet("rm /var/lib/hugetlbfs/global/pagesize-1GB/roc-bench-dma*");
 
     if (!mOptions.light) {
-      Logger::get() << "Removing uio_pci_dma" << LogDebugDevel << endm;
+      Logger::get() << "Removing uio_pci_dma" << LogDebugDevel_(4708) << endm;
       sysCheckRet("modprobe -r uio_pci_dma");
-      Logger::get() << "Reinserting uio_pci_dma" << LogDebugDevel << endm;
+      Logger::get() << "Reinserting uio_pci_dma" << LogDebugDevel_(4709) << endm;
       sysCheckRet("modprobe uio_pci_dma");
     }
 
-    Logger::get() << "`roc-cleanup` execution finished" << LogDebugOps << endm;
+    Logger::get() << "`roc-cleanup` execution finished" << LogDebugOps_(4710) << endm;
     return;
   }
 

@@ -37,7 +37,7 @@ PdaDmaBuffer::PdaDmaBuffer(PciDevice* pciDevice, void* userBufferAddress, size_t
   try {
     Pda::PdaLock lock{};
   } catch (const LockException& e) {
-    Logger::get() << "Failed to acquire PDA lock" << e.what() << LogErrorDevel << endm;
+    Logger::get() << "Failed to acquire PDA lock" << e.what() << LogErrorDevel_(4203) << endm;
     throw;
   }
 
@@ -119,7 +119,7 @@ PdaDmaBuffer::PdaDmaBuffer(PciDevice* pciDevice, void* userBufferAddress, size_t
     long totalSize = std::accumulate(nodeSizes.begin(), nodeSizes.end(), 0);
 
     Logger::get() << "[" << serialId << " |"
-                  << " PDA buffer SGL stats] #nodes: " << n << " | total: " << totalSize << " | min: " << minSize << " | max: " << maxSize << " | median: " << median << LogInfoDevel << endm;
+                  << " PDA buffer SGL stats] #nodes: " << n << " | total: " << totalSize << " | min: " << minSize << " | max: " << maxSize << " | median: " << median << LogInfoDevel_(4204) << endm;
   } catch (const PdaException&) {
     PciDevice_deleteDMABuffer(mPciDevice, mDmaBuffer);
     throw;
@@ -133,7 +133,7 @@ PdaDmaBuffer::~PdaDmaBuffer()
   try {
     Pda::PdaLock lock{};
   } catch (const LockException& e) {
-    Logger::get() << "Failed to acquire PDA lock" << e.what() << LogErrorDevel << endm;
+    Logger::get() << "Failed to acquire PDA lock" << e.what() << LogErrorDevel_(4205) << endm;
     assert(false);
     //throw; (changed to assert(false) to get rid of the warning)
   }
@@ -142,7 +142,7 @@ PdaDmaBuffer::~PdaDmaBuffer()
     PciDevice_deleteDMABuffer(mPciDevice, mDmaBuffer);
   } catch (std::exception& e) {
     // Nothing to be done?
-    Logger::get() << "PdaDmaBuffer::~PdaDmaBuffer() failed: " << e.what() << LogErrorDevel << endm;
+    Logger::get() << "PdaDmaBuffer::~PdaDmaBuffer() failed: " << e.what() << LogErrorDevel_(4206) << endm;
   }
 }
 
