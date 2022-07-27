@@ -242,6 +242,10 @@ class ProgramConfig : public Program
       }
 
       Logger::get() << "Configuring card " << cardId << " with command line arguments" << LogDebugOps_(4600) << endm;
+      if (mOptions.forceConfig) {
+        Logger::get() << "`--force` enabled" << LogDebugOps_(4600) << endm;
+      }
+
       try {
         CardConfigurator(params, mOptions.forceConfig);
       } catch (const std::runtime_error& e) {
@@ -253,6 +257,10 @@ class ProgramConfig : public Program
       }
     } else {
       Logger::get() << "Configuring card " << cardId << " with config uri: " << mOptions.configUri << LogDebugOps_(4600) << endm;
+      if (mOptions.forceConfig) {
+        Logger::get() << "`--force` enabled" << LogDebugOps_(4600) << endm;
+      }
+
       try {
         CardConfigurator(cardId, mOptions.configUri, mOptions.forceConfig);
       } catch (const std::runtime_error& e) {
