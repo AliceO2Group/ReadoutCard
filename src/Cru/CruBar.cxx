@@ -168,7 +168,7 @@ uint32_t CruBar::getSuperpageSize(uint32_t link)
     superpageSizeIndex = Utilities::getBits(superpageSizeFifo, 24, 31);
   }
 
-  mSuperpageSizeIndexCounter[link] = (superpageSizeIndex + 1) % 246;
+  mSuperpageSizeIndexCounter[link] = (superpageSizeIndex + 1) % 256;
 
   return superpageSize;
 }
