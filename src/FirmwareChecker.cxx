@@ -25,6 +25,7 @@ namespace roc
 
 FirmwareChecker::FirmwareChecker() : mCompatibleFirmwareList({
                                        /* CRU */
+                                       { "e64b97b1", "v3.15.0" },
                                        { "14ccd414", "v3.14.1" },
                                        { "2058c933", "v3.14.0" },
                                        { "4a412c71", "v3.13.0" },
