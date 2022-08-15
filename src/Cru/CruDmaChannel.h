@@ -159,6 +159,9 @@ class CruDmaChannel final : public DmaChannelPdaBase
   const size_t mDmaPageSize;
 
   bool mFirstSPPushed = false;
+
+  /// Empty Superpage FIFO counters per link
+  std::unordered_map<int, uint32_t> mEmptySPFifoCounters;
 };
 
 } // namespace roc

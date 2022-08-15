@@ -400,16 +400,15 @@ bool CruDmaChannel::areSuperpageFifosHealthy()
   }
 
   bool ok = true;
-  static std::unordered_map<int, uint32_t> counters;
 
   for (const auto& link : mLinks) {
     uint32_t emptyCounter = getBar()->getSuperpageFifoEmptyCounter(link.id);
-    if (counters.count(link.id) && //only check after the counters map has been initialized
-        counters[link.id] != emptyCounter) {
-      log((format("Empty counter of Superpage FIFO of link %1% increased") % link.id).str(), LogWarningDevel_(4257));
+    if (mEmptySPFifoCounters.count(link.id) && //only check after the counters map has been initialized
+        mEmptySPFifoCounters[link.id] != emptyCounter) {
+      log((format("Empty counter of Superpage FIFO of link %d increased from %x to %x") % link.id % mEmptySPFifoCounters[link.id] % emptyCounter).str(), LogWarningDevel_(4257));
       ok = false;
     }
-    counters[link.id] = emptyCounter;
+    mEmptySPFifoCounters[link.id] = emptyCounter;
   }
 
   return ok;
