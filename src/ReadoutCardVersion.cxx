@@ -23,5 +23,5 @@ const char* getReadoutCardVersion()
   return O2_READOUTCARD_VERSION;
 }
 
-}
-}
+} // namespace roc
+} // namespace o2

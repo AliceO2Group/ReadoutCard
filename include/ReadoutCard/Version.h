@@ -21,7 +21,7 @@ namespace roc
 /// Get the ReadoutCard library version
 const char* getReadoutCardVersion();
 
-}
-}
+} // namespace roc
+} // namespace o2
 
 #endif
