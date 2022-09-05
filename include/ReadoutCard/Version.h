@@ -9,17 +9,19 @@
 // In applying this license CERN does not waive the privileges and immunities
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
-/// \file ReadoutCard.h
-/// \brief Convenience header for the ReadoutCard module
-///
-/// \author Pascal Boeschoten (pascal.boeschoten@cern.ch)
 
-#include "ReadoutCard/NamespaceAlias.h"
-#include "ReadoutCard/BarInterface.h"
-#include "ReadoutCard/CardType.h"
-#include "ReadoutCard/ChannelFactory.h"
-#include "ReadoutCard/DmaChannelInterface.h"
-#include "ReadoutCard/Exception.h"
-#include "ReadoutCard/Parameters.h"
-#include "ReadoutCard/RegisterReadWriteInterface.h"
-#include "ReadoutCard/Version.h"
+#ifndef O2_READOUTCARD_INCLUDE_VERSION_H_
+#define O2_READOUTCARD_INCLUDE_VERSION_H_
+
+namespace o2
+{
+namespace roc
+{
+
+/// Get the ReadoutCard library version
+const char* getReadoutCardVersion();
+
+}
+}
+
+#endif

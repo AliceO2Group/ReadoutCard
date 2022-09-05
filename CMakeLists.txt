@@ -159,6 +159,7 @@ add_library(ReadoutCard SHARED
   src/Pda/PdaBar.cxx
   src/Pda/PdaDevice.cxx
   src/Pda/PdaDmaBuffer.cxx
+  src/ReadoutCardVersion.cxx
   src/RocPciDevice.cxx
   src/Utilities/Hugetlbfs.cxx
   src/Utilities/MemoryMaps.cxx
