@@ -142,6 +142,10 @@ void CruDmaChannel::deviceStartDma()
     log("Did not set data source, feature not supported by firmware", LogWarningDevel_(4254));
   }
 
+  if (dataSourceSelection == Cru::Registers::DATA_SOURCE_SELECT_GBT) {
+    getBar2()->disableDataTaking(); // Make sure we don't start from a bad state - shall be done before reset
+  }
+
   // Reset CRU (should be done after link mask set)
   resetCru();
 
@@ -162,7 +166,6 @@ void CruDmaChannel::deviceStartDma()
 
   // Enable data taking
   if (dataSourceSelection == Cru::Registers::DATA_SOURCE_SELECT_GBT) {
-    getBar2()->disableDataTaking(); // Make sure we don't start from a bad state
     getBar2()->enableDataTaking();
   }
 }
