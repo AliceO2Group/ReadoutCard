@@ -393,6 +393,11 @@ install(
   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
   RENAME o2-roc-setup-hugetlbfs
 )
+install(
+  FILES src/o2-roc-config-status.sh
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+  PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+)
 
 # Create a symlink for backwards compatibility
 set(legacy_hugetlbfs_target o2-roc-setup-hugetlbfs)
