@@ -37,7 +37,8 @@ namespace po = boost::program_options;
 std::string cmd; // program command invoked
 
 /// Get a status report of given card
-std::string getStatusReport(Parameters::CardIdType cardId) {
+std::string getStatusReport(Parameters::CardIdType cardId)
+{
 
   auto card = RocPciDevice(cardId).getCardDescriptor();
   auto cardType = card.cardType;
@@ -48,7 +49,7 @@ std::string getStatusReport(Parameters::CardIdType cardId) {
   std::string header;
   std::string lineFat;
   std::string lineThin;
-  const char *linkMask = "0-11";
+  const char* linkMask = "0-11";
 
   if (cardType == CardType::type::Crorc) {
     formatHeader = "  %-9s %-8s %-19s\n";
@@ -57,7 +58,7 @@ std::string getStatusReport(Parameters::CardIdType cardId) {
     lineFat = std::string(header.length(), '=') + '\n';
     lineThin = std::string(header.length(), '-') + '\n';
 
-    auto params = Parameters::makeParameters(cardId, 0); //status available on BAR0
+    auto params = Parameters::makeParameters(cardId, 0); // status available on BAR0
     params.setLinkMask(Parameters::linkMaskFromString(linkMask));
     auto bar0 = ChannelFactory().getBar(params);
     auto crorcBar0 = std::dynamic_pointer_cast<CrorcBar>(bar0);
@@ -78,7 +79,6 @@ std::string getStatusReport(Parameters::CardIdType cardId) {
       table << "Time Frame Detection " << timeFrameDetectionEnabled << std::endl;
       table << "Time Frame Length: " << reportInfo.timeFrameLength << std::endl;
       table << "-----------------------------" << std::endl;
-
 
       table << lineFat << header << lineThin;
 
@@ -104,7 +104,7 @@ std::string getStatusReport(Parameters::CardIdType cardId) {
     lineFat = std::string(header.length(), '=') + '\n';
     lineThin = std::string(header.length(), '-') + '\n';
 
-    auto params = Parameters::makeParameters(cardId, 2); //status available on BAR2
+    auto params = Parameters::makeParameters(cardId, 2); // status available on BAR2
     params.setLinkMask(Parameters::linkMaskFromString(linkMask));
     auto bar2 = ChannelFactory().getBar(params);
     auto cruBar2 = std::dynamic_pointer_cast<CruBar>(bar2);
@@ -130,7 +130,6 @@ std::string getStatusReport(Parameters::CardIdType cardId) {
     if (reportInfo.runStatsEnabled) {
       table << "Run statistics enabled" << std::endl;
     }
-
 
     Cru::OnuStatus onuStatus = cruBar2->reportOnuStatus(0);
 
@@ -166,7 +165,7 @@ std::string getStatusReport(Parameters::CardIdType cardId) {
     /* PARAMETERS PER LINK */
     for (const auto& el : reportInfo.linkMap) {
       auto link = el.second;
-      int globalId = el.first; //Use the "new" link mapping
+      int globalId = el.first; // Use the "new" link mapping
       std::string gbtTxMode = GbtMode::toString(link.gbtTxMode);
       std::string gbtRxMode = GbtMode::toString(link.gbtRxMode);
       std::string gbtTxRxMode = gbtTxMode + "/" + gbtRxMode;
@@ -315,22 +314,24 @@ class ProgramConfig : public Program
                           "Sets the FEE ID");
     options.add_options()("status-report",
                           po::value<std::string>(&mOptions.statusReport),
-			  "Sets file where to output card status (similar to roc-status). Can be stdout, infologger, or a file name. The file name can be preceded with + for appending the file. Name can contain special escape sequences %t (timestamp) %T (date/time) or %i (card ID). Infologger reports are set with error code 4805.");
+                          "Sets file where to output card status (similar to roc-status). Can be stdout, infologger, or a file name. The file name can be preceded with + for appending the file. Name can contain special escape sequences %t (timestamp) %T (date/time) or %i (card ID). Infologger reports are set with error code 4805.");
     Options::addOptionCardId(options);
   }
 
-  static std::string cardIdToString(const Parameters::CardIdType &cardId) {
-    if ( auto *id = boost::get<o2::roc::PciAddress>( &cardId ) ) {
+  static std::string cardIdToString(const Parameters::CardIdType& cardId)
+  {
+    if (auto* id = boost::get<o2::roc::PciAddress>(&cardId)) {
       return id->toString();
-    } else if ( auto *id = boost::get<o2::roc::PciSequenceNumber>( &cardId ) ) {
+    } else if (auto* id = boost::get<o2::roc::PciSequenceNumber>(&cardId)) {
       return id->toString();
-    } else if ( auto *id = boost::get<o2::roc::SerialId>( &cardId ) ) {
+    } else if (auto* id = boost::get<o2::roc::SerialId>(&cardId)) {
       return id->toString();
     }
     return "";
   }
 
-  virtual void reportStatus(Parameters::CardIdType cardId) {
+  virtual void reportStatus(Parameters::CardIdType cardId)
+  {
     if (mOptions.statusReport != "") {
 
       // create report
@@ -348,7 +349,7 @@ class ProgramConfig : public Program
       report += "Command:        " + cmd + "\n";
 
       // do as in roc-status
-      report += "Status: \n" + getStatusReport(cardId);      
+      report += "Status: \n" + getStatusReport(cardId);
 
       // parse filename
       std::string fileName;
@@ -393,11 +394,11 @@ class ProgramConfig : public Program
         std::string line;
         std::stringstream ss;
         ss << report;
-        while(std::getline(ss, line)) {
-          theLog << LogInfoSupport_(4805) << line << InfoLogger::endm;          
+        while (std::getline(ss, line)) {
+          theLog << LogInfoSupport_(4805) << line << InfoLogger::endm;
         }
       } else {
-        FILE *fp = fopen(fileName.c_str(), fileMode);
+        FILE* fp = fopen(fileName.c_str(), fileMode);
         if (fp == nullptr) {
           BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Failed to open report file " + fileName + " : " + strerror(errno)));
         } else {
@@ -409,7 +410,7 @@ class ProgramConfig : public Program
     return;
   }
 
-  const char *ilFacility = "ReadoutCard/config";
+  const char* ilFacility = "ReadoutCard/config";
 
   virtual void run(const boost::program_options::variables_map& map)
   {
@@ -595,7 +596,7 @@ class ProgramConfig : public Program
 
 int main(int argc, char** argv)
 {
-  for (int i=0; i<argc; i++) {
+  for (int i = 0; i < argc; i++) {
     cmd += argv[i] + std::string(" ");
   }
   // true here enables InfoLogger output by default
