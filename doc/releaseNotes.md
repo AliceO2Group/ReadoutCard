@@ -6,3 +6,6 @@ This file describes the main feature changes for released versions of ReadoutCar
 - Added release notes as part of source code.
 - Added library version number. Can be retrieved at runtime with o2::roc::getReadoutCardVersion().
 - Fixed bug in DMA reset. Old data from previous run could stay in the pipeline if previous process was stopped abruptly. 
+
+## v0.39.0 - 07/10/2022
+- Added option --status-report to roc-config, in order to dump roc-status (similar) output to given file name. Can be stdout, infologger, or a file name. The file name can be preceded with + for appending the file. Name can contain special escape sequences %t (timestamp) %T (date/time) or %i (card ID). Infologger reports are set with error code 4805.
