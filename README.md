@@ -694,6 +694,7 @@ Error codes in the range 4000-4999 are assigned to ReadoutCard. These are furthe
 | 4800 - 4899 | Full Range   |
 | ----------- | ------------ |
 | 4800 - 4804 | CTP emulator |
+| 4805        | roc status   |
 
 ### Unassigned
 | Range |

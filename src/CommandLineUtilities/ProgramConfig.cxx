@@ -19,16 +19,200 @@
 #include "CommandLineUtilities/Options.h"
 #include "CommandLineUtilities/Program.h"
 #include "Cru/CruBar.h"
+#include "Crorc/CrorcBar.h"
 #include "ReadoutCard/CardConfigurator.h"
 #include "ReadoutCard/ChannelFactory.h"
 #include "ReadoutCard/Exception.h"
 #include "ReadoutCard/FirmwareChecker.h"
 #include "ReadoutCard/Logger.h"
 #include "RocPciDevice.h"
+#include <InfoLogger/InfoLogger.hxx>
+#include <boost/format.hpp>
 
+using namespace AliceO2::InfoLogger;
 using namespace o2::roc::CommandLineUtilities;
 using namespace o2::roc;
 namespace po = boost::program_options;
+
+std::string cmd; // program command invoked
+
+/// Get a status report of given card
+std::string getStatusReport(Parameters::CardIdType cardId)
+{
+
+  auto card = RocPciDevice(cardId).getCardDescriptor();
+  auto cardType = card.cardType;
+
+  std::ostringstream table;
+  std::string formatHeader;
+  std::string formatRow;
+  std::string header;
+  std::string lineFat;
+  std::string lineThin;
+  const char* linkMask = "0-11";
+
+  if (cardType == CardType::type::Crorc) {
+    formatHeader = "  %-9s %-8s %-19s\n";
+    formatRow = "  %-9s %-8s %-19.1f\n";
+    header = (boost::format(formatHeader) % "Link ID" % "Status" % "Optical power(uW)").str();
+    lineFat = std::string(header.length(), '=') + '\n';
+    lineThin = std::string(header.length(), '-') + '\n';
+
+    auto params = Parameters::makeParameters(cardId, 0); // status available on BAR0
+    params.setLinkMask(Parameters::linkMaskFromString(linkMask));
+    auto bar0 = ChannelFactory().getBar(params);
+    auto crorcBar0 = std::dynamic_pointer_cast<CrorcBar>(bar0);
+
+    Crorc::ReportInfo reportInfo = crorcBar0->report();
+    std::string qsfpEnabled = reportInfo.qsfpEnabled ? "Enabled" : "Disabled";
+    std::string offset = reportInfo.dynamicOffset ? "Dynamic" : "Fixed";
+    std::string timeFrameDetectionEnabled = reportInfo.timeFrameDetectionEnabled ? "Enabled" : "Disabled";
+
+    if (card.serialId.getSerial() == 0x7fffffff || card.serialId.getSerial() == 0x0) {
+      table << "Bad serial reported, bad card state" << std::endl;
+    } else {
+
+      table << "-----------------------------" << std::endl;
+      table << "QSFP " << qsfpEnabled << std::endl;
+      table << offset << " offset" << std::endl;
+      table << "-----------------------------" << std::endl;
+      table << "Time Frame Detection " << timeFrameDetectionEnabled << std::endl;
+      table << "Time Frame Length: " << reportInfo.timeFrameLength << std::endl;
+      table << "-----------------------------" << std::endl;
+
+      table << lineFat << header << lineThin;
+
+      /* PARAMETERS PER LINK */
+      for (const auto& el : reportInfo.linkMap) {
+        auto link = el.second;
+        int id = el.first;
+
+        std::string linkStatus = link.status == Crorc::LinkStatus::Up ? "UP" : "DOWN";
+        float opticalPower = link.opticalPower;
+
+        auto format = boost::format(formatRow) % id % linkStatus % opticalPower;
+        table << format;
+      }
+    }
+    lineFat = std::string(header.length(), '=') + '\n';
+    table << lineFat;
+
+  } else if (cardType == CardType::type::Cru) {
+    formatHeader = "  %-9s %-16s %-10s %-14s %-15s %-10s %-14s %-14s %-8s %-19s %-11s %-7s\n";
+    formatRow = "  %-9s %-16s %-10s %-14s %-15s %-10s %-14.2f %-14.2f %-8s %-19.1f %-11s %-7s\n";
+    header = (boost::format(formatHeader) % "Link ID" % "GBT Mode Tx/Rx" % "Loopback" % "GBT MUX" % "Datapath Mode" % "Datapath" % "RX freq(MHz)" % "TX freq(MHz)" % "Status" % "Optical power(uW)" % "System ID" % "FEE ID").str();
+    lineFat = std::string(header.length(), '=') + '\n';
+    lineThin = std::string(header.length(), '-') + '\n';
+
+    auto params = Parameters::makeParameters(cardId, 2); // status available on BAR2
+    params.setLinkMask(Parameters::linkMaskFromString(linkMask));
+    auto bar2 = ChannelFactory().getBar(params);
+    auto cruBar2 = std::dynamic_pointer_cast<CruBar>(bar2);
+
+    Cru::ReportInfo reportInfo = cruBar2->report();
+
+    std::string clock = (reportInfo.ttcClock == 0 ? "TTC" : "Local");
+    std::string offset = (reportInfo.dynamicOffset ? "Dynamic" : "Fixed");
+    std::string userLogic = (reportInfo.userLogicEnabled ? "Enabled" : "Disabled");
+    std::string runStats = (reportInfo.runStatsEnabled ? "Enabled" : "Disabled");
+    std::string userAndCommonLogic = (reportInfo.userAndCommonLogicEnabled ? "Enabled" : "Disabled");
+
+    table << "-----------------------------" << std::endl;
+    table << "CRU ID: " << reportInfo.cruId << std::endl;
+    table << clock << " clock | ";
+    table << offset << " offset" << std::endl;
+    table << "Timeframe length: " << (int)reportInfo.timeFrameLength << std::endl;
+    if (reportInfo.userLogicEnabled && reportInfo.userAndCommonLogicEnabled) {
+      table << "User and Common Logic enabled" << std::endl;
+    } else if (reportInfo.userLogicEnabled) {
+      table << "User Logic enabled" << std::endl;
+    }
+    if (reportInfo.runStatsEnabled) {
+      table << "Run statistics enabled" << std::endl;
+    }
+
+    Cru::OnuStatus onuStatus = cruBar2->reportOnuStatus(0);
+
+    std::string onuUpstreamStatus = Cru::LinkStatusToString(onuStatus.stickyStatus.upstreamStatus);
+    std::string onuDownstreamStatus = Cru::LinkStatusToString(onuStatus.stickyStatus.downstreamStatus);
+    uint32_t onuStickyValue = onuStatus.stickyStatus.stickyValue;
+    uint32_t onuStickyValuePrev = onuStatus.stickyStatus.stickyValuePrev;
+
+    std::string ponQualityStatusStr;
+    ponQualityStatusStr = onuStatus.ponQualityStatus ? "good" : "bad";
+
+    table << "=============================" << std::endl;
+    table << "ONU downstream status: " << onuDownstreamStatus << std::endl;
+    table << "ONU upstream status: " << onuUpstreamStatus << std::endl;
+    table << "ONU sticky value: 0x" << std::hex << onuStickyValue << std::endl;
+    table << "ONU sticky value (was): 0x" << std::hex << onuStickyValuePrev << std::endl;
+    table << "ONU address: " << onuStatus.onuAddress << std::endl;
+    table << "-----------------------------" << std::endl;
+    table << "ONU RX40 locked: " << onuStatus.rx40Locked << std::endl;
+    table << "ONU phase good: " << onuStatus.phaseGood << std::endl;
+    table << "ONU RX locked: " << onuStatus.rxLocked << std::endl;
+    table << "ONU operational: " << onuStatus.operational << std::endl;
+    table << "ONU MGT TX ready: " << onuStatus.mgtTxReady << std::endl;
+    table << "ONU MGT RX ready: " << onuStatus.mgtRxReady << std::endl;
+    table << "ONU MGT TX PLL locked: " << onuStatus.mgtTxPllLocked << std::endl;
+    table << "ONU MGT RX PLL locked: " << onuStatus.mgtRxPllLocked << std::endl;
+    table << "PON quality: 0x" << std::hex << onuStatus.ponQuality << std::endl;
+    table << "PON quality status: " << ponQualityStatusStr << std::endl;
+    table << "PON RX power (dBm): " << onuStatus.ponRxPower << std::endl;
+
+    table << lineFat << header << lineThin;
+
+    /* PARAMETERS PER LINK */
+    for (const auto& el : reportInfo.linkMap) {
+      auto link = el.second;
+      int globalId = el.first; // Use the "new" link mapping
+      std::string gbtTxMode = GbtMode::toString(link.gbtTxMode);
+      std::string gbtRxMode = GbtMode::toString(link.gbtRxMode);
+      std::string gbtTxRxMode = gbtTxMode + "/" + gbtRxMode;
+      std::string loopback = (link.loopback == false ? "None" : "Enabled");
+
+      std::string downstreamData;
+      if (reportInfo.downstreamData == Cru::DATA_CTP) {
+        downstreamData = "CTP";
+      } else if (reportInfo.downstreamData == Cru::DATA_PATTERN) {
+        downstreamData = "PATTERN";
+      } else if (reportInfo.downstreamData == Cru::DATA_MIDTRG) {
+        downstreamData = "MIDTRG";
+      }
+
+      std::string gbtMux = GbtMux::toString(link.gbtMux);
+      if (gbtMux == "TTC") {
+        gbtMux += ":" + downstreamData;
+      }
+
+      std::string datapathMode = DatapathMode::toString(link.datapathMode);
+
+      std::string enabled = (link.enabled) ? "Enabled" : "Disabled";
+
+      float rxFreq = link.rxFreq;
+      float txFreq = link.txFreq;
+
+      std::string linkStatus;
+      if (link.stickyBit == Cru::LinkStatus::Up) {
+        linkStatus = "UP";
+      } else if (link.stickyBit == Cru::LinkStatus::UpWasDown) {
+        linkStatus = "UP (was DOWN)";
+      } else if (link.stickyBit == Cru::LinkStatus::Down) {
+        linkStatus = "DOWN";
+      }
+
+      float opticalPower = link.opticalPower;
+      std::string systemId = Utilities::toHexString(link.systemId);
+      std::string feeId = Utilities::toHexString(link.feeId);
+      auto format = boost::format(formatRow) % globalId % gbtTxRxMode % loopback % gbtMux % datapathMode % enabled % rxFreq % txFreq % linkStatus % opticalPower % systemId % feeId;
+      table << format;
+    }
+    lineFat = std::string(header.length(), '=') + '\n';
+    table << lineFat;
+  }
+
+  return table.str();
+}
 
 class ProgramConfig : public Program
 {
@@ -128,13 +312,110 @@ class ProgramConfig : public Program
     options.add_options()("fee-id",
                           po::value<std::string>(&mOptions.feeId),
                           "Sets the FEE ID");
+    options.add_options()("status-report",
+                          po::value<std::string>(&mOptions.statusReport),
+                          "Sets file where to output card status (similar to roc-status). Can be stdout, infologger, or a file name. The file name can be preceded with + for appending the file. Name can contain special escape sequences %t (timestamp) %T (date/time) or %i (card ID). Infologger reports are set with error code 4805.");
     Options::addOptionCardId(options);
   }
+
+  static std::string cardIdToString(const Parameters::CardIdType& cardId)
+  {
+    if (auto* id = boost::get<o2::roc::PciAddress>(&cardId)) {
+      return id->toString();
+    } else if (auto* id = boost::get<o2::roc::PciSequenceNumber>(&cardId)) {
+      return id->toString();
+    } else if (auto* id = boost::get<o2::roc::SerialId>(&cardId)) {
+      return id->toString();
+    }
+    return "";
+  }
+
+  virtual void reportStatus(Parameters::CardIdType cardId)
+  {
+    if (mOptions.statusReport != "") {
+
+      // create report
+      std::string report;
+
+      // time now
+      std::time_t t = std::time(nullptr);
+      std::tm tm = *std::localtime(&t);
+      std::stringstream buffer;
+      buffer << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
+
+      report += "roc-config execution report\n";
+      report += "Card:           " + cardIdToString(cardId) + "\n";
+      report += "Time completed: " + buffer.str() + "\n";
+      report += "Command:        " + cmd + "\n";
+
+      // do as in roc-status
+      report += "Status: \n" + getStatusReport(cardId);
+
+      // parse filename
+      std::string fileName;
+      int parseError = 0;
+      const char* fileMode = "w";
+      for (std::string::iterator it = mOptions.statusReport.begin(); it != mOptions.statusReport.end(); ++it) {
+        if (*it == '%') {
+          // escape characters
+          ++it;
+          if (it != fileName.end()) {
+            if (*it == 't') {
+              fileName += std::to_string(std::time(nullptr));
+            } else if (*it == 'T') {
+              std::stringstream buffer;
+              buffer << std::put_time(&tm, "%Y_%m_%d__%H_%M_%S");
+              fileName += buffer.str();
+            } else if (*it == 'i') {
+              fileName += cardIdToString(cardId);
+            }
+          } else {
+            parseError++;
+          }
+        } else if ((it == mOptions.statusReport.begin()) && (*it == '+')) {
+          fileMode = "a";
+        } else {
+          // normal char - copy it
+          fileName += *it;
+        }
+        if (parseError) {
+          break;
+        }
+      }
+
+      // write report
+      if (fileName == "stdout") {
+        printf("\n%s\n", report.c_str());
+      } else if (fileName == "infologger") {
+        InfoLogger theLog;
+        InfoLoggerContext theLogContext;
+        theLogContext.setField(InfoLoggerContext::FieldName::Facility, ilFacility);
+        theLog.setContext(theLogContext);
+        std::string line;
+        std::stringstream ss;
+        ss << report;
+        while (std::getline(ss, line)) {
+          theLog << LogInfoSupport_(4805) << line << InfoLogger::endm;
+        }
+      } else {
+        FILE* fp = fopen(fileName.c_str(), fileMode);
+        if (fp == nullptr) {
+          BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Failed to open report file " + fileName + " : " + strerror(errno)));
+        } else {
+          fprintf(fp, "%s\n", report.c_str());
+          fclose(fp);
+        }
+      }
+    }
+    return;
+  }
+
+  const char* ilFacility = "ReadoutCard/config";
 
   virtual void run(const boost::program_options::variables_map& map)
   {
 
-    Logger::setFacility("ReadoutCard/config");
+    Logger::setFacility(ilFacility);
 
     // Configure all cards found - Normally used during boot
     if (mOptions.configAll) {
@@ -153,6 +434,7 @@ class ProgramConfig : public Program
           try {
             FirmwareChecker().checkFirmwareCompatibility(params);
             CardConfigurator(card.pciAddress, mOptions.configUri, mOptions.forceConfig);
+            reportStatus(card.pciAddress);
           } catch (const std::runtime_error& e) {
             Logger::get() << e.what() << LogErrorOps_(4600) << endm;
           } catch (const Exception& e) {
@@ -248,6 +530,7 @@ class ProgramConfig : public Program
 
       try {
         CardConfigurator(params, mOptions.forceConfig);
+        reportStatus(cardId);
       } catch (const std::runtime_error& e) {
         Logger::get() << e.what() << LogErrorOps_(4600) << endm;
         throw;
@@ -263,6 +546,7 @@ class ProgramConfig : public Program
 
       try {
         CardConfigurator(cardId, mOptions.configUri, mOptions.forceConfig);
+        reportStatus(cardId);
       } catch (const std::runtime_error& e) {
         Logger::get() << e.what() << LogErrorOps_(4600) << endm;
         throw;
@@ -302,6 +586,7 @@ class ProgramConfig : public Program
     bool noGbt = false;
     std::string systemId = "0x0";
     std::string feeId = "0x0";
+    std::string statusReport = ""; // when set, output roc status to file
     /*std::string systemId = "0x1ff"; // TODO: Default values that can be used to check if params have been specified
     std::string feeId = "0x1f";*/
   } mOptions;
@@ -311,6 +596,9 @@ class ProgramConfig : public Program
 
 int main(int argc, char** argv)
 {
+  for (int i = 0; i < argc; i++) {
+    cmd += argv[i] + std::string(" ");
+  }
   // true here enables InfoLogger output by default
   // see the Program constructor
   return ProgramConfig(true).execute(argc, argv);
