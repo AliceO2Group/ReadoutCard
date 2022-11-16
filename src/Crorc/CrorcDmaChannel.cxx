@@ -105,16 +105,14 @@ CrorcDmaChannel::~CrorcDmaChannel()
 
 void CrorcDmaChannel::deviceStartDma()
 {
+  // reset fifo ready counters
+  getSuperpageInfoUser()->size = 0;
+  getSuperpageInfoUser()->count = 0xff;
+  mSPAvailCount = 0xff;
+
   deviceResetChannel(ResetLevel::Internal);
 
   startDataReceiving();
-
-  while (!mReadyQueue.isEmpty()) {
-    mReadyQueue.popFront();
-  }
-  while (!mTransferQueue.isEmpty()) {
-    mTransferQueue.popFront();
-  }
 
   if (mGeneratorEnabled) {
     log("Starting data generator", LogInfoDevel_(4301));
@@ -132,6 +130,7 @@ void CrorcDmaChannel::deviceStartDma()
     }
   }
 
+  // needed to wait a bit FEE
   std::this_thread::sleep_for(100ms);
 
   log("DMA started", LogInfoOps_(4303));
@@ -139,7 +138,6 @@ void CrorcDmaChannel::deviceStartDma()
 
 void CrorcDmaChannel::deviceStopDma()
 {
-  getBar()->flushSuperpages();
   if (mGeneratorEnabled) {
     getBar()->stopDataGenerator();
   } else {
@@ -148,10 +146,25 @@ void CrorcDmaChannel::deviceStopDma()
       getBar()->stopTrigger();
     }
   }
+  getBar()->flushSuperpages();
   getBar()->stopDataReceiver();
 
-  // Return any filled superpages
-  fillSuperpages();
+
+  // handling of last superpage pushed, being it ready or not
+  while (!mIntermediateQueue.isEmpty()) {
+    auto superpage = mIntermediateQueue.frontPtr();
+    if (isASuperpageAvailable()) {
+      superpage->setReceived(getSuperpageInfoUser()->size); // length in bytes
+      superpage->setReady(true);
+    } else {
+      superpage->setReceived(0); // page was not used yet
+      superpage->setReady(false);
+    }
+    mReadyQueue.write(*superpage);
+    mIntermediateQueue.popFront();
+    //printf("\n*** %04d *** final pop 0x%p : intermediate -> ready (size %d)\n\n", __LINE__, (void*)(superpage->getOffset()), (int)superpage->getReceived());
+  }
+
 
   // Return any superpages that have been pushed up in the meantime but won't get filled
   while (mTransferQueue.sizeGuess()) {
@@ -160,6 +173,7 @@ void CrorcDmaChannel::deviceStopDma()
     superpage->setReady(false);
     mReadyQueue.write(*superpage);
     mTransferQueue.popFront();
+    //printf("\n*** %04d *** final pop 0x%p : transfer -> ready\n\n", __LINE__, (void*)(superpage->getOffset()));
   }
 }
 
@@ -265,6 +279,7 @@ void CrorcDmaChannel::fillSuperpages()
     superpage->setReady(true);
     mReadyQueue.write(*superpage);
     mIntermediateQueue.popFront();
+    //printf("\n*** %04d *** pop 0x%p : intermediate -> ready (size %d)\n\n", __LINE__, (void*)(superpage->getOffset()), (int)superpage->getReceived());
   }
 
   // Push single Superpage to the firmware when available
@@ -276,6 +291,7 @@ void CrorcDmaChannel::fillSuperpages()
     getBar()->pushSuperpageAddressAndSize(busAddress, inSuperpage->getSize());
 
     mIntermediateQueue.write(*inSuperpage);
+    //printf("\n*** %04d *** push 0x%p : transfer -> intermediate\n\n", __LINE__, (void*)(inSuperpage->getOffset()));
   }
 }
 
