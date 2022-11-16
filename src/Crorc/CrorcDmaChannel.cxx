@@ -149,7 +149,6 @@ void CrorcDmaChannel::deviceStopDma()
   getBar()->flushSuperpages();
   getBar()->stopDataReceiver();
 
-
   // handling of last superpage pushed, being it ready or not
   while (!mIntermediateQueue.isEmpty()) {
     auto superpage = mIntermediateQueue.frontPtr();
@@ -162,9 +161,8 @@ void CrorcDmaChannel::deviceStopDma()
     }
     mReadyQueue.write(*superpage);
     mIntermediateQueue.popFront();
-    //printf("\n*** %04d *** final pop 0x%p : intermediate -> ready (size %d)\n\n", __LINE__, (void*)(superpage->getOffset()), (int)superpage->getReceived());
+    // printf("\n*** %04d *** final pop 0x%p : intermediate -> ready (size %d)\n\n", __LINE__, (void*)(superpage->getOffset()), (int)superpage->getReceived());
   }
-
 
   // Return any superpages that have been pushed up in the meantime but won't get filled
   while (mTransferQueue.sizeGuess()) {
@@ -173,7 +171,7 @@ void CrorcDmaChannel::deviceStopDma()
     superpage->setReady(false);
     mReadyQueue.write(*superpage);
     mTransferQueue.popFront();
-    //printf("\n*** %04d *** final pop 0x%p : transfer -> ready\n\n", __LINE__, (void*)(superpage->getOffset()));
+    // printf("\n*** %04d *** final pop 0x%p : transfer -> ready\n\n", __LINE__, (void*)(superpage->getOffset()));
   }
 }
 
@@ -279,7 +277,7 @@ void CrorcDmaChannel::fillSuperpages()
     superpage->setReady(true);
     mReadyQueue.write(*superpage);
     mIntermediateQueue.popFront();
-    //printf("\n*** %04d *** pop 0x%p : intermediate -> ready (size %d)\n\n", __LINE__, (void*)(superpage->getOffset()), (int)superpage->getReceived());
+    // printf("\n*** %04d *** pop 0x%p : intermediate -> ready (size %d)\n\n", __LINE__, (void*)(superpage->getOffset()), (int)superpage->getReceived());
   }
 
   // Push single Superpage to the firmware when available
@@ -291,7 +289,7 @@ void CrorcDmaChannel::fillSuperpages()
     getBar()->pushSuperpageAddressAndSize(busAddress, inSuperpage->getSize());
 
     mIntermediateQueue.write(*inSuperpage);
-    //printf("\n*** %04d *** push 0x%p : transfer -> intermediate\n\n", __LINE__, (void*)(inSuperpage->getOffset()));
+    // printf("\n*** %04d *** push 0x%p : transfer -> intermediate\n\n", __LINE__, (void*)(inSuperpage->getOffset()));
   }
 }
 
