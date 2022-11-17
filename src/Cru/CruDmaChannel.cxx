@@ -96,7 +96,7 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
       mLinks.push_back(newLink);
     }
 
-    log(stream.str(), LogInfoOps_(4252));
+    log(stream.str(), LogInfoDevel_(4252));
 
     if (mLinks.empty()) {
       BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("No links are enabled. Check with roc-status. Configure with roc-config."));

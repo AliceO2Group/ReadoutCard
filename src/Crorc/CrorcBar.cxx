@@ -106,7 +106,7 @@ int CrorcBar::getEndpointNumber()
 
 void CrorcBar::configure(bool /*force*/)
 {
-  log("Configuring...", LogInfoOps_(4650));
+  log("Configuring...", LogInfoDevel_(4650));
 
   // enable laser
   log("Enabling the laser", LogInfoDevel_(4651));
@@ -127,7 +127,7 @@ void CrorcBar::configure(bool /*force*/)
   log("Configuring Time Frame detection", LogInfoDevel_(4655));
   setTimeFrameDetectionEnabled(mTimeFrameDetectionEnabled);
 
-  log("CRORC configuration done", LogInfoOps_(4656));
+  log("CRORC configuration done", LogInfoDevel_(4656));
 }
 
 Crorc::ReportInfo CrorcBar::report(bool forConfig)

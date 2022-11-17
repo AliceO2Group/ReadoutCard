@@ -130,11 +130,11 @@ DmaChannelPdaBase::~DmaChannelPdaBase()
 void DmaChannelPdaBase::startDma()
 {
   if (mDmaState == DmaState::UNKNOWN) {
-    log("Unknown DMA state", LogErrorOps_(4213));
+    log("Unknown DMA state", LogErrorDevel_(4213));
   } else if (mDmaState == DmaState::STARTED) {
-    log("DMA already started. Ignoring startDma() call", LogWarningOps_(4214));
+    log("DMA already started. Ignoring startDma() call", LogWarningDevel_(4214));
   } else {
-    log("Starting DMA", LogInfoOps_(4215));
+    log("Starting DMA", LogInfoDevel_(4215));
     deviceStartDma();
   }
   mDmaState = DmaState::STARTED;
@@ -144,12 +144,12 @@ void DmaChannelPdaBase::startDma()
 void DmaChannelPdaBase::stopDma()
 {
   if (mDmaState == DmaState::UNKNOWN) {
-    log("Unknown DMA state", LogErrorOps_(4216));
+    log("Unknown DMA state", LogErrorDevel_(4216));
     mDmaState = DmaState::STOPPED;
   } else if (mDmaState == DmaState::STOPPED) {
-    log("DMA already stopped. Ignoring stopDma() call", LogWarningOps_(4217));
+    log("DMA already stopped. Ignoring stopDma() call", LogWarningDevel_(4217));
   } else {
-    log("Stopping DMA", LogInfoOps_(4218));
+    log("Stopping DMA", LogInfoDevel_(4218));
     mDmaState = DmaState::STOPPED;
     deviceStopDma();
   }
@@ -164,7 +164,7 @@ void DmaChannelPdaBase::resetChannel(ResetLevel::type resetLevel)
     BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Reset channel failed: DMA was not stopped"));
   }
 
-  log("Resetting channel", LogDebugOps_(4219));
+  log("Resetting channel", LogDebugDevel_(4219));
   deviceResetChannel(resetLevel);
 }
 

@@ -133,7 +133,7 @@ void CrorcDmaChannel::deviceStartDma()
   // needed to wait a bit FEE
   std::this_thread::sleep_for(100ms);
 
-  log("DMA started", LogInfoOps_(4303));
+  log("DMA started", LogInfoDevel_(4303));
 }
 
 void CrorcDmaChannel::deviceStopDma()

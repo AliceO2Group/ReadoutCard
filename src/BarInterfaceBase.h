@@ -129,7 +129,7 @@ class BarInterfaceBase : public BarInterface
   std::shared_ptr<Pda::PdaBar> mPdaBar;
 
   /// Convenience function for InfoLogger
-  void log(const std::string& logMessage, ILMessageOption = LogInfoOps);
+  void log(const std::string& logMessage, ILMessageOption = LogInfoDevel);
 
  private:
   /// Inheriting classes must implement this to check whether a given read is safe.

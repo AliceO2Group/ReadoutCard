@@ -12,3 +12,6 @@ This file describes the main feature changes for released versions of ReadoutCar
 
 ## v0.39.1 - 16/11/2022
 - Fixed CRORC start-stop-start: fifo ready counters reset, emptying last page if unused, flush order on stop, release of unused pages in internal fifo.
+
+## next
+- log messages level updated: moved all Ops messages to Devel. The calling layer is in charge to reporting high level operation messages.

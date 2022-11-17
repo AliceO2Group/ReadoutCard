@@ -725,12 +725,12 @@ void CruBar::configure(bool force)
       mGbtEnabled == reportInfo.gbtEnabled &&
       mTimeFrameLength == reportInfo.timeFrameLength &&
       !force) {
-    log("No need to reconfigure further", LogInfoOps_(4600));
+    log("No need to reconfigure further", LogInfoDevel_(4600));
     return;
   }
 
   checkConfigParameters();
-  log("Reconfiguring", LogInfoOps_(4600));
+  log("Reconfiguring", LogInfoDevel_(4600));
 
   Ttc ttc = Ttc(mPdaBar, mSerial);
   DatapathWrapper datapathWrapper = DatapathWrapper(mPdaBar);
@@ -855,7 +855,7 @@ void CruBar::configure(bool force)
     setTimeFrameLength(mTimeFrameLength);
   }
 
-  log("CRU configuration done", LogInfoOps_(4600));
+  log("CRU configuration done", LogInfoDevel_(4600));
 }
 
 /// Sets the mWrapperCount variable
