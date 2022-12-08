@@ -15,3 +15,4 @@ This file describes the main feature changes for released versions of ReadoutCar
 
 ## next
 - log messages level updated: moved all Ops messages to Devel. The calling layer is in charge to reporting high level operation messages.
+- superpage metadata: added link id.

@@ -327,6 +327,7 @@ void CruDmaChannel::transferSuperpageFromLinkToReady(Link& link, bool reclaim)
     link.queue->frontPtr()->setReceived(0);
   }
 
+  link.queue->frontPtr()->setLink(link.id);
   mReadyQueue->write(*link.queue->frontPtr());
   link.queue->popFront();
   link.superpageCounter++;

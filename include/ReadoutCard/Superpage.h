@@ -103,12 +103,23 @@ struct Superpage {
     mUserData = userData;
   }
 
+  /// Set the link id
+  void setLink(int id = -1) {
+    mLink = id;
+  }
+
+  /// Get the link id
+  int getLink() {
+    return mLink;
+  }
+
  private:
   size_t mOffset = 0;        ///< Offset from the start of the DMA buffer to the start of the superpage
   size_t mSize = 0;          ///< Size of the superpage in bytes
   void* mUserData = nullptr; ///< Pointer that users can use for whatever, e.g. to associate data with the superpage
   size_t mReceived = 0;      ///< Size of the received data in bytes
   bool mReady = false;       ///< Indicates this superpage is ready
+  int mLink = -1;            ///< The link producing the data
 };
 
 } // namespace roc
