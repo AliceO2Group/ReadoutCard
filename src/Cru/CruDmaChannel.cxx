@@ -405,11 +405,13 @@ bool CruDmaChannel::areSuperpageFifosHealthy()
 
   bool ok = true;
 
+  static ILAutoMuteToken logToken(LogWarningDevel_(4257), 15, 60);
+
   for (const auto& link : mLinks) {
     uint32_t emptyCounter = getBar()->getSuperpageFifoEmptyCounter(link.id);
     if (mEmptySPFifoCounters.count(link.id) && //only check after the counters map has been initialized
         mEmptySPFifoCounters[link.id] != emptyCounter) {
-      log((format("Empty counter of Superpage FIFO of link %d increased from %x to %x") % link.id % mEmptySPFifoCounters[link.id] % emptyCounter).str(), LogWarningDevel_(4257));
+      Logger::get().log(logToken, "%s", (mLoggerPrefix + (format("Empty counter of Superpage FIFO of link %d increased from %x to %x") % link.id % mEmptySPFifoCounters[link.id] % emptyCounter).str()).c_str());
       ok = false;
     }
     mEmptySPFifoCounters[link.id] = emptyCounter;

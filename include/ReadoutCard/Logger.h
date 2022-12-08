@@ -30,6 +30,7 @@ constexpr auto endm = AliceO2::InfoLogger::InfoLogger::endm;
 
 typedef AliceO2::InfoLogger::InfoLoggerContext ILContext;
 typedef AliceO2::InfoLogger::InfoLogger::InfoLoggerMessageOption ILMessageOption;
+typedef AliceO2::InfoLogger::InfoLogger::AutoMuteToken ILAutoMuteToken;
 
 class Logger
 {

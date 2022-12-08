@@ -127,6 +127,7 @@ class DmaChannelBase : public DmaChannelInterface
   /// Lock that guards against both inter- and intra-process ownership
   std::unique_ptr<Interprocess::Lock> mInterprocessLock;
 
+  protected:
   std::string mLoggerPrefix;
 };
 
