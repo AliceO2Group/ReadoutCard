@@ -109,7 +109,7 @@ class DmaChannelBase : public DmaChannelInterface
   }
 
   /// Convenience function for InfoLogger
-  void log(const std::string& logMessage, ILMessageOption = LogInfoOps);
+  void log(const std::string& logMessage, ILMessageOption = LogInfoDevel);
 
  private:
   /// Check if the channel number is valid
@@ -127,6 +127,7 @@ class DmaChannelBase : public DmaChannelInterface
   /// Lock that guards against both inter- and intra-process ownership
   std::unique_ptr<Interprocess::Lock> mInterprocessLock;
 
+  protected:
   std::string mLoggerPrefix;
 };
 

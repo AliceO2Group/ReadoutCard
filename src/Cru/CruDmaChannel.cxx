@@ -96,7 +96,7 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
       mLinks.push_back(newLink);
     }
 
-    log(stream.str(), LogInfoOps_(4252));
+    log(stream.str(), LogInfoDevel_(4252));
 
     if (mLinks.empty()) {
       BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("No links are enabled. Check with roc-status. Configure with roc-config."));
@@ -327,6 +327,7 @@ void CruDmaChannel::transferSuperpageFromLinkToReady(Link& link, bool reclaim)
     link.queue->frontPtr()->setReceived(0);
   }
 
+  link.queue->frontPtr()->setLink(link.id);
   mReadyQueue->write(*link.queue->frontPtr());
   link.queue->popFront();
   link.superpageCounter++;
@@ -404,11 +405,13 @@ bool CruDmaChannel::areSuperpageFifosHealthy()
 
   bool ok = true;
 
+  static ILAutoMuteToken logToken(LogWarningDevel_(4257), 15, 60);
+
   for (const auto& link : mLinks) {
     uint32_t emptyCounter = getBar()->getSuperpageFifoEmptyCounter(link.id);
     if (mEmptySPFifoCounters.count(link.id) && //only check after the counters map has been initialized
         mEmptySPFifoCounters[link.id] != emptyCounter) {
-      log((format("Empty counter of Superpage FIFO of link %d increased from %x to %x") % link.id % mEmptySPFifoCounters[link.id] % emptyCounter).str(), LogWarningDevel_(4257));
+      Logger::get().log(logToken, "%s", (mLoggerPrefix + (format("Empty counter of Superpage FIFO of link %d increased from %x to %x") % link.id % mEmptySPFifoCounters[link.id] % emptyCounter).str()).c_str());
       ok = false;
     }
     mEmptySPFifoCounters[link.id] = emptyCounter;

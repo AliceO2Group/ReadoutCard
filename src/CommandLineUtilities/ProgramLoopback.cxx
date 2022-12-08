@@ -99,7 +99,7 @@ class ProgramLoopback : public Program
     auto cardType = card.cardType;
 
     if (cardType == CardType::type::Crorc) {
-      Logger::get() << "CRORC not supported" << LogErrorOps << endm;
+      Logger::get() << "CRORC not supported" << LogErrorDevel << endm;
     } else if (cardType == CardType::type::Cru) {
       if (mOptions.expertView) {
         formatHeader = "  %-9s %-10s %-19s %-16s %-12s %-21s %-17s\n";

@@ -395,7 +395,7 @@ class ProgramConfig : public Program
         std::stringstream ss;
         ss << report;
         while (std::getline(ss, line)) {
-          theLog << LogInfoSupport_(4805) << line << InfoLogger::endm;
+          theLog << LogInfoDevel_(4805) << line << InfoLogger::endm;
         }
       } else {
         FILE* fp = fopen(fileName.c_str(), fileMode);
@@ -419,10 +419,10 @@ class ProgramConfig : public Program
 
     // Configure all cards found - Normally used during boot
     if (mOptions.configAll) {
-      Logger::get() << "Running RoC Configuration for all cards" << LogInfoOps_(4600) << endm;
+      Logger::get() << "Running RoC Configuration for all cards" << LogInfoDevel_(4600) << endm;
       std::vector<CardDescriptor> cardsFound;
       if (mOptions.configUri == "") {
-        Logger::get() << "A configuration URI is necessary with the startup-config flag set" << LogErrorOps_(4600) << endm;
+        Logger::get() << "A configuration URI is necessary with the startup-config flag set" << LogErrorDevel_(4600) << endm;
         return;
       }
 
@@ -436,9 +436,9 @@ class ProgramConfig : public Program
             CardConfigurator(card.pciAddress, mOptions.configUri, mOptions.forceConfig);
             reportStatus(card.pciAddress);
           } catch (const std::runtime_error& e) {
-            Logger::get() << e.what() << LogErrorOps_(4600) << endm;
+            Logger::get() << e.what() << LogErrorDevel_(4600) << endm;
           } catch (const Exception& e) {
-            Logger::get() << boost::diagnostic_information(e) << LogErrorOps_(4600) << endm;
+            Logger::get() << boost::diagnostic_information(e) << LogErrorDevel_(4600) << endm;
           }
         }
       }
@@ -451,7 +451,7 @@ class ProgramConfig : public Program
       try {
         FirmwareChecker().checkFirmwareCompatibility(cardId);
       } catch (const Exception& e) {
-        Logger::get() << boost::diagnostic_information(e) << LogErrorOps_(4600) << endm;
+        Logger::get() << boost::diagnostic_information(e) << LogErrorDevel_(4600) << endm;
         throw;
       }
     }
@@ -523,35 +523,35 @@ class ProgramConfig : public Program
         return;
       }
 
-      Logger::get() << "Configuring card " << cardId << " with command line arguments" << LogDebugOps_(4600) << endm;
+      Logger::get() << "Configuring card " << cardId << " with command line arguments" << LogDebugDevel_(4600) << endm;
       if (mOptions.forceConfig) {
-        Logger::get() << "`--force` enabled" << LogDebugOps_(4600) << endm;
+        Logger::get() << "`--force` enabled" << LogDebugDevel_(4600) << endm;
       }
 
       try {
         CardConfigurator(params, mOptions.forceConfig);
         reportStatus(cardId);
       } catch (const std::runtime_error& e) {
-        Logger::get() << e.what() << LogErrorOps_(4600) << endm;
+        Logger::get() << e.what() << LogErrorDevel_(4600) << endm;
         throw;
       } catch (const Exception& e) {
-        Logger::get() << e.what() << LogErrorOps_(4600) << endm;
+        Logger::get() << e.what() << LogErrorDevel_(4600) << endm;
         throw;
       }
     } else {
-      Logger::get() << "Configuring card " << cardId << " with config uri: " << mOptions.configUri << LogDebugOps_(4600) << endm;
+      Logger::get() << "Configuring card " << cardId << " with config uri: " << mOptions.configUri << LogDebugDevel_(4600) << endm;
       if (mOptions.forceConfig) {
-        Logger::get() << "`--force` enabled" << LogDebugOps_(4600) << endm;
+        Logger::get() << "`--force` enabled" << LogDebugDevel_(4600) << endm;
       }
 
       try {
         CardConfigurator(cardId, mOptions.configUri, mOptions.forceConfig);
         reportStatus(cardId);
       } catch (const std::runtime_error& e) {
-        Logger::get() << e.what() << LogErrorOps_(4600) << endm;
+        Logger::get() << e.what() << LogErrorDevel_(4600) << endm;
         throw;
       } catch (const Exception& e) {
-        Logger::get() << e.what() << LogErrorOps_(4600) << endm;
+        Logger::get() << e.what() << LogErrorDevel_(4600) << endm;
         throw;
       }
     }

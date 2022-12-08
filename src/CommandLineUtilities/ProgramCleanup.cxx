@@ -82,7 +82,7 @@ class ProgramCleanup : public Program
       return {};
     };
 
-    Logger::get() << "`roc-cleanup` execution initiated by " << getUsername() << LogDebugOps_(4700) << endm;
+    Logger::get() << "`roc-cleanup` execution initiated by " << getUsername() << LogDebugDevel_(4700) << endm;
 
     // Take and hold DMA locks during cleanup
     std::vector<std::unique_ptr<Interprocess::Lock>> dmaLocks;
@@ -127,7 +127,7 @@ class ProgramCleanup : public Program
       sysCheckRet("modprobe uio_pci_dma");
     }
 
-    Logger::get() << "`roc-cleanup` execution finished" << LogDebugOps_(4710) << endm;
+    Logger::get() << "`roc-cleanup` execution finished" << LogDebugDevel_(4710) << endm;
     return;
   }
 
