@@ -16,6 +16,7 @@
 
 #include <iostream>
 #include <string>
+#define BOOST_BIND_GLOBAL_PLACEHOLDERS
 #include <boost/lexical_cast/try_lexical_convert.hpp>
 #include <boost/python.hpp>
 #include "Common/GuardFunction.h"

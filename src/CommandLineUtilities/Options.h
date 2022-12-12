@@ -19,6 +19,7 @@
 #ifndef O2_READOUTCARD_CLI_OPTIONS_H
 #define O2_READOUTCARD_CLI_OPTIONS_H
 
+#define BOOST_BIND_GLOBAL_PLACEHOLDERS
 #include <boost/program_options.hpp>
 #include "ReadoutCard/Exception.h"
 #include "ReadoutCard/Parameters.h"

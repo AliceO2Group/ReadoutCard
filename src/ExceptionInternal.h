@@ -20,6 +20,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#define BOOST_BIND_GLOBAL_PLACEHOLDERS
 #include <boost/exception/all.hpp>
 #include <cstdint>
 #include "Common/Exception.h"
