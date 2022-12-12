@@ -576,7 +576,7 @@ Cru::PacketMonitoringInfo CruBar::monitorPackets()
   uint32_t accepted = datapathWrapper.getAcceptedPackets(runStatsLink);
   uint32_t rejected = datapathWrapper.getRejectedPackets(runStatsLink);
   uint32_t forced = datapathWrapper.getForcedPackets(runStatsLink);
-  linkPacketInfoMap.insert({ runStatsLink.dwrapperId, { accepted, rejected, forced } });
+  linkPacketInfoMap.insert({ (int)runStatsLink.dwrapperId, { accepted, rejected, forced } });
 
   // Insert the UL link at 15
   Link uLLink = {};

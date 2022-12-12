@@ -1151,8 +1151,8 @@ class ProgramDmaBench : public Program
     static constexpr int NEXT_PAUSE_MAX = 2000;  ///< Maximum random pause interval in milliseconds
     static constexpr int PAUSE_LENGTH_MIN = 1;   ///< Minimum random pause in milliseconds
     static constexpr int PAUSE_LENGTH_MAX = 500; ///< Maximum random pause in milliseconds
-    TimePoint next;                              ///< Next pause at this time
-    std::chrono::milliseconds length;            ///< Next pause has this length
+    TimePoint next = TimePoint::min();           ///< Next pause at this time
+    std::chrono::milliseconds length{PAUSE_LENGTH_MIN};            ///< Next pause has this length
 
     void pauseIfNeeded()
     {
