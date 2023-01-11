@@ -4,7 +4,7 @@ on: [pull_request]
 
 jobs:
   clang-format:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v2
       with:
@@ -12,8 +12,8 @@ jobs:
 
     - name: Install prerequisites
       run: |
-        sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-11 100
-        sudo update-alternatives --install /usr/bin/git-clang-format git-clang-format /usr/bin/git-clang-format-11 100
+        sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-14 100
+        sudo update-alternatives --install /usr/bin/git-clang-format git-clang-format /usr/bin/git-clang-format-14 100
 
     - name: Run clang-format on changed files
       run: |
