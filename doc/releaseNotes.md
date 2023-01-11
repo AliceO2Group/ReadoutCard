@@ -17,3 +17,7 @@ This file describes the main feature changes for released versions of ReadoutCar
 - log messages level updated: moved all Ops messages to Devel. The calling layer is in charge to reporting high level operation messages.
 - superpage metadata: added link id.
 - added verbosity protection for "Empty counter of Superpage FIFO" warnings
+
+## v0.40.1 - 11/01/2022
+- Added support for CRORC firmware version v2.10.0 (0x221ff280)
+- Minor compilation warnings fixed

@@ -44,6 +44,7 @@ FirmwareChecker::FirmwareChecker() : mCompatibleFirmwareList({
                                        /* CRORC */
                                        { "267f8e5", "v2.9.1" },
                                        { "cecc295", "v2.9.0" },
+                                       { "221ff280", "v2.10.0" },
                                        /*{ "59e9955", "v2.8.1" },
                                        { "f086417", "v2.8.0" },
                                        { "474f9e1", "v2.7.0" }
