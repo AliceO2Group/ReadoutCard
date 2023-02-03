@@ -437,7 +437,7 @@ class ProgramDmaBench : public Program
     // Thread for pushing & checking arrivals
     auto pushFuture = std::async(std::launch::async, [&] {
       try {
-        RandomPauses pauses;
+        RandomPauses pauses{};
 
         while (!isStopDma()) {
           // Check if we need to stop in the case of a superpage limit
@@ -500,7 +500,7 @@ class ProgramDmaBench : public Program
 
     // Readout thread (main thread)
     try {
-      RandomPauses pauses;
+      RandomPauses pauses{};
 
       while (!isStopDma()) {
         if (!mInfinitePages && mSuperpagesReadOut.load(std::memory_order_relaxed) >= mSuperpageLimit) {
