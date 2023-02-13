@@ -113,7 +113,7 @@ class ProgramCtpEmulator : public Program
                           mOptions.triggerFrequency,
                           mOptions.generateEox,
                           mOptions.generateSingleTrigger,
-                          (uint32_t)strtoul(mOptions.orbitInit.c_str(), NULL, 32) });
+                          (uint32_t)strtoul(mOptions.orbitInit.c_str(), NULL, 16) });
   }
 
  private:
