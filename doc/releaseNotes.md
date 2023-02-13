@@ -18,6 +18,6 @@ This file describes the main feature changes for released versions of ReadoutCar
 - superpage metadata: added link id.
 - added verbosity protection for "Empty counter of Superpage FIFO" warnings
 
-## v0.40.1 - 11/01/2022
+## v0.40.1 - 11/01/2023
 - Added support for CRORC firmware version v2.10.0 (0x221ff280)
 - Minor compilation warnings fixed
