@@ -21,3 +21,6 @@ This file describes the main feature changes for released versions of ReadoutCar
 ## v0.40.1 - 11/01/2023
 - Added support for CRORC firmware version v2.10.0 (0x221ff280)
 - Minor compilation warnings fixed
+
+## v0.40.2 - 16/02/2023
+- Fixed bug with o2-roc-ctp-emulator failing to parse hexadecimal values of the init-orbit option.
