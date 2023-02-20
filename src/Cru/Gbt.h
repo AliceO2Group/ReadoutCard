@@ -51,6 +51,7 @@ class Gbt
   LinkStatus getStickyBit(Link link);
   uint32_t getRxClockFrequency(Link link);
   uint32_t getTxClockFrequency(Link link);
+  uint32_t getGlitchCounter(Link link);
   void resetFifo();
   std::map<int, LoopbackStats> getLoopbackStats(bool reset, GbtPatternMode::type patternMode = GbtPatternMode::type::Counter,
                                                 GbtCounterType::type counterType = GbtCounterType::type::ThirtyBit,
