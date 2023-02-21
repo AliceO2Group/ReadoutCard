@@ -198,6 +198,7 @@ class ProgramStatus : public Program
       std::string userLogic = (reportInfo.userLogicEnabled ? "Enabled" : "Disabled");
       std::string runStats = (reportInfo.runStatsEnabled ? "Enabled" : "Disabled");
       std::string userAndCommonLogic = (reportInfo.userAndCommonLogicEnabled ? "Enabled" : "Disabled");
+      std::string dmaStatus = reportInfo.dmaStatus ? "Enabled" : "Disabled";
 
       /* GENERAL PARAMETERS */
       if (mOptions.monitoring) {
@@ -210,6 +211,7 @@ class ProgramStatus : public Program
                            .addValue(reportInfo.runStatsEnabled, "runStats")
                            .addValue(reportInfo.userAndCommonLogicEnabled, "userAndCommonLogic")
                            .addValue(reportInfo.timeFrameLength, "timeFrameLength")
+                           .addValue(reportInfo.dmaStatus, "dmaStatus")
                            .addTag(tags::Key::SerialId, card.serialId.getSerial())
                            .addTag(tags::Key::Endpoint, card.serialId.getEndpoint())
                            .addTag(tags::Key::ID, card.sequenceId)
@@ -225,6 +227,7 @@ class ProgramStatus : public Program
         root.put("runStats", runStats);
         root.put("userAndCommonLogic", userAndCommonLogic);
         root.put("timeFrameLength", reportInfo.timeFrameLength);
+        root.put("dmaStatus", dmaStatus);
       } else {
         std::cout << "-----------------------------" << std::endl;
         std::cout << "CRU ID: " << reportInfo.cruId << std::endl;
@@ -239,6 +242,7 @@ class ProgramStatus : public Program
         if (reportInfo.runStatsEnabled) {
           std::cout << "Run statistics enabled" << std::endl;
         }
+         std::cout << "DMA: "<< dmaStatus << std::endl;
       }
 
       /* ONU PARAMETERS */

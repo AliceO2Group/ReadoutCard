@@ -116,6 +116,7 @@ struct ReportInfo {
   bool runStatsEnabled;
   bool userAndCommonLogicEnabled;
   uint16_t timeFrameLength;
+  bool dmaStatus;
 };
 
 struct OnuStickyStatus {

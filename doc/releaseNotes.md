@@ -27,3 +27,4 @@ This file describes the main feature changes for released versions of ReadoutCar
 
 ## next version
 - Added glitchCounter to roc-status (all output styles, including monitoring).
+- Added DMA status (enabled / disabled) to roc-status (all output styles, including monitoring).
