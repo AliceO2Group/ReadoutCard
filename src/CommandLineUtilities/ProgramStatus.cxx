@@ -72,7 +72,8 @@ class ProgramStatus : public Program
     std::ostringstream table;
     std::string formatHeader;
     std::string formatRow;
-    std::string header;
+    std::string header1;
+    std::string header2;
     std::string lineFat;
     std::string lineThin;
 
@@ -91,14 +92,15 @@ class ProgramStatus : public Program
     }
 
     if (cardType == CardType::type::Crorc) {
-      formatHeader = "  %-9s %-8s %-19s\n";
-      formatRow = "  %-9s %-8s %-19.1f\n";
-      header = (boost::format(formatHeader) % "Link ID" % "Status" % "Optical power(uW)").str();
-      lineFat = std::string(header.length(), '=') + '\n';
-      lineThin = std::string(header.length(), '-') + '\n';
+      formatHeader = "  %-6s %-8s %-11s\n";
+      formatRow = "  %-6s %-8s %-11.1f\n";
+      header1 = (boost::format(formatHeader) % "Link" % "Status" % "Optical").str();
+      header2 = (boost::format(formatHeader) % "ID"   % ""       % "power (uW)").str();
+      lineFat = std::string(header1.length(), '=') + '\n';
+      lineThin = std::string(header1.length(), '-') + '\n';
 
       if (!mOptions.jsonOut) {
-        table << lineFat << header << lineThin;
+        table << lineFat << header1 << header2 << lineThin;
       }
 
       auto params = Parameters::makeParameters(cardId, 0); //status available on BAR0
@@ -176,11 +178,12 @@ class ProgramStatus : public Program
         }
       }
     } else if (cardType == CardType::type::Cru) {
-      formatHeader = "  %-9s %-16s %-10s %-14s %-15s %-10s %-14s %-14s %-8s %-19s %-11s %-7s\n";
-      formatRow = "  %-9s %-16s %-10s %-14s %-15s %-10s %-14.2f %-14.2f %-8s %-19.1f %-11s %-7s\n";
-      header = (boost::format(formatHeader) % "Link ID" % "GBT Mode Tx/Rx" % "Loopback" % "GBT MUX" % "Datapath Mode" % "Datapath" % "RX freq(MHz)" % "TX freq(MHz)" % "Status" % "Optical power(uW)" % "System ID" % "FEE ID").str();
-      lineFat = std::string(header.length(), '=') + '\n';
-      lineThin = std::string(header.length(), '-') + '\n';
+      formatHeader = "  %-6s %-10s %-10s %-14s %-10s %-10s %-8s %-8s %-8s %-11s %-8s %-8s\n";
+      formatRow = "  %-6s %-10s %-10s %-14s %-10s %-10s %-8.2f %-8.2f %-8s %-11.1f %-8s %-8s\n";
+      header1 = (boost::format(formatHeader) % "Link" % "GBT Mode" % "Loopback" % "GBT MUX" % "Datapath" % "Datapath" % "RX freq" % "TX freq" % "Status" % "Optical"    % "System" % "FEE").str();
+      header2 = (boost::format(formatHeader) % "ID"   % "Tx/Rx"    % ""         % ""        % "mode"     % "status"   % "(MHz)"   % "(MHz)"   % ""       % "power (uW)" % "ID"     % "ID").str();
+      lineFat = std::string(header1.length(), '=') + '\n';
+      lineThin = std::string(header2.length(), '-') + '\n';
 
       auto params = Parameters::makeParameters(cardId, 2); //status available on BAR2
       params.setLinkMask(Parameters::linkMaskFromString(mOptions.links));
@@ -188,7 +191,7 @@ class ProgramStatus : public Program
       auto cruBar2 = std::dynamic_pointer_cast<CruBar>(bar2);
 
       if (!mOptions.jsonOut) {
-        table << lineFat << header << lineThin;
+        table << lineFat << header1 << header2 << lineThin;
       }
 
       Cru::ReportInfo reportInfo = cruBar2->report();
@@ -450,7 +453,7 @@ class ProgramStatus : public Program
     if (mOptions.jsonOut) {
       pt::write_json(std::cout, root);
     } else if (!mOptions.monitoring) {
-      auto lineFat = std::string(header.length(), '=') + '\n';
+      auto lineFat = std::string(header1.length(), '=') + '\n';
       table << lineFat;
       std::cout << table.str();
     }
