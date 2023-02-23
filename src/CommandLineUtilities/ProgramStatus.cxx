@@ -176,9 +176,9 @@ class ProgramStatus : public Program
         }
       }
     } else if (cardType == CardType::type::Cru) {
-      formatHeader = "  %-9s %-16s %-10s %-14s %-15s %-10s %-14s %-14s %-8s %-19s %-11s %-7s %-10s\n";
-      formatRow = "  %-9s %-16s %-10s %-14s %-15s %-10s %-14.2f %-14.2f %-8s %-19.1f %-11s %-7s %-10s\n";
-      header = (boost::format(formatHeader) % "Link ID" % "GBT Mode Tx/Rx" % "Loopback" % "GBT MUX" % "Datapath Mode" % "Datapath" % "RX freq(MHz)" % "TX freq(MHz)" % "Status" % "Optical power(uW)" % "System ID" % "FEE ID" % "Glitches").str();
+      formatHeader = "  %-9s %-16s %-10s %-14s %-15s %-10s %-14s %-14s %-8s %-19s %-11s %-7s\n";
+      formatRow = "  %-9s %-16s %-10s %-14s %-15s %-10s %-14.2f %-14.2f %-8s %-19.1f %-11s %-7s\n";
+      header = (boost::format(formatHeader) % "Link ID" % "GBT Mode Tx/Rx" % "Loopback" % "GBT MUX" % "Datapath Mode" % "Datapath" % "RX freq(MHz)" % "TX freq(MHz)" % "Status" % "Optical power(uW)" % "System ID" % "FEE ID").str();
       lineFat = std::string(header.length(), '=') + '\n';
       lineThin = std::string(header.length(), '-') + '\n';
 
@@ -383,7 +383,7 @@ class ProgramStatus : public Program
 
         float rxFreq = link.rxFreq;
         float txFreq = link.txFreq;
-        int glitchCounter = link.glitchCounter;
+        uint32_t glitchCounter = link.glitchCounter;
 
         std::string linkStatus;
         if (link.stickyBit == Cru::LinkStatus::Up) {
@@ -412,7 +412,7 @@ class ProgramStatus : public Program
                              .addValue(opticalPower, "opticalPower")
                              .addValue(systemId, "systemId")
                              .addValue(feeId, "feeId")
-                             .addValue(glitchCounter, "glitchCounter")
+                             .addValue((int)glitchCounter, "glitchCounter")
                              .addTag(tags::Key::SerialId, card.serialId.getSerial())
                              .addTag(tags::Key::Endpoint, card.serialId.getEndpoint())
                              .addTag(tags::Key::CRU, card.sequenceId)
@@ -438,7 +438,7 @@ class ProgramStatus : public Program
           // add the link node to the tree
           root.add_child(std::to_string(globalId), linkNode);
         } else {
-          auto format = boost::format(formatRow) % globalId % gbtTxRxMode % loopback % gbtMux % datapathMode % enabled % rxFreq % txFreq % linkStatus % opticalPower % systemId % feeId % glitchCounter;
+          auto format = boost::format(formatRow) % globalId % gbtTxRxMode % loopback % gbtMux % datapathMode % enabled % rxFreq % txFreq % linkStatus % opticalPower % systemId % feeId;
           table << format;
         }
       }
