@@ -178,10 +178,15 @@ class ProgramStatus : public Program
         }
       }
     } else if (cardType == CardType::type::Cru) {
-      formatHeader = "  %-6s %-10s %-10s %-14s %-10s %-10s %-8s %-8s %-8s %-11s %-8s %-8s\n";
-      formatRow = "  %-6s %-10s %-10s %-14s %-10s %-10s %-8.2f %-8.2f %-8s %-11.1f %-8s %-8s\n";
-      header1 = (boost::format(formatHeader) % "Link" % "GBT Mode" % "Loopback" % "GBT MUX" % "Datapath" % "Datapath" % "RX freq" % "TX freq" % "Status" % "Optical"    % "System" % "FEE").str();
-      header2 = (boost::format(formatHeader) % "ID"   % "Tx/Rx"    % ""         % ""        % "mode"     % "status"   % "(MHz)"   % "(MHz)"   % ""       % "power (uW)" % "ID"     % "ID").str();
+      if (mOptions.fec) {
+        formatHeader = "  %-6s %-10s %-10s %-14s %-10s %-10s %-8s %-8s %-7s %-7s %-11s %-7s %-7s\n";
+        formatRow = "  %-6s %-10s %-10s %-14s %-10s %-10s %-8.2f %-8.2f %-7s %-7s %-11.1f %-7s %-7s\n";
+      } else {
+        formatHeader = "  %-6s %-10s %-10s %-14s %-10s %-10s %-8s %-8s %-7s%-0s %-11s %-7s %-7s\n";
+        formatRow = "  %-6s %-10s %-10s %-14s %-10s %-10s %-8.2f %-8.2f %-7s%-0s %-11.1f %-7s %-7s\n";
+      }
+      header1 = (boost::format(formatHeader) % "Link" % "GBT Mode" % "Loopback" % "GBT MUX" % "Datapath" % "Datapath" % "RX freq" % "TX freq" % "Status" % (mOptions.fec ? "FEC" : "" ) % "Optical"    % "System" % "FEE").str();
+      header2 = (boost::format(formatHeader) % "ID"   % "Tx/Rx"    % ""         % ""        % "mode"     % "status"   % "(MHz)"   % "(MHz)"   % ""       % ""                           % "power (uW)" % "ID"     % "ID").str();
       lineFat = std::string(header1.length(), '=') + '\n';
       lineThin = std::string(header2.length(), '-') + '\n';
 
@@ -387,6 +392,10 @@ class ProgramStatus : public Program
         float rxFreq = link.rxFreq;
         float txFreq = link.txFreq;
         uint32_t glitchCounter = link.glitchCounter;
+        std::string fecCounter;
+        if (mOptions.fec) {
+          fecCounter = Utilities::toHexString(link.fecCounter);
+        }
 
         std::string linkStatus;
         if (link.stickyBit == Cru::LinkStatus::Up) {
@@ -437,11 +446,14 @@ class ProgramStatus : public Program
           linkNode.put("systemId", systemId);
           linkNode.put("feeId", feeId);
           linkNode.put("glitchCounter", glitchCounter);
+          if (mOptions.fec) {
+            linkNode.put("fecCounter", fecCounter);
+          }
 
           // add the link node to the tree
           root.add_child(std::to_string(globalId), linkNode);
         } else {
-          auto format = boost::format(formatRow) % globalId % gbtTxRxMode % loopback % gbtMux % datapathMode % enabled % rxFreq % txFreq % linkStatus % opticalPower % systemId % feeId;
+          auto format = boost::format(formatRow) % globalId % gbtTxRxMode % loopback % gbtMux % datapathMode % enabled % rxFreq % txFreq % linkStatus % fecCounter % opticalPower % systemId % feeId;
           table << format;
         }
       }
