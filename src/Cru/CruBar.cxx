@@ -1,4 +1,3 @@
-
 // Copyright 2019-2020 CERN and copyright holders of ALICE O2.
 // See https://alice-o2.web.cern.ch/copyright for details of the copyright holders.
 // All rights not expressly granted are reserved.
@@ -184,16 +183,13 @@ uint32_t CruBar::getSuperpageFifoEmptyCounter(uint32_t link)
 /// Signals the CRU DMA engine to start
 void CruBar::startDmaEngine()
 {
-  writeRegister(Cru::Registers::DMA_CONTROL.index, 0x11);                  // send DMA start (bit #0)
-                                                                           // dyn offset enabled (bit #4)
-  modifyRegister(Cru::Registers::DATA_GENERATOR_CONTROL.index, 0, 1, 0x1); // enable data generator
+  writeRegister(Cru::Registers::DMA_CONTROL.index, 0x1);                  // send DMA start (bit #0)
 }
 
 /// Signals the CRU DMA engine to stop
 void CruBar::stopDmaEngine()
 {
   modifyRegister(Cru::Registers::DMA_CONTROL.index, 8, 1, 0x1);            // send DMA flush to the CRU
-  modifyRegister(Cru::Registers::DATA_GENERATOR_CONTROL.index, 0, 1, 0x0); // disable data generator
 }
 
 /// Resets the data generator counter
