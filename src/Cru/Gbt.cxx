@@ -326,6 +326,17 @@ uint32_t Gbt::getGlitchCounter(Link link)
   return mPdaBar->readRegister(address / 4);
 }
 
+uint32_t Gbt::getFecCounter(Link link)
+{
+  uint32_t address = Cru::getWrapperBaseAddress(link.wrapper) +
+                     Cru::Registers::GBT_WRAPPER_BANK_OFFSET.address * (link.bank + 1) +
+                     Cru::Registers::GBT_BANK_LINK_OFFSET.address * (link.id + 1) +
+                     Cru::Registers::GBT_LINK_REGS_OFFSET.address +
+                     Cru::Registers::GBT_LINK_FEC_COUNTER.address;
+
+  return mPdaBar->readRegister(address / 4);
+}
+
 void Gbt::resetFifo()
 {
   mPdaBar->modifyRegister(Cru::Registers::BSP_USER_CONTROL.index, 7, 1, 0x1); // reset TX

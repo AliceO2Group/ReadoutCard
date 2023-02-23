@@ -510,6 +510,7 @@ Cru::ReportInfo CruBar::report(bool forConfig)
     link.rxFreq = gbt.getRxClockFrequency(link) / 1e6; // Hz -> Mhz
     link.txFreq = gbt.getTxClockFrequency(link) / 1e6; // Hz -> Mhz
     link.glitchCounter = gbt.getGlitchCounter(link);
+    link.fecCounter = gbt.getFecCounter(link);
     link.systemId = datapathWrapper.getSystemId(link);
     link.feeId = datapathWrapper.getFeeId(link);
 

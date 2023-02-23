@@ -72,6 +72,7 @@ struct Link {
   /*uint32_t systemId = 0x1ff; // invalid, used as "unset" placeholder
   uint32_t feeId = 0x1f; // invalid, used as "unset" placeholder*/
   uint32_t glitchCounter = 0;
+  uint32_t fecCounter = 0;
 
   bool operator==(const Link& dlink) const
   {

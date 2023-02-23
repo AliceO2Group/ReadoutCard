@@ -257,6 +257,9 @@ static constexpr Register GBT_LINK_TX_CLOCK(0x00000004);
 /// Register for getting the glitch counter
 static constexpr Register GBT_LINK_GLITCH_COUNTER(0x00000044);
 
+/// Register for getting the FEC counter
+static constexpr Register GBT_LINK_FEC_COUNTER(0x0000001C);
+
 /// Register for selecting the the GBT Multiplexer
 static constexpr Register GBT_MUX_SELECT(0x0000001c);
 /*static constexpr uint32_t GBT_MUX_TTC(0x0);
