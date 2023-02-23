@@ -26,5 +26,5 @@ This file describes the main feature changes for released versions of ReadoutCar
 - Fixed bug with o2-roc-ctp-emulator failing to parse hexadecimal values of the init-orbit option.
 
 ## next version
-- Added glitchCounter to roc-status (all output styles, including monitoring).
+- Added glitchCounter to roc-status (monitoring + JSON output).
 - Added DMA status (enabled / disabled) to roc-status (all output styles, including monitoring).
