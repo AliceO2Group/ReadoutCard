@@ -135,6 +135,7 @@ class CruBar final : public BarInterfaceBase
   uint32_t getFpgaChipLow();
   uint32_t getPonStatusRegister();
   uint32_t getOnuAddress();
+  bool getDmaStatus();
   bool checkPonUpstreamStatusExpected(uint32_t ponUpstreamRegister, uint32_t onuAddress);
   bool checkClockConsistent(std::map<int, Link> linkMap);
   void populateLinkMap(std::map<int, Link>& linkMap);

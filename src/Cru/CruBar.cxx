@@ -406,6 +406,12 @@ uint32_t CruBar::getPonStatusRegister()
   return readRegister((Cru::Registers::ONU_USER_LOGIC.address + 0x0c) / 4);
 }
 
+bool CruBar::getDmaStatus()
+{
+  mPdaBar->assertBarIndex(2, "Can only get DMA status register from BAR 2");
+  return readRegister(Cru::Registers::BSP_USER_CONTROL.index) & 0x1; // DMA enabled = bit 0
+}
+
 uint32_t CruBar::getOnuAddress()
 {
   mPdaBar->assertBarIndex(2, "Can only get PON status register from BAR 2");
@@ -503,6 +509,8 @@ Cru::ReportInfo CruBar::report(bool forConfig)
     link.stickyBit = gbt.getStickyBit(link);
     link.rxFreq = gbt.getRxClockFrequency(link) / 1e6; // Hz -> Mhz
     link.txFreq = gbt.getTxClockFrequency(link) / 1e6; // Hz -> Mhz
+    link.glitchCounter = gbt.getGlitchCounter(link);
+    link.fecCounter = gbt.getFecCounter(link);
     link.systemId = datapathWrapper.getSystemId(link);
     link.feeId = datapathWrapper.getFeeId(link);
 
@@ -544,6 +552,8 @@ Cru::ReportInfo CruBar::report(bool forConfig)
   bool userAndCommonLogicEnabled = datapathWrapper.getUserAndCommonLogicEnabled(mEndpoint);
   uint16_t timeFrameLength = getTimeFrameLength();
 
+  bool dmaStatus = getDmaStatus();
+
   Cru::ReportInfo reportInfo = {
     linkMap,
     clock,
@@ -557,7 +567,8 @@ Cru::ReportInfo CruBar::report(bool forConfig)
     userLogicEnabled,
     runStatsEnabled,
     userAndCommonLogicEnabled,
-    timeFrameLength
+    timeFrameLength,
+    dmaStatus
   };
 
   return reportInfo;

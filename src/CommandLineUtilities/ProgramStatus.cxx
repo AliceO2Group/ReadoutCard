@@ -72,7 +72,8 @@ class ProgramStatus : public Program
     std::ostringstream table;
     std::string formatHeader;
     std::string formatRow;
-    std::string header;
+    std::string header1;
+    std::string header2;
     std::string lineFat;
     std::string lineThin;
 
@@ -91,14 +92,15 @@ class ProgramStatus : public Program
     }
 
     if (cardType == CardType::type::Crorc) {
-      formatHeader = "  %-9s %-8s %-19s\n";
-      formatRow = "  %-9s %-8s %-19.1f\n";
-      header = (boost::format(formatHeader) % "Link ID" % "Status" % "Optical power(uW)").str();
-      lineFat = std::string(header.length(), '=') + '\n';
-      lineThin = std::string(header.length(), '-') + '\n';
+      formatHeader = "  %-6s %-8s %-11s\n";
+      formatRow = "  %-6s %-8s %-11.1f\n";
+      header1 = (boost::format(formatHeader) % "Link" % "Status" % "Optical").str();
+      header2 = (boost::format(formatHeader) % "ID"   % ""       % "power (uW)").str();
+      lineFat = std::string(header1.length(), '=') + '\n';
+      lineThin = std::string(header1.length(), '-') + '\n';
 
       if (!mOptions.jsonOut) {
-        table << lineFat << header << lineThin;
+        table << lineFat << header1 << header2 << lineThin;
       }
 
       auto params = Parameters::makeParameters(cardId, 0); //status available on BAR0
@@ -176,11 +178,17 @@ class ProgramStatus : public Program
         }
       }
     } else if (cardType == CardType::type::Cru) {
-      formatHeader = "  %-9s %-16s %-10s %-14s %-15s %-10s %-14s %-14s %-8s %-19s %-11s %-7s\n";
-      formatRow = "  %-9s %-16s %-10s %-14s %-15s %-10s %-14.2f %-14.2f %-8s %-19.1f %-11s %-7s\n";
-      header = (boost::format(formatHeader) % "Link ID" % "GBT Mode Tx/Rx" % "Loopback" % "GBT MUX" % "Datapath Mode" % "Datapath" % "RX freq(MHz)" % "TX freq(MHz)" % "Status" % "Optical power(uW)" % "System ID" % "FEE ID").str();
-      lineFat = std::string(header.length(), '=') + '\n';
-      lineThin = std::string(header.length(), '-') + '\n';
+      if (mOptions.fec) {
+        formatHeader = "  %-6s %-10s %-10s %-14s %-10s %-10s %-8s %-8s %-7s %-7s %-11s %-7s %-7s\n";
+        formatRow = "  %-6s %-10s %-10s %-14s %-10s %-10s %-8.2f %-8.2f %-7s %-7s %-11.1f %-7s %-7s\n";
+      } else {
+        formatHeader = "  %-6s %-10s %-10s %-14s %-10s %-10s %-8s %-8s %-7s%-0s %-11s %-7s %-7s\n";
+        formatRow = "  %-6s %-10s %-10s %-14s %-10s %-10s %-8.2f %-8.2f %-7s%-0s %-11.1f %-7s %-7s\n";
+      }
+      header1 = (boost::format(formatHeader) % "Link" % "GBT Mode" % "Loopback" % "GBT MUX" % "Datapath" % "Datapath" % "RX freq" % "TX freq" % "Status" % (mOptions.fec ? "FEC" : "" ) % "Optical"    % "System" % "FEE").str();
+      header2 = (boost::format(formatHeader) % "ID"   % "Tx/Rx"    % ""         % ""        % "mode"     % "status"   % "(MHz)"   % "(MHz)"   % ""       % ""                           % "power (uW)" % "ID"     % "ID").str();
+      lineFat = std::string(header1.length(), '=') + '\n';
+      lineThin = std::string(header2.length(), '-') + '\n';
 
       auto params = Parameters::makeParameters(cardId, 2); //status available on BAR2
       params.setLinkMask(Parameters::linkMaskFromString(mOptions.links));
@@ -188,7 +196,7 @@ class ProgramStatus : public Program
       auto cruBar2 = std::dynamic_pointer_cast<CruBar>(bar2);
 
       if (!mOptions.jsonOut) {
-        table << lineFat << header << lineThin;
+        table << lineFat << header1 << header2 << lineThin;
       }
 
       Cru::ReportInfo reportInfo = cruBar2->report();
@@ -198,6 +206,7 @@ class ProgramStatus : public Program
       std::string userLogic = (reportInfo.userLogicEnabled ? "Enabled" : "Disabled");
       std::string runStats = (reportInfo.runStatsEnabled ? "Enabled" : "Disabled");
       std::string userAndCommonLogic = (reportInfo.userAndCommonLogicEnabled ? "Enabled" : "Disabled");
+      std::string dmaStatus = reportInfo.dmaStatus ? "Enabled" : "Disabled";
 
       /* GENERAL PARAMETERS */
       if (mOptions.monitoring) {
@@ -210,6 +219,7 @@ class ProgramStatus : public Program
                            .addValue(reportInfo.runStatsEnabled, "runStats")
                            .addValue(reportInfo.userAndCommonLogicEnabled, "userAndCommonLogic")
                            .addValue(reportInfo.timeFrameLength, "timeFrameLength")
+                           .addValue(reportInfo.dmaStatus, "dmaStatus")
                            .addTag(tags::Key::SerialId, card.serialId.getSerial())
                            .addTag(tags::Key::Endpoint, card.serialId.getEndpoint())
                            .addTag(tags::Key::ID, card.sequenceId)
@@ -225,6 +235,7 @@ class ProgramStatus : public Program
         root.put("runStats", runStats);
         root.put("userAndCommonLogic", userAndCommonLogic);
         root.put("timeFrameLength", reportInfo.timeFrameLength);
+        root.put("dmaStatus", dmaStatus);
       } else {
         std::cout << "-----------------------------" << std::endl;
         std::cout << "CRU ID: " << reportInfo.cruId << std::endl;
@@ -239,6 +250,7 @@ class ProgramStatus : public Program
         if (reportInfo.runStatsEnabled) {
           std::cout << "Run statistics enabled" << std::endl;
         }
+         std::cout << "DMA: "<< dmaStatus << std::endl;
       }
 
       /* ONU PARAMETERS */
@@ -379,6 +391,11 @@ class ProgramStatus : public Program
 
         float rxFreq = link.rxFreq;
         float txFreq = link.txFreq;
+        uint32_t glitchCounter = link.glitchCounter;
+        std::string fecCounter;
+        if (mOptions.fec) {
+          fecCounter = Utilities::toHexString(link.fecCounter);
+        }
 
         std::string linkStatus;
         if (link.stickyBit == Cru::LinkStatus::Up) {
@@ -407,6 +424,7 @@ class ProgramStatus : public Program
                              .addValue(opticalPower, "opticalPower")
                              .addValue(systemId, "systemId")
                              .addValue(feeId, "feeId")
+                             .addValue((int)glitchCounter, "glitchCounter")
                              .addTag(tags::Key::SerialId, card.serialId.getSerial())
                              .addTag(tags::Key::Endpoint, card.serialId.getEndpoint())
                              .addTag(tags::Key::CRU, card.sequenceId)
@@ -427,11 +445,15 @@ class ProgramStatus : public Program
           linkNode.put("opticalPower", Utilities::toPreciseString(opticalPower));
           linkNode.put("systemId", systemId);
           linkNode.put("feeId", feeId);
+          linkNode.put("glitchCounter", glitchCounter);
+          if (mOptions.fec) {
+            linkNode.put("fecCounter", fecCounter);
+          }
 
           // add the link node to the tree
           root.add_child(std::to_string(globalId), linkNode);
         } else {
-          auto format = boost::format(formatRow) % globalId % gbtTxRxMode % loopback % gbtMux % datapathMode % enabled % rxFreq % txFreq % linkStatus % opticalPower % systemId % feeId;
+          auto format = boost::format(formatRow) % globalId % gbtTxRxMode % loopback % gbtMux % datapathMode % enabled % rxFreq % txFreq % linkStatus % fecCounter % opticalPower % systemId % feeId;
           table << format;
         }
       }
@@ -443,7 +465,7 @@ class ProgramStatus : public Program
     if (mOptions.jsonOut) {
       pt::write_json(std::cout, root);
     } else if (!mOptions.monitoring) {
-      auto lineFat = std::string(header.length(), '=') + '\n';
+      auto lineFat = std::string(header1.length(), '=') + '\n';
       table << lineFat;
       std::cout << table.str();
     }

@@ -24,3 +24,8 @@ This file describes the main feature changes for released versions of ReadoutCar
 
 ## v0.40.2 - 16/02/2023
 - Fixed bug with o2-roc-ctp-emulator failing to parse hexadecimal values of the init-orbit option.
+
+## v0.41.0 - 23/02/2023
+- Added glitchCounter to roc-status (monitoring + JSON output).
+- Added DMA status (enabled / disabled) to roc-status (all output styles, including monitoring).
+- Added FEC counter per link to roc-status (stdout + JSON output).
