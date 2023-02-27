@@ -428,6 +428,7 @@ class ProgramStatus : public Program
                              .addValue(systemId, "systemId")
                              .addValue(feeId, "feeId")
                              .addValue((int)glitchCounter, "glitchCounter")
+                             .addValue((int)link.fecCounter, "fecCounter")
                              .addTag(tags::Key::SerialId, card.serialId.getSerial())
                              .addTag(tags::Key::Endpoint, card.serialId.getEndpoint())
                              .addTag(tags::Key::CRU, card.sequenceId)

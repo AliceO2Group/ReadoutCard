@@ -32,3 +32,4 @@ This file describes the main feature changes for released versions of ReadoutCar
 
 ## next version
 - Added support for CRORC ID where missing: roc-status, roc-config JSON.
+- Added FEC counter per link to roc-status (monitoring).
