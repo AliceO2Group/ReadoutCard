@@ -122,6 +122,7 @@ class ProgramStatus : public Program
       if (mOptions.monitoring) {
         monitoring->send(Metric{ "CRORC" }
                            .addValue(card.pciAddress.toString(), "pciAddress")
+                           .addValue(reportInfo.crorcId, "crorcId")
                            .addValue(reportInfo.qsfpEnabled, "qsfp")
                            .addValue(reportInfo.dynamicOffset, "dynamicOffset")
                            .addValue(reportInfo.timeFrameDetectionEnabled, "timeFrameDetection")
@@ -132,12 +133,14 @@ class ProgramStatus : public Program
       } else if (mOptions.jsonOut) {
         root.put("pciAddress", card.pciAddress.toString());
         root.put("serial", card.serialId.getSerial());
+        root.put("crocId", reportInfo.crorcId);
         root.put("qsfp", qsfpEnabled);
         root.put("offset", offset);
         root.put("timeFrameDetection", timeFrameDetectionEnabled);
         root.put("timeFrameLength", reportInfo.timeFrameLength);
       } else {
         std::cout << "-----------------------------" << std::endl;
+        std::cout << "CRORC ID: " << reportInfo.crorcId << std::endl;
         std::cout << "QSFP " << qsfpEnabled << std::endl;
         std::cout << offset << " offset" << std::endl;
         std::cout << "-----------------------------" << std::endl;

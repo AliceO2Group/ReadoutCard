@@ -129,6 +129,7 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
   bool dynamicOffset = false;
   uint32_t onuAddress = 0x0;
   uint16_t cruId = 0x0;
+  uint16_t crorcId = 0x0;
   GbtMode::type gbtMode = GbtMode::type::Gbt;
   DownstreamData::type downstreamData = DownstreamData::type::Ctp;
   uint32_t triggerWindowSize = 1000;
@@ -181,6 +182,9 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
         parsedString = subtree.get<std::string>("cruId");
         cruId = Hex::fromString(parsedString);
 
+        parsedString = subtree.get<std::string>("crorc-id");
+        crorcId = Hex::fromString(parsedString);
+
         allowRejection = subtree.get<bool>("allowRejection");
 
         triggerWindowSize = subtree.get<int>("triggerWindowSize");
@@ -204,6 +208,7 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
         parameters.setDynamicOffsetEnabled(dynamicOffset);
         parameters.setOnuAddress(onuAddress);
         parameters.setCruId(cruId);
+        parameters.setCrorcId(crorcId);
         parameters.setAllowRejection(allowRejection);
         parameters.setTriggerWindowSize(triggerWindowSize);
         parameters.setGbtEnabled(gbtEnabled);
