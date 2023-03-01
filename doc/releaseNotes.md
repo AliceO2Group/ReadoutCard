@@ -30,5 +30,6 @@ This file describes the main feature changes for released versions of ReadoutCar
 - Added DMA status (enabled / disabled) to roc-status (all output styles, including monitoring).
 - Added FEC counter per link to roc-status (stdout + JSON output).
 
-## next version
+## v0.42.0 - 01/03/2023
 - Added support for CRORC ID where missing: roc-status, roc-config JSON.
+- Added FEC counter per link to roc-status (monitoring).
