@@ -33,3 +33,6 @@ This file describes the main feature changes for released versions of ReadoutCar
 ## v0.42.0 - 01/03/2023
 - Added support for CRORC ID where missing: roc-status, roc-config JSON.
 - Added FEC counter per link to roc-status (monitoring).
+
+## v0.42.1
+- Fixed bug with roc-config JSON: crorc-id wrongly set in "cru" section. Now named crorcId and to be set under "crorc" section.
