@@ -182,9 +182,6 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
         parsedString = subtree.get<std::string>("cruId");
         cruId = Hex::fromString(parsedString);
 
-        parsedString = subtree.get<std::string>("crorc-id");
-        crorcId = Hex::fromString(parsedString);
-
         allowRejection = subtree.get<bool>("allowRejection");
 
         triggerWindowSize = subtree.get<int>("triggerWindowSize");
@@ -208,7 +205,6 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
         parameters.setDynamicOffsetEnabled(dynamicOffset);
         parameters.setOnuAddress(onuAddress);
         parameters.setCruId(cruId);
-        parameters.setCrorcId(crorcId);
         parameters.setAllowRejection(allowRejection);
         parameters.setTriggerWindowSize(triggerWindowSize);
         parameters.setGbtEnabled(gbtEnabled);
@@ -217,6 +213,14 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
         parameters.setUserAndCommonLogicEnabled(userAndCommonLogicEnabled);
         parameters.setSystemId(systemId);
         parameters.setTimeFrameLength(timeFrameLength);
+
+      } else if (group == "crorc") {
+
+        parsedString = subtree.get<std::string>("crorcId");
+        crorcId = Hex::fromString(parsedString);
+
+        parameters.setCrorcId(crorcId);
+
       } else if (group == "links") { // Configure all links with default values
 
         enabled = subtree.get<bool>("enabled");
