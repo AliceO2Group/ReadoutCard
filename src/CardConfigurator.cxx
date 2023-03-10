@@ -86,6 +86,7 @@ void CardConfigurator::parseConfigUriCrorc(std::string configUri, Parameters& pa
 {
   bool dynamicOffset = false;
   uint16_t timeFrameLength = 0x100;
+  uint16_t crorcId = 0x0;
 
   std::unique_ptr<o2::configuration::ConfigurationInterface> conf;
   try {
@@ -104,10 +105,13 @@ void CardConfigurator::parseConfigUriCrorc(std::string configUri, Parameters& pa
       if (group == "crorc") { // Configure the CRORC
         dynamicOffset = subtree.get<bool>("dynamicOffset");
         timeFrameLength = subtree.get<int>("timeFrameLength");
+        std::string parsedString = subtree.get<std::string>("crorcId");
+        crorcId = Hex::fromString(parsedString);
       }
 
       parameters.setDynamicOffsetEnabled(dynamicOffset);
       parameters.setTimeFrameLength(timeFrameLength);
+      parameters.setCrorcId(crorcId);
     }
   } catch (...) {
     BOOST_THROW_EXCEPTION(ParseException() << ErrorInfo::ConfigParse(group));
@@ -129,7 +133,6 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
   bool dynamicOffset = false;
   uint32_t onuAddress = 0x0;
   uint16_t cruId = 0x0;
-  uint16_t crorcId = 0x0;
   GbtMode::type gbtMode = GbtMode::type::Gbt;
   DownstreamData::type downstreamData = DownstreamData::type::Ctp;
   uint32_t triggerWindowSize = 1000;
@@ -213,14 +216,6 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
         parameters.setUserAndCommonLogicEnabled(userAndCommonLogicEnabled);
         parameters.setSystemId(systemId);
         parameters.setTimeFrameLength(timeFrameLength);
-
-      } else if (group == "crorc") {
-
-        parsedString = subtree.get<std::string>("crorcId");
-        crorcId = Hex::fromString(parsedString);
-
-        parameters.setCrorcId(crorcId);
-
       } else if (group == "links") { // Configure all links with default values
 
         enabled = subtree.get<bool>("enabled");

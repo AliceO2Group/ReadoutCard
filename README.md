@@ -171,11 +171,11 @@ The `Data Source` parameter for the CRU DMA Channel should be used as follows:
 
 Card Configurator
 -------------------
-The `CardConfigurator` class offers an interface to configure the Readout Card (_currently only implemented for the CRU_). In
-order to configure the CRU one has to create a `CardConfigurator` object. The constructor can either be called with a list of
+The `CardConfigurator` class offers an interface to configure the Readout Card. In
+order to configure the CRU or CRORC, one has to create a `CardConfigurator` object. The constructor can either be called with a list of
 parameters, or a path to a configuration file, specifying these parameters.
 
-### Parameters
+### CRU Parameters
 
 The `CardConfigurator` utilizes the `Parameters` class, the same class where Parameters are specified for DMA channels. For the
 Card Configurator, the parameters need to be initialized for the card on BAR2. The command that
@@ -243,6 +243,11 @@ Likewise for `OnuAddress`, passing the int is enough.
 ```
 params.setOnuAddress(42)
 ```
+
+### CRORC Parameters
+
+The CRORC parameters which can be defined from configuration file are: `crorcId`, `dynamicOffset`, `timeframeLength`.
+
 
 ### Configuration File
 

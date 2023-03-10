@@ -36,3 +36,6 @@ This file describes the main feature changes for released versions of ReadoutCar
 
 ## v0.42.1 - 06/03/2023
 - Fixed bug with roc-config JSON: crorc-id wrongly set in "cru" section. Now named crorcId and to be set under "crorc" section.
+
+## next version
+- Fix for crorId field in configuration file.
