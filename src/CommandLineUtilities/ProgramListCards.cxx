@@ -56,8 +56,8 @@ class ProgramListCards : public Program
   {
     std::ostringstream table;
 
-    auto formatHeader = "  %-3s %-6s %-10s %-8s %-10s %-5s %-12s %-12s\n";
-    auto formatRow = "  %-3s %-6s %-10s %-8s %-10s %-5s %-12s %-12s\n";
+    auto formatHeader = "  %-3s %-6s %-10s %-8s %-10s %-5s %-15s %-12s\n";
+    auto formatRow = "  %-3s %-6s %-10s %-8s %-10s %-5s %-15s %-12s\n";
     auto header = (boost::format(formatHeader) % "#" % "Type" % "PCI Addr" % "Serial" % "Endpoint" % "NUMA" % "FW Version" % "UL Version").str();
     auto lineFat = std::string(header.length(), '=') + '\n';
     auto lineThin = std::string(header.length(), '-') + '\n';

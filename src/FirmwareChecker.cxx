@@ -32,28 +32,34 @@ FirmwareChecker::FirmwareChecker() : mCompatibleFirmwareList({
                                        { "82b4662d", "MFT PSU" },
                                        { "6838510f", "v3.17.0" },
                                        { "8e74a7f8", "v3.17.1" },
-                                       /*{ "6a85d30c", "v3.12.0" },
-                                       { "7be5aa1c", "v3.11.0" },
-                                       { "e4a5a46e", "v3.10.0" },
-                                       { "f71faa86", "v3.9.1" },
-                                       { "8e0d2ffa", "v3.9.0" },
-                                       { "e8e58cff", "v3.8.0" },
-                                                               { "f8cecade", "v3.7.0" },
-                                                               { "75b96268", "v3.6.1" },
-                                                               { "6955404", "v3.6.0" },
-                                                               { "d458317e", "v3.5.2" },
-                                                               { "6baf11da", "v3.5.1" },*/
                                        /* CRORC */
                                        { "267f8e5", "v2.9.1" },
                                        { "cecc295", "v2.9.0" },
                                        { "221ff280", "v2.10.0" },
                                        { "cfa0bc9c", "2.10.1" },
                                        { "2d4c9028", "2.11.0" },
-                                       /*{ "59e9955", "v2.8.1" },
+                                     })
+
+                                     // second list for older firmware
+                                     , mOtherFirmwareList({
+                                       /* CRU */
+                                       { "6a85d30c", "v3.12.0" },
+                                       { "7be5aa1c", "v3.11.0" },
+                                       { "e4a5a46e", "v3.10.0" },
+                                       { "f71faa86", "v3.9.1" },
+                                       { "8e0d2ffa", "v3.9.0" },
+                                       { "e8e58cff", "v3.8.0" },
+                                       { "f8cecade", "v3.7.0" },
+                                       { "75b96268", "v3.6.1" },
+                                       { "6955404", "v3.6.0" },
+                                       { "d458317e", "v3.5.2" },
+                                       { "6baf11da", "v3.5.1" },
+                                       /* CRORC */
+                                       { "59e9955", "v2.8.1" },
                                        { "f086417", "v2.8.0" },
-                                       { "474f9e1", "v2.7.0" }
+                                       { "474f9e1", "v2.7.0" },
                                        { "8e3a98e", "v2.6.1" },
-                                                               { "72cdb92", "v2.4.1" }*/
+                                       { "72cdb92", "v2.4.1" }
                                      })
 {
   std::unordered_map<std::string, std::string> parsedList;
@@ -80,6 +86,8 @@ std::string FirmwareChecker::resolveFirmwareTag(std::string firmware)
   //firmware = firmware.substr(firmware.find_last_of("-") + 1);
   if (mCompatibleFirmwareList.find(firmware) != mCompatibleFirmwareList.end()) {
     return mCompatibleFirmwareList.at(firmware);
+  } else if (mOtherFirmwareList.find(firmware) != mOtherFirmwareList.end()) {
+    return mOtherFirmwareList.at(firmware) + " (old)";
   } else {
     return firmware;
   }
