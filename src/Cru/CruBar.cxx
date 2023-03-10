@@ -156,6 +156,11 @@ uint32_t CruBar::getSuperpageSize(uint32_t link)
 {
   writeRegister(Cru::Registers::LINK_SUPERPAGE_SIZE.get(link).index, 0xbadcafe); // write a dummy value to update the FIFO
   uint32_t superpageSizeFifo = readRegister(Cru::Registers::LINK_SUPERPAGE_SIZE.get(link).index);
+  uint32_t superpageSizeFifoCopy = readRegister(Cru::Registers::LINK_SUPERPAGE_SIZE.get(link).index);
+  if (superpageSizeFifoCopy != superpageSizeFifo) {
+   log("superpageSize inconsistent: " + std::to_string(superpageSizeFifo) + " != " + std::to_string(superpageSizeFifoCopy), LogWarningDevel_(4600));
+  }
+  
   uint32_t superpageSize = Utilities::getBits(superpageSizeFifo, 0, 23); // [0-23] -> superpage size (in bytes)
   if (superpageSize == 0) {                                              // No reason to check for index -> superpageSize == 0 -> CRU FW < v3.4.0
     return 0;
