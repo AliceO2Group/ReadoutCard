@@ -39,3 +39,4 @@ This file describes the main feature changes for released versions of ReadoutCar
 
 ## next version
 - Fix for crorId field in configuration file.
+- o2-roc-list-cards is able to identify previous versions of the firmware. Their version number is displayed and they are flagged as "old", when not on the compatibility list any more.
