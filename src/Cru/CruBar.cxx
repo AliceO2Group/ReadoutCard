@@ -156,11 +156,6 @@ uint32_t CruBar::getSuperpageSize(uint32_t link)
 {
   writeRegister(Cru::Registers::LINK_SUPERPAGE_SIZE.get(link).index, 0xbadcafe); // write a dummy value to update the FIFO
   uint32_t superpageSizeFifo = readRegister(Cru::Registers::LINK_SUPERPAGE_SIZE.get(link).index);
-  uint32_t superpageSizeFifoCopy = readRegister(Cru::Registers::LINK_SUPERPAGE_SIZE.get(link).index);
-  if (superpageSizeFifoCopy != superpageSizeFifo) {
-   log("superpageSize inconsistent: " + std::to_string(superpageSizeFifo) + " != " + std::to_string(superpageSizeFifoCopy), LogWarningDevel_(4600));
-  }
-  
   uint32_t superpageSize = Utilities::getBits(superpageSizeFifo, 0, 23); // [0-23] -> superpage size (in bytes)
   if (superpageSize == 0) {                                              // No reason to check for index -> superpageSize == 0 -> CRU FW < v3.4.0
     return 0;
@@ -171,6 +166,18 @@ uint32_t CruBar::getSuperpageSize(uint32_t link)
     superpageSizeFifo = readRegister(Cru::Registers::LINK_SUPERPAGE_SIZE.get(link).index);
     superpageSize = Utilities::getBits(superpageSizeFifo, 0, 23);
     superpageSizeIndex = Utilities::getBits(superpageSizeFifo, 24, 31);
+  }
+
+  uint32_t superpageSizeFifoCopy = readRegister(Cru::Registers::LINK_SUPERPAGE_SIZE.get(link).index);
+  uint32_t superpageSizeCopy = Utilities::getBits(superpageSizeFifoCopy, 0, 23);
+  if (superpageSizeCopy != superpageSize) {
+   log("superpageSize inconsistent: 1st read = " + std::to_string(superpageSize) + " != " + std::to_string(superpageSizeCopy) + "2nd read", LogWarningDevel_(4600));
+   log("superpageSizeIndex = " + std::to_string(superpageSizeIndex) + ", mSuperpageSizeIndexCounter[ " + std::to_string(link) + "] = " + std::to_string(mSuperpageSizeIndexCounter[link]), LogWarningDevel_(4600));
+  }
+  uint32_t superpageSizeFifoCopy2 = readRegister(Cru::Registers::LINK_SUPERPAGE_SIZE.get(link).index);
+  uint32_t superpageSizeCopy2 = Utilities::getBits(superpageSizeFifoCopy2, 0, 23);
+  if (superpageSizeCopy2 != superpageSizeCopy) {
+   log("superpageSize inconsistent: 2nd read = " + std::to_string(superpageSizeCopy) + " != " + std::to_string(superpageSizeCopy2) + "3rd read", LogWarningDevel_(4600));
   }
 
   mSuperpageSizeIndexCounter[link] = (superpageSizeIndex + 1) % 256;
