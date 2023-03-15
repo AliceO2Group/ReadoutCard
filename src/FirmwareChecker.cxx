@@ -73,7 +73,13 @@ FirmwareChecker::FirmwareChecker() : mCompatibleFirmwareList({
 
   // if the parsed list is not empty update the compatible fimrware list
   if (!parsedList.empty()) {
-    mCompatibleFirmwareList = parsedList;
+    // append existing list...
+    for (const auto& p: parsedList) {
+      if ((p.first.length()) && (p.second.length())) {
+        mCompatibleFirmwareList.insert(p);
+      }
+    }
+    //mCompatibleFirmwareList = parsedList;
   }
 }
 
