@@ -40,3 +40,6 @@ This file describes the main feature changes for released versions of ReadoutCar
 ## v0.42.2 - 16/03/2023
 - Fix for crorId field in configuration file.
 - o2-roc-list-cards is able to identify previous versions of the firmware. Their version number is displayed and they are flagged as "old", when not on the compatibility list any more.
+
+## v0.42.3 - 28/04/2023
+- Fix for roc-status --monitoring: glitchCounter unsigned.
