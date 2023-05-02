@@ -32,6 +32,7 @@ FirmwareChecker::FirmwareChecker() : mCompatibleFirmwareList({
                                        { "82b4662d", "MFT PSU" },
                                        { "6838510f", "v3.17.0" },
                                        { "8e74a7f8", "v3.17.1" },
+                                       { "9052c0dd", "v3.18.1" },
                                        /* CRORC */
                                        { "267f8e5", "v2.9.1" },
                                        { "cecc295", "v2.9.0" },
