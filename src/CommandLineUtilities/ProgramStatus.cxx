@@ -304,9 +304,9 @@ class ProgramStatus : public Program
           root.put("ONU MGT RX ready", onuStatus.mgtRxReady);
           root.put("ONU MGT TX PLL locked", onuStatus.mgtTxPllLocked);
           root.put("ONU MGT RX PLL locked", onuStatus.mgtRxPllLocked);
-          root.put("PON quality", Utilities::toHexString(onuStatus.ponQuality));
-          root.put("PON quality Status", ponQualityStatusStr);
-          root.put("PON RX power (dBm)", onuStatus.ponRxPower);
+          root.put("ONU PON quality", Utilities::toHexString(onuStatus.ponQuality));
+          root.put("ONU PON quality Status", ponQualityStatusStr);
+          root.put("ONU PON RX power (dBm)", onuStatus.ponRxPower);
           root.put("ONU glitch counter", onuStatus.glitchCounter);
         } else {
           std::cout << "=============================" << std::endl;
@@ -324,9 +324,9 @@ class ProgramStatus : public Program
           std::cout << "ONU MGT RX ready: \t" << std::boolalpha << onuStatus.mgtRxReady << std::endl;
           std::cout << "ONU MGT TX PLL locked: \t" << std::boolalpha << onuStatus.mgtTxPllLocked << std::endl;
           std::cout << "ONU MGT RX PLL locked: \t" << std::boolalpha << onuStatus.mgtRxPllLocked << std::endl;
-          std::cout << "PON quality: \t\t0x" << std::hex << onuStatus.ponQuality << std::endl;
-          std::cout << "PON quality status: \t" << ponQualityStatusStr << std::endl;
-          std::cout << "PON RX power (dBm): \t" << onuStatus.ponRxPower << std::endl;
+          std::cout << "ONU PON quality: \t\t0x" << std::hex << onuStatus.ponQuality << std::endl;
+          std::cout << "ONU PON quality status: \t" << ponQualityStatusStr << std::endl;
+          std::cout << "ONU PON RX power (dBm): \t" << onuStatus.ponRxPower << std::endl;
           std::cout << "ONU glitch counter: \t" << onuStatus.glitchCounter << std::endl;
         }
       }
