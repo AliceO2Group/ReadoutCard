@@ -671,6 +671,9 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | `tags::Key::ID`       | ID of the link        |
 | `tags::Key::Type`     | `tags::Value::CRU`    |
 
+
+NB: For link 15 (User Logic), when enabled, the list of values exported is a subset of the metrics above: `"orbitSor"`.
+
 Logging
 -------------------
 Logging is achieved through the use of the [InfoLogger](https://github.com/AliceO2Group/InfoLogger) library.

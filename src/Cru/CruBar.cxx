@@ -545,10 +545,12 @@ Cru::ReportInfo CruBar::report(bool forConfig)
   bool dynamicOffset = datapathWrapper.getDynamicOffsetEnabled(mEndpoint);
   uint32_t triggerWindowSize = datapathWrapper.getTriggerWindowSize(mEndpoint);
 
+  uint32_t userLogicLinkId = 15;
   Link userLogicLink;
   userLogicLink.dwrapper = mEndpoint;
-  userLogicLink.dwrapperId = 15;
+  userLogicLink.dwrapperId = userLogicLinkId;
   bool userLogicEnabled = datapathWrapper.isLinkEnabled(userLogicLink);
+  uint32_t userLogicOrbitSor = datapathWrapper.getLinkRegister(userLogicLink, Cru::Registers::DATALINK_ORBIT_SOR);
 
   Link runStatsLink;
   runStatsLink.dwrapper = mEndpoint;
@@ -560,22 +562,23 @@ Cru::ReportInfo CruBar::report(bool forConfig)
 
   bool dmaStatus = getDmaStatus();
 
-  Cru::ReportInfo reportInfo = {
-    linkMap,
-    clock,
-    downstreamData,
-    ponStatusRegister,
-    onuAddress,
-    cruId,
-    dynamicOffset,
-    triggerWindowSize,
-    gbtEnabled,
-    userLogicEnabled,
-    runStatsEnabled,
-    userAndCommonLogicEnabled,
-    timeFrameLength,
-    dmaStatus
-  };
+  Cru::ReportInfo reportInfo;
+  reportInfo.linkMap = linkMap;
+  reportInfo.ttcClock = clock;
+  reportInfo.downstreamData = downstreamData;
+  reportInfo.ponStatusRegister = ponStatusRegister;
+  reportInfo.onuAddress = onuAddress;
+  reportInfo.cruId = cruId;
+  reportInfo.dynamicOffset = dynamicOffset;
+  reportInfo.triggerWindowSize = triggerWindowSize;
+  reportInfo.gbtEnabled = gbtEnabled;
+  reportInfo.userLogicEnabled = userLogicEnabled;
+  reportInfo.userLogicLinkId = userLogicLinkId;
+  reportInfo.userLogicOrbitSor = userLogicOrbitSor;
+  reportInfo.runStatsEnabled = runStatsEnabled;
+  reportInfo.userAndCommonLogicEnabled = userAndCommonLogicEnabled;
+  reportInfo.timeFrameLength = timeFrameLength;
+  reportInfo.dmaStatus = dmaStatus;
 
   return reportInfo;
 }

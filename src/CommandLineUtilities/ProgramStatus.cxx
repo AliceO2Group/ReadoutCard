@@ -466,6 +466,20 @@ class ProgramStatus : public Program
           table << format;
         }
       }
+
+      /* PARAMETERS FOR USER LOGIC */
+      if (reportInfo.userLogicEnabled) {
+        if (mOptions.monitoring) {
+          monitoring->send(Metric{ "link" }
+                             .addValue((uint64_t)reportInfo.userLogicOrbitSor, "orbitSor")
+                             .addTag(tags::Key::SerialId, card.serialId.getSerial())
+                             .addTag(tags::Key::Endpoint, card.serialId.getEndpoint())
+                             .addTag(tags::Key::CRU, card.sequenceId)
+                             .addTag(tags::Key::ID, reportInfo.userLogicLinkId)
+                             .addTag(tags::Key::Type, tags::Value::CRU));
+        }
+      }
+
     } else {
       std::cout << "Invalid card type" << std::endl;
       return;
