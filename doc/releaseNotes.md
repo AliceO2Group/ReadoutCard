@@ -43,3 +43,6 @@ This file describes the main feature changes for released versions of ReadoutCar
 
 ## v0.42.3 - 28/04/2023
 - Fix for roc-status --monitoring: glitchCounter unsigned.
+
+## next version
+- Added some (per link) counters for roc-status --monitoring: pktProcessed, pktErrorProtocol, pktErrorCheck1, pktErrorCheck2, pktErrorOversize, orbitSor

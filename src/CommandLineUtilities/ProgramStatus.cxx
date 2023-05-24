@@ -394,7 +394,6 @@ class ProgramStatus : public Program
 
         float rxFreq = link.rxFreq;
         float txFreq = link.txFreq;
-        uint32_t glitchCounter = link.glitchCounter;
         std::string fecCounter;
         if (mOptions.fec) {
           fecCounter = Utilities::toHexString(link.fecCounter);
@@ -427,8 +426,14 @@ class ProgramStatus : public Program
                              .addValue(opticalPower, "opticalPower")
                              .addValue(systemId, "systemId")
                              .addValue(feeId, "feeId")
-                             .addValue((uint64_t)glitchCounter, "glitchCounter")
+                             .addValue((uint64_t)link.glitchCounter, "glitchCounter")
                              .addValue((uint64_t)link.fecCounter, "fecCounter")
+                             .addValue((uint64_t)link.pktProcessed, "pktProcessed")
+                             .addValue((uint64_t)link.pktErrorProtocol, "pktErrorProtocol")
+                             .addValue((uint64_t)link.pktErrorCheck1, "pktErrorCheck1")
+                             .addValue((uint64_t)link.pktErrorCheck2, "pktErrorCheck2")
+                             .addValue((uint64_t)link.pktErrorOversize, "pktErrorOversize")
+                             .addValue((uint64_t)link.orbitSor, "orbitSor")
                              .addTag(tags::Key::SerialId, card.serialId.getSerial())
                              .addTag(tags::Key::Endpoint, card.serialId.getEndpoint())
                              .addTag(tags::Key::CRU, card.sequenceId)
@@ -449,7 +454,7 @@ class ProgramStatus : public Program
           linkNode.put("opticalPower", Utilities::toPreciseString(opticalPower));
           linkNode.put("systemId", systemId);
           linkNode.put("feeId", feeId);
-          linkNode.put("glitchCounter", glitchCounter);
+          linkNode.put("glitchCounter", link.glitchCounter);
           if (mOptions.fec) {
             linkNode.put("fecCounter", fecCounter);
           }

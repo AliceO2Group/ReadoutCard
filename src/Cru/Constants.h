@@ -327,6 +327,12 @@ static constexpr Register DWRAPPER_TRIGGER_SIZE(0x00000034);
 static constexpr Register DATALINK_PACKETS_REJECTED(0x00000008);
 static constexpr Register DATALINK_PACKETS_ACCEPTED(0x0000000c);
 static constexpr Register DATALINK_PACKETS_FORCED(0x00000010);
+static constexpr Register DATALINK_PACKETS_PROCESSED(0x00000014);
+static constexpr Register DATALINK_PACKETS_ERROR_PROTOCOL(0x00000018);
+static constexpr Register DATALINK_PACKETS_ERROR_CHECK1(0x0000001c);
+static constexpr Register DATALINK_PACKETS_ERROR_CHECK2(0x00000020);
+static constexpr Register DATALINK_PACKETS_ERROR_OVERSIZE(0x00000024);
+static constexpr Register DATALINK_ORBIT_SOR(0x00000028);
 
 /// Registers to set the Flow Control
 static constexpr Register FLOW_CONTROL_OFFSET(0x000c0000);
@@ -372,6 +378,13 @@ static constexpr Register USER_LOGIC_EVSIZE(0x00c80004);
 static constexpr Register USER_LOGIC_EVSIZE_RAND(0x00c80008);
 static constexpr Register USER_LOGIC_SYSTEM_ID(0x00c8000c);
 static constexpr Register USER_LOGIC_LINK_ID(0x00c80010);
+
+static constexpr Register USER_LOGIC_BASE0(0x0065E000);
+static constexpr Register USER_LOGIC_BASE1(0x0075E000);
+static constexpr Register USER_LOGIC_PACKETS_REJECTED(0x00000008);
+static constexpr Register USER_LOGIC_PACKETS_ACCEPTED(0x0000000c);
+static constexpr Register USER_LOGIC_PACKETS_FORCED(0x00000010);
+static constexpr Register USER_LOGIC_ORBIT_SOR(0x00000014);
 
 /// Register to adjust the TimeFrame length (31 downto 20)
 static constexpr Register TIME_FRAME_LENGTH(0x00000c00);

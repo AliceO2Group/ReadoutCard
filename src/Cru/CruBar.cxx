@@ -513,6 +513,12 @@ Cru::ReportInfo CruBar::report(bool forConfig)
     link.fecCounter = gbt.getFecCounter(link);
     link.systemId = datapathWrapper.getSystemId(link);
     link.feeId = datapathWrapper.getFeeId(link);
+    link.pktProcessed = datapathWrapper.getLinkRegister(link, Cru::Registers::DATALINK_PACKETS_PROCESSED);
+    link.pktErrorProtocol = datapathWrapper.getLinkRegister(link, Cru::Registers::DATALINK_PACKETS_ERROR_PROTOCOL);
+    link.pktErrorCheck1 = datapathWrapper.getLinkRegister(link, Cru::Registers::DATALINK_PACKETS_ERROR_CHECK1);
+    link.pktErrorCheck2 = datapathWrapper.getLinkRegister(link, Cru::Registers::DATALINK_PACKETS_ERROR_CHECK2);
+    link.pktErrorOversize = datapathWrapper.getLinkRegister(link, Cru::Registers::DATALINK_PACKETS_ERROR_OVERSIZE);
+    link.orbitSor = datapathWrapper.getLinkRegister(link, Cru::Registers::DATALINK_ORBIT_SOR);
 
     if (link.enabled) {
       gbtEnabled = true;
