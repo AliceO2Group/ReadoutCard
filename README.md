@@ -654,6 +654,14 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | `"opticalPower"` | -                                                                 | double |
 | `"systemId"`     | 8-bit hex                                                         | string |
 | `"feeId"`        | 12-bit hex                                                        | string |
+| `"glitchCounter"`       | -                                                          | int    |
+| `"fecCounter"`          | -                                                          | int    |
+| `"pktProcessed"`        | -                                                          | int    |
+| `"pktErrorProtocol"`    | -                                                          | int    |
+| `"pktErrorCheck1"`      | -                                                          | int    |
+| `"pktErrorCheck2"`      | -                                                          | int    |
+| `"pktErrorOversize"`    | -                                                          | int    |
+| `"orbitSor"`            | -                                                          | int    |
 
 | Tag key               | Value                 |
 | --------------------- | --------------------- |

@@ -62,6 +62,10 @@ class DatapathWrapper
   void setFeeId(Link link, uint32_t feeId);
   uint32_t getFeeId(Link link);
 
+  // generic function to retrieve given register for given link
+  // (to avoid defining one getter function per register...)
+  uint32_t getLinkRegister(const Link link, const Register reg);
+
  private:
   uint32_t getDatapathWrapperBaseAddress(int wrapper);
 

@@ -33,6 +33,8 @@ FirmwareChecker::FirmwareChecker() : mCompatibleFirmwareList({
                                        { "6838510f", "v3.17.0" },
                                        { "8e74a7f8", "v3.17.1" },
                                        { "9052c0dd", "v3.18.1" },
+                                       { "47df4106", "v3.19.0" },
+                                       { "adc37d07", "v3.19.0" },
                                        /* CRORC */
                                        { "267f8e5", "v2.9.1" },
                                        { "cecc295", "v2.9.0" },

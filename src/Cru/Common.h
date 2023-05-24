@@ -73,6 +73,12 @@ struct Link {
   uint32_t feeId = 0x1f; // invalid, used as "unset" placeholder*/
   uint32_t glitchCounter = 0;
   uint32_t fecCounter = 0;
+  uint32_t pktProcessed = 0;
+  uint32_t pktErrorProtocol = 0;
+  uint32_t pktErrorCheck1 = 0;
+  uint32_t pktErrorCheck2 = 0;
+  uint32_t pktErrorOversize = 0;
+  uint32_t orbitSor = 0;
 
   bool operator==(const Link& dlink) const
   {

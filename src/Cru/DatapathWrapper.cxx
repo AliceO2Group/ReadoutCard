@@ -262,6 +262,16 @@ uint32_t DatapathWrapper::getForcedPackets(Link link)
   return mPdaBar->readRegister(address / 4);
 }
 
+uint32_t DatapathWrapper::getLinkRegister(const Link link, const Register reg)
+{
+  uint32_t address = getDatapathWrapperBaseAddress(link.dwrapper) +
+                     Cru::Registers::DATAPATHLINK_OFFSET.address +
+                     Cru::Registers::DATALINK_OFFSET.address * link.dwrapperId +
+                     reg.address;
+
+  return mPdaBar->readRegister(address / 4);
+}
+
 /// size in gbt words
 void DatapathWrapper::setTriggerWindowSize(int wrapper, uint32_t size)
 {
