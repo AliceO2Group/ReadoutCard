@@ -611,6 +611,7 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | `"mgtRxPllLocked"`      | 0/1 (False/True)               | int    |
 | `"ponQualityStatus"`    | 0/1 (Bad/Good)                 | int    |
 | `"ponRxPower"`          | dBm                            | int    |
+| `"glitchCounter"`       |                                | int    |
 
 | Tag key               | Value                 |
 | --------------------- | --------------------- |
@@ -670,6 +671,9 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | `tags::Key::CRU`      | ID of the CRU         |
 | `tags::Key::ID`       | ID of the link        |
 | `tags::Key::Type`     | `tags::Value::CRU`    |
+
+
+NB: For link 15 (User Logic), when enabled, the list of values exported is a subset of the metrics above: `"orbitSor"`.
 
 Logging
 -------------------

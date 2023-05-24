@@ -285,6 +285,7 @@ class ProgramStatus : public Program
                              .addValue(onuStatus.mgtRxPllLocked, "mgtRxPllLocked")
                              .addValue(onuStatus.ponQualityStatus, "ponQualityStatus")
                              .addValue(onuStatus.ponRxPower, "ponRxPower")
+                             .addValue((uint64_t)onuStatus.glitchCounter, "glitchCounter")
                              .addTag(tags::Key::SerialId, card.serialId.getSerial())
                              .addTag(tags::Key::Endpoint, card.serialId.getEndpoint())
                              .addTag(tags::Key::ID, card.sequenceId)
@@ -303,9 +304,10 @@ class ProgramStatus : public Program
           root.put("ONU MGT RX ready", onuStatus.mgtRxReady);
           root.put("ONU MGT TX PLL locked", onuStatus.mgtTxPllLocked);
           root.put("ONU MGT RX PLL locked", onuStatus.mgtRxPllLocked);
-          root.put("PON quality", Utilities::toHexString(onuStatus.ponQuality));
-          root.put("PON quality Status", ponQualityStatusStr);
-          root.put("PON RX power (dBm)", onuStatus.ponRxPower);
+          root.put("ONU PON quality", Utilities::toHexString(onuStatus.ponQuality));
+          root.put("ONU PON quality Status", ponQualityStatusStr);
+          root.put("ONU PON RX power (dBm)", onuStatus.ponRxPower);
+          root.put("ONU glitch counter", onuStatus.glitchCounter);
         } else {
           std::cout << "=============================" << std::endl;
           std::cout << "ONU downstream status: \t" << onuDownstreamStatus << std::endl;
@@ -322,9 +324,10 @@ class ProgramStatus : public Program
           std::cout << "ONU MGT RX ready: \t" << std::boolalpha << onuStatus.mgtRxReady << std::endl;
           std::cout << "ONU MGT TX PLL locked: \t" << std::boolalpha << onuStatus.mgtTxPllLocked << std::endl;
           std::cout << "ONU MGT RX PLL locked: \t" << std::boolalpha << onuStatus.mgtRxPllLocked << std::endl;
-          std::cout << "PON quality: \t\t0x" << std::hex << onuStatus.ponQuality << std::endl;
-          std::cout << "PON quality status: \t" << ponQualityStatusStr << std::endl;
-          std::cout << "PON RX power (dBm): \t" << onuStatus.ponRxPower << std::endl;
+          std::cout << "ONU PON quality: \t\t0x" << std::hex << onuStatus.ponQuality << std::endl;
+          std::cout << "ONU PON quality status: \t" << ponQualityStatusStr << std::endl;
+          std::cout << "ONU PON RX power (dBm): \t" << onuStatus.ponRxPower << std::endl;
+          std::cout << "ONU glitch counter: \t" << onuStatus.glitchCounter << std::endl;
         }
       }
 
@@ -466,6 +469,20 @@ class ProgramStatus : public Program
           table << format;
         }
       }
+
+      /* PARAMETERS FOR USER LOGIC */
+      if (reportInfo.userLogicEnabled) {
+        if (mOptions.monitoring) {
+          monitoring->send(Metric{ "link" }
+                             .addValue((uint64_t)reportInfo.userLogicOrbitSor, "orbitSor")
+                             .addTag(tags::Key::SerialId, card.serialId.getSerial())
+                             .addTag(tags::Key::Endpoint, card.serialId.getEndpoint())
+                             .addTag(tags::Key::CRU, card.sequenceId)
+                             .addTag(tags::Key::ID, reportInfo.userLogicLinkId)
+                             .addTag(tags::Key::Type, tags::Value::CRU));
+        }
+      }
+
     } else {
       std::cout << "Invalid card type" << std::endl;
       return;

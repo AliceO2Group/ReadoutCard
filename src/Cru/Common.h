@@ -120,6 +120,8 @@ struct ReportInfo {
   uint32_t triggerWindowSize;
   bool gbtEnabled;
   bool userLogicEnabled;
+  uint32_t userLogicLinkId;
+  uint32_t userLogicOrbitSor;
   bool runStatsEnabled;
   bool userAndCommonLogicEnabled;
   uint16_t timeFrameLength;
@@ -147,6 +149,7 @@ struct OnuStatus {
   uint32_t ponQuality;
   int ponQualityStatus;
   double ponRxPower;
+  uint32_t glitchCounter;
 };
 
 struct FecStatus {
