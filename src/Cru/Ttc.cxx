@@ -193,6 +193,7 @@ OnuStatus Ttc::onuStatus(bool monitoring)
 {
   uint32_t calStatus = mBar->readRegister(Cru::Registers::ONU_USER_LOGIC.index + 0xc / 4);
   uint32_t onuAddress = mBar->readRegister(Cru::Registers::ONU_USER_LOGIC.index) >> 1;
+  uint32_t onuGlitchCounter = mBar->readRegister(Cru::Registers::TTC_ONU_GLITCH_COUNTER.index);
 
   return {
     onuAddress,
@@ -207,7 +208,8 @@ OnuStatus Ttc::onuStatus(bool monitoring)
     getOnuStickyStatus(monitoring),
     getPonQuality(),
     getPonQualityStatus(),
-    getPonRxPower()
+    getPonRxPower(),
+    onuGlitchCounter,
   };
 }
 

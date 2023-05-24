@@ -285,6 +285,7 @@ class ProgramStatus : public Program
                              .addValue(onuStatus.mgtRxPllLocked, "mgtRxPllLocked")
                              .addValue(onuStatus.ponQualityStatus, "ponQualityStatus")
                              .addValue(onuStatus.ponRxPower, "ponRxPower")
+                             .addValue((uint64_t)onuStatus.glitchCounter, "glitchCounter")
                              .addTag(tags::Key::SerialId, card.serialId.getSerial())
                              .addTag(tags::Key::Endpoint, card.serialId.getEndpoint())
                              .addTag(tags::Key::ID, card.sequenceId)
@@ -306,6 +307,7 @@ class ProgramStatus : public Program
           root.put("PON quality", Utilities::toHexString(onuStatus.ponQuality));
           root.put("PON quality Status", ponQualityStatusStr);
           root.put("PON RX power (dBm)", onuStatus.ponRxPower);
+          root.put("ONU glitch counter", onuStatus.glitchCounter);
         } else {
           std::cout << "=============================" << std::endl;
           std::cout << "ONU downstream status: \t" << onuDownstreamStatus << std::endl;
@@ -325,6 +327,7 @@ class ProgramStatus : public Program
           std::cout << "PON quality: \t\t0x" << std::hex << onuStatus.ponQuality << std::endl;
           std::cout << "PON quality status: \t" << ponQualityStatusStr << std::endl;
           std::cout << "PON RX power (dBm): \t" << onuStatus.ponRxPower << std::endl;
+          std::cout << "ONU glitch counter: \t" << onuStatus.glitchCounter << std::endl;
         }
       }
 

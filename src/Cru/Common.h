@@ -149,6 +149,7 @@ struct OnuStatus {
   uint32_t ponQuality;
   int ponQualityStatus;
   double ponRxPower;
+  uint32_t glitchCounter;
 };
 
 struct FecStatus {

@@ -45,4 +45,6 @@ This file describes the main feature changes for released versions of ReadoutCar
 - Fix for roc-status --monitoring: glitchCounter unsigned.
 
 ## next version
-- Added some (per link) counters for roc-status --monitoring: pktProcessed, pktErrorProtocol, pktErrorCheck1, pktErrorCheck2, pktErrorOversize, orbitSor
+- Added some counters for roc-status:
+  - link (with --monitoring option only): pktProcessed, pktErrorProtocol, pktErrorCheck1, pktErrorCheck2, pktErrorOversize, orbitSor (including for UL link 15)
+  - onu (with --onu option, all output modes, including --monitoring): glitchCounter

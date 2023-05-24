@@ -611,6 +611,7 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | `"mgtRxPllLocked"`      | 0/1 (False/True)               | int    |
 | `"ponQualityStatus"`    | 0/1 (Bad/Good)                 | int    |
 | `"ponRxPower"`          | dBm                            | int    |
+| `"glitchCounter"`       |                                | int    |
 
 | Tag key               | Value                 |
 | --------------------- | --------------------- |
