@@ -41,6 +41,8 @@ FirmwareChecker::FirmwareChecker() : mCompatibleFirmwareList({
                                        { "221ff280", "v2.10.0" },
                                        { "cfa0bc9c", "2.10.1" },
                                        { "2d4c9028", "2.11.0" },
+                                       { "c7ff5689", "2.12.0" },
+                                       { "ac9dd573", "2.12.1" },
                                      })
 
                                      // second list for older firmware

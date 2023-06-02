@@ -32,6 +32,7 @@ enum LinkStatus {
 struct Link {
   LinkStatus status = LinkStatus::Down;
   float opticalPower = 0.0;
+  uint32_t orbitSor = 0;
 };
 
 struct ReportInfo {

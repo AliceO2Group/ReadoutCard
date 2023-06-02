@@ -146,6 +146,12 @@ Crorc::ReportInfo CrorcBar::report(bool forConfig)
   }
 
   getOpticalPowers(linkMap);
+
+  for (auto& el : linkMap) {
+    auto& link = el.second;
+    link.orbitSor = readRegister(Crorc::Registers::ORBIT_SOR.index);
+  }
+
   Crorc::ReportInfo reportInfo = {
     linkMap,
     getCrorcId(),
