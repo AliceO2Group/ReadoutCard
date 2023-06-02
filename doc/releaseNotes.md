@@ -48,3 +48,7 @@ This file describes the main feature changes for released versions of ReadoutCar
 - Added some counters for roc-status:
   - link (with --monitoring option only): pktProcessed, pktErrorProtocol, pktErrorCheck1, pktErrorCheck2, pktErrorOversize, orbitSor (including for UL link 15)
   - onu (with --onu option, all output modes, including --monitoring): glitchCounter
+
+## v0.44.0 - 02/06/2023
+- Added some counters for roc-status:
+  - link (with --monitoring option only): orbitSOR for CRORC

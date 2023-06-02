@@ -162,6 +162,7 @@ class ProgramStatus : public Program
                              .addValue(card.pciAddress.toString(), "pciAddress")
                              .addValue(link.status, "status")
                              .addValue(opticalPower, "opticalPower")
+                             .addValue((uint64_t)link.orbitSor, "orbitSor")
                              .addTag(tags::Key::SerialId, card.serialId.getSerial())
                              .addTag(tags::Key::CRORC, card.sequenceId)
                              .addTag(tags::Key::ID, id)

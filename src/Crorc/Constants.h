@@ -429,6 +429,7 @@ static constexpr Register SERIAL_NUMBER(0x000000FC);
 
 static constexpr Register ACQ_RATE(0x00000050);
 static constexpr Register PKTS_RECEIVED(0x00000054);
+static constexpr Register ORBIT_SOR(0x00000060);
 
 } // namespace Registers
 } //namespace Crorc

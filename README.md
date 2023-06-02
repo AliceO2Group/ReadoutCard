@@ -562,6 +562,7 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | `"pciAddress"`   | -                  | string |
 | `"status"`       | 0/1 (DOWN/UP)      | int    |
 | `"opticalPower"` | -                  | double |
+| `"orbitSor"`     | -                  | int    |
 
 | Tag key               | Value                 |
 | --------------------- | --------------------- |
