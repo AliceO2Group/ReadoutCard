@@ -52,3 +52,4 @@ This file describes the main feature changes for released versions of ReadoutCar
 ## v0.44.0 - 02/06/2023
 - Added some counters for roc-status:
   - link (with --monitoring option only): orbitSOR for CRORC
+- Updated list of firmwares for CRORC
