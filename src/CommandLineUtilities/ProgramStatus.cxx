@@ -475,6 +475,7 @@ class ProgramStatus : public Program
       if (reportInfo.userLogicEnabled) {
         if (mOptions.monitoring) {
           monitoring->send(Metric{ "link" }
+                             .addValue(card.pciAddress.toString(), "pciAddress")
                              .addValue((uint64_t)reportInfo.userLogicOrbitSor, "orbitSor")
                              .addTag(tags::Key::SerialId, card.serialId.getSerial())
                              .addTag(tags::Key::Endpoint, card.serialId.getEndpoint())
