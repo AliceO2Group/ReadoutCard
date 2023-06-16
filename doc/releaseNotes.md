@@ -53,3 +53,8 @@ This file describes the main feature changes for released versions of ReadoutCar
 - Added some counters for roc-status:
   - link (with --monitoring option only): orbitSOR for CRORC
 - Updated list of firmwares for CRORC
+
+## v0.44.1 - 16/06/2023
+- Updated list of CRORC firmwares: hash truncated to 7 chars, because CRORC does not report all 8.
+- roc-status:
+  - added pciAddress for user logic link 15

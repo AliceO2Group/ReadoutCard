@@ -35,14 +35,14 @@ FirmwareChecker::FirmwareChecker() : mCompatibleFirmwareList({
                                        { "9052c0dd", "v3.18.1" },
                                        { "47df4106", "v3.19.0" },
                                        { "adc37d07", "v3.19.0" },
-                                       /* CRORC */
+                                       /* CRORC - keep 7 chars only for the hash */
                                        { "267f8e5", "v2.9.1" },
                                        { "cecc295", "v2.9.0" },
-                                       { "221ff280", "v2.10.0" },
-                                       { "cfa0bc9c", "2.10.1" },
-                                       { "2d4c9028", "2.11.0" },
-                                       { "c7ff5689", "2.12.0" },
-                                       { "ac9dd573", "2.12.1" },
+                                       { "221ff28", "v2.10.0" },
+                                       { "cfa0bc9", "2.10.1" },
+                                       { "2d4c902", "2.11.0" },
+                                       { "c7ff568", "2.12.0" },
+                                       { "ac9dd57", "2.12.1" },
                                      })
 
                                      // second list for older firmware
