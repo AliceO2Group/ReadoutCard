@@ -267,8 +267,14 @@ bool CrorcDmaChannel::isASuperpageAvailable()
   return diff > 0;
 }
 
+std::mutex lockFillSuperpages;
+
 void CrorcDmaChannel::fillSuperpages()
 {
+  // ensure there is no concurrency to access registers
+  // because this causes HW problems, cf issue O2-3772
+  std::unique_lock<std::mutex> lock(lockFillSuperpages);
+
   // Check for arrivals & handle them
   if (!mIntermediateQueue.isEmpty() && isASuperpageAvailable()) {
 

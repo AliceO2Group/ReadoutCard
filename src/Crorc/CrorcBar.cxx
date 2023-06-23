@@ -372,13 +372,64 @@ void CrorcBar::stopDataReceiver()
     Utilities::setBit(CSRRegister, Crorc::Registers::DATA_RX_ON_OFF_BIT, true);
     writeRegister(Crorc::Registers::CHANNEL_CSR.index, CSRRegister);
   }
+
+  nSPpush = 0;
+  nSPpushErr = 0;
+  nSPcounter = 0;
 }
 
 void CrorcBar::pushSuperpageAddressAndSize(uintptr_t blockAddress, uint32_t blockLength)
 {
+/*
   writeRegister(Crorc::Registers::SP_WR_ADDR_HIGH.index, arch64() ? (blockAddress >> 32) : 0x0);
   writeRegister(Crorc::Registers::SP_WR_ADDR_LOW.index, blockAddress & 0xffffffff);
   writeRegister(Crorc::Registers::SP_WR_SIZE.index, blockLength);
+*/
+
+  uint32_t vwr; // value to write
+  uint32_t vxp; // value expected on read back (not always = vwr)
+  uint32_t vrd; // value read back
+  size_t ix; // address index
+
+  auto checkSuccess = [&] () {
+    if (vrd != vxp) {
+      char err[1024];
+      snprintf(err,1024, "pushSuperpageAddress : write failed ix = 0x%X write = 0x%X expected = 0x%X != read 0x%X", (int)ix, (int)vwr, (int)vxp, (int)vrd);
+      log(err, LogErrorDevel_(4699));
+      nSPpushErr++;
+      return -1;
+    }
+    return 0;
+  };
+
+  try {
+    nSPpush++;
+
+    ix = Crorc::Registers::SP_WR_ADDR_HIGH.index;
+    vxp = vwr = arch64() ? (blockAddress >> 32) : 0x0;
+    writeRegister(ix, vwr);
+    vrd = readRegister(ix);
+    checkSuccess();
+
+    ix = Crorc::Registers::SP_WR_ADDR_LOW.index;
+    vxp = vwr = blockAddress & 0xffffffff;
+    writeRegister(ix, vwr);
+    vrd = readRegister(ix);
+    checkSuccess();
+
+    ix = Crorc::Registers::SP_WR_SIZE.index;
+    vxp = vwr = blockLength;
+    vxp = (vwr << 8) | (++nSPcounter); // weird feature of crorc
+    writeRegister(ix, vwr);
+    vrd = readRegister(ix);
+    if (!checkSuccess()) {
+      nSPcounter = vrd & 0xFF;
+    }
+  } catch(...) {
+    nSPpushErr++;
+    log("pushSuperpageAddress exception", LogErrorDevel_(4699));
+  }
+  return;
 }
 
 void CrorcBar::startDataGenerator()
