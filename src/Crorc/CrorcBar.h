@@ -72,6 +72,10 @@ class CrorcBar final : public BarInterfaceBase
   void setSiuLoopback();
   Crorc::PacketMonitoringInfo monitorPackets();
 
+  int nSPpush = 0; // total pages pushed
+  int nSPpushErr = 0; // number of push errors
+  uint8_t nSPcounter = 0; // 8-bit push counter as in device
+
  private:
   std::map<int, Crorc::Link> initializeLinkMap();
 
