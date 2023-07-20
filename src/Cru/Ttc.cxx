@@ -215,14 +215,14 @@ OnuStatus Ttc::onuStatus(bool monitoring)
 
 FecStatus Ttc::fecStatus()
 {
-  uint32_t fecStatus = mBar->readRegister(Cru::Registers::ONU_FEC_COUNTERS.index);
+  uint32_t fecStatus = mBar->readRegister(Cru::Registers::ONU_FEC_COUNTERS_STATUS.index);
   return {
     Utilities::getBit(fecStatus, 0) == 1,
     Utilities::getBit(fecStatus, 1) == 1,
-    Utilities::getBit(fecStatus, 7) == 1,
-    (uint8_t)Utilities::getBits(fecStatus, 8, 15),
-    (uint8_t)Utilities::getBits(fecStatus, 16, 23),
-    (uint8_t)Utilities::getBits(fecStatus, 24, 31)
+    0, // meaningless, kept for compatibility
+    (uint8_t)mBar->readRegister(Cru::Registers::ONU_FEC_COUNTERS_SERR.index),
+    (uint8_t)mBar->readRegister(Cru::Registers::ONU_FEC_COUNTERS_DERR.index),
+    0 // meaningless, kept for compatibility
   };
 }
 
