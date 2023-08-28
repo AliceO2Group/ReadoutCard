@@ -102,7 +102,7 @@ DmaChannelPdaBase::DmaChannelPdaBase(const Parameters& parameters,
           log("Buffer is hugepage-backed", LogDebugTrace_(4209));
         } else {
           if (AliceO2::Common::Iommu::isEnabled()) {
-            log("Buffer is NOT hugepage-backed, but IOMMU is enabled", LogWarningTrace_(4210));
+            log("Buffer is NOT hugepage-backed, but IOMMU is enabled", LogDebugTrace_(4210));
           } else {
             std::string message =
               "Buffer is NOT hugepage-backed and IOMMU is disabled - unsupported buffer "
