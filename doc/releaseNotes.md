@@ -64,3 +64,4 @@ This file describes the main feature changes for released versions of ReadoutCar
 
 ##
 - Fix registers for FEC status counters.
+- Updated list of firmwares for CRORC
