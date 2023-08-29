@@ -62,6 +62,7 @@ This file describes the main feature changes for released versions of ReadoutCar
 ## v0.44.2 - 23/06/2023
 - Added a workaround to avoid HW lock issues for CRORC: prevent concurrency in the calls to feed superpages to the card. Added a check to detect write discrepencies.
 
-##
+## v0.44.3 - 29/08/2023
 - Fix registers for FEC status counters.
 - Updated list of firmwares for CRORC
+- CMake cleanup: removed python2 support.
