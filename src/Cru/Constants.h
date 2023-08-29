@@ -215,7 +215,9 @@ static constexpr Register CLOCK_PLL_CONTROL_ONU(0x00240018);
 static constexpr Register ONU_USER_LOGIC(0x0022a000);
 
 /// Register for getting FEC status
-static constexpr Register ONU_FEC_COUNTERS(0x0022200c);
+static constexpr Register ONU_FEC_COUNTERS_STATUS(0x0022A004);
+static constexpr Register ONU_FEC_COUNTERS_SERR(0x0022A020);
+static constexpr Register ONU_FEC_COUNTERS_DERR(0x0022A028);
 
 /// Registers for setting the Ref Gen
 static constexpr Register ONU_USER_REFGEN(0x0022c000);
