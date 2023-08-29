@@ -61,12 +61,12 @@ endif()
 ####################################
 # Populate the Cru/Constants.h file with the register addresses contained in CRU/cru_table.py
 ####################################
-execute_process(COMMAND /usr/bin/env python3 ${CMAKE_CURRENT_SOURCE_DIR}/src/Cru/cru_constants_populate.py
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/Cru
-  RESULT_VARIABLE status)
-IF(NOT "${status}" EQUAL "0")
-  MESSAGE(WARNING "Couldn't update CRU Register Addresses")
-ENDIF()
+#execute_process(COMMAND /usr/bin/env python3 ${CMAKE_CURRENT_SOURCE_DIR}/src/Cru/cru_constants_populate.py
+#  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/Cru
+#  RESULT_VARIABLE status)
+#IF(NOT "${status}" EQUAL "0")
+#  MESSAGE(WARNING "Couldn't update CRU Register Addresses")
+#ENDIF()
 
 ####################################
 # Dependencies
