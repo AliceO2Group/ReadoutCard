@@ -199,10 +199,6 @@ class ProgramPatternPlayer : public Program
 
  private:
   struct OptionsStruct {
-    std::string pat0;
-    std::string pat1;
-    std::string pat2;
-    std::string pat3;
     PatternPlayer::Info info;
     bool readBack = false;
   } mOptions;
