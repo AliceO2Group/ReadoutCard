@@ -354,20 +354,29 @@ static constexpr Register CTP_EMU_FBCT(0x00280024);
 static constexpr Register CTP_EMU_ORBIT_INIT(0x00280028);
 
 /// Registers for the Pattern Player
+/// see https://gitlab.cern.ch/alice-cru/cru-fw/-/tree/pplayer/TTC#address-table
 static constexpr Register PATPLAYER_CFG(0x00260000);
-static constexpr Register PATPLAYER_IDLE_PATTERN_0(0x00260004);
-static constexpr Register PATPLAYER_IDLE_PATTERN_1(0x00260008);
-static constexpr Register PATPLAYER_IDLE_PATTERN_2(0x0026000c);
-static constexpr Register PATPLAYER_SYNC_PATTERN_0(0x00260010);
-static constexpr Register PATPLAYER_SYNC_PATTERN_1(0x00260014);
-static constexpr Register PATPLAYER_SYNC_PATTERN_2(0x00260018);
-static constexpr Register PATPLAYER_RESET_PATTERN_0(0x0026001c);
-static constexpr Register PATPLAYER_RESET_PATTERN_1(0x00260020);
-static constexpr Register PATPLAYER_RESET_PATTERN_2(0x00260024);
-static constexpr Register PATPLAYER_SYNC_CNT(0x00260028);
-static constexpr Register PATPLAYER_DELAY_CNT(0x0026002c);
-static constexpr Register PATPLAYER_RESET_CNT(0x00260030);
-static constexpr Register PATPLAYER_TRIGGER_SEL(0x00260034);
+static constexpr Register PATPLAYER_PAT0_0(0x00260004);
+static constexpr Register PATPLAYER_PAT0_1(0x00260008);
+static constexpr Register PATPLAYER_PAT0_2(0x0026000c);
+static constexpr Register PATPLAYER_PAT1_0(0x00260010);
+static constexpr Register PATPLAYER_PAT1_1(0x00260014);
+static constexpr Register PATPLAYER_PAT1_2(0x00260018);
+static constexpr Register PATPLAYER_PAT2_0(0x0026001c);
+static constexpr Register PATPLAYER_PAT2_1(0x00260020);
+static constexpr Register PATPLAYER_PAT2_2(0x00260024);
+static constexpr Register PATPLAYER_PAT1_LENGTH(0x00260028);
+static constexpr Register PATPLAYER_PAT1_DELAY_CNT(0x0026002c);
+static constexpr Register PATPLAYER_PAT2_LENGTH(0x00260030);
+static constexpr Register PATPLAYER_PAT1_TRIGGER_SEL(0x00260034);
+static constexpr Register PATPLAYER_PAT2_TRIGGER_SEL(0x00260038);
+static constexpr Register PATPLAYER_PAT3_TRIGGER_SEL(0x0026003c);
+static constexpr Register PATPLAYER_PAT2_TRIGGER_TF(0x00260040);
+static constexpr Register PATPLAYER_PAT3_LENGTH(0x00260044);
+static constexpr Register PATPLAYER_PAT3_0(0x00260048);
+static constexpr Register PATPLAYER_PAT3_1(0x0026004c);
+static constexpr Register PATPLAYER_PAT3_2(0x00260050);
+
 
 //** I2C **//
 /// I2C base addresses
