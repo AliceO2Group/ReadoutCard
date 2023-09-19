@@ -32,45 +32,82 @@ using namespace o2::roc;
 namespace po = boost::program_options;
 using namespace boost::multiprecision;
 
-// 128-bit hex string parser
+// print uin128_t value as a readable hexa value
+void print_uint128(uint128_t v) {
+  printf ("0x ");
+  for (int k = 8; k > 0; k--) {
+    printf("%04X ", (unsigned int)((v >> ((k-1)*16)) & 0xffff));
+  }
+  printf("\n");
+}
+
+// 128-bit string parser (both hex and decimal)
 // nBits specifies the maximum allowed bit width
 // throws exception on error
-uint128_t parsePattern(const std::string &s, int nBits = 128) {
+uint128_t parsePattern(const std::string &s, unsigned int nBits = 128, const std::string &name = "") {
+  if (nBits > 128) {
+    nBits = 128;
+  }
   uint128_t v = 0;
-  if (strncmp(s.c_str(), "0x", 2) || (s.length() <= 2)) {
-    BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-         << ErrorInfo::Message("Pattern must be hexadecimal"));
-  }
-  for (unsigned int i=2; i<s.length(); i++) {
-    int c = s[i];
-    uint128_t x = 0;
-    if ( ( c >= '0') && ( c <= '9')) {
-      x = c - '0';
-    } else if ( ( c >= 'A') && ( c <= 'F')) {
-      x = 10 + c - 'A';
-    } else if ( ( c >= 'a') && ( c <= 'f')) {
-      x = 10 + c - 'a';
-    } else {
+  uint128_t vmax = (((uint128_t)1) << nBits) - 1;
+  std::string error = "Parsing option " + name + " : ";
+  auto addDigit = [&] (uint128_t digit, uint128_t base) {
+    bool overflow = 0;
+    if (digit >= base) {
+      overflow =1;
+    } else if (v > (vmax / base)) {
+      overflow = 1;
+    }
+    v = v * ((uint128_t)base);
+    if (v > vmax - ((uint128_t)digit)) {
+      overflow = 1;
+    }
+    v = v + ((uint128_t)digit);
+    if (v > vmax) {
+      overflow = 1;
+    }
+    if (overflow) {
       BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-         << ErrorInfo::Message("Pattern must be hexadecimal"));
+                      << ErrorInfo::Message(error + "Value exceeds " + std::to_string(nBits) + " bits"));
     }
-    v = (v << 4) + x;
-
-    /*
-    // print value
-    for (int k=8; k > 0; k--) {
-      printf("%04X ", (unsigned int)((v >> ((k-1)*16)) & 0xffff));
+    return;
+  };
+  if (!strncmp(s.c_str(), "0x", 2)) {
+    // hexadecimal string
+    for (unsigned int i=2; i<s.length(); i++) {
+      uint8_t c = s[i];
+      uint128_t x = 0;
+      if ( ( c >= '0') && ( c <= '9')) {
+        x = c - '0';
+      } else if ( ( c >= 'A') && ( c <= 'F')) {
+        x = 10 + c - 'A';
+      } else if ( ( c >= 'a') && ( c <= 'f')) {
+        x = 10 + c - 'a';
+      } else {
+        BOOST_THROW_EXCEPTION(InvalidOptionValueException()
+           << ErrorInfo::Message(error + "Value has wrong hexadecimal syntax"));
+      }
+      addDigit(x, (uint128_t)16);
     }
-    printf("\n");
-    */
-  }
-
-  if (((v >> nBits) != 0) || (s.length() - 2 > 32)) {
-    BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-                      << ErrorInfo::Message("Pattern exceeds " + std::to_string(nBits) + " bits"));
+  } else {
+    // decimal string
+    for (unsigned int i=0; i<s.length(); i++) {
+      uint8_t c = s[i];
+      uint128_t x = 0;
+      if ( ( c >= '0') && ( c <= '9')) {
+        x = c - '0';
+      } else {
+        BOOST_THROW_EXCEPTION(InvalidOptionValueException()
+           << ErrorInfo::Message(error + "Value has wrong decimal syntax"));
+      }
+      addDigit(x, (uint128_t)10);
+    }
   }
   return v;
 }
+
+
+
 
 class ProgramPatternPlayer : public Program
 {
@@ -84,42 +121,22 @@ class ProgramPatternPlayer : public Program
   virtual void addOptions(boost::program_options::options_description& options)
   {
     Options::addOptionCardId(options);
-    options.add_options()("pat0",
-                          po::value<std::string>(&mOptions.pat0),
-                          "80-bit pat0 pattern in hex");
-    options.add_options()("pat1",
-                          po::value<std::string>(&mOptions.pat1),
-                          "80-bit pat1 pattern in hex");
-    options.add_options()("pat2",
-                          po::value<std::string>(&mOptions.pat2),
-                          "80-bit pat2 pattern in hex");
-    options.add_options()("pat3",
-                          po::value<std::string>(&mOptions.pat3),
-                          "80-bit pat3 pattern in hex");
-    options.add_options()("pat1-length",
-                          po::value<uint32_t>(&mOptions.info.pat1Length),
-                          "pat1 pattern's length");
-    options.add_options()("pat1-delay",
-                          po::value<uint32_t>(&mOptions.info.pat1Delay),
-                          "pat1 pattern's delay");
-    options.add_options()("pat2-length",
-                          po::value<uint32_t>(&mOptions.info.pat2Length),
-                          "pat2 pattern's length");
-    options.add_options()("pat2-trigger-counters",
-                          po::value<uint32_t>(&mOptions.info.pat2TriggerTF),
-                          "Trigger counters for pat2: TF[31:20] ORBIT[19:12] BC[11:0]");
-    options.add_options()("pat3-length",
-                          po::value<uint32_t>(&mOptions.info.pat3Length),
-                          "pat3 pattern's length");
-    options.add_options()("pat1-trigger-select",
-                          po::value<uint32_t>(&mOptions.info.pat1TriggerSelect),
-                          "Select trigger for pat1");
-    options.add_options()("pat2-trigger-select",
-                          po::value<uint32_t>(&mOptions.info.pat2TriggerSelect),
-                          "Select trigger for pat2");
-    options.add_options()("pat3-trigger-select",
-                          po::value<uint32_t>(&mOptions.info.pat3TriggerSelect),
-                          "Select trigger for pat3");
+
+    optionValues.reserve(16); // need to keep same variable addresses
+
+    addOptionValue(options, "pat0", "80-bit pat0 pattern", &mOptions.info.pat0, 80);
+    addOptionValue(options, "pat1", "80-bit pat1 pattern", &mOptions.info.pat1, 80);
+    addOptionValue(options, "pat2", "80-bit pat2 pattern", &mOptions.info.pat2, 80);
+    addOptionValue(options, "pat3", "80-bit pat3 pattern", &mOptions.info.pat3, 80);
+    addOptionValue(options, "pat1-length", "pat1 pattern's length", &mOptions.info.pat1Length);
+    addOptionValue(options, "pat1-delay", "pat1 pattern's delay", &mOptions.info.pat1Delay);
+    addOptionValue(options, "pat2-length", "pat2 pattern's length", &mOptions.info.pat2Length);
+    addOptionValue(options, "pat2-trigger-counters", "Trigger counters for pat2: TF[31:20] ORBIT[19:12] BC[11:0]", &mOptions.info.pat2TriggerTF);
+    addOptionValue(options, "pat3-length", "pat3 pattern's length", &mOptions.info.pat3Length);
+    addOptionValue(options, "pat1-trigger-select", "Select trigger for pat1", &mOptions.info.pat1TriggerSelect);
+    addOptionValue(options, "pat2-trigger-select", "Select trigger for pat2", &mOptions.info.pat2TriggerSelect);
+    addOptionValue(options, "pat3-trigger-select", "Select trigger for pat3", &mOptions.info.pat3TriggerSelect);
+
     options.add_options()("execute-pat1-at-start",
                           po::bool_switch(&mOptions.info.exePat1AtStart)->default_value(false),
                           "Enable automatically sending a pat1 pattern when runenable goes high");
@@ -150,18 +167,8 @@ class ProgramPatternPlayer : public Program
       return;
     }
 
-    if (mOptions.pat0.length()) {
-      mOptions.info.pat0 = parsePattern(mOptions.pat0, 80);
-    }
-    if (mOptions.pat1.length()) {
-      mOptions.info.pat1 = parsePattern(mOptions.pat1, 80);
-    }
-    if (mOptions.pat2.length()) {
-      mOptions.info.pat2 = parsePattern(mOptions.pat2, 80);
-    }
-    if (mOptions.pat3.length()) {
-      mOptions.info.pat3 = parsePattern(mOptions.pat3, 80);
-    }
+    // convert input strings to numbers
+    parseOptionValues();
 
     auto cruBar2 = std::dynamic_pointer_cast<CruBar>(bar2);
     if (!mOptions.readBack) {
@@ -199,6 +206,45 @@ class ProgramPatternPlayer : public Program
     PatternPlayer::Info info;
     bool readBack = false;
   } mOptions;
+
+  struct OptionValue {
+    public:
+    enum OptionValueType {UINT32, UINT64, UINT128};
+    std::string name; // option name
+    std::string value; // string value
+    void * destination; // variable assigned when parsing value
+    unsigned int bitWidth; // maximum bit width allowed
+    OptionValueType type; // variable type
+  }; // namespace option
+
+  std::vector<OptionValue> optionValues;
+
+  // register 32bit option value
+  void addOptionValue(boost::program_options::options_description& options, const char *name, const char *description, uint32_t *destinationVariable, unsigned int bitWidth = 32) {
+    optionValues.push_back({name, "", destinationVariable, bitWidth, OptionValue::OptionValueType::UINT32});
+    options.add_options()(name, po::value<std::string>(&(optionValues.back().value)), description);
+  }
+
+  // register 128bit option value
+  void addOptionValue(boost::program_options::options_description& options, const char *name, const char *description, uint128_t *destinationVariable, unsigned int bitWidth = 128) {
+    optionValues.push_back({name, "", destinationVariable, bitWidth, OptionValue::OptionValueType::UINT128});
+    options.add_options()(name, po::value<std::string>(&(optionValues.back().value)), description);
+  }
+
+  // parse option values and assign corresponding variables
+  void parseOptionValues() {
+    for(const auto &opt : optionValues) {
+      if (opt.value.length()) {
+        uint128_t v;
+        v = parsePattern(opt.value, opt.bitWidth, opt.name);
+        if (opt.type == OptionValue::OptionValueType::UINT32) {
+          *(static_cast<uint32_t *>(opt.destination)) = (uint32_t)v;
+        } else if (opt.type == OptionValue::OptionValueType::UINT128) {
+          *(static_cast<uint128_t *>(opt.destination)) = v;
+        }
+      }
+    }
+  }
 };
 
 int main(int argc, char** argv)
