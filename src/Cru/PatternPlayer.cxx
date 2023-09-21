@@ -154,5 +154,142 @@ void PatternPlayer::exePat2()
   mBar->modifyRegister(Cru::Registers::PATPLAYER_CFG.index, 4, 1, 0x0);
 }
 
+uint128_t PatternPlayer::getValueFromString(const std::string &s, unsigned int nBits, const std::string &name) {
+  if (nBits > 128) {
+    nBits = 128;
+  }
+  uint128_t v = 0;
+  uint128_t vmax = (((uint128_t)1) << nBits) - 1;
+  std::string error = "Parsing parameter " + name + " : ";
+  auto addDigit = [&] (uint128_t digit, uint128_t base) {
+    bool overflow = 0;
+    if (digit >= base) {
+      overflow =1;
+    } else if (v > (vmax / base)) {
+      overflow = 1;
+    }
+    v = v * ((uint128_t)base);
+    if (v > vmax - ((uint128_t)digit)) {
+      overflow = 1;
+    }
+    v = v + ((uint128_t)digit);
+    if (v > vmax) {
+      overflow = 1;
+    }
+    if (overflow) {
+      BOOST_THROW_EXCEPTION(InvalidOptionValueException()
+                      << ErrorInfo::Message(error + "Value exceeds " + std::to_string(nBits) + " bits"));
+    }
+    return;
+  };
+  if (!strncmp(s.c_str(), "0x", 2)) {
+    // hexadecimal string
+    for (unsigned int i=2; i<s.length(); i++) {
+      uint8_t c = s[i];
+      uint128_t x = 0;
+      if ( ( c >= '0') && ( c <= '9')) {
+        x = c - '0';
+      } else if ( ( c >= 'A') && ( c <= 'F')) {
+        x = 10 + c - 'A';
+      } else if ( ( c >= 'a') && ( c <= 'f')) {
+        x = 10 + c - 'a';
+      } else {
+        BOOST_THROW_EXCEPTION(InvalidOptionValueException()
+           << ErrorInfo::Message(error + "Value has wrong hexadecimal syntax"));
+      }
+      addDigit(x, (uint128_t)16);
+    }
+  } else {
+    // decimal string
+    for (unsigned int i=0; i<s.length(); i++) {
+      uint8_t c = s[i];
+      uint128_t x = 0;
+      if ( ( c >= '0') && ( c <= '9')) {
+        x = c - '0';
+      } else {
+        BOOST_THROW_EXCEPTION(InvalidOptionValueException()
+           << ErrorInfo::Message(error + "Value has wrong decimal syntax"));
+      }
+      addDigit(x, (uint128_t)10);
+    }
+  }
+  return v;
+}
+
+PatternPlayer::Info PatternPlayer::getInfoFromString(const std::vector<std::string> &parameters) {
+  roc::PatternPlayer::Info ppInfo;
+
+  int infoField = 0;
+  for (const auto& parameter : parameters) {
+    if (parameter.find('#') == std::string::npos) {
+      infoField++;
+    }
+  }
+
+  if (infoField != 15) { // Test that we have enough non-comment parameters
+    BOOST_THROW_EXCEPTION(InvalidOptionValueException() << ErrorInfo::Message("Wrong number of non-comment parameters for the Pattern Player: " + std::to_string(infoField) + "/15"));
+  }
+
+  infoField = 0;
+  for (const auto& parameter : parameters) {
+    if (parameter.find('#') == std::string::npos) {
+      switch (infoField) {
+        bool boolValue;
+        case 0:
+          ppInfo.pat0 = PatternPlayer::getValueFromString(parameter, 80, "pat0");
+          break;
+        case 1:
+          ppInfo.pat1 = PatternPlayer::getValueFromString(parameter, 80, "pat1");
+          break;
+        case 2:
+          ppInfo.pat2 = PatternPlayer::getValueFromString(parameter, 80, "pat2");
+          break;
+        case 3:
+          ppInfo.pat3 = PatternPlayer::getValueFromString(parameter, 80, "pat3");
+          break;
+        case 4:
+          ppInfo.pat1Length = (uint32_t)PatternPlayer::getValueFromString(parameter, 32, "pat1Length");
+          break;
+        case 5:
+          ppInfo.pat1Delay = (uint32_t)PatternPlayer::getValueFromString(parameter, 32, "pat1Delay");
+          break;
+        case 6:
+          ppInfo.pat2Length = (uint32_t)PatternPlayer::getValueFromString(parameter, 32, "pat2Length");
+          break;
+        case 7:
+          ppInfo.pat3Length = (uint32_t)PatternPlayer::getValueFromString(parameter, 32, "pat3Length");
+          break;
+        case 8:
+          ppInfo.pat1TriggerSelect = (uint32_t)PatternPlayer::getValueFromString(parameter, 32, "pat1TriggerSelect");
+          break;
+        case 9:
+          ppInfo.pat2TriggerSelect = (uint32_t)PatternPlayer::getValueFromString(parameter, 32, "pat2TriggerSelect");
+          break;
+        case 10:
+          ppInfo.pat3TriggerSelect = (uint32_t)PatternPlayer::getValueFromString(parameter, 32, "pat3TriggerSelect");
+          break;
+        case 11:
+          ppInfo.pat2TriggerTF = (uint32_t)PatternPlayer::getValueFromString(parameter, 32, "pat2TriggerTF");
+          break;
+        case 12:
+          std::istringstream(parameter) >> std::boolalpha >> boolValue;
+          ppInfo.exePat1AtStart = boolValue;
+          break;
+        case 13:
+          std::istringstream(parameter) >> std::boolalpha >> boolValue;
+          ppInfo.exePat1Now = boolValue;
+          break;
+        case 14:
+          std::istringstream(parameter) >> std::boolalpha >> boolValue;
+          ppInfo.exePat2Now = boolValue;
+          break;
+      }
+      infoField++;
+    }
+  }
+  return ppInfo;
+}
+
+
 } // namespace roc
 } // namespace o2

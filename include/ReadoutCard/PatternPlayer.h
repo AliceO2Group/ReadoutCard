@@ -33,6 +33,7 @@ class PatternPlayer
 {
  public:
   struct Info {
+    // as defined in https://gitlab.cern.ch/alice-cru/cru-fw/-/tree/pplayer/TTC#address-table
     uint128_t pat0= 0x0;
     uint128_t pat1 = 0x0;
     uint128_t pat2 = 0x0;
@@ -54,6 +55,19 @@ class PatternPlayer
   PatternPlayer(std::shared_ptr<BarInterface> bar);
   void play(PatternPlayer::Info info);
   PatternPlayer::Info read();
+
+  // helper function to fill Info fields from string
+  // 128-bit string parser (both hex and decimal)
+  // nBits specifies the maximum allowed bit width
+  // name is used in the error message, if any
+  // throws exception on error
+  static uint128_t getValueFromString(const std::string &s, unsigned int nBits = 128, const std::string &name = "");
+
+  // parse a vector of strings into an Info struct
+  // strings with # are considered as comments and not used
+  // number of valid strings must match exactly number of parameters in struct
+  // throws an exception on error
+  static PatternPlayer::Info getInfoFromString(const std::vector<std::string> &parameters);
 
  private:
   void configure(bool startConfig);

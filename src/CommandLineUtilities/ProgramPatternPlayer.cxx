@@ -32,82 +32,6 @@ using namespace o2::roc;
 namespace po = boost::program_options;
 using namespace boost::multiprecision;
 
-// print uin128_t value as a readable hexa value
-void print_uint128(uint128_t v) {
-  printf ("0x ");
-  for (int k = 8; k > 0; k--) {
-    printf("%04X ", (unsigned int)((v >> ((k-1)*16)) & 0xffff));
-  }
-  printf("\n");
-}
-
-// 128-bit string parser (both hex and decimal)
-// nBits specifies the maximum allowed bit width
-// throws exception on error
-uint128_t parsePattern(const std::string &s, unsigned int nBits = 128, const std::string &name = "") {
-  if (nBits > 128) {
-    nBits = 128;
-  }
-  uint128_t v = 0;
-  uint128_t vmax = (((uint128_t)1) << nBits) - 1;
-  std::string error = "Parsing option " + name + " : ";
-  auto addDigit = [&] (uint128_t digit, uint128_t base) {
-    bool overflow = 0;
-    if (digit >= base) {
-      overflow =1;
-    } else if (v > (vmax / base)) {
-      overflow = 1;
-    }
-    v = v * ((uint128_t)base);
-    if (v > vmax - ((uint128_t)digit)) {
-      overflow = 1;
-    }
-    v = v + ((uint128_t)digit);
-    if (v > vmax) {
-      overflow = 1;
-    }
-    if (overflow) {
-      BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-                      << ErrorInfo::Message(error + "Value exceeds " + std::to_string(nBits) + " bits"));
-    }
-    return;
-  };
-  if (!strncmp(s.c_str(), "0x", 2)) {
-    // hexadecimal string
-    for (unsigned int i=2; i<s.length(); i++) {
-      uint8_t c = s[i];
-      uint128_t x = 0;
-      if ( ( c >= '0') && ( c <= '9')) {
-        x = c - '0';
-      } else if ( ( c >= 'A') && ( c <= 'F')) {
-        x = 10 + c - 'A';
-      } else if ( ( c >= 'a') && ( c <= 'f')) {
-        x = 10 + c - 'a';
-      } else {
-        BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-           << ErrorInfo::Message(error + "Value has wrong hexadecimal syntax"));
-      }
-      addDigit(x, (uint128_t)16);
-    }
-  } else {
-    // decimal string
-    for (unsigned int i=0; i<s.length(); i++) {
-      uint8_t c = s[i];
-      uint128_t x = 0;
-      if ( ( c >= '0') && ( c <= '9')) {
-        x = c - '0';
-      } else {
-        BOOST_THROW_EXCEPTION(InvalidOptionValueException()
-           << ErrorInfo::Message(error + "Value has wrong decimal syntax"));
-      }
-      addDigit(x, (uint128_t)10);
-    }
-  }
-  return v;
-}
-
-
-
 
 class ProgramPatternPlayer : public Program
 {
@@ -153,7 +77,6 @@ class ProgramPatternPlayer : public Program
 
   virtual void run(const boost::program_options::variables_map& map)
   {
-
     auto cardId = Options::getOptionCardId(map);
     auto params = Parameters::makeParameters(cardId, 2);
     auto bar2 = ChannelFactory().getBar(params);
@@ -232,7 +155,7 @@ class ProgramPatternPlayer : public Program
     for(const auto &opt : optionValues) {
       if (opt.value.length()) {
         uint128_t v;
-        v = parsePattern(opt.value, opt.bitWidth, opt.name);
+        v = PatternPlayer::getValueFromString(opt.value, opt.bitWidth, opt.name);
         if (opt.type == OptionValue::OptionValueType::UINT32) {
           *(static_cast<uint32_t *>(opt.destination)) = (uint32_t)v;
         } else if (opt.type == OptionValue::OptionValueType::UINT128) {
