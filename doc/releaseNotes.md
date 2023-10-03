@@ -66,3 +66,7 @@ This file describes the main feature changes for released versions of ReadoutCar
 - Fix registers for FEC status counters.
 - Updated list of firmwares for CRORC
 - CMake cleanup: removed python2 support.
+
+## v0.45.0 - 03/10/2023
+- o2-roc-pat-player: options have changed to match the [latest firmware conventions](https://gitlab.cern.ch/alice-cru/cru-fw/-/tree/pplayer/TTC#address-table). Values can specified as decimal or hexadecimal numbers.
+- Added support for pattern-player configuration parsing (used by ALF).

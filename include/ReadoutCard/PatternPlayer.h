@@ -33,43 +33,47 @@ class PatternPlayer
 {
  public:
   struct Info {
-    uint128_t syncPattern = 0x0;
-    uint128_t resetPattern = 0x0;
-    uint128_t idlePattern = 0x0;
-    uint32_t syncLength = 1;
-    uint32_t syncDelay = 0;
-    uint32_t resetLength = 1;
-    uint32_t resetTriggerSelect = 30;
-    uint32_t syncTriggerSelect = 29;
-    bool syncAtStart = false;
-    bool triggerSync = false;
-    bool triggerReset = false;
+    // as defined in https://gitlab.cern.ch/alice-cru/cru-fw/-/tree/pplayer/TTC#address-table
+    uint128_t pat0= 0x0;
+    uint128_t pat1 = 0x0;
+    uint128_t pat2 = 0x0;
+    uint128_t pat3 = 0x0;
+    uint32_t pat1Length = 1;
+    uint32_t pat1Delay = 0;
+    uint32_t pat2Length = 1;
+    uint32_t pat3Length = 1;
+    uint32_t pat1TriggerSelect = 29;
+    uint32_t pat2TriggerSelect = 30;
+    uint32_t pat3TriggerSelect = 0;
+    uint32_t pat2TriggerTF = 0;
+
+    bool exePat1AtStart = false;
+    bool exePat1Now = false;
+    bool exePat2Now = false;
   };
 
   PatternPlayer(std::shared_ptr<BarInterface> bar);
   void play(PatternPlayer::Info info);
   PatternPlayer::Info read();
 
+  // helper function to fill Info fields from string
+  // 128-bit string parser (both hex and decimal)
+  // nBits specifies the maximum allowed bit width
+  // name is used in the error message, if any
+  // throws exception on error
+  static uint128_t getValueFromString(const std::string &s, unsigned int nBits = 128, const std::string &name = "");
+
+  // parse a vector of strings into an Info struct
+  // strings with # are considered as comments and not used
+  // number of valid strings must match exactly number of parameters in struct
+  // throws an exception on error
+  static PatternPlayer::Info getInfoFromString(const std::vector<std::string> &parameters);
+
  private:
   void configure(bool startConfig);
-  void setIdlePattern(uint128_t pattern);
-  void setSyncPattern(uint128_t pattern);
-  void configureSync(uint32_t length = 1, uint32_t delay = 0);
-  void setResetPattern(uint128_t pattern);
-  void configureReset(uint32_t length = 1);
-  void selectPatternTrigger(uint32_t syncTrigger = 3, uint32_t resetTrigger = 3);
-  void enableSyncAtStart(bool enable = false);
-  void triggerSync();
-  void triggerReset();
-
-  uint128_t getSyncPattern();
-  uint128_t getResetPattern();
-  uint128_t getIdlePattern();
-  uint32_t getSyncLength();
-  uint32_t getSyncDelay();
-  uint32_t getResetLength();
-  uint32_t getResetTriggerSelect();
-  uint32_t getSyncTriggerSelect();
+  void exePat1AtStart(bool enable = false);
+  void exePat1();
+  void exePat2();
 
   std::shared_ptr<BarInterface> mBar;
 };

@@ -1,4 +1,4 @@
-
+ 
 // Copyright 2019-2020 CERN and copyright holders of ALICE O2.
 // See https://alice-o2.web.cern.ch/copyright for details of the copyright holders.
 // All rights not expressly granted are reserved.
@@ -32,51 +32,44 @@ using namespace o2::roc;
 namespace po = boost::program_options;
 using namespace boost::multiprecision;
 
+
 class ProgramPatternPlayer : public Program
 {
  public:
   virtual Description getDescription()
   {
     return { "PatternPlayer", "Configure the CRU pattern player",
-             "o2-roc-pat-player --id 42:00.0 --sync 0x0123457899876543210abcdefedcb --sync-length 4 --sync-delay 2 --sync-at-start\n" };
+             "o2-roc-pat-player --id 42:00.0 --pat1 0x012345789abdef0123 --pat1-length 4 --pat1-delay 2 --execute-pat1-at-start\n" };
   }
 
   virtual void addOptions(boost::program_options::options_description& options)
   {
     Options::addOptionCardId(options);
-    options.add_options()("sync",
-                          po::value<std::string>(&mOptions.syncPattern)->default_value("0x0"),
-                          "80-bit sync pattern in hex");
-    options.add_options()("reset",
-                          po::value<std::string>(&mOptions.resetPattern)->default_value("0x0"),
-                          "80-bit reset pattern in hex");
-    options.add_options()("idle",
-                          po::value<std::string>(&mOptions.idlePattern)->default_value("0x0"),
-                          "80-bit idle pattern in hex");
-    options.add_options()("sync-length",
-                          po::value<uint32_t>(&mOptions.syncLength)->default_value(1),
-                          "Sync pattern's length");
-    options.add_options()("sync-delay",
-                          po::value<uint32_t>(&mOptions.syncDelay)->default_value(0),
-                          "Sync pattern's delay");
-    options.add_options()("reset-length",
-                          po::value<uint32_t>(&mOptions.resetLength)->default_value(1),
-                          "Reset pattern's length");
-    options.add_options()("reset-trigger-select",
-                          po::value<uint32_t>(&mOptions.resetTriggerSelect)->default_value(30),
-                          "Select trigger for SYNC from TTC_DATA[0-31]");
-    options.add_options()("sync-trigger-select",
-                          po::value<uint32_t>(&mOptions.syncTriggerSelect)->default_value(29),
-                          "Select trigger for RESET from TTC_DATA[0-31]");
-    options.add_options()("sync-at-start",
-                          po::bool_switch(&mOptions.syncAtStart)->default_value(false),
-                          "Enable automatically sending a sync pattern when runenable goes high");
-    options.add_options()("trigger-sync",
-                          po::bool_switch(&mOptions.triggerSync)->default_value(false),
-                          "Manually trigger the SYNC pattern");
-    options.add_options()("trigger-reset",
-                          po::bool_switch(&mOptions.triggerReset)->default_value(false),
-                          "Manually trigger the reset pattern");
+
+    optionValues.reserve(16); // need to keep same variable addresses
+
+    addOptionValue(options, "pat0", "80-bit pat0 pattern", &mOptions.info.pat0, 80);
+    addOptionValue(options, "pat1", "80-bit pat1 pattern", &mOptions.info.pat1, 80);
+    addOptionValue(options, "pat2", "80-bit pat2 pattern", &mOptions.info.pat2, 80);
+    addOptionValue(options, "pat3", "80-bit pat3 pattern", &mOptions.info.pat3, 80);
+    addOptionValue(options, "pat1-length", "pat1 pattern's length", &mOptions.info.pat1Length);
+    addOptionValue(options, "pat1-delay", "pat1 pattern's delay", &mOptions.info.pat1Delay);
+    addOptionValue(options, "pat2-length", "pat2 pattern's length", &mOptions.info.pat2Length);
+    addOptionValue(options, "pat2-trigger-counters", "Trigger counters for pat2: TF[31:20] ORBIT[19:12] BC[11:0]", &mOptions.info.pat2TriggerTF);
+    addOptionValue(options, "pat3-length", "pat3 pattern's length", &mOptions.info.pat3Length);
+    addOptionValue(options, "pat1-trigger-select", "Select trigger for pat1", &mOptions.info.pat1TriggerSelect);
+    addOptionValue(options, "pat2-trigger-select", "Select trigger for pat2", &mOptions.info.pat2TriggerSelect);
+    addOptionValue(options, "pat3-trigger-select", "Select trigger for pat3", &mOptions.info.pat3TriggerSelect);
+
+    options.add_options()("execute-pat1-at-start",
+                          po::bool_switch(&mOptions.info.exePat1AtStart)->default_value(false),
+                          "Enable automatically sending a pat1 pattern when runenable goes high");
+    options.add_options()("execute-pat1-now",
+                          po::bool_switch(&mOptions.info.exePat1Now)->default_value(false),
+                          "Manually trigger the pat1 pattern now");
+    options.add_options()("execute-pat2-now",
+                          po::bool_switch(&mOptions.info.exePat2Now)->default_value(false),
+                          "Manually trigger the pat2 pattern now");
     options.add_options()("read-back",
                           po::bool_switch(&mOptions.readBack)->default_value(false),
                           "Reads back the pattern player configuration [DOES NOT CONFIGURE!!]");
@@ -84,7 +77,6 @@ class ProgramPatternPlayer : public Program
 
   virtual void run(const boost::program_options::variables_map& map)
   {
-
     auto cardId = Options::getOptionCardId(map);
     auto params = Parameters::makeParameters(cardId, 2);
     auto bar2 = ChannelFactory().getBar(params);
@@ -98,47 +90,80 @@ class ProgramPatternPlayer : public Program
       return;
     }
 
+    // convert input strings to numbers
+    parseOptionValues();
+
     auto cruBar2 = std::dynamic_pointer_cast<CruBar>(bar2);
     if (!mOptions.readBack) {
-      cruBar2->patternPlayer({ uint128_t(mOptions.syncPattern), //TODO: Parse this correctly!
-                               uint128_t(mOptions.resetPattern),
-                               uint128_t(mOptions.idlePattern),
-                               mOptions.syncLength,
-                               mOptions.syncDelay,
-                               mOptions.resetLength,
-                               mOptions.resetTriggerSelect,
-                               mOptions.syncTriggerSelect,
-                               mOptions.syncAtStart,
-                               mOptions.triggerSync,
-                               mOptions.triggerReset });
+      cruBar2->patternPlayer(mOptions.info);
     } else {
       auto ppInfo = cruBar2->patternPlayerRead();
-      std::cout << "sync pattern:\t\t0x" << std::hex << ppInfo.syncPattern << std::endl;
-      std::cout << "reset pattern:\t\t0x" << ppInfo.resetPattern << std::endl;
-      std::cout << "idle pattern:\t\t0x" << ppInfo.idlePattern << std::dec << std::endl;
-      std::cout << "sync length:\t\t" << ppInfo.syncLength << std::endl;
-      std::cout << "sync delay:\t\t" << ppInfo.syncDelay << std::endl;
-      std::cout << "reset length:\t\t" << ppInfo.resetLength << std::endl;
-      std::cout << "reset trigger select:\t" << ppInfo.resetTriggerSelect << std::endl;
-      std::cout << "sync trigger select:\t" << ppInfo.syncTriggerSelect << std::endl;
+      std::cout << "pat0 pattern:\t\t0x" << std::hex << ppInfo.pat0 << std::endl;
+      std::cout << "pat1 pattern:\t\t0x" << std::hex << ppInfo.pat1 << std::endl;
+      std::cout << "pat2 pattern:\t\t0x" << std::hex << ppInfo.pat2 << std::endl;
+      std::cout << "pat3 pattern:\t\t0x" << std::hex << ppInfo.pat3 << std::endl;
+
+      std::cout << "pat1 length:\t\t" << std::dec << ppInfo.pat1Length << std::endl;
+      std::cout << "pat1 delay:\t\t" << std::dec << ppInfo.pat1Delay << std::endl;
+      std::cout << "pat2 length:\t\t" << std::dec << ppInfo.pat2Length << std::endl;
+      std::cout << "pat3 length:\t\t" << std::dec << ppInfo.pat3Length << std::endl;
+
+      std::cout << "pat1 trigger select:\t0x" << std::hex << ppInfo.pat1TriggerSelect << std::endl;
+      std::cout << "pat2 trigger select:\t0x" << std::hex << ppInfo.pat2TriggerSelect << std::endl;
+      std::cout << "pat3 trigger select:\t0x" << std::hex << ppInfo.pat3TriggerSelect << std::endl;
+
+      std::cout << "pat2 trigger counters:\t"
+        << "TF 0x" << std::hex << ((ppInfo.pat2TriggerTF >> 20) & 0xFFF)
+        << " ORBIT 0x" << std::hex << ((ppInfo.pat2TriggerTF >> 12) & 0xFF)
+        << " BC 0x" << std::hex << (ppInfo.pat2TriggerTF & 0xFFF)
+        << std::endl;
     }
   }
 
  private:
   struct OptionsStruct {
-    std::string syncPattern = "0x0";
-    std::string resetPattern = "0x0";
-    std::string idlePattern = "0x0";
-    uint32_t syncLength = 1;
-    uint32_t syncDelay = 0;
-    uint32_t resetLength = 1;
-    uint32_t resetTriggerSelect = 30;
-    uint32_t syncTriggerSelect = 29;
-    bool syncAtStart = false;
-    bool triggerSync = false;
-    bool triggerReset = false;
+    PatternPlayer::Info info;
     bool readBack = false;
   } mOptions;
+
+  struct OptionValue {
+    public:
+    enum OptionValueType {UINT32, UINT64, UINT128};
+    std::string name; // option name
+    std::string value; // string value
+    void * destination; // variable assigned when parsing value
+    unsigned int bitWidth; // maximum bit width allowed
+    OptionValueType type; // variable type
+  }; // namespace option
+
+  std::vector<OptionValue> optionValues;
+
+  // register 32bit option value
+  void addOptionValue(boost::program_options::options_description& options, const char *name, const char *description, uint32_t *destinationVariable, unsigned int bitWidth = 32) {
+    optionValues.push_back({name, "", destinationVariable, bitWidth, OptionValue::OptionValueType::UINT32});
+    options.add_options()(name, po::value<std::string>(&(optionValues.back().value)), description);
+  }
+
+  // register 128bit option value
+  void addOptionValue(boost::program_options::options_description& options, const char *name, const char *description, uint128_t *destinationVariable, unsigned int bitWidth = 128) {
+    optionValues.push_back({name, "", destinationVariable, bitWidth, OptionValue::OptionValueType::UINT128});
+    options.add_options()(name, po::value<std::string>(&(optionValues.back().value)), description);
+  }
+
+  // parse option values and assign corresponding variables
+  void parseOptionValues() {
+    for(const auto &opt : optionValues) {
+      if (opt.value.length()) {
+        uint128_t v;
+        v = PatternPlayer::getValueFromString(opt.value, opt.bitWidth, opt.name);
+        if (opt.type == OptionValue::OptionValueType::UINT32) {
+          *(static_cast<uint32_t *>(opt.destination)) = (uint32_t)v;
+        } else if (opt.type == OptionValue::OptionValueType::UINT128) {
+          *(static_cast<uint128_t *>(opt.destination)) = v;
+        }
+      }
+    }
+  }
 };
 
 int main(int argc, char** argv)
