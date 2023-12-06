@@ -395,7 +395,7 @@ void CrorcBar::pushSuperpageAddressAndSize(uintptr_t blockAddress, uint32_t bloc
     if (vrd != vxp) {
       char err[1024];
       snprintf(err,1024, "pushSuperpageAddress : write failed ix = 0x%X write = 0x%X expected = 0x%X != read 0x%X", (int)ix, (int)vwr, (int)vxp, (int)vrd);
-      log(err, LogErrorDevel_(4699));
+      log(err, LogWarningDevel_(4699));
       nSPpushErr++;
       return -1;
     }
