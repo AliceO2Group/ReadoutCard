@@ -71,5 +71,5 @@ This file describes the main feature changes for released versions of ReadoutCar
 - o2-roc-pat-player: options have changed to match the [latest firmware conventions](https://gitlab.cern.ch/alice-cru/cru-fw/-/tree/pplayer/TTC#address-table). Values can specified as decimal or hexadecimal numbers.
 - Added support for pattern-player configuration parsing (used by ALF).
 
-## next
+## v0.45.1 - 24/01/2024
 - o2-roc-list-cards:  get NUMA card info from system instead of PDA PciDevice_getNumaNode() function, which reports wrong node for RH8. Fix also applies to field in RocPciDevice internal class.
