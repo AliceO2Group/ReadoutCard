@@ -29,6 +29,7 @@
 #include "ReadoutCard/ChannelFactory.h"
 #include "ReadoutCard/Exception.h"
 #include "ReadoutCard/Parameters.h"
+#include "Utilities/Numa.h"
 
 namespace o2
 {
@@ -91,6 +92,17 @@ RocPciDevice::~RocPciDevice()
 {
 }
 
+int getNumaNodeSafe(PciDevice* pciDevice) {
+  int numaNode = -1;
+  try {
+    numaNode = o2::roc::Utilities::getNumaNode(addressFromDevice(pciDevice));
+  }
+  catch(...) {
+    printf("getnumanode failed\n");
+  }
+  return numaNode;
+}
+
 void RocPciDevice::initWithSerialId(const SerialId& serialId)
 {
   int sequenceCounter = 0;
@@ -115,7 +127,7 @@ void RocPciDevice::initWithSerialId(const SerialId& serialId)
 
       if (serial == serialId.getSerial() && endpoint == serialId.getEndpoint()) {
         mPciDevice = pciDevice;
-        mDescriptor = CardDescriptor{ type.cardType, serialId, type.pciId, addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice), sequenceCounter };
+        mDescriptor = CardDescriptor{ type.cardType, serialId, type.pciId, addressFromDevice(pciDevice), getNumaNodeSafe(pciDevice), sequenceCounter };
         return;
       }
       sequenceCounter++;
@@ -151,7 +163,7 @@ void RocPciDevice::initWithAddress(const PciAddress& address)
         endpoint = type.getEndpoint(mPdaBar0);
 
         mPciDevice = pciDevice;
-        mDescriptor = CardDescriptor{ type.cardType, SerialId{ serial, endpoint }, type.pciId, address, PciDevice_getNumaNode(pciDevice), sequenceCounter };
+        mDescriptor = CardDescriptor{ type.cardType, SerialId{ serial, endpoint }, type.pciId, address, getNumaNodeSafe(pciDevice), sequenceCounter };
         return;
       }
       sequenceCounter++;
@@ -187,7 +199,7 @@ void RocPciDevice::initWithSequenceNumber(const PciSequenceNumber& sequenceNumbe
         endpoint = type.getEndpoint(mPdaBar0);
 
         mPciDevice = pciDevice;
-        mDescriptor = CardDescriptor{ type.cardType, SerialId{ serial, endpoint }, type.pciId, addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice), sequenceCounter };
+        mDescriptor = CardDescriptor{ type.cardType, SerialId{ serial, endpoint }, type.pciId, addressFromDevice(pciDevice), getNumaNodeSafe(pciDevice), sequenceCounter };
         return;
       }
       sequenceCounter++;
@@ -225,7 +237,7 @@ std::vector<CardDescriptor> RocPciDevice::findSystemDevices()
     endpoint = type.getEndpoint(pdaBar0);
 
     try {
-      cards.push_back(CardDescriptor{ type.cardType, SerialId{ serial, endpoint }, type.pciId, addressFromDevice(pciDevice), PciDevice_getNumaNode(pciDevice), sequenceCounter });
+      cards.push_back(CardDescriptor{ type.cardType, SerialId{ serial, endpoint }, type.pciId, addressFromDevice(pciDevice), getNumaNodeSafe(pciDevice), sequenceCounter });
     } catch (boost::exception& e) {
       std::cout << boost::diagnostic_information(e);
     }
