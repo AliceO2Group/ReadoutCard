@@ -73,3 +73,7 @@ This file describes the main feature changes for released versions of ReadoutCar
 
 ## v0.45.1 - 24/01/2024
 - o2-roc-list-cards:  get NUMA card info from system instead of PDA PciDevice_getNumaNode() function, which reports wrong node for RH8. Fix also applies to field in RocPciDevice internal class.
+
+## v0.45.2 - 29/05/2024
+- Updated list of firmwares.
+- Added CRU option dropBadRdhEnabled.
