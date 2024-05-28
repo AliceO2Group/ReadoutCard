@@ -176,7 +176,7 @@ uint32_t CruBar::getSuperpageSize(uint32_t link)
 uint32_t CruBar::getSuperpageFifoEmptyCounter(uint32_t link)
 {
   if (link >= Cru::MAX_LINKS) {
-    BOOST_THROW_EXCEPTION(InvalidLinkId() << ErrorInfo::Message("Link ID out of range") << ErrorInfo::LinkId(link));
+    BOOST_THROW_EXCEPTION(InvalidLinkId() << ErrorInfo::Message(getLoggerPrefix() + "Link ID out of range") << ErrorInfo::LinkId(link));
   }
   return readRegister(Cru::Registers::LINK_SUPERPAGE_FIFO_EMPTY.get(link).index);
 }
@@ -720,7 +720,7 @@ Cru::TriggerMonitoringInfo CruBar::monitorTriggers(bool updateable)
 void CruBar::checkConfigParameters()
 {
   if (mUserAndCommonLogicEnabled && !mUserLogicEnabled) {
-    BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("User and Common logic switch invalid when User logic disabled"));
+    BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message(getLoggerPrefix() + "User and Common logic switch invalid when User logic disabled"));
   }
 }
 

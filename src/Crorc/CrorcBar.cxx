@@ -191,7 +191,7 @@ void CrorcBar::assertLinkUp()
   }
 
   if (!checkLinkUp()) {
-    BOOST_THROW_EXCEPTION(CrorcCheckLinkException() << ErrorInfo::Message("Link was not up"));
+    BOOST_THROW_EXCEPTION(CrorcCheckLinkException() << ErrorInfo::Message(getLoggerPrefix() + "Link was not up"));
   }
 }
 
@@ -238,7 +238,7 @@ bool CrorcBar::getDynamicOffsetEnabled()
 void CrorcBar::setTimeFrameLength(uint16_t timeFrameLength)
 {
   if (timeFrameLength > 256) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("BAD TF LENGTH, should be less or equal to 256") << ErrorInfo::ConfigValue(timeFrameLength));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(getLoggerPrefix() + "BAD TF LENGTH, should be less or equal to 256") << ErrorInfo::ConfigValue(timeFrameLength));
   }
   modifyRegister(Crorc::Registers::CFG_CONTROL_B.index, 0, 11, timeFrameLength);
 }
@@ -299,7 +299,7 @@ void CrorcBar::sendDdlCommand(uint32_t address, uint32_t command)
   while ((std::chrono::steady_clock::now() < timeOut) && !checkFifoEmpty()) {
   }
   if (!checkFifoEmpty()) {
-    BOOST_THROW_EXCEPTION(CrorcCheckLinkException() << ErrorInfo::Message("Link was not up"));
+    BOOST_THROW_EXCEPTION(CrorcCheckLinkException() << ErrorInfo::Message(getLoggerPrefix() + "Link was not up"));
   } else {
     readRegister(Crorc::Registers::DDL_STATUS.index);
   }

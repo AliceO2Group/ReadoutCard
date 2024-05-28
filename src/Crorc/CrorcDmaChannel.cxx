@@ -41,13 +41,13 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
 {
   // Check that the DMA page is valid
   if (mPageSize != DMA_PAGE_SIZE) {
-    BOOST_THROW_EXCEPTION(CrorcException() << ErrorInfo::Message("CRORC only supports 8KiB DMA page size")
+    BOOST_THROW_EXCEPTION(CrorcException() << ErrorInfo::Message(getLoggerPrefix() + "CRORC only supports 8KiB DMA page size")
                                            << ErrorInfo::DmaPageSize(mPageSize));
   }
 
   // Check that the data source is valid. If not throw
   if (mDataSource == DataSource::Ddg) {
-    BOOST_THROW_EXCEPTION(CruException() << ErrorInfo::Message("CRORC does not support specified data source")
+    BOOST_THROW_EXCEPTION(CruException() << ErrorInfo::Message(getLoggerPrefix() + "CRORC does not support specified data source")
                                          << ErrorInfo::DataSource(mDataSource));
   }
 
@@ -76,7 +76,7 @@ CrorcDmaChannel::CrorcDmaChannel(const Parameters& parameters)
     if (entry.size < kSuperpageInfoSize) {
       // Something must've failed at some point
       BOOST_THROW_EXCEPTION(Exception()
-                            << ErrorInfo::Message("Scatter gather list entry for Superpage info buffer was too small")
+                            << ErrorInfo::Message(getLoggerPrefix() + "Scatter gather list entry for Superpage info buffer was too small")
                             << ErrorInfo::ScatterGatherEntrySize(entry.size)
                             << ErrorInfo::SuperpageInfoSize(kSuperpageInfoSize));
     }
@@ -220,7 +220,7 @@ int CrorcDmaChannel::getReadyQueueSize()
 auto CrorcDmaChannel::getSuperpage() -> Superpage
 {
   if (mReadyQueue.isEmpty()) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not get superpage, ready queue was empty"));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(getLoggerPrefix() + "Could not get superpage, ready queue was empty"));
   }
   return *mReadyQueue.frontPtr();
 }
@@ -234,7 +234,7 @@ bool CrorcDmaChannel::pushSuperpage(Superpage superpage)
   checkSuperpage(superpage);
 
   if (mTransferQueue.sizeGuess() >= TRANSFER_QUEUE_CAPACITY) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not push superpage, transfer queue was full"));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(getLoggerPrefix() + "Could not push superpage, transfer queue was full"));
   }
 
   mTransferQueue.write(superpage);
@@ -245,7 +245,7 @@ bool CrorcDmaChannel::pushSuperpage(Superpage superpage)
 auto CrorcDmaChannel::popSuperpage() -> Superpage
 {
   if (mReadyQueue.isEmpty()) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not pop superpage, ready queue was empty"));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(getLoggerPrefix() + "Could not pop superpage, ready queue was empty"));
   }
   auto superpage = mReadyQueue.frontPtr();
   mReadyQueue.popFront();

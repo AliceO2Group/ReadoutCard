@@ -40,13 +40,13 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
     if (pageSize.get() != Cru::DMA_PAGE_SIZE) {
       log("DMA page size not default; Behaviour undefined", LogWarningDevel_(4250));
       /*BOOST_THROW_EXCEPTION(CruException()
-          << ErrorInfo::Message("CRU only supports an 8KiB page size")
+          << ErrorInfo::Message(getLoggerPrefix() + "CRU only supports an 8KiB page size")
           << ErrorInfo::DmaPageSize(pageSize.get()));*/
     }
   }
 
   if (mDataSource == DataSource::Diu || mDataSource == DataSource::Siu) {
-    BOOST_THROW_EXCEPTION(CruException() << ErrorInfo::Message("CRU does not support specified data source")
+    BOOST_THROW_EXCEPTION(CruException() << ErrorInfo::Message(getLoggerPrefix() + "CRU does not support specified data source")
                                          << ErrorInfo::DataSource(mDataSource));
   }
 
@@ -99,7 +99,7 @@ CruDmaChannel::CruDmaChannel(const Parameters& parameters)
     log(stream.str(), LogInfoDevel_(4252));
 
     if (mLinks.empty()) {
-      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("No links are enabled. Check with roc-status. Configure with roc-config."));
+      BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(getLoggerPrefix() + "No links are enabled. Check with roc-status. Configure with roc-config."));
     }
 
     mReadyQueue = std::make_unique<SuperpageQueue>(mReadyQueueCapacity + 1); // folly queue needs + 1
@@ -214,7 +214,7 @@ void CruDmaChannel::deviceResetChannel(ResetLevel::type resetLevel)
   if (resetLevel == ResetLevel::Nothing) {
     return;
   } else if (resetLevel != ResetLevel::Internal) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("The CRU can only be reset internally"));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(getLoggerPrefix() + "The CRU can only be reset internally"));
   }
   resetCru();
 }
@@ -260,7 +260,7 @@ bool CruDmaChannel::pushSuperpage(Superpage superpage)
   if (mLinkQueuesTotalAvailable == 0) {
     // Note: the transfer queue refers to the firmware, not the mLinkIndexQueue which contains the LinkIds for links
     // that can still be pushed into (essentially the opposite of the firmware's queue).
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not push superpage, transfer queue was full"));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(getLoggerPrefix() + "Could not push superpage, transfer queue was full"));
   }
 
   // Get the next link to push
@@ -269,7 +269,7 @@ bool CruDmaChannel::pushSuperpage(Superpage superpage)
   if (link.queue->sizeGuess() >= mLinkQueueCapacity) {
     // Is the link's FIFO out of space?
     // This should never happen
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not push superpage, link queue was full"));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(getLoggerPrefix() + "Could not push superpage, link queue was full"));
   }
 
   // Once we've confirmed the link has a slot available, we push the superpage
@@ -286,7 +286,7 @@ bool CruDmaChannel::pushSuperpage(Superpage superpage)
 auto CruDmaChannel::getSuperpage() -> Superpage
 {
   if (mReadyQueue->isEmpty()) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not get superpage, ready queue was empty"));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(getLoggerPrefix() + "Could not get superpage, ready queue was empty"));
   }
   return *mReadyQueue->frontPtr();
 }
@@ -294,7 +294,7 @@ auto CruDmaChannel::getSuperpage() -> Superpage
 auto CruDmaChannel::popSuperpage() -> Superpage
 {
   if (mReadyQueue->isEmpty()) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not pop superpage, ready queue was empty"));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(getLoggerPrefix() + "Could not pop superpage, ready queue was empty"));
   }
   auto superpage = *mReadyQueue->frontPtr();
   mReadyQueue->popFront();
@@ -311,7 +311,7 @@ void CruDmaChannel::pushSuperpageToLink(Link& link, const Superpage& superpage)
 void CruDmaChannel::transferSuperpageFromLinkToReady(Link& link, bool reclaim)
 {
   if (link.queue->isEmpty()) {
-    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Could not transfer Superpage from link to ready queue, link queue is empty"));
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message(getLoggerPrefix() + "Could not transfer Superpage from link to ready queue, link queue is empty"));
   }
 
   if (!reclaim) {
@@ -353,7 +353,7 @@ void CruDmaChannel::fillSuperpages()
              << superpageCount << " pushed according to firmware";
       log(stream.str(), LogErrorDevel_(4256));
       BOOST_THROW_EXCEPTION(Exception()
-                            << ErrorInfo::Message("FATAL: Firmware reported more superpages available than should be present in FIFO"));
+                            << ErrorInfo::Message(getLoggerPrefix() + "FATAL: Firmware reported more superpages available than should be present in FIFO"));
     }
 
     while (amountAvailable) {
