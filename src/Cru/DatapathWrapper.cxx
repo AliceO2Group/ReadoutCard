@@ -347,5 +347,22 @@ uint32_t DatapathWrapper::getFeeId(Link link)
   return mPdaBar->readRegister(address / 4) & 0xffff;
 }
 
+void DatapathWrapper::setDropBadRdhEnabled(bool enable, int wrapper)
+{
+  uint32_t value = enable ? 0x1 : 0x0;
+  uint32_t address = getDatapathWrapperBaseAddress(wrapper) +
+                     Cru::Registers::DWRAPPER_GREGS.address +
+                     Cru::Registers::DWRAPPER_DROP_BAD_RDH.address;
+  mPdaBar->writeRegister(address / 4, value);
+}
+
+bool DatapathWrapper::getDropBadRdhEnabled(int wrapper)
+{
+  uint32_t address = getDatapathWrapperBaseAddress(wrapper) +
+                     Cru::Registers::DWRAPPER_GREGS.address +
+                     Cru::Registers::DWRAPPER_DROP_BAD_RDH.address;
+  return mPdaBar->readRegister(address / 4);
+}
+
 } // namespace roc
 } // namespace o2

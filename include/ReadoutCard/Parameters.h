@@ -162,6 +162,9 @@ class Parameters
   // Type for the Time Frame Length parameter
   using TimeFrameLengthType = uint32_t;
 
+  /// Type for the Drop RDH enabled parameter
+  using DropBadRdhEnabledType = bool;
+
   /// Type for the Time Frame Detection enabled parameter
   using TimeFrameDetectionEnabledType = bool;
 
@@ -477,6 +480,12 @@ class Parameters
   /// \return Reference to this object for chaining calls
   auto setTimeFrameLength(TimeFrameLengthType value) -> Parameters&;
 
+  /// Sets the DropBadRdhEnabled parameter
+  ///
+  /// \param value The value to set
+  /// \return Reference to this object for chaining calls
+  auto setDropBadRdhEnabled(DropBadRdhEnabledType value) -> Parameters&;
+
   /// Sets the TimeFrameDetectionEnabled parameter
   ///
   /// \param value The value to set
@@ -633,6 +642,10 @@ class Parameters
   /// Gets the TimeFrameLength parameter
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
   auto getTimeFrameLength() const -> boost::optional<TimeFrameLengthType>;
+
+  /// Gets the DropBadRdhEnabled parameter
+  /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
+  auto getDropBadRdhEnabled() const -> boost::optional<DropBadRdhEnabledType>;
 
   /// Gets the TimeFrameDetectionEnabled parameter
   /// \return The value wrapped in an optional if it is present, or an empty optional if it was not
@@ -816,6 +829,11 @@ class Parameters
   /// \exception ParameterException The parameter was not present
   /// \return The value
   auto getTimeFrameLengthRequired() const -> TimeFrameLengthType;
+
+  /// Gets the DropBadRdhEnabled parameter
+  /// \exception ParameterException The parameter was not present
+  /// \return The value
+  auto getDropBadRdhEnabledRequired() const -> DropBadRdhEnabledType;
 
   /// Gets the TimeFrameDetectionEnabled parameter
   /// \exception ParameterException The parameter was not present

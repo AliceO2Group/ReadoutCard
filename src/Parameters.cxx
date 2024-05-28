@@ -154,6 +154,7 @@ _PARAMETER_FUNCTIONS(TimeFrameDetectionEnabled, "timeframe_detection_enabled")
 _PARAMETER_FUNCTIONS(SystemId, "system_id")
 _PARAMETER_FUNCTIONS(FeeId, "fee_id")
 _PARAMETER_FUNCTIONS(FeeIdMap, "fee_id_map")
+_PARAMETER_FUNCTIONS(DropBadRdhEnabled, "drop_bad_rdh_enabled")
 #undef _PARAMETER_FUNCTIONS
 
 Parameters::Parameters() : mPimpl(std::make_unique<ParametersPimpl>())
