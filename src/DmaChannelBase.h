@@ -129,6 +129,12 @@ class DmaChannelBase : public DmaChannelInterface
 
   protected:
   std::string mLoggerPrefix;
+
+  /// Get a string descriptor, to be used for logs or exceptions
+  const std::string &getLoggerPrefix() {
+    return mLoggerPrefix;
+  };
+
 };
 
 } // namespace roc

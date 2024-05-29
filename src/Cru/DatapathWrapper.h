@@ -61,6 +61,8 @@ class DatapathWrapper
   uint32_t getSystemId(Link link);
   void setFeeId(Link link, uint32_t feeId);
   uint32_t getFeeId(Link link);
+  void setDropBadRdhEnabled(bool enable, int wrapper);
+  bool getDropBadRdhEnabled(int wrapper);
 
   // generic function to retrieve given register for given link
   // (to avoid defining one getter function per register...)

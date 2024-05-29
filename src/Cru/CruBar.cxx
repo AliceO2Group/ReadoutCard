@@ -68,7 +68,8 @@ CruBar::CruBar(const Parameters& parameters, std::unique_ptr<RocPciDevice> rocPc
     mGbtHighMask(parameters.getGbtHighMask().get_value_or(0xffffffff)),
     mGbtMedMask(parameters.getGbtMedMask().get_value_or(0xffffffff)),
     mGbtLowMask(parameters.getGbtLowMask().get_value_or(0xffffffff)),
-    mTimeFrameLength(parameters.getTimeFrameLength().get_value_or(0x100))
+    mTimeFrameLength(parameters.getTimeFrameLength().get_value_or(0x100)),
+    mDropBadRdhEnabled(parameters.getDropBadRdhEnabled().get_value_or(false))
 {
   if (getIndex() == 0) {
     mFeatures = parseFirmwareFeatures();
@@ -176,7 +177,7 @@ uint32_t CruBar::getSuperpageSize(uint32_t link)
 uint32_t CruBar::getSuperpageFifoEmptyCounter(uint32_t link)
 {
   if (link >= Cru::MAX_LINKS) {
-    BOOST_THROW_EXCEPTION(InvalidLinkId() << ErrorInfo::Message("Link ID out of range") << ErrorInfo::LinkId(link));
+    BOOST_THROW_EXCEPTION(InvalidLinkId() << ErrorInfo::Message(getLoggerPrefix() + "Link ID out of range") << ErrorInfo::LinkId(link));
   }
   return readRegister(Cru::Registers::LINK_SUPERPAGE_FIFO_EMPTY.get(link).index);
 }
@@ -559,6 +560,7 @@ Cru::ReportInfo CruBar::report(bool forConfig)
 
   bool userAndCommonLogicEnabled = datapathWrapper.getUserAndCommonLogicEnabled(mEndpoint);
   uint16_t timeFrameLength = getTimeFrameLength();
+  bool dropBadRdhEnabled = datapathWrapper.getDropBadRdhEnabled(mEndpoint);
 
   bool dmaStatus = getDmaStatus();
 
@@ -579,6 +581,7 @@ Cru::ReportInfo CruBar::report(bool forConfig)
   reportInfo.userAndCommonLogicEnabled = userAndCommonLogicEnabled;
   reportInfo.timeFrameLength = timeFrameLength;
   reportInfo.dmaStatus = dmaStatus;
+  reportInfo.dropBadRdhEnabled = dropBadRdhEnabled;
 
   return reportInfo;
 }
@@ -720,7 +723,7 @@ Cru::TriggerMonitoringInfo CruBar::monitorTriggers(bool updateable)
 void CruBar::checkConfigParameters()
 {
   if (mUserAndCommonLogicEnabled && !mUserLogicEnabled) {
-    BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message("User and Common logic switch invalid when User logic disabled"));
+    BOOST_THROW_EXCEPTION(ParameterException() << ErrorInfo::Message(getLoggerPrefix() + "User and Common logic switch invalid when User logic disabled"));
   }
 }
 
@@ -744,6 +747,7 @@ void CruBar::configure(bool force)
       mRunStatsEnabled == reportInfo.runStatsEnabled &&
       mGbtEnabled == reportInfo.gbtEnabled &&
       mTimeFrameLength == reportInfo.timeFrameLength &&
+      mDropBadRdhEnabled == reportInfo.dropBadRdhEnabled &&
       !force) {
     log("No need to reconfigure further", LogInfoDevel_(4600));
     return;
@@ -873,6 +877,11 @@ void CruBar::configure(bool force)
   if (mTimeFrameLength != reportInfo.timeFrameLength || force) {
     log("Setting Time Frame length: " + std::to_string(mTimeFrameLength), LogInfoDevel_(4605));
     setTimeFrameLength(mTimeFrameLength);
+  }
+
+  if (mDropBadRdhEnabled != reportInfo.dropBadRdhEnabled || force) {
+    log("Drop packets with bad RDH enabled: " + Utilities::toBoolString(mDropBadRdhEnabled), LogInfoDevel_(4605));
+    datapathWrapper.setDropBadRdhEnabled(mDropBadRdhEnabled, mEndpoint);
   }
 
   log("CRU configuration done", LogInfoDevel_(4600));

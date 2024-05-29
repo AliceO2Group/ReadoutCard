@@ -142,6 +142,7 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
   bool userAndCommonLogicEnabled = false;
   uint32_t systemId = 0x0;
   uint16_t timeFrameLength = 0x100;
+  bool dropBadRdhEnabled = false;
 
   bool enabled = false;
   std::string gbtMux = "ttc";
@@ -198,6 +199,7 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
         systemId = Hex::fromString(parsedString);
 
         timeFrameLength = subtree.get<int>("timeFrameLength");
+        dropBadRdhEnabled = subtree.get<bool>("dropBadRdhEnabled");
 
         parameters.setClock(clock);
         parameters.setDatapathMode(datapathMode);
@@ -216,6 +218,8 @@ void CardConfigurator::parseConfigUriCru(std::string configUri, Parameters& para
         parameters.setUserAndCommonLogicEnabled(userAndCommonLogicEnabled);
         parameters.setSystemId(systemId);
         parameters.setTimeFrameLength(timeFrameLength);
+	parameters.setDropBadRdhEnabled(dropBadRdhEnabled);
+
       } else if (group == "links") { // Configure all links with default values
 
         enabled = subtree.get<bool>("enabled");

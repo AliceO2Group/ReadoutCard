@@ -211,6 +211,7 @@ class ProgramStatus : public Program
       std::string runStats = (reportInfo.runStatsEnabled ? "Enabled" : "Disabled");
       std::string userAndCommonLogic = (reportInfo.userAndCommonLogicEnabled ? "Enabled" : "Disabled");
       std::string dmaStatus = reportInfo.dmaStatus ? "Enabled" : "Disabled";
+      std::string dropBadRdh = (reportInfo.dropBadRdhEnabled ? "Enabled" : "Disabled");
 
       /* GENERAL PARAMETERS */
       if (mOptions.monitoring) {
@@ -240,6 +241,7 @@ class ProgramStatus : public Program
         root.put("userAndCommonLogic", userAndCommonLogic);
         root.put("timeFrameLength", reportInfo.timeFrameLength);
         root.put("dmaStatus", dmaStatus);
+	root.put("dropBadRdh", dropBadRdh);
       } else {
         std::cout << "-----------------------------" << std::endl;
         std::cout << "CRU ID: " << reportInfo.cruId << std::endl;
@@ -255,6 +257,9 @@ class ProgramStatus : public Program
           std::cout << "Run statistics enabled" << std::endl;
         }
          std::cout << "DMA: "<< dmaStatus << std::endl;
+	if (reportInfo.dropBadRdhEnabled) {
+	  std::cout << "Drop packets with bad RDH enabled" << std::endl;
+	}
       }
 
       /* ONU PARAMETERS */

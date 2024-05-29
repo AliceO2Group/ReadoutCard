@@ -11,7 +11,7 @@
 
 #include "ReadoutCard/Version.h"
 
-#define O2_READOUTCARD_VERSION "0.45.1"
+#define O2_READOUTCARD_VERSION "0.45.2"
 
 namespace o2
 {

@@ -186,6 +186,7 @@ class CruBar final : public BarInterfaceBase
   uint32_t mGbtLowMask;
   bool mGbtLoopbackReset;
   uint32_t mTimeFrameLength;
+  bool mDropBadRdhEnabled;
 
   int mSerial;
   int mEndpoint;

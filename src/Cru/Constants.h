@@ -327,6 +327,10 @@ static constexpr Register DWRAPPER_TOTAL_PACKETS_PER_SEC(0x0000002c);
 /// Register to set the trigger window size in gbt words
 static constexpr Register DWRAPPER_TRIGGER_SIZE(0x00000034);
 
+/// Register to enable dropping of packets with bad RDH
+static constexpr Register DWRAPPER_DROP_BAD_RDH(0x00000038);
+
+
 static constexpr Register DATALINK_PACKETS_REJECTED(0x00000008);
 static constexpr Register DATALINK_PACKETS_ACCEPTED(0x0000000c);
 static constexpr Register DATALINK_PACKETS_FORCED(0x00000010);

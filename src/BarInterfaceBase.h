@@ -131,6 +131,11 @@ class BarInterfaceBase : public BarInterface
   /// Convenience function for InfoLogger
   void log(const std::string& logMessage, ILMessageOption = LogInfoDevel);
 
+  /// Get a string descriptor, to be used for logs or exceptions
+  const std::string &getLoggerPrefix() {
+    return mLoggerPrefix;
+  };
+
  private:
   /// Inheriting classes must implement this to check whether a given read is safe.
   /// If it is not safe, it should throw an UnsafeReadAccess exception

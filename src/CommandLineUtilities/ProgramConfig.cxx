@@ -116,6 +116,7 @@ std::string getStatusReport(Parameters::CardIdType cardId)
     std::string userLogic = (reportInfo.userLogicEnabled ? "Enabled" : "Disabled");
     std::string runStats = (reportInfo.runStatsEnabled ? "Enabled" : "Disabled");
     std::string userAndCommonLogic = (reportInfo.userAndCommonLogicEnabled ? "Enabled" : "Disabled");
+    std::string dropBadRdh = (reportInfo.dropBadRdhEnabled ? "Enabled" : "Disabled");
 
     table << "-----------------------------" << std::endl;
     table << "CRU ID: " << reportInfo.cruId << std::endl;
@@ -129,6 +130,9 @@ std::string getStatusReport(Parameters::CardIdType cardId)
     }
     if (reportInfo.runStatsEnabled) {
       table << "Run statistics enabled" << std::endl;
+    }
+    if (reportInfo.dropBadRdhEnabled) {
+      table << "Drop packets with bad RDH enabled" << std::endl;
     }
 
     Cru::OnuStatus onuStatus = cruBar2->reportOnuStatus(0);
@@ -315,6 +319,9 @@ class ProgramConfig : public Program
     options.add_options()("status-report",
                           po::value<std::string>(&mOptions.statusReport),
                           "Sets file where to output card status (similar to roc-status). Can be stdout, infologger, or a file name. The file name can be preceded with + for appending the file. Name can contain special escape sequences %t (timestamp) %T (date/time) or %i (card ID). Infologger reports are set with error code 4805.");
+    options.add_options()("drop-bad-rdh",
+                          po::bool_switch(&mOptions.dropBadRdhEnabled),
+                          "Flag to enable dropping of packets with bad RDH");
     Options::addOptionCardId(options);
   }
 
@@ -480,6 +487,7 @@ class ProgramConfig : public Program
       params.setTimeFrameDetectionEnabled(!mOptions.timeFrameDetectionDisabled);
       params.setSystemId(strtoul(mOptions.systemId.c_str(), NULL, 16));
       params.setFeeId(strtoul(mOptions.feeId.c_str(), NULL, 16));
+      params.setDropBadRdhEnabled(mOptions.dropBadRdhEnabled);
 
       // Generate a configuration file base on the parameters provided
       if (mOptions.genConfigFile != "") { //TODO: To be updated for the CRORC
@@ -506,6 +514,7 @@ class ProgramConfig : public Program
         //cfgFile << "timeFrameDetectionEnabled=" << std::boolalpha << !mOptions.timeFrameDetectionDisabled << "\n";
         cfgFile << "systemId=" << mOptions.systemId << "\n";
         cfgFile << "timeFrameLength=" << mOptions.timeFrameLength << "\n";
+        cfgFile << "dropBadRdhEnabled=" << std::boolalpha << mOptions.dropBadRdhEnabled << "\n";
 
         cfgFile << "[links]\n";
         cfgFile << "enabled=false\n";
@@ -589,6 +598,7 @@ class ProgramConfig : public Program
     std::string statusReport = ""; // when set, output roc status to file
     /*std::string systemId = "0x1ff"; // TODO: Default values that can be used to check if params have been specified
     std::string feeId = "0x1f";*/
+    bool dropBadRdhEnabled = false;
   } mOptions;
 
  private:

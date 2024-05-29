@@ -211,6 +211,8 @@ The Parameters that affect the configuration of the CRU, their possible values (
 
 `UserLogicEnabled (true | false) [false]`
 
+`DropBadRdhEnabled (true | false) [false]`
+
 To set any of the above parameters the usual template can be followed.
 
 ```
@@ -228,7 +230,7 @@ params.setClock(Parameters::Clock::type::Local);
 The above parameters will be set for the enabled links, as specified by the `LinkMask` parameter. See the [LinkMask](#linkmask) section
 for more info.
 
-Note that for `AllowRejection`, `LinkLoopbackEnabled`, `PonUpstreamEnabled`, `DynamicOffsetEnabled`, `GbtEnabled` and `UserLogicEnabled` it is sufficient to do the following, as they are simply booleans.
+Note that for `AllowRejection`, `LinkLoopbackEnabled`, `PonUpstreamEnabled`, `DynamicOffsetEnabled`, `GbtEnabled`, `UserLogicEnabled`, `DropBadRdhEnabled` it is sufficient to do the following, as they are simply booleans.
 
 ```
 params.setAllowRejection(true);
@@ -269,6 +271,7 @@ dynamicOffsetEnabled
 triggerWindowSize
 gbtEnabled
 UserLogicEnabled
+DropBadRdhEnabled
 ```
 
 The "per link" parameters are
