@@ -78,6 +78,6 @@ This file describes the main feature changes for released versions of ReadoutCar
 - Updated list of firmwares.
 - Added CRU option dropBadRdhEnabled.
 
-## next version
+## v0.45.3 - 16/07/2024
 - Added some counters for roc-status:
   - link (with --monitoring option only): rdhCorruptedDropped (for convenience - this value is extracted from the existing pktErrorCheck1 field, bits [23:16]).
