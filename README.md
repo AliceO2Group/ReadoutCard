@@ -667,6 +667,7 @@ metric format for the CRORC and the CRU is different, as different parameters ar
 | `"pktErrorCheck2"`      | -                                                          | int    |
 | `"pktErrorOversize"`    | -                                                          | int    |
 | `"orbitSor"`            | -                                                          | int    |
+| `"rdhCorruptedDropped"` | -                                                          | int    |
 
 | Tag key               | Value                 |
 | --------------------- | --------------------- |

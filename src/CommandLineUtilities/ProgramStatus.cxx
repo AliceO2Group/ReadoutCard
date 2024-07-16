@@ -443,6 +443,7 @@ class ProgramStatus : public Program
                              .addValue((uint64_t)link.pktErrorCheck2, "pktErrorCheck2")
                              .addValue((uint64_t)link.pktErrorOversize, "pktErrorOversize")
                              .addValue((uint64_t)link.orbitSor, "orbitSor")
+                             .addValue((uint8_t)((link.pktErrorCheck1 & 0x00ff0000 ) >> 16), "rdhCorruptedDropped")
                              .addTag(tags::Key::SerialId, card.serialId.getSerial())
                              .addTag(tags::Key::Endpoint, card.serialId.getEndpoint())
                              .addTag(tags::Key::CRU, card.sequenceId)
