@@ -81,3 +81,6 @@ This file describes the main feature changes for released versions of ReadoutCar
 ## v0.45.3 - 16/07/2024
 - Added some counters for roc-status:
   - link (with --monitoring option only): rdhCorruptedDropped (for convenience - this value is extracted from the existing pktErrorCheck1 field, bits [23:16]).
+
+## v0.45.4 - 26/09/2024
+- Updated list of firmwares.
