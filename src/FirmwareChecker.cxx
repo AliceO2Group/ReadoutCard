@@ -36,6 +36,7 @@ FirmwareChecker::FirmwareChecker() : mCompatibleFirmwareList({
                                        { "47df4106", "v3.19.0" },
                                        { "adc37d07", "v3.19.0" },
                                        { "641a503d", "v3.19.2" },
+				       { "b0332f4e", "v3.19.3" },
                                        /* CRORC (before 2.14, keep 7 chars only for the hash) */
                                        { "267f8e5", "v2.9.1" },
                                        { "cecc295", "v2.9.0" },
