@@ -84,3 +84,6 @@ This file describes the main feature changes for released versions of ReadoutCar
 
 ## v0.45.4 - 26/09/2024
 - Updated list of firmwares.
+
+## v0.45.5 - 19/12/2024
+- Added internal fallback when hugeadm tool not available to setup hugepages (e.g.for RHEL9).

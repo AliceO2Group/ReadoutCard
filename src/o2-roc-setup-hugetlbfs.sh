@@ -13,6 +13,13 @@ HUGEPAGES_1G_SYSFILE=/sys/kernel/mm/hugepages/hugepages-1048576kB/nr_hugepages
 HUGEPAGES_1G_NUMBER=6
 
 
+which hugeadm
+if [ "$?" == "0" ]; then
+  FOUND_HUGEADM=1
+else
+  echo "hugeadm command not found, using internal fallback"
+fi
+
 # Allocate hugepages of each type
 echo -n "File '${HUGEPAGES_2M_CONF}' "
 if [ -f $HUGEPAGES_2M_CONF ]; then
@@ -34,7 +41,22 @@ echo $HUGEPAGES_1G_NUMBER > $HUGEPAGES_1G_SYSFILE
 
 # Create hugetlbfs mounts in /var/lib/hugetlbfs/global/...
 echo "Creating hugetlbfs mounts"
-hugeadm --create-global-mounts
+if [ "$FOUND_HUGEADM" == "1" ]; then
+  hugeadm --create-global-mounts
+else
+  for sz in 2M 1G; do
+    MPDIR=/var/lib/hugetlbfs/global/pagesize-${sz}B
+    mountpoint -q $MPDIR
+    if [ "$?" -ne 0 ]; then
+      echo "Mounting $MPDIR"
+      mount -t hugetlbfs -o pagesize=${sz} none $MPDIR
+      chown root:root $MPDIR
+      chmod 1777 $MPDIR
+    else
+      echo "Already mounted: $MPDIR"
+    fi
+  done
+fi
 echo "Setting permissions on hugeltbfs mounts"
 chgrp -R pda /var/lib/hugetlbfs/global/*
 chmod -R g+rwx /var/lib/hugetlbfs/global/*
@@ -42,7 +64,14 @@ chmod -R g+rwx /var/lib/hugetlbfs/global/*
 # Display hugepage status
 echo ""
 echo "Hugepages:"
-hugeadm --pool-list
+if [ "$FOUND_HUGEADM" == "1" ]; then
+  hugeadm --pool-list
+else
+  echo -n "Number of 2MB hugepages: "
+  cat $HUGEPAGES_2M_SYSFILE
+  echo -n "Number of 1GB hugepages: "
+  cat $HUGEPAGES_1G_SYSFILE
+fi
 echo ""
 echo "Use 'echo [number] > /sys/kernel/mm/hugepages/hugepages-[size]/nr_hugepages' to allocate hugepages manually"
 echo "Or set a number in the following conf files and run the script again:"
