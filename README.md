@@ -378,6 +378,14 @@ It may use files in these directories for DMA buffers:
 The program will report the exact file used. 
 They can be inspected manually if needed, e.g. with hexdump: `hexdump -e '"%07_ax" " | " 4/8 "%08x " "\n"' [filename]`
 
+Example usage:
+```
+for i in 0 1; do  roc-config --i=#$i --clock=local --links=0-1 --tf=32  --byp  --loop --dyn --force --datapathmode=streaming; done
+roc-bench-dma --i=#0 --fast --data=FEE --bypass
+o2-roc-ctp-emulator --id=#0 --trigger-mode=continuous  --init-orbit=0x1e
+```
+
+
 ### roc-cleanup
 In the event of a serious crash, such as a segfault, it may be necessary to clean up and reset.
 This tool serves this purpose and is intended to be run as root. Be aware that this will make every
