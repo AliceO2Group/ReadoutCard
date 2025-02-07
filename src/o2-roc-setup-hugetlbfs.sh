@@ -49,7 +49,7 @@ else
     mountpoint -q $MPDIR
     if [ "$?" -ne 0 ]; then
       echo "Mounting $MPDIR"
-      mount -t hugetlbfs -o pagesize=${sz} none $MPDIR
+      mount -t hugetlbfs -o pagesize=${sz},X-mount.mkdir none $MPDIR
       chown root:root $MPDIR
       chmod 1777 $MPDIR
     else
