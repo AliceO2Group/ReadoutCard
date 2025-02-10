@@ -778,7 +778,7 @@ void CruBar::configure(bool force)
     if (mGbtEnabled /*|| !checkClockConsistent(reportInfo.linkMap)*/) {
       Gbt gbt = Gbt(mPdaBar, mLinkMap, mWrapperCount, mEndpoint);
       gbt.calibrateGbt(mLinkMap);
-      Cru::fpllref(mLinkMap, mPdaBar, 2);
+      //Cru::fpllref(mLinkMap, mPdaBar, 2); // disable for new FW
       Cru::fpllcal(mLinkMap, mPdaBar);
       gbt.resetFifo();
     }
