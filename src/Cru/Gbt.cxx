@@ -84,7 +84,7 @@ void Gbt::calibrateGbt(std::map<int, Link> linkMap)
 {
   //Cru::fpllref(linkMap, mPdaBar, 2); //Has been bound with clock configuration
   //Cru::fpllcal(linkMap, mPdaBar); //same
-  cdrref(linkMap, 2);
+  //cdrref(linkMap, 2); // disable for new FW
   txcal(linkMap);
   rxcal(linkMap);
 }
