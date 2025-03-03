@@ -821,7 +821,13 @@ is always searched for in `/etc/o2.d/readoutcard/o2-roc-fw-list.json`. This is a
 
 ### PDA
 The module depends on the PDA (Portable Driver Architecture) library and driver.
-If PDA is not detected on the system, only a dummy implementation of the interface will be compiled.
+
+For runtime environment, the pda-dkms-adapter RPM provides the kernel module.
+It is installed by the FLP suite setup procedure.
+If needed, this RPM can be removed/reinstalled. It is available from the usual O2 repositories.
+
+In development mode, the PDA library is built by aliBuild, but the kernel module is still needed in case of accessing hardware.
+The kernel module can be installed with the RPM described above, or manually with: 
 
 1. Install dependency packages
   ~~~
@@ -846,6 +852,9 @@ If PDA is not detected on the system, only a dummy implementation of the interfa
   ~~~
   modprobe uio_pci_dma
   ~~~
+
+If PDA is not detected on the system, only a dummy implementation of the ReadoutCard interface will be compiled.
+
 
 ### Hugepages
 At some point, we should probably use kernel boot parameters to allocate hugepages, or use some boot-time script, but 
