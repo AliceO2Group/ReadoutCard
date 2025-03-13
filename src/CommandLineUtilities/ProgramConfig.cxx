@@ -36,6 +36,14 @@ namespace po = boost::program_options;
 
 std::string cmd; // program command invoked
 
+namespace o2
+{
+namespace roc
+{
+extern bool testModeORC501; // testMode flag used for some FW dev, cf JIRA ORC-501
+}
+}
+
 /// Get a status report of given card
 std::string getStatusReport(Parameters::CardIdType cardId)
 {
@@ -322,6 +330,9 @@ class ProgramConfig : public Program
     options.add_options()("drop-bad-rdh",
                           po::bool_switch(&mOptions.dropBadRdhEnabled),
                           "Flag to enable dropping of packets with bad RDH");
+    options.add_options()("test-mode-ORC501",
+                          po::bool_switch(&o2::roc::testModeORC501),
+                          "Flag to enable test mode as described in JIRA ORC-501");
     Options::addOptionCardId(options);
   }
 

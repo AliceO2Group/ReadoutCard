@@ -39,6 +39,8 @@ namespace o2
 namespace roc
 {
 
+bool testModeORC501 = false; // testMode flag used for some FW dev, cf JIRA ORC-501
+
 using Link = Cru::Link;
 
 CruBar::CruBar(const Parameters& parameters, std::unique_ptr<RocPciDevice> rocPciDevice)
@@ -776,9 +778,14 @@ void CruBar::configure(bool force)
     }
 
     if (mGbtEnabled /*|| !checkClockConsistent(reportInfo.linkMap)*/) {
+      if (testModeORC501) {
+        log("GBT :  using test mode, cf JIRA ORC-501", LogInfoDevel_(4601));
+      }
       Gbt gbt = Gbt(mPdaBar, mLinkMap, mWrapperCount, mEndpoint);
       gbt.calibrateGbt(mLinkMap);
-      Cru::fpllref(mLinkMap, mPdaBar, 2);
+      if (!testModeORC501) { // testMode flag used for some FW dev, cf JIRA ORC-501
+        Cru::fpllref(mLinkMap, mPdaBar, 2);
+      }
       Cru::fpllcal(mLinkMap, mPdaBar);
       gbt.resetFifo();
     }
