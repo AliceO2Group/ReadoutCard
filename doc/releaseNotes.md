@@ -90,3 +90,6 @@ This file describes the main feature changes for released versions of ReadoutCar
 
 ## v0.45.6 - 07/02/2025
 - Updated list of firmwares.
+
+## v0.45.7 - 13/03/2025
+- o2-roc-config: added (temporary) option --test-mode-ORC501 to enable testing of new firmware as described in [ORC-501](https://its.cern.ch/jira/browse/ORC-501).

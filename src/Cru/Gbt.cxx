@@ -84,7 +84,10 @@ void Gbt::calibrateGbt(std::map<int, Link> linkMap)
 {
   //Cru::fpllref(linkMap, mPdaBar, 2); //Has been bound with clock configuration
   //Cru::fpllcal(linkMap, mPdaBar); //same
-  cdrref(linkMap, 2);
+  extern bool testModeORC501; // testMode flag used for some FW dev, cf JIRA ORC-501
+  if (!testModeORC501) { // testMode flag used for some FW dev, cf JIRA ORC-501
+    cdrref(linkMap, 2);
+  }
   txcal(linkMap);
   rxcal(linkMap);
 }
