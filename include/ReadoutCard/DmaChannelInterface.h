@@ -143,6 +143,13 @@ class DmaChannelInterface
   /// Gets card unique ID, such as an FPGA chip ID in the case of the CRU
   /// \return A string containing the unique ID
   virtual boost::optional<std::string> getCardId() = 0;
+
+  /// Gets the first orbit received by CRU
+  /// cf JIRA OMON-800
+  /// \return orbit number, or -1 if not found.
+  virtual int32_t getCounterFirstOrbit() {
+    return -1;
+  }
 };
 
 } // namespace roc

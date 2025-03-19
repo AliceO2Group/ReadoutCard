@@ -481,5 +481,18 @@ boost::optional<std::string> CruDmaChannel::getCardId()
   }
 }
 
+int32_t CruDmaChannel::getCounterFirstOrbit() {
+  int address = 0x0;
+  int endpoint = getBar()->getEndpointNumber();
+  if (endpoint == 0) {
+    address = 0x64002C;
+  } else if (endpoint == 1) {
+    address = 0x74002C;
+  } else {
+    return -1;
+  }
+  return getBar2()->readRegister(address / 4);
+}
+
 } // namespace roc
 } // namespace o2
