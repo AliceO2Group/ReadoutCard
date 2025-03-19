@@ -93,3 +93,6 @@ This file describes the main feature changes for released versions of ReadoutCar
 
 ## v0.45.7 - 13/03/2025
 - o2-roc-config: added (temporary) option --test-mode-ORC501 to enable testing of new firmware as described in [ORC-501](https://its.cern.ch/jira/browse/ORC-501).
+
+## v0.46.0 - 19/03/2025
+- class DmaChannelInterface: added getCounterFirstOrbit(), c.f. JIRA OMON-800
