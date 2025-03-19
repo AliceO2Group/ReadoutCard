@@ -62,6 +62,8 @@ class CruDmaChannel final : public DmaChannelPdaBase
   virtual boost::optional<std::string> getCardId() override;
   AllowedChannels allowedChannels();
 
+  virtual int32_t getCounterFirstOrbit() override;
+
  protected:
   virtual void deviceStartDma() override;
   virtual void deviceStopDma() override;
