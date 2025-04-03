@@ -24,7 +24,7 @@ endif()
 
 # Define project
 project(ReadoutCard
-  VERSION 0.46.0
+  VERSION 0.46.1
   DESCRIPTION "O2 ReadoutCard library"
   LANGUAGES C CXX
 )
