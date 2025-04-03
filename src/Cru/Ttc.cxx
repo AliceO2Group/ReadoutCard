@@ -24,6 +24,7 @@
 #include "register_maps/Si5345-RevD_ttc_pll1_zdb-Registers.h"
 #include "register_maps/Si5345-RevD_ttc_pll2_zdb-Registers.h"
 #include "register_maps/Si5344-RevD-TFC_40-Registers.h"
+#include "register_maps/Si5345-RevD-_local_pll-oct-2024-320M-LPGBTCRU-Registers.h"
 
 namespace o2
 {
@@ -63,6 +64,12 @@ void Ttc::configurePlls(uint32_t clock)
     setRefGen();
     registerMap1 = getTtcClockPll1RegisterMap();
     registerMap2 = getTtcClockPll2RegisterMap();
+  }
+
+  extern bool testModeORC501; // testMode flag used for some FW dev, cf JIRA ORC-501
+  if (testModeORC501) { // testMode flag used for some FW dev, cf JIRA ORC-501 + JIRA ORC-511
+    registerMap1 = getORC511PllRegisterMap();
+    registerMap2 = getORC511PllRegisterMap();
   }
 
   I2c p1 = I2c(Cru::Registers::SI5345_1.address, chipAddress, mBar, 0, registerMap1);
