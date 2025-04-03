@@ -96,3 +96,6 @@ This file describes the main feature changes for released versions of ReadoutCar
 
 ## v0.46.0 - 19/03/2025
 - class DmaChannelInterface: added getCounterFirstOrbit(), c.f. JIRA OMON-800
+
+## v0.46.1 - 03/04/2025
+- o2-roc-config: new PLL config used for test-mode-ORC501, cf [ORC-511](https://its.cern.ch/jira/browse/ORC-511)
