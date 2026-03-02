@@ -34,7 +34,6 @@ find_dependency(InfoLogger CONFIG HINTS ${InfoLogger_CMAKE_DIR})
 # find package must be used as Common already looks for boost and set Boost_FOUND
 find_package(Boost QUIET
   COMPONENTS
-  system
   filesystem
   ${boost_python_component}
   REQUIRED
