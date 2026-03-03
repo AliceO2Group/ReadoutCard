@@ -85,7 +85,6 @@ find_package(Boost 1.56
   COMPONENTS
   unit_test_framework
   filesystem
-  system
   program_options
   ${boost_python_component}
   REQUIRED
@@ -185,7 +184,6 @@ target_link_libraries(ReadoutCard
   PRIVATE
     pda::pda
     Boost::filesystem
-    Boost::system
     pthread
 )
 

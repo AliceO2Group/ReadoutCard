@@ -24,6 +24,7 @@
 #include "Pda/PdaLock.h"
 #include "ReadoutCard/CardDescriptor.h"
 #include "ReadoutCard/Logger.h"
+#include <boost/range/iterator_range.hpp>
 
 namespace bfs = boost::filesystem;
 
