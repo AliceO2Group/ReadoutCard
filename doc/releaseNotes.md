@@ -104,6 +104,6 @@ This file describes the main feature changes for released versions of ReadoutCar
 - boost compatibility
 - removed some obsolete CRU BAR code
 
-## next
+## v0.47.0 - 27/10/2026
 - o2-roc-config: added option --clock-config=[yes, no, only] to configure the CRU clock separately from the rest, cf [ORC-518](https://its.cern.ch/jira/browse/ORC-518). Default yes (unchanged behavior).
 - BarInterface::configure() and CardConfigurator now take a ConfigureOptions struct (force, clockConfig) instead of bool force.
