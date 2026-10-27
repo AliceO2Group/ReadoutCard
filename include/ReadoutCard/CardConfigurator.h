@@ -20,6 +20,7 @@
 #include "ReadoutCard/NamespaceAlias.h"
 #include "ReadoutCard/CardType.h"
 #include "ReadoutCard/Parameters.h"
+#include "ReadoutCard/ConfigureOptions.h"
 
 namespace o2
 {
@@ -29,8 +30,8 @@ namespace roc
 class CardConfigurator
 {
  public:
-  CardConfigurator(Parameters::CardIdType cardId, std::string pathToConfigFile, bool forceConfigure = false);
-  CardConfigurator(Parameters& parameters, bool forceConfigure = false);
+  CardConfigurator(Parameters::CardIdType cardId, std::string pathToConfigFile, const ConfigureOptions& options = {});
+  CardConfigurator(Parameters& parameters, const ConfigureOptions& options = {});
 
  private:
   void parseConfigUri(CardType::type cardType, std::string configUri, Parameters& parameters);

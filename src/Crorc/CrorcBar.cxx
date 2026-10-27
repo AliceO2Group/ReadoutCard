@@ -104,7 +104,7 @@ int CrorcBar::getEndpointNumber()
   return 0;
 }
 
-void CrorcBar::configure(bool /*force*/)
+void CrorcBar::configure(const ConfigureOptions& /*options*/)
 {
   log("Configuring...", LogInfoDevel_(4650));
 

@@ -84,7 +84,7 @@ class CruBar final : public BarInterfaceBase
 
   void resetInternalCounters();
   void setWrapperCount();
-  void configure(bool force = false) override;
+  void configure(const ConfigureOptions& options) override;
   Cru::ReportInfo report(bool forConfig = false);
   Cru::PacketMonitoringInfo monitorPackets();
   Cru::TriggerMonitoringInfo monitorTriggers(bool updateable = false);
