@@ -26,7 +26,7 @@ namespace o2
 namespace roc
 {
 
-CardConfigurator::CardConfigurator(Parameters::CardIdType cardId, std::string configUri, bool forceConfigure)
+CardConfigurator::CardConfigurator(Parameters::CardIdType cardId, std::string configUri, const ConfigureOptions& options)
 {
   auto cardType = RocPciDevice(cardId).getCardDescriptor().cardType;
   Parameters parameters;
@@ -47,23 +47,23 @@ CardConfigurator::CardConfigurator(Parameters::CardIdType cardId, std::string co
 
   auto bar2 = ChannelFactory().getBar(parameters);
   try {
-    bar2->configure(forceConfigure);
+    bar2->configure(options);
   } catch (const Exception& e) {
     BOOST_THROW_EXCEPTION(e);
   }
 }
 
-CardConfigurator::CardConfigurator(Parameters& parameters, bool forceConfigure)
+CardConfigurator::CardConfigurator(Parameters& parameters, const ConfigureOptions& options)
 {
   auto cardType = RocPciDevice(parameters.getCardId().get()).getCardDescriptor().cardType;
   try {
     if (cardType == CardType::Cru) {
       auto bar2 = ChannelFactory().getBar(parameters);
-      bar2->configure(forceConfigure);
+      bar2->configure(options);
     } else if (cardType == CardType::Crorc) {
       parameters.setChannelNumber(0); // we need to change to bar 0
       auto bar0 = ChannelFactory().getBar(parameters);
-      bar0->configure(forceConfigure);
+      bar0->configure(options);
     }
   } catch (const Exception& e) {
     BOOST_THROW_EXCEPTION(e);

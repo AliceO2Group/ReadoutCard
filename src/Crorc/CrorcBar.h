@@ -52,7 +52,7 @@ class CrorcBar final : public BarInterfaceBase
   boost::optional<int32_t> getSerialNumber();
   void setSerial(int serial);
 
-  void configure(bool force = false) override;
+  void configure(const ConfigureOptions& options) override;
   Crorc::ReportInfo report(bool forConfig = false);
 
   void resetDevice(bool withSiu);

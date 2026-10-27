@@ -726,17 +726,21 @@ void CruBar::checkConfigParameters()
 }
 
 /// Configures the CRU according to the parameters passed on init
-void CruBar::configure(bool force)
+void CruBar::configure(const ConfigureOptions& options)
 {
+  bool force = options.force;
+  bool doClock = options.clockConfig != ConfigureOptions::ClockConfig::No;      // run the TTC block
+  bool onlyClock = options.clockConfig == ConfigureOptions::ClockConfig::Only; // run only the TTC block
+
   // Get current info
   Cru::ReportInfo reportInfo = report(true);
   populateLinkMap(mLinkMap);
 
-  if (static_cast<uint32_t>(mClock) == reportInfo.ttcClock &&
-      static_cast<uint32_t>(mDownstreamData) == reportInfo.downstreamData &&
-      std::equal(mLinkMap.begin(), mLinkMap.end(), reportInfo.linkMap.begin()) &&
-      checkPonUpstreamStatusExpected(reportInfo.ponStatusRegister, reportInfo.onuAddress) &&
+  bool clockMatches = static_cast<uint32_t>(mClock) == reportInfo.ttcClock &&
       //checkClockConsistent(reportInfo.linkMap) &&
+      checkPonUpstreamStatusExpected(reportInfo.ponStatusRegister, reportInfo.onuAddress);
+  bool othersMatch = static_cast<uint32_t>(mDownstreamData) == reportInfo.downstreamData &&
+      std::equal(mLinkMap.begin(), mLinkMap.end(), reportInfo.linkMap.begin()) &&
       mCruId == reportInfo.cruId &&
       mDynamicOffset == reportInfo.dynamicOffset &&
       mTriggerWindowSize == reportInfo.triggerWindowSize &&
@@ -745,8 +749,10 @@ void CruBar::configure(bool force)
       mRunStatsEnabled == reportInfo.runStatsEnabled &&
       mGbtEnabled == reportInfo.gbtEnabled &&
       mTimeFrameLength == reportInfo.timeFrameLength &&
-      mDropBadRdhEnabled == reportInfo.dropBadRdhEnabled &&
-      !force) {
+      mDropBadRdhEnabled == reportInfo.dropBadRdhEnabled;
+
+  // only compare the parts selected for configuration
+  if ((!doClock || clockMatches) && (onlyClock || othersMatch) && !force) {
     log("No need to reconfigure further", LogInfoDevel_(4600));
     return;
   }
@@ -758,7 +764,9 @@ void CruBar::configure(bool force)
   DatapathWrapper datapathWrapper = DatapathWrapper(mPdaBar);
 
   /* TTC */
-  if (static_cast<uint32_t>(mClock) != reportInfo.ttcClock /*|| !checkClockConsistent(reportInfo.linkMap)*/ || force) {
+  if (!doClock) {
+    log("Skipping clock configuration", LogInfoDevel_(4601));
+  } else if (static_cast<uint32_t>(mClock) != reportInfo.ttcClock /*|| !checkClockConsistent(reportInfo.linkMap)*/ || force) {
     log("Setting the clock to " + Clock::toString(mClock), LogInfoDevel_(4601));
     ttc.setClock(mClock);
 
@@ -785,6 +793,11 @@ void CruBar::configure(bool force)
       Cru::fpllcal(mLinkMap, mPdaBar);
       gbt.resetFifo();
     }
+  }
+
+  if (onlyClock) {
+    log("CRU clock configuration done", LogInfoDevel_(4600));
+    return;
   }
 
   if (static_cast<uint32_t>(mDownstreamData) != reportInfo.downstreamData || force) {

@@ -22,6 +22,7 @@
 #include "ReadoutCard/CardType.h"
 #include "ReadoutCard/RegisterReadWriteInterface.h"
 #include "ReadoutCard/Parameters.h"
+#include "ReadoutCard/ConfigureOptions.h"
 #include "boost/optional.hpp"
 
 namespace o2
@@ -76,7 +77,7 @@ class BarInterface : public virtual RegisterReadWriteInterface
 
   virtual int getEndpointNumber() = 0;
 
-  virtual void configure(bool force) = 0;
+  virtual void configure(const ConfigureOptions& options) = 0;
 };
 
 } // namespace roc

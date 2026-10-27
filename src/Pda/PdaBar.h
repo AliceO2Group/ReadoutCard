@@ -177,7 +177,7 @@ class PdaBar : public BarInterface
     return -1;
   }
 
-  void configure(bool /*force*/) override
+  void configure(const ConfigureOptions& /*options*/) override
   {
     std::cout << "Configure invalid through the PDA BAR" << std::endl;
   }

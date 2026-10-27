@@ -175,6 +175,21 @@ The `CardConfigurator` class offers an interface to configure the Readout Card. 
 order to configure the CRU or CRORC, one has to create a `CardConfigurator` object. The constructor can either be called with a list of
 parameters, or a path to a configuration file, specifying these parameters.
 
+The constructor also takes an optional `ConfigureOptions` struct (see [ConfigureOptions.h](include/ReadoutCard/ConfigureOptions.h)),
+which controls *how* the configuration is applied, as opposed to the `Parameters`, which define *what* is configured:
+
+| Field         | Values                 | Default | Description                                                                                       |
+| ------------- | ---------------------- | ------- | ------------------------------------------------------------------------------------------------- |
+| `force`       | `true`, `false`        | `false` | Rewrite all settings, even if the card state already matches the requested configuration         |
+| `clockConfig` | `Yes`, `No`, `Only`    | `Yes`   | CRU clock (TTC) configuration: run it with the rest, skip it, or run only the clock configuration |
+
+```cpp
+ConfigureOptions options;
+options.force = true;
+options.clockConfig = ConfigureOptions::ClockConfig::No;
+CardConfigurator(parameters, options);
+```
+
 ### CRU Parameters
 
 The `CardConfigurator` utilizes the `Parameters` class, the same class where Parameters are specified for DMA channels. For the
@@ -393,6 +408,20 @@ running instance of readout.exe or roc-bench-dma fail.
 
 ### roc-config
 Configures the CRU. Can be executed with a list of parameters, or with a [configuration file](#configuration-file). Uses the [Card Configurator](#card-configurator). For more details refer to the `--help` dialog of the binary.
+
+The `--clock-config` option (`yes`, `no`, `only`; default `yes`) sets when the CRU clock is configured. The clock
+configuration (clock selection, TTC/PON calibration and GBT calibration) is slow, so it can be done separately from the
+rest of the configuration:
+* `yes`: the clock is configured together with the other settings.
+* `no`: the clock configuration is skipped, and only the other settings are configured.
+* `only`: only the clock is configured, and the other settings are left untouched.
+
+When `--force` is not set, only the settings selected by `--clock-config` are compared with the current card state to decide
+whether reconfiguring is needed. Example:
+```
+o2-roc-config --id=b0:00.0 --tf=32 --clock-config=only   # configure the clock
+o2-roc-config --id=b0:00.0 --tf=32 --clock-config=no     # configure the rest, without touching the clock
+```
 
 ### roc-example
 The compiled example of `src/Example.cxx`

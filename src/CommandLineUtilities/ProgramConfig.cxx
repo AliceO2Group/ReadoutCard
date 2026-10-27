@@ -22,12 +22,14 @@
 #include "Crorc/CrorcBar.h"
 #include "ReadoutCard/CardConfigurator.h"
 #include "ReadoutCard/ChannelFactory.h"
+#include "ReadoutCard/ConfigureOptions.h"
 #include "ReadoutCard/Exception.h"
 #include "ReadoutCard/FirmwareChecker.h"
 #include "ReadoutCard/Logger.h"
 #include "RocPciDevice.h"
 #include <InfoLogger/InfoLogger.hxx>
 #include <boost/format.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 using namespace AliceO2::InfoLogger;
 using namespace o2::roc::CommandLineUtilities;
@@ -330,6 +332,9 @@ class ProgramConfig : public Program
     options.add_options()("drop-bad-rdh",
                           po::bool_switch(&mOptions.dropBadRdhEnabled),
                           "Flag to enable dropping of packets with bad RDH");
+    options.add_options()("clock-config",
+                          po::value<std::string>(&mOptions.clockConfig)->default_value("yes"),
+                          "Clock (TTC) configuration [yes, no, only]: yes = configure clock with the rest (default), no = skip clock configuration, only = configure only the clock");
     options.add_options()("test-mode-ORC501",
                           po::bool_switch(&o2::roc::testModeORC501),
                           "Flag to enable test mode as described in JIRA ORC-501");
@@ -430,10 +435,31 @@ class ProgramConfig : public Program
 
   const char* ilFacility = "ReadoutCard/config";
 
+  /// Converts the --clock-config option value
+  static ConfigureOptions::ClockConfig clockConfigFromString(const std::string& value)
+  {
+    if (boost::iequals(value, "yes")) {
+      return ConfigureOptions::ClockConfig::Yes;
+    } else if (boost::iequals(value, "no")) {
+      return ConfigureOptions::ClockConfig::No;
+    } else if (boost::iequals(value, "only")) {
+      return ConfigureOptions::ClockConfig::Only;
+    }
+    BOOST_THROW_EXCEPTION(Exception() << ErrorInfo::Message("Invalid --clock-config value: " + value + " (expected yes, no or only)"));
+  }
+
   virtual void run(const boost::program_options::variables_map& map)
   {
 
     Logger::setFacility(ilFacility);
+
+    // Options controlling how the configuration is applied
+    ConfigureOptions configureOptions;
+    configureOptions.force = mOptions.forceConfig;
+    configureOptions.clockConfig = clockConfigFromString(mOptions.clockConfig);
+    if (configureOptions.clockConfig != ConfigureOptions::ClockConfig::Yes) {
+      Logger::get() << "`--clock-config` set to " << mOptions.clockConfig << LogDebugDevel_(4600) << endm;
+    }
 
     // Configure all cards found - Normally used during boot
     if (mOptions.configAll) {
@@ -451,7 +477,7 @@ class ProgramConfig : public Program
         if (!mOptions.bypassFirmwareCheck) {
           try {
             FirmwareChecker().checkFirmwareCompatibility(params);
-            CardConfigurator(card.pciAddress, mOptions.configUri, mOptions.forceConfig);
+            CardConfigurator(card.pciAddress, mOptions.configUri, configureOptions);
             reportStatus(card.pciAddress);
           } catch (const std::runtime_error& e) {
             Logger::get() << e.what() << LogErrorDevel_(4600) << endm;
@@ -549,7 +575,7 @@ class ProgramConfig : public Program
       }
 
       try {
-        CardConfigurator(params, mOptions.forceConfig);
+        CardConfigurator(params, configureOptions);
         reportStatus(cardId);
       } catch (const std::runtime_error& e) {
         Logger::get() << e.what() << LogErrorDevel_(4600) << endm;
@@ -565,7 +591,7 @@ class ProgramConfig : public Program
       }
 
       try {
-        CardConfigurator(cardId, mOptions.configUri, mOptions.forceConfig);
+        CardConfigurator(cardId, mOptions.configUri, configureOptions);
         reportStatus(cardId);
       } catch (const std::runtime_error& e) {
         Logger::get() << e.what() << LogErrorDevel_(4600) << endm;
@@ -580,6 +606,7 @@ class ProgramConfig : public Program
 
   struct OptionsStruct {
     std::string clock = "local";
+    std::string clockConfig = "yes";
     std::string configUri = "";
     std::string datapathMode = "packet";
     std::string downstreamData = "Ctp";
